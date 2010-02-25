@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeView;
@@ -57,6 +58,7 @@ public class DemoCanvas extends Canvas {
         Tab tableTab = new Tab("Resource Search Table");
         Tab treeTab = new Tab("Resource Tree");
         final Tab configTab = new Tab("Configuration Editor");
+        Tab alertHistoryTab = new Tab("Alert History");
 
 
         // Agent:  resource (10005) type (10060)
@@ -66,12 +68,12 @@ public class DemoCanvas extends Canvas {
         configTab.setPane(new ConfigurationEditor(10005, 10060, ConfigurationEditor.ConfigType.plugin));
         treeTab.setPane(new ResourceTreeView(new Resource(10001)));
         tableTab.setPane(new ResourceSearchView());
-
+        alertHistoryTab.setPane(new AlertsView());
 
         topTabSet.addTab(configTab);
         topTabSet.addTab(tableTab);
         topTabSet.addTab(treeTab);
-
+        topTabSet.addTab(alertHistoryTab);
 
 
         final Menu configSelectMenu = new Menu();

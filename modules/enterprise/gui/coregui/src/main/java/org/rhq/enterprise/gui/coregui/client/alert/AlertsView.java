@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -75,18 +75,6 @@ public class AlertsView extends SectionStack {
 
         listGrid.setUseAllDataSourceFields(true);
 
-//        ListGridField idField = new ListGridField("id", "Id", 55);
-//        idField.setType(ListGridFieldType.INTEGER);
-//
-//        ListGridField nameField = new ListGridField("username", "Name", 100);
-//
-//
-//        ListGridField descriptionField = new ListGridField("name", "Name", 150);
-//        ListGridField emailField = new ListGridField("email", "Email Address", 100);
-//
-//        listGrid.setFields(idField, nameField, descriptionField, emailField);
-
-
         gridHolder.addMember(listGrid);
 
         ToolStrip toolStrip = new ToolStrip();
@@ -123,19 +111,17 @@ public class AlertsView extends SectionStack {
             }
         });
 
-        SectionStackSection topSection = new SectionStackSection("Roles");
+        SectionStackSection topSection = new SectionStackSection("Alerts");
         topSection.setExpanded(true);
         topSection.setItems(gridHolder);
 
         addSection(topSection);
 
-
         final RoleEditView roleEditor = new RoleEditView();
 
-        final SectionStackSection detailSection = new SectionStackSection("Edit Role");
+        final SectionStackSection detailSection = new SectionStackSection("Selected Role");
         detailSection.setItems(roleEditor);
         addSection(detailSection);
-
 
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {

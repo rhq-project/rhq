@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,10 +30,11 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface AlertGWTService extends RemoteService {
     /**
-     * Find the alerts that match the specified criteria.
+     * Find all alerts that match the specified criteria.
      *
-     * @param criteria
-     * @return
+     * @param criteria the criteria
+     *
+     * @return all alerts that match the specified criteria
      */
     PageList<Alert> findAlertsByCriteria(AlertCriteria criteria);
 }

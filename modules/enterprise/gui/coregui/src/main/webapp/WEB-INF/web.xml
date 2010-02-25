@@ -68,4 +68,8 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementDataGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MeasurementDataGWTService</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AlertGWTService</url-pattern>
+    </servlet-mapping>
 </web-app>

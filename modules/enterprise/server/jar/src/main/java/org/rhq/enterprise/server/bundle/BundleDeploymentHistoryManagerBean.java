@@ -30,7 +30,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.enterprise.server.RHQConstants;
@@ -56,39 +55,6 @@ public class BundleDeploymentHistoryManagerBean implements BundleDeploymentHisto
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
 
-    /**
-     * 
-     * @param bundleDeployment
-     * @return
-     */
-    public List<BundleDeploymentHistory> findBundleDeploymentHistoryByBundleDeployment(BundleDeployment bundleDeployment) {
-        List<BundleDeploymentHistory> histories = new ArrayList<BundleDeploymentHistory>();
-        return histories;
-    }
-
-    /**
-    * gets history for a specific bundle deployment
-    * @param bundleId
-    * @param platformResourceId
-    * @return
-    */
-    public List<BundleDeploymentHistory> findBundleDeploymentHistoryByBundleAndPlatform(int bundleId,
-        int platformResourceId) {
-        List<BundleDeploymentHistory> histories = new ArrayList<BundleDeploymentHistory>();
-        return histories;
-    }
-
-    /**
-     * 
-     * @param platformResourceId
-     * @return
-     */
-    public List<BundleDeploymentHistory> findBundleDeploymentHistoryByPlatform(int platformResourceId) {
-        List<BundleDeploymentHistory> histories = new ArrayList<BundleDeploymentHistory>();
-        return histories;
-
-    }
-
     public List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(Subject subject,
         BundleDeploymentHistoryCriteria criteria) {
         List<BundleDeploymentHistory> histories = new ArrayList<BundleDeploymentHistory>();
@@ -97,7 +63,6 @@ public class BundleDeploymentHistoryManagerBean implements BundleDeploymentHisto
 
     public void addBundleDeploymentHistoryByBundleDeployment(BundleDeploymentHistory history)
         throws IllegalArgumentException {
-        // TODO Auto-generated method stub
 
     }
 }

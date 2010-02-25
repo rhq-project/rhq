@@ -88,6 +88,21 @@ public class BundleDeploymentHistoryManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLED)
+    public void testFindByPlatformId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = ENABLED)
+    public void testFindByBundleId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = ENABLED)
+    public void testFindByBundleDeploymentId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = ENABLED)
     public void testFindByCriteria() throws Exception {
 
         Subject subject = getOverlord();

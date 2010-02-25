@@ -18,32 +18,18 @@
  */
 package org.rhq.enterprise.server.bundle;
 
-import java.util.List;
-
 import javax.ejb.Local;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
-import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 
 /**
  * Local interface to the manager responsible for creating and managing bundles.
  *  
- * @author Adam YOung
+ * @author Adam Young
  */
 @Local
-public interface BundleDeploymentHistoryManagerLocal {
+public interface BundleDeploymentHistoryManagerLocal extends BundleDeploymentHistoryManagerRemote {
 
     void addBundleDeploymentHistoryByBundleDeployment(BundleDeploymentHistory history) throws IllegalArgumentException;
-
-    List<BundleDeploymentHistory> findBundleDeploymentHistoryByBundleDeployment(BundleDeployment bundleDeployment);
-
-    List<BundleDeploymentHistory> findBundleDeploymentHistoryByBundleAndPlatform(int bundleId, int platformResourceId);
-
-    List<BundleDeploymentHistory> findBundleDeploymentHistoryByPlatform(int platformResourceId);
-
-    List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(Subject subject,
-        BundleDeploymentHistoryCriteria criteria);
 
 }

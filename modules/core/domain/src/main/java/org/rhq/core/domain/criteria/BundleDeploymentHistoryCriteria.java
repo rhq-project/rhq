@@ -34,12 +34,36 @@ public class BundleDeploymentHistoryCriteria extends Criteria {
 
     private static final long serialVersionUID = 747793536546442610L;
 
+    //No reason to make these private.  The setters are necessary to work with bean-api mechanisms
+    public Integer filterId;
+    public Integer filterPlatformResourceId;
+    public Integer filterBundleId;
+    public Integer filterBundleDeploymentId;
+    public Integer filterBundleDeploymentDefinitionId;
+
     public BundleDeploymentHistoryCriteria() {
         super(BundleDeploymentHistory.class);
 
     }
 
-    public void addFilterId(Integer filterId) {
+    public void setFilterId(Integer filterId) {
+        this.filterId = filterId;
+    }
+
+    public void setFilterPlatformResourceId(Integer filterPlatformResourceId) {
+        this.filterPlatformResourceId = filterPlatformResourceId;
+    }
+
+    public void setFilterBundleId(Integer filterBundleId) {
+        this.filterBundleId = filterBundleId;
+    }
+
+    public void setFilterBundleDeploymentId(Integer filterBundleDeploymentId) {
+        this.filterBundleDeploymentId = filterBundleDeploymentId;
+    }
+
+    public void setFilterBundleDeploymentDefinitionId(Integer filterBundleDeploymentDefinitionId) {
+        this.filterBundleDeploymentDefinitionId = filterBundleDeploymentDefinitionId;
     }
 
 }

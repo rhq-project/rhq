@@ -907,7 +907,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 builder.append(condition.getName()).append(' ');
             }
         } else {
-            builder.append(condition.getName()).append(' ');
+            if (category.getName()!=null) // this is null for e.g. availability
+                builder.append(condition.getName()).append(' ');
         }
 
         // next format the RHS

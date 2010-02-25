@@ -121,6 +121,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                         } else if ((path.startsWith("/rhq/resource/configuration/view-map.xhtml") ||
                             path.startsWith("/rhq/resource/configuration/edit-map.xhtml") ||
                             path.startsWith("/rhq/resource/configuration/add-map.xhtml") ||
+                            path.startsWith("/rhq/resource/configuration/history-view-map.xhtml") ||
                             path.startsWith("/rhq/resource/configuration/edit.xhtml") && facets.isConfiguration())) {
                             path = "/rhq/resource/configuration/view.xhtml";
 

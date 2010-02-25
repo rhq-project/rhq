@@ -188,7 +188,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         entityManager.persist(resource);
-        log.error("********* resource persisted ************");
+        log.debug("********* resource persisted ************");
         // Execute sub-methods as overlord to bypass additional security checks.
         Subject overlord = this.subjectManager.getOverlord();
         updateImplicitMembership(overlord, resource);
@@ -366,7 +366,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0,
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first delete the config objects
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then the history objects wrapping those configs
-            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't 
+            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't
             AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
             Alert.QUERY_DELETE_BY_RESOURCES, //                order
             AlertCondition.QUERY_DELETE_BY_RESOURCES, //       of
@@ -2134,7 +2134,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 parent = null;
                 break;
             }
-            
+
         } while (parent != null);
         if (resource != null) {
             if (!authorizationManager.canViewResource(subject, resource.getId())) {
@@ -2164,7 +2164,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwaysIncludeParent,
         IntExtractor<? super T> extractor) {
-        
+
         if (results.isEmpty()) {
             return new ResourceNamesDisambiguationResult<T>(new ArrayList<DisambiguationReport<T>>(), false, false,
                 false);

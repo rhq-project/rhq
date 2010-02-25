@@ -235,17 +235,6 @@
     <h:form id="viewResourceConfigurationForm">
 
         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-        <input type="hidden" name="configId" value="#{param.configId}"/>
-
-        <ui:remove>
-        <onc:config configurationDefinition="#{ViewResourceConfigurationUpdateUIBean.configurationDefinition}"
-                    configuration="#{ViewResourceConfigurationUpdateUIBean.configuration}"
-                    readOnly="true"
-                    nullConfigurationDefinitionMessage="#{ViewResourceConfigurationUpdateUIBean.nullConfigurationDefinitionMessage}"
-                    nullConfigurationMessage="#{ViewResourceConfigurationUpdateUIBean.nullConfigurationMessage}"
-                    prevalidate="true"/>
-        </ui:remove>
-
 
       <c:choose>
         <c:when test="${configurationViewer.rawSupported}">

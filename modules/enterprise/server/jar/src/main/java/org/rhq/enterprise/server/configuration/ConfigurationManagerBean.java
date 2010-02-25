@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -993,7 +992,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     invalidConfig, subject.getName());
                 resourceConfigurationUpdate.setErrorMessage("resource.validation.failed");
                 resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
-                
+
                 return resourceConfigurationUpdate;
             }
         } catch (PluginContainerException e) {

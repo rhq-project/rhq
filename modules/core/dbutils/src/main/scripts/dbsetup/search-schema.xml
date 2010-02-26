@@ -17,7 +17,7 @@
         <column name="RESULT_COUNT" type="LONG" required="false"/>
         
         <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT" required="true"/>
-        <column name="ENABLED" type="BOOLEAN" required="true"/>
+        <column name="GLOBAL" type="BOOLEAN" required="true"/>
     </table>
 
 </dbsetup>

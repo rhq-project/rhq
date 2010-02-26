@@ -38,6 +38,10 @@ public enum OperationRequestStatus {
         this.displayName = displayName;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
     public String toString() {
         return displayName;
     }

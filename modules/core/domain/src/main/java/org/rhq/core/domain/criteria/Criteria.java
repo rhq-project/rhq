@@ -125,8 +125,11 @@ public abstract class Criteria implements Serializable {
                 results.put(getCleansedFieldName(filterField, 6), filterFieldValue);
             }
         }
-        for (Map.Entry<String, Object> entries : results.entrySet()) {
-            LOG.debug("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
+
+        if (LOG.isDebugEnabled()) {
+            for (Map.Entry<String, Object> entries : results.entrySet()) {
+                LOG.debug("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
+            }
         }
         return results;
     }
@@ -160,8 +163,10 @@ public abstract class Criteria implements Serializable {
                 }
             }
         }
-        for (String entry : results) {
-            LOG.debug("Fetch: (" + entry + ")");
+        if (LOG.isDebugEnabled()) {
+            for (String entry : results) {
+                LOG.debug("Fetch: (" + entry + ")");
+            }
         }
         return results;
     }
@@ -283,7 +288,9 @@ public abstract class Criteria implements Serializable {
                 }
             }
         }
-        LOG.debug("Page Control: " + pc);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Page Control: " + pc);
+        }
         return pc;
     }
 

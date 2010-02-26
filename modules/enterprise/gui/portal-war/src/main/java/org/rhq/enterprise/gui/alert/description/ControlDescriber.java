@@ -18,9 +18,11 @@
  */
 package org.rhq.enterprise.gui.alert.description;
 
+import org.jboss.seam.Component;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -53,12 +55,13 @@ public class ControlDescriber extends AlertConditionDescriber {
     private OperationDefinition getDefinition(AlertCondition condition) {
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
 
-        Integer resourceTypeId = condition.getAlertDefinition().getResource().getResourceType().getId();
+        // this is not a seam component, so look it up in the component contexts
+        ResourceType resourceType = (ResourceType)Component.getInstance("resourceType");
         String operationName = condition.getName();
 
         try {
             return operationManager.getOperationDefinitionByResourceTypeAndName(
-                resourceTypeId, operationName, false);
+                resourceType.getId(), operationName, false);
         } catch (Exception e) {
             return null;
         }

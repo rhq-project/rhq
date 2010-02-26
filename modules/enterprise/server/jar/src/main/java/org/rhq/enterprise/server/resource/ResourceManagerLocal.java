@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -449,7 +450,12 @@ public interface ResourceManagerLocal {
      * The disambiguation result contains information on what types of information are needed to make the resources
      * in the original result unambiguous and contains the decorated original data in the same order as the 
      * supplied result list.
-     * 
+     * <p>
+     * The objects in results do not necessarily need to correspond to a resource. In case of such objects,
+     * the resourceIdExtractor should return 0. In the resulting report such objects will still be wrapped
+     * in a {@link DisambiguationReport} but the parent list will be empty and resource type and plugin name will
+     * be null.
+     *  
      * @see ResourceNamesDisambiguationResult
      * 
      * @param <T> the type of the result elements

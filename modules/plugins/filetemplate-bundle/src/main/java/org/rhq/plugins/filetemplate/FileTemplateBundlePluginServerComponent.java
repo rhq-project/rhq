@@ -22,6 +22,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
+import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -45,5 +47,12 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
 
     public AvailabilityType getAvailability() {
         return AvailabilityType.UP;
+    }
+
+    @Override
+    public BundleDeployResult deployBundle(BundleDeployRequest request) {
+        // TODO
+        BundleDeployResult result = new BundleDeployResult();
+        return result;
     }
 }

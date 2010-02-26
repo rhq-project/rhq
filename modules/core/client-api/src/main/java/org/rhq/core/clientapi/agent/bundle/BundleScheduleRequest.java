@@ -20,12 +20,37 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.clientapi.server.bundle;
+
+package org.rhq.core.clientapi.agent.bundle;
+
+import java.io.Serializable;
+
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
 
 /**
- * 
  * @author John Mazzitelli
  */
-public class BundleUpdateComplete {
+public class BundleScheduleRequest implements Serializable {
+    private static final long serialVersionUID = 1L;
 
+    private BundleDeployDefinition bundleDeployDefinition;
+
+    public BundleScheduleRequest(BundleDeployDefinition bundleDef) {
+        this.bundleDeployDefinition = bundleDef;
+    }
+
+    public BundleDeployDefinition getBundleDeployDefinition() {
+        return bundleDeployDefinition;
+    }
+
+    public void setBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
+        this.bundleDeployDefinition = bundleDeployDefinition;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder(this.getClass() + ": ");
+        str.append(bundleDeployDefinition.toString());
+        return str.toString();
+    }
 }

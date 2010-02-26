@@ -22,7 +22,10 @@
  */
 package org.rhq.core.clientapi.server.bundle;
 
+import java.util.List;
+
 import org.rhq.core.communications.command.annotation.Asynchronous;
+import org.rhq.core.domain.bundle.BundleFile;
 
 /**
  * Interface for agents to use when needing to inform the server about bundle tasks. Implementations of this interface, once registered with the
@@ -33,5 +36,7 @@ import org.rhq.core.communications.command.annotation.Asynchronous;
 public interface BundleServerService {
 
     @Asynchronous(guaranteedDelivery = true)
-    void updateComplete(BundleUpdateComplete buc);
+    void updateStatus(BundleStatusUpdate update);
+
+    List<BundleFile> getAllBundleFiles(int bundleVersionId);
 }

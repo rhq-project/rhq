@@ -23,9 +23,44 @@
 
 package org.rhq.core.clientapi.agent.bundle;
 
+import java.io.Serializable;
+
+import org.rhq.core.util.exception.ThrowableUtil;
+
 /**
  * @author John Mazzitelli
  */
-public class BundleUpdateRequest {
+public class BundleScheduleResponse implements Serializable {
+    private static final long serialVersionUID = 1L;
 
+    private String errorMessage;
+
+    public BundleScheduleResponse() {
+    }
+
+    public boolean isSuccess() {
+        return this.errorMessage == null;
+    }
+
+    public String getErrorMessage() {
+        return this.errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public void setErrorMessage(Throwable t) {
+        this.errorMessage = ThrowableUtil.getAllMessages(t);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder(this.getClass().getSimpleName());
+        if (getErrorMessage() != null) {
+            str.append(" error=[").append(getErrorMessage()).append("];");
+        }
+        str.append(" success=[").append(isSuccess()).append("]");
+        return str.toString();
+    }
 }

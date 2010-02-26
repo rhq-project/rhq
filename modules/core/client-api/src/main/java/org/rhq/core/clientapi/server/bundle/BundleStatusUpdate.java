@@ -20,12 +20,14 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
-package org.rhq.core.clientapi.agent.bundle;
+package org.rhq.core.clientapi.server.bundle;
 
 /**
+ * Object that informs the server that a bundle deployment has a new status.
+ * This will be the way the bundle deployment process is tracked.
+ * 
  * @author John Mazzitelli
  */
-public class BundleUpdateResponse {
+public class BundleStatusUpdate {
 
 }

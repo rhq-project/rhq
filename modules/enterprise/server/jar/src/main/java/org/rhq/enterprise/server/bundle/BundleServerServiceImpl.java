@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.bundle;
 
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -26,6 +28,10 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.bundle.BundleStatusUpdate;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.util.exception.WrappedRemotingException;
+import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Server-side implementation of the <code>BundleServerService</code>. This implmentation simply forwards
@@ -40,7 +46,29 @@ public class BundleServerServiceImpl implements BundleServerService {
         // TODO Auto-generated method stub
     }
 
-    public List<BundleFile> getAllBundleFiles(int bundleVersionId) {
-        return null;
+    public List<PackageVersion> getAllBundleVersionPackageVersions(int bundleVersionId) {
+        try {
+            BundleManagerLocal bm = LookupUtil.getBundleManager();
+            List<BundleFile> bundleFiles = bm.findBundleFilesForBundleVersion(bundleVersionId);
+            List<PackageVersion> packageVersions = new ArrayList<PackageVersion>(bundleFiles.size());
+            for (BundleFile bundleFile : bundleFiles) {
+                packageVersions.add(bundleFile.getPackageVersion());
+            }
+            return packageVersions;
+        } catch (Exception e) {
+            log.error("Failed to obtain bundle files for bundle version id: " + bundleVersionId, e);
+            throw new WrappedRemotingException(e);
+        }
+    }
+
+    public long downloadPackageBits(PackageVersion packageVersion, OutputStream outputStream) {
+        try {
+            ContentSourceManagerLocal csm = LookupUtil.getContentSourceManager();
+            long size = csm.outputPackageVersionBits(packageVersion, outputStream);
+            return size;
+        } catch (Exception e) {
+            log.error("Failed to obtain package version bits for package version: " + packageVersion, e);
+            throw new WrappedRemotingException(e);
+        }
     }
 }

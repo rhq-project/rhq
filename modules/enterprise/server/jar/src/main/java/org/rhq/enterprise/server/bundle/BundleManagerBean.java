@@ -35,6 +35,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.Repo;
@@ -71,6 +72,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
 
+    @SuppressWarnings("unchecked")
+    public List<BundleFile> findBundleFilesForBundleVersion(int bundleVersionId) throws Exception {
+        Query q = entityManager.createNamedQuery(BundleFile.QUERY_FIND_BY_BUNDLE_VERSION_ID);
+        q.setParameter("id", bundleVersionId);
+        List<BundleFile> bundleFiles = (List<BundleFile>) q.getResultList();
+        return bundleFiles;
+    }
+
     public Bundle createBundle(Subject subject, Bundle bundle) {
         // add the implicit bundle repo, if necessary
         if (null == bundle.getRepo()) {
@@ -79,6 +88,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             repo.setSyncSchedule(null);
             bundle.setRepo(repo);
         }
+
+        log.info("Creating bundle: " + bundle);
 
         entityManager.persist(bundle);
         return bundle;

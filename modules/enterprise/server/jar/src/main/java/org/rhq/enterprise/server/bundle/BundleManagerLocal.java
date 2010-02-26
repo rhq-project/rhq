@@ -26,6 +26,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -46,6 +47,8 @@ public interface BundleManagerLocal {
     BundleType createBundleType(Subject subject, BundleType bundleType);
 
     BundleVersion createBundleVersion(Subject subject, BundleVersion bundleVersion);
+
+    List<BundleFile> findBundleFilesForBundleVersion(int bundleVersionId) throws Exception;
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

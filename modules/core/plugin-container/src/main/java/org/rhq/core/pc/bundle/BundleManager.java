@@ -22,6 +22,7 @@
  */
 package org.rhq.core.pc.bundle;
 
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -34,9 +35,9 @@ import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
@@ -120,9 +121,24 @@ public class BundleManager extends AgentService implements BundleAgentService, C
      * @return the bundle files that are associated with the given bundle
      * @throws Exception
      */
-    public List<BundleFile> getAllBundleFiles(BundleVersion bundleVersion) throws Exception {
-        List<BundleFile> bundleFiles = getBundleServerService().getAllBundleFiles(bundleVersion.getId());
-        return bundleFiles;
+    public List<PackageVersion> getAllBundleVersionPackageVersions(BundleVersion bundleVersion) throws Exception {
+        int bvId = bundleVersion.getId();
+        List<PackageVersion> pvs = getBundleServerService().getAllBundleVersionPackageVersions(bvId);
+        return pvs;
+    }
+
+    /**
+     * This is used by bundle plugins - bundle plugins call back into this manager to obtain the
+     * bundle file content for the given package.
+     * 
+     * @param packageVersion the package whose bits are to be downloaded
+     * @param outputStream where the package bits will get written to
+     * @return the size of the package version content that was downloaded and output
+     * @throws Exception
+     */
+    public long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception {
+        long size = getBundleServerService().downloadPackageBitsGivenResource(packageVersion, outputStream);
+        return size;
     }
 
     /**

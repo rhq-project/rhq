@@ -3,7 +3,6 @@
 <module>
 
     <inherits name='com.google.gwt.user.User'/>
-    <inherits name='com.smartgwt.SmartGwt' />
 
     <entry-point class='org.rhq.core.client.RHQDomain'/>
 
@@ -11,9 +10,9 @@
     <source path="domain"/>
 
 
-    <generate-with class="org.rhq.core.rebind.RecordBuilderGenerator">
+    <!--<generate-with class="org.rhq.core.rebind.RecordBuilderGenerator">
         <when-type-assignable class="org.rhq.core.domain.util.Recordizable"/>
-    </generate-with>
+    </generate-with>-->
 
 
 </module>

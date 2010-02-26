@@ -137,7 +137,7 @@ public class BundleManager extends AgentService implements BundleAgentService, C
      * @throws Exception
      */
     public long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception {
-        long size = getBundleServerService().downloadPackageBitsGivenResource(packageVersion, outputStream);
+        long size = getBundleServerService().downloadPackageBits(packageVersion, outputStream);
         return size;
     }
 

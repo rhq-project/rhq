@@ -17,7 +17,15 @@
 
     <h:panelGrid columns="2" border="1" cellpadding="5" style="margin: 15px;">
         <h:outputLabel for="alertNameInput" value="Name:  " />
-        <h:inputText id="alertNameInput" value="#{alertDefinition.name}" style="width: 300px;" />
+        <h:inputText id="alertNameInput"
+                     value="#{alertDefinition.name}"
+                     style="width: 300px;"
+                     maxlength="100"
+                     required="true"
+                     requiredMessage="#{alertMessages.nameRequired}"
+                     validatorMessage="#{alertMessages.nameLength}">
+            <f:validateLength maximum="100" />
+        </h:inputText>
 
         <h:outputLabel for="alertDescriptionInput" value="Description:  " />
         <h:inputTextarea id="alertDescriptionInput" value="#{alertDefinition.description}" style="width: 300px;" />

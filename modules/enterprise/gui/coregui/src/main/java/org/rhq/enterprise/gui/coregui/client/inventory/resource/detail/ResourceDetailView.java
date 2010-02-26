@@ -22,6 +22,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.Presenter;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
 import org.rhq.enterprise.gui.coregui.client.components.SubTabLayout;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
@@ -50,6 +51,7 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
 
     private Resource resource;
 
+    private SimpleCollapsiblePanel summaryPanel;
     private ResourceSummaryView summaryView;
 
     private Tab summaryTab;
@@ -76,8 +78,14 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
         setWidth100();
         setHeight100();
 
-        // addMember(new ResourceSummaryView());
+
+
+        // The header section
         summaryView = new ResourceSummaryView();
+        summaryPanel = new SimpleCollapsiblePanel("Summary", summaryView);
+
+
+        // The Tabs section
 
         topTabSet = new TabSet();
         topTabSet.setTabBarPosition(Side.TOP);
@@ -102,7 +110,7 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
         title.setContents("Loading...");
         addMember(title);
 
-        addMember(summaryView);
+        addMember(summaryPanel);
 
         addMember(topTabSet);
 

@@ -54,5 +54,8 @@ public class Portlet extends Window {
         // (since width is determined from the containing layout, not the portlet contents)
 //        setVPolicy(LayoutPolicy.NONE);
         setOverflow(Overflow.VISIBLE);
+
+        setCanDragResize(true);
+        setResizeFrom("B");
     }
 }

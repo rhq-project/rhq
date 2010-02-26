@@ -16,24 +16,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.gwt;
+package org.rhq.enterprise.gui.coregui.client.components;
 
-
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
-
-import com.google.gwt.user.client.rpc.RemoteService;
-import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
-
-
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
 
 /**
  * @author Greg Hinkle
  */
-@RemoteServiceRelativePath("ResourceGroupGWTService")
-public interface ResourceGroupGWTService extends RemoteService {
+public class HeaderLabel extends HTMLFlow {
 
-    PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria);
-
+    public HeaderLabel(String contents) {
+        super(contents);
+        setHeight(60);
+        setStylePrimaryName("HeaderLabel");
+        setStyleName("HeaderLabel");
+    }
 }

@@ -106,6 +106,7 @@ public class MenuBarView extends HLayout {
 
         Hyperlink dashboardLink = new Hyperlink("Dashboard", "Dashboard");
         dashboardLink.setStylePrimaryName("TopSectionLink");
+        dashboardLink.setStyleName("TopSectionLink");
         addMember(dashboardLink);
 
         Hyperlink demoLink = new Hyperlink("Demo", "Demo");

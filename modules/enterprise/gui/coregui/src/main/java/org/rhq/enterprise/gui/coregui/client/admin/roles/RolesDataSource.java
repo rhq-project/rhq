@@ -40,11 +40,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
  */
 public class RolesDataSource extends RPCDataSource {
 
-    private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
-
-    private boolean initialized = false;
-
     private static RolesDataSource INSTANCE;
+
+    private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
 
     public static RolesDataSource getInstance() {
         if (INSTANCE == null) {
@@ -53,15 +51,12 @@ public class RolesDataSource extends RPCDataSource {
         return INSTANCE;
     }
 
-
-    private String query;
-
     protected RolesDataSource() {
         super("Roles");
 
-
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
         idDataField.setPrimaryKey(true);
+        idDataField.setCanEdit(false);
 
         DataSourceTextField nameField = new DataSourceTextField("name", "Name");
 
@@ -74,8 +69,13 @@ public class RolesDataSource extends RPCDataSource {
         final long start = System.currentTimeMillis();
 
         RoleCriteria criteria = new RoleCriteria();
-        criteria.setPageControl(getPageControl(request, criteria.getAlias()));
- 
+        criteria.setPageControl(getPageControl(request));
+
+
+        criteria.setFetchResourceGroups(true);
+        criteria.setFetchPermissions(true);
+        criteria.setFetchSubjects(true);
+
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
                 Window.alert("Failed to load " + caught.getMessage());
@@ -94,7 +94,10 @@ public class RolesDataSource extends RPCDataSource {
                     ListGridRecord record = new ListGridRecord();
                     record.setAttribute("id", role.getId());
                     record.setAttribute("name", role.getName());
+
+                    record.setAttribute("resourceGroups", role.getResourceGroups());
                     record.setAttribute("permissions", role.getPermissions());
+                    record.setAttribute("subjects", role.getSubjects());
 
                     records[x] = record;
                 }
@@ -102,7 +105,6 @@ public class RolesDataSource extends RPCDataSource {
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize());    // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
-
             }
         });
     }

@@ -20,12 +20,26 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTService;
-
+import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 
 /**
  * @author Greg Hinkle
  */
 public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implements ResourceGroupGWTService {
+
+    private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
+
+    public PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria) {
+        return SerialUtility.prepare(groupManager.findResourceGroupsByCriteria(getSessionSubject(), criteria),
+                "ResourceGroupService.findResourceGroupsByCriteria");
+    }
+
 }

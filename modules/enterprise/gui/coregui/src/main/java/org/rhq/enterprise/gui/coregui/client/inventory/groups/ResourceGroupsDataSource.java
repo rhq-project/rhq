@@ -16,14 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource;
+package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 import com.google.gwt.user.client.Window;
@@ -40,18 +42,18 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 /**
  * @author Greg Hinkle
  */
-public class ResourceDatasource extends RPCDataSource {
+public class ResourceGroupsDataSource extends RPCDataSource {
 
     private String query;
 
-    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+    private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
 
-    public ResourceDatasource() {
+    public ResourceGroupsDataSource() {
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
-        
+
         DataSourceTextField nameDataField = new DataSourceTextField("name", "Name", 200);
         nameDataField.setCanEdit(false);
 
@@ -62,64 +64,59 @@ public class ResourceDatasource extends RPCDataSource {
         DataSourceTextField pluginNameDataField = new DataSourceTextField("pluginName", "Plugin");
         DataSourceTextField categoryDataField = new DataSourceTextField("category", "Category");
 
-        DataSourceImageField availabilityDataField = new DataSourceImageField("currentAvailability", "Availability", 20);
 
-        availabilityDataField.setCanEdit(false);
-
-        setFields(idDataField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField, categoryDataField, availabilityDataField);
+        setFields(idDataField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField, categoryDataField);
     }
-
-    public String getQuery() {
-        return query;
-    }
-
-    public void setQuery(String query) {
-        this.query = query;
-    }
-
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
 
-        ResourceCriteria criteria = new ResourceCriteria();
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.setPageControl(getPageControl(request));
-        criteria.addFilterName(this.query);
+        criteria.addFilterName(query);
 
-        resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+
+        groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
             public void onFailure(Throwable caught) {
-                Window.alert("Failed to load " + caught.getMessage());
-                System.err.println("Failed to fetch Resource Data");
+                CoreGUI.getErrorHandler().handleError("Failed to load groups", caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
 
-            public void onSuccess(PageList<Resource> result) {
-
+            public void onSuccess(PageList<ResourceGroup> result) {
                 System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
 
-                ListGridRecord[] records = new ListGridRecord[result.size()];
-                for (int x=0; x<result.size(); x++) {
-                    Resource res = result.get(x);
-                    ListGridRecord record = new ListGridRecord();
-                    record.setAttribute("resource",res);
-                    record.setAttribute("id",res.getId());
-                    record.setAttribute("name",res.getName());
-                    record.setAttribute("description",res.getDescription());
-                    record.setAttribute("typeName",res.getResourceType().getName());
-                    record.setAttribute("pluginName",res.getResourceType().getPlugin());
-                    record.setAttribute("category",res.getResourceType().getCategory().getDisplayName());
-
-                    record.setAttribute("currentAvailability",
-                            res.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP
-                            ? "/images/icons/availability_green_16.png" 
-                            : "/images/icons/availability_red_16.png");
-                    records[x] = record;
-                }
-
-                response.setData(records);
-                response.setTotalRows(result.getTotalSize());	// for paging to work we have to specify size of full result set
+                response.setData(buildRecords(result));
+                response.setTotalRows(result.getTotalSize());    // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }
         });
     }
+
+
+    public static ListGridRecord[] buildRecords(PageList<ResourceGroup> groupList) {
+
+        ListGridRecord[] records = null;
+        if (groupList != null) {
+            records = new ListGridRecord[groupList.size()];
+
+            for (int x = 0; x < groupList.size(); x++) {
+                ResourceGroup group = groupList.get(x);
+                ListGridRecord record = new ListGridRecord();
+                record.setAttribute("group", group);
+                record.setAttribute("id", group.getId());
+                record.setAttribute("name", group.getName());
+                record.setAttribute("description", group.getDescription());
+                record.setAttribute("groupCategory", group.getGroupCategory());
+
+                record.setAttribute("resourceType", group.getResourceType());
+                record.setAttribute("typeName", group.getResourceType().getName());
+                record.setAttribute("pluginName", group.getResourceType().getPlugin());
+
+                records[x] = record;
+            }
+        }
+        return records;
+    }
+
 }

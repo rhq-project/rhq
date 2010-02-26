@@ -1,10 +1,56 @@
-body {
+/*body {
     background-color: white;
     color: black;
     font-family: Arial, sans-serif;
     font-size: small;
     margin: 8px;
+}*/
+
+body, p, td, th, option, input, textarea, select {
+    color: #000000;
+    font-family: tahoma, verdana, sans-serif;
+    font-size: 11px;
 }
+
+img {
+    border-style: none;
+}
+
+hr {
+    background-color: #AAAAAA;
+    border: 0 none;
+    color: #AAAAAA;
+    height: 1px;
+    margin-left: 0;
+    margin-right: 0;
+    text-align: center;
+    width: 100%;
+}
+
+a:link {
+    color: #003399;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+a:visited {
+    color: #003399;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #003399;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.HeaderLabel {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #444444;
+}
+
 
 .OddRow {
     background-color: white;
@@ -57,7 +103,6 @@ body {
     color: black;
 }
 
-z
 
 .BreadCrumb {
     font-size: 12pt;
@@ -78,6 +123,15 @@ z
 .formTitle, .formTitleFocused {
     font-weight: bold;
 }
+
+
+
+.GraphTooltip {
+    background-color:#B5D5FF;
+    font-weight:bold;
+    padding:5px;
+}
+
 
 
 .SubTabButton,

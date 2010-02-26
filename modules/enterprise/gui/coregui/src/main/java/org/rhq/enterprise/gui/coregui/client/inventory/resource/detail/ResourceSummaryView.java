@@ -161,14 +161,14 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
 //            item.setValue("?");
         }
 
-        SectionItem section = new SectionItem("Summary", "Summary");
-        section.setTitle("Summary");
-        section.setDefaultValue("Summary");
-        section.setCanCollapse(true);
-        section.setCellStyle("HidablePlainSectionHeader");
-        section.setItemIds(itemIds.toArray(new String[itemIds.size()]));
+//        SectionItem section = new SectionItem("Summary", "Summary");
+//        section.setTitle("Summary");
+//        section.setDefaultValue("Summary");
+//        section.setCanCollapse(true);
+//        section.setCellStyle("HidablePlainSectionHeader");
+//        section.setItemIds(itemIds.toArray(new String[itemIds.size()]));
+//        formItems.add(0, section);
 
-        formItems.add(0, section);
         formItems.add(new SpacerItem());
         setItems(formItems.toArray(new FormItem[formItems.size()]));
 

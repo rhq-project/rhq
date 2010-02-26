@@ -67,6 +67,7 @@ public class SimpleCollapsiblePanel extends VLayout {
                     button.setIcon("[skin]/images/SectionHeader/opener_closed.png");
                     content.hide();
                 }
+                getParentElement().markForRedraw();
                 markForRedraw();
             }
         });

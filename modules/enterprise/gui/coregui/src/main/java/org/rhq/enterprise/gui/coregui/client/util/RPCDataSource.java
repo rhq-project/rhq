@@ -18,9 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -51,60 +53,59 @@ public abstract class RPCDataSource extends DataSource {
 
     @Override
     protected Object transformRequest(DSRequest request) {
-        switch (request.getOperationType()) {
-            case FETCH:
-                DSResponse response = createResponse(request);
-                executeFetch(request, response);
-                break;
-            case ADD:
-            case UPDATE:
-            case REMOVE:
-                super.transformRequest(request);
-                break;
-            default:
-                super.transformRequest(request);
-                break;
+        try {
+            switch (request.getOperationType()) {
+                case FETCH:
+                    DSResponse response = createResponse(request);
+                    executeFetch(request, response);
+                    break;
+                case ADD:
+                case UPDATE:
+                case REMOVE:
+                    super.transformRequest(request);
+                    break;
+                default:
+                    super.transformRequest(request);
+                    break;
+            }
+        } catch (Throwable t) {
+            CoreGUI.getErrorHandler().handleError("Failure in datasource [" + request.getOperationType() + "]", t);
+            return null;
         }
-
         return request.getData();
     }
 
     /**
      * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
      * pagination, but *not* filter fields.
-     * 
+     *
      * @param request the request to turn into a page control
      * @return the page control for passing to criteria and other queries
      */
-    protected PageControl getPageControl(DSRequest request, String alias) {
+    protected PageControl getPageControl(DSRequest request) {
         // Initialize paging.
-        PageControl pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow());
+        PageControl pageControl;
+        if (request.getStartRow() == null || request.getEndRow() == null) {
+            pageControl = new PageControl();
+        } else {
+            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow());
+        }
 
         // Initialize sorting.
         String sortBy = request.getAttribute("sortBy");
-        if (sortBy == null) {
-            List<OrderingField> orderingFields = getDefaultOrderingFields(alias);
-            if (orderingFields != null) {
-                for (OrderingField orderingField : orderingFields) {
-                    pageControl.addDefaultOrderingField(orderingField.getField(), orderingField.getOrdering());
-                }
-            }
-        } else {
+        if (sortBy != null) {
             String[] sorts = sortBy.split(",");
             for (String sort : sorts) {
                 PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
                 String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
-                String fieldName = alias + "." + columnName;
-                pageControl.addDefaultOrderingField(fieldName, ordering);
+                ResourceCriteria c;
+                pageControl.addDefaultOrderingField(columnName, ordering);
             }
         }
 
         return pageControl;
     }
 
-    protected List<OrderingField> getDefaultOrderingFields(String alias) {
-        return null;
-    }
 
     protected abstract void executeFetch(final DSRequest request, final DSResponse response);
 
@@ -112,13 +113,13 @@ public abstract class RPCDataSource extends DataSource {
      * Executed on <code>REMOVE</code> operation. <code>processResponse (requestId, response)</code>
      * should be called when operation completes (either successful or failure).
      *
-     * @param request <code>DSRequest</code> being processed. <code>request.getData ()</code>
-     *      contains record should be removed.
+     * @param request  <code>DSRequest</code> being processed. <code>request.getData ()</code>
+     *                 contains record should be removed.
      * @param response <code>DSResponse</code>. <code>setData (list)</code> should be called on
-     *      successful execution of this method. Array should contain single element representing
-     *      removed row. <code>setStatus (&lt;0)</code> should be called on failure.
+     *                 successful execution of this method. Array should contain single element representing
+     *                 removed row. <code>setStatus (&lt;0)</code> should be called on failure.
      */
-    protected void executeRemove (final DSRequest request, final DSResponse response) {
+    protected void executeRemove(final DSRequest request, final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support removal.");
     }
 

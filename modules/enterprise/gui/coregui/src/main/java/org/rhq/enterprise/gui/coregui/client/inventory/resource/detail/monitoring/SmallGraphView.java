@@ -36,6 +36,7 @@ import ca.nanometrics.gflot.client.options.TickFormatter;
 
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
@@ -43,6 +44,7 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.WidgetCanvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import java.util.Date;
@@ -74,9 +76,12 @@ public class SmallGraphView extends VLayout {
         super();
         this.definition = def;
         this.data = data;
-        setHeight(250);
+//        setHeight(250);
+        setHeight100();
         setWidth100();
-        setPadding(10);
+//        setPadding(10);
+
+
     }
 
     public String getName() {
@@ -92,6 +97,13 @@ public class SmallGraphView extends VLayout {
         }
 
         drawGraph();
+    }
+
+
+    @Override
+    public void parentResized() {
+        super.parentResized();
+        onDraw();
     }
 
     private void drawGraph() {
@@ -117,7 +129,9 @@ public class SmallGraphView extends VLayout {
 
         // create the plot
         SimplePlot plot = new SimplePlot(model, plotOptions);
-        plot.setSize("100%","70%");
+        plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight() - 20));
+//                "80%","80%");
+
 
 
         // add hover listener
@@ -159,7 +173,8 @@ public class SmallGraphView extends VLayout {
         if (definition != null) {
             addMember(new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription()));
         }
-        addMember(plot);
+
+        addMember(new WidgetCanvas(plot));
     }
 
     private String getHover(PlotItem item) {
@@ -190,7 +205,9 @@ public class SmallGraphView extends VLayout {
 
         plotOptions.setXAxisOptions(new AxisOptions().setTicks(8). setMinimum(min).setMaximum(max).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double tickValue, Axis axis) {
-                return String.valueOf(new Date((long) tickValue));
+                com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat.getShortDateTimeFormat();
+                return dateFormat.format(new Date((long)tickValue));
+//                return String.valueOf(new Date((long) tickValue));
 //                return MONTH_NAMES[(int) (tickValue - 1)];
             }
         }));

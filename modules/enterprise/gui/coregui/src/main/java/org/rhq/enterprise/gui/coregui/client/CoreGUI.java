@@ -9,6 +9,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourcesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.places.Place;
+import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -44,6 +45,8 @@ public class CoreGUI implements EntryPoint {
     private static Subject sessionSubject;
     private static Subject fullSubject;
 
+    private static ErrorHandler errorHandler = new ErrorHandler();
+
     private static BreadCrumb breadCrumb;
 
     private static Canvas content;
@@ -60,6 +63,13 @@ public class CoreGUI implements EntryPoint {
                 }
             });
         }
+
+        GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+            public void onUncaughtException(Throwable e) {
+                SC.say("Globally uncaught exception... " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
 
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/j_security_check.do?j_username=rhqadmin&j_password=rhqadmin");
         try {
@@ -210,6 +220,9 @@ public class CoreGUI implements EntryPoint {
 
     // -------------------- Static application utilities ----------------------
 
+    public static ErrorHandler getErrorHandler() {
+        return errorHandler;
+    }
 
     public static Subject getSessionSubject() {
         return sessionSubject;

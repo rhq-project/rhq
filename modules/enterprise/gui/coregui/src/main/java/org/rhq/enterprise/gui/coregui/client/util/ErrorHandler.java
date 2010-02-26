@@ -16,24 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.gwt;
+package org.rhq.enterprise.gui.coregui.client.util;
 
+import com.smartgwt.client.util.SC;
 
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
-
-import com.google.gwt.user.client.rpc.RemoteService;
-import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
-
-
+import java.util.List;
 
 /**
  * @author Greg Hinkle
  */
-@RemoteServiceRelativePath("ResourceGroupGWTService")
-public interface ResourceGroupGWTService extends RemoteService {
+public class ErrorHandler {
 
-    PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria);
+
+    private List<String> errors;
+
+
+    public void handleError(String message, Throwable t) {
+
+        // TODO: This is just a placeholder implementation
+        SC.say(message);
+
+        t.printStackTrace();
+        errors.add(message);
+
+    }
 
 }

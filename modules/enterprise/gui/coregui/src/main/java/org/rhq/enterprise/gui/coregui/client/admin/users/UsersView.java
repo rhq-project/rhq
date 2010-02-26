@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
+import org.rhq.enterprise.gui.coregui.client.Presenter;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
+import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
@@ -44,10 +46,12 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import java.util.List;
+
 /**
  * @author Greg Hinkle
  */
-public class UsersView extends SectionStack {
+public class UsersView extends SectionStack implements Presenter {
 
 
 
@@ -153,5 +157,19 @@ public class UsersView extends SectionStack {
         addSection(gridSection);
         addSection(detailsSection);
 
+    }
+
+    public boolean fireDisplay(Place place, List<Place> children) {
+        if (!place.equals(getPlace())) {
+            return false;
+        }
+        if (children.size() > 0) {
+            int userId = Integer.parseInt(children.get(0).getId());
+        }
+        return true;
+    }
+
+    public Place getPlace() {
+        return new Place("users", "Users");
     }
 }

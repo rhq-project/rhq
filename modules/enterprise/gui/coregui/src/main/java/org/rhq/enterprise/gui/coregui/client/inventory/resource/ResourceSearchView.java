@@ -27,6 +27,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionAppearance;
@@ -108,34 +109,17 @@ public class ResourceSearchView extends VLayout {
             }
         });
 
-        /* TODO: Safe to remove this, we're now using links in the records
-        nameField.addRecordClickHandler(new RecordClickHandler() {
-            public void onRecordClick(final RecordClickEvent recordClickEvent) {
-                for (final ResourceSelectListener l : selectListeners) {
-                    // TODO GH: This doesn't work
-                    final int resourceId = recordClickEvent.getRecord().getAttributeAsInt("id");
-                    ResourceCriteria c = new ResourceCriteria();
-                    c.addFilterId(resourceId);
-                    ResourceGWTServiceAsync.Util.getInstance().findResourcesByCriteria(CoreGUI.getSessionSubject(), c, new AsyncCallback<PageList<Resource>>() {
-                        public void onFailure(Throwable caught) {
-                            System.out.println("Failed ehre");
-                        }
-
-                        public void onSuccess(PageList<Resource> result) {
-
-                            l.onResourceSelected(result.get(0));
-
-                        }
-                    });
-                }
-            }
-        });
-        */
 
         ListGridField descriptionField = new ListGridField("description", "Description");
+        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
+        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
+        ListGridField categoryField = new ListGridField("category", "Category", 60);
+
+
+
         ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
         availabilityField.setAlign(Alignment.CENTER);
-        listGrid.setFields(idField, nameField, descriptionField, availabilityField);
+        listGrid.setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
 
 
         gridHolder.addMember(listGrid);
@@ -156,6 +140,7 @@ public class ResourceSearchView extends VLayout {
                 );
             }
         });
+
 
 
 

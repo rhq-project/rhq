@@ -62,7 +62,9 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
         for (Canvas c : getMembers()) {
             c.destroy();
         }
-        buildGraphs();
+        if (resource != null) {
+            buildGraphs();
+        }
     }
 
 
@@ -113,8 +115,11 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
     }
 
     private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
+        SmallGraphView graph = new SmallGraphView(def, data);
+        graph.setWidth("80%");
+        graph.setHeight(250);
 
-        addMember(new SmallGraphView(def, data));
+        addMember(graph);
 
     }
 

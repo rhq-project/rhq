@@ -25,6 +25,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -62,15 +63,11 @@ public class UsersDataSource extends RPCDataSource {
         DataSourceTextField usernameField = new DataSourceTextField("username", "User Name");
         usernameField.setCanEdit(false);
 
-        //DataSourceTextField name = new DataSourceTextField("name", "Name");
-
         DataSourceTextField firstName = new DataSourceTextField("firstName", "First Name");
 
         DataSourceTextField lastName = new DataSourceTextField("lastName", "Last Name");
 
-
         DataSourceTextField email = new DataSourceTextField("email", "Email Address");
-
 
         DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone");
 
@@ -90,7 +87,7 @@ public class UsersDataSource extends RPCDataSource {
         final long start = System.currentTimeMillis();
         
         SubjectCriteria criteria = new SubjectCriteria();
-        criteria.setPageControl(getPageControl(request, criteria.getAlias()));
+        criteria.setPageControl(getPageControl(request));
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
@@ -109,7 +106,7 @@ public class UsersDataSource extends RPCDataSource {
                     ListGridRecord record = new ListGridRecord();
                     record.setAttribute("id",res.getId());
                     record.setAttribute("username",res.getName());
-                    record.setAttribute("name",res.getFirstName() + " " + res.getLastName());
+//                    record.setAttribute("name",res.getFirstName() + " " + res.getLastName());
                     record.setAttribute("firstName", res.getFirstName());
                     record.setAttribute("lastName", res.getLastName());
                     record.setAttribute("factive", res.getFactive());

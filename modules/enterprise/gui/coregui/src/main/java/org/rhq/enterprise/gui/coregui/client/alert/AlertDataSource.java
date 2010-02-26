@@ -77,10 +77,10 @@ public class AlertDataSource extends RPCDataSource {
         idDataField.setPrimaryKey(true);
         idDataField.setHidden(true);
 
-        DataSourceField resourceIdDataField = new DataSourceIntegerField("alertDefinition.resource.Id", "Resource Id");
+        DataSourceField resourceIdDataField = new DataSourceIntegerField("resourceId", "Resource Id");
         idDataField.setHidden(true);
 
-        DataSourceTextField nameField = new DataSourceTextField("alertDefinition.name", "Name", 100);
+        DataSourceTextField nameField = new DataSourceTextField("name", "Name", 100);
 
         DataSourceTextField conditionTextField = new DataSourceTextField("conditionText", "Condition Text");
         conditionTextField.setCanSortClientOnly(true);
@@ -92,7 +92,7 @@ public class AlertDataSource extends RPCDataSource {
         recoveryInfoField.setCanSortClientOnly(true);
 
         // TODO: Use DataSourceEnumField here?
-        DataSourceTextField priorityField = new DataSourceTextField("alertDefinition.priority", "Priority", 15);
+        DataSourceTextField priorityField = new DataSourceTextField("priority", "Priority", 15);
 
         DataSourceTextField ctimeField = new DataSourceTextField("ctime", "Creation Time");
 
@@ -159,7 +159,7 @@ public class AlertDataSource extends RPCDataSource {
         criteria.fetchConditionLogs(true);
         criteria.fetchRecoveryAlertDefinition(true);
 
-        criteria.setPageControl(getPageControl(request, criteria.getAlias()));
+        criteria.setPageControl(getPageControl(request));
 
         this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
             public void onFailure(Throwable caught) {
@@ -197,9 +197,9 @@ public class AlertDataSource extends RPCDataSource {
     private ListGridRecord createRecord(Alert alert) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", alert.getId());
-        record.setAttribute("alertDefinition.resource.id", alert.getAlertDefinition().getResource().getId());        
-        record.setAttribute("alertDefinition.name", alert.getAlertDefinition().getName());
-        record.setAttribute("alertDefinition.priority", alert.getAlertDefinition().getPriority().name());
+        record.setAttribute("resourceId", alert.getAlertDefinition().getResource().getId());        
+        record.setAttribute("name", alert.getAlertDefinition().getName());
+        record.setAttribute("priority", alert.getAlertDefinition().getPriority().name());
         record.setAttribute("ctime", DATE_TIME_FORMAT.format(new Date(alert.getCtime())));
 
         Set<AlertConditionLog> conditionLogs = alert.getConditionLogs();
@@ -229,11 +229,11 @@ public class AlertDataSource extends RPCDataSource {
         return record;
     }
 
-    @Override
+    /*@Override
     protected List<OrderingField> getDefaultOrderingFields(String alias) {
         List<OrderingField> orderingFields = new ArrayList<OrderingField>(2);
         orderingFields.add(new OrderingField(alias + ".alertDefinition.name", PageOrdering.ASC));
         orderingFields.add(new OrderingField(alias + ".ctime", PageOrdering.DESC));
         return orderingFields;
-    }
+    }*/
 }

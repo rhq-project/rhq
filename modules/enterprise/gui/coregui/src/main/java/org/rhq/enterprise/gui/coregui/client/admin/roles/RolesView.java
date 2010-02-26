@@ -18,10 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
+import org.rhq.enterprise.gui.coregui.client.Presenter;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
+import org.rhq.enterprise.gui.coregui.client.places.Place;
 
+import com.smartgwt.client.docs.CheckboxField;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
@@ -31,6 +35,7 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -41,17 +46,18 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import java.util.List;
+
 /**
  * @author Greg Hinkle
  */
-public class RolesView extends SectionStack {
+public class RolesView extends VLayout implements Presenter {
 
 
     @Override
     protected void onInit() {
         super.onInit();
 
-        setVisibilityMode(VisibilityMode.MULTIPLE);
         setWidth100();
         setHeight100();
 
@@ -59,7 +65,10 @@ public class RolesView extends SectionStack {
 
         VLayout gridHolder = new VLayout();
         gridHolder.setWidth100();
-        gridHolder.setHeight100();
+        gridHolder.setHeight("50%");
+        gridHolder.setShowResizeBar(true);
+        gridHolder.setResizeBarTarget("next");
+
 
         final ListGrid listGrid = new ListGrid();
         listGrid.setWidth100();
@@ -68,24 +77,20 @@ public class RolesView extends SectionStack {
         listGrid.setAutoFetchData(true);
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
-        listGrid.setSelectionType(SelectionStyle.SIMPLE);
-        listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
+//        listGrid.setSelectionType(SelectionStyle.SIMPLE);
+//        listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
         listGrid.setShowFilterEditor(true);
+//        listGrid.setUseAllDataSourceFields(true);
 
 
-        listGrid.setUseAllDataSourceFields(true);
+        ListGridField idField = new ListGridField("id", "Id", 55);
+        idField.setType(ListGridFieldType.INTEGER);
 
-//        ListGridField idField = new ListGridField("id", "Id", 55);
-//        idField.setType(ListGridFieldType.INTEGER);
-//
-//        ListGridField nameField = new ListGridField("username", "Name", 100);
-//
-//
-//        ListGridField descriptionField = new ListGridField("name", "Name", 150);
-//        ListGridField emailField = new ListGridField("email", "Email Address", 100);
-//
-//        listGrid.setFields(idField, nameField, descriptionField, emailField);
+
+        ListGridField nameField = new ListGridField("username", "Name");
+
+        listGrid.setFields(idField, nameField);
 
 
         gridHolder.addMember(listGrid);
@@ -127,31 +132,36 @@ public class RolesView extends SectionStack {
         });
 
 
-        SectionStackSection topSection = new SectionStackSection("Roles");
-        topSection.setExpanded(true);
-        topSection.setItems(gridHolder);
-
-        addSection(topSection);
-
+        addMember(gridHolder);
 
         final RoleEditView roleEditor = new RoleEditView();
-
-        final SectionStackSection detailSection = new SectionStackSection("Edit Role");
-        detailSection.setItems(roleEditor);
-        addSection(detailSection);
+        roleEditor.setOverflow(Overflow.AUTO);
+        addMember(roleEditor);
 
 
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
-                    expandSection(1);
                     roleEditor.editRecord(selectionEvent.getRecord());
-                } else
-                    collapseSection(1);
+                } else {
                     roleEditor.editNone();
+                }
             }
         });
 
 
+    }
+
+    public boolean fireDisplay(Place place, List<Place> children) {
+        if (!getPlace().equals(place)) {
+            return false;
+        }
+
+
+        return true;
+    }
+
+    public Place getPlace() {
+        return new Place("Roles", "Manage Roles");
     }
 }

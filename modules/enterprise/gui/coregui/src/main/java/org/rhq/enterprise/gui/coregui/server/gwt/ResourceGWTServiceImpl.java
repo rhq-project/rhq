@@ -120,17 +120,9 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                 resource.setAgent(null);
             }
 
-
-            HibernateDetachUtility.nullOutUninitializedFields(result,
-                    HibernateDetachUtility.SerializationType.SERIALIZATION);
-
-            long start = System.currentTimeMillis();
-
             ObjectFilter.filterFields(result, importantFieldsSet);
 
-            System.out.println("Took: " + (System.currentTimeMillis() - start) + "ms");
-
-            return result;
+            return SerialUtility.prepare(result, "ResourceService.findResourceByCriteria");
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             throw new RuntimeException(e);

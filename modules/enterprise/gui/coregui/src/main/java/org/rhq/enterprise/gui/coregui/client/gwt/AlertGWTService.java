@@ -37,4 +37,6 @@ public interface AlertGWTService extends RemoteService {
      * @return all alerts that match the specified criteria
      */
     PageList<Alert> findAlertsByCriteria(AlertCriteria criteria);
+
+    void deleteAlerts(int resourceId, Integer[] alertIds);
 }

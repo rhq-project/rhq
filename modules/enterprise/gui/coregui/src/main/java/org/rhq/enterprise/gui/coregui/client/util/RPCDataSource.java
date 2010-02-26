@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -26,6 +27,8 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+
+import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -48,32 +51,23 @@ public abstract class RPCDataSource extends DataSource {
 
     @Override
     protected Object transformRequest(DSRequest request) {
-        String requestId = request.getRequestId();
-        DSResponse response = new DSResponse();
-        response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Asume success
-        response.setStatus(0);
         switch (request.getOperationType()) {
-            case ADD:
-                //executeAdd(lstRec, true);
-                break;
             case FETCH:
-                executeFetch(requestId, request, response);
+                DSResponse response = createResponse(request);
+                executeFetch(request, response);
                 break;
-            case REMOVE:
-                //executeRemove(lstRec);
-                break;
+            case ADD:
             case UPDATE:
-                //executeAdd(lstRec, false);
+            case REMOVE:
+                super.transformRequest(request);
                 break;
-
             default:
+                super.transformRequest(request);
                 break;
         }
 
         return request.getData();
     }
-
 
     /**
      * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
@@ -88,7 +82,14 @@ public abstract class RPCDataSource extends DataSource {
 
         // Initialize sorting.
         String sortBy = request.getAttribute("sortBy");
-        if (sortBy != null) {
+        if (sortBy == null) {
+            List<OrderingField> orderingFields = getDefaultOrderingFields(alias);
+            if (orderingFields != null) {
+                for (OrderingField orderingField : orderingFields) {
+                    pageControl.addDefaultOrderingField(orderingField.getField(), orderingField.getOrdering());
+                }
+            }
+        } else {
             String[] sorts = sortBy.split(",");
             for (String sort : sorts) {
                 PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
@@ -101,6 +102,31 @@ public abstract class RPCDataSource extends DataSource {
         return pageControl;
     }
 
-    public abstract void executeFetch(final String requestId, final DSRequest request, final DSResponse response);
+    protected List<OrderingField> getDefaultOrderingFields(String alias) {
+        return null;
+    }
 
+    protected abstract void executeFetch(final DSRequest request, final DSResponse response);
+
+    /**
+     * Executed on <code>REMOVE</code> operation. <code>processResponse (requestId, response)</code>
+     * should be called when operation completes (either successful or failure).
+     *
+     * @param request <code>DSRequest</code> being processed. <code>request.getData ()</code>
+     *      contains record should be removed.
+     * @param response <code>DSResponse</code>. <code>setData (list)</code> should be called on
+     *      successful execution of this method. Array should contain single element representing
+     *      removed row. <code>setStatus (&lt;0)</code> should be called on failure.
+     */
+    protected void executeRemove (final DSRequest request, final DSResponse response) {
+        throw new UnsupportedOperationException("This dataSource does not support removal.");
+    }
+
+    private DSResponse createResponse(DSRequest request) {
+        DSResponse response = new DSResponse();
+        response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
+        // Assume success as the default.
+        response.setStatus(0);
+        return response;
+    }
 }

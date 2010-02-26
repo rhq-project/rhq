@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,11 +22,9 @@
  */
 package org.rhq.core.domain.criteria;
 
+import org.rhq.core.client.GwtClientUtility;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageControl;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -43,7 +41,6 @@ import java.util.Map;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Criteria implements Serializable {
-
     public enum Type {
         FILTER, FETCH, SORT;
     }
@@ -63,6 +60,7 @@ public abstract class Criteria implements Serializable {
     protected PageControl pageControlOverrides;
 
     private List<String> orderingFieldNames;
+    private String alias;
 
     //added no args constructor for bean and JAXB requirement
     @SuppressWarnings("unused")
@@ -83,7 +81,6 @@ public abstract class Criteria implements Serializable {
     }
 
     public abstract Class getPersistentClass();
-
 
 
     public String getJPQLFilterOverride(String fieldName) {
@@ -221,8 +218,11 @@ public abstract class Criteria implements Serializable {
     }
 
     public String getAlias() {
-        String className = getPersistentClass().getName();
-        String simpleClassName = className.substring(className.lastIndexOf(".") + 1);
-        return simpleClassName.toLowerCase();
+        if (this.alias == null) {
+            // Base alias on persistent class's name: org.rhq.core.domain.ResourceType -> "resourcetype"
+            String classSimpleName = GwtClientUtility.getSimpleName(getPersistentClass());
+            this.alias = classSimpleName.toLowerCase();
+        }
+        return this.alias;
     }
 }

@@ -86,8 +86,7 @@ public class UsersDataSource extends RPCDataSource {
     }
 
 
-
-    public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
+    public void executeFetch(final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
         
         SubjectCriteria criteria = new SubjectCriteria();
@@ -98,7 +97,7 @@ public class UsersDataSource extends RPCDataSource {
                 Window.alert("Failed to load " + caught.getMessage());
                 System.err.println("Failed to fetch Resource Data");
                 response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(requestId, response);
+                processResponse(request.getRequestId(), response);
             }
 
             public void onSuccess(PageList<Subject> result) {
@@ -122,7 +121,7 @@ public class UsersDataSource extends RPCDataSource {
 
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize());	// for paging to work we have to specify size of full result set
-                processResponse(requestId, response);
+                processResponse(request.getRequestId(), response);
             }
         });
     }

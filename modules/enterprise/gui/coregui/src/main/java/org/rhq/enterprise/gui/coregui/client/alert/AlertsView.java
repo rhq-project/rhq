@@ -86,8 +86,10 @@ public class AlertsView extends SectionStack {
             public void onClick(ClickEvent clickEvent) {
                 SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " alerts?",
                         new BooleanCallback() {
-                            public void execute(Boolean aBoolean) {
-
+                            public void execute(Boolean confirmed) {
+                                if (confirmed) {
+                                    deleteSelectedAlerts(dataSource, listGrid);
+                                }
                             }
                         }
                 );
@@ -135,5 +137,23 @@ public class AlertsView extends SectionStack {
         });
 
 
+    }
+
+    private void deleteSelectedAlerts(AlertDataSource dataSource, ListGrid listGrid) {
+        //listGrid.removeSelectedData();
+
+        /*DSRequest request = new DSRequest();
+        request.setAttribute("data", listGrid.getSelection());
+        DSResponse response = new DSResponse();
+        dataSource.executeRemove(request, response);*/
+
+        dataSource.deleteAlerts(listGrid, this);
+        markForRedraw();
+    }
+
+    void reportSelectedAlertsDeleted(ListGrid listGrid) {
+        listGrid.removeSelectedData();
+        System.out.println("Alerts deleted successfully.");
+        listGrid.markForRedraw();
     }
 }

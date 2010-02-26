@@ -33,7 +33,11 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
 
     public PageList<Alert> findAlertsByCriteria(AlertCriteria criteria) {
-        return SerialUtility.prepare(alertManager.findAlertsByCriteria(getSessionSubject(), criteria),
+        return SerialUtility.prepare(this.alertManager.findAlertsByCriteria(getSessionSubject(), criteria),
                 "AlertService.findAlertsByCriteria");
+    }
+
+    public void deleteAlerts(int resourceId, Integer[] alertIds) {        
+        this.alertManager.deleteAlerts(getSessionSubject(), resourceId, alertIds);
     }
 }

@@ -22,10 +22,16 @@
  */
 package org.rhq.core.client;
 
-import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.user.client.ui.*;
+/**
+ * @author Ian Springer
+ */
+public class GwtClientUtility {
+    public static String getSimpleName(Class clazz) {
+        String className = clazz.getName();
+        // TODO: Cache the simple names in a static Map<Class, String>.
+        return className.substring(className.lastIndexOf(".") + 1);
+    }
 
-public class RHQDomain implements EntryPoint {
-    public void onModuleLoad() {
+    private GwtClientUtility() {
     }
 }

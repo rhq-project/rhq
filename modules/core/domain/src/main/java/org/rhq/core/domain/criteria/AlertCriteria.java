@@ -59,6 +59,7 @@ public class AlertCriteria extends Criteria {
     private boolean fetchAlertDefinition;
     private boolean fetchConditionLogs;
     private boolean fetchNotificationLogs;
+    private boolean fetchRecoveryAlertDefinition;
 
     private PageOrdering sortName; // requires overrides
     private PageOrdering sortCtime;
@@ -157,6 +158,10 @@ public class AlertCriteria extends Criteria {
         this.fetchNotificationLogs = fetchNotificationLogs;
     }
 
+    public void fetchRecoveryAlertDefinition(boolean fetchRecoveryAlertDefinition) {
+        this.fetchRecoveryAlertDefinition = fetchRecoveryAlertDefinition;
+    }
+
     public void addSortName(PageOrdering sortName) {
         addSortField("name");
         this.sortName = sortName;
@@ -170,5 +175,5 @@ public class AlertCriteria extends Criteria {
     public void addSortPriority(PageOrdering sortPriority) {
         addSortField("priority");
         this.sortPriority = sortPriority;
-    }
+    }    
 }

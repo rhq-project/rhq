@@ -46,7 +46,6 @@ public class DemoCanvas extends Canvas {
         setWidth100();
         setHeight100();
         
-
         final TabSet topTabSet = new TabSet();
         topTabSet.setTabBarPosition(Side.TOP);
         topTabSet.setWidth100();//(1200);
@@ -54,19 +53,17 @@ public class DemoCanvas extends Canvas {
 
         //        topTabSet.setTop(50);
 
-
         Tab tableTab = new Tab("Resource Search Table");
         Tab treeTab = new Tab("Resource Tree");
         final Tab configTab = new Tab("Configuration Editor");
         Tab alertHistoryTab = new Tab("Alert History");
 
-
         // Agent:  resource (10005) type (10060)
         // Raw: 10003 / 10023
         // both:  10002 / 10022
 
-        configTab.setPane(new ConfigurationEditor(10005, 10060, ConfigurationEditor.ConfigType.plugin));
-        treeTab.setPane(new ResourceTreeView(new Resource(10001)));
+        //configTab.setPane(new ConfigurationEditor(10005, 10060, ConfigurationEditor.ConfigType.plugin));
+        //treeTab.setPane(new ResourceTreeView(new Resource(10001)));
         tableTab.setPane(new ResourceSearchView());
         alertHistoryTab.setPane(new AlertsView());
 
@@ -74,7 +71,7 @@ public class DemoCanvas extends Canvas {
         topTabSet.addTab(tableTab);
         topTabSet.addTab(treeTab);
         topTabSet.addTab(alertHistoryTab);
-
+        //topTabSet.selectTab(alertHistoryTab);
 
         final Menu configSelectMenu = new Menu();
         configSelectMenu.addItem(new MenuItem("Agent"));
@@ -107,9 +104,7 @@ public class DemoCanvas extends Canvas {
             }
         });
 
-
         topTabSet.setTabBarControls(TabBarControls.TAB_SCROLLER, TabBarControls.TAB_PICKER, new MenuButton("Config Resource", configSelectMenu));
-
 
         addChild(topTabSet);
     }

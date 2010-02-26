@@ -61,7 +61,6 @@ public class CoreGUI implements EntryPoint {
             });
         }
 
-
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/j_security_check.do?j_username=rhqadmin&j_password=rhqadmin");
         try {
             b.setCallback(new RequestCallback() {
@@ -78,13 +77,12 @@ public class CoreGUI implements EntryPoint {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 
-
         SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
 
         subjectService.login("rhqadmin", "rhqadmin", new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
-                System.out.println("failed to login");
-                Label loginFailed = new Label("Could not login");
+                System.out.println("Failed to login - cause: " + caught);
+                Label loginFailed = new Label("Failed to login - cause: " + caught);
                 loginFailed.draw();
             }
 

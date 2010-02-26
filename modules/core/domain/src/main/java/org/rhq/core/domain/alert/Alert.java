@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -246,10 +247,12 @@ public class Alert implements Serializable {
     @Column(name = "RECOVERY_ID")
     private Integer recoveryId;
 
+    @JoinColumn(name = "RECOVERY_ID", referencedColumnName = "ID", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private AlertDefinition recoveryAlertDefinition;
+
     @Column(name = "WILL_RECOVER", nullable = false)
     private boolean willRecover;
-
-
 
 
     @Column(name ="ACK_TIME")
@@ -366,6 +369,10 @@ public class Alert implements Serializable {
                 "An alert definition can either be a recovery definition or a definition to-be-recovered, but not both.");
         }
         this.recoveryId = actOnTriggerId;
+    }
+
+    public AlertDefinition getRecoveryAlertDefinition() {
+        return this.recoveryAlertDefinition;
     }
 
     @Override

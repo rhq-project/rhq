@@ -34,7 +34,7 @@ import ca.nanometrics.gflot.client.options.PlotOptions;
 import ca.nanometrics.gflot.client.options.PointsSeriesOptions;
 import ca.nanometrics.gflot.client.options.TickFormatter;
 
-import org.rhq.core.domain.measurement.MeasurementConverter;
+import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
@@ -52,7 +52,6 @@ import java.util.List;
  * @author Greg Hinkle
  */
 public class SmallGraphView extends VLayout {
-
 
     private static final String INSTRUCTIONS = "Point your mouse to a data point on the chart";
 
@@ -166,7 +165,7 @@ public class SmallGraphView extends VLayout {
     private String getHover(PlotItem item) {
         if (definition != null) {
             com.google.gwt.i18n.client.DateTimeFormat df = DateTimeFormat.getMediumDateTimeFormat();            
-            return definition.getDisplayName() + ": " + MeasurementConverter.format(item.getDataPoint().getY(),definition.getUnits(), true)
+            return definition.getDisplayName() + ": " + MeasurementConverterClient.format(item.getDataPoint().getY(),definition.getUnits(), true)
                     + "<br/>" + df.format(new Date((long) item.getDataPoint().getX()));
         } else {
             return "x: " + item.getDataPoint().getX() + ", y: " + item.getDataPoint().getY();
@@ -182,7 +181,7 @@ public class SmallGraphView extends VLayout {
 
         plotOptions.setYAxisOptions(new AxisOptions().setTicks(5).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double v, Axis axis) {
-                return MeasurementConverter.format(v, definition.getUnits(), true);
+                return MeasurementConverterClient.format(v, definition.getUnits(), true);
             }
         }));
 

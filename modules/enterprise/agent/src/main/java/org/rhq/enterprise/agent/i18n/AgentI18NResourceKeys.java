@@ -498,6 +498,15 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Neither server auto-detection nor polling is enabled - the client will be allowed to start sending commands immediately, but when the server is offline, be prepared for alot of errors to be logged")
     String NO_AUTO_DETECT = "AgentMain.no-auto-detect";
 
+    @I18NMessage("Native system info is enabled, but the system info API is not accessible on this platform " +
+                 "(sigar.jar not found in classpath or SIGAR shared library not found in shared library path). " +
+                 "Enable DEBUG logging for more details.")
+    String NATIVE_SYSINFO_UNAVAILABLE = "AgentMain.native-sysinfo-unavailable";
+
+    @I18NMessage("Native system info is enabled, but the system info API is not accessible on this platform " +
+                 "(sigar.jar not found in classpath or SIGAR shared library not found in shared library path).")                 
+    String NATIVE_SYSINFO_UNAVAILABLE_DEBUG = "AgentMain.native-sysinfo-unavailable-debug";
+
     @I18NMessage("The agent encountered an error during startup and must abort")
     String STARTUP_ERROR = "AgentMain.startup-error";
 

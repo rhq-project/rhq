@@ -69,6 +69,8 @@
 
       </plugin-configuration>
 
+      <process-scan name="java" query="process|basename|match=^java.*"/>
+
       <help>
          <![CDATA[
          <p>In order to monitor your Java applications via JMX, you need to expose their MBeans to remote JMX clients. 

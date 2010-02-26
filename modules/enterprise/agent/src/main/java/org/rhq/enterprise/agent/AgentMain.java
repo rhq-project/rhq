@@ -359,6 +359,11 @@ public class AgentMain {
     private final AgentRestartCounter m_agentRestartCounter = new AgentRestartCounter();
 
     /**
+     * The -t command line option was specified.
+     */
+    private boolean m_disableNativeSystem;
+
+    /**
      * The main method that starts the whole thing.
      *
      * @param args
@@ -2049,9 +2054,20 @@ public class AgentMain {
      * disabled no matter what this method decides to do.
      */
     private void prepareNativeSystem() {
-        if (m_configuration.isNativeSystemDisabled() && !SystemInfoFactory.isNativeSystemInfoDisabled()) {
-            SystemInfoFactory.disableNativeSystemInfo();
-            LOG.info(AgentI18NResourceKeys.NATIVE_SYSTEM_DISABLED);
+        if (m_disableNativeSystem || m_configuration.isNativeSystemDisabled()) {
+            if (!SystemInfoFactory.isNativeSystemInfoDisabled()) {
+                SystemInfoFactory.disableNativeSystemInfo();
+                LOG.info(AgentI18NResourceKeys.NATIVE_SYSTEM_DISABLED);
+            }
+        } else {
+            if (!SystemInfoFactory.isNativeSystemInfoAvailable()) {
+                Throwable t = SystemInfoFactory.getNativeLibraryLoadThrowable();
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(AgentI18NResourceKeys.NATIVE_SYSINFO_UNAVAILABLE_DEBUG, t);
+                } else {
+                    LOG.warn(AgentI18NResourceKeys.NATIVE_SYSINFO_UNAVAILABLE);
+                }
+            }                        
         }
 
         return;
@@ -2807,8 +2823,7 @@ public class AgentMain {
             }
 
             case 't': {
-                SystemInfoFactory.disableNativeSystemInfo();
-                LOG.info(AgentI18NResourceKeys.NATIVE_SYSTEM_DISABLED);
+                m_disableNativeSystem = true;
             }
             }
         }

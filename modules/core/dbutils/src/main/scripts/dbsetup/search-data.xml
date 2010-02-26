@@ -10,7 +10,7 @@
               DESCRIPTION="All downed machines across the entire enterprise" 
               PATTERN="down platform" 
               LAST_COMPUTE_TIME="0"
-              SUBJECT="1"
+              SUBJECT_ID="1"
               GLOBAL="TRUE" />
         <data ID="2" 
               CONTEXT="Resource" 
@@ -18,7 +18,7 @@
               DESCRIPTION="All downed servers across the entire enterprise" 
               PATTERN="down server" 
               LAST_COMPUTE_TIME="0"
-              SUBJECT="1"
+              SUBJECT_ID="1"
               GLOBAL="TRUE" />
     </table>
 

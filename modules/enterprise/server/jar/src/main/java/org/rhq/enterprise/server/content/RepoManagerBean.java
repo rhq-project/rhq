@@ -773,13 +773,9 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<PackageVersion> packageVersions = query.getResultList();
-
-        return new PageList<PackageVersion>(packageVersions, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<PackageVersion> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        
+        return queryRunner.execute();
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

@@ -41,6 +41,7 @@ import java.util.Map;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Criteria implements Serializable {
+
     public enum Type {
         FILTER, FETCH, SORT;
     }
@@ -82,6 +83,17 @@ public abstract class Criteria implements Serializable {
 
     public abstract Class getPersistentClass();
 
+    public Integer getPageNumber() {
+        return pageNumber;
+    }
+
+    public Integer getPageSize() {
+        return pageSize;
+    }
+
+    public List<String> getOrderingFieldNames() {
+        return orderingFieldNames;
+    }
 
     public String getJPQLFilterOverride(String fieldName) {
         return filterOverrides.get(fieldName);
@@ -183,39 +195,8 @@ public abstract class Criteria implements Serializable {
         this.requiredPermissions = Arrays.asList(requiredPermissions);
     }
 
-    public PageControl getPageControl() {
-        PageControl pc = null;
 
-        if (pageControlOverrides != null) {
-            pc = pageControlOverrides;
-        } else {
-            if (pageNumber == null || pageSize == null) {
-                pc = PageControl.getUnlimitedInstance();
-            } else {
-                pc = new PageControl(pageNumber, pageSize);
-            }
-            for (String fieldName : orderingFieldNames) {
-                /* TODO: GWT
-                for (Field sortField : getFields(Type.SORT)) {
-                    if (sortField.getName().equals(fieldName) == false) {
-                        continue;
-                    }
-                    Object sortFieldValue = null;
-                    try {
-                        sortFieldValue = sortField.get(this);
-                    } catch (IllegalAccessException iae) {
-                        throw new RuntimeException(iae);
-                    }
-                    if (sortFieldValue != null) {
-                        PageOrdering pageOrdering = (PageOrdering) sortFieldValue;
-                        pc.addDefaultOrderingField(getCleansedFieldName(sortField, 4), pageOrdering);
-                    }
-                }
-                */
-            }
-        }
-        return pc;
-    }
+
 
     public String getAlias() {
         if (this.alias == null) {

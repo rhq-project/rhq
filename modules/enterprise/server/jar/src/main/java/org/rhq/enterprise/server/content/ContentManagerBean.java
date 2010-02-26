@@ -95,6 +95,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * EJB that handles content subsystem interaction with resources, including content discovery reports and create/delete
@@ -1435,13 +1436,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 "resource", subject.getId());
         }
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
+        CriteriaQueryRunner<InstalledPackage> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
 
-        long count = (Long) countQuery.getSingleResult();
-        List<InstalledPackage> results = query.getResultList();
-
-        return new PageList<InstalledPackage>(results, (int) count, criteria.getPageControl());
+        return queryRunner.execute();
     }
 
     @SuppressWarnings("unchecked")
@@ -1461,13 +1458,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
+        CriteriaQueryRunner<PackageVersion> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
 
-        long count = (Long) countQuery.getSingleResult();
-        List<PackageVersion> results = query.getResultList();
-
-        return new PageList<PackageVersion>(results, (int) count, criteria.getPageControl());
+        return queryRunner.execute();
     }
 
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {

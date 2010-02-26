@@ -252,7 +252,7 @@ public final class CriteriaQueryGenerator {
             PageControl pc = criteria.getPageControlOverrides();
             if (pc == null) {
                 overridden = false;
-                pc = criteria.getPageControl();
+                pc = getPageControl(criteria);
             }
 
             boolean first = true;
@@ -264,19 +264,17 @@ public final class CriteriaQueryGenerator {
                     results.append(", ");
                 }
 
-                if (overridden) {
-                    String fieldName = orderingField.getField();
-                    PageOrdering ordering = orderingField.getOrdering();
-
-                    results.append(fieldName).append(' ').append(ordering);
+                String fieldName = orderingField.getField();
+                String override = criteria.getJPQLSortOverride(fieldName);
+                if (override == null) {
+                    override = alias + "." + fieldName;
                 } else {
-                    String fieldName = orderingField.getField();
-                    String override = criteria.getJPQLSortOverride(fieldName);
-                    String fragment = override != null ? override : fieldName;
-
-                    results.append(alias).append('.').append(fragment);
-                    results.append(' ').append(orderingField.getOrdering());
+                    override = alias + "." + override;
                 }
+
+                PageOrdering ordering = orderingField.getOrdering();
+
+                results.append(override).append(' ').append(ordering);
             }
         }
         results.append(NL);
@@ -309,7 +307,7 @@ public final class CriteriaQueryGenerator {
     }
 
 
-      private List<Field> getFields(Criteria criteria, Criteria.Type fieldType) {
+      private static List<Field> getFields(Criteria criteria, Criteria.Type fieldType) {
         String prefix = fieldType.name().toLowerCase();
         List<Field> results = new ArrayList<Field>();
 
@@ -327,7 +325,7 @@ public final class CriteriaQueryGenerator {
         return results;
     }
 
-    public String getCleansedFieldName(Field field, int leadingCharsToStrip) {
+    public static String getCleansedFieldName(Field field, int leadingCharsToStrip) {
         String fieldNameFragment = field.getName().substring(leadingCharsToStrip);
         String fieldName = Character.toLowerCase(fieldNameFragment.charAt(0)) + fieldNameFragment.substring(1);
         return fieldName;
@@ -402,7 +400,7 @@ public final class CriteriaQueryGenerator {
         String queryString = getQueryString(false);
         Query query = em.createQuery(queryString);
         setBindValues(query, false);
-        PersistenceUtility.setDataPage(query, criteria.getPageControl());
+        PersistenceUtility.setDataPage(query, getPageControl(criteria));
         return query;
     }
 
@@ -513,5 +511,38 @@ public final class CriteriaQueryGenerator {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(resourceCriteria);
         generator.getQueryString(false);
         generator.getQueryString(true);
+    }
+
+
+    public static PageControl getPageControl(Criteria criteria) {
+        PageControl pc = null;
+
+        if (criteria.getPageControlOverrides() != null) {
+            pc = criteria.getPageControlOverrides();
+        } else {
+            if (criteria.getPageNumber() == null || criteria.getPageSize() == null) {
+                pc = PageControl.getUnlimitedInstance();
+            } else {
+                pc = new PageControl(criteria.getPageNumber(), criteria.getPageSize());
+            }
+            for (String fieldName : criteria.getOrderingFieldNames()) {
+                for (Field sortField : getFields(criteria, Criteria.Type.SORT)) {
+                    if (sortField.getName().equals(fieldName) == false) {
+                        continue;
+                    }
+                    Object sortFieldValue = null;
+                    try {
+                        sortFieldValue = sortField.get(criteria);
+                    } catch (IllegalAccessException iae) {
+                        throw new RuntimeException(iae);
+                    }
+                    if (sortFieldValue != null) {
+                        PageOrdering pageOrdering = (PageOrdering) sortFieldValue;
+                        pc.addDefaultOrderingField(getCleansedFieldName(sortField, 4), pageOrdering);
+                    }
+                }
+            }
+        }
+        return pc;
     }
 }

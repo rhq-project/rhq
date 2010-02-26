@@ -86,6 +86,7 @@ public class AlertCriteria extends Criteria {
         filterOverrides.put("groupAlertDefinitionIds", "alertDefinition.groupAlertDefinition.id IN ( ? )");
 
         sortOverrides.put("name", "alertDefinition.name");
+        sortOverrides.put("resourceId", "alertDefinition.resource.id");
         sortOverrides.put("priority", "alertDefinition.priority");
     }
 

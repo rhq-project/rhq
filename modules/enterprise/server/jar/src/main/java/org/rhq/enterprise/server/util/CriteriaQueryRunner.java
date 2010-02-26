@@ -57,7 +57,7 @@ public class CriteriaQueryRunner<T> {
             initAllPersistentBags(results);
         }
 
-        return new PageList<T>(results, (int) count, criteria.getPageControl());
+        return new PageList<T>(results, (int) count, CriteriaQueryGenerator.getPageControl(criteria));
     }
 
     private void initAllPersistentBags(List<T> entities) {

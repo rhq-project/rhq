@@ -29,7 +29,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,6 +49,7 @@ public class SystemInfoFactory {
     private static final String NATIVE_LIBRARY_CLASS_NAME = "org.hyperic.sigar.Sigar";
 
     private static boolean nativeLibraryLoadable;
+    private static Throwable nativeLibraryLoadThrowable;
     private static boolean disabled;
     private static boolean initialized = false;
 
@@ -78,10 +78,11 @@ public class SystemInfoFactory {
 
             nativeLibraryLoadable = true;
         } catch (Throwable t) {
-            nativeLibraryLoadable = false; // can't load the native libs if we don't even have the JNI classes
-            LOG
-                .warn("System info API not accessible on this platform (native shared library not found in java.library.path).");
-            LOG.trace("Stack trace...", t);
+            // We don't have the JNI classes (sigar.jar) and/or the native shared library (e.g. libsigar-amd64-linux.so).
+            // This might be expected (e.g. the admin console WAR (Embedded Jopr) does not include SIGAR), so don't log
+            // anything, but store the Throwable, so callers can log the cause when appropriate.
+            nativeLibraryLoadable = false;
+            nativeLibraryLoadThrowable = t;
         }
 
         disabled = !nativeLibraryLoadable; // automatically disable native system info iff the native library is not loadable
@@ -167,6 +168,17 @@ public class SystemInfoFactory {
      */
     public static boolean isNativeSystemInfoAvailable() {
         return nativeLibraryLoadable;
+    }
+
+    /**
+     * Returns a Throwable describing why the native library failed to initialize, or null if the native library
+     * initialized successfully
+     *
+     * @return a Throwable describing why the native library failed to initialize, or null if the native library
+     *         initialized successfully
+     */
+    public static Throwable getNativeLibraryLoadThrowable() {
+        return nativeLibraryLoadThrowable;
     }
 
     /**
@@ -308,7 +320,7 @@ public class SystemInfoFactory {
     private static String findNativeLibrariesRootDirectory() throws Exception {
         String rootDir = null;
         File jniLocation = null;
-        URL jarLocation = null;
+        URL jarLocation;
 
         if (isNativeSystemInfoAvailable()) {
             rootDir = System.getProperty("rhq.native-libraries-root-directory");

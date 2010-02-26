@@ -3231,9 +3231,7 @@
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_SAVED_SEARCH" column="GLOBAL" columnType="BOOLEAN" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" nullable="FALSE" />
-            </schemaSpec>
-            
-            <schemaSpec version="2.82.1">
+
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Inserting global default saved search 'Downed Platforms'">
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)

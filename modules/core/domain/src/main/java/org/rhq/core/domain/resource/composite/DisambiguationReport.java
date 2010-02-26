@@ -64,6 +64,6 @@ public class DisambiguationReport<T> implements Serializable {
     }
     
     public String toString() {
-        return "DisambiguationReport(type=" + resourceTypeName + ", plugin=" + resourceTypePluginName + ", parents=" + parents + ")";
+        return "DisambiguationReport(type=" + resourceTypeName + ", plugin=" + resourceTypePluginName + ", parents=" + parents + ", original=" + original + ")";
     }
 }

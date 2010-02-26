@@ -62,6 +62,7 @@ public class RHQLTest extends AssertJUnit {
         @Override
         public TestResult call() throws Exception {
             try {
+                System.out.println(line);
                 ANTLRStringStream input = new ANTLRStringStream(line); // Create an input character stream from standard in
                 RHQLLexer lexer = new RHQLLexer(input); // Create an echoLexer that feeds from that stream
                 CommonTokenStream tokens = new CommonTokenStream(lexer); // Create a stream of tokens fed by the lexer

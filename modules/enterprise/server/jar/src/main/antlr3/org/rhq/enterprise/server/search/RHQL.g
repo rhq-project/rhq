@@ -27,11 +27,43 @@
  * @author Joseph Marques
  */
 grammar RHQL;
-
 options {
     language=Java;
     backtrack=true;
     memoize=true;
+    output=AST;
+    ASTLabelType=CommonTree;
+}
+
+/*
+ * Imaginary nodes serve to fully abstract the parse tree from the AST.  This
+ * allows us, for example, to support the conjunctive ('and') operator between
+ * conditional expressions, but gives us the flexibility to modify the lexical
+ * element that represents that operation.  In the future, we might want to
+ * support '&&' instead of 'and', or even support them both.  The inclusion of
+ * imaginary tokens creates a more stable AST that downstream grammars can use
+ * without fear that every change to the syntax will break their tree parser.
+ */
+tokens {
+    OR;
+    AND;
+
+    CONTEXT;
+    LINEAGE;
+    PATH;
+    PARAM;
+    IDENT;
+    VALUE;
+    
+    OP_EQUALS;
+    OP_EQUALS_STRICT;
+    OP_NULL;
+    OP_IN;
+    
+    OP_NOT_EQUALS;
+    OP_NOT_EQUALS_STRICT;
+    OP_NOT_NULL;
+    OP_NOT_IN;
 }
 
 @header {
@@ -41,26 +73,29 @@ options {
     package org.rhq.enterprise.server.search;
 }
 
+
 /* 
  * parser rules 
  */
  
 searchExpression
-    :   conditionalExpression
+    :   conditionalExpression { System.out.println($conditionalExpression.tree.toStringTree()); }
     ;
 
 conditionalExpression
-    :   conditionalFactor ( 'or' conditionalFactor )*
-    ;
+    :   conds+=conditionalFactor ( WS* ( 'or' ) WS* conds+=conditionalFactor )*     -> { $conds.size() == 1 }? ^($conds)
+                                                                                    -> ^(OR conditionalFactor+)
+    ; // use rewrite predicates to eliminate superfluous 'or' node if only one child
 
 conditionalFactor 
-    :   conditionalPrimary ( ( 'and' )? conditionalPrimary )*
-    ;
+    :   conds+=conditionalPrimary ( WS* ( 'and' WS* )? conds+=conditionalPrimary )* -> { $conds.size() == 1 }? ^($conds)
+                                                                                    -> ^(AND conditionalPrimary+)
+    ; // use rewrite predicates to eliminate superfluous 'and' node if only one child
 
 conditionalPrimary
-    :   simpleConditionalExpression
-    |   '(' conditionalExpression ')'
-    ;
+    :   WS* simpleConditionalExpression WS*                                         -> simpleConditionalExpression
+    |   '(' WS* conditionalExpression WS* ')'                                       -> conditionalExpression
+    ; // avoid building nodes for parens, tree structure implies existence appropriately -- ignore captured WS
 
 simpleConditionalExpression
     :   comparisonConditionalExpression
@@ -69,69 +104,78 @@ simpleConditionalExpression
     ;
 
 comparisonConditionalExpression
-    :   context comparisonOperator identifier
-    ;
+    :   c=context WS* op=comparisonOperator WS* ident=identifier                 -> ^($op $c ^(VALUE $ident))
+    ; // rewrite tree output so operator is always the root -- ignore captured WS
 
 nullComparisonConditionalExpression
-    :   context nullOperator
-    ;
+    :   c=context WS* op=nullOperator                                            -> ^($op $c)
+    ; // rewrite tree output so operator is always the root -- ignore captured WS
 
 inExpression
-    :   context inOperator '[' '='? identifier ( ',' '='? identifier )* ']'
-    ;
+    :   c=context WS* op=inOperator WS* '[' WS* ids+=identifier WS* ( ',' WS* ids+=identifier WS* )* ']' 
+                                                                                 -> ^($op $c ^(VALUE $ids+))
+    ; // rewrite tree output so operator is always the root -- ignore captured WS
 
 context
-    :  ( lineage '.' )? path ( '[' identifier ']' )?
+    :  ( l=lineage '.' )? p=path ( '[' ident=identifier ']' )?                   -> ^(CONTEXT ^(LINEAGE $l)? ^(PATH $p) ^(PARAM $ident)?)
     ;
 
 lineage
-    :   path ( '(' INT ')' )?
-    ;
+    :   path ( '('! LEVEL ')'! )?
+    ; // avoid building nodes for brackets, tree structure implies existence appropriately
 
 path
     :   ID+
     ;
 
 identifier
-    :   quotedValue
-    |   value
+    :   doubleQuotedValue -> ^(IDENT doubleQuotedValue)
+    |   quotedValue       -> ^(IDENT quotedValue)
+    |   openEndedvalue    -> ^(IDENT openEndedvalue)
     ;
 
+doubleQuotedValue
+    :   '"'! ~('"')* '"'!
+    ; // avoid building nodes for the double-quote characters
+
+    
 quotedValue
-    :   '\'' ~('\'')* '\''
-    ;
+    :   '\''! ~('\'')* '\''!
+    ; // avoid building nodes for the sinngle-quote characters
 
-value
-    :   ~('\'') ~(']'|','|')')*
-    ;
+openEndedvalue
+    :   ~(']' | ',' | ')' | '(' | 'or' | 'and' | WS )*
+    ; // consume until we find a char to terminate the current phrase ']' ',' ')' or begin the next '(' 'or' 'and'
 
 comparisonOperator  
-    :   '=' 
-    |   '==' 
-    |   '!=' 
-    |   '!==' 
-    ;
+    :   '='   -> ^(OP_EQUALS)
+    |   '=='  -> ^(OP_EQUALS_STRICT)
+    |   '!='  -> ^(OP_NOT_EQUALS)
+    |   '!==' -> ^(OP_NOT_EQUALS_STRICT)
+    ; // use imaginary nodes for all operators, which further removes the AST from the real lexical elements
 
 nullOperator 
-    :   'is' 'not'? 'null'
-    ;
+    :   'is' WS+ (negation='not' WS+)? 'null' -> { $negation == null }? ^(OP_NULL)
+                                              -> ^(OP_NOT_NULL)
+    ; // use imaginary nodes for all operators, which further removes the AST from the real lexical elements
 
 inOperator 
-    :   'not'? 'in'
-    ;
+    :   (negation+='not' WS+)? 'in'       -> { $negation == null }? ^(OP_IN)
+                                          -> ^(OP_NOT_IN)
+    ; // use imaginary nodes for all operators, which further removes the AST from the real lexical elements
 
 /* 
  * lexical elements 
- */
+ */ 
  
 ID
     :   'a'..'z'
     ;
 
-INT
-    :   '0'..'9'
+LEVEL
+    :   '0'..'5'
     ;
 
 WS
-    :   ( ' ' | '\n' | '\r' )+ { $channel = HIDDEN; }
+    :   ( ' ' | '\n' | '\r' )+
     ;

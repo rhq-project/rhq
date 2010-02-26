@@ -164,7 +164,7 @@ public class ResourceGroupComposite implements Serializable {
      * @return query string snippet that can appear after the "?" in group URLs.
      */
     public String getGroupQueryString() {
-        return "category=" + getCategory().getName() + "&amp;groupId=" + getResourceGroup().getId();
+        return "groupId=" + getResourceGroup().getId();
     }
 
     private String getAlignedAvailabilityResults(long up, long down) {

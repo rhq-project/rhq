@@ -71,9 +71,14 @@ public class ResourceConfigurationViewer {
     @Out(required = false)
     protected RawConfigUIBean selectedRawUIBean;
 
+    @RequestParameter
+    private Integer configId;
+
     protected Integer resourceId;
 
     protected boolean initialized = false;
+
+    private boolean usingPreviousVersion;
 
     /**
      * <p>
@@ -132,9 +137,16 @@ public class ResourceConfigurationViewer {
 
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
-        AbstractResourceConfigurationUpdate configurationUpdate =
+        if (configId != null && usingPreviousVersion) {
+            AbstractResourceConfigurationUpdate configurationUpdate =
+                configurationManager.getResourceConfigurationUpdate(subject, configId);
+            resourceConfiguration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
+        }
+        else {
+            AbstractResourceConfigurationUpdate configurationUpdate =
                 configurationManager.getLatestResourceConfigurationUpdate(subject, resourceId);
-        resourceConfiguration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
+            resourceConfiguration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
+        }
 
         if (resourceConfiguration != null) {
             ConfigurationMaskingUtility.maskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
@@ -282,6 +294,16 @@ public class ResourceConfigurationViewer {
 
     public void select(String path) {
         selectedRawUIBean = findRawConfigUIBeanByPath(path);
+    }
+
+    /**
+     * This method can be called to indicate to the viewer that it may be using a previous version of the resource
+     * configuration. If the request paraemter, configId, is found then the version of the resource configuration
+     * corresponding to that id will be used. Note that this method must be invoked prior to
+     * {@linkplain #initialize()} in order for it to take effect. 
+     */
+    public void prepareToViewPreviousVersion() {
+        usingPreviousVersion = true;
     }
 
     protected RawConfigUIBean findRawConfigUIBeanByPath(String path) {

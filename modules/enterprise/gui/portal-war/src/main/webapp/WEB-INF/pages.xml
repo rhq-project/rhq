@@ -12,7 +12,10 @@
     </navigation>
   </page>
 
-  <page view-id="/rhq/resource/configuration/history.xhtml" action="#{configurationViewer.initialize}"/>
+  <page view-id="/rhq/resource/configuration/history.xhtml">
+    <action execute="#{configurationViewer.prepareToViewPreviousVersion()}"/>
+    <action execute="#{configurationViewer.initialize()}"/>
+  </page>
 
   <page view-id="/rhq/resource/configuration/view-map.xhtml" action="#{configurationViewer.initialize}"/>
 
@@ -21,10 +24,7 @@
 
     <action execute="#{configurationEditor.initialize}"
             on-postback="false"
-            if="#{!configurationEditor.initialized or (configurationEditor.resourceId != id)}"/>
-            <!--
-            if="#{!conversation.longRunning or (empty resourceConfiguration or id != configurationEditor.resourceId)}"
-            -->
+            if="#{!configurationEditor.initialized or (configurationEditor.resourceId != id)}"/>            
 
     <navigation from-action="#{configurationEditor.initialize}">
       <rule if="#{configurationEditor.initialized}">

@@ -38,5 +38,13 @@ public interface AlertGWTService extends RemoteService {
      */
     PageList<Alert> findAlertsByCriteria(AlertCriteria criteria);
 
-    void deleteAlerts(int resourceId, Integer[] alertIds);
+    /**
+     * Delete the Resource alerts with the specified id's if the current user has permission to do so (i.e. either
+     * the MANAGE_INVENTORY global permission, or the MANAGE_ALERTS Resource permission for all associated Resources).
+     * If the user does not have permission for all of the specified alerts, then none of the alerts will be deleted
+     * and a PermissionException will be thrown.
+     *
+     * @param alertIds the id's of the Resource alerts to be deleted
+     */
+    void deleteResourceAlerts(Integer[] alertIds);
 }

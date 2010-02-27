@@ -35,22 +35,18 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
-import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
+ * A server-side SmartGWT DataSource for CRUD of {@link Alert}s.
+ *
  * @author Ian Springer
  */
 public class AlertDataSource extends RPCDataSource {
@@ -73,14 +69,14 @@ public class AlertDataSource extends RPCDataSource {
 
         setCanMultiSort(true);
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "Id");
-        idDataField.setPrimaryKey(true);
-        idDataField.setHidden(true);
+        DataSourceField idField = new DataSourceIntegerField("id", "Id");
+        idField.setPrimaryKey(true);
+        idField.setHidden(true);
 
-        DataSourceField resourceIdDataField = new DataSourceIntegerField("resourceId", "Resource Id");
-        idDataField.setHidden(true);
+        // TODO: Replace 'Resource Id' column with 'Resource Name' and 'Resource Lineage' columns.
+        DataSourceField resourceIdField = new DataSourceIntegerField(AlertCriteria.SORT_FIELD_RESOURCE_ID, "Resource Id");
 
-        DataSourceTextField nameField = new DataSourceTextField("name", "Name", 100);
+        DataSourceTextField nameField = new DataSourceTextField(AlertCriteria.SORT_FIELD_NAME, "Name", 100);
 
         DataSourceTextField conditionTextField = new DataSourceTextField("conditionText", "Condition Text");
         conditionTextField.setCanSortClientOnly(true);
@@ -91,64 +87,40 @@ public class AlertDataSource extends RPCDataSource {
         DataSourceTextField recoveryInfoField = new DataSourceTextField("recoveryInfo", "Recovery Info");
         recoveryInfoField.setCanSortClientOnly(true);
 
-        // TODO: Use DataSourceEnumField here?
-        DataSourceTextField priorityField = new DataSourceTextField("priority", "Priority", 15);
+        // TODO: Will using DataSourceEnumField here allow us to do
+        //       record.setAttribute("priority", alert.getAlertDefinition().getPriority()), rather than
+        //       record.setAttribute("priority", alert.getAlertDefinition().getPriority().name()) in
+        //       createRecord() below?
+        DataSourceTextField priorityField = new DataSourceTextField(AlertCriteria.SORT_FIELD_PRIORITY, "Priority", 15);
 
-        DataSourceTextField ctimeField = new DataSourceTextField("ctime", "Creation Time");
+        DataSourceTextField ctimeField = new DataSourceTextField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
 
-        setFields(idDataField, nameField, conditionTextField, conditionValueField, recoveryInfoField, priorityField,
-                ctimeField);
+        setFields(idField, resourceIdField, nameField, conditionTextField, conditionValueField, recoveryInfoField,
+                priorityField, ctimeField);
     }
 
-    void deleteAlerts(final ListGrid listGrid, final AlertsView alertsView) {
+    void deleteAlerts(final AlertsView alertsView) {
+        ListGrid listGrid = alertsView.getListGrid();
         ListGridRecord[] records = listGrid.getSelection();
-        final Map<Integer, List<ListGridRecord>> alertIdMap = new HashMap<Integer, List<ListGridRecord>>();
+
+        final Integer[] alertIds = new Integer[records.length];
         for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
             ListGridRecord record = records[i];
-            Integer resourceId = record.getAttributeAsInt("alertDefinition.resource.id");
-            List<ListGridRecord> recordsForResource;
-            if (alertIdMap.containsKey(resourceId)) {
-                recordsForResource = alertIdMap.get(resourceId);
-            } else {
-                recordsForResource = new ArrayList<ListGridRecord>();
-                alertIdMap.put(resourceId, recordsForResource);
-            }
-            recordsForResource.add(record);
+            Integer alertId = record.getAttributeAsInt("id");
+            alertIds[i] = alertId;
         }
 
-        AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
-        final Set<Integer> successfulResourceIds = new HashSet<Integer>();
-        final Set<Integer> failedResourceIds = new HashSet<Integer>();
-        for (final Integer resourceId : alertIdMap.keySet()) {
-            final List<ListGridRecord> recordsForResource = alertIdMap.get(resourceId);
-            Integer[] alertIds = new Integer[recordsForResource.size()];
-            for (int i = 0; i < recordsForResource.size(); i++) {
-                ListGridRecord listGridRecord = recordsForResource.get(i);
-                Integer alertId = listGridRecord.getAttributeAsInt("id");
-                alertIds[i] = alertId;
+        this.alertService.deleteResourceAlerts(alertIds, new AsyncCallback<Void>() {
+            public void onSuccess(Void blah) {
+                System.out.println("Deleted Alerts with id's: " + Arrays.toString(alertIds) + ".");
+                alertsView.reloadData();
             }
 
-            alertService.deleteAlerts(resourceId, alertIds, new AsyncCallback<Void>() {
-                public void onSuccess(Void blah) {
-                    /*for (ListGridRecord record : recordsForResource) {
-                        removeData(record);
-                    }*/
-                    successfulResourceIds.add(resourceId);
-                    if (successfulResourceIds.size() + failedResourceIds.size() == alertIdMap.size()) {
-                        alertsView.reportSelectedAlertsDeleted(listGrid);
-                    }
-                }
-
-                public void onFailure(Throwable caught) {
-                    Window.alert("Failed to delete Alerts for Resource with id " + resourceId + " - cause: " + caught);
-                    System.err.println("Failed to delete Alerts for Resource with id " + resourceId + " - cause: " + caught);
-                    failedResourceIds.add(resourceId);
-                    if (successfulResourceIds.size() + failedResourceIds.size() == alertIdMap.size()) {
-                        // TODO: Report failure.
-                    }
-                }
-            });
-        }
+            public void onFailure(Throwable caught) {
+                Window.alert("Failed to delete Alerts with id's: " + Arrays.toString(alertIds) + " - cause: " + caught);
+                System.err.println("Failed to delete Alerts with id's " + Arrays.toString(alertIds) + " - cause: " + caught);
+            }
+        });
     }
 
     protected void executeFetch(final DSRequest request, final DSResponse response) {
@@ -156,8 +128,9 @@ public class AlertDataSource extends RPCDataSource {
 
         AlertCriteria criteria = new AlertCriteria();
         criteria.fetchAlertDefinition(true);
-        criteria.fetchConditionLogs(true);
         criteria.fetchRecoveryAlertDefinition(true);
+        // TODO: Uncomment the below once the bad performance of it has been fixed.
+        //criteria.fetchConditionLogs(true);
 
         criteria.setPageControl(getPageControl(request));
 
@@ -211,7 +184,7 @@ public class AlertDataSource extends RPCDataSource {
         } else if (conditionLogs.size() == 1) {
             AlertConditionLog conditionLog = conditionLogs.iterator().next();
             AlertCondition condition = conditionLog.getCondition();
-            conditionText = AlertDefinitionUtility.formatAlertConditionForDisplay(condition);
+            conditionText = AlertFormatUtility.formatAlertConditionForDisplay(condition);
             conditionValue = conditionLog.getValue();
             if (condition.getMeasurementDefinition() != null) {
                 conditionValue = MeasurementConverterClient.format(Double.valueOf(conditionLog.getValue()), condition
@@ -224,16 +197,8 @@ public class AlertDataSource extends RPCDataSource {
         record.setAttribute("conditionText", conditionText);
         record.setAttribute("conditionValue", conditionValue);
 
-        String recoveryInfo = AlertDefinitionUtility.getAlertRecoveryInfo(alert);
+        String recoveryInfo = AlertFormatUtility.getAlertRecoveryInfo(alert);
         record.setAttribute("recoveryInfo", recoveryInfo);
         return record;
     }
-
-    /*@Override
-    protected List<OrderingField> getDefaultOrderingFields(String alias) {
-        List<OrderingField> orderingFields = new ArrayList<OrderingField>(2);
-        orderingFields.add(new OrderingField(alias + ".alertDefinition.name", PageOrdering.ASC));
-        orderingFields.add(new OrderingField(alias + ".ctime", PageOrdering.DESC));
-        return orderingFields;
-    }*/
 }

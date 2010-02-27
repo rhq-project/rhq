@@ -85,6 +85,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -157,6 +158,25 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 entityManager.remove(alert); // condition logs will be removed with entity cascading
             }
         }
+    }
+
+    public void deleteResourceAlerts(Subject user, Integer[] alertIds) {
+        Query q = entityManager.createNamedQuery(Alert.QUERY_FIND_RESOURCES);
+        q.setParameter("alertIds", Arrays.asList(alertIds));
+        List<Resource> resources = q.getResultList();
+
+        List<Resource> forbiddenResources = new ArrayList<Resource>();
+        for (Resource resource : resources) {
+            if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resource.getId())) {
+                forbiddenResources.add(resource);
+            }            
+        }
+        if (!forbiddenResources.isEmpty()) {
+            throw new PermissionException("User [" + user.getName() + "] does not have permissions to delete alerts "
+                    + "for the following Resource(s): " + forbiddenResources);
+        }
+
+        deleteAlerts(alertIds);
     }
 
     public void deleteAlerts(Subject user, int resourceId, Integer[] ids) {

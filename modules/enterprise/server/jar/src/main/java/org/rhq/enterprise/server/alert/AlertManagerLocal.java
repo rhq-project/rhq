@@ -41,6 +41,17 @@ public interface AlertManagerLocal {
 
     Alert updateAlert(Alert alert);
 
+    /**
+     * Delete the Resource alerts with the specified id's if the specified user has permission to do so (i.e. either
+     * the MANAGE_INVENTORY global permission, or the MANAGE_ALERTS Resource permission for all associated Resources).
+     * If the user does not have permission for all of the specified alerts, then none of the alerts will be deleted
+     * and a PermissionException will be thrown.
+     *
+     * @param user the user requesting the deletion
+     * @param alertIds the id's of the Resource alerts to be deleted
+     */
+    void deleteResourceAlerts(Subject user, Integer[] alertIds);
+
     void deleteAlerts(Subject user, int resourceId, Integer[] ids);
 
     void deleteAlertsForResourceGroup(Subject user, int resourceGroupId, Integer[] ids);

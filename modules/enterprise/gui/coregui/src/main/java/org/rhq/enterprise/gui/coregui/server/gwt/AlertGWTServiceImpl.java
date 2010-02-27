@@ -37,7 +37,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
                 "AlertService.findAlertsByCriteria");
     }
 
-    public void deleteAlerts(int resourceId, Integer[] alertIds) {        
-        this.alertManager.deleteAlerts(getSessionSubject(), resourceId, alertIds);
+    public void deleteResourceAlerts(Integer[] alertIds) {
+        this.alertManager.deleteResourceAlerts(getSessionSubject(), alertIds);
     }
 }

@@ -41,7 +41,7 @@ import java.util.List;
  *
  * @author Ian Springer
  */
-public class AlertDefinitionUtility {
+public class AlertFormatUtility {
     private static final String BASELINE_OPT_MEAN = "mean";
     private static final String BASELINE_OPT_MIN = "min";
     private static final String BASELINE_OPT_MAX = "max";
@@ -181,6 +181,6 @@ public class AlertDefinitionUtility {
         }
     }
 
-    private AlertDefinitionUtility() {
+    private AlertFormatUtility() {
     }
 }

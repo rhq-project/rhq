@@ -126,6 +126,8 @@ import org.rhq.core.domain.auth.Subject;
         + "     AND (a.ctime > :startDate OR :startDate IS NULL) "
         + "     AND (a.ctime < :endDate OR :endDate IS NULL) "),
     @NamedQuery(name = Alert.QUERY_FIND_ALL, query = "SELECT a FROM Alert AS a"),
+    @NamedQuery(name = Alert.QUERY_FIND_RESOURCES, query = "SELECT res FROM Alert AS a JOIN a.alertDefinition aDef "
+        + "     JOIN aDef.resource res WHERE a.id in (:alertIds) AND res.id IS NOT NULL"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_CTIME, query = "" //
         + "DELETE FROM Alert AS a " //
         + " WHERE a.ctime BETWEEN :begin AND :end"),//
@@ -204,7 +206,8 @@ public class Alert implements Serializable {
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCEGROUP = "Alert.findByMeasDefIdAndResourceGroup";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_AUTOGROUP = "Alert.findByMeasDefIdAndAutoGroup";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE = "Alert.findByMeasDefIdAndResource";
-    public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES"; 
+    public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES";
+    public static final String QUERY_FIND_RESOURCES = "Alert.findResources";
 
     public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT";
 

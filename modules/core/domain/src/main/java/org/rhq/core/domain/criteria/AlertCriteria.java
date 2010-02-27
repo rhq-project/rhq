@@ -42,6 +42,14 @@ import org.rhq.core.domain.util.PageOrdering;
 public class AlertCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
+    // sort fields from the Alert itself
+    public static final String SORT_FIELD_CTIME = "ctime";
+
+    // sort fields from the Alert's AlertDefinition
+    public static final String SORT_FIELD_NAME = "name";
+    public static final String SORT_FIELD_PRIORITY = "priority";
+    public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
+
     private Integer filterId;
     private String filterTriggeredOperationName; // requires overrides
     private Long filterStartTime; // requires overrides
@@ -61,9 +69,11 @@ public class AlertCriteria extends Criteria {
     private boolean fetchNotificationLogs;
     private boolean fetchRecoveryAlertDefinition;
 
-    private PageOrdering sortName; // requires overrides
     private PageOrdering sortCtime;
-    private PageOrdering sortPriority; // requires overrides
+
+    private PageOrdering sortName; // requires sort override
+    private PageOrdering sortPriority; // requires sort override
+    private PageOrdering sortResourceId; // requires sort override
 
     public AlertCriteria() {
         super(Alert.class);
@@ -85,9 +95,9 @@ public class AlertCriteria extends Criteria {
         filterOverrides.put("alertDefinitionIds", "alertDefinition.id IN ( ? )");
         filterOverrides.put("groupAlertDefinitionIds", "alertDefinition.groupAlertDefinition.id IN ( ? )");
 
-        sortOverrides.put("name", "alertDefinition.name");
-        sortOverrides.put("resourceId", "alertDefinition.resource.id");
-        sortOverrides.put("priority", "alertDefinition.priority");
+        sortOverrides.put(SORT_FIELD_NAME, "alertDefinition.name");
+        sortOverrides.put(SORT_FIELD_PRIORITY, "alertDefinition.priority");
+        sortOverrides.put(SORT_FIELD_RESOURCE_ID, "alertDefinition.resource.id");
     }
 
     @Override
@@ -163,18 +173,23 @@ public class AlertCriteria extends Criteria {
         this.fetchRecoveryAlertDefinition = fetchRecoveryAlertDefinition;
     }
 
-    public void addSortName(PageOrdering sortName) {
-        addSortField("name");
-        this.sortName = sortName;
-    }
-
     public void addSortCtime(PageOrdering sortCtime) {
-        addSortField("ctime");
+        addSortField(SORT_FIELD_CTIME);
         this.sortCtime = sortCtime;
     }
 
+    public void addSortName(PageOrdering sortName) {
+        addSortField(SORT_FIELD_NAME);
+        this.sortName = sortName;
+    }
+
     public void addSortPriority(PageOrdering sortPriority) {
-        addSortField("priority");
+        addSortField(SORT_FIELD_PRIORITY);
         this.sortPriority = sortPriority;
-    }    
+    }
+
+    public void addSortResourceId(PageOrdering sortResourceId) {
+        addSortField(SORT_FIELD_RESOURCE_ID);
+        this.sortResourceId = sortResourceId;
+    }
 }

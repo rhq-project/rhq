@@ -29,6 +29,8 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
+import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
@@ -36,16 +38,20 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RoleEditView;
 
 /**
  * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, along with the
- * ability to filter or sort those alerts, click on an alert to view details about that alert, or delete selected
- * alerts.
+ * ability to filter or sort those alerts, click on an alert to view details about that alert's definition, or delete
+ * selected alerts.
  *
  * @author Ian Springer
  */
 public class AlertsView extends SectionStack {
+    private ListGrid listGrid;
+    private IButton removeButton;
+    private Label tableInfo;
 
     @Override
     protected void onInit() {
@@ -61,57 +67,62 @@ public class AlertsView extends SectionStack {
         gridHolder.setWidth100();
         gridHolder.setHeight100();
 
-        final ListGrid listGrid = new ListGrid();
-        listGrid.setWidth100();
-        listGrid.setHeight100();
-        listGrid.setDataSource(dataSource);
-        listGrid.setAutoFetchData(true);
-        listGrid.setAutoFitData(Autofit.HORIZONTAL);
-        listGrid.setAlternateRecordStyles(true);
-        listGrid.setSelectionType(SelectionStyle.SIMPLE);
-        listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
+        this.listGrid = new ListGrid();
+        this.listGrid.setWidth100();
+        this.listGrid.setHeight100();
+        this.listGrid.setDataSource(dataSource);
+        this.listGrid.setAutoFetchData(true);
+        this.listGrid.setAutoFitData(Autofit.HORIZONTAL);
+        this.listGrid.setAlternateRecordStyles(true);
+        this.listGrid.setSelectionType(SelectionStyle.SIMPLE);
+        this.listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
-        listGrid.setShowFilterEditor(true);
+        this.listGrid.setShowFilterEditor(true);
 
-        listGrid.setUseAllDataSourceFields(true);
+        this.listGrid.setUseAllDataSourceFields(true);
+        this.listGrid.setSortField(AlertCriteria.SORT_FIELD_NAME);
 
-        gridHolder.addMember(listGrid);
+        gridHolder.addMember(this.listGrid);
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setMembersMargin(15);
 
-        final IButton removeButton = new IButton("Delete");
-        removeButton.setDisabled(true);
-        removeButton.addClickHandler(new ClickHandler() {
+        this.removeButton = new IButton("Delete");
+        this.removeButton.setDisabled(true);
+        this.removeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " alerts?",
+                SC.confirm("Are you sure you want to delete the " + AlertsView.this.listGrid.getSelection().length
+                        + " selected alerts?",
                         new BooleanCallback() {
                             public void execute(Boolean confirmed) {
                                 if (confirmed) {
-                                    deleteSelectedAlerts(dataSource, listGrid);
+                                    //listGrid.removeSelectedData();
+                                    dataSource.deleteAlerts(AlertsView.this);
                                 }
                             }
                         }
                 );
             }
         });
-
-        final Label tableInfo = new Label("Total: " + listGrid.getTotalRows());
-        tableInfo.setWrap(false);
-
-        toolStrip.addMember(removeButton);
+        toolStrip.addMember(this.removeButton);
         toolStrip.addMember(new LayoutSpacer());
-        toolStrip.addMember(tableInfo);
+
+        this.tableInfo = new Label();
+        this.tableInfo.setWrap(false);
+        toolStrip.addMember(this.tableInfo);
 
         gridHolder.addMember(toolStrip);
 
-        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                int selectedCount = ((ListGrid) selectionEvent.getSource()).getSelection().length;
-                tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
-                removeButton.setDisabled(selectedCount == 0);
+        this.listGrid.addDataArrivedHandler(new DataArrivedHandler() {
+            public void onDataArrived(DataArrivedEvent event) {
+                updateFooter();
             }
         });
+        this.listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+            public void onSelectionChanged(SelectionEvent event) {
+                updateFooter();
+            }
+        });        
 
         SectionStackSection topSection = new SectionStackSection("Alerts");
         topSection.setExpanded(true);
@@ -121,11 +132,11 @@ public class AlertsView extends SectionStack {
 
         final RoleEditView roleEditor = new RoleEditView();
 
-        final SectionStackSection detailSection = new SectionStackSection("Selected Role");
+        final SectionStackSection detailSection = new SectionStackSection("Selected Alert");
         detailSection.setItems(roleEditor);
         addSection(detailSection);
 
-        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+        this.listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
                     expandSection(1);
@@ -135,25 +146,24 @@ public class AlertsView extends SectionStack {
                     roleEditor.editNone();
             }
         });
-
-
     }
 
-    private void deleteSelectedAlerts(AlertDataSource dataSource, ListGrid listGrid) {
-        //listGrid.removeSelectedData();
-
-        /*DSRequest request = new DSRequest();
-        request.setAttribute("data", listGrid.getSelection());
-        DSResponse response = new DSResponse();
-        dataSource.executeRemove(request, response);*/
-
-        dataSource.deleteAlerts(listGrid, this);
-        markForRedraw();
+    ListGrid getListGrid() {
+        return this.listGrid;
     }
 
-    void reportSelectedAlertsDeleted(ListGrid listGrid) {
-        listGrid.removeSelectedData();
-        System.out.println("Alerts deleted successfully.");
-        listGrid.markForRedraw();
+    void reloadData() {
+        this.tableInfo.setContents("");
+        this.listGrid.invalidateCache();
+        //this.listGrid.markForRedraw();        
+    }
+
+    private void updateFooter() {
+        String label = "Total: " + this.listGrid.getTotalRows();
+        if (this.listGrid.anySelected()) {
+            label += " (" + this.listGrid.getSelection().length + " selected)";
+        }
+        this.tableInfo.setContents(label);
+        this.removeButton.setDisabled(!listGrid.anySelected());
     }
 }

@@ -37,6 +37,8 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  */
 public class SnmpTrapdDiscovery implements ResourceDiscoveryComponent<SnmpTrapdComponent>, ManualAddFacet<SnmpTrapdComponent> {
 
+    private static final String PORT_PROPERTY = "port";
+    
     /*
      * Autodiscovery is not supported.
      */
@@ -52,11 +54,11 @@ public class SnmpTrapdDiscovery implements ResourceDiscoveryComponent<SnmpTrapdC
      */
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
                                                       ResourceDiscoveryContext<SnmpTrapdComponent> ctx) throws InvalidPluginConfigurationException {
-
-        String pcName = ctx.getPluginContainerName();
-        String key = "Trapd (" + pcName + ")";
+        
+        String port = pluginConfiguration.getSimpleValue(PORT_PROPERTY, null);
+        String key = "Trapd " + port;
         String name = key;
-        String description = "SNMP Trap receiver on " + pcName;
+        String description = "SNMP Trap receiver on port " + port;
         ResourceType resourceType = ctx.getResourceType();
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceType, key, name, null, description,
             pluginConfiguration, null);

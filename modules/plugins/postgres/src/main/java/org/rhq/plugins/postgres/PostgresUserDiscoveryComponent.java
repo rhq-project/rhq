@@ -61,7 +61,7 @@ public class PostgresUserDiscoveryComponent implements ResourceDiscoveryComponen
             while (resultSet.next()) {
                 String userName = resultSet.getString("rolname");
                 DiscoveredResourceDetails service = new DiscoveredResourceDetails(context.getResourceType(), userName,
-                    userName + " User", null, "A Postgres user", null, null);
+                    userName, null, "A Postgres user", null, null);
                 service.getPluginConfiguration().put(new PropertySimple("userName", userName));
                 discoveredUsers.add(service);
             }

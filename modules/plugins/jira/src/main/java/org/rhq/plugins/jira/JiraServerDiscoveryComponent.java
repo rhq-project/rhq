@@ -50,7 +50,7 @@ public class JiraServerDiscoveryComponent implements ResourceDiscoveryComponent,
                 new DiscoveredResourceDetails(
                         resourceDiscoveryContext.getResourceType(),
                         url,
-                        "Jira " + url,
+                        url,
                         info.getVersion(),
                         info.getEdition(),
                         config,

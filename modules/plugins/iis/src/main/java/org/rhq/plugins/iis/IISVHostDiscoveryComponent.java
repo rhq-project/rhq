@@ -86,7 +86,7 @@ public class IISVHostDiscoveryComponent implements ResourceDiscoveryComponent<II
             config.put(new PropertySimple("logDirectory", "C:\\Windows\\System32\\LogFiles\\W3SVC" + info.getId()));
 
             DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceDiscoveryContext
-                .getResourceType(), siteName, siteName + " VHost", "1.0", siteName + " Virtual Host", config, null);
+                .getResourceType(), siteName, siteName, "1.0", siteName + " Virtual Host", config, null);
 
             hostDetails.add(details);
         }

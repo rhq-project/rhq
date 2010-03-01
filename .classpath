@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/filetemplate-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/filetemplate-bundle/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/base-perspective-jar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/main/java"/>

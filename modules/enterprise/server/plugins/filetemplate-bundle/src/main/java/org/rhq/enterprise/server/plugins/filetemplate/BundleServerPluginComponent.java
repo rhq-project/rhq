@@ -19,8 +19,17 @@
 
 package org.rhq.enterprise.server.plugins.filetemplate;
 
+import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.bundle.filetemplate.recipe.RecipeContext;
+import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.enterprise.server.bundle.RecipeParseResults;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -34,23 +43,38 @@ import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
  */
 public class BundleServerPluginComponent implements ServerPluginComponent, BundleServerPluginFacet, ControlFacet {
 
+    private final Log log = LogFactory.getLog(BundleServerPluginComponent.class);
+
     private ServerPluginContext context;
 
     public void initialize(ServerPluginContext context) throws Exception {
         this.context = context;
-        System.out.println("The filetemplate bundle plugin has been initialized!!! : " + this);
+        log.debug("The filetemplate bundle plugin has been initialized!!! : " + this);
     }
 
     public void start() {
-        System.out.println("The filetemplate bundle plugin has started!!! : " + this);
+        log.debug("The filetemplate bundle plugin has started!!! : " + this);
     }
 
     public void stop() {
-        System.out.println("The filetemplate bundle plugin has stopped!!! : " + this);
+        log.debug("The filetemplate bundle plugin has stopped!!! : " + this);
     }
 
     public void shutdown() {
-        System.out.println("The filetemplate bundle plugin has been shut down!!! : " + this);
+        log.debug("The filetemplate bundle plugin has been shut down!!! : " + this);
+    }
+
+    public RecipeParseResults parseRecipe(String recipe) throws Exception {
+        RecipeParser parser = new RecipeParser();
+        RecipeContext parserContext = parser.parseRecipe(recipe);
+
+        // TODO convert the context to the results object
+        ConfigurationDefinition configDef = null;
+        Set<String> bundleFileNames = null;
+
+        RecipeParseResults results = new RecipeParseResults(configDef, bundleFileNames);
+        return results;
+
     }
 
     public ControlResults invoke(String name, Configuration parameters) {

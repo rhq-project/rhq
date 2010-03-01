@@ -19,11 +19,13 @@
 
 package org.rhq.enterprise.server.plugin.pc.bundle;
 
+import org.rhq.enterprise.server.bundle.RecipeParseResults;
+
 /**
  * All bundle server plugins must implement this facet.
  * 
  * @author John Mazzitelli
  */
 public interface BundleServerPluginFacet {
-
+    RecipeParseResults parseRecipe(String recipe) throws Exception;
 }

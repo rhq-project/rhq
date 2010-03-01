@@ -38,6 +38,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationValidationException;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -471,13 +472,13 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
+        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException, ConfigurationValidationException {
         return configurationManager.updateResourceConfiguration(subject, resourceId, newConfiguration);
     }
 
     public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
-        ConfigurationUpdateStillInProgressException {
+        ConfigurationUpdateStillInProgressException, ConfigurationValidationException {
         return configurationManager.updateStructuredOrRawConfiguration(subject, resourceId, newConfiguration,
             fromStructured);
     }
@@ -487,7 +488,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
-        boolean fromStructured) throws ResourceNotFoundException {
+        boolean fromStructured) throws ResourceNotFoundException, ConfigurationValidationException {
         return configurationManager.translateResourceConfiguration(subject, resourceId, configuration, fromStructured);
     }
 

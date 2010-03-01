@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationValidationException;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -178,12 +179,13 @@ public interface ConfigurationManagerRemote {
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "newConfiguration")//
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
+        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException, ConfigurationValidationException;
 
     @WebMethod
     ResourceConfigurationUpdate updateStructuredOrRawConfiguration(@WebParam Subject subject, @WebParam int resourceId,
         @WebParam @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration,
-        @WebParam boolean fromStructured) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
+        @WebParam boolean fromStructured) throws ResourceNotFoundException,
+        ConfigurationUpdateStillInProgressException, ConfigurationValidationException;
 
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for
@@ -262,7 +264,17 @@ public interface ConfigurationManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "packageTypeId") int packageTypeId);
 
+    /**
+     * 
+     * @param subject
+     * @param resourceId
+     * @param configuration
+     * @param fromStructured
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ConfigurationValidationException
+     */
     Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
-        boolean fromStructured) throws ResourceNotFoundException;
+        boolean fromStructured) throws ResourceNotFoundException, ConfigurationValidationException;
 
 }

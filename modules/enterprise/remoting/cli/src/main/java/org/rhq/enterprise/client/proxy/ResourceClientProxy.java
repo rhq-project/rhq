@@ -18,37 +18,23 @@
  */
 package org.rhq.enterprise.client.proxy;
 
-import java.lang.reflect.InvocationTargetException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
-import javassist.CannotCompileException;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
-import javassist.CtNewMethod;
-import javassist.NotFoundException;
-import javassist.bytecode.ParameterAnnotationsAttribute;
-import javassist.bytecode.annotation.Annotation;
-import javassist.bytecode.annotation.StringMemberValue;
 import javassist.util.proxy.MethodHandler;
-import javassist.util.proxy.ProxyFactory;
-
-import javax.jws.WebParam;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.ConfigurationValidationException;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
@@ -68,19 +54,20 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.Summary;
-import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.utility.LazyLoadScenario;
-import org.rhq.enterprise.client.utility.ShortOutput;
+import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.utility.ConfigurationClassBuilder;
+import org.rhq.enterprise.client.utility.LazyLoadScenario;
 import org.rhq.enterprise.client.utility.ScriptUtil;
+import org.rhq.enterprise.client.utility.ShortOutput;
+import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
 /**
@@ -369,6 +356,7 @@ public class ResourceClientProxy {
         public String toString() {
             return getName();
         }
+
         public String getShortOutput() {
             return getDisplayValue();
         }
@@ -461,18 +449,16 @@ public class ResourceClientProxy {
         }
 
         public PluginConfigurationUpdate updatePluginConfiguration(Configuration configuration) {
-            PluginConfigurationUpdate update =
-                remoteClient.getConfigurationManagerRemote().updatePluginConfiguration(
-                    remoteClient.getSubject(),
-                    resourceClientProxy.getId(),
-                    configuration);
+            PluginConfigurationUpdate update = remoteClient.getConfigurationManagerRemote().updatePluginConfiguration(
+                remoteClient.getSubject(), resourceClientProxy.getId(), configuration);
 
             return update;
         }
 
         public void editPluginConfiguration() {
             ConfigurationEditor editor = new ConfigurationEditor(resourceClientProxy.client);
-            Configuration config = editor.editConfiguration(getPluginConfigurationDefinition(), getPluginConfiguration());
+            Configuration config = editor.editConfiguration(getPluginConfigurationDefinition(),
+                getPluginConfiguration());
             if (config != null) {
                 updatePluginConfiguration(config);
             }
@@ -480,7 +466,8 @@ public class ResourceClientProxy {
 
         public void editResourceConfiguration() {
             ConfigurationEditor editor = new ConfigurationEditor(resourceClientProxy.client);
-            Configuration config = editor.editConfiguration(getResourceConfigurationDefinition(), getResourceConfiguration());
+            Configuration config = editor.editConfiguration(getResourceConfigurationDefinition(),
+                getResourceConfiguration());
             if (config != null) {
                 updateResourceConfiguration(config);
             }
@@ -499,11 +486,21 @@ public class ResourceClientProxy {
         }
 
         public ResourceConfigurationUpdate updateResourceConfiguration(Configuration configuration) {
-            ResourceConfigurationUpdate update =
-                remoteClient.getConfigurationManagerRemote().updateResourceConfiguration(
-                    remoteClient.getSubject(),
-                    resourceClientProxy.getId(),
-                    configuration);
+            ResourceConfigurationUpdate update = null;
+
+            try {
+                update = remoteClient.getConfigurationManagerRemote().updateResourceConfiguration(
+                    remoteClient.getSubject(), resourceClientProxy.getId(), configuration);
+            } catch (ResourceNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (ConfigurationUpdateStillInProgressException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (ConfigurationValidationException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
 
             return update;
 
@@ -511,7 +508,8 @@ public class ResourceClientProxy {
 
         public InstalledPackage getBackingContent() {
 
-            return remoteClient.getContentManagerRemote().getBackingPackageForResource(remoteClient.getSubject(), resourceClientProxy.resourceId);
+            return remoteClient.getContentManagerRemote().getBackingPackageForResource(remoteClient.getSubject(),
+                resourceClientProxy.resourceId);
         }
 
         public void updateBackingContent(String filename) {
@@ -523,15 +521,13 @@ public class ResourceClientProxy {
                 throw new IllegalArgumentException("File expected, found directory: " + file.getAbsolutePath());
             }
 
-
             InstalledPackage oldPackage = getBackingContent();
-
 
             String oldVersion = oldPackage.getPackageVersion().getVersion();
             String newVersion = "1.0";
             if (oldVersion != null && oldVersion.length() != 0) {
                 String[] parts = oldVersion.split("[^a-zA-Z0-9]");
-                String lastPart = parts[parts.length-1];
+                String lastPart = parts[parts.length - 1];
                 try {
                     int lastNumber = Integer.parseInt(lastPart);
                     newVersion = oldVersion.substring(0, oldVersion.length() - lastPart.length()) + (lastNumber + 1);
@@ -542,21 +538,13 @@ public class ResourceClientProxy {
 
             byte[] fileContents = new ScriptUtil(null).getFileBytes(filename);
 
+            PackageVersion pv = remoteClient.getContentManagerRemote().createPackageVersion(remoteClient.getSubject(),
+                oldPackage.getPackageVersion().getGeneralPackage().getName(),
+                oldPackage.getPackageVersion().getGeneralPackage().getPackageType().getId(), newVersion,
+                oldPackage.getPackageVersion().getArchitecture().getId(), fileContents);
 
-            PackageVersion pv =
-                    remoteClient.getContentManagerRemote().createPackageVersion(
-                        remoteClient.getSubject(),
-                        oldPackage.getPackageVersion().getGeneralPackage().getName(),
-                        oldPackage.getPackageVersion().getGeneralPackage().getPackageType().getId(),
-                        newVersion,
-                        oldPackage.getPackageVersion().getArchitecture().getId(),
-                        fileContents);
-
-            remoteClient.getContentManagerRemote().deployPackages(
-                    remoteClient.getSubject(),
-                    new int[] { resourceClientProxy.getId()},
-                    new int[] {pv.getId()});
-
+            remoteClient.getContentManagerRemote().deployPackages(remoteClient.getSubject(),
+                new int[] { resourceClientProxy.getId() }, new int[] { pv.getId() });
 
         }
 
@@ -564,14 +552,13 @@ public class ResourceClientProxy {
 
             InstalledPackage installedPackage = getBackingContent();
 
-            if (fileName == null )
+            if (fileName == null)
                 fileName = installedPackage.getPackageVersion().getFileName();
-            
+
             File file = new File(fileName);
 
-            byte[] data =
-                    remoteClient.getContentManagerRemote().getPackageBytes(
-                            remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
+            byte[] data = remoteClient.getContentManagerRemote().getPackageBytes(remoteClient.getSubject(),
+                resourceClientProxy.resourceId, installedPackage.getId());
 
             FileOutputStream fos = new FileOutputStream(file);
             fos.write(data);
@@ -580,8 +567,6 @@ public class ResourceClientProxy {
         }
 
         // ------------------------------------------------------------------------------------------------------
-
-
 
         public Object invoke(Object proxy, Method method, Method proceedMethod, Object[] args) throws Throwable {
 
@@ -620,7 +605,6 @@ public class ResourceClientProxy {
         }
     }
 
-
     static String simpleName(String name) {
         return decapitalize(name.replaceAll("\\W", ""));
     }
@@ -657,9 +641,7 @@ public class ResourceClientProxy {
 
         public InstalledPackage getBackingContent();
 
-
         public void updateBackingContent(String fileName);
-
 
         public void retrieveBackingContent(String fileName) throws IOException;
 

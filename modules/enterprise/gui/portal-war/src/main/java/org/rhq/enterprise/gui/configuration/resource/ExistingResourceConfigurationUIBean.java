@@ -18,17 +18,32 @@
  */
 package org.rhq.enterprise.gui.configuration.resource;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.event.ValueChangeEvent;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.Out;
 import org.jetbrains.annotations.Nullable;
+import org.richfaces.model.UploadItem;
 
-import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
+import org.jboss.seam.annotations.Create;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationValidationException;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -39,22 +54,9 @@ import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
 import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.richfaces.model.UploadItem;
-
-import javax.ejb.EJBException;
-import javax.faces.application.FacesMessage;
-import javax.faces.event.ValueChangeEvent;
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
 
 // This class is temporarily decleared in components.xml since it is declared under two names - ViewUIBean and
 // UIBean. This class is undergoing some refactoring and part of that will include declaring the @Name and @Scope
@@ -73,7 +75,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     //    @Out
     private Collection<RawConfigDirectory> rawConfigDirectories;
 
-//    @Out
+    //    @Out
     private FileUploadUIBean fileUploader = new FileUploadUIBean();
 
     private String modalEditorContents;
@@ -139,18 +141,28 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String switchToRaw() {
-        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getConfiguration(), true);
+        Configuration configuration;
+        try {
+            configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
+                EnterpriseFacesContextUtility.getSubject(), getResourceId(), getConfiguration(), true);
 
-        setConfiguration(configuration);
+            setConfiguration(configuration);
 
-        for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRaws().put(raw.getPath(), raw);
+            for (RawConfiguration raw : configuration.getRawConfigurations()) {
+                getRaws().put(raw.getPath(), raw);
+            }
+            current = null;
+            setConfiguration(configuration);
+            updateModifiedCache();
+            mode = RAW_MODE;
+
+        } catch (ResourceNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ConfigurationValidationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
-        current = null;
-        setConfiguration(configuration);
-        updateModifiedCache();
-        mode = RAW_MODE;
         return null;
     }
 
@@ -166,27 +178,37 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String switchToStructured() {
-        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
+        Configuration configuration;
+        try {
+            configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
+                EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
 
-        for (Property property : configuration.getAllProperties().values()) {
-            property.setConfiguration(configuration);
-        }
+            for (Property property : configuration.getAllProperties().values()) {
+                property.setConfiguration(configuration);
+            }
 
-        for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRaws().put(raw.getPath(), raw);
+            for (RawConfiguration raw : configuration.getRawConfigurations()) {
+                getRaws().put(raw.getPath(), raw);
+                setConfiguration(configuration);
+            }
+            current = null;
             setConfiguration(configuration);
+
+            for (RawConfiguration raw : configuration.getRawConfigurations()) {
+                System.out.println(raw.getPath() + " -\n" + (new String(raw.getContents())) + "\n");
+            }
+
+            updateModifiedCache();
+
+            mode = STRUCTURED_MODE;
+
+        } catch (ResourceNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ConfigurationValidationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
-        current = null;
-        setConfiguration(configuration);
-
-        for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            System.out.println(raw.getPath() + " -\n" + (new String(raw.getContents())) + "\n");
-        }
-
-        updateModifiedCache();
-
-        mode = STRUCTURED_MODE;
 
         return null;
     }
@@ -208,39 +230,46 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         Configuration mergedConfiguration = null;
         ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-        
-        mergedConfiguration = getMergedConfiguration();
-        AbstractResourceConfigurationUpdate updateRequest = this.configurationManager
-            .updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(), resourceId,
-                mergedConfiguration, fromStructured);
-        if (updateRequest != null) {
-            switch (updateRequest.getStatus()) {
-            case SUCCESS:
-            case INPROGRESS:
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration update request with id "
-                    + updateRequest.getId() + " has been sent to the Agent.");
-                clearConfiguration();
-                return SUCCESS_OUTCOME;
-            case FAILURE:
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
-                    + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
 
-                if (null != mergedConfiguration) {
-                    for (RawConfiguration raw : mergedConfiguration.getRawConfigurations()) {
-                        String message = raw.errorMessage;
-                        if (message != null) {
-                            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
+        mergedConfiguration = getMergedConfiguration();
+        try {
+            AbstractResourceConfigurationUpdate updateRequest = this.configurationManager
+                .updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(), resourceId,
+                    mergedConfiguration, fromStructured);
+            if (updateRequest != null) {
+                switch (updateRequest.getStatus()) {
+                case SUCCESS:
+                case INPROGRESS:
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration update request with id "
+                        + updateRequest.getId() + " has been sent to the Agent.");
+                    clearConfiguration();
+                    return SUCCESS_OUTCOME;
+                case FAILURE:
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
+                        + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
+
+                    if (null != mergedConfiguration) {
+                        for (RawConfiguration raw : mergedConfiguration.getRawConfigurations()) {
+                            String message = raw.errorMessage;
+                            if (message != null) {
+                                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
+                            }
                         }
                     }
+
+                    return FAILURE_OUTCOME;
+                case NOCHANGE:
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
+                        "No changes were made to the configuration, so "
+                            + "no update request has been sent to the Agent.");
+                    clearConfiguration();
+                    return SUCCESS_OUTCOME;
+
                 }
-
-                return FAILURE_OUTCOME;
-            case NOCHANGE:
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                    "No changes were made to the configuration, so " + "no update request has been sent to the Agent.");
-                clearConfiguration();
-                return SUCCESS_OUTCOME;
-
+            }
+        } catch (ConfigurationValidationException e) {
+            for (String key : e.errors.keySet()) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, key, e.errors.get(key));
             }
         }
         return FAILURE_OUTCOME;
@@ -297,8 +326,19 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     public String commit() {
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        LookupUtil.getConfigurationManager().updateResourceConfiguration(subject, getResourceId(),
-            getMergedConfiguration());
+        try {
+            LookupUtil.getConfigurationManager().updateResourceConfiguration(subject, getResourceId(),
+                getMergedConfiguration());
+        } catch (ResourceNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ConfigurationUpdateStillInProgressException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (org.rhq.core.domain.configuration.ConfigurationValidationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         return "/rhq/resource/configuration/view.xhtml?id=" + getResourceId();
     }

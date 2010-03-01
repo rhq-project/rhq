@@ -18,18 +18,21 @@
  */
 package org.rhq.enterprise.server.configuration;
 
+import java.util.List;
+import java.util.Map;
+
+import javax.ejb.Local;
+
 import org.jetbrains.annotations.Nullable;
 import org.quartz.SchedulerException;
 
-import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.ConfigurationValidationException;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -44,11 +47,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 
-import javax.ejb.Local;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource
  * configuration and previous update history and view/edit plugin configuration.
@@ -57,7 +55,7 @@ import java.util.Map;
  * @author Ian Springer
  */
 @Local
-public interface ConfigurationManagerLocal {
+public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
 
     /**
      * Updates the plugin configuration used to connect and communicate with the resource using the information in the
@@ -150,9 +148,13 @@ public interface ConfigurationManagerLocal {
      * @param  configHistoryId the id of the resource's previous configuration to rollback to
      *
      * @throws ConfigurationUpdateException if the configHistoryId does not exist
+     * @throws ConfigurationValidationException 
+     * @throws ConfigurationUpdateStillInProgressException 
+     * @throws ResourceNotFoundException 
      */
     void rollbackResourceConfiguration(Subject subject, int resourceId, int configHistoryId)
-        throws ConfigurationUpdateException;
+        throws ConfigurationUpdateException, ResourceNotFoundException, ConfigurationUpdateStillInProgressException,
+        ConfigurationValidationException;
 
     /**
      * For internal use only - do not call this method. This is for
@@ -372,120 +374,5 @@ public interface ConfigurationManagerLocal {
      * timed out).
      */
     void checkForTimedOutConfigurationUpdateRequests();
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    public GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId);
-
-    public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
-        int configurationUpdateId);
-
-    public Configuration getConfiguration(Subject subject, int configurationId);
-
-    /**
-     * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     * resource's plugin configuration is not yet initialized.
-     *
-     * @param  subject     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
-     *
-     * @return the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     *         resource's configuration is not yet initialized
-     * @throws FetchException TODO
-     */
-    @Nullable
-    Configuration getPluginConfiguration(Subject subject, int resourceId);
-
-    /**
-     * Get the latest plugin configuration for the {@link Resource} with the given id. Returns the configuration as it
-     * is known on the server-side in the database.
-     *
-     * @param  subject     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
-     *
-     * @return the current plugin configuration (along with additional information about the configuration) for the
-     *         {@link Resource} with the given id
-     * @throws FetchException TODO
-     */
-    PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId);
-
-    /**
-     * Get the latest resource configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     * resource's configuration is not yet initialized and for some reason we can't get its current live configuration
-     * (e.g. in the case the agent or resource is down). Returns the configuration as it is known on the server-side in
-     * the database. The database will be sync'ed with the live values, if the currently live configuration is actually
-     * different than the latest configuration update found in history.
-     *
-     * @param  subject     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
-     *
-     * @return the current configuration (along with additional information about the configuration) for the
-     *         {@link Resource} with the given id, or <code>null</code> if the resource's configuration is not yet
-     *         initialized and its live configuration could not be determined
-     * @throws FetchException TODO
-     */
-    @Nullable
-    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId);
-
-    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId,
-        boolean fromStructured);
-
-    boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId);
-
-    boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId);
-
-    int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
-        Map<Integer, Configuration> newResourceConfigurationMap);
-
-    /**
-     * Updates the plugin configuration used to connect and communicate with the resource. The given <code>
-     * newConfiguration</code> is usually a modified version of a configuration returned by
-     * {@link #getPluginConfiguration(Subject, int)}.
-     *
-     * @param  subject           the user who wants to see the information
-     * @param  resourceId       a {@link Resource} id
-     * @param  newConfiguration the new plugin configuration
-     *
-     * @return the plugin configuration update item corresponding to this request
-     */
-    PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId, Configuration newConfiguration)
-        throws ResourceNotFoundException;
-
-    /**
-     * This method is called when a user has requested to change the resource configuration for an existing resource. If
-     * the user does not have the proper permissions to change the resource's configuration, an exception is thrown.
-     *
-     * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
-     * sent. Once the agent finishes with the request, it will send the completed request information to
-     * {@link #completeResourceConfigurationUpdate}.</p>
-     *
-     * @param  subject           the user who is requesting the update
-     * @param  resourceId       identifies the resource to be updated
-     * @param  newConfiguration the resource's desired new configuration
-     *
-     * @return the resource configuration update item corresponding to this request. null 
-     * if newConfiguration is equal to the existing configuration.
-     */
-    @Nullable
-    ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
-
-    ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
-        ConfigurationUpdateStillInProgressException;
-
-    Configuration getResourceConfiguration(Subject subject, int resourceId);
-
-    /**
-     * @see ConfigurationManagerRemote#getPackageTypeConfigurationDefinition(Subject,int)
-     */
-    ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId);
-
-    Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
-        boolean fromStructured) throws ResourceNotFoundException, TranslationNotSupportedException;
 
 }

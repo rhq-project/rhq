@@ -55,6 +55,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.ConfigurationValidationException;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -976,33 +977,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
-        ConfigurationUpdateStillInProgressException {
+        ConfigurationUpdateStillInProgressException, ConfigurationValidationException {
 
         Configuration configToUpdate = newConfiguration;
 
         if (isStructuredAndRawSupported(resourceId)) {
             configToUpdate = translateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
         }
-        try {
-            Configuration invalidConfig = validateResourceConfiguration(subject, resourceId, newConfiguration,
-                fromStructured);
-            if (null != invalidConfig) {
-                Resource resource = resourceManager.getResourceById(subject, resourceId);
-                ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource,
-                    invalidConfig, subject.getName());
-                resourceConfigurationUpdate.setErrorMessage("resource.validation.failed");
-                resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
-
-                return resourceConfigurationUpdate;
-            }
-        } catch (PluginContainerException e) {
-            Resource resource = resourceManager.getResourceById(subject, resourceId);
-            ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource,
-                newConfiguration, subject.getName());
-            resourceConfigurationUpdate.setErrorMessage(e.getMessage());
-            resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
-            return resourceConfigurationUpdate;
-        }
+        validateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
 
         ResourceConfigurationUpdate newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(
             subject, resourceId, configToUpdate, ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
@@ -1010,8 +992,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return newUpdate;
     }
 
-    private Configuration validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
-        boolean isStructured) throws PluginContainerException {
+    private void validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean isStructured) throws ConfigurationValidationException {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
             throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
@@ -1023,7 +1005,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Agent agent = resource.getAgent();
         AgentClient agentClient = this.agentManager.getAgentClient(agent);
         ConfigurationAgentService configService = agentClient.getConfigurationAgentService();
-        return configService.validate(configuration, resourceId, isStructured);
+        configService.validate(configuration, resourceId, isStructured);
     }
 
     private boolean isRawSupported(int resourceId) {
@@ -1096,7 +1078,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public void rollbackResourceConfiguration(Subject subject, int resourceId, int configHistoryId)
-        throws ConfigurationUpdateException {
+        throws ConfigurationUpdateException, ResourceNotFoundException, ConfigurationUpdateStillInProgressException,
+        ConfigurationValidationException {
         ResourceConfigurationUpdate configurationUpdateHistory = entityManager.find(ResourceConfigurationUpdate.class,
             configHistoryId);
         Configuration configuration = configurationUpdateHistory.getConfiguration();

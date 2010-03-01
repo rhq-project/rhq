@@ -23,26 +23,29 @@
 
 package org.rhq.enterprise.gui.configuration.resource;
 
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.ejb.EJBException;
+import javax.faces.application.FacesMessage;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Observer;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
+
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationValidationException;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import org.richfaces.model.UploadItem;
-
-import javax.ejb.EJBException;
-import javax.faces.application.FacesMessage;
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 
 @Name("configurationEditor")
 @Scope(ScopeType.CONVERSATION)
@@ -67,7 +70,7 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
     }
 
     @Override
-    protected void changeToRawTab() {
+    protected void changeToRawTab() throws ResourceNotFoundException, ConfigurationValidationException {
         resourceConfiguration = translateToRaw();
         for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
             RawConfigUIBean uiBean = findRawConfigUIBeanByPath(raw.getPath());
@@ -75,25 +78,33 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
         }
     }
 
-    private Configuration translateToRaw() {
+    private Configuration translateToRaw() throws ResourceNotFoundException, ConfigurationValidationException {
         ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
         return configurationMgr.translateResourceConfiguration(loggedInUser.getSubject(), resourceId,
             resourceConfiguration, STRUCTURED_MODE);
     }
 
     @Override
-    protected void changeToStructuredTab() {
+    protected void changeToStructuredTab() throws ResourceNotFoundException, ConfigurationValidationException {
+
         resourceConfiguration = translateToStructured();
+
         for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
             RawConfigUIBean uiBean = findRawConfigUIBeanByPath(raw.getPath());
             uiBean.setRawConfiguration(raw);
+            if ((raw.errorMessage != null) && (!raw.errorMessage.equals(""))) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.errorMessage);
+            }
+
         }
     }
 
-    private Configuration translateToStructured() {
+    private Configuration translateToStructured() throws ResourceNotFoundException, ConfigurationValidationException {
         ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
+
         return configurationMgr.translateResourceConfiguration(loggedInUser.getSubject(), resourceId,
             resourceConfiguration, RAW_MODE);
+
     }
 
     @Observer("rawConfigUpdate")
@@ -144,7 +155,8 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
         return isRawSupported() || isStructuredAndRawSupported();
     }
 
-    public String updateConfiguration() {
+    public String updateConfiguration() throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException,
+        ConfigurationValidationException {
         ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
 
         ConfigurationMaskingUtility.unmaskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
@@ -154,11 +166,10 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
 
             if (isStructuredAndRawSupported()) {
                 updateRequest = configurationMgr.updateStructuredOrRawConfiguration(loggedInUser.getSubject(),
-                    resourceId, resourceConfiguration, isStructuredMode());                
-            }
-            else {
-                updateRequest = configurationMgr.updateResourceConfiguration(loggedInUser.getSubject(),
-                    resourceId, resourceConfiguration);
+                    resourceId, resourceConfiguration, isStructuredMode());
+            } else {
+                updateRequest = configurationMgr.updateResourceConfiguration(loggedInUser.getSubject(), resourceId,
+                    resourceConfiguration);
             }
 
             clearErrors();
@@ -173,12 +184,12 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
                 case FAILURE:
                     FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
                         + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
-//                    for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
-//                        String message = raw.errorMessage;
-//                        if (message != null) {
-//                            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
-//                        }
-//                    }
+                    //                    for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
+                    //                        String message = raw.errorMessage;
+                    //                        if (message != null) {
+                    //                            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
+                    //                        }
+                    //                    }
                     copyErrorMessages(updateRequest);
                     return "failure";
 
@@ -218,10 +229,10 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
                 rawUIBean.setErrorMessage(updatedRaw.errorMessage);
             }
 
-//            RawConfiguration raw = findRawConfigurationByPath(updatedRaw.getPath());
-//            if (raw != null) {
-//                raw.errorMessage = updatedRaw.errorMessage;
-//            }
+            //            RawConfiguration raw = findRawConfigurationByPath(updatedRaw.getPath());
+            //            if (raw != null) {
+            //                raw.errorMessage = updatedRaw.errorMessage;
+            //            }
         }
     }
 

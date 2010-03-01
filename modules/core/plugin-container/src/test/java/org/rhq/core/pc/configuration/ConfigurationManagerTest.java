@@ -23,13 +23,23 @@
 
 package org.rhq.core.pc.configuration;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+
+import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+
 import org.hamcrest.Matcher;
 import org.jmock.Expectations;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationValidationException;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.resource.ResourceType;
@@ -38,15 +48,6 @@ import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.test.jmock.PropertyMatcher;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 
 public class ConfigurationManagerTest extends ConfigManagementTest {
 
@@ -324,12 +325,11 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
         try {
             configurationMgr.validate(configuration, resourceId, false);
             assertTrue(false);
-        } catch (PluginContainerException exception) {
+        } catch (ConfigurationValidationException exception) {
             //SUCCESS
         }
     }
 
-    
     @Test
     public void catchExceptionThrownByFailedValidationOfStructuredConfigs() throws Exception {
 
@@ -355,14 +355,11 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
         try {
             configurationMgr.validate(configuration, resourceId, true);
             assertTrue(false);
-        } catch (PluginContainerException exception) {
+        } catch (ConfigurationValidationException exception) {
             //SUCCESS
         }
     }
 
-
-    
-    
     @Test
     public void mergingRawsIntoStructuredShouldIgnoreNull() throws Exception {
         Configuration config = new Configuration();

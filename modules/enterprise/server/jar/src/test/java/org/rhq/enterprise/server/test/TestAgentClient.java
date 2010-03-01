@@ -40,6 +40,7 @@ import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationValidationException;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
@@ -255,8 +256,8 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
         return null;
     }
 
-    public Configuration validate(Configuration configuration, int resourceId, boolean isStructured)
-            throws PluginContainerException {
-        return null;
+    public void validate(Configuration configuration, int resourceId, boolean isStructured)
+        throws ConfigurationValidationException {
+        return;
     }
 }

@@ -22,7 +22,9 @@
  */
 package org.rhq.core.pc.configuration;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -40,6 +42,7 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationValidationException;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.resource.ResourceType;
@@ -53,9 +56,6 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.system.SystemInfoFactory;
-
-import org.rhq.core.util.exception.WrappedRemotingException;
 
 /**
  * Manages configuration of all resources across all plugins.
@@ -328,36 +328,47 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return null;
     }
 
-    public Configuration validate(Configuration configuration, int resourceId, boolean isStructured)
-        throws PluginContainerException {
+    public void validate(Configuration configuration, int resourceId, boolean isStructured)
+        throws ConfigurationValidationException {
 
         boolean success = true;
 
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
-        ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
-            FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+        ResourceConfigurationFacet facet;
+        try {
+            facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class, FacetLockType.READ,
+                FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+        } catch (PluginContainerException e1) {
+            Map<String, String> errors = new HashMap<String, String>();
+            errors.put("structured", e1.getMessage());
+            throw new ConfigurationValidationException(e1.getMessage(), errors);
+        }
         if (isStructured) {
             try {
                 facet.validateStructuredConfiguration(configuration);
-            } catch (IllegalArgumentException e) {
-                success = false;
             } catch (Throwable t) {
-                throw new PluginContainerException(t.getMessage(), t);
+                Map<String, String> errors = new HashMap<String, String>();
+                errors.put("structured", t.getMessage());
+                throw new ConfigurationValidationException(t.getMessage(), errors);
             }
         } else {
+            Map<String, String> errors = null;
+
             for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
                 try {
                     facet.validateRawConfiguration(rawConfiguration);
                 } catch (IllegalArgumentException e) {
-                    success = false;
+                    if (errors == null) {
+                        errors = new HashMap<String, String>();
+                    }
+                    errors.put(rawConfiguration.getPath(), e.getMessage());
                     rawConfiguration.errorMessage = e.getMessage();
-                } catch (Throwable t) {
-                    success = false;
-                    rawConfiguration.errorMessage = t.getMessage();
                 }
             }
+            if (errors != null) {
+                throw new ConfigurationValidationException("validation of raw configs failed", errors);
+            }
         }
-        return success ?  null: configuration;
     }
 }

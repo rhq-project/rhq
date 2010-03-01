@@ -23,6 +23,8 @@
 
 package org.rhq.bundle.filetemplate.recipe;
 
+import java.util.Map;
+
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -35,14 +37,49 @@ public class RecipeParserTest {
         cleanRecipe();
     }
 
-    public void testSimpleRecipe() throws Exception {
-        addRecipeCommand("deploy -f jboss.tar -d /opt/jboss");
-        addRecipeCommand("configdef -f config.xml");
+    public void testSimpleRecipeReplacementVariables() throws Exception {
+        addRecipeCommand("# <% ignored.inside.comment %>");
+        addRecipeCommand("deploy -f jboss.tar -d \"<% opt.dir %>/jboss\"");
+        addRecipeCommand("deploy -f tomcat.tar -d <%opt.dir%>/tomcat");
+        addRecipeCommand("deploy -f jboss.zip -d <%rhq.system.hostname%>/opt/tomcat"); // this is ignored, its an agent fact variable
         RecipeParser parser = new RecipeParser();
         RecipeContext context = parser.parseRecipe(getRecipe());
-        assert context.getConfigurationDefinitionFilename().equals("config.xml");
-        assert context.getDeployFiles().containsKey("jboss.tar");
-        assert context.getDeployFiles().get("jboss.tar").equals("/opt/jboss");
+        Map<String, String> files = context.getDeployFiles();
+        assert files.containsKey("jboss.tar") : files;
+        assert files.get("jboss.tar").equals("<% opt.dir %>/jboss") : files;
+        assert files.containsKey("tomcat.tar") : files;
+        assert files.get("tomcat.tar").equals("<%opt.dir%>/tomcat") : files;
+        assert files.containsKey("jboss.zip") : files;
+        assert files.get("jboss.zip").equals("<%rhq.system.hostname%>/opt/tomcat") : files;
+        assert context.getReplacementVariables().contains("opt.dir") : context.getReplacementVariables();
+        assert context.getReplacementVariables().size() == 1 : context.getReplacementVariables();
+    }
+
+    public void testSimpleRecipe() throws Exception {
+        addRecipeCommand("deploy -f jboss.tar -d /opt/jboss");
+        addRecipeCommand("deploy -f tomcat.tar -d /opt/tomcat");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = parser.parseRecipe(getRecipe());
+        Map<String, String> files = context.getDeployFiles();
+        assert files.containsKey("jboss.tar") : files;
+        assert files.get("jboss.tar").equals("/opt/jboss") : files;
+        assert files.containsKey("tomcat.tar") : files;
+        assert files.get("tomcat.tar").equals("/opt/tomcat") : files;
+    }
+
+    public void testSimpleRecipeWithQuotes() throws Exception {
+        addRecipeCommand("deploy -f jboss1.zip -d \"/opt/jboss1\"");
+        addRecipeCommand("deploy -f jboss.tar --directory='/opt/jboss'");
+        addRecipeCommand("deploy -f tomcat.tar \"--directory=/opt/tomcat\"");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = parser.parseRecipe(getRecipe());
+        Map<String, String> files = context.getDeployFiles();
+        assert files.containsKey("jboss1.zip") : files;
+        assert files.get("jboss1.zip").equals("/opt/jboss1") : files;
+        assert files.containsKey("jboss.tar") : files;
+        assert files.get("jboss.tar").equals("'/opt/jboss'") : files;
+        assert files.containsKey("tomcat.tar") : files;
+        assert files.get("tomcat.tar").equals("/opt/tomcat") : files;
     }
 
     public void testSimpleRecipeError() throws Exception {
@@ -57,11 +94,11 @@ public class RecipeParserTest {
         }
 
         cleanRecipe();
-        addRecipeCommand("configdef");
+        addRecipeCommand("deploy -d /opt/jboss");
 
         try {
             parser.parseRecipe(getRecipe());
-            assert false : "This should have failed - need to provide a -f to the configdef command";
+            assert false : "This should have failed - need to provide a -f to the deploy command";
         } catch (Exception ok) {
             // to be expected
         }
@@ -75,16 +112,18 @@ public class RecipeParserTest {
         addRecipeCommand("");
         addRecipeCommand("#");
         addRecipeCommand("### comment here");
-        addRecipeCommand("configdef -f config.xml");
+        addRecipeCommand("deploy -f tomcat.tar -d /opt/tomcat");
         addRecipeCommand("");
         addRecipeCommand("#");
         addRecipeCommand("### comment here");
         addRecipeCommand("");
         RecipeParser parser = new RecipeParser();
         RecipeContext context = parser.parseRecipe(getRecipe());
-        assert context.getConfigurationDefinitionFilename().equals("config.xml");
-        assert context.getDeployFiles().containsKey("jboss.tar");
-        assert context.getDeployFiles().get("jboss.tar").equals("/opt/jboss");
+        Map<String, String> files = context.getDeployFiles();
+        assert files.containsKey("jboss.tar") : files;
+        assert files.get("jboss.tar").equals("/opt/jboss") : files;
+        assert files.containsKey("tomcat.tar") : files;
+        assert files.get("tomcat.tar").equals("/opt/tomcat") : files;
     }
 
     private void cleanRecipe() {

@@ -26,6 +26,10 @@ package org.rhq.bundle.filetemplate.recipe;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
+/**
+ * @deprecated I think this command will not be used - probably should delete it
+ * @author mazz
+ */
 public class ConfigdefRecipeCommand implements RecipeCommand {
 
     public String getName() {
@@ -67,7 +71,8 @@ public class ConfigdefRecipeCommand implements RecipeCommand {
             throw new IllegalArgumentException("Missing the -f argument to indicate what the config def filename is");
         }
 
-        context.setConfigurationDefinitionFilename(filename);
+        // TODO: what to do? can I delete this command entirely?
+
         return;
     }
 }

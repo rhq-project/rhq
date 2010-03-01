@@ -30,8 +30,12 @@ import java.io.StreamTokenizer;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Parses the file template recipe.
@@ -41,6 +45,12 @@ import java.util.Map;
  */
 public class RecipeParser {
     private Map<String, RecipeCommand> recipeCommands;
+
+    // note that we use the same as the core util's template engine
+    // the native system replacement variable prefix is used by the agent-side fact variable names
+    private final Pattern replacementVariableDeclarationPattern = Pattern.compile("<%\\s*(\\w+\\.?)+\\s*%>");
+    private final Pattern replacementVariableNamePattern = Pattern.compile("(\\w+\\.?)+");
+    private final String systemReplacementVariablePrefix = "rhq.system.";
 
     public RecipeParser() {
         setupRecipeCommands();
@@ -74,7 +84,13 @@ public class RecipeParser {
             throw new Exception("Unknown command in recipe: " + commandName);
         }
 
+        Set<String> replacementVars = getReplacementVariables(line);
+        if (replacementVars != null) {
+            context.addReplacementVariables(replacementVars);
+        }
+
         recipeCommand.parse(context, arguments);
+
         return;
     }
 
@@ -88,6 +104,27 @@ public class RecipeParser {
         for (RecipeCommand recipeCommand : knownCommands) {
             recipeCommands.put(recipeCommand.getName(), recipeCommand);
         }
+    }
+
+    private Set<String> getReplacementVariables(String cmdLine) {
+        Set<String> replacementVariables = null;
+        Matcher matcher = this.replacementVariableDeclarationPattern.matcher(cmdLine);
+        while (matcher.find()) {
+            String replacementDeclaration = matcher.group();
+            Matcher matcherInner = this.replacementVariableNamePattern.matcher(replacementDeclaration);
+            if (!matcherInner.find()) {
+                throw new IllegalArgumentException("Bad replacement declaration [" + replacementDeclaration + "]");
+            }
+            String replacementVariable = matcherInner.group();
+            if (!replacementVariable.startsWith(this.systemReplacementVariablePrefix)) {
+                if (replacementVariables == null) {
+                    replacementVariables = new HashSet<String>(1);
+                }
+                replacementVariables.add(replacementVariable);
+            }
+        }
+
+        return replacementVariables;
     }
 
     private String[] splitCommandLine(String cmdLine) {

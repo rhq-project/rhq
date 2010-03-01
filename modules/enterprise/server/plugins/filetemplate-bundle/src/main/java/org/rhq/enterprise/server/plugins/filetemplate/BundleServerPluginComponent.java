@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.server.plugins.filetemplate;
 
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -29,6 +31,8 @@ import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
@@ -68,9 +72,19 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
         RecipeParser parser = new RecipeParser();
         RecipeContext parserContext = parser.parseRecipe(recipe);
 
-        // TODO convert the context into the proper data that the parse results wants
+        Set<String> bundleFileNames = new HashSet<String>();
+        Map<String, String> deployFiles = deployFiles = parserContext.getDeployFiles();
+        bundleFileNames.addAll(deployFiles.keySet());
+
         ConfigurationDefinition configDef = null;
-        Set<String> bundleFileNames = null;
+        if (parserContext.getReplacementVariables() != null) {
+            configDef = new ConfigurationDefinition("replacementVariables", null);
+            for (String replacementVar : parserContext.getReplacementVariables()) {
+                PropertyDefinitionSimple prop = new PropertyDefinitionSimple(replacementVar, null, false,
+                    PropertySimpleType.STRING);
+                configDef.put(prop);
+            }
+        }
 
         RecipeParseResults results = new RecipeParseResults(configDef, bundleFileNames);
         return results;

@@ -24,7 +24,9 @@
 package org.rhq.bundle.filetemplate.recipe;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Contains information that is gleened from a recipe after it is parsed.
@@ -34,13 +36,13 @@ import java.util.Map;
 public class RecipeContext {
 
     private final String recipe;
-    private String configurationDefinitionFilename;
-    private Map<String, String> deployFiles;
+    private final Map<String, String> deployFiles;
+    private final Set<String> replacementVariables;
 
     public RecipeContext(String recipe) {
         this.recipe = recipe;
-        this.configurationDefinitionFilename = null;
         this.deployFiles = new HashMap<String, String>();
+        this.replacementVariables = new HashSet<String>();
     }
 
     /**
@@ -49,21 +51,7 @@ public class RecipeContext {
      * @return the actual recipe text
      */
     public String getRecipe() {
-        return recipe;
-    }
-
-    /**
-     * A recipe can have an optional configuration definition file associated with it.
-     * If this returns non-<code>null</code>, it refers to this configuration definition file.
-     * 
-     * @return config def filename
-     */
-    public String getConfigurationDefinitionFilename() {
-        return configurationDefinitionFilename;
-    }
-
-    public void setConfigurationDefinitionFilename(String filename) {
-        this.configurationDefinitionFilename = filename;
+        return this.recipe;
     }
 
     /**
@@ -79,4 +67,18 @@ public class RecipeContext {
     public void addDeployFile(String filename, String directory) {
         this.deployFiles.put(filename, directory);
     }
+
+    /**
+     * The names of all replacement variables that are found in the recipe.
+     * 
+     * @return the replacement variables
+     */
+    public Set<String> getReplacementVariables() {
+        return this.replacementVariables;
+    }
+
+    public void addReplacementVariables(Set<String> replacementVariables) {
+        this.replacementVariables.addAll(replacementVariables);
+    }
+
 }

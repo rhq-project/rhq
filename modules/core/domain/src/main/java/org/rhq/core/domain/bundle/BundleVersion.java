@@ -94,6 +94,9 @@ public class BundleVersion implements Serializable {
     @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleDeployDefinition> bundleDeployDefinitions = new ArrayList<BundleDeployDefinition>();
 
+    @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleFile> bundleFiles = new ArrayList<BundleFile>();
+
     public BundleVersion() {
         // for JPA use
     }
@@ -180,6 +183,19 @@ public class BundleVersion implements Serializable {
 
     public void setBundleDeployDefinitions(List<BundleDeployDefinition> bundleDeployDefinitions) {
         this.bundleDeployDefinitions = bundleDeployDefinitions;
+    }
+
+    public List<BundleFile> getBundleFiles() {
+        return bundleFiles;
+    }
+
+    public void addBundleFile(BundleFile bundleFile) {
+        this.bundleFiles.add(bundleFile);
+        bundleFile.setBundleVersion(this);
+    }
+
+    public void setBundleFiles(List<BundleFile> bundleFiles) {
+        this.bundleFiles = bundleFiles;
     }
 
     @Override

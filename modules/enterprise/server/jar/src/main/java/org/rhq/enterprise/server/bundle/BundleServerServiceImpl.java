@@ -27,8 +27,11 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.bundle.BundleStatusUpdate;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -49,7 +52,12 @@ public class BundleServerServiceImpl implements BundleServerService {
     public List<PackageVersion> getAllBundleVersionPackageVersions(int bundleVersionId) {
         try {
             BundleManagerLocal bm = LookupUtil.getBundleManager();
-            List<BundleFile> bundleFiles = bm.findBundleFilesForBundleVersion(bundleVersionId);
+            BundleVersionCriteria c = new BundleVersionCriteria();
+            Subject subject = LookupUtil.getSubjectManager().getOverlord();
+            c.addFilterId(bundleVersionId);
+            c.fetchBundleFiles(true);
+            List<BundleVersion> bundleVersions = bm.findBundleVersionsByCriteria(subject, c);
+            List<BundleFile> bundleFiles = bundleVersions.get(0).getBundleFiles();
             List<PackageVersion> packageVersions = new ArrayList<PackageVersion>(bundleFiles.size());
             for (BundleFile bundleFile : bundleFiles) {
                 packageVersions.add(bundleFile.getPackageVersion());

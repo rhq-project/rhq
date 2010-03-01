@@ -26,7 +26,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -42,13 +41,28 @@ import org.rhq.core.domain.util.PageList;
  */
 @Local
 public interface BundleManagerLocal {
-    Bundle createBundle(Subject subject, Bundle b);
 
-    BundleType createBundleType(Subject subject, BundleType bundleType);
+    /**
+     * @param subject must be InventoryManager
+     * @param bundle required fields: name 
+     * @return the persisted Bundle (id is assigned)
+     */
+    Bundle createBundle(Subject subject, Bundle bundle) throws Exception;
 
-    BundleVersion createBundleVersion(Subject subject, BundleVersion bundleVersion);
+    /**
+     * @param subject must be InventoryManager
+     * @param bundleType required fields: name 
+     * @return the persisted BundleType (id is assigned)
+     */
+    BundleType createBundleType(Subject subject, BundleType bundleType) throws Exception;
 
-    List<BundleFile> findBundleFilesForBundleVersion(int bundleVersionId) throws Exception;
+    /**
+     * @param subject must be InventoryManager
+     * @param int bundleId the bundle for which this will be the next version
+     * @param bundleVersion required fields: recipe (the full recipe as a String)
+     * @return the persisted BundleVersion (id is assigned)
+     */
+    BundleVersion createBundleVersion(Subject subject, int bundleId, BundleVersion bundleVersion) throws Exception;
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

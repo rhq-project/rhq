@@ -41,6 +41,7 @@ public class BundleVersionCriteria extends Criteria {
 
     private boolean fetchBundle;
     private boolean fetchBundleDeployDefinitions;
+    private boolean fetchBundleFiles;
     private boolean fetchDistribution;
     private boolean fetchConfigurationDefinition;
 
@@ -70,12 +71,16 @@ public class BundleVersionCriteria extends Criteria {
         this.fetchBundle = fetchBundle;
     }
 
-    public void fetchDistribution(boolean fetchDistribution) {
-        this.fetchDistribution = fetchDistribution;
-    }
-
     public void fetchBundleDeployDefinitions(boolean fetchBundleDeployDefinitions) {
         this.fetchBundleDeployDefinitions = fetchBundleDeployDefinitions;
+    }
+
+    public void fetchBundleFiles(boolean fetchBundleFiles) {
+        this.fetchBundleFiles = fetchBundleFiles;
+    }
+
+    public void fetchDistribution(boolean fetchDistribution) {
+        this.fetchDistribution = fetchDistribution;
     }
 
 }

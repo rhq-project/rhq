@@ -35,7 +35,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.Repo;
@@ -49,6 +48,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -72,15 +72,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
 
-    @SuppressWarnings("unchecked")
-    public List<BundleFile> findBundleFilesForBundleVersion(int bundleVersionId) throws Exception {
-        Query q = entityManager.createNamedQuery(BundleFile.QUERY_FIND_BY_BUNDLE_VERSION_ID);
-        q.setParameter("id", bundleVersionId);
-        List<BundleFile> bundleFiles = (List<BundleFile>) q.getResultList();
-        return bundleFiles;
-    }
-
     public Bundle createBundle(Subject subject, Bundle bundle) {
+        if (null == bundle || null == bundle.getName())
+            throw new IllegalArgumentException("Missing one or more of: bundle, name");
+
         // add the implicit bundle repo, if necessary
         if (null == bundle.getRepo()) {
             Repo repo = new Repo(bundle.getName());
@@ -95,12 +90,25 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundle;
     }
 
-    public BundleType createBundleType(Subject subject, BundleType bundleType) {
+    public BundleType createBundleType(Subject subject, BundleType bundleType) throws Exception {
+        if (null == bundleType || null == bundleType.getName())
+            throw new IllegalArgumentException("Missing one or more of: bundleType, name");
+
         entityManager.persist(bundleType);
         return bundleType;
     }
 
-    public BundleVersion createBundleVersion(Subject subject, BundleVersion bundleVersion) {
+    public BundleVersion createBundleVersion(Subject subject, int bundleId, BundleVersion bundleVersion)
+        throws Exception {
+        Bundle bundle = entityManager.find(Bundle.class, bundleId);
+
+        if (null == bundleVersion || null == bundle || null == bundleVersion.getRecipe())
+            throw new IllegalArgumentException("Missing one or more of: bundle, bundleVersion, recipe");
+
+        // parse the recipe and get the config def and list of files
+        BundleServerPluginFacet bp;
+        //        bp.parseRecipe;
+
         entityManager.persist(bundleVersion);
         return bundleVersion;
     }
@@ -186,10 +194,16 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     public BundleType createMockBundleType(Subject subject) {
-        ResourceType linuxPlatformResourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin("Linux",
-            "Platforms");
-        BundleType bundleType = new BundleType(UUID.randomUUID().toString(), linuxPlatformResourceType);
-        return createBundleType(subject, bundleType);
+
+        try {
+            ResourceType linuxPlatformResourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin("Linux",
+                "Platforms");
+            BundleType bundleType = new BundleType(UUID.randomUUID().toString(), linuxPlatformResourceType);
+            return createBundleType(subject, bundleType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public Bundle createMockBundle(Subject subject, List<BundleType> bundleTypes) {

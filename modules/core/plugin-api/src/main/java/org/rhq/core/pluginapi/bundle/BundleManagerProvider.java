@@ -1,0 +1,52 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2010 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+package org.rhq.core.pluginapi.bundle;
+
+import java.io.OutputStream;
+import java.util.List;
+
+import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.content.PackageVersion;
+
+/**
+ * Provides bundle functionality that plugin components will need in order to process bundles.
+ * 
+ * @author John Mazzitelli
+ */
+public interface BundleManagerProvider {
+    /**
+     * Bndle plugins call back into this manager to obtain the bundle files that belong to a given bundle version.
+     * 
+     * @param bundleVersion
+     * @return the bundle files that are associated with the given bundle
+     * @throws Exception
+     */
+    List<PackageVersion> getAllBundleVersionPackageVersions(BundleVersion bundleVersion) throws Exception;
+
+    /**
+     * Bundle plugins call back into this manager to obtain the bundle file content for the given package.
+     * 
+     * @param packageVersion the package whose bits are to be downloaded
+     * @param outputStream where the package bits will get written to
+     * @return the size of the package version content that was downloaded and output
+     * @throws Exception
+     */
+    long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception;
+}

@@ -30,10 +30,10 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pc.bundle.BundleManager;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
+import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -59,7 +59,6 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
         return AvailabilityType.UP;
     }
 
-    @Override
     public BundleDeployResult deployBundle(BundleDeployRequest request) {
         BundleDeployResult result = new BundleDeployResult();
         try {
@@ -68,7 +67,7 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
 
             // download all the bundle files to our tmp directory
             File tmpDir = new File(this.resourceContext.getTemporaryDirectory(), "" + bundleVersion.getId());
-            BundleManager bundleManager = request.getBundleManager();
+            BundleManagerProvider bundleManager = request.getBundleManagerProvider();
             List<PackageVersion> packageVersions = bundleManager.getAllBundleVersionPackageVersions(bundleVersion);
             for (PackageVersion packageVersion : packageVersions) {
                 File packageFile = new File(tmpDir, packageVersion.getFileName());

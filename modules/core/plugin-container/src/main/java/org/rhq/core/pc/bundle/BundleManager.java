@@ -50,6 +50,7 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
+import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 
 /**
  * Manages the bundle subsystem, which allows bundles of content to be installed. 
@@ -58,7 +59,7 @@ import org.rhq.core.pluginapi.bundle.BundleFacet;
  *
  * @author John Mazzitelli
  */
-public class BundleManager extends AgentService implements BundleAgentService, ContainerService {
+public class BundleManager extends AgentService implements BundleAgentService, BundleManagerProvider, ContainerService {
     private final Log log = LogFactory.getLog(BundleManager.class);
 
     private PluginContainerConfiguration configuration;
@@ -99,7 +100,7 @@ public class BundleManager extends AgentService implements BundleAgentService, C
 
             // deploy the bundle utilizing the bundle facet object
             BundleDeployRequest deployRequest = new BundleDeployRequest();
-            deployRequest.setBundleManager(this);
+            deployRequest.setBundleManagerProvider(this);
             deployRequest.setBundleDeployDefinition(request.getBundleDeployDefinition());
             BundleDeployResult result = bundlePluginComponent.deployBundle(deployRequest);
             if (!result.isSuccess()) {
@@ -113,29 +114,12 @@ public class BundleManager extends AgentService implements BundleAgentService, C
         return response;
     }
 
-    /**
-     * This is used by bundle plugins - bundle plugins call back into this manager to obtain the
-     * bundle files that belong to a given bundle version.
-     * 
-     * @param bundleVersion
-     * @return the bundle files that are associated with the given bundle
-     * @throws Exception
-     */
     public List<PackageVersion> getAllBundleVersionPackageVersions(BundleVersion bundleVersion) throws Exception {
         int bvId = bundleVersion.getId();
         List<PackageVersion> pvs = getBundleServerService().getAllBundleVersionPackageVersions(bvId);
         return pvs;
     }
 
-    /**
-     * This is used by bundle plugins - bundle plugins call back into this manager to obtain the
-     * bundle file content for the given package.
-     * 
-     * @param packageVersion the package whose bits are to be downloaded
-     * @param outputStream where the package bits will get written to
-     * @return the size of the package version content that was downloaded and output
-     * @throws Exception
-     */
     public long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception {
         long size = getBundleServerService().downloadPackageBits(packageVersion, outputStream);
         return size;

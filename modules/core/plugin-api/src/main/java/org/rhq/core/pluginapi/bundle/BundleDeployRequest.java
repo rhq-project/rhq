@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,6 @@ package org.rhq.core.pluginapi.bundle;
 import java.io.Serializable;
 
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.pc.bundle.BundleManager;
 
 /**
  * A request to deploy a bundle.
@@ -33,7 +32,7 @@ public class BundleDeployRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private BundleDeployDefinition bundleDeployDefinition;
-    private BundleManager bundleManager;
+    private BundleManagerProvider bundleManager;
 
     public BundleDeployDefinition getBundleDeployDefinition() {
         return bundleDeployDefinition;
@@ -43,12 +42,12 @@ public class BundleDeployRequest implements Serializable {
         this.bundleDeployDefinition = bundleDeployDefinition;
     }
 
-    public BundleManager getBundleManager() {
+    public BundleManagerProvider getBundleManagerProvider() {
         return bundleManager;
     }
 
-    public void setBundleManager(BundleManager bundleManager) {
-        this.bundleManager = bundleManager;
+    public void setBundleManagerProvider(BundleManagerProvider provider) {
+        this.bundleManager = provider;
     }
 
 }

@@ -3202,6 +3202,57 @@
                      </statement>
                 </schema-directSQL>
             </schemaSpec>
+            
+            <schemaSpec version="2.82">
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_SAVED_SEARCH">
+                        CREATE TABLE RHQ_SAVED_SEARCH ( ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement desc="Creating primary key for RHQ_AFFINITY_GROUP">
+                        ALTER TABLE RHQ_SAVED_SEARCH ADD PRIMARY KEY ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="CONTEXT" columnType="VARCHAR2" precision="25" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" nullable="FALSE" />
+                
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="NAME" columnType="VARCHAR2" precision="200" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="PATTERN" columnType="VARCHAR2" precision="1000" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="PATTERN" nullable="FALSE" />
+                
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="JPQL_TRANSLATION" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="RESULT_COUNT" columnType="LONG" />
+                
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="GLOBAL" columnType="BOOLEAN" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" nullable="FALSE" />
+
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql" desc="Inserting global default saved search 'Downed Platforms'">
+                        INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
+                        VALUES (1, 'Resource', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, true)
+                    </statement>
+                    <statement targetDBVendor="oracle" desc="Inserting global default saved search 'Downed Platforms'">
+                        INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
+                        VALUES (1, 'Resource', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, 1)
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql" desc="Inserting global default saved search 'Downed Servers'">
+                        INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
+                        VALUES (2, 'Resource', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, true)
+                    </statement>
+                    <statement targetDBVendor="oracle" desc="Inserting global default saved search 'Downed Servers'">
+                        INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
+                        VALUES (2, 'Resource', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, 1)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

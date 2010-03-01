@@ -40,13 +40,15 @@ public class RecipeParseResults {
     /** The set of bundle files that make up the bundle (version) as specified in the recipe commands */
     private Set<String> bundleFileNames;
 
-    private RecipeParseResults(ConfigurationDefinition configDef, Set<String> bundleFileNames) {
+    public RecipeParseResults(ConfigurationDefinition configDef, Set<String> bundleFileNames) {
         this.configDef = configDef;
         this.bundleFileNames = bundleFileNames;
     }
 
     public ConfigurationDefinition getConfigDef() {
+
         // stub out a test ConfigDef here until we actual parse the recipe
+        System.out.println("!!!!!! REMOVE THIS TEST CODE !!!!!!!!");
         configDef = new ConfigurationDefinition("SampleBundle", "Stubbed ConfigDef for Sample Bundle");
         configDef.put(new PropertyDefinitionSimple("sample.bundle.deploy.directory",
             "Stubbed Property for deploy directory (must already exist on target platform)", true,
@@ -62,6 +64,7 @@ public class RecipeParseResults {
     public Set<String> getBundleFileNames() {
         // stub out a test set of BundleFiles here until we actual parse the recipe. For now lets just deploy
         // a war file into an existing app server dir.
+        System.out.println("!!!!!! REMOVE THIS TEST CODE !!!!!!!!");
         bundleFileNames = new HashSet<String>();
         bundleFileNames.add("sample-bundle.war");
 

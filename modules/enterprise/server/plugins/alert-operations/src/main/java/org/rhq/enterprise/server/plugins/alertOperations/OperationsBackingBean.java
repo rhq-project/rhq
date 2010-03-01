@@ -67,19 +67,32 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         log.info("new " + hashCode());
     }
 
-    @Create
-    public void init() {
-        log.info("init");
+    @Override
+    public void internalInit() {
+/*        log.info("internalInit");
+        try {
+            getResId();
+            getResourceName();
+            obtainOperationIds();
+            getOperationId();
+            lookupConfiguration();
+        }
+        catch (Throwable t) {
+            t.printStackTrace();
+        }*/
     }
+
 
     @Override
     public void internalCleanup() {
+        log.info("internalCleanup");
         PropertySimple parameterConfigProp = alertParameters.getSimple(OperationsSender.PARAMETERS_CONFIG);
         if (parameterConfigProp!=null) {
             Integer paramId = parameterConfigProp.getIntegerValue();
             if (paramId!=null) {
                 ConfigurationManagerLocal cmgr = LookupUtil.getConfigurationManager();
                 cmgr.deleteConfigurations(Arrays.asList(paramId));
+                cleanProperty(alertParameters,OperationsSender.PARAMETERS_CONFIG);
             }
         }
     }
@@ -92,6 +105,8 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
             persistProperty(alertParameters, OperationsSender.RESOURCE_ID,resId);
             cleanProperty(alertParameters,OperationsSender.OPERATION_ID);
             cleanProperty(alertParameters,OperationsSender.USABLE);
+            operationIds = new HashMap<String,Integer>(); // Clean out operations dropdown
+            operationId = null;
 
         }
 
@@ -116,25 +131,25 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     private void lookupConfiguration() {
 
 
-//        log.info("getCD: " + configurationDefinition);
         try {
 //            Subject subject = EnterpriseFacesContextUtility.getSubject();
             Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO replace with real subject
 
-//            int operationId = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("opId"));
             OperationManagerLocal opMan = LookupUtil.getOperationManager();
             obtainOperationIds();
 
 
-            OperationDefinition operationDefinition = opMan.getOperationDefinition(subject, operationId);
-            configurationDefinition = operationDefinition.getParametersConfigurationDefinition();
+            if (operationId!=null) {
+                OperationDefinition operationDefinition = opMan.getOperationDefinition(subject, operationId);
+                configurationDefinition = operationDefinition.getParametersConfigurationDefinition();
 
 
-            // call a SLSB method to get around lazy initialization of configDefs and configTemplates
-            ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-            configuration = configurationManager.getConfigurationFromDefaultTemplate(configurationDefinition);
-//            Configuration newConfiguration = configuration.deepCopy(false);
-log.info("gConfig: " + configuration + ", " + configuration.hashCode() + ", " + configuration.getSimpleValue("detailedDiscovery","-unset-"));
+                // call a SLSB method to get around lazy initialization of configDefs and configTemplates
+                ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+                configuration = configurationManager.getConfigurationFromDefaultTemplate(configurationDefinition);
+    //            Configuration newConfiguration = configuration.deepCopy(false);
+                log.info("lookupConfiguration: " + configuration + ", " + configuration.hashCode() );
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

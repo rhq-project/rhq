@@ -40,6 +40,13 @@ public class CustomAlertSenderBackingBean {
     public void setAlertParameters(Configuration alertParameters) {
         this.alertParameters = alertParameters;
     }
+
+    /**
+     * This method is called after constructing the bean and injecting the
+     * #alertParameters
+     */
+    public void internalInit() {}
+
     /**
      * This method is called when the alert notification that uses this backing bean
      * is removed, so that the backing bean can do some cleanup work

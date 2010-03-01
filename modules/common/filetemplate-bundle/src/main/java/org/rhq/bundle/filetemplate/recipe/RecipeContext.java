@@ -23,15 +23,24 @@
 
 package org.rhq.bundle.filetemplate.recipe;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
+ * Contains information that is gleened from a recipe after it is parsed.
+ * 
  * @author John Mazzitelli
  */
 public class RecipeContext {
 
     private final String recipe;
+    private String configurationDefinitionFilename;
+    private Map<String, String> deployFiles;
 
     public RecipeContext(String recipe) {
         this.recipe = recipe;
+        this.configurationDefinitionFilename = null;
+        this.deployFiles = new HashMap<String, String>();
     }
 
     /**
@@ -41,5 +50,33 @@ public class RecipeContext {
      */
     public String getRecipe() {
         return recipe;
+    }
+
+    /**
+     * A recipe can have an optional configuration definition file associated with it.
+     * If this returns non-<code>null</code>, it refers to this configuration definition file.
+     * 
+     * @return config def filename
+     */
+    public String getConfigurationDefinitionFilename() {
+        return configurationDefinitionFilename;
+    }
+
+    public void setConfigurationDefinitionFilename(String filename) {
+        this.configurationDefinitionFilename = filename;
+    }
+
+    /**
+     * Returns all the files that are to be deployed. The key is the bundle file's name, the
+     * value is the directory where the bundle is to be deployed to.
+     * 
+     * @return map of all files to be deployed and the location where they are to be deployed
+     */
+    public Map<String, String> getDeployFiles() {
+        return this.deployFiles;
+    }
+
+    public void addDeployFile(String filename, String directory) {
+        this.deployFiles.put(filename, directory);
     }
 }

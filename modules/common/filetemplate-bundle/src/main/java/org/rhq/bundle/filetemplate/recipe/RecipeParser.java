@@ -52,21 +52,30 @@ public class RecipeParser {
         BufferedReader recipeReader = new BufferedReader(new StringReader(recipe));
         String line = recipeReader.readLine();
         while (line != null) {
-            String[] commandLineArray = splitCommandLine(line);
-            String commandName = commandLineArray[0];
-            String[] arguments = extractArguments(commandLineArray);
-
-            RecipeCommand recipeCommand = recipeCommands.get(commandName);
-            if (recipeCommand == null) {
-                throw new Exception("Unknown command in recipe: " + commandName);
-            }
-
-            recipeCommand.parse(context, arguments);
-
+            parseRecipeCommandLine(context, line);
             line = recipeReader.readLine();
         }
 
         return context;
+    }
+
+    public void parseRecipeCommandLine(RecipeContext context, String line) throws Exception {
+        // ignore blank lines or comment lines that start with #
+        if (line == null || line.trim().length() == 0 || line.startsWith("#")) {
+            return;
+        }
+
+        String[] commandLineArray = splitCommandLine(line);
+        String commandName = commandLineArray[0];
+        String[] arguments = extractArguments(commandLineArray);
+
+        RecipeCommand recipeCommand = recipeCommands.get(commandName);
+        if (recipeCommand == null) {
+            throw new Exception("Unknown command in recipe: " + commandName);
+        }
+
+        recipeCommand.parse(context, arguments);
+        return;
     }
 
     private void setupRecipeCommands() {

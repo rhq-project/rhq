@@ -45,11 +45,11 @@ public class ConfigdefRecipeCommand implements RecipeCommand {
             switch (code) {
             case ':':
             case '?': {
-                throw new IllegalArgumentException("Bad recipe command [" + getName() + "]: " + args);
+                throw new IllegalArgumentException("Bad recipe argument.");
             }
 
             case 1: {
-                throw new IllegalArgumentException("Bad recipe command [" + getName() + "]: " + args);
+                throw new IllegalArgumentException("Bad recipe argument!");
             }
 
             case 'f': {
@@ -58,12 +58,16 @@ public class ConfigdefRecipeCommand implements RecipeCommand {
             }
 
             default: {
-                throw new IllegalArgumentException("Unexpected error in recipe command [" + getName() + "]: " + args);
+                throw new IllegalArgumentException("Unexpected error in recipe command");
             }
-
             }
         }
 
-        // TODO : do something with filename
+        if (filename == null) {
+            throw new IllegalArgumentException("Missing the -f argument to indicate what the config def filename is");
+        }
+
+        context.setConfigurationDefinitionFilename(filename);
+        return;
     }
 }

@@ -68,7 +68,7 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
         RecipeParser parser = new RecipeParser();
         RecipeContext parserContext = parser.parseRecipe(recipe);
 
-        // TODO convert the context to the results object
+        // TODO convert the context into the proper data that the parse results wants
         ConfigurationDefinition configDef = null;
         Set<String> bundleFileNames = null;
 

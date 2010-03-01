@@ -31,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -2170,34 +2171,36 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 false);
         }
 
-        //this will contain the disambiguated results
-        List<DisambiguationReport<T>> resolution = new ArrayList<DisambiguationReport<T>>(results.size());
         boolean typeResolutionNeeded = false;
         boolean pluginResolutionNeeded = false;
         boolean parentResolutionNeeded = false;
 
         //we can't assume the ordering of the provided results and the disambiguation query results
-        //will be the same, hence this map.
-        Map<Integer, MutableDisambiguationReport<T>> reportByResourceId = new HashMap<Integer, MutableDisambiguationReport<T>>();
+        //will be the same.
+        
+        //this list contains the resulting reports in the same order as the original results
+        List<MutableDisambiguationReport<T>> reports = new ArrayList<MutableDisambiguationReport<T>>(results.size());
+
+        //this maps the reports to resourceIds. More than one report can correspond to a single
+        //resource id. The reports in this map are the same instances as in the reports list.
+        Map<Integer, List<MutableDisambiguationReport<T>>> reportsByResourceId = new HashMap<Integer, List<MutableDisambiguationReport<T>>>();
         for (T r : results) {
             MutableDisambiguationReport<T> value = new MutableDisambiguationReport<T>();
             value.original = r;
             int resourceId = extractor.extract(r);
             if (resourceId > 0) {
-                reportByResourceId.put(resourceId, value);
+                List<MutableDisambiguationReport<T>> correspondingResults = reportsByResourceId.get(resourceId);
+                if (correspondingResults == null) {
+                    correspondingResults = new ArrayList<MutableDisambiguationReport<T>>();
+                    reportsByResourceId.put(resourceId, correspondingResults);
+                }
+                correspondingResults.add(value);
             }
+            reports.add(value);
         }
 
         //check that we still have something to disambiguate
-        if (reportByResourceId.isEmpty()) {
-            //no, we don't. construct the resolution only using the results.
-
-            for (T result : results) {
-                DisambiguationReport<T> report = new DisambiguationReport<T>(result, Collections
-                    .<ResourceParentFlyweight> emptyList(), null, null);
-                resolution.add(report);
-            }
-        } else {
+        if (reportsByResourceId.size() > 0) {
             //first find out how many ancestors we are going to require to disambiguate the resuls
             String query = Resource.NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL;
 
@@ -2247,7 +2250,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             Query parentsQuery = entityManager.createQuery(selectBuilder.append(" ").append(fromBuilder).toString());
 
-            parentsQuery.setParameter("resourceIds", reportByResourceId.keySet());
+            parentsQuery.setParameter("resourceIds", reportsByResourceId.keySet());
 
             @SuppressWarnings("unchecked")
             List<Object[]> parentsResults = (List<Object[]>) parentsQuery.getResultList();
@@ -2264,28 +2267,22 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     String parentName = (String) parentsResult[2 * i + 2];
                     parents.add(new ResourceParentFlyweight(parentId, parentName));
                 }
-                MutableDisambiguationReport<T> report = reportByResourceId.get(resourceId);
-                report.typeName = typeName;
-                report.pluginName = pluginName;
-                report.parents = parents;
-            }
-
-            //now we have all the information to create the result.
-            for (T result : results) {
-                int resourceId = extractor.extract(result);
-                if (resourceId > 0) {
-                    //this results was disambiguated by the query above...
-                    MutableDisambiguationReport<T> report = reportByResourceId.get(resourceId);
-                    resolution.add(report.getReport());
-                } else {
-                    //this result doesn't correspond to any resource, need to handle it specially
-                    DisambiguationReport<T> report = new DisambiguationReport<T>(result, Collections
-                        .<ResourceParentFlyweight> emptyList(), null, null);
-                    resolution.add(report);
+                
+                //update all the reports that correspond to this resourceId
+                for(MutableDisambiguationReport<T> report : reportsByResourceId.get(resourceId)) {
+                    report.typeName = typeName;
+                    report.pluginName = pluginName;
+                    report.parents = parents;
                 }
             }
         }
 
+        List<DisambiguationReport<T>> resolution = new ArrayList<DisambiguationReport<T>>(results.size());
+
+        for (MutableDisambiguationReport<T> report : reports) {
+            resolution.add(report.getReport());
+        }
+        
         return new ResourceNamesDisambiguationResult<T>(resolution, typeResolutionNeeded, parentResolutionNeeded,
             pluginResolutionNeeded);
     }
@@ -2297,7 +2294,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         public List<ResourceParentFlyweight> parents;
 
         public DisambiguationReport<T> getReport() {
-            return new DisambiguationReport<T>(original, parents, typeName, pluginName);
+            return new DisambiguationReport<T>(original, parents == null ? Collections
+                .<ResourceParentFlyweight> emptyList() : parents, typeName, pluginName);
         }
     }
 }

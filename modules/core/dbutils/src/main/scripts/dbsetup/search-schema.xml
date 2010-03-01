@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dbsetup name="amps-schema.xml"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="urn:xmlns:rhq-dbsetup-schema">
+
+    <table name="RHQ_SAVED_SEARCH">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="CONTEXT" type="VARCHAR2" size="25" required="true"/>
+        
+        <column name="NAME" type="VARCHAR2" size="200" required="true"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="500" required="false"/>
+        <column name="PATTERN" type="VARCHAR2" size="1000" required="true"/>
+        
+        <column name="JPQL_TRANSLATION" type="VARCHAR2" size="4000" required="false"/>
+        <column name="LAST_COMPUTE_TIME" type="LONG" required="true"/>
+        <column name="RESULT_COUNT" type="LONG" required="false"/>
+        
+        <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT" required="true"/>
+        <column name="GLOBAL" type="BOOLEAN" required="true"/>
+    </table>
+
+</dbsetup>

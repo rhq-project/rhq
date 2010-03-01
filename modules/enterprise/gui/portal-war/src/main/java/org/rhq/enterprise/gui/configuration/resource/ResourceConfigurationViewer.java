@@ -40,6 +40,7 @@ import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Out;
 import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.annotations.web.RequestParameter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -147,13 +148,12 @@ public class ResourceConfigurationViewer {
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
         if (configId != null && usingPreviousVersion) {
-            AbstractResourceConfigurationUpdate configurationUpdate =
-                configurationManager.getResourceConfigurationUpdate(subject, configId);
+            AbstractResourceConfigurationUpdate configurationUpdate = configurationManager
+                .getResourceConfigurationUpdate(subject, configId);
             resourceConfiguration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-        }
-        else {
-            AbstractResourceConfigurationUpdate configurationUpdate =
-                configurationManager.getLatestResourceConfigurationUpdate(subject, resourceId);
+        } else {
+            AbstractResourceConfigurationUpdate configurationUpdate = configurationManager
+                .getLatestResourceConfigurationUpdate(subject, resourceId);
             resourceConfiguration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
         }
 

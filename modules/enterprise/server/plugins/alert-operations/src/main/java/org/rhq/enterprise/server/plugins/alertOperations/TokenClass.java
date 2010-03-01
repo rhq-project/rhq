@@ -26,22 +26,30 @@ import java.util.EnumSet;
  */
 public enum TokenClass {
 
-    ALERT("alert"),
-    RESOURCE("resource"),
-    TARGET_RESOURCE("targetResource"),
-    TEST("test");
+    ALERT("alert","Information about the alert itself"),
+    RESOURCE("resource","Information about the resource that triggered the alert"),
+    TARGET_RESOURCE("targetResource","Information about the resource the alert is fired on "),
+    OPERATION("operation","Information about the triggered operation"),
+    //
+    TEST("test","Just some dummies for internal testing purposes");
 
     private String text;
+    private String description;
 
-    private TokenClass(String text) {
+    private TokenClass(String text,String description) {
         this.text = text;
+        this.description = description;
     }
 
     public String getText() {
         return text;
     }
 
-        /**
+    public String getDescription() {
+        return description;
+    }
+
+    /**
      * Return the tokenclass that matches the input text or null if not found.
      * The token delimiters need to be already stripped from the input
      * @param input a token text like <i>alert</i>, which would return the

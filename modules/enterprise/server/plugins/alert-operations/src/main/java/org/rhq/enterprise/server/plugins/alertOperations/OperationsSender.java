@@ -78,9 +78,11 @@ public class OperationsSender extends AlertSender {
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO get real subject
 
         List<OperationDefinition> opdefs = opMgr.findSupportedResourceOperations(subject,resourceId,false);
-        for (OperationDefinition opdef : opdefs ) {
-            if (opdef.getId() == opId) {
-                opName = opdef.getName();
+        OperationDefinition opDef = null;
+        for (OperationDefinition tmp : opdefs ) {
+            if (tmp.getId() == opId) {
+                opName = tmp.getName();
+                opDef = tmp;
                 break;
             }
         }
@@ -110,7 +112,7 @@ public class OperationsSender extends AlertSender {
         if (parameters!=null && tokenMode.equals(INTERPRETED)) {
             Map<String,PropertySimple> propsMap = parameters.getSimpleProperties();
             if (!propsMap.isEmpty()) {
-                TokenReplacer tr = new TokenReplacer(alert);
+                AlertTokenReplacer tr = new AlertTokenReplacer(alert, opDef, null);
                 for (PropertySimple prop  : propsMap.values()) {
                     String tmp = prop.getStringValue();
                     tmp = tr.replaceTokens(tmp);

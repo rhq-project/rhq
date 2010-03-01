@@ -43,11 +43,25 @@ public enum Token {
     // resource that triggered the alert related tokens
     RESOURCE_ID(TokenClass.RESOURCE, "id", "Id of the resource"),
     RESOURCE_NAME(TokenClass.RESOURCE, "name", "Name of the resource"),
+    RESOURCE_PARENT_ID(TokenClass.RESOURCE, "parentId", "Id of the parent resource"),
+    RESOURCE_PARENT_NAME(TokenClass.RESOURCE, "parentName", "Name of the parent resource"),
+    RESOURCE_TYPE_ID(TokenClass.RESOURCE,"typeId","Resource type id"),
+    RESOURCE_TYPE_NAME(TokenClass.RESOURCE,"typeName","Resource type name"),
+    RESOURCE_PLATFORM_ID(TokenClass.RESOURCE,"platformId", "Id of the platform the resource is on"),
+    RESOURCE_PLATFORM_NAME(TokenClass.RESOURCE,"platformName", "Name of the platform the resource is on"),
+    RESOURCE_PLATFORM_TYPE(TokenClass.RESOURCE,"platformType", "Type of the platform the resource is on"),
 
 
     // resource the operation is run on related tokens
     TRESOURCE_ID(TokenClass.TARGET_RESOURCE, "id","Id of the target resource"),
     TRESOURCE_NAME(TokenClass.TARGET_RESOURCE, "name", "Name of the target resource"),
+    TRESOURCE_PARENT_ID(TokenClass.TARGET_RESOURCE, "parentId", "Id of the target's parent resource"),
+    TRESOURCE_PARENT_NAME(TokenClass.TARGET_RESOURCE, "parentName", "Name of the target's parent resource"),
+    TRESOURCE_TYPE_ID(TokenClass.TARGET_RESOURCE,"typeId","Resource type of the target resource id"),
+    TRESOURCE_TYPE_NAME(TokenClass.TARGET_RESOURCE,"typeName","Resource type name of the target resource"),
+    TRESOURCE_PLATFORM_ID(TokenClass.TARGET_RESOURCE,"platformId", "Id of the platform the target resource is on"),
+    TRESOURCE_PLATFORM_NAME(TokenClass.TARGET_RESOURCE,"platformName", "Name of the platform the target resource is on"),
+    TRESOURCE_PLATFORM_TYPE(TokenClass.TARGET_RESOURCE,"platformType", "Type of the platform the target resource is on"),
 
 
     // Information about the fired operation
@@ -56,9 +70,7 @@ public enum Token {
 
     // only for testing
     TEST_ECHO(TokenClass.TEST,"echo", "Echo the input"),
-    TEST_FIX(TokenClass.TEST,"fix", "Return a fixed string")
-
-    ;
+    TEST_FIX(TokenClass.TEST,"fix", "Return a fixed string");
 
 
     private TokenClass tc;

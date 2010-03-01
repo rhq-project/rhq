@@ -35,6 +35,17 @@ public class PrintTokens {
 
     public static void main(String[] args) throws Exception {
 
+        String text = createTokenDescription();
+
+        System.out.println(text);
+    }
+
+    /**
+     * Do the work and return an xml structure that lists available token classes and
+     * tokens along with their descriptions.
+     * @return String with an XML representation of the available tokens
+     */
+    public static String createTokenDescription() {
         EnumSet<TokenClass> tokenClasses = EnumSet.allOf(TokenClass.class);
 
         StringBuilder builder = new StringBuilder("<tokenClasses>\n");
@@ -58,7 +69,6 @@ public class PrintTokens {
         }
 
         builder.append("</tokenClasses>\n");
-
-        System.out.println(builder.toString());
+        return builder.toString();
     }
 }

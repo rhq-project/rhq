@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.plugins.alertOperations;
 
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,22 +26,30 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Helper to replace tokens by their values
  * @author Heiko W. Rupp
  */
-public class TokenReplacer {
+public class AlertTokenReplacer {
 
-    private final Log log = LogFactory.getLog(TokenReplacer.class);
-    private static final String NOT_YET_IMPLEMENTED = " - not yet implemented -";
+    private final Log log = LogFactory.getLog(AlertTokenReplacer.class);
+    public static final String NOT_YET_IMPLEMENTED = " - not yet implemented -";
     protected static final String THE_QUICK_BROWN_FOX_JUMPS_OVER_THE_LAZY_DOG = "TheQuickBrownFoxJumpsOverTheLazyDOg";
     private Alert alert;
     private Pattern pattern;
+    private OperationDefinition operationDefinition;
+    private Resource targetResource;
 
-    public TokenReplacer(Alert alert) {
+    public AlertTokenReplacer(Alert alert, OperationDefinition operationDefinition, Resource targetResource) {
         this.alert = alert;
+        this.operationDefinition = operationDefinition;
         pattern = Pattern.compile("<%\\s*([a-z]+\\.[a-z0-9]+)\\s*%>");
     }
 
@@ -63,19 +72,14 @@ public class TokenReplacer {
         matcher.reset();
 
         do {
-//            System.out.println(input);
             matcher = pattern.matcher(work);
             if (!matcher.find()) {
                 break;
             }
-//            System.out.println(matcher.regionStart() + ":" + matcher.regionEnd() + input.substring(matcher.regionStart(),matcher.regionEnd()));
-//            System.out.println(matcher.group(1));
             String replacement = replaceToken(matcher.group(1)                                                                                                                               );
             String s = matcher.replaceFirst(replacement);
-//            System.out.println(s);
             work = s;
 
-//            System.out.println("----");
         } while (true);
 
         return work;
@@ -116,8 +120,13 @@ public class TokenReplacer {
                 ret = replaceResourceToken(token,alert.getAlertDefinition().getResource());
                 break;
             case TARGET_RESOURCE:
-                Resource resource = null; // TODO
-                ret = replaceTargetResourceToken(token, resource);
+                // Create a "pseudo" token to feed it into the plain resource replacement code
+                String text = "resource." + token.getName();
+                Token tok = Token.getByText(text);
+                ret = replaceResourceToken(tok, targetResource);
+                break;
+            case OPERATION:
+                ret = replaceOperationToken(token);
                 break;
             case TEST:
                 switch (token) {
@@ -137,11 +146,28 @@ public class TokenReplacer {
 
     private String replaceAlertToken(Token token, Alert alert) {
 
+        AlertManagerLocal mgr = LookupUtil.getAlertManager();
+
         switch (token) {
             case ALERT_ID:
                 return String.valueOf(alert.getId());
+            case ALERT_FIRE_TIME:
+                return new Date(alert.getCtime()).toString(); // TODO use a specific impl here?
+            case ALERT_WILL_RECOVER:
+                return String.valueOf(alert.getAlertDefinition().getWillRecover());
+            case ALERT_WILL_DISABLE:
+                return String.valueOf(mgr.willDefinitionBeDisabled(alert));
+            case ALERT_DEF_NAME:
+                return alert.getAlertDefinition().getName();
+            case ALERT_DEF_DESC:
+                return alert.getAlertDefinition().getDescription();
+            case ALERT_DEF_PRIO:
+                return alert.getAlertDefinition().getPriority().getName();
             case ALERT_URL:
-                return NOT_YET_IMPLEMENTED;
+                return mgr.prettyPrintAlertURL(alert);
+            case ALERT_CONDITIONS:
+                return mgr.prettyPrintAlertConditions(alert,false);
+
 
             default:
                 return NOT_YET_IMPLEMENTED;
@@ -151,28 +177,55 @@ public class TokenReplacer {
 
     private String replaceResourceToken(Token token, Resource resource) {
 
+        ResourceManagerLocal mgr = LookupUtil.getResourceManager();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        Resource parent;
+        Resource platform = mgr.getPlaformOfResource(overlord,resource.getId());
+
         switch (token) {
         case RESOURCE_ID:
             return String.valueOf(resource.getId());
         case RESOURCE_NAME:
             return resource.getName();
+        case RESOURCE_PARENT_ID:
+            parent = mgr.getParentResource(resource.getId());
+            if (parent==null)
+                return "0";
+            else
+                return String.valueOf(parent.getId());
+        case RESOURCE_PARENT_NAME:
+            parent = mgr.getParentResource(resource.getId());
+            if (parent==null)
+                return "0";
+            else
+                return String.valueOf(parent.getId());
+        case RESOURCE_TYPE_ID:
+            return String.valueOf(resource.getResourceType().getId());
+        case RESOURCE_TYPE_NAME:
+            return resource.getResourceType().getName();
+        case RESOURCE_PLATFORM_ID:
+            return String.valueOf(platform.getId());
+        case RESOURCE_PLATFORM_NAME:
+            return platform.getName();
+        case RESOURCE_PLATFORM_TYPE:
+            return platform.getResourceType().getName();
 
         default:
             return NOT_YET_IMPLEMENTED;
         }
     }
 
-    private String replaceTargetResourceToken(Token token, Resource resource) {
+    private String replaceOperationToken(Token token) {
 
         switch (token) {
-        case TRESOURCE_ID:
-            return String.valueOf(resource.getId());
-        case TRESOURCE_NAME:
-            return resource.getName();
+        case OPERATION_ID:
+            return String.valueOf(operationDefinition.getId());
+        case OPERATION_NAME:
+            return operationDefinition.getName();
+
 
         default:
             return NOT_YET_IMPLEMENTED;
         }
     }
-
 }

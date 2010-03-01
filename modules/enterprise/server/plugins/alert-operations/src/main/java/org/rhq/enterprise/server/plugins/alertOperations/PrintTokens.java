@@ -58,7 +58,7 @@ public class PrintTokens {
             Set<Token> tokens = Token.getByTokenClass(tc);
             for (Token token : tokens) {
                 builder.append("    <token name=\"").append(token.getName()).append(CLOSE);
-                builder.append("      <fullName>").append(token.getText()).append(CLOSE);
+                builder.append("      <fullName>").append(token.getText()).append("</fullName>\n");
                 builder.append("      <descr>").append(token.getDescription()).append("</descr>\n");
                 builder.append("    </token>\n");
 

@@ -177,13 +177,15 @@ public class CoreGUI implements EntryPoint {
                 ViewRenderer viewRenderer = (ViewRenderer)parentView.getCanvas();
                 List<Breadcrumb> breadcrumbs = new ArrayList<Breadcrumb>(viewIdNames.size());
                 try {
-                    for (String viewIdName : viewIdNames) {
+                    for (int i = 0, viewIdNamesSize = viewIdNames.size(); i < viewIdNamesSize; i++) {
+                        String viewIdName = viewIdNames.get(i);
                         Canvas parentCanvas = parentView.getCanvas();
                         if (parentCanvas != null && parentCanvas instanceof ViewRenderer) {
-                            viewRenderer = (ViewRenderer)parentCanvas;
+                            viewRenderer = (ViewRenderer) parentCanvas;
                         }
                         ViewId viewId = new ViewId(viewIdName, parentView.getId());
-                        parentView = viewRenderer.renderView(parentView, viewId);
+                        boolean lastNode = (i == (viewIdNamesSize - 1));
+                        parentView = viewRenderer.renderView(viewId, parentView, lastNode);
                         breadcrumbs.add(parentView.getBreadcrumb());
                     }
                 } catch (UnknownViewException e) {
@@ -302,14 +304,14 @@ public class CoreGUI implements EntryPoint {
             setHeight100(); // (900);
         }
 
-        public View renderView(View parentView, ViewId viewId) throws UnknownViewException {
+        public View renderView(ViewId viewId, View parentView, boolean lastNode) throws UnknownViewException {
             String path = viewId.getPath();
             Canvas canvas = createContent(path);
-            if (canvas != null) {
-                setContent(canvas);
-                return new View(viewId, canvas);
+            if (canvas == null) {
+                throw new UnknownViewException();
             }
-            throw new UnknownViewException(viewId);
+            setContent(canvas);
+            return new View(viewId, canvas);
         }
     }
 }

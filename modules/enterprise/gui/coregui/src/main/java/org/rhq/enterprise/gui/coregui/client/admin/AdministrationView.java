@@ -391,12 +391,15 @@ public class AdministrationView extends HLayout implements Presenter, ViewRender
         return renderedBreadcrumbs;
     }
 
-    public View renderView(View parentView, ViewId viewId) throws UnknownViewException {
-        String parentPath = viewId.getParent().getPath();
+    public View renderView(ViewId viewId, View parentView, boolean lastNode) throws UnknownViewException {
+        String parentPath = parentView.getId().getPath();
         if (parentPath.equals("Administration")) {
             SectionStackSection stackSection = this.sectionStack.getSection(viewId.getName());
             if (stackSection != null) {
                 stackSection.setExpanded(true);
+                if (lastNode) {
+                    // TODO: Render some default content for the e.g. Administration/Reports view.
+                }
                 return new View(viewId, new Breadcrumb(viewId.getName(), false));
             }
         } else if (parentPath.equals("Administration/Reports")) {
@@ -404,6 +407,6 @@ public class AdministrationView extends HLayout implements Presenter, ViewRender
             setContent(canvas);
             return new View(viewId, canvas);
         }
-        throw new UnknownViewException(viewId);        
+        throw new UnknownViewException();
     }
 }

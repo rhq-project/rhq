@@ -24,24 +24,10 @@ package org.rhq.enterprise.gui.coregui.client;
  * @author Ian Springer
  */
 public class UnknownViewException extends Exception {
-    private ViewId viewId;
-    private String message;
-
-    public UnknownViewException(ViewId viewId) {
-        this(viewId, null);
+    public UnknownViewException() {
     }
 
-    public UnknownViewException(ViewId viewId, String message) {
-        this.viewId = viewId;
-        this.message = message;
-    }
-
-    @Override
-    public String getMessage() {
-        String message = "Unknown view id [" + this.viewId + "]";
-        if (this.message != null) {
-            message += ": " + this.message;
-        }
-        return message;
+    public UnknownViewException(String message) {
+        super(message);
     }
 }

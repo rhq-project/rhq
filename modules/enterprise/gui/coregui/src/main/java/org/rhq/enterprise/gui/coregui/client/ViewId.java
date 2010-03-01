@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * TODO
  *
@@ -56,21 +53,14 @@ public class ViewId {
     public String getPath() {
         if (this.path == null) {
             StringBuilder buffer = new StringBuilder();
-            List<String> names = new ArrayList<String>(5);
-            ViewId current = this;
-            do {
-               names.add(0, current.getName());
-               current = current.getParent();
-            } while (current != null && !current.getName().equals(ROOT_VIEW_ID.getName()));
-            boolean first = true;
-            for (String name : names) {
-                if (first) {
-                    first = false;
-                } else {
+            if (this.parent != null) {
+                String parentPath = this.parent.getPath();
+                buffer.append(parentPath);
+                if (!parentPath.equals(ROOT_VIEW_ID.getPath())) {
                     buffer.append(PATH_SEPARATOR);
                 }
-                buffer.append(name);
             }
+            buffer.append(this.name);
             this.path = buffer.toString();
         }
         return this.path;

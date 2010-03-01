@@ -160,14 +160,17 @@ public class ResourceView extends HLayout implements Presenter, ViewRenderer {
         contentCanvas.draw();
     }
 
-    public View renderView(View parentView, ViewId viewId) throws UnknownViewException {
-        String path = viewId.getPathRelativeTo(parentView.getId());
+    public View renderView(ViewId viewId, View parentView, boolean lastNode) throws UnknownViewException {
+        String parentPath = parentView.getId().getPath();
+        if (!parentPath.equals("Resource")) {
+            throw new UnknownViewException();
+        }
         int resourceId;
         try {
-            resourceId = Integer.parseInt(path);
+            resourceId = Integer.parseInt(viewId.getName());
         } catch (NumberFormatException e) {
             // not a valid Resource id - nothing for us to do
-            throw new UnknownViewException(viewId, "Invalid Resource id [" + path + "]");
+            throw new UnknownViewException("Invalid Resource id [" + viewId + "]");
         }
         if (this.selectedResource == null || this.selectedResource.getId() != resourceId) {
             setSelectedResource(resourceId, viewId);

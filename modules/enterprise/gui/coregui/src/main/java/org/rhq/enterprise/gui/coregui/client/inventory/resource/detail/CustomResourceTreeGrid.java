@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.tree.TreeGrid;

@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+
+<ui:composition
+        template="/rhq/layout/main.xhtml"
+        xmlns="http://www.w3.org/1999/xhtml"
+        xmlns:f="http://java.sun.com/jsf/core"
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:ui="http://java.sun.com/jsf/facelets"
+        xmlns:c="http://java.sun.com/jstl/core"
+        xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+        xmlns:a4j="http://richfaces.org/a4j"
+        xmlns:rich="http://richfaces.org/rich"
+        xmlns:rhq="http://rhq-project.org/rhq"
+        xmlns:onc="http://jboss.org/on/component">
+
+    <ui:param name="pageTitle" value="Resource Version Inventory Report"/>
+    <ui:param name="disableMenu" value="true"/>
+    <ui:param name="disableBreadcrumbs" value="true"/>
+
+    <ui:define name="body">
+
+        <rich:panel>
+            <f:facet name="header">
+                <h:outputText value="Resource Version Inventory Report"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+                <h:form>
+                    <h:selectBooleanCheckbox id="groupByVersion" value="#{ResourceInstallReportUIBean.groupByVersion}" 
+                                             label="gbvLabel">
+                        <a4j:support reRender="reportTable" event="onclick" status="commonStatus"/>
+                    </h:selectBooleanCheckbox>
+                    <h:outputText value="Group By Version" id="gbvLabel"/>
+
+                    <rich:dataTable
+                            id="reportTable"
+                            value="#{ResourceInstallReportUIBean.resourceInstallCounts}"
+                            var="installReport"
+                            width="100%"
+                            columnsWidth="15%, 15%, 10%, 10%, 10%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+                        <rich:column title="Type">
+                            <f:facet name="header">
+                                Type
+                            </f:facet>
+                            <h:outputLink value="#Resources" target="_top">
+                                <h:outputText value="#{installReport.typeName}"/>
+                            </h:outputLink>
+                        </rich:column>
+
+                        <rich:column title="Plugin">
+                            <f:facet name="header">
+                                Plugin
+                            </f:facet>
+                            <h:outputText value="#{installReport.typePlugin}"/>
+                        </rich:column>
+
+                        <rich:column title="Category">
+                            <f:facet name="header">
+                                Category
+                            </f:facet>
+                            <h:outputText value="#{installReport.category}"/>
+                        </rich:column>
+
+                        <rich:column title="Version" rendered="#{ResourceInstallReportUIBean.groupByVersion}">
+                            <f:facet name="header">
+                                Version
+                            </f:facet>
+                            <h:outputText value="#{installReport.version}"/>
+                        </rich:column>
+
+                        <rich:column title="Imported Count">
+                            <f:facet name="header">
+                                Imported Count
+                            </f:facet>
+                            <h:outputText value="#{installReport.count}"/>
+                        </rich:column>
+
+                    </rich:dataTable>
+                </h:form>
+
+            </h:panelGrid>
+
+        </rich:panel>
+
+    </ui:define>
+
+</ui:composition>

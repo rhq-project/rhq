@@ -30,16 +30,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.places.Place;
 
-import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -78,12 +75,9 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
         setWidth100();
         setHeight100();
 
-
-
         // The header section
         summaryView = new ResourceSummaryView();
         summaryPanel = new SimpleCollapsiblePanel("Summary", summaryView);
-
 
         // The Tabs section
 
@@ -94,7 +88,6 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
         topTabSet.setEdgeMarginSize(0);
         topTabSet.setEdgeSize(0);
 
-
         summaryTab = new Tab("Summary", "/images/icons/Service_up_16.png");
         monitoringTab = new Tab("Monitoring", "/images/icons/Monitor_grey_16.png");
         inventoryTab = new Tab("Inventory", "/images/icons/Inventory_grey_16.png");
@@ -103,7 +96,6 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
         configurationTab = new Tab("Configuration", "/images/icons/Configure_grey_16.png");
         eventsTab = new Tab("Events", "/images/icons/Events_grey_16.png");
         contentTab = new Tab("Content", "/images/icons/Content_grey_16.png");
-
 
         topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab, eventsTab, contentTab);
 
@@ -118,9 +110,8 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
     }
 
 
-    public boolean fireDisplay(Place place, List<Place> children) {
-        if (place.equals(getPlace())) {
-
+    public boolean fireDisplay(Place base, List<Place> subLocations) {
+        if (base.equals(getPlace())) {
 
         }
         return true;

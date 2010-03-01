@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,20 +18,30 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import org.rhq.enterprise.gui.coregui.client.places.Place;
-
-import java.util.List;
-
 /**
- * @deprecated replaced by {@link ViewRenderer}
+ * TODO
  *
- * @author Greg Hinkle
+ * @author Ian Springer
  */
-@Deprecated
-public interface Presenter {
+public class UnknownViewException extends Exception {
+    private ViewId viewId;
+    private String message;
 
-    boolean fireDisplay(Place baseLocation, List<Place> subLocations);
+    public UnknownViewException(ViewId viewId) {
+        this(viewId, null);
+    }
 
-    Place getPlace();
+    public UnknownViewException(ViewId viewId, String message) {
+        this.viewId = viewId;
+        this.message = message;
+    }
 
+    @Override
+    public String getMessage() {
+        String message = "Unknown view id [" + this.viewId + "]";
+        if (this.message != null) {
+            message += ": " + this.message;
+        }
+        return message;
+    }
 }

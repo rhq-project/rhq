@@ -18,11 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeView;
 
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.TabBarControls;

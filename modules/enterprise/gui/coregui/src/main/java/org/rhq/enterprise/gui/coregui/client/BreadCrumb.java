@@ -18,105 +18,89 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import org.rhq.enterprise.gui.coregui.client.places.Place;
-
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.HTMLPane;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.HStack;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
+ * GWT widget for the breadcrumb trail, which is displayed at the top of each page.
+ *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class BreadCrumb extends HTMLPane {
 
-    private ArrayList<Place> trail = new ArrayList<Place>();
+    private List<Breadcrumb> breadcrumbs = new ArrayList<Breadcrumb>();
 
     public BreadCrumb() {
-
         setHeight(28);
         setBackgroundColor("#E6E3E3");
         setPadding(5);
         setOverflow(Overflow.CLIP_V);
     }
 
-
-    public void initialize(String historyPath) {
-        String[] ids =historyPath.split("\\/");
-        
-        for (String id : ids) {
-            trail.add(new Place(id,"?"));
-        }
-
+    public List<Breadcrumb> getBreadcrumbs() {
+        return this.breadcrumbs;
     }
 
-    public void verify(String historyPath) {
-        String[] ids = historyPath.split("\\/");
-
-        for (int i = 0; i < ids.length; i++) {
-            if (trail.size() > i && !trail.get(i).getId().equals(ids[i])) {
-                trail = new ArrayList(trail.subList(0,i));
-                trail.add(new Place(ids[i], "?"));
-            } else {
-                if (trail.size() > i) {
-                    trail.set(i,new Place(ids[i],"?"));
-                } else {
-                    trail.add(new Place(ids[i],"?"));
-                }
-            }
-        }
-    }
-
-
-
-    public void setPlace(Place place) {
-        trail.clear();
-        addPlace(place);
-    }
-
-    public void addPlace(Place place) {
-        trail.add(place);
-
-        refresh();
+    public void setBreadcrumbs(List<Breadcrumb> breadcrumbs) {
+        this.breadcrumbs = breadcrumbs;
     }
 
     public void refresh() {
-        String content = "";
-        boolean first = true;
+        try {
+            boolean first = true;
+            StringBuilder path = new StringBuilder();
+            StringBuilder content = new StringBuilder();
+            content.append("<div class=\"BreadCrumb\">");
+            for (int i = 0, trailSize = this.breadcrumbs.size(); i < trailSize; i++) {
+                if (!first) {
+                    path.append("/");
+                    content.append(" > ");
+                } else {
+                    first = false;
+                }
 
-        String path = "";
-        for (Place place : trail) {
-            if (!first) {
-                content += " > ";
+                Breadcrumb breadcrumb = breadcrumbs.get(i);
+                path.append(breadcrumb.getName());
+
+                if ((i == (trailSize - 1) || !breadcrumb.isHyperlink())) {
+                    // last item in trail is the current page and so should not be a link
+                    content.append(breadcrumb.getDisplayName());
+                } else {
+                    content.append("<a href=\"#");
+                    // NOTE: We have to call toString() below, because GWT chokes if you try to append a StringBuilder.                           
+                    content.append(path.toString());
+                    content.append("\">");
+                    content.append(breadcrumb.getDisplayName());
+                    content.append("</a>");
+                }
+                content.append("\n");
             }
-            first = false;
-            if (path.length() > 0) {
-                path += "/";
-            }
-            path += place.getId();
+            content.append("</div>");
 
-
-            content += "<a class=\"BreadCrumb\" href=\"#" + path + "\">" + place.getName() + "</a>";
+            setContents(content.toString());
+        } catch (Throwable t) {
+            System.err.println("Failed to refresh bread crumb HTML - cause: " + t);
         }
 
-        setContents(content);
-
-        History.newItem(path);
-        if (!trail.isEmpty())
-            Window.setTitle("RHQ: " + trail.get(trail.size()-1));
+        String title = "RHQ";
+        if (!breadcrumbs.isEmpty()) {
+            title += ": " + this.breadcrumbs.get(this.breadcrumbs.size() - 1);
+        }
+        Window.setTitle(title);
 
         redraw();
     }
 
-
-    public ArrayList<Place> getTrail() {
-        return trail;
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder("BreadCrumb[");
+        result.append(this.breadcrumbs);
+        result.append("]");
+        return result.toString();
     }
-
 }

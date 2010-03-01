@@ -152,8 +152,8 @@ public class RolesView extends VLayout implements Presenter {
 
     }
 
-    public boolean fireDisplay(Place place, List<Place> children) {
-        if (!getPlace().equals(place)) {
+    public boolean fireDisplay(Place base, List<Place> subLocations) {
+        if (!getPlace().equals(base)) {
             return false;
         }
 

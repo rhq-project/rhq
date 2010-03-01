@@ -21,9 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Presenter;
-import org.rhq.enterprise.gui.coregui.client.admin.users.UserEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
 import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.smartgwt.client.types.ContentsType;
@@ -39,7 +36,6 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,9 +43,10 @@ import java.util.List;
  */
 public class ResourcesView extends HLayout implements Presenter {
 
+    public static final String VIEW_PATH = "Resources";
+
     private SectionStack sectionStack;
     private Canvas contentCanvas;
-
 
     @Override
     protected void onInit() {
@@ -58,11 +55,9 @@ public class ResourcesView extends HLayout implements Presenter {
         setWidth100();
         setHeight100();
 
-
         contentCanvas = new Canvas();
         contentCanvas.setWidth("*");
         contentCanvas.setHeight100();
-
 
         sectionStack = new SectionStack();
         sectionStack.setShowResizeBar(true);
@@ -77,8 +72,6 @@ public class ResourcesView extends HLayout implements Presenter {
         addMember(contentCanvas);
 
         setContent(buildResourceSearchView());
-
-        CoreGUI.setBreadCrumb(getPlace());
     }
 
 
@@ -86,7 +79,8 @@ public class ResourcesView extends HLayout implements Presenter {
         ResourceSearchView searchView = new ResourceSearchView();
         searchView.addResourceSelectedListener(new ResourceSelectListener() {
             public void onResourceSelected(Resource resource) {
-                CoreGUI.setContent(new ResourceView(resource));
+                //CoreGUI.setContent(new ResourceView(resource));
+                CoreGUI.goTo("Resource/" + resource.getId());
             }
         });
         return searchView;
@@ -190,13 +184,13 @@ public class ResourcesView extends HLayout implements Presenter {
     }
 
 
-    public boolean fireDisplay(Place place, List<Place> children) {
-        if (place.equals(getPlace())) {
-            if (!children.isEmpty()) {
+    public boolean fireDisplay(Place base, List<Place> subLocations) {
+        if (base.equals(getPlace())) {
+            if (!subLocations.isEmpty()) {
                 if (contentCanvas.getChildren().length > 0) {
                     Canvas element = contentCanvas.getChildren()[0];
                     if (element instanceof Presenter) {
-                        ((Presenter) element).fireDisplay(children.get(0), children.subList(1, children.size() - 1));
+                        ((Presenter) element).fireDisplay(subLocations.get(0), subLocations.subList(1, subLocations.size() - 1));
                     }
                 }
             }

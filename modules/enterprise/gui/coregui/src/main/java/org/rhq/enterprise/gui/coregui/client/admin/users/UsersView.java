@@ -159,12 +159,12 @@ public class UsersView extends SectionStack implements Presenter {
 
     }
 
-    public boolean fireDisplay(Place place, List<Place> children) {
-        if (!place.equals(getPlace())) {
+    public boolean fireDisplay(Place base, List<Place> subLocations) {
+        if (!base.equals(getPlace())) {
             return false;
         }
-        if (children.size() > 0) {
-            int userId = Integer.parseInt(children.get(0).getId());
+        if (subLocations.size() > 0) {
+            int userId = Integer.parseInt(subLocations.get(0).getId());
         }
         return true;
     }

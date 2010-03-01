@@ -19,8 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.places;
 
 /**
+ * @deprecated replaced by {@link org.rhq.enterprise.gui.coregui.client.View} and
+ *             {@link org.rhq.enterprise.gui.coregui.client.Breadcrumb}
+ *
  * @author Greg Hinkle
  */
+@Deprecated
 public class Place {
 
     private String id;

@@ -8,7 +8,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourcesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
-import org.rhq.enterprise.gui.coregui.client.places.Place;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -33,6 +32,9 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -43,13 +45,15 @@ public class CoreGUI implements EntryPoint {
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
     private static Subject sessionSubject;
-    private static Subject fullSubject;
+    //private static Subject fullSubject;
 
     private static ErrorHandler errorHandler = new ErrorHandler();
 
     private static BreadCrumb breadCrumb;
 
     private static Canvas content;
+
+    private View rootView;
 
     public void onModuleLoad() {
 
@@ -118,9 +122,9 @@ public class CoreGUI implements EntryPoint {
 
     private void buildCoreUI() {
 
-        VLayout layout = new VLayout();
-        layout.setWidth100();//(1200);
-        layout.setHeight100(); //(900);
+        RootCanvas rootCanvas = new RootCanvas();
+        this.rootView = new View(new ViewId("", null), rootCanvas);
+
 
 //        HTMLPane menuPane = new HTMLPane();
 //        menuPane.setWidth100();
@@ -139,12 +143,12 @@ public class CoreGUI implements EntryPoint {
 //        menuCanvas.setWidth100();
 //        menuCanvas.draw();
 
-        layout.addMember(menuBarView);
+        rootCanvas.addMember(menuBarView);
 
 
         breadCrumb = new BreadCrumb();
 
-        layout.addMember(breadCrumb);
+        rootCanvas.addMember(breadCrumb);
 
 
         DOM.setInnerHTML(RootPanel.get("Loading-Panel").getElement(), "");
@@ -154,34 +158,53 @@ public class CoreGUI implements EntryPoint {
         canvas.setWidth100();
         canvas.setHeight100();
 
-        layout.addMember(canvas);
+        rootCanvas.addMember(canvas);
 
 
 //        canvas.addChild(new AdministrationView()) ; //DemoCanvas());
 
 
-        layout.draw();
-
-
-        breadCrumb.initialize(History.getToken());
-
+        rootCanvas.draw();        
 
         History.addValueChangeHandler(new ValueChangeHandler<String>() {
             public void onValueChange(ValueChangeEvent<String> historyChangeEvent) {
-                System.out.println("History request: " + historyChangeEvent.getValue());
+                String path = historyChangeEvent.getValue();
+                System.out.println("History request: " + path);
 
+                List<String> viewIdNames = path.equals("") ? Collections.<String>emptyList() : Arrays.asList(path.split("\\/"));
 
-                breadCrumb.verify(historyChangeEvent.getValue());
+                View parentView = CoreGUI.this.rootView;
+                ViewRenderer viewRenderer = (ViewRenderer)parentView.getCanvas();
+                List<Breadcrumb> breadcrumbs = new ArrayList<Breadcrumb>(viewIdNames.size());
+                try {
+                    for (String viewIdName : viewIdNames) {
+                        Canvas parentCanvas = parentView.getCanvas();
+                        if (parentCanvas != null && parentCanvas instanceof ViewRenderer) {
+                            viewRenderer = (ViewRenderer)parentCanvas;
+                        }
+                        ViewId viewId = new ViewId(viewIdName, parentView.getId());
+                        parentView = viewRenderer.renderView(parentView, viewId);
+                        breadcrumbs.add(parentView.getBreadcrumb());
+                    }
+                } catch (UnknownViewException e) {
+                    // Abort the for-loop, since once we hit an unknown name, we don't care about any remaining names
+                    // in the list. The breadcrumbs list will contain breadcrumbs for only the names that were
+                    // recognized.
+                    System.err.println(e.getMessage());
+                }
 
+                System.out.println("Breadcrumbs: " + breadcrumbs);
+                breadCrumb.setBreadcrumbs(breadcrumbs);
+
+                /*breadCrumb.initialize(path);
                 ArrayList<Place> trail = breadCrumb.getTrail();
 
                 Place base = trail.get(0);
 
-
                 if (content != null && content instanceof Presenter) {
                     Presenter p = ((Presenter) content);
                     if (!p.fireDisplay(base, trail.subList(1, trail.size()))) {
-                        Canvas c = displayContent(base.getId());
+                        Canvas c = createContent(base.getId());
                         setContent(c);
 
                         if (trail.size() >= 2 && c instanceof Presenter) {
@@ -189,32 +212,36 @@ public class CoreGUI implements EntryPoint {
                         }
                     }
                 } else {
-                    Canvas c = displayContent(base.getId());
+                    Canvas c = createContent(base.getId());
                     setContent(c);
                     if (trail.size() >= 2 && c instanceof Presenter) {
                         ((Presenter) c).fireDisplay(trail.get(0), trail.subList(1, trail.size()));
                     }
-                }
+                }*/
+
+                breadCrumb.refresh();
             }
         });
 
         History.fireCurrentHistoryState();
     }
 
-    public Canvas displayContent(String key) {
-        Canvas c = null;
-        if (key.equals("Administration")) {
-            c = new AdministrationView();
-        } else if (key.equals("Demo")) {
-            c = new DemoCanvas();
-        } else if (key.equals("Resources")) {
-            c = new ResourcesView();
-        } else if (key.equals("Resource")) {
-            c = new ResourceView();
-        } else if (key.equals("Dashboard")) {
-            c = new DashboardView();
+    public Canvas createContent(String breadcrumbName) {
+        Canvas canvas;
+        if (breadcrumbName.equals("Administration")) {
+            canvas = new AdministrationView();
+        } else if (breadcrumbName.equals("Demo")) {
+            canvas = new DemoCanvas();
+        } else if (breadcrumbName.equals("Resources")) {
+            canvas = new ResourcesView();
+        } else if (breadcrumbName.equals("Resource")) {
+            canvas = new ResourceView();
+        } else if (breadcrumbName.equals("Dashboard")) {
+            canvas = new DashboardView();
+        } else {
+            canvas = null;
         }
-        return c;
+        return canvas;
     }
 
 
@@ -250,16 +277,41 @@ public class CoreGUI implements EntryPoint {
         contentCanvas.draw();
     }
 
-    public static void addBreadCrumb(Place place) {
-        breadCrumb.addPlace(place);
-
+    public static void goTo(String path) {
+        History.newItem(path, true);
     }
 
-    public static void setBreadCrumb(Place place) {
-        breadCrumb.setPlace(place);
-
+    public static void updateBreadCrumbDisplayName(ViewId viewId, String displayName) {
+        int index = -1;
+        for (ViewId current = viewId.getParent(); current != null; current = current.getParent()) {
+           index++;
+        }
+        List<Breadcrumb> breadcrumbs = breadCrumb.getBreadcrumbs();
+        if (index < breadcrumbs.size()) {
+            Breadcrumb breadcrumb = breadcrumbs.get(index);
+            if (breadcrumb.getName().equals(viewId.getName())) {
+                breadcrumbs.set(index, new Breadcrumb(breadcrumb.getName(), displayName));
+                breadCrumb.refresh();
+            }
+        }
     }
 
+    private class RootCanvas extends VLayout implements ViewRenderer {
+        private RootCanvas() {
+            setWidth100(); // (1200);
+            setHeight100(); // (900);
+        }
+
+        public View renderView(View parentView, ViewId viewId) throws UnknownViewException {
+            String path = viewId.getPath();
+            Canvas canvas = createContent(path);
+            if (canvas != null) {
+                setContent(canvas);
+                return new View(viewId, canvas);
+            }
+            throw new UnknownViewException(viewId);
+        }
+    }
 }
 
 

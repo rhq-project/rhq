@@ -21,11 +21,16 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
+import org.rhq.enterprise.gui.coregui.client.UnknownViewException;
+import org.rhq.enterprise.gui.coregui.client.View;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewRenderer;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Presenter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourcesView;
 import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -38,14 +43,12 @@ import java.util.List;
 /**
  * @author Greg Hinkle
  */
-public class ResourceView extends HLayout implements Presenter {
+public class ResourceView extends HLayout implements Presenter, ViewRenderer {
 
     private Canvas contentCanvas;
 
-
     private Resource selectedResource;
-    private Resource resourcePlatform;
-
+    //private Resource resourcePlatform;
 
     private ResourceTreeView treeView;
     private ResourceDetailView detailView;
@@ -60,7 +63,7 @@ public class ResourceView extends HLayout implements Presenter {
     public ResourceView(Resource selectedResource) {
         this.selectedResource = selectedResource;
 
-        System.out.println("displaying resource: " + selectedResource);
+        System.out.println("Displaying Resource: " + selectedResource);
     }
 
     @Override
@@ -87,15 +90,15 @@ public class ResourceView extends HLayout implements Presenter {
 
     }
 
-    public boolean fireDisplay(Place place, List<Place> children) {
+    public boolean fireDisplay(Place base, List<Place> subLocations) {
         try {
-            if (place.equals(getPlace())) {
-                if (children.size() > 0) {
-                    Place resourcePlace = children.get(0);
+            if (base.equals(getPlace())) {
+                if (subLocations.size() > 0) {
+                    Place resourcePlace = subLocations.get(0);
                     int resourceId = Integer.parseInt(resourcePlace.getId());
 
                     if (selectedResource == null || selectedResource.getId() != resourceId) {
-                        setSelectedResource(resourceId);
+                        setSelectedResource(resourceId, null);
                     }
                 }
                 return true;
@@ -108,27 +111,40 @@ public class ResourceView extends HLayout implements Presenter {
     }
 
 
+    public void setSelectedResource(final int resourceId, final ViewId viewId) {
+        Resource resource = this.treeView.getResource(resourceId);
+        if (resource != null) {
+            setSelectedResource(resource);
+            CoreGUI.updateBreadCrumbDisplayName(viewId, resource.getName());
+        } else {
+            ResourceCriteria criteria = new ResourceCriteria();
+            criteria.addFilterId(resourceId);
+            resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+                public void onFailure(Throwable caught) {
+                    SC.say("Failed to load Resource with id " + resourceId + ": " + caught);
+                    // TODO: Display this error in a red box at top of page instead?
+                    CoreGUI.goTo(ResourcesView.VIEW_PATH);
+                }
 
-    public void setSelectedResource(int resourceId) {
-        ResourceCriteria criteria = new ResourceCriteria();
-        criteria.addFilterId(resourceId);
-        resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
-            public void onFailure(Throwable caught) {
-                SC.say("failed to load");
-            }
-
-            public void onSuccess(PageList<Resource> result) {
-                Resource res = result.get(0);
-                setSelectedResource(res);
-            }
-        });
+                public void onSuccess(PageList<Resource> result) {
+                    if (result.isEmpty()) {
+                        //noinspection ThrowableInstanceNeverThrown
+                        onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
+                    } else {
+                        Resource resource = result.get(0);
+                        setSelectedResource(resource);
+                        CoreGUI.updateBreadCrumbDisplayName(viewId, resource.getName());
+                    }
+                }
+            });
+        }
     }
 
 
     public void setSelectedResource(Resource resource) {
         this.selectedResource = resource;
-        treeView.setSelectedResource(resource);
-        detailView.onResourceSelected(resource);
+        this.treeView.setSelectedResource(resource);
+        this.detailView.onResourceSelected(resource);
     }
 
 
@@ -142,5 +158,23 @@ public class ResourceView extends HLayout implements Presenter {
             contentCanvas.getChildren()[0].destroy();
         contentCanvas.addChild(newContent);
         contentCanvas.draw();
+    }
+
+    public View renderView(View parentView, ViewId viewId) throws UnknownViewException {
+        String path = viewId.getPathRelativeTo(parentView.getId());
+        int resourceId;
+        try {
+            resourceId = Integer.parseInt(path);
+        } catch (NumberFormatException e) {
+            // not a valid Resource id - nothing for us to do
+            throw new UnknownViewException(viewId, "Invalid Resource id [" + path + "]");
+        }
+        if (this.selectedResource == null || this.selectedResource.getId() != resourceId) {
+            setSelectedResource(resourceId, viewId);
+        }
+        // Use "..." as temporary display name for breadcrumb. If the Resource is fetched successfully, the display name
+        // will be updated to be the Resource's name.
+        Breadcrumb breadcrumb = new Breadcrumb(viewId.getName(), "...");
+        return new View(viewId, this.detailView, breadcrumb);
     }
 }

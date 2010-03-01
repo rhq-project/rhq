@@ -25,18 +25,14 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.google.gwt.user.client.Random;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,7 +40,6 @@ import java.util.List;
  */
 public class DashboardView extends VLayout implements Presenter {
 
-    
      private static String[] colors = new String[]{
              "FF6600", "808000", "008000", "008080", "0000FF", "666699",
              "FF0000", "FF9900", "99CC00", "339966", "33CCCC", "3366FF",
@@ -193,8 +188,8 @@ public class DashboardView extends VLayout implements Presenter {
 
     }
 
-    public boolean fireDisplay(Place place, List<Place> children) {
-        return place.equals(getPlace());
+    public boolean fireDisplay(Place base, List<Place> subLocations) {
+        return base.equals(getPlace());
     }
 
     public Place getPlace() {

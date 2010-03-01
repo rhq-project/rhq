@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,20 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import org.rhq.enterprise.gui.coregui.client.places.Place;
-
-import java.util.List;
-
 /**
- * @deprecated replaced by {@link ViewRenderer}
+ * TODO
  *
- * @author Greg Hinkle
+ * @author Ian Springer
  */
-@Deprecated
-public interface Presenter {
-
-    boolean fireDisplay(Place baseLocation, List<Place> subLocations);
-
-    Place getPlace();
-
+public interface ViewRenderer {
+    /**
+     * TODO
+     *
+     * @param parentView
+     * @param viewId
+     * @return
+     * @throws UnknownViewException
+     */
+    View renderView(View parentView, ViewId viewId) throws UnknownViewException;
 }

@@ -279,11 +279,18 @@ public class ResourceTreeView extends VLayout {
         importChildMenu.setEnabled(importChildSubMenu.getItems().length > 0);
         contextMenu.addItem(importChildMenu);
 
-
-
-
     }
 
+    Resource getResource(int resourceId) {
+         if (this.treeGrid != null && this.treeGrid.getTree() != null) {
+             ResourceTreeDatasource.ResourceTreeNode treeNode =
+                     (ResourceTreeDatasource.ResourceTreeNode) this.treeGrid.getTree().findById(String.valueOf(resourceId));
+             if (treeNode != null) {
+                 return treeNode.getResource();
+             }
+         }
+         return null;       
+    }
 
     public void setSelectedResource(final Resource selectedResource) {
         this.selectedResource = selectedResource;

@@ -372,7 +372,8 @@
                                                     converter="#{metricPercentConverter}"
                                                     required="true"
                                                     requiredMessage="#{alertMessages.percentRange}"
-                                                    validatorMessage="#{alertMessages.percentRange}">
+                                                    validatorMessage="#{alertMessages.percentRange}"
+                                                    size="6">
                                                 <f:validateDoubleRange minimum="0.0" maximum="1000.0" />
                                             </h:inputText>
                                             <h:outputLabel for="metricBaselinePercent" value=" #{messages['alert.config.props.CB.Content.Percent']} " />

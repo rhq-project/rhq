@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugins.filetemplate;
 
+import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
@@ -51,6 +52,11 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
 
     public void shutdown() {
         System.out.println("The filetemplate bundle plugin has been shut down!!! : " + this);
+    }
+
+    public void parseRecipe(String recipe) throws Exception {
+        RecipeParser parser = new RecipeParser();
+        parser.parseRecipe(recipe);
     }
 
     public ControlResults invoke(String name, Configuration parameters) {

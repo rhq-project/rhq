@@ -25,5 +25,6 @@ package org.rhq.enterprise.server.plugin.pc.bundle;
  * @author John Mazzitelli
  */
 public interface BundleServerPluginFacet {
-
+    // TODO return something the server/jar SLSB likes
+    void parseRecipe(String recipe) throws Exception;
 }

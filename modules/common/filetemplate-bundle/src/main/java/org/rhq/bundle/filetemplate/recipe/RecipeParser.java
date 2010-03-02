@@ -119,7 +119,7 @@ public class RecipeParser {
     protected HashMap<String, RecipeCommand> createRecipeCommands() {
         HashMap<String, RecipeCommand> commands = new HashMap<String, RecipeCommand>();
 
-        RecipeCommand[] knownCommands = new RecipeCommand[] { new ConfigdefRecipeCommand(), //
+        RecipeCommand[] knownCommands = new RecipeCommand[] { new ScriptRecipeCommand(), //
             new DeployRecipeCommand() //
         };
 

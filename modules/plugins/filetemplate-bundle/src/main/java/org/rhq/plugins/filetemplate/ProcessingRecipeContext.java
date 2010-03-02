@@ -80,6 +80,23 @@ public class ProcessingRecipeContext extends RecipeContext {
         super.addReplacementVariables(replacementVariables);
     }
 
+    @Override
+    public void addScript(String exe, List<String> exeArgs) {
+        super.addScript(exe, exeArgs);
+
+        File scriptFile = new File(this.baseWorkingDirectory, exe);
+
+        ProcessExecution pe = new ProcessExecution(scriptFile.getAbsolutePath());
+        pe.setArguments(exeArgs);
+        pe.setWaitForCompletion(30 * 60 * 1000L);
+        pe.setWorkingDirectory(scriptFile.getParent());
+
+        ProcessExecutionResults results = this.systemInfo.executeProcess(pe);
+        if (results.getError() != null) {
+            throw new RuntimeException("Could not execute script [" + pe + "]: " + results, results.getError());
+        }
+    }
+
     private ProcessExecution getUnzipExecution(String filename, String directory) {
         String exe;
         List<String> args = null;

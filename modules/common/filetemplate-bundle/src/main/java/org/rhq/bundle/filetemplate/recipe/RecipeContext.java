@@ -23,8 +23,10 @@
 
 package org.rhq.bundle.filetemplate.recipe;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,11 +44,13 @@ public class RecipeContext {
     private final Map<String, String> deployFiles;
     private final Set<String> replacementVariables;
     private Configuration replacementVariableValues;
+    private final List<Script> scripts;
 
     public RecipeContext(String recipe) {
         this.recipe = recipe;
         this.deployFiles = new HashMap<String, String>();
         this.replacementVariables = new HashSet<String>();
+        this.scripts = new ArrayList<Script>();
     }
 
     /**
@@ -113,5 +117,69 @@ public class RecipeContext {
             setReplacementVariableValues(values);
         }
         values.put(new PropertySimple(name, value));
+    }
+
+    /**
+     * Returns a set of all the names of scripts found in the recipe.
+     * 
+     * @return script names
+     */
+    public Set<String> getScriptFiles() {
+        Set<String> scriptFiles = new HashSet<String>();
+        for (Script script : this.scripts) {
+            scriptFiles.add(script.getExecutable());
+        }
+        return scriptFiles;
+    }
+
+    /**
+     * Adds a script that the recipe wants invoked.
+     * 
+     * @param exe the script executable
+     * @param exeArgs the arguments to pass to the script
+     */
+    public void addScript(String exe, List<String> exeArgs) {
+        this.scripts.add(new Script(exe, exeArgs));
+    }
+
+    class Script {
+        private final List<String> args;
+        private final String exe;
+
+        public Script(String exe, List<String> args) {
+            this.exe = exe;
+            this.args = args;
+        }
+
+        public String getExecutable() {
+            return exe;
+        }
+
+        public List<String> getArguments() {
+            return args;
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder("RecipeContext:\n");
+        str.append("Recipe Text:\n").append(getRecipe()).append("\n");
+        str.append("Deploy Files: ").append(getDeployFiles()).append("\n");
+        str.append("Replacement Vars: ").append(getReplacementVariables()).append("\n");
+
+        str.append("Replacement Values: ");
+        Configuration values = getReplacementVariableValues();
+        if (values == null) {
+            str.append("<none>");
+        } else {
+            str.append(values.getProperties());
+        }
+        str.append("\n");
+
+        str.append("Script Files: ").append(getScriptFiles()).append("\n");
+        for (Script script : this.scripts) {
+            str.append("* ").append(script.getExecutable()).append(" ").append(script.getArguments()).append("\n");
+        }
+        return str.toString();
     }
 }

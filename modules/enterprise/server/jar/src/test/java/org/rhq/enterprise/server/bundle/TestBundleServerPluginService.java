@@ -39,18 +39,15 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
-import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginServiceMBean;
+import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginManager;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
- * Used as a mock service for the generic server plugin container.
+ * Used as a mock service for the bundle server plugin container.
  */
-public class TestBundleServerPluginService extends ServerPluginService implements TestGenericServerPluginServiceMBean {
-    public enum State {
-        INITIALIZED, STARTED, STOPPED, UNINITIALIZED
-    }
+public class TestBundleServerPluginService extends ServerPluginService implements TestBundleServerPluginServiceMBean {
 
     // public so tests can directly set these
     public TestMasterServerPluginContainer master;
@@ -105,9 +102,7 @@ public class TestBundleServerPluginService extends ServerPluginService implement
         }
     }
 
-    public class TestBundleServerPluginContainer extends GenericServerPluginContainer {
-        public State state = State.UNINITIALIZED;
-
+    public class TestBundleServerPluginContainer extends BundleServerPluginContainer {
         public TestBundleServerPluginContainer(MasterServerPluginContainer master) {
             super(master);
         }
@@ -117,56 +112,12 @@ public class TestBundleServerPluginService extends ServerPluginService implement
             TestBundlePluginManager pm = new TestBundlePluginManager(this);
             return pm;
         }
-
-        @Override
-        public synchronized void initialize() throws Exception {
-            if (state == State.UNINITIALIZED) {
-                state = State.INITIALIZED;
-            } else {
-                System.out.println("!!! PC LIFECYCLE WAS BAD - THIS IS A BUG !!!");
-                throw new IllegalStateException("not uninitialized: " + state);
-            }
-            super.initialize();
-        }
-
-        @Override
-        public synchronized void start() {
-            if (state == State.INITIALIZED) {
-                state = State.STARTED;
-            } else {
-                System.out.println("!!! PC LIFECYCLE WAS BAD - THIS IS A BUG !!!");
-                throw new IllegalStateException("not initialized: " + state);
-            }
-            super.start();
-        }
-
-        @Override
-        public synchronized void stop() {
-            if (state == State.STARTED) {
-                state = State.STOPPED;
-            } else {
-                System.out.println("!!! PC LIFECYCLE WAS BAD - THIS IS A BUG !!!");
-                throw new IllegalStateException("not started: " + state);
-            }
-            super.stop();
-        }
-
-        @Override
-        public synchronized void shutdown() {
-            if (state == State.STOPPED) {
-                state = State.UNINITIALIZED;
-            } else {
-                System.out.println("!!! PC LIFECYCLE WAS BAD - THIS IS A BUG !!!");
-                throw new IllegalStateException("not stopped: " + state);
-            }
-            super.shutdown();
-        }
     }
 
     /**
      * The test plugin manager.
      */
-    class TestBundlePluginManager extends ServerPluginManager {
+    class TestBundlePluginManager extends BundleServerPluginManager {
         public final Map<String, ServerPluginComponent> components;
 
         public TestBundlePluginManager(TestBundleServerPluginContainer pc) {

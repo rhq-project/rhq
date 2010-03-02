@@ -65,18 +65,14 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     public void beforeMethod() {
         super.startTest();
 
-        if (null == ps) {
-            ps = new TestBundleServerPluginService();
-            pc = ps.createMasterPluginContainer();
-        } else {
-            pc.initialize(ps.masterConfig);
-        }
-
+        this.ps = new TestBundleServerPluginService();
+        prepareCustomServerPluginService(this.ps);
         bundleManagerBean = LookupUtil.getBundleManager();
+        this.ps.startMasterPluginContainer();
     }
 
     @AfterMethod(alwaysRun = true)
-    public void afterMethod() {
+    public void afterMethod() throws Exception {
 
         EntityManager em = null;
 
@@ -133,9 +129,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             }
         }
 
-        if (null != pc) {
-            pc.shutdown();
-        }
+        unprepareServerPluginService();
+        this.ps = null;
 
         super.endTest();
     }

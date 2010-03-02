@@ -18,6 +18,11 @@
  */
 package org.rhq.enterprise.server.plugins.alertOperations;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -35,9 +40,20 @@ public class PrintTokens {
 
     public static void main(String[] args) throws Exception {
 
+        OutputStream out;
+        if (args.length==0)
+            out = new BufferedOutputStream(System.out);
+        else {
+            File file = new File(args[0]);
+            System.err.println("writing to " + file.getAbsolutePath());
+            out = new BufferedOutputStream(new FileOutputStream(file));
+        }
+
         String text = createTokenDescription();
 
-        System.out.println(text);
+        out.write(text.getBytes());
+        out.flush();
+        out.close();
     }
 
     /**

@@ -54,6 +54,7 @@ import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
+import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
@@ -94,6 +95,7 @@ public class RemoteClient {
         ResourceGroupManager(ResourceGroupManagerRemote.class), //
         ResourceTypeManager(ResourceTypeManagerRemote.class), //
         RoleManager(RoleManagerRemote.class), //
+        SavedSearchManager(SavedSearchManagerRemote.class), //
         SubjectManager(SubjectManagerRemote.class), //
         SupportManager(SupportManagerRemote.class), //
         SystemManager(SystemManagerRemote.class) //

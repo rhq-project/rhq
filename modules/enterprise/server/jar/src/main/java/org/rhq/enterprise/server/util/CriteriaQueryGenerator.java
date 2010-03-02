@@ -58,13 +58,14 @@ public final class CriteriaQueryGenerator {
 
     public enum AuthorizationTokenType {
         RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking 
-        GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking
+        GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking 
     }
 
     private Criteria criteria;
 
     private String authorizationJoinFragment;
     private String authorizationPermsFragment;
+    private String authorizationCustomConditionFragment;
     private int authorizationSubjectId;
 
     private String alias;
@@ -87,6 +88,10 @@ public final class CriteriaQueryGenerator {
             }
         }
         this.alias = aliasBuilder.toString();
+    }
+
+    public void setAuthorizationCustomConditionFragment(String fragment) {
+        this.authorizationCustomConditionFragment = fragment;
     }
 
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, int subjectId) {
@@ -258,6 +263,16 @@ public final class CriteriaQueryGenerator {
             if (null != this.authorizationPermsFragment) {
                 results.append(this.authorizationPermsFragment + " ");
             }
+        }
+
+        if (authorizationCustomConditionFragment != null) {
+            if (firstCrit) {
+                firstCrit = false;
+            } else {
+                // always want AND for security, regardless of conjunctiveFragment
+                results.append(NL).append(" AND ");
+            }
+            results.append(this.authorizationCustomConditionFragment);
         }
 
         if (countQuery == false) {

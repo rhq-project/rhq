@@ -292,6 +292,10 @@ public class ResourceTreeView extends VLayout {
          return null;       
     }
 
+    private void setRootResource(Resource rootResource) {
+        this.rootResource = rootResource;
+    }
+
     public void setSelectedResource(final Resource selectedResource) {
         this.selectedResource = selectedResource;
 
@@ -317,8 +321,7 @@ public class ResourceTreeView extends VLayout {
                         }
                         buildTree();
 
-                        ResourceTreeView.this.rootResource = root;
-
+                        setRootResource(root);
 
                         ResourceTreeDatasource dataSource = new ResourceTreeDatasource(result);
                         treeGrid.setDataSource(dataSource);

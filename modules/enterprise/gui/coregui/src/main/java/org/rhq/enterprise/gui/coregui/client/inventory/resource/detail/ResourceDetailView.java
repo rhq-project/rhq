@@ -24,6 +24,8 @@ import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
 import org.rhq.enterprise.gui.coregui.client.components.SubTabLayout;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
+import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -48,15 +50,16 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
     private SimpleCollapsiblePanel summaryPanel;
     private ResourceSummaryView summaryView;
 
-    private Tab summaryTab;
-    private Tab monitoringTab;
-    private Tab inventoryTab;
-    private Tab operationsTab;
-    private Tab alertsTab;
-    private Tab configurationTab;
-    private Tab eventsTab;
-    private Tab contentTab;
-    private TabSet topTabSet;
+    private TwoLevelTab summaryTab;
+    private TwoLevelTab monitoringTab;
+    private TwoLevelTab inventoryTab;
+    private TwoLevelTab operationsTab;
+    private TwoLevelTab alertsTab;
+    private TwoLevelTab configurationTab;
+    private TwoLevelTab eventsTab;
+    private TwoLevelTab contentTab;
+
+    private TwoLevelTabSet topTabSet;
 
     HTMLFlow title = new HTMLFlow();
 
@@ -65,8 +68,8 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void onDraw() {
+        super.onDraw();
 
         setWidth100();
         setHeight100();
@@ -77,21 +80,34 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
 
         // The Tabs section
 
-        topTabSet = new TabSet();
+        topTabSet = new TwoLevelTabSet();
         topTabSet.setTabBarPosition(Side.TOP);
         topTabSet.setWidth100();
         topTabSet.setHeight100();
         topTabSet.setEdgeMarginSize(0);
         topTabSet.setEdgeSize(0);
 
-        summaryTab = new Tab("Summary", "/images/icons/Service_up_16.png");
-        monitoringTab = new Tab("Monitoring", "/images/icons/Monitor_grey_16.png");
-        inventoryTab = new Tab("Inventory", "/images/icons/Inventory_grey_16.png");
-        operationsTab = new Tab("Operations", "/images/icons/Operation_grey_16.png");
-        alertsTab = new Tab("Alerts", "/images/icons/Alert_grey_16.png");
-        configurationTab = new Tab("Configuration", "/images/icons/Configure_grey_16.png");
-        eventsTab = new Tab("Events", "/images/icons/Events_grey_16.png");
-        contentTab = new Tab("Content", "/images/icons/Content_grey_16.png");
+        summaryTab = new TwoLevelTab("Summary", "/images/icons/Service_up_16.png");
+        summaryTab.registerSubTabs("Overview","Timeline");
+
+        monitoringTab = new TwoLevelTab("Monitoring", "/images/icons/Monitor_grey_16.png");
+        monitoringTab.registerSubTabs("Graphs","Tables","Traits","Availability","Schedules");
+
+        inventoryTab = new TwoLevelTab("Inventory", "/images/icons/Inventory_grey_16.png");
+        inventoryTab.registerSubTabs("Children","Connection Settings");
+
+        operationsTab = new TwoLevelTab("Operations", "/images/icons/Operation_grey_16.png");
+        operationsTab.registerSubTabs("History", "Scheduled");
+
+        alertsTab = new TwoLevelTab("Alerts", "/images/icons/Alert_grey_16.png");
+        alertsTab.registerSubTabs("Alert History", "Alert Definitions");
+
+        configurationTab = new TwoLevelTab("Configuration", "/images/icons/Configure_grey_16.png");
+        configurationTab.registerSubTabs("Current", "History");
+
+        eventsTab = new TwoLevelTab("Events", "/images/icons/Events_grey_16.png");
+
+        contentTab = new TwoLevelTab("Content", "/images/icons/Content_grey_16.png");
 
         topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab, eventsTab, contentTab);
 
@@ -119,21 +135,19 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
 
         FullHTMLPane summaryPane = new FullHTMLPane("/rhq/resource/summary/overview-plain.xhtml?id=" + resource.getId());
         FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
-        SubTabLayout summarySet = new SubTabLayout();
-        summarySet.registerSubTab("Overview", summaryPane);
-        summarySet.registerSubTab("Timeline", timelinePane);
+        summaryTab.updateSubTab("Overview", summaryPane);
+        summaryTab.updateSubTab("Timeline", timelinePane);
 
-        topTabSet.updateTab(summaryTab, summarySet);
 
-        SubTabLayout monitoringSet = new SubTabLayout();
-        monitoringSet.registerSubTab("Graphs", new GraphListView(resource)); // new FullHTMLPane("/rhq/common/monitor/graphs.xhtml?id=" + resource.getId()));
-        monitoringSet.registerSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables.xhtml?id=" + resource.getId()));
-        monitoringSet.registerSubTab("Traits", new FullHTMLPane("/rhq/resource/monitor/traits.xhtml?id=" + resource.getId()));
-        monitoringSet.registerSubTab("Availability", new FullHTMLPane("/rhq/resource/monitor/availabilityHistory.xhtml?id=" + resource.getId()));
-        monitoringSet.registerSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules.xhtml?id=" + resource.getId()));
-        topTabSet.updateTab(monitoringTab, monitoringSet);
+        monitoringTab.updateSubTab("Graphs", new GraphListView(resource)); // new FullHTMLPane("/rhq/common/monitor/graphs.xhtml?id=" + resource.getId()));
+        monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables.xhtml?id=" + resource.getId()));
+        monitoringTab.updateSubTab("Traits", new FullHTMLPane("/rhq/resource/monitor/traits.xhtml?id=" + resource.getId()));
+        monitoringTab.updateSubTab("Availability", new FullHTMLPane("/rhq/resource/monitor/availabilityHistory.xhtml?id=" + resource.getId()));
+        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules.xhtml?id=" + resource.getId()));
 
-        topTabSet.updateTab(configurationTab, new ConfigurationEditor(resource.getId(), resource.getResourceType().getId()));
+
+        configurationTab.updateSubTab("Current", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId()));
+
 
         topTabSet.setSelectedTab(selectedTab);
 

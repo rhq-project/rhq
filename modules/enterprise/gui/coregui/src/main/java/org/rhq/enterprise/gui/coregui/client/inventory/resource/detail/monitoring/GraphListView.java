@@ -29,6 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectLi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -51,6 +52,7 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
 
     public GraphListView(Resource resource) {
         this.resource = resource;
+        setOverflow(Overflow.SCROLL);
     }
 
 

@@ -129,7 +129,7 @@ public class ResourceView extends HLayout implements ViewRenderer {
     }
 
     public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {
-        String parentPath = viewId.getParent().getPath();
+            String parentPath = viewId.getParent().getPath();
         if (!parentPath.equals("Resource")) {
             throw new UnknownViewException();
         }

@@ -25,11 +25,10 @@ package org.rhq.core.clientapi.agent.configuration;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class ConfigurationValidationException extends RuntimeException implements Serializable{
+public class ConfigurationValidationException extends Exception implements Serializable {
     /**
      * 
      */

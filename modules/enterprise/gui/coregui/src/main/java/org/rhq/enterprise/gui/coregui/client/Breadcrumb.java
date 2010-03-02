@@ -107,7 +107,7 @@ public class Breadcrumb {
                 }
             } else {
                 first = false;
-            }            
+            }
             displayName.append(currentChar);
         }
         return displayName.toString();

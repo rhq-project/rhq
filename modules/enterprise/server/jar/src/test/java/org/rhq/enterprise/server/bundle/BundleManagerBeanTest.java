@@ -41,6 +41,7 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -57,8 +58,20 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private BundleManagerLocal bundleManagerBean;
 
+    private TestBundleServerPluginService ps;
+    private MasterServerPluginContainer pc;
+
     @BeforeMethod
     public void beforeMethod() {
+        super.startTest();
+
+        if (null == ps) {
+            ps = new TestBundleServerPluginService();
+            pc = ps.createMasterPluginContainer();
+        } else {
+            pc.initialize(ps.masterConfig);
+        }
+
         bundleManagerBean = LookupUtil.getBundleManager();
     }
 
@@ -119,6 +132,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
                 em.close();
             }
         }
+
+        if (null != pc) {
+            pc.shutdown();
+        }
+
+        super.endTest();
     }
 
     @Test(enabled = ENABLED)
@@ -232,8 +251,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private BundleType createBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-type-" + name;
-        BundleType bt = new BundleType(fullName, createResourceType(name));
-        bt = bundleManagerBean.createBundleType(getOverlord(), bt);
+        BundleType bt = bundleManagerBean.createBundleType(getOverlord(), fullName, createResourceType(name).getId());
 
         assert bt.getId() > 0;
         assert bt.getName().endsWith(fullName);
@@ -247,8 +265,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private Bundle createBundle(String name, BundleType bt) throws Exception {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
-        Bundle b = new Bundle(fullName, bt);
-        b = bundleManagerBean.createBundle(getOverlord(), b);
+        Bundle b = bundleManagerBean.createBundle(getOverlord(), fullName, bt.getId());
 
         assert b.getId() > 0;
         assert b.getName().endsWith(fullName);
@@ -257,9 +274,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private BundleVersion createBundleVersion(String name, String version, Bundle bundle) throws Exception {
         final String fullName = TEST_PREFIX + "-version-" + version + "-" + name;
-        final String recipe = TEST_PREFIX + "-recipe-" + name;
-        BundleVersion bv = new BundleVersion(fullName, version, bundle, recipe);
-        bv = bundleManagerBean.createBundleVersion(getOverlord(), bv);
+        final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d <% test.path %>";
+        BundleVersion bv = bundleManagerBean.createBundleVersion(getOverlord(), bundle.getId(), fullName, version,
+            recipe);
 
         assert bv.getId() > 0;
         assert bv.getName().endsWith(fullName);

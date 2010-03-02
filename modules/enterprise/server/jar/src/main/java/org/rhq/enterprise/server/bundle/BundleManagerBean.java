@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.bundle;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -32,11 +34,17 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
@@ -48,6 +56,9 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -70,47 +81,206 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     private AuthorizationManagerLocal authorizationManager;
 
     @EJB
+    private ContentManagerLocal contentManager;
+
+    @EJB
+    private RepoManagerLocal repoManager;
+
+    @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
 
-    public Bundle createBundle(Subject subject, Bundle bundle) {
-        if (null == bundle || null == bundle.getName())
-            throw new IllegalArgumentException("Missing one or more of: bundle, name");
-
-        // add the implicit bundle repo, if necessary
-        if (null == bundle.getRepo()) {
-            Repo repo = new Repo(bundle.getName());
-            repo.setCandidate(false);
-            repo.setSyncSchedule(null);
-            bundle.setRepo(repo);
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public Bundle createBundle(Subject subject, String name, int bundleTypeId) {
+        if (null == name || "".equals(name.trim())) {
+            throw new IllegalArgumentException("Invalid bundleName: " + name);
         }
 
-        log.info("Creating bundle: " + bundle);
+        BundleType bundleType = entityManager.find(BundleType.class, bundleTypeId);
+        if (null == bundleType) {
+            throw new IllegalArgumentException("Invalid bundleTypeId: " + bundleTypeId);
+        }
 
+        Bundle bundle = new Bundle(name, bundleType);
+
+        // add the implicit bundle repo
+        Repo repo = new Repo(name);
+        repo.setCandidate(false);
+        repo.setSyncSchedule(null);
+        bundle.setRepo(repo);
+
+        log.info("Creating bundle: " + bundle);
         entityManager.persist(bundle);
+
         return bundle;
     }
 
-    public BundleType createBundleType(Subject subject, BundleType bundleType) throws Exception {
-        if (null == bundleType || null == bundleType.getName())
-            throw new IllegalArgumentException("Missing one or more of: bundleType, name");
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleType createBundleType(Subject subject, String name, int resourceTypeId) throws Exception {
+        if (null == name || "".equals(name.trim())) {
+            throw new IllegalArgumentException("Invalid bundleTypeName: " + name);
+        }
 
+        ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
+        if (null == resourceType) {
+            throw new IllegalArgumentException("Invalid resourceeTypeId: " + resourceTypeId);
+        }
+
+        BundleType bundleType = new BundleType(name, resourceType);
         entityManager.persist(bundleType);
         return bundleType;
     }
 
-    public BundleVersion createBundleVersion(Subject subject, int bundleId, BundleVersion bundleVersion)
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String version, String recipe)
         throws Exception {
+        if (null == name || "".equals(name.trim())) {
+            throw new IllegalArgumentException("Invalid bundleVersionName: " + name);
+        }
+
         Bundle bundle = entityManager.find(Bundle.class, bundleId);
+        if (null == bundle) {
+            throw new IllegalArgumentException("Invalid bundleId: " + bundleId);
+        }
 
-        if (null == bundleVersion || null == bundle || null == bundleVersion.getRecipe())
-            throw new IllegalArgumentException("Missing one or more of: bundle, bundleVersion, recipe");
+        // parse the recipe (validation occurs here) and get the config def and list of files
+        BundleType bundleType = bundle.getBundleType();
+        BundleServerPluginFacet bp = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
+            .getBundleServerPluginFacet(bundleType.getName());
+        RecipeParseResults results = bp.parseRecipe(recipe);
 
-        // parse the recipe and get the config def and list of files
-        BundleServerPluginFacet bp;
-        //        bp.parseRecipe;
+        // ensure we have a version
+        version = getVersion(version, bundle);
+
+        BundleVersion bundleVersion = new BundleVersion(name, version, bundle, recipe);
+        bundleVersion.setConfigurationDefinition(results.getConfigDef());
 
         entityManager.persist(bundleVersion);
         return bundleVersion;
+    }
+
+    private String getVersion(String version, Bundle bundle) {
+        if (!(null == version || "".equals(version.trim()))) {
+            return version;
+        }
+
+        BundleVersion currentBundleVersion = null;
+        for (BundleVersion bundleVersion : bundle.getBundleVersions()) {
+            if ((null == currentBundleVersion) || (bundleVersion.getId() > currentBundleVersion.getId())) {
+                currentBundleVersion = bundleVersion;
+            }
+        }
+
+        // note - this is the same algo used by ResourceClientProxy in updatebackingContent (for a resource)
+        String oldVersion = (null == currentBundleVersion) ? null : currentBundleVersion.getVersion();
+        String newVersion = "1.0";
+        if (oldVersion != null && oldVersion.length() != 0) {
+            String[] parts = oldVersion.split("[^a-zA-Z0-9]");
+            String lastPart = parts[parts.length - 1];
+            try {
+                int lastNumber = Integer.parseInt(lastPart);
+                newVersion = oldVersion.substring(0, oldVersion.length() - lastPart.length()) + (lastNumber + 1);
+            } catch (NumberFormatException nfe) {
+                newVersion = oldVersion + ".1";
+            }
+        }
+
+        return newVersion;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
+        Architecture architecture, InputStream fileStream, boolean pinToPackage) throws Exception {
+
+        if (null == name || "".equals(name.trim())) {
+            throw new IllegalArgumentException("Invalid bundleFileName: " + name);
+        }
+        if (null == version || "".equals(version.trim())) {
+            throw new IllegalArgumentException("Invalid bundleFileVersion: " + version);
+        }
+        if (null == fileStream) {
+            throw new IllegalArgumentException("Invalid fileStream: " + null);
+        }
+        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
+        if (null == bundleVersion) {
+            throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
+        }
+
+        // Create the PackageVersion the BundleFile is tied to.  This implicitly creates the
+        // Package for the PackageVersion.
+        Bundle bundle = bundleVersion.getBundle();
+        PackageType packageType = getBundleTypePackageType(bundle.getBundleType());
+        architecture = (null == architecture) ? contentManager.getNoArchitecture() : architecture;
+        PackageVersion packageVersion = contentManager.createPackageVersion(name, packageType.getId(), version,
+            architecture.getId(), fileStream);
+
+        // Create the mapping between the Bundle's Repo and the BundleFile's PackageVersion
+        Repo repo = bundle.getRepo();
+        repoManager.addPackageVersionsToRepo(subject, repo.getId(), new int[] { packageVersion.getId() });
+
+        // Classify the Package with the Bundle name in order to distinguish it from the same package name for
+        // a different bundle.
+        Package generalPackage = packageVersion.getGeneralPackage();
+        generalPackage.setClassification(bundle.getName());
+
+        // With all the plumbing in place, create and persist the BundleFile. Tie it to the Package if the caller
+        // wants this BundleFile pinned to themost recent version.
+        BundleFile bundleFile = new BundleFile();
+        bundleFile.setBundleVersion(bundleVersion);
+        bundleFile.setPackageVersion(packageVersion);
+        if (pinToPackage) {
+            bundleFile.setPackage(generalPackage);
+        }
+
+        entityManager.persist(bundleFile);
+
+        return bundleFile;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleFile addBundleFileViaByteArray(Subject subject, int bundleVersionId, String name, String version,
+        Architecture architecture, byte[] fileBytes, boolean pinToPackage) throws Exception {
+
+        return addBundleFile(subject, bundleVersionId, name, version, architecture,
+            new ByteArrayInputStream(fileBytes), pinToPackage);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
+        int packageVersionId, boolean pinToPackage) throws Exception {
+
+        if (null == name || "".equals(name.trim())) {
+            throw new IllegalArgumentException("Invalid bundleFileName: " + name);
+        }
+        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
+        if (null == bundleVersion) {
+            throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
+        }
+        PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
+        if (null == packageVersion) {
+            throw new IllegalArgumentException("Invalid packageVersionId: " + packageVersionId);
+        }
+
+        // With all the plumbing in place, create and persist the BundleFile. Tie it to the Package if the caller
+        // wants this BundleFile pinned to themost recent version.
+        BundleFile bundleFile = new BundleFile();
+        bundleFile.setBundleVersion(bundleVersion);
+        bundleFile.setPackageVersion(packageVersion);
+        if (pinToPackage) {
+            bundleFile.setPackage(packageVersion.getGeneralPackage());
+        }
+
+        entityManager.persist(bundleFile);
+
+        return bundleFile;
+    }
+
+    private PackageType getBundleTypePackageType(BundleType bundleType) {
+
+        Query packageTypeQuery = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
+        packageTypeQuery.setParameter("typeId", bundleType.getResourceType().getId());
+        packageTypeQuery.setParameter("name", bundleType.getName());
+
+        return (PackageType) packageTypeQuery.getSingleResult();
     }
 
     @SuppressWarnings("unchecked")
@@ -198,8 +368,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         try {
             ResourceType linuxPlatformResourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin("Linux",
                 "Platforms");
-            BundleType bundleType = new BundleType(UUID.randomUUID().toString(), linuxPlatformResourceType);
-            return createBundleType(subject, bundleType);
+            return createBundleType(subject, UUID.randomUUID().toString(), linuxPlatformResourceType.getId());
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -215,9 +384,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             int randomIndex = random.nextInt(bundleTypes.size());
             bundleType = bundleTypes.get(randomIndex);
         }
-        Bundle bundle = new Bundle(UUID.randomUUID().toString(), bundleType);
 
-        bundle = createBundle(subject, bundle);
+        Bundle bundle = createBundle(subject, UUID.randomUUID().toString(), bundleType.getId());
 
         // Add 1 to 5 bundle versions.
         int bundleVersionCount = random.nextInt(5) + 1;

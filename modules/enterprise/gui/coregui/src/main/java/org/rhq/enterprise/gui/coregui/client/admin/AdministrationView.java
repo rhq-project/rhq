@@ -24,11 +24,9 @@ import org.rhq.enterprise.gui.coregui.client.View;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewRenderer;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Presenter;
-import org.rhq.enterprise.gui.coregui.client.admin.report.InventorySummaryReportView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
-import org.rhq.enterprise.gui.coregui.client.places.Place;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 
 import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.types.VisibilityMode;
@@ -45,14 +43,19 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * 
  * @author Greg Hinkle
  */
-public class AdministrationView extends HLayout implements Presenter, ViewRenderer {
+public class AdministrationView extends HLayout implements ViewRenderer {
+    public static final String VIEW_PATH = "Administration";
+
+    public static final String SUBVIEW_PATH_REPORTS = VIEW_PATH + ViewId.PATH_SEPARATOR + "Reports";
+    public static final String SUBVIEW_PATH_REPORTS_INVENTORY_SUMMARY = SUBVIEW_PATH_REPORTS + ViewId.PATH_SEPARATOR + "InventorySummary";
+
+    private static final String IFRAME_URL_INVENTORY_SUMMARY_REPORT = "/rhq/admin/report/resourceInstallReport-body.xhtml";
 
     private SectionStack sectionStack;
 
@@ -256,10 +259,11 @@ public class AdministrationView extends HLayout implements Presenter, ViewRender
         Tree tree = new Tree();
         final TreeNode manageSettings = new TreeNode("System Settings");
         final TreeNode manageTemplates = new TreeNode("Templates");
+        final TreeNode manageDownloads = new TreeNode("Downloads");
         final TreeNode manageLicense = new TreeNode("License");
 
         tree.setRoot(new TreeNode("System Configuration",
-                manageSettings, manageTemplates, manageLicense));
+                manageSettings, manageTemplates, manageDownloads, manageLicense));
 
         systemConfigTreeGrid.setData(tree);
 
@@ -267,19 +271,21 @@ public class AdministrationView extends HLayout implements Presenter, ViewRender
         systemConfigTreeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
-                    HTMLPane pane = new HTMLPane();
-                    pane.setContentsType(ContentsType.PAGE);
-                    pane.setWidth100();
-                    pane.setHeight100();
-
-                    String url = null;
+                    String url;
                     if (selectionEvent.getRecord() == manageSettings) {
                         url = "/admin/config/Config.do?mode=edit";
                     } else if (selectionEvent.getRecord() == manageTemplates) {
                         url = "/admin/config/EditDefaults.do?mode=monitor&viewMode=all";
+                    } else if (selectionEvent.getRecord() == manageDownloads) {
+                        url = "/rhq/admin/downloads-body.xhtml";
+                    } else if (selectionEvent.getRecord() == manageLicense) {
+                        url = "/admin/license/LicenseAdmin.do?mode=view";
+                    } else {
+                        throw new IllegalStateException("Unknown record selected: " + selectionEvent.getRecord());
                     }
+                    url += "&nomenu=true";
 
-                    pane.setContentsURL(url + "&nomenu=true");
+                    FullHTMLPane pane = new FullHTMLPane(url);
                     setContent(pane);
                     for (TreeGrid treeGrid : treeGrids) {
                         if (treeGrid != systemConfigTreeGrid) {
@@ -315,9 +321,7 @@ public class AdministrationView extends HLayout implements Presenter, ViewRender
         reportsTreeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
-                    HTMLPane pane = new InventorySummaryReportView();
-                    setContent(pane);
-                    CoreGUI.goTo(InventorySummaryReportView.PATH);
+                    CoreGUI.goTo(SUBVIEW_PATH_REPORTS_INVENTORY_SUMMARY);
                     for (TreeGrid treeGrid : treeGrids) {
                         if (treeGrid != reportsTreeGrid) {
                             treeGrid.deselectAllRecords();
@@ -332,7 +336,6 @@ public class AdministrationView extends HLayout implements Presenter, ViewRender
         return section;
     }
 
-
     public void setContent(Canvas newContent) {
 
         if (contentCanvas.getChildren().length > 0)
@@ -341,54 +344,6 @@ public class AdministrationView extends HLayout implements Presenter, ViewRender
         contentCanvas.addChild(newContent);
         contentCanvas.draw();
 
-    }
-
-
-    public boolean fireDisplay(Place base, List<Place> subLocations) {
-        try {
-            if (base.equals(getPlace())) {
-                if (!subLocations.isEmpty()) {
-                    Place child = subLocations.get(0);
-                    String childId = child.getId();
-                    if (childId.equals("Reports")) {
-                        if (subLocations.size() >= 2) {
-                            Place grandchild = subLocations.get(1);
-                            String grandchildId = grandchild.getId();
-                            if (grandchildId.equals("InventorySummary")) {
-                                HTMLPane pane = new InventorySummaryReportView();
-                                setContent(pane);
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println(e);
-        }
-        return false;
-    }
-
-    public Place getPlace() {
-        return new Place("Administration", "Administration");
-    }
-
-    public List<Breadcrumb> render(List<String> breadcrumbNames) {
-        if (breadcrumbNames == null || breadcrumbNames.size() < 2) {
-            return Collections.emptyList();
-        }
-        List<Breadcrumb> renderedBreadcrumbs = new ArrayList<Breadcrumb>(breadcrumbNames.size());
-        String firstBreadcrumbName = breadcrumbNames.get(0);
-        if (firstBreadcrumbName.equals("Reports")) {
-            String secondBreadcrumbName = breadcrumbNames.get(1);
-            if (secondBreadcrumbName.equals("InventorySummary")) {
-                HTMLPane pane = new InventorySummaryReportView();
-                setContent(pane);
-                renderedBreadcrumbs.add(new Breadcrumb("Reports"));
-                renderedBreadcrumbs.add(new Breadcrumb("InventorySummary"));
-            }
-        }
-        return renderedBreadcrumbs;
     }
 
     public View renderView(ViewId viewId, View parentView, boolean lastNode) throws UnknownViewException {
@@ -403,9 +358,9 @@ public class AdministrationView extends HLayout implements Presenter, ViewRender
                 return new View(viewId, new Breadcrumb(viewId.getName(), false));
             }
         } else if (parentPath.equals("Administration/Reports")) {
-            InventorySummaryReportView canvas = new InventorySummaryReportView();
-            setContent(canvas);
-            return new View(viewId, canvas);
+            FullHTMLPane pane = new FullHTMLPane(IFRAME_URL_INVENTORY_SUMMARY_REPORT);
+            setContent(pane);
+            return new View(viewId, pane);
         }
         throw new UnknownViewException();
     }

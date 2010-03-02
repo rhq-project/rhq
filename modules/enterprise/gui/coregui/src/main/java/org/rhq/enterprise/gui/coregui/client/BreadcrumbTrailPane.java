@@ -31,11 +31,11 @@ import java.util.List;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class BreadCrumb extends HTMLPane {
+public class BreadcrumbTrailPane extends HTMLPane {
 
     private List<Breadcrumb> breadcrumbs = new ArrayList<Breadcrumb>();
 
-    public BreadCrumb() {
+    public BreadcrumbTrailPane() {
         setHeight(28);
         setBackgroundColor("#E6E3E3");
         setPadding(5);

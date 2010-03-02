@@ -49,7 +49,7 @@ public class CoreGUI implements EntryPoint {
 
     private static ErrorHandler errorHandler = new ErrorHandler();
 
-    private static BreadCrumb breadCrumb;
+    private static BreadcrumbTrailPane breadCrumb;
 
     private static Canvas content;
 
@@ -146,7 +146,7 @@ public class CoreGUI implements EntryPoint {
         rootCanvas.addMember(menuBarView);
 
 
-        breadCrumb = new BreadCrumb();
+        breadCrumb = new BreadcrumbTrailPane();
 
         rootCanvas.addMember(breadCrumb);
 

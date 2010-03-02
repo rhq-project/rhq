@@ -184,12 +184,6 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
                 case FAILURE:
                     FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
                         + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
-                    //                    for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
-                    //                        String message = raw.errorMessage;
-                    //                        if (message != null) {
-                    //                            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
-                    //                        }
-                    //                    }
                     copyErrorMessages(updateRequest);
                     return "failure";
 
@@ -199,9 +193,20 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
                 }
             }
         } catch (EJBException e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Unable to contact the remote agent.", e
-                .getCause());
-            return "failure";
+            if (e.getCausedByException() != null &&
+                e.getCausedByException() instanceof ConfigurationValidationException) {
+                ConfigurationValidationException validationException =
+                        (ConfigurationValidationException) e.getCausedByException();
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update failed: " +
+                        validationException.getMessage());
+                copyErrorMessages(validationException);
+                return "failure";
+            }
+            else {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Unable to contact the remote agent.", e
+                    .getCause());
+                return "failure";
+            }
         }
 
         // updateRequest will be null if there is no change to the configuration. ConfigurationManagerBean checks to
@@ -221,6 +226,15 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
         }
     }
 
+    private void copyErrorMessages(ConfigurationValidationException exception) {
+        for (String path : exception.errors.keySet()) {
+            RawConfigUIBean rawUIBean = findRawConfigUIBeanByPath(path);
+            if (rawUIBean != null) {
+                rawUIBean.setErrorMessage(exception.errors.get(path));
+            }
+        }
+    }
+
     private void copyErrorMessages(AbstractResourceConfigurationUpdate update) {
         Configuration updatedConfiguration = update.getConfiguration();
         for (RawConfiguration updatedRaw : updatedConfiguration.getRawConfigurations()) {
@@ -228,11 +242,6 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
             if (rawUIBean != null) {
                 rawUIBean.setErrorMessage(updatedRaw.errorMessage);
             }
-
-            //            RawConfiguration raw = findRawConfigurationByPath(updatedRaw.getPath());
-            //            if (raw != null) {
-            //                raw.errorMessage = updatedRaw.errorMessage;
-            //            }
         }
     }
 

@@ -331,8 +331,6 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     public void validate(Configuration configuration, int resourceId, boolean isStructured)
         throws ConfigurationValidationException {
 
-        boolean success = true;
-
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
         ResourceConfigurationFacet facet;
@@ -358,12 +356,12 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
                 try {
                     facet.validateRawConfiguration(rawConfiguration);
-                } catch (IllegalArgumentException e) {
+                } catch (Throwable t) {
                     if (errors == null) {
                         errors = new HashMap<String, String>();
                     }
-                    errors.put(rawConfiguration.getPath(), e.getMessage());
-                    rawConfiguration.errorMessage = e.getMessage();
+                    errors.put(rawConfiguration.getPath(), t.getMessage());
+                    rawConfiguration.errorMessage = t.getMessage();
                 }
             }
             if (errors != null) {

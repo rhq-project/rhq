@@ -259,7 +259,7 @@ public class CoreGUI implements EntryPoint {
     }
 
     public static void goTo(String path) {
-        History.newItem(path, true);
+        History.newItem(path);
     }
 
     public static void updateBreadCrumbDisplayName(ViewId viewId, String displayName) {

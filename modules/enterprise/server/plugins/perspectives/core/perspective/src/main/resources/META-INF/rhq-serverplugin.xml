@@ -92,6 +92,23 @@
          placement="after" />
    </menu-item>
 
+   <menu-item
+       name="overview.gwtGui"
+       displayName="GWT GUI"
+       url="/coregui/CoreGUI.html#Resources">
+       <position
+          name="overview.dashboard"
+          placement="after" />
+   </menu-item>
+   <menu-item
+       name="overview.gwtGuiDevMode"
+       displayName="GWT GUI - Dev Mode"
+       url="/coregui/CoreGUI.html?gwt.codesvr=127.0.0.1:9997#Resources">
+       <position
+          name="overview.gwtGui"
+          placement="after" />
+   </menu-item>
+
    <!--  Core Menu: Resources -->
    <menu-item
       name="resources.platforms"

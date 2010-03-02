@@ -116,7 +116,7 @@ public class OperationsSender extends AlertSender {
             if (parameters!=null && tokenMode.equals(INTERPRETED)) {
                 // We must not pass the original Config object, as this would mean
                 // our tokens get wiped out.
-                theParameters = parameters.clone();
+                theParameters = parameters.deepCopy(false);
                 Map<String,PropertySimple> propsMap = theParameters.getSimpleProperties();
                 if (!propsMap.isEmpty()) {
                     ResourceManagerLocal resMgr = LookupUtil.getResourceManager();

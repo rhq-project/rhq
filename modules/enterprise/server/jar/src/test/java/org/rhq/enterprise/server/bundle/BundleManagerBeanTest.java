@@ -33,8 +33,10 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -56,7 +58,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLED = true;
 
-    private BundleManagerLocal bundleManagerBean;
+    private BundleManagerLocal bundleManager;
 
     private TestBundleServerPluginService ps;
     private MasterServerPluginContainer pc;
@@ -67,7 +69,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         this.ps = new TestBundleServerPluginService();
         prepareCustomServerPluginService(this.ps);
-        bundleManagerBean = LookupUtil.getBundleManager();
+        bundleManager = LookupUtil.getBundleManager();
         this.ps.startMasterPluginContainer();
     }
 
@@ -108,6 +110,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
                 em.remove(em.getReference(BundleType.class, ((BundleType) removeMe).getId()));
             }
 
+            q = em.createQuery("SELECT pt FROM PackageType pt WHERE pt.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(PackageType.class, ((PackageType) removeMe).getId()));
+            }
+
             q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
@@ -139,7 +147,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     public void testGetBundleTypes() throws Exception {
         BundleType bt1 = createBundleType("one");
         BundleType bt2 = createBundleType("two");
-        List<BundleType> bts = bundleManagerBean.getAllBundleTypes(LookupUtil.getSubjectManager().getOverlord());
+        List<BundleType> bts = bundleManager.getAllBundleTypes(LookupUtil.getSubjectManager().getOverlord());
         assert bts.size() >= 2 : "should have at least 2 bundle types";
 
         List<String> btNames = new ArrayList<String>();
@@ -149,6 +157,36 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         assert btNames.contains(bt1.getName());
         assert btNames.contains(bt2.getName());
+    }
+
+    @Test(enabled = ENABLED)
+    public void testCreateBundle() throws Exception {
+        Bundle b1 = createBundle("one");
+        assertNotNull(b1);
+    }
+
+    @Test(enabled = ENABLED)
+    public void testCreateBundleVersion() throws Exception {
+        Bundle b1 = createBundle("one");
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", null, b1);
+        assertNotNull(bv1);
+        assertEquals("1.0", bv1.getVersion());
+        BundleVersion bv2 = createBundleVersion(b1.getName() + "-2", null, b1);
+        assertNotNull(bv2);
+        assertEquals("1.1", bv2.getVersion());
+    }
+
+    @Test(enabled = ENABLED)
+    public void testAddBundleFiles() throws Exception {
+        Bundle b1 = createBundle("one");
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
+        assertNotNull(bv1);
+        BundleFile bf1 = bundleManager.addBundleFileViaByteArray(getOverlord(), bv1.getId(), TEST_PREFIX
+            + "-bundlefile-1", "1.0", null, "Test Bundle File # 1".getBytes(), false);
+        BundleFile bf2 = bundleManager.addBundleFileViaByteArray(getOverlord(), bv1.getId(), TEST_PREFIX
+            + "-bundlefile-2", "1.0", null, "Test Bundle File # 2".getBytes(), false);
     }
 
     @Test(enabled = ENABLED)
@@ -163,7 +201,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         String name = null;
 
         // return all with no optional data
-        bundles = bundleManagerBean.findBundlesByCriteria(getOverlord(), c);
+        bundles = bundleManager.findBundlesByCriteria(getOverlord(), c);
         assertNotNull(bundles);
         assertEquals(2, bundles.size());
         b = bundles.get(0);
@@ -192,7 +230,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         c.addFilterBundleTypeName(b.getName());
         c.fetchBundleVersions(true);
         c.fetchRepo(true);
-        bundles = bundleManagerBean.findBundlesByCriteria(getOverlord(), c);
+        bundles = bundleManager.findBundlesByCriteria(getOverlord(), c);
         assertNotNull(bundles);
         assertEquals(1, bundles.size());
         b = bundles.get(0);
@@ -219,7 +257,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         BundleVersion bv = null;
 
         // return all with no optional data
-        bvs = bundleManagerBean.findBundleVersionsByCriteria(getOverlord(), c);
+        bvs = bundleManager.findBundleVersionsByCriteria(getOverlord(), c);
         bv = bvs.get(1);
         assertNotNull(bvs);
         assertEquals(3, bvs.size());
@@ -233,7 +271,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         c.fetchBundle(true);
         c.fetchDistribution(true);
         c.fetchBundleDeployDefinitions(true);
-        bvs = bundleManagerBean.findBundleVersionsByCriteria(getOverlord(), c);
+        bvs = bundleManager.findBundleVersionsByCriteria(getOverlord(), c);
         assertNotNull(bvs);
         assertEquals(1, bvs.size());
         bv = bvs.get(0);
@@ -246,7 +284,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private BundleType createBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-type-" + name;
-        BundleType bt = bundleManagerBean.createBundleType(getOverlord(), fullName, createResourceType(name).getId());
+        ResourceType rt = createResourceType(name);
+        PackageType pt = createPackageType(name, rt);
+        BundleType bt = bundleManager.createBundleType(getOverlord(), fullName, rt.getId());
 
         assert bt.getId() > 0;
         assert bt.getName().endsWith(fullName);
@@ -260,7 +300,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private Bundle createBundle(String name, BundleType bt) throws Exception {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
-        Bundle b = bundleManagerBean.createBundle(getOverlord(), fullName, bt.getId());
+        Bundle b = bundleManager.createBundle(getOverlord(), fullName, bt.getId());
 
         assert b.getId() > 0;
         assert b.getName().endsWith(fullName);
@@ -268,10 +308,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     }
 
     private BundleVersion createBundleVersion(String name, String version, Bundle bundle) throws Exception {
-        final String fullName = TEST_PREFIX + "-version-" + version + "-" + name;
+        final String fullName = TEST_PREFIX + "-bundleversion-" + version + "-" + name;
         final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d <% test.path %>";
-        BundleVersion bv = bundleManagerBean.createBundleVersion(getOverlord(), bundle.getId(), fullName, version,
-            recipe);
+        BundleVersion bv = bundleManager.createBundleVersion(getOverlord(), bundle.getId(), fullName, version, recipe);
 
         assert bv.getId() > 0;
         assert bv.getName().endsWith(fullName);
@@ -289,6 +328,19 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         em.close();
         txMgr.commit();
         return rt;
+    }
+
+    private PackageType createPackageType(String name, ResourceType rt) throws Exception {
+        final String fullName = TEST_PREFIX + "-packagetype-" + name;
+        PackageType pt = new PackageType(fullName, rt);
+
+        TransactionManager txMgr = getTransactionManager();
+        txMgr.begin();
+        EntityManager em = getEntityManager();
+        em.persist(pt);
+        em.close();
+        txMgr.commit();
+        return pt;
     }
 
     private Subject getOverlord() {

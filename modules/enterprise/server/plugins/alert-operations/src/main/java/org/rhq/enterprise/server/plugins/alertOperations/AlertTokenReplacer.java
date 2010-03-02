@@ -50,7 +50,8 @@ public class AlertTokenReplacer {
     public AlertTokenReplacer(Alert alert, OperationDefinition operationDefinition, Resource targetResource) {
         this.alert = alert;
         this.operationDefinition = operationDefinition;
-        pattern = Pattern.compile("<%\\s*([a-z]+\\.[a-z0-9]+)\\s*%>");
+        this.targetResource = targetResource;
+        pattern = Pattern.compile("<%\\s*([a-zA-Z]+\\.[a-zA-Z0-9]+)\\s*%>");
     }
 
     /**
@@ -136,6 +137,9 @@ public class AlertTokenReplacer {
                 case TEST_FIX:
                     ret = THE_QUICK_BROWN_FOX_JUMPS_OVER_THE_LAZY_DOG;
                     break;
+                case TEST_CAMEL:
+                    ret ="camel";
+                    break;
                 default:
                     ret = NOT_YET_IMPLEMENTED;
                 }
@@ -181,6 +185,8 @@ public class AlertTokenReplacer {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         Resource parent;
         Resource platform = mgr.getPlaformOfResource(overlord,resource.getId());
+        if (platform==null)
+            platform=resource;
 
         switch (token) {
         case RESOURCE_ID:

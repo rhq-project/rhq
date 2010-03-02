@@ -56,6 +56,9 @@ public class TokenReplacementTest {
         assert res != null;
         assert res.equals(TEST_ECHO);
 
+        res = tr.replaceToken("test.camelCase");
+        assert res != null;
+        assert res.equals("camel");
 /*
         res = tr.replaceToken("alert.id");
         assert res != null;

@@ -23,6 +23,8 @@ import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
+import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
@@ -30,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.HeaderItem;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -38,13 +41,15 @@ import java.util.Set;
 public class PermissionEditorView extends CanvasItem {
 
 
-    private Set<Permission> permissions = EnumSet.noneOf(Permission.class);
+    private Set<Permission> selectedPermissions = EnumSet.noneOf(Permission.class);
+
+    private DynamicForm parentForm;
 
     private DynamicForm form;
 
+
     public PermissionEditorView(String name, String title) {
         super(name, title);
-
 
         setCanvas(new SimpleCollapsiblePanel("Permissions", buildForm()));
     }
@@ -90,10 +95,37 @@ public class PermissionEditorView extends CanvasItem {
 
 
     public void setPermissions(Set<Permission> permissions) {
-        this.permissions = permissions;
+        this.selectedPermissions = permissions;
         for (Permission p : Permission.values()) {
             form.setValue(p.name(), permissions.contains(p));
         }
+
+        form.addItemChangedHandler(new ItemChangedHandler() {
+            public void onItemChanged(ItemChangedEvent itemChangedEvent) {
+                for (Permission p : Permission.values()) {
+                    if ((Boolean)form.getValue(p.name())) {
+                        selectedPermissions.add(p);
+                    } else {
+                        selectedPermissions.remove(p);
+                    }
+                }
+            }
+        });
+
         form.markForRedraw();
+    }
+
+    public Set<Permission> getPermissions() {
+        return selectedPermissions;
+    }
+
+    @Override
+    public Object getValue() {
+        System.out.println("Finding Value");
+        return super.getValue();
+    }
+
+    public void setParentForm(DynamicForm parentForm) {
+        this.parentForm = parentForm;
     }
 }

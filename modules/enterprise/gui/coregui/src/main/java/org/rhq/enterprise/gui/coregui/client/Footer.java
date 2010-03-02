@@ -16,25 +16,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.gwt;
+package org.rhq.enterprise.gui.coregui.client;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.criteria.RoleCriteria;
-import org.rhq.core.domain.util.PageList;
-
-import com.google.gwt.user.client.rpc.RemoteService;
+import com.smartgwt.client.widgets.layout.HLayout;
 
 /**
  * @author Greg Hinkle
  */
-public interface RoleGWTService extends RemoteService {
+public class Footer extends HLayout {
 
-    PageList<Role> findRolesByCriteria(RoleCriteria criteria);
+    public Footer() {
+        super();
 
-    Role createRole(Role role);
+        setHeight(100);
+        setBackgroundColor("gray");
 
-    Role updateRole(Role role);
 
-    void removeRoles(Integer[] roleIds);
+    }
 }

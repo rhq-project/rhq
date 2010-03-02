@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.util;
 
 import com.smartgwt.client.util.SC;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,7 +29,7 @@ import java.util.List;
 public class ErrorHandler {
 
 
-    private List<String> errors;
+    private ArrayList<String> errors = new ArrayList<String>();
 
 
     public void handleError(String message, Throwable t) {

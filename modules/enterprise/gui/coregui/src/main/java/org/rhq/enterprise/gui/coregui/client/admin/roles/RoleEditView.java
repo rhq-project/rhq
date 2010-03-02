@@ -19,30 +19,43 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
+import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.ResetItem;
 import com.smartgwt.client.widgets.form.fields.SectionItem;
 import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Greg Hinkle
  */
 public class RoleEditView extends VLayout {
+
+    private Role roleBeingEdited;
+
 
     private Label message = new Label("Select a role to edit...");
 
@@ -81,29 +94,45 @@ public class RoleEditView extends VLayout {
         editCanvas.addMember(editLabel);
 
         form = new DynamicForm();
-        form.setAutoFetchData(true);
         form.setDataSource(RolesDataSource.getInstance());
 
-        TextItem idItem = new TextItem("id","Id");
+        TextItem idItem = new TextItem("id", "Id");
 
-        TextItem nameItem = new TextItem("name","Name");
+        TextItem nameItem = new TextItem("name", "Name");
 
         permissionEditorItem = new PermissionEditorView("permissionEditor", "Permissions");
         permissionEditorItem.setShowTitle(false);
         permissionEditorItem.setColSpan(2);
 
 
-        assignedGroupEditorItem = new RoleGroupsEditorItem("assignedGroups","Assigned Groups");
+
+        assignedGroupEditorItem = new RoleGroupsEditorItem("assignedGroups", "Assigned Groups");
         assignedGroupEditorItem.setShowTitle(false);
         assignedGroupEditorItem.setColSpan(2);
+
+        SubmitItem saveButton = new SubmitItem("save", "Save");
+
+        saveButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                save();
+                System.out.println("Save is done");
+            }
+        });
+
+        form.addSubmitValuesHandler(new SubmitValuesHandler() {
+            public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
+                Object o = submitValuesEvent.getValues();
+                System.out.println("O: " + o);
+            }
+        });
+
 
         form.setItems(
                 idItem,
                 nameItem,
                 permissionEditorItem,
                 assignedGroupEditorItem,
-                new SubmitItem("save", "Save"), new ResetItem("reset", "Reset"));
-
+                saveButton, new ResetItem("reset", "Reset"));
 
         editCanvas.addMember(form);
 
@@ -111,11 +140,13 @@ public class RoleEditView extends VLayout {
     }
 
     public void editRecord(Record record) {
+        this.roleBeingEdited = (Role) record.getAttributeAsObject("entity");
         message.hide();
         editCanvas.show();
         try {
-            editLabel.setContents("Editing user " + record.getAttribute("name"));
+            editLabel.setContents("Editing Role " + record.getAttribute("name"));
             form.editRecord(record);
+            permissionEditorItem.setParentForm(form);
             permissionEditorItem.setPermissions((Set<Permission>) record.getAttributeAsObject("permissions"));
             assignedGroupEditorItem.setGroups((PageList<ResourceGroup>) record.getAttributeAsObject("assignedGroups"));
         } catch (Throwable t) {
@@ -129,5 +160,39 @@ public class RoleEditView extends VLayout {
         editCanvas.hide();
 
         markForRedraw();
+    }
+
+    public void editNew() {
+        ListGridRecord r = new ListGridRecord();
+        Role newRole = new Role(null); // todo make default constructor public
+        RolesDataSource.copyValues(newRole, r);
+        editRecord(r);
+        form.setSaveOperationType(DSOperationType.ADD);
+
+//
+//        HashSet<Permission> permissions = new HashSet<Permission>();
+//        HashMap values = new HashMap();
+//        values.put("permssions", permissions);
+//
+//        form.editNewRecord();
+
+
+        editLabel.setContents("Create Role");
+//        permissionEditorItem.setPermissions(permissions);
+
+//        message.hide();
+//        editCanvas.show();
+    }
+
+
+
+    public void save() {
+        System.out.println("Saving role");
+        form.saveData();
+    }
+
+
+    public DynamicForm getForm() {
+        return form;
     }
 }

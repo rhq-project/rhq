@@ -49,20 +49,28 @@ public abstract class RPCDataSource extends DataSource {
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
+
     }
+
+
 
     @Override
     protected Object transformRequest(DSRequest request) {
         try {
+            DSResponse response = createResponse(request);
+
             switch (request.getOperationType()) {
                 case FETCH:
-                    DSResponse response = createResponse(request);
                     executeFetch(request, response);
                     break;
                 case ADD:
+                    executeAdd(request, response);
+                    break;
                 case UPDATE:
+                    executeUpdate(request, response);
+                    break;
                 case REMOVE:
-                    super.transformRequest(request);
+                    executeRemove(request, response);
                     break;
                 default:
                     super.transformRequest(request);
@@ -121,6 +129,14 @@ public abstract class RPCDataSource extends DataSource {
      */
     protected void executeRemove(final DSRequest request, final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support removal.");
+    }
+
+    protected void executeAdd(final DSRequest request, final DSResponse response) {
+        throw new UnsupportedOperationException("This dataSource does not support addition.");
+    }
+
+    protected void executeUpdate(final DSRequest request, final DSResponse response) {
+        throw new UnsupportedOperationException("This dataSource does not support updates.");
     }
 
     private DSResponse createResponse(DSRequest request) {

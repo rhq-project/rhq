@@ -19,22 +19,37 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.FieldValueExtractor;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
+import com.smartgwt.client.types.FieldType;
+import com.smartgwt.client.util.JSOHelper;
+import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
+import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Greg Hinkle
@@ -53,21 +68,40 @@ public class UsersDataSource extends RPCDataSource {
         return INSTANCE;
     }
 
-    
+
     protected UsersDataSource() {
         super("Users");
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
         idDataField.setPrimaryKey(true);
+        idDataField.setCanEdit(false);
 
-        DataSourceTextField usernameField = new DataSourceTextField("username", "User Name");
-        usernameField.setCanEdit(false);
+        DataSourceTextField usernameField = new DataSourceTextField("username", "User Name", 100, true);
+        usernameField.setRequired(true);
 
-        DataSourceTextField firstName = new DataSourceTextField("firstName", "First Name");
+        DataSourceTextField firstName = new DataSourceTextField("firstName", "First Name", 100, true);
 
-        DataSourceTextField lastName = new DataSourceTextField("lastName", "Last Name");
+        DataSourceTextField lastName = new DataSourceTextField("lastName", "Last Name", 100, true);
 
-        DataSourceTextField email = new DataSourceTextField("email", "Email Address");
+        DataSourceTextField password = new DataSourceTextField("password", "Password", 100, false);
+        password.setType(FieldType.PASSWORD);
+
+        LengthRangeValidator passwordValdidator = new LengthRangeValidator();
+        passwordValdidator.setMin(6);
+        passwordValdidator.setErrorMessage("Password must be at least six characters");
+        password.setValidators(passwordValdidator);
+
+
+        DataSourceTextField passwordVerify = new DataSourceTextField("passwordVerify", "Verify", 100, false);
+        passwordVerify.setType(FieldType.PASSWORD);
+
+        MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
+        passwordsEqualValidator.setOtherField("password");
+        passwordsEqualValidator.setErrorMessage("Passwords do not match");
+        passwordVerify.setValidators(passwordsEqualValidator);
+
+
+        DataSourceTextField email = new DataSourceTextField("email", "Email Address", 100, true);
 
         DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone");
 
@@ -79,13 +113,13 @@ public class UsersDataSource extends RPCDataSource {
         roles.setMultiple(true);
 
 
-        setFields(idDataField, usernameField, firstName, lastName, phone, email, department);
+        setFields(idDataField, usernameField, firstName, lastName, password, passwordVerify, phone, email, department);
     }
 
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
-        
+
         SubjectCriteria criteria = new SubjectCriteria();
         criteria.setPageControl(getPageControl(request));
 
@@ -101,26 +135,155 @@ public class UsersDataSource extends RPCDataSource {
                 System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
 
                 ListGridRecord[] records = new ListGridRecord[result.size()];
-                for (int x=0; x<result.size(); x++) {
-                    Subject res = result.get(x);
+                for (int x = 0; x < result.size(); x++) {
+                    Subject subject = result.get(x);
                     ListGridRecord record = new ListGridRecord();
-                    record.setAttribute("id",res.getId());
-                    record.setAttribute("username",res.getName());
-//                    record.setAttribute("name",res.getFirstName() + " " + res.getLastName());
-                    record.setAttribute("firstName", res.getFirstName());
-                    record.setAttribute("lastName", res.getLastName());
-                    record.setAttribute("factive", res.getFactive());
-                    record.setAttribute("department", res.getDepartment());
-                    record.setAttribute("phoneNumber", res.getPhoneNumber());
-                    record.setAttribute("email",res.getEmailAddress());
+
+                    copyValues(subject, record);
+
                     records[x] = record;
                 }
 
                 response.setData(records);
-                response.setTotalRows(result.getTotalSize());	// for paging to work we have to specify size of full result set
+                response.setTotalRows(result.getTotalSize());    // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }
         });
+    }
+
+
+
+       @Override
+    protected void executeAdd(final DSRequest request, final DSResponse response) {
+        JavaScriptObject data = request.getData();
+        final ListGridRecord rec = new ListGridRecord(data);
+        Subject newSubject = new Subject();
+        copyValues(rec, newSubject);
+
+        subjectService.createSubject(newSubject, new AsyncCallback<Subject>() {
+            public void onFailure(Throwable caught) {
+                // TODO better exceptions so we can set the right validation errors
+                Map<String,String> errors = new HashMap<String, String>();
+                errors.put("username", "A user with this name already exists.");
+                response.setErrors(errors);
+//                CoreGUI.getErrorHandler().handleError("Failed to create role",caught);
+                response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
+                processResponse(request.getRequestId(), response);
+            }
+
+            public void onSuccess(Subject result) {
+                ListGridRecord record = new ListGridRecord();
+                copyValues(result,record);
+                response.setData(new Record[] {record});
+                processResponse(request.getRequestId(),response);
+            }
+        });
+
+    }
+
+    @Override
+    protected void executeUpdate(final DSRequest request, final DSResponse response) {
+        final ListGridRecord record = getEditedRecord(request);
+        System.out.println("Updating record: " + record);
+        final Subject updatedSubject = new Subject();
+        copyValues(record, updatedSubject);
+        subjectService.updateSubject(updatedSubject, new AsyncCallback<Subject>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to update subject",caught);
+            }
+
+            public void onSuccess(final Subject result) {
+
+                String password = record.getAttributeAsString("password");
+                if (password != null) {
+                    subjectService.changePassword(updatedSubject.getName(), password, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to update subject's password",caught);
+                        }
+
+                        public void onSuccess(Void nothing) {
+                            System.out.println("Subject Updated");
+                            copyValues(result,record);
+                            response.setData(new Record[] {record});
+                            processResponse(request.getRequestId(),response);
+
+                        }
+                    });
+                } else {
+                    System.out.println("Subject Updated");
+                    copyValues(result,record);
+                    response.setData(new Record[] {record});
+                    processResponse(request.getRequestId(),response);
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void executeRemove(final DSRequest request, final DSResponse response) {
+        JavaScriptObject data = request.getData();
+        final ListGridRecord rec = new ListGridRecord(data);
+        Subject subjectToDelete = new Subject(); // TODO GH: Make default constructor public
+        copyValues(rec, subjectToDelete);
+
+        subjectService.deleteSubjects(new int[]{subjectToDelete.getId()}, new AsyncCallback<Void>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to delete role",caught);
+            }
+
+            public void onSuccess(Void result) {
+                System.out.println("Subject deleted");
+                response.setData(new Record[]{rec});
+                processResponse(request.getRequestId(), response);
+            }
+        });
+
+    }
+
+
+
+    private static void copyValues(ListGridRecord from, Subject to) {
+        to.setId(from.getAttributeAsInt("id"));
+        to.setName(from.getAttributeAsString("username"));
+        to.setFirstName(from.getAttributeAsString("firstName"));
+        to.setLastName(from.getAttributeAsString("lastName"));
+        to.setFactive(from.getAttributeAsBoolean("factive"));
+        to.setDepartment(from.getAttributeAsString("department"));
+        to.setPhoneNumber(from.getAttributeAsString("phoneNumber"));
+        to.setEmailAddress(from.getAttributeAsString("email"));
+
+        to.setRoles((Set<Role>) from.getAttributeAsObject("roles"));
+    }
+
+    static void copyValues(Subject from, ListGridRecord to) {
+        to.setAttribute("id", from.getId());
+        to.setAttribute("username", from.getName());
+        to.setAttribute("firstName", from.getFirstName());
+        to.setAttribute("lastName", from.getLastName());
+        to.setAttribute("factive", from.getFactive());
+        to.setAttribute("department", from.getDepartment());
+        to.setAttribute("phoneNumber", from.getPhoneNumber());
+        to.setAttribute("email", from.getEmailAddress());
+
+        to.setAttribute("roles",from.getRoles());
+
+        to.setAttribute("entity", from);
+    }
+
+
+
+    private ListGridRecord getEditedRecord(DSRequest request) {
+        // Retrieving values before edit
+        JavaScriptObject oldValues = request.getAttributeAsJavaScriptObject("oldValues");
+        // Creating new record for combining old values with changes
+        ListGridRecord newRecord = new ListGridRecord();
+        // Copying properties from old record
+        JSOHelper.apply(oldValues, newRecord.getJsObj());
+        // Retrieving changed values
+        JavaScriptObject data = request.getData();
+        // Apply changes
+        JSOHelper.apply(data, newRecord.getJsObj());
+        return newRecord;
     }
 
 }

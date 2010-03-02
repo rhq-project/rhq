@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.coregui.client.gwt;
 
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 
@@ -36,4 +38,5 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria);
 
+    PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria);
 }

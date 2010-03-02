@@ -16,13 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.roles;
+package org.rhq.enterprise.gui.coregui.client.admin.users;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.DragDataAction;
 import com.smartgwt.client.types.DragTrackerMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -33,35 +38,42 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VStack;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author Greg Hinkle
  */
-public class RoleGroupsEditorItem extends CanvasItem {
+public class SubjectRolesEditorItem extends CanvasItem {
 
-    private PageList<ResourceGroup> assignedGroups;
+    private Set<Role> assignedRoles;
+    private Subject subject;
 
-    private ListGrid assignedGroupGrid;
-    private ListGrid availableGroupGrid;
+    private ListGrid assignedRoleGrid;
+    private ListGrid availableRoleGrid;
 
-    public RoleGroupsEditorItem(String name, String title) {
+    public SubjectRolesEditorItem(String name, String title) {
         super(name, title);
-        setCanvas(new SimpleCollapsiblePanel("Assigned Groups", buildForm()));
+        setShowTitle(false);
+        setColSpan(2);
+        setWidth("90%");
+        setCanvas(new SimpleCollapsiblePanel("Assigned Roles", buildForm()));
     }
 
     private Canvas buildForm() {
 
         HLayout layout = new HLayout(10);
 
-        availableGroupGrid = new ListGrid();
-        availableGroupGrid.setHeight(350);
-        availableGroupGrid.setCanDragRecordsOut(true);
-        availableGroupGrid.setDragTrackerMode(DragTrackerMode.RECORD);
-        availableGroupGrid.setDragDataAction(DragDataAction.MOVE);
-        availableGroupGrid.setDataSource(new ResourceGroupsDataSource());
-        availableGroupGrid.setAutoFetchData(true);
-        availableGroupGrid.setFields(new ListGridField("id",50), new ListGridField("name"));
+        availableRoleGrid = new ListGrid();
+        availableRoleGrid.setHeight(250);
+        availableRoleGrid.setCanDragRecordsOut(true);
+        availableRoleGrid.setDragTrackerMode(DragTrackerMode.RECORD);
+        availableRoleGrid.setDragDataAction(DragDataAction.MOVE);
+        availableRoleGrid.setDataSource(RolesDataSource.getInstance());
+        availableRoleGrid.setAutoFetchData(true);
+        availableRoleGrid.setFields(new ListGridField("id", 50), new ListGridField("name"));
 
-        layout.addMember(availableGroupGrid);
+        layout.addMember(availableRoleGrid);
 
         VStack moveButtonStack = new VStack(10);
         moveButtonStack.setWidth(50);
@@ -78,23 +90,37 @@ public class RoleGroupsEditorItem extends CanvasItem {
 
         layout.addMember(moveButtonStack);
 
-        assignedGroupGrid = new ListGrid();
-        assignedGroupGrid.setHeight(350);
-        assignedGroupGrid.setCanDragRecordsOut(true);
-        assignedGroupGrid.setCanAcceptDroppedRecords(true);
-        assignedGroupGrid.setDataSource(new ResourceGroupsDataSource());
-        assignedGroupGrid.setFields(new ListGridField("id", 50), new ListGridField("name"));
+        assignedRoleGrid = new ListGrid();
+        assignedRoleGrid.setHeight(250);
+        assignedRoleGrid.setCanDragRecordsOut(true);
+        assignedRoleGrid.setCanAcceptDroppedRecords(true);
+//        assignedRoleGrid.setDataSource(RolesDataSource.getInstance());
+        assignedRoleGrid.setFields(new ListGridField("id", 50), new ListGridField("name"));
 
-        layout.addMember(assignedGroupGrid);
+        layout.addMember(assignedRoleGrid);
 
 
         return layout;
     }
 
-    public void setGroups(PageList<ResourceGroup> assignedGroups) {
-        this.assignedGroups = assignedGroups;
+    public void setRoles(Set<Role> assignedRoles) {
+        this.assignedRoles = assignedRoles;
 
-        assignedGroupGrid.setData(ResourceGroupsDataSource.buildRecords(assignedGroups));
+        assignedRoleGrid.setData(RolesDataSource.buildRecords(assignedRoles));
     }
 
+    public Set<Role> getRoles() {
+        return this.assignedRoles;
+    }
+
+    public Subject getSubject() {
+        return subject;
+    }
+
+    public void setSubject(Subject subject) {
+        this.subject = subject;
+        if (subject != null) {
+            assignedRoleGrid.setCriteria(new Criteria("subjectId", String.valueOf(subject.getId())));
+        }
+    }
 }

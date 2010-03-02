@@ -992,7 +992,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return newUpdate;
     }
 
-    private void validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+    public void validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean isStructured) throws ConfigurationValidationException {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {

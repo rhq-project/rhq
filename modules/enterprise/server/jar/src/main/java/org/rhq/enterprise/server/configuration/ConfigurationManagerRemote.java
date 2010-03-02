@@ -277,4 +277,16 @@ public interface ConfigurationManagerRemote {
     Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) throws ResourceNotFoundException, ConfigurationValidationException;
 
+    /**
+     * Calls down to the plugin to determine if the configuration is valid or not.  
+     * @param subject to determine if the caller has permissions to perform the action
+     * @param resourceId the resource that the configuration is for 
+     * @param configuration the configuration, with either the raw of structured modified 
+     *                  that will be validated by the plugin
+     * @param isStructured  true if the structured config should be validated, false, the raw config is validated
+     * @throws ConfigurationValidationException if the specified configuration is invalid
+     */
+    public void validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean isStructured) throws ConfigurationValidationException;
+
 }

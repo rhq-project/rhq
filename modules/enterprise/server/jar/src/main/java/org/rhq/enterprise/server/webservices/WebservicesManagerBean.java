@@ -492,6 +492,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return configurationManager.translateResourceConfiguration(subject, resourceId, configuration, fromStructured);
     }
 
+    public void validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean isStructured) throws ConfigurationValidationException {
+        configurationManager.validateResourceConfiguration(subject, resourceId, configuration, isStructured);
+    }
+
     //CONFIGURATIONMANAGER: END ----------------------------------
 
     //CONTENTMANAGER: BEGIN ----------------------------------
@@ -1077,4 +1082,5 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public List<EntitlementCertificate> getCertificates(Subject subject, int resourceId) {
         return entitlementManager.getCertificates(subject, resourceId);
     }
+
 }

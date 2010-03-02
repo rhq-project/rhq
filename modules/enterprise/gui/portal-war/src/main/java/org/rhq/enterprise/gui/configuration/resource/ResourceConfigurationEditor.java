@@ -102,8 +102,12 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
     private Configuration translateToStructured() throws ResourceNotFoundException, ConfigurationValidationException {
         ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
 
-        return configurationMgr.translateResourceConfiguration(loggedInUser.getSubject(), resourceId,
+        Configuration result = configurationMgr.translateResourceConfiguration(loggedInUser.getSubject(), resourceId,
             resourceConfiguration, RAW_MODE);
+
+        configurationMgr.validateResourceConfiguration(loggedInUser.getSubject(), resourceId, result, true);
+
+        return result;
 
     }
 

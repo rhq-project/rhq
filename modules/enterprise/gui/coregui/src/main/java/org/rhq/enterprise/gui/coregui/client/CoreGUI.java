@@ -36,7 +36,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-
 /**
  * @author Greg Hinkle
  */
@@ -174,14 +173,16 @@ public class CoreGUI implements EntryPoint {
                 List<String> viewIdNames = path.equals("") ? Collections.<String>emptyList() : Arrays.asList(path.split("\\/"));
 
                 View parentView = CoreGUI.this.rootView;
-                ViewRenderer viewRenderer = (ViewRenderer)parentView.getCanvas();
+                ViewRenderer viewRenderer = parentView.getDescendantViewRenderer();
                 List<Breadcrumb> breadcrumbs = new ArrayList<Breadcrumb>(viewIdNames.size());
                 try {
                     for (int i = 0, viewIdNamesSize = viewIdNames.size(); i < viewIdNamesSize; i++) {
                         String viewIdName = viewIdNames.get(i);
-                        Canvas parentCanvas = parentView.getCanvas();
-                        if (parentCanvas != null && parentCanvas instanceof ViewRenderer) {
-                            viewRenderer = (ViewRenderer) parentCanvas;
+                        // See if the parent view provided a view renderer to use for its descendants. If not,
+                        // continue using the view renderer that renderer the parent view.
+                        ViewRenderer descendantViewRenderer = parentView.getDescendantViewRenderer();
+                        if (descendantViewRenderer != null) {
+                            viewRenderer = descendantViewRenderer;
                         }
                         ViewId viewId = new ViewId(viewIdName, parentView.getId());
                         boolean lastNode = (i == (viewIdNamesSize - 1));
@@ -311,7 +312,7 @@ public class CoreGUI implements EntryPoint {
                 throw new UnknownViewException();
             }
             setContent(canvas);
-            return new View(viewId, canvas);
+            return new View(viewId);
         }
     }
 }

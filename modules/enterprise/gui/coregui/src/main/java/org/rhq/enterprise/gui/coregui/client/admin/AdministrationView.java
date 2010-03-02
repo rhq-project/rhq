@@ -357,10 +357,9 @@ public class AdministrationView extends HLayout implements ViewRenderer {
                 }
                 return new View(viewId, new Breadcrumb(viewId.getName(), false));
             }
-        } else if (parentPath.equals("Administration/Reports")) {
-            FullHTMLPane pane = new FullHTMLPane(IFRAME_URL_INVENTORY_SUMMARY_REPORT);
-            setContent(pane);
-            return new View(viewId, pane);
+        } else if (parentPath.equals("Administration/Reports")) {            
+            setContent(new FullHTMLPane(IFRAME_URL_INVENTORY_SUMMARY_REPORT));
+            return new View(viewId);
         }
         throw new UnknownViewException();
     }

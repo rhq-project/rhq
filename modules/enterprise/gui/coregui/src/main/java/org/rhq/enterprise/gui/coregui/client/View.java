@@ -18,31 +18,33 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import com.smartgwt.client.widgets.Canvas;
-
 /**
- * TODO
+ * A view in the GUI which has a bookmarkable URL. The fragment portion of the URL is what
+ * uniquely identifies the view. View id's are hierarchical and are therefore represented as
+ * paths (e.g. "http://localhost:7080/coregui/CoreGUI.html#Resource/10001" is a view URL,
+ * whose view id is "Resource/1001". The URL of its parent view is
+ * ""http://localhost:7080/coregui/CoreGUI.html#Resource", whose view id is "Resource".
  *
  * @author Ian Springer
  */
 public class View {
     private ViewId id;
-    private Canvas canvas;
+    private ViewRenderer descendantViewRender;
     private Breadcrumb breadcrumb;
 
     public View(ViewId id) {
         this(id, null, null);
     }
 
-    public View(ViewId id, Canvas canvas) {
-        this(id, canvas, null);
+    public View(ViewId id, ViewRenderer descendantViewRender) {
+        this(id, descendantViewRender, null);
     }
 
     public View(ViewId id, Breadcrumb breadcrumb) {
         this(id, null, breadcrumb);
     }
 
-    public View(ViewId id, Canvas canvas, Breadcrumb breadcrumb) {
+    public View(ViewId id, ViewRenderer descendantViewRender, Breadcrumb breadcrumb) {
         if (id == null) {
             throw new IllegalArgumentException("Id is null.");
         }
@@ -55,27 +57,48 @@ public class View {
         } else {
             this.breadcrumb = new Breadcrumb(id.getName());
         }
-        this.canvas = canvas;
+        this.descendantViewRender = descendantViewRender;
     }
 
+    /**
+     * Returns this view's unique id.
+     *
+     * @return this view's unique id
+     */
     public ViewId getId() {
-        return id;
+        return this.id;
     }
 
-    public Canvas getCanvas() {
-        return canvas;
+    /**
+     * Returns a view renderer that should be used to render descendant views, or null if
+     * the view renderer that rendered this view should also be used to render descendant
+     * views.
+     *
+     * @return a view renderer that should be used to render descendant views, or null if
+     *         the view renderer that rendered this view should also be used to render
+     *         descendant views
+     */
+    public ViewRenderer getDescendantViewRenderer() {
+        return this.descendantViewRender;
     }
 
+    /**
+     * Returns info that should be used when rendering a breadcrumb for this view in the
+     * breadcrumb trail, or null if a default breadcrumb should be used.
+     *
+     * @return info that should be used when rendering a breadcrumb for this view in the
+     *         breadcrumb trail, or null if a default breadcrumb should be used
+     */
     public Breadcrumb getBreadcrumb() {
-        return breadcrumb;
+        return this.breadcrumb;
     }
 
     @Override
     public String toString() {
         return "View[" +
                 "id=" + id +
-                ", canvas=" + canvas +
-                ", breadcrumb=" + breadcrumb +
+                ", descendantViewRender=" + this.descendantViewRender +
+                ", breadcrumb=" + this.breadcrumb +
                 ']';
     }
 }

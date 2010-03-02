@@ -178,6 +178,6 @@ public class ResourceView extends HLayout implements Presenter, ViewRenderer {
         // Use "..." as temporary display name for breadcrumb. If the Resource is fetched successfully, the display name
         // will be updated to be the Resource's name.
         Breadcrumb breadcrumb = new Breadcrumb(viewId.getName(), "...");
-        return new View(viewId, this.detailView, breadcrumb);
+        return new View(viewId, breadcrumb);
     }
 }

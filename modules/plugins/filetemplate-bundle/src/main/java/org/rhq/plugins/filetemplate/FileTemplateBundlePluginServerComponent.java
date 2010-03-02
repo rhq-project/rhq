@@ -112,12 +112,15 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
                 } else {
                     log.debug("Package version [" + packageVersion + "] has no MD5/SHA256 hash - not verifying it");
                 }
+
+                packageVersionFiles.put(packageVersion, packageFile);
             }
 
             // process the recipe
             String recipe = bundleVersion.getRecipe();
             RecipeParser parser = new RecipeParser();
-            ProcessingRecipeContext recipeContext = new ProcessingRecipeContext(recipe);
+            ProcessingRecipeContext recipeContext = new ProcessingRecipeContext(recipe, packageVersionFiles,
+                this.resourceContext.getSystemInformation(), tmpDir.getAbsolutePath());
             recipeContext.setReplacementVariableValues(bundleDeployDef.getConfiguration());
             parser.setReplaceReplacementVariables(true);
             parser.parseRecipe(recipeContext);

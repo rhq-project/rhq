@@ -70,16 +70,17 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
 
     public RecipeParseResults parseRecipe(String recipe) throws Exception {
         RecipeParser parser = new RecipeParser();
-        RecipeContext parserContext = parser.parseRecipe(recipe);
+        RecipeContext recipeContext = new RecipeContext(recipe);
+        parser.parseRecipe(recipeContext);
 
         Set<String> bundleFileNames = new HashSet<String>();
-        Map<String, String> deployFiles = deployFiles = parserContext.getDeployFiles();
+        Map<String, String> deployFiles = recipeContext.getDeployFiles();
         bundleFileNames.addAll(deployFiles.keySet());
 
         ConfigurationDefinition configDef = null;
-        if (parserContext.getReplacementVariables() != null) {
+        if (recipeContext.getReplacementVariables() != null) {
             configDef = new ConfigurationDefinition("replacementVariables", null);
-            for (String replacementVar : parserContext.getReplacementVariables()) {
+            for (String replacementVar : recipeContext.getReplacementVariables()) {
                 PropertyDefinitionSimple prop = new PropertyDefinitionSimple(replacementVar, null, false,
                     PropertySimpleType.STRING);
                 configDef.put(prop);

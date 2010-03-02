@@ -28,6 +28,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+
 /**
  * Contains information that is gleened from a recipe after it is parsed.
  * 
@@ -38,6 +41,7 @@ public class RecipeContext {
     private final String recipe;
     private final Map<String, String> deployFiles;
     private final Set<String> replacementVariables;
+    private Configuration replacementVariableValues;
 
     public RecipeContext(String recipe) {
         this.recipe = recipe;
@@ -81,4 +85,33 @@ public class RecipeContext {
         this.replacementVariables.addAll(replacementVariables);
     }
 
+    /**
+     * If known, the returned value will contain values that are to be used to replace
+     * replacement variables found in the recipe.
+     * 
+     * @return the replacement variable values
+     */
+    public Configuration getReplacementVariableValues() {
+        return this.replacementVariableValues;
+    }
+
+    public void setReplacementVariableValues(Configuration configuration) {
+        this.replacementVariableValues = configuration;
+    }
+
+    /**
+     * Adds the given name/value pair to the set of replacement variable values associated
+     * with this context.
+     * 
+     * @param name
+     * @param value
+     */
+    public void addReplacementVariableValue(String name, String value) {
+        Configuration values = getReplacementVariableValues();
+        if (values == null) {
+            values = new Configuration();
+            setReplacementVariableValues(values);
+        }
+        values.put(new PropertySimple(name, value));
+    }
 }

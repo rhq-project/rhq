@@ -37,6 +37,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.template.TemplateEngine;
+
 /**
  * Parses the file template recipe.
  * 
@@ -46,27 +50,41 @@ import java.util.regex.Pattern;
 public class RecipeParser {
     private Map<String, RecipeCommand> recipeCommands;
 
-    // note that we use the same as the core util's template engine
-    // the native system replacement variable prefix is used by the agent-side fact variable names
-    private final Pattern replacementVariableDeclarationPattern = Pattern.compile("<%\\s*(\\w+\\.?)+\\s*%>");
-    private final Pattern replacementVariableNamePattern = Pattern.compile("(\\w+\\.?)+");
-    private final String systemReplacementVariablePrefix = "rhq.system.";
+    private Pattern replacementVariableDeclarationPattern;
+    private Pattern replacementVariableNamePattern;
+    private String systemReplacementVariablePrefix;
+    private boolean replaceVariables = false;
 
     public RecipeParser() {
-        setupRecipeCommands();
+        this.recipeCommands = createRecipeCommands();
+        setupReplacementPatterns();
     }
 
-    public RecipeContext parseRecipe(String recipe) throws Exception {
-        RecipeContext context = new RecipeContext(recipe);
+    /**
+     * If the parser should replace replacement variables with their corresponding values (as found in
+     * the parser context), <code>true</code> is returned. If <code>false</code> then the replacement
+     * variables remain as is when they are passed to their command processor objects.
+     * 
+     * @return flag
+     */
+    public boolean isReplaceReplacementVariables() {
+        return this.replaceVariables;
+    }
 
-        BufferedReader recipeReader = new BufferedReader(new StringReader(recipe));
+    public void setReplaceReplacementVariables(boolean flag) {
+        this.replaceVariables = flag;
+    }
+
+    public void parseRecipe(RecipeContext context) throws Exception {
+
+        BufferedReader recipeReader = new BufferedReader(new StringReader(context.getRecipe()));
         String line = recipeReader.readLine();
         while (line != null) {
             parseRecipeCommandLine(context, line);
             line = recipeReader.readLine();
         }
 
-        return context;
+        return;
     }
 
     public void parseRecipeCommandLine(RecipeContext context, String line) throws Exception {
@@ -75,11 +93,15 @@ public class RecipeParser {
             return;
         }
 
+        if (isReplaceReplacementVariables()) {
+            line = replaceReplacementVariables(context, line);
+        }
+
         String[] commandLineArray = splitCommandLine(line);
         String commandName = commandLineArray[0];
         String[] arguments = extractArguments(commandLineArray);
 
-        RecipeCommand recipeCommand = recipeCommands.get(commandName);
+        RecipeCommand recipeCommand = this.recipeCommands.get(commandName);
         if (recipeCommand == null) {
             throw new Exception("Unknown command in recipe: " + commandName);
         }
@@ -94,28 +116,30 @@ public class RecipeParser {
         return;
     }
 
-    private void setupRecipeCommands() {
-        recipeCommands = new HashMap<String, RecipeCommand>();
+    protected HashMap<String, RecipeCommand> createRecipeCommands() {
+        HashMap<String, RecipeCommand> commands = new HashMap<String, RecipeCommand>();
 
         RecipeCommand[] knownCommands = new RecipeCommand[] { new ConfigdefRecipeCommand(), //
             new DeployRecipeCommand() //
         };
 
         for (RecipeCommand recipeCommand : knownCommands) {
-            recipeCommands.put(recipeCommand.getName(), recipeCommand);
+            commands.put(recipeCommand.getName(), recipeCommand);
         }
+
+        return commands;
     }
 
-    private Set<String> getReplacementVariables(String cmdLine) {
+    protected Set<String> getReplacementVariables(String cmdLine) {
         Set<String> replacementVariables = null;
         Matcher matcher = this.replacementVariableDeclarationPattern.matcher(cmdLine);
         while (matcher.find()) {
             String replacementDeclaration = matcher.group();
-            Matcher matcherInner = this.replacementVariableNamePattern.matcher(replacementDeclaration);
-            if (!matcherInner.find()) {
+            Matcher nameMatcher = this.replacementVariableNamePattern.matcher(replacementDeclaration);
+            if (!nameMatcher.find()) {
                 throw new IllegalArgumentException("Bad replacement declaration [" + replacementDeclaration + "]");
             }
-            String replacementVariable = matcherInner.group();
+            String replacementVariable = nameMatcher.group();
             if (!replacementVariable.startsWith(this.systemReplacementVariablePrefix)) {
                 if (replacementVariables == null) {
                     replacementVariables = new HashSet<String>(1);
@@ -127,7 +151,43 @@ public class RecipeParser {
         return replacementVariables;
     }
 
-    private String[] splitCommandLine(String cmdLine) {
+    protected String replaceReplacementVariables(RecipeContext context, String input) {
+
+        // don't bother if we have no values to replace them with
+        Configuration replacementValues = context.getReplacementVariableValues();
+        if (replacementValues == null) {
+            return input;
+        }
+
+        TemplateEngine templateEngine = null;
+        StringBuffer buffer = new StringBuffer();
+        Matcher matcher = this.replacementVariableDeclarationPattern.matcher(input);
+        while (matcher.find()) {
+            String next = matcher.group();
+            Matcher nameMatcher = this.replacementVariableNamePattern.matcher(next);
+            if (nameMatcher.find()) {
+                String key = nameMatcher.group();
+                String value = replacementValues.getSimpleValue(key, null);
+                if (value == null) {
+                    // our replacement values don't know how to replace the key, see if our system info template engine can
+                    if (templateEngine == null) {
+                        templateEngine = SystemInfoFactory.fetchTemplateEngine();
+                    }
+                    value = templateEngine.replaceTokens(next);
+                }
+                if (value != null) {
+                    next = value;
+                }
+            }
+
+            // If we didn't find a replacement for the key then leave the original value unchanged
+            matcher.appendReplacement(buffer, next);
+        }
+        matcher.appendTail(buffer);
+        return buffer.toString();
+    }
+
+    protected String[] splitCommandLine(String cmdLine) {
         ByteArrayInputStream in = new ByteArrayInputStream(cmdLine.getBytes());
         StreamTokenizer strtok = new StreamTokenizer(new InputStreamReader(in));
         List<String> args = new ArrayList<String>();
@@ -163,11 +223,20 @@ public class RecipeParser {
         return args.toArray(new String[args.size()]);
     }
 
-    private String[] extractArguments(String[] commandLine) {
+    protected String[] extractArguments(String[] commandLine) {
         // strip the first element (the command name) from the array, leaving only the arguments
         int newLength = commandLine.length - 1;
         String[] argsOnly = new String[newLength];
         System.arraycopy(commandLine, 1, argsOnly, 0, newLength);
         return argsOnly;
     }
+
+    private void setupReplacementPatterns() {
+        // note that we use the same as the core util's template engine
+        // the native system replacement variable prefix is used by the agent-side fact variable names
+        this.replacementVariableDeclarationPattern = Pattern.compile("<%\\s*(\\w+\\.?)+\\s*%>");
+        this.replacementVariableNamePattern = Pattern.compile("(\\w+\\.?)+");
+        this.systemReplacementVariablePrefix = SystemInfoFactory.TOKEN_PREFIX;
+    }
+
 }

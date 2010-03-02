@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import org.rhq.enterprise.gui.coregui.client.Presenter;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.smartgwt.client.docs.CheckboxField;
@@ -33,8 +34,11 @@ import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
+import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -88,7 +92,7 @@ public class RolesView extends VLayout implements Presenter {
         idField.setType(ListGridFieldType.INTEGER);
 
 
-        ListGridField nameField = new ListGridField("username", "Name");
+        ListGridField nameField = new ListGridField("name", "Name");
 
         listGrid.setFields(idField, nameField);
 
@@ -104,11 +108,22 @@ public class RolesView extends VLayout implements Presenter {
             public void onClick(ClickEvent clickEvent) {
                 SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " resources?",
                         new BooleanCallback() {
-                            public void execute(Boolean aBoolean) {
-
+                            public void execute(Boolean accepted) {
+                                if (accepted) {
+                                    listGrid.removeSelectedData();
+                                }
                             }
                         }
                 );
+            }
+        });
+
+
+
+        final IButton addButton = new IButton("Add Role");
+        addButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                createRole();
             }
         });
 
@@ -117,6 +132,7 @@ public class RolesView extends VLayout implements Presenter {
         tableInfo.setWrap(false);
 
         toolStrip.addMember(removeButton);
+        toolStrip.addMember(addButton);
         toolStrip.addMember(new LayoutSpacer());
         toolStrip.addMember(tableInfo);
 
@@ -148,8 +164,26 @@ public class RolesView extends VLayout implements Presenter {
                 }
             }
         });
+    }
 
 
+
+    public void createRole() {
+
+        RoleEditView editView = new RoleEditView();
+
+        final Window roleEditor = new Window();
+        roleEditor.setTitle("Create Role");
+        roleEditor.setWidth(800);
+        roleEditor.setHeight(800);
+        roleEditor.setIsModal(true);
+        roleEditor.setShowModalMask(true);
+        roleEditor.setCanDragResize(true);
+        roleEditor.centerInPage();
+        roleEditor.addItem(editView);
+        roleEditor.show();
+
+        editView.editNew();
     }
 
     public boolean fireDisplay(Place base, List<Place> subLocations) {

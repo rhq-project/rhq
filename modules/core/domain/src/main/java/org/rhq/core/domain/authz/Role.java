@@ -137,7 +137,7 @@ public class Role implements Serializable {
     @OneToMany(mappedBy = "role", cascade = javax.persistence.CascadeType.ALL)
     private Set<RoleNotification> roleNotifications = new HashSet<RoleNotification>();
 
-    protected Role() {
+    public Role() {
         fsystem = Boolean.FALSE;
     }
 

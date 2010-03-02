@@ -52,6 +52,7 @@ public class SimpleCollapsiblePanel extends VLayout {
         button.setShowRollOver(false);
         button.setActionType(SelectionType.RADIO);
         button.setBorder(null);
+        button.setAutoFit(true);
 
 
         button.setIcon("[skin]/images/SectionHeader/opener_opened.png");
@@ -66,6 +67,7 @@ public class SimpleCollapsiblePanel extends VLayout {
                 } else {
                     button.setIcon("[skin]/images/SectionHeader/opener_closed.png");
                     content.hide();
+                    setHeight(30);
                 }
                 getParentElement().markForRedraw();
                 markForRedraw();

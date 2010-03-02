@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import org.rhq.enterprise.gui.coregui.client.Presenter;
+import org.rhq.enterprise.gui.coregui.client.admin.roles.RoleEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.places.Place;
 
@@ -34,6 +35,7 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -51,24 +53,25 @@ import java.util.List;
 /**
  * @author Greg Hinkle
  */
-public class UsersView extends SectionStack implements Presenter {
+public class UsersView extends VLayout implements Presenter {
 
-
-
+    public UsersView() {
+        super();
+        setWidth100();
+        setHeight100();
+    }
 
     @Override
     protected void onInit() {
         super.onInit();
 
-        setVisibilityMode(VisibilityMode.MULTIPLE);
-        setWidth100();
-        setHeight100();
 
-         final UsersDataSource datasource = UsersDataSource.getInstance();
+        final UsersDataSource datasource = UsersDataSource.getInstance();
 
         VLayout gridHolder = new VLayout();
         gridHolder.setWidth100();
-        gridHolder.setHeight100();
+        gridHolder.setHeight("50%");
+        gridHolder.setShowResizeBar(true);
 
         final ListGrid listGrid = new ListGrid();
         listGrid.setWidth100();
@@ -79,21 +82,19 @@ public class UsersView extends SectionStack implements Presenter {
 //        listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
 //        listGrid.setAutoFitData(Autofit.HORIZONTAL);
-        listGrid.setSelectionType(SelectionStyle.SIMPLE);
-        listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
+//        listGrid.setSelectionType(SelectionStyle.SIMPLE);
+//        listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
         listGrid.setShowFilterEditor(true);
 
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
-        
+
         ListGridField nameField = new ListGridField("username", "Name", 100);
 
+        ListGridField emailField = new ListGridField("email", "Email Address");
 
-        ListGridField descriptionField = new ListGridField("name", "Name", 150);
-        ListGridField emailField = new ListGridField("email", "Email Address", 100);
-        
-        listGrid.setFields(idField, nameField, descriptionField, emailField);
+        listGrid.setFields(idField, nameField, emailField);
 
 
         gridHolder.addMember(listGrid);
@@ -105,10 +106,10 @@ public class UsersView extends SectionStack implements Presenter {
         removeButton.setDisabled(true);
         removeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " resources?",
+                SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " users?",
                         new BooleanCallback() {
                             public void execute(Boolean aBoolean) {
-
+                                // todo
                             }
                         }
                 );
@@ -116,20 +117,32 @@ public class UsersView extends SectionStack implements Presenter {
         });
 
 
-
         final Label tableInfo = new Label("Total: " + listGrid.getTotalRows());
         tableInfo.setWrap(false);
 
+
+        final IButton addButton = new IButton("Add Role");
+        addButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                createUser();
+            }
+        });
+
+
         toolStrip.addMember(removeButton);
+        toolStrip.addMember(addButton);
         toolStrip.addMember(new LayoutSpacer());
         toolStrip.addMember(tableInfo);
 
         gridHolder.addMember(toolStrip);
 
 
+        final UserEditView userEditor = new UserEditView();
+
+
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                int selectedCount = ((ListGrid)selectionEvent.getSource()).getSelection().length;
+                int selectedCount = ((ListGrid) selectionEvent.getSource()).getSelection().length;
                 tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
                 removeButton.setDisabled(selectedCount == 0);
             }
@@ -141,22 +154,36 @@ public class UsersView extends SectionStack implements Presenter {
 
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                for (Canvas c : detailsSection.getItems())
-                    c.destroy();
-                
-                detailsSection.setItems(new UserEditView());
-                detailsSection.setExpanded(true);
-                expandSection(1);
+                if (selectionEvent.getState()) {
+                    userEditor.editRecord(selectionEvent.getRecord());
+                } else {
+                    userEditor.editNone();
+                }
             }
         });
 
 
-        SectionStackSection gridSection = new SectionStackSection("Search Users");
-        gridSection.setExpanded(true);
-        gridSection.setItems(gridHolder);
-        addSection(gridSection);
-        addSection(detailsSection);
+        addMember(gridHolder);
+        addMember(userEditor);
+    }
 
+
+    public void createUser() {
+
+        UserEditView editView = new UserEditView();
+
+        final Window roleEditor = new Window();
+        roleEditor.setTitle("Create User");
+        roleEditor.setWidth(800);
+        roleEditor.setHeight(800);
+        roleEditor.setIsModal(true);
+        roleEditor.setShowModalMask(true);
+        roleEditor.setCanDragResize(true);
+        roleEditor.centerInPage();
+        roleEditor.addItem(editView);
+        roleEditor.show();
+
+        editView.editNew();
     }
 
     public boolean fireDisplay(Place base, List<Place> subLocations) {

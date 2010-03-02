@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Presenter;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
 import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.smartgwt.client.types.ContentsType;
@@ -130,14 +132,14 @@ public class ResourcesView extends HLayout implements Presenter {
         treeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
-        final TreeNode manageServersNode = new TreeNode("Groups");
-        final TreeNode manageAgentsNode = new TreeNode("DynaGroups");
+        final TreeNode groupsNode = new TreeNode("Groups");
+        final TreeNode groupDefinitions = new TreeNode("DynaGroups");
         final TreeNode manageAffinityGroupsNode = new TreeNode("Special Groups");
         final TreeNode managePartitionEventsNode = new TreeNode("Greg's Groups");
 
         tree.setRoot(new TreeNode("clustering",
-                manageServersNode,
-                manageAgentsNode,
+                groupsNode,
+                groupDefinitions,
                 manageAffinityGroupsNode,
                 managePartitionEventsNode));
 
@@ -152,10 +154,12 @@ public class ResourcesView extends HLayout implements Presenter {
                 pane.setHeight100();
 
                 String url = null;
-                if (selectionEvent.getRecord() == manageServersNode) {
-                    url = "/rhq/ha/listServers.xhtml";
-                } else if (selectionEvent.getRecord() == manageAgentsNode) {
-                    url = "/rhq/ha/listAgents.xhtml";
+                if (selectionEvent.getRecord() == groupsNode) {
+                    setContent(new ResourceGroupListView());
+                    return;
+                } else if (selectionEvent.getRecord() == groupDefinitions) {
+                    setContent(new GroupDefinitionListView());
+                    return;
                 } else if (selectionEvent.getRecord() == manageAffinityGroupsNode) {
                     url = "/rhq/ha/listAffinityGroups.xhtml";
                 } else if (selectionEvent.getRecord() == managePartitionEventsNode) {

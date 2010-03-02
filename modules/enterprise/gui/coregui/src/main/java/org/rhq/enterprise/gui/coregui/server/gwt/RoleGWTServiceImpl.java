@@ -47,4 +47,19 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
         return SerialUtility.prepare(roleManager.findRolesByCriteria(getSessionSubject(), criteria),
                 "RoleService.findRolesByCriteria");
     }
+
+    public Role createRole(Role role) {
+        return SerialUtility.prepare(roleManager.createRole(getSessionSubject(), role),
+                "RoleService.createRole");
+    }
+
+    public Role updateRole(Role role) {
+        return SerialUtility.prepare(roleManager.updateRole(getSessionSubject(), role),
+                "RoleService.updateRole");
+    }
+
+    public void removeRoles(Integer[] roleIds) {
+        roleManager.deleteRoles(getSessionSubject(), roleIds);
+    }
+
 }

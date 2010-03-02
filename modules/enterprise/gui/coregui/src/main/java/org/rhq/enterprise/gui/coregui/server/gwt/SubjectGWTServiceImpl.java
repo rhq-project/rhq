@@ -39,19 +39,20 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
     public void changePassword(String username, String password) {
-        // TODO: Implement this method.
+        subjectManager.changePassword(getSessionSubject(), username, password);
     }
 
     public void createPrincipal(String username, String password) {
-        // TODO: Implement this method.
+        subjectManager.createPrincipal(getSessionSubject(), username, password);
     }
 
     public Subject createSubject(Subject subjectToCreate) {
-        return null;  // TODO: Implement this method.
+        return SerialUtility.prepare(subjectManager.createSubject(getSessionSubject(), subjectToCreate),
+                "SubjectManager.createSubject");
     }
 
     public void deleteSubjects(int[] subjectIds) {
-        // TODO: Implement this method.
+        subjectManager.deleteSubjects(getSessionSubject(),subjectIds);
     }
 
     public Subject login(String username, String password) {
@@ -63,11 +64,12 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
     }
 
     public void logout(Subject subject) {
-        // TODO: Implement this method.
+        subjectManager.logout(subject.getSessionId());
     }
 
     public Subject updateSubject(Subject subjectToModify) {
-        return null;  // TODO: Implement this method.
+        return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
+                "SubjectManager.updateSubject");
     }
 
     public PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria) {

@@ -2129,7 +2129,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 resourceId = parent.getId();
             }
             parent = getParentResource(resourceId);
-            int parentId = parent.getId();
+            if (parent==null)
+                break;
             if (parent.getResourceType().getCategory().equals(ResourceCategory.PLATFORM)){
                 resource = parent;
                 parent = null;
@@ -2177,7 +2178,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         //we can't assume the ordering of the provided results and the disambiguation query results
         //will be the same.
-        
+
         //this list contains the resulting reports in the same order as the original results
         List<MutableDisambiguationReport<T>> reports = new ArrayList<MutableDisambiguationReport<T>>(results.size());
 
@@ -2267,7 +2268,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     String parentName = (String) parentsResult[2 * i + 2];
                     parents.add(new ResourceParentFlyweight(parentId, parentName));
                 }
-                
+
                 //update all the reports that correspond to this resourceId
                 for(MutableDisambiguationReport<T> report : reportsByResourceId.get(resourceId)) {
                     report.typeName = typeName;
@@ -2282,7 +2283,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         for (MutableDisambiguationReport<T> report : reports) {
             resolution.add(report.getReport());
         }
-        
+
         return new ResourceNamesDisambiguationResult<T>(resolution, typeResolutionNeeded, parentResolutionNeeded,
             pluginResolutionNeeded);
     }

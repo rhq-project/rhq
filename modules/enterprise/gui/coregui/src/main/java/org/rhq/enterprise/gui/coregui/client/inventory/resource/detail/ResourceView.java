@@ -27,23 +27,19 @@ import org.rhq.enterprise.gui.coregui.client.View;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewRenderer;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Presenter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourcesView;
-import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
 
-import java.util.List;
-
 /**
  * @author Greg Hinkle
  */
-public class ResourceView extends HLayout implements Presenter, ViewRenderer {
+public class ResourceView extends HLayout implements ViewRenderer {
 
     private Canvas contentCanvas;
 
@@ -90,27 +86,6 @@ public class ResourceView extends HLayout implements Presenter, ViewRenderer {
 
     }
 
-    public boolean fireDisplay(Place base, List<Place> subLocations) {
-        try {
-            if (base.equals(getPlace())) {
-                if (subLocations.size() > 0) {
-                    Place resourcePlace = subLocations.get(0);
-                    int resourceId = Integer.parseInt(resourcePlace.getId());
-
-                    if (selectedResource == null || selectedResource.getId() != resourceId) {
-                        setSelectedResource(resourceId, null);
-                    }
-                }
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-
     public void setSelectedResource(final int resourceId, final ViewId viewId) {
         Resource resource = this.treeView.getResource(resourceId);
         if (resource != null) {
@@ -140,17 +115,10 @@ public class ResourceView extends HLayout implements Presenter, ViewRenderer {
         }
     }
 
-
     public void setSelectedResource(Resource resource) {
         this.selectedResource = resource;
         this.treeView.setSelectedResource(resource);
         this.detailView.onResourceSelected(resource);
-    }
-
-
-    public Place getPlace() {
-//        return new Place("Resource[" + selectedResource.getId() + "]", "Resource - " + selectedResource.getName());
-        return new Place("Resource", "Resource");
     }
 
     public void setContent(Canvas newContent) {
@@ -160,8 +128,8 @@ public class ResourceView extends HLayout implements Presenter, ViewRenderer {
         contentCanvas.draw();
     }
 
-    public View renderView(ViewId viewId, View parentView, boolean lastNode) throws UnknownViewException {
-        String parentPath = parentView.getId().getPath();
+    public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {
+        String parentPath = viewId.getParent().getPath();
         if (!parentPath.equals("Resource")) {
             throw new UnknownViewException();
         }

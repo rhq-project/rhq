@@ -48,7 +48,7 @@ public class CoreGUI implements EntryPoint {
 
     private static ErrorHandler errorHandler = new ErrorHandler();
 
-    private static BreadcrumbTrailPane breadCrumb;
+    private static BreadcrumbTrailPane breadCrumbTrailPane;
 
     private static Canvas content;
 
@@ -145,9 +145,9 @@ public class CoreGUI implements EntryPoint {
         rootCanvas.addMember(menuBarView);
 
 
-        breadCrumb = new BreadcrumbTrailPane();
+        breadCrumbTrailPane = new BreadcrumbTrailPane();
 
-        rootCanvas.addMember(breadCrumb);
+        rootCanvas.addMember(breadCrumbTrailPane);
 
 
         DOM.setInnerHTML(RootPanel.get("Loading-Panel").getElement(), "");
@@ -186,7 +186,7 @@ public class CoreGUI implements EntryPoint {
                         }
                         ViewId viewId = new ViewId(viewIdName, parentView.getId());
                         boolean lastNode = (i == (viewIdNamesSize - 1));
-                        parentView = viewRenderer.renderView(viewId, parentView, lastNode);
+                        parentView = viewRenderer.renderView(viewId, lastNode);
                         breadcrumbs.add(parentView.getBreadcrumb());
                     }
                 } catch (UnknownViewException e) {
@@ -194,35 +194,13 @@ public class CoreGUI implements EntryPoint {
                     // in the list. The breadcrumbs list will contain breadcrumbs for only the names that were
                     // recognized.
                     System.err.println(e.getMessage());
+                    // TODO: Should we add a new token to the History to point to the valid location
+                    //       we ended up at?
                 }
 
                 System.out.println("Breadcrumbs: " + breadcrumbs);
-                breadCrumb.setBreadcrumbs(breadcrumbs);
-
-                /*breadCrumb.initialize(path);
-                ArrayList<Place> trail = breadCrumb.getTrail();
-
-                Place base = trail.get(0);
-
-                if (content != null && content instanceof Presenter) {
-                    Presenter p = ((Presenter) content);
-                    if (!p.fireDisplay(base, trail.subList(1, trail.size()))) {
-                        Canvas c = createContent(base.getId());
-                        setContent(c);
-
-                        if (trail.size() >= 2 && c instanceof Presenter) {
-                            ((Presenter) c).fireDisplay(trail.get(0), trail.subList(1, trail.size()));
-                        }
-                    }
-                } else {
-                    Canvas c = createContent(base.getId());
-                    setContent(c);
-                    if (trail.size() >= 2 && c instanceof Presenter) {
-                        ((Presenter) c).fireDisplay(trail.get(0), trail.subList(1, trail.size()));
-                    }
-                }*/
-
-                breadCrumb.refresh();
+                breadCrumbTrailPane.setBreadcrumbs(breadcrumbs);
+                breadCrumbTrailPane.refresh();
             }
         });
 
@@ -289,12 +267,12 @@ public class CoreGUI implements EntryPoint {
         for (ViewId current = viewId.getParent(); current != null; current = current.getParent()) {
            index++;
         }
-        List<Breadcrumb> breadcrumbs = breadCrumb.getBreadcrumbs();
+        List<Breadcrumb> breadcrumbs = breadCrumbTrailPane.getBreadcrumbs();
         if (index < breadcrumbs.size()) {
             Breadcrumb breadcrumb = breadcrumbs.get(index);
             if (breadcrumb.getName().equals(viewId.getName())) {
                 breadcrumbs.set(index, new Breadcrumb(breadcrumb.getName(), displayName));
-                breadCrumb.refresh();
+                breadCrumbTrailPane.refresh();
             }
         }
     }
@@ -305,14 +283,16 @@ public class CoreGUI implements EntryPoint {
             setHeight100(); // (900);
         }
 
-        public View renderView(ViewId viewId, View parentView, boolean lastNode) throws UnknownViewException {
+        public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {
             String path = viewId.getPath();
             Canvas canvas = createContent(path);
             if (canvas == null) {
                 throw new UnknownViewException();
             }
             setContent(canvas);
-            return new View(viewId);
+            ViewRenderer descendantViewRender = (canvas instanceof ViewRenderer) ?
+                    (ViewRenderer)canvas : null;
+            return new View(viewId, descendantViewRender);
         }
     }
 }

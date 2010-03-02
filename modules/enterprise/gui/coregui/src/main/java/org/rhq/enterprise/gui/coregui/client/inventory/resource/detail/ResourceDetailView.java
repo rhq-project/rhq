@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.Presenter;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
 import org.rhq.enterprise.gui.coregui.client.components.SubTabLayout;
@@ -28,7 +27,6 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -37,14 +35,13 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
 import java.util.EnumSet;
-import java.util.List;
 
 /**
  * Right panel of the resource view.
  *
  * @author Greg Hinkle
  */
-public class ResourceDetailView extends VLayout implements Presenter, ResourceSelectListener {
+public class ResourceDetailView extends VLayout implements ResourceSelectListener {
 
     private Resource resource;
 
@@ -60,7 +57,6 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
     private Tab eventsTab;
     private Tab contentTab;
     private TabSet topTabSet;
-
 
     HTMLFlow title = new HTMLFlow();
 
@@ -109,19 +105,6 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
 //        CoreGUI.addBreadCrumb(getPlace());
     }
 
-
-    public boolean fireDisplay(Place base, List<Place> subLocations) {
-        if (base.equals(getPlace())) {
-
-        }
-        return true;
-
-    }
-
-    public Place getPlace() {
-        return new Place(String.valueOf(resource.getId()), resource.getName());
-    }
-
     public void onResourceSelected(Resource resource) {
 
         this.resource = resource;
@@ -142,10 +125,6 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
 
         topTabSet.updateTab(summaryTab, summarySet);
 
-
-
-
-
         SubTabLayout monitoringSet = new SubTabLayout();
         monitoringSet.registerSubTab("Graphs", new GraphListView(resource)); // new FullHTMLPane("/rhq/common/monitor/graphs.xhtml?id=" + resource.getId()));
         monitoringSet.registerSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables.xhtml?id=" + resource.getId()));
@@ -153,7 +132,6 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
         monitoringSet.registerSubTab("Availability", new FullHTMLPane("/rhq/resource/monitor/availabilityHistory.xhtml?id=" + resource.getId()));
         monitoringSet.registerSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules.xhtml?id=" + resource.getId()));
         topTabSet.updateTab(monitoringTab, monitoringSet);
-
 
         topTabSet.updateTab(configurationTab, new ConfigurationEditor(resource.getId(), resource.getResourceType().getId()));
 
@@ -202,7 +180,6 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
 
                     }
                 });
-
 
     }
 

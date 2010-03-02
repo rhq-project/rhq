@@ -18,21 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import org.rhq.enterprise.gui.coregui.client.Presenter;
-import org.rhq.enterprise.gui.coregui.client.admin.roles.RoleEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.places.Place;
-
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.SelectionAppearance;
-import com.smartgwt.client.types.SelectionStyle;
-import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
@@ -43,17 +32,14 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
-import java.util.List;
-
 /**
  * @author Greg Hinkle
  */
-public class UsersView extends VLayout implements Presenter {
+public class UsersView extends VLayout {
 
     public UsersView() {
         super();
@@ -184,19 +170,5 @@ public class UsersView extends VLayout implements Presenter {
         roleEditor.show();
 
         editView.editNew();
-    }
-
-    public boolean fireDisplay(Place base, List<Place> subLocations) {
-        if (!base.equals(getPlace())) {
-            return false;
-        }
-        if (subLocations.size() > 0) {
-            int userId = Integer.parseInt(subLocations.get(0).getId());
-        }
-        return true;
-    }
-
-    public Place getPlace() {
-        return new Place("users", "Users");
     }
 }

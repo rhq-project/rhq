@@ -28,8 +28,7 @@ public interface ViewRenderer {
      * TODO
      *
      * @param viewId
-     *@param parentView  @return
      * @param lastNode  @throws UnknownViewException
      */
-    View renderView(ViewId viewId, View parentView, boolean lastNode) throws UnknownViewException;
+    View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException;
 }

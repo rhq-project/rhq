@@ -20,10 +20,8 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Presenter;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
-import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.types.VisibilityMode;
@@ -38,12 +36,10 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import java.util.List;
-
 /**
  * @author Greg Hinkle
  */
-public class ResourcesView extends HLayout implements Presenter {
+public class ResourcesView extends HLayout {
 
     public static final String VIEW_PATH = "Resources";
 
@@ -173,10 +169,8 @@ public class ResourcesView extends HLayout implements Presenter {
 
         section.addItem(treeGrid);
 
-
         return section;
     }
-
 
     public void setContent(Canvas newContent) {
         if (contentCanvas.getChildren().length > 0)
@@ -185,26 +179,5 @@ public class ResourcesView extends HLayout implements Presenter {
         newContent.setHeight100();
         contentCanvas.addChild(newContent);
         contentCanvas.draw();
-    }
-
-
-    public boolean fireDisplay(Place base, List<Place> subLocations) {
-        if (base.equals(getPlace())) {
-            if (!subLocations.isEmpty()) {
-                if (contentCanvas.getChildren().length > 0) {
-                    Canvas element = contentCanvas.getChildren()[0];
-                    if (element instanceof Presenter) {
-                        ((Presenter) element).fireDisplay(subLocations.get(0), subLocations.subList(1, subLocations.size() - 1));
-                    }
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
-
-    public Place getPlace() {
-        return new Place("Resources", "Resources");
     }
 }

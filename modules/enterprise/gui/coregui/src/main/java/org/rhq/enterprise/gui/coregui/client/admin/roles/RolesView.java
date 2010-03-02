@@ -18,18 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import org.rhq.enterprise.gui.coregui.client.Presenter;
-import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.places.Place;
-
-import com.smartgwt.client.docs.CheckboxField;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.SelectionAppearance;
-import com.smartgwt.client.types.SelectionStyle;
-import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
@@ -37,25 +28,18 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
-import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.SectionStack;
-import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
-
-import java.util.List;
 
 /**
  * @author Greg Hinkle
  */
-public class RolesView extends VLayout implements Presenter {
+public class RolesView extends VLayout {
 
 
     @Override
@@ -184,18 +168,5 @@ public class RolesView extends VLayout implements Presenter {
         roleEditor.show();
 
         editView.editNew();
-    }
-
-    public boolean fireDisplay(Place base, List<Place> subLocations) {
-        if (!getPlace().equals(base)) {
-            return false;
-        }
-
-
-        return true;
-    }
-
-    public Place getPlace() {
-        return new Place("Roles", "Manage Roles");
     }
 }

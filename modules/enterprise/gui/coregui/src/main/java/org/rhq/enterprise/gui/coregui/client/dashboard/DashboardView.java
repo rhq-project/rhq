@@ -18,11 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
-import org.rhq.enterprise.gui.coregui.client.Presenter;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.SmallGraphView;
-import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.google.gwt.user.client.Random;
 import com.smartgwt.client.widgets.AnimationCallback;
@@ -33,12 +31,10 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import java.util.List;
-
 /**
  * @author Greg Hinkle
  */
-public class DashboardView extends VLayout implements Presenter {
+public class DashboardView extends VLayout {
 
      private static String[] colors = new String[]{
              "FF6600", "808000", "008000", "008080", "0000FF", "666699",
@@ -186,13 +182,5 @@ public class DashboardView extends VLayout implements Presenter {
         addMember(form);
         addMember(portalLayout);
 
-    }
-
-    public boolean fireDisplay(Place base, List<Place> subLocations) {
-        return base.equals(getPlace());
-    }
-
-    public Place getPlace() {
-        return new Place("Dashboard", "Dashboard");
     }
 }

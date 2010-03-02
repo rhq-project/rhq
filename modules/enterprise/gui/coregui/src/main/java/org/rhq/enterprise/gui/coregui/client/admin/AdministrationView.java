@@ -146,7 +146,6 @@ public class AdministrationView extends HLayout implements ViewRenderer {
         return section;
     }
 
-
     private SectionStackSection buildManagementClusterSection() {
         final SectionStackSection section = new SectionStackSection("Management Cluster");
         section.setExpanded(true);
@@ -346,8 +345,8 @@ public class AdministrationView extends HLayout implements ViewRenderer {
 
     }
 
-    public View renderView(ViewId viewId, View parentView, boolean lastNode) throws UnknownViewException {
-        String parentPath = parentView.getId().getPath();
+    public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {
+        String parentPath = viewId.getParent().getPath();
         if (parentPath.equals("Administration")) {
             SectionStackSection stackSection = this.sectionStack.getSection(viewId.getName());
             if (stackSection != null) {

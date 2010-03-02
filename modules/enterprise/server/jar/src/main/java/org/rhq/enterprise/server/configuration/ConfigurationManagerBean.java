@@ -1035,6 +1035,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + "whether the structured or raw was updated.");
         }
 
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
+        boolean isStructured = configDef.getConfigurationFormat() == ConfigurationFormat.STRUCTURED;
+
+        validateResourceConfiguration(subject, resourceId, newConfiguration, isStructured);
+
         // must do this in a separate transaction so it is committed prior to sending the agent request
         // (consider synchronizing to avoid the condition where someone calls this method twice quickly
         // in two different txs which would put two updates in INPROGRESS and cause havoc)

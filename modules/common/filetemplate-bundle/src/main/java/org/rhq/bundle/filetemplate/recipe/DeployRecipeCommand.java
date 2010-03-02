@@ -47,11 +47,11 @@ public class DeployRecipeCommand implements RecipeCommand {
             switch (code) {
             case ':':
             case '?': {
-                throw new IllegalArgumentException("Bad recipe command [" + getName() + "]: " + args);
+                throw new IllegalArgumentException("Bad recipe command.");
             }
 
             case 1: {
-                throw new IllegalArgumentException("Bad recipe command [" + getName() + "]: " + args);
+                throw new IllegalArgumentException("Bad recipe command!");
             }
 
             case 'f': {
@@ -65,12 +65,21 @@ public class DeployRecipeCommand implements RecipeCommand {
             }
 
             default: {
-                throw new IllegalArgumentException("Unexpected error in recipe command [" + getName() + "]: " + args);
+                throw new IllegalArgumentException("Unexpected error in recipe command");
             }
 
             }
         }
 
-        // TODO : do something with filename and directory
+        if (filename == null) {
+            throw new IllegalArgumentException("Did not specify the name of the file to deploy");
+        }
+
+        if (directory == null) {
+            throw new IllegalArgumentException("Did not specify the directory where the file should be deployed");
+        }
+
+        context.addDeployFile(filename, directory);
+        return;
     }
 }

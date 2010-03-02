@@ -22,8 +22,18 @@
  */
 package org.rhq.core.pc.configuration;
 
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
@@ -45,15 +55,6 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.template.TemplateEngine;
-
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Manages configuration of all resources across all plugins.
@@ -185,21 +186,20 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         Configuration structuredConfig = facet.loadStructuredConfiguration();
 
         TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
-        
+
         if (structuredConfig != null) {
             prepareConfigForMergeIntoStructured(configuration, structuredConfig);
 
             for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
                 String contents = templateEngine.replaceTokens(new String(rawConfig.getContents()));
                 rawConfig.setContents(contents);
-                
+
                 structuredConfig.addRawConfiguration(rawConfig);
                 facet.mergeStructuredConfiguration(rawConfig, configuration);
             }
         }
     }
 
-    
     private void prepareConfigForMergeIntoStructured(Configuration config, Configuration latestStructured) {
         config.getAllProperties().clear();
         for (Property property : latestStructured.getProperties()) {
@@ -217,12 +217,14 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         prepareConfigForMergeIntoRaws(configuration, rawConfigs);
 
         Queue<RawConfiguration> queue = new LinkedList<RawConfiguration>(rawConfigs);
+        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
 
         while (!queue.isEmpty()) {
             RawConfiguration originalRaw = queue.poll();
             RawConfiguration mergedRaw = facet.mergeRawConfiguration(configuration, originalRaw);
-
             if (mergedRaw != null) {
+                //TODO bypass validation of structured config for template values
+                mergedRaw.setContents(templateEngine.replaceTokens(mergedRaw.getContents()));
                 updateRawConfig(configuration, originalRaw, mergedRaw);
             }
         }
@@ -364,7 +366,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     }
 
     public void validate(Configuration configuration, int resourceId, boolean isStructured)
-    throws PluginContainerException {
+        throws PluginContainerException {
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
         ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
@@ -372,26 +374,27 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         if (isStructured) {
             return;
         } else {
-            StringBuilder  errorMessage = null;
+            StringBuilder errorMessage = null;
 
-            try{
+            try {
                 for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
                     try {
                         facet.validateRawConfiguration(rawConfiguration);
                     } catch (IllegalArgumentException e) {
-                        if (null == errorMessage){
+                        if (null == errorMessage) {
                             errorMessage = new StringBuilder();
                         }
-                        errorMessage.append("file " + rawConfiguration.getPath() +" failed validation with " + e.getMessage()+"."  );                  
+                        errorMessage.append("file " + rawConfiguration.getPath() + " failed validation with "
+                            + e.getMessage() + ".");
                     }
                 }
-            }catch(Throwable t){
+            } catch (Throwable t) {
                 errorMessage = new StringBuilder();
-                errorMessage.append("configuation validation failed with" + t.getMessage()+".");                
-	    }
-	    if (null != errorMessage){
-		throw new PluginContainerException(errorMessage.toString());
-	    }
-	}
+                errorMessage.append("configuation validation failed with" + t.getMessage() + ".");
+            }
+            if (null != errorMessage) {
+                throw new PluginContainerException(errorMessage.toString());
+            }
+        }
     }
 }

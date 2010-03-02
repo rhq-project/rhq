@@ -21,11 +21,14 @@ package org.rhq.plugins.filetemplate;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.PackageVersion;
@@ -66,6 +69,7 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
             BundleVersion bundleVersion = bundleDeployDef.getBundleVersion();
 
             // download all the bundle files to our tmp directory
+            Map<PackageVersion, File> packageVersionFiles = new HashMap<PackageVersion, File>();
             File tmpDir = new File(this.resourceContext.getTemporaryDirectory(), "" + bundleVersion.getId());
             BundleManagerProvider bundleManager = request.getBundleManagerProvider();
             List<PackageVersion> packageVersions = bundleManager.getAllBundleVersionPackageVersions(bundleVersion);
@@ -108,9 +112,18 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
                 } else {
                     log.debug("Package version [" + packageVersion + "] has no MD5/SHA256 hash - not verifying it");
                 }
+
+                packageVersionFiles.put(packageVersion, packageFile);
             }
 
-            // TODO all bundle files are downloaded - now process the bundle
+            // process the recipe
+            String recipe = bundleVersion.getRecipe();
+            RecipeParser parser = new RecipeParser();
+            ProcessingRecipeContext recipeContext = new ProcessingRecipeContext(recipe, packageVersionFiles,
+                this.resourceContext.getSystemInformation(), tmpDir.getAbsolutePath());
+            recipeContext.setReplacementVariableValues(bundleDeployDef.getConfiguration());
+            parser.setReplaceReplacementVariables(true);
+            parser.parseRecipe(recipeContext);
 
         } catch (Throwable t) {
             log.error("Failed to deploy bundle [" + request + "]", t);

@@ -101,9 +101,13 @@ public class RawConfigUIBean {
 
     /**
      * @return The name of the raw config file excluding the path. If the file has been modified, an asterisk is
-     * prepended to the name.
+     * prepended to the name. If the file has validation errors, two asterisks are prepended to the name.
      */
     public String getFileDisplayName() {
+        if (errorMessage != null) {
+            return "** " + getFileName();
+        }
+
         if (isModified()) {
             return "* " + getFileName();
         }

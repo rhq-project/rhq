@@ -1026,7 +1026,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     @Nullable
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
-        throws ResourceNotFoundException {
+        throws ResourceNotFoundException, ConfigurationValidationException {
 
         if (isStructuredAndRawSupported(resourceId)) {
             throw new ConfigurationUpdateNotSupportedException("Cannot update a resource configuration that "

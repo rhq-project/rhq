@@ -21,7 +21,7 @@ package org.rhq.core.domain.configuration;
 import java.util.Collections;
 import java.util.Map;
 
-public class ConfigurationValidationException extends RuntimeException {
+public class ConfigurationValidationException extends Exception {
     private static final long serialVersionUID = -6924768743906659205L;
 
     /**

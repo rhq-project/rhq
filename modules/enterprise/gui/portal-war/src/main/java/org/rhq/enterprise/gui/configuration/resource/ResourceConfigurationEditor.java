@@ -196,21 +196,11 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
                     return "nochange";
                 }
             }
-        } catch (EJBException e) {
-            if (e.getCausedByException() != null &&
-                e.getCausedByException() instanceof ConfigurationValidationException) {
-                ConfigurationValidationException validationException =
-                        (ConfigurationValidationException) e.getCausedByException();
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update failed: " +
-                        validationException.getMessage());
-                copyErrorMessages(validationException);
-                return "failure";
-            }
-            else {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Unable to contact the remote agent.", e
-                    .getCause());
-                return "failure";
-            }
+        } catch (ConfigurationValidationException e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update failed: " +
+                e.getMessage());
+            copyErrorMessages(e);
+            return "failure";
         }
 
         // updateRequest will be null if there is no change to the configuration. ConfigurationManagerBean checks to

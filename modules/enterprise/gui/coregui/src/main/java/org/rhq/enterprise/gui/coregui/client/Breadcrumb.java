@@ -98,12 +98,17 @@ public class Breadcrumb {
         StringBuilder displayName = new StringBuilder();
         boolean first = true;
         for (int i = 0; i < this.name.length(); i++) {
-            char c = this.name.charAt(i);
-            if (Character.isUpperCase(c) && !first) {
-                displayName.append(" ");
-            }
-            first = false;
-            displayName.append(c);
+            char currentChar = this.name.charAt(i);
+            if (!first) {
+                if (Character.isUpperCase(currentChar)) {
+                    if ((i + 1) == this.name.length() || Character.isLowerCase(this.name.charAt(i + 1))) {
+                        displayName.append(" ");
+                    }
+                }
+            } else {
+                first = false;
+            }            
+            displayName.append(currentChar);
         }
         return displayName.toString();
     }

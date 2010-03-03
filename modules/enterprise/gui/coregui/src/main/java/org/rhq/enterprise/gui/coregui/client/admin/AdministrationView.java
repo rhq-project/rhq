@@ -28,11 +28,9 @@ import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 
-import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -125,13 +123,18 @@ public class AdministrationView extends HLayout implements ViewRenderer {
         securityTreeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
+                    Canvas content;
                     if (selectionEvent.getRecord() == manageUsersNode) {
-                        setContent(new UsersView());
+                        content = new UsersView();
                     } else if (selectionEvent.getRecord() == manageRolesNode) {
-                        setContent(new RolesView());
+                        content = new RolesView();
                     } else if (selectionEvent.getRecord() == manageGroups) {
-                        setContent(new RolesView());
+                        content = new RolesView();
+                    } else {
+                        throw new IllegalStateException("Unknown record selected: " + selectionEvent.getRecord());
                     }
+                    setContent(content);
+
                     for (TreeGrid treeGrid : treeGrids) {
                         if (treeGrid != securityTreeGrid) {
                             treeGrid.deselectAllRecords();
@@ -171,12 +174,7 @@ public class AdministrationView extends HLayout implements ViewRenderer {
         mgmtClusterTreeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
-                    HTMLPane pane = new HTMLPane();
-                    pane.setContentsType(ContentsType.PAGE);
-                    pane.setWidth100();
-                    pane.setHeight100();
-
-                    String url = null;
+                    String url;
                     if (selectionEvent.getRecord() == manageServersNode) {
                         url = "/rhq/ha/listServers.xhtml";
                     } else if (selectionEvent.getRecord() == manageAgentsNode) {
@@ -185,9 +183,13 @@ public class AdministrationView extends HLayout implements ViewRenderer {
                         url = "/rhq/ha/listAffinityGroups.xhtml";
                     } else if (selectionEvent.getRecord() == managePartitionEventsNode) {
                         url = "/rhq/ha/listPartitionEvents.xhtml";
+                    } else {
+                        throw new IllegalStateException("Unknown record selected: " + selectionEvent.getRecord());
                     }
-                    pane.setContentsURL(url + "?nomenu=true");
+                    url = addQueryStringParam(url, "nomenu=true");
+                    FullHTMLPane pane = new FullHTMLPane(url);                    
                     setContent(pane);
+
                     for (TreeGrid treeGrid : treeGrids) {
                         if (treeGrid != mgmtClusterTreeGrid) {
                             treeGrid.deselectAllRecords();
@@ -221,17 +223,16 @@ public class AdministrationView extends HLayout implements ViewRenderer {
         pluginsTreeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
-                    HTMLPane pane = new HTMLPane();
-                    pane.setContentsType(ContentsType.PAGE);
-                    pane.setWidth100();
-                    pane.setHeight100();
-
                     String url = null;
                     if (selectionEvent.getRecord() == managePlugins) {
                         url = "/rhq/admin/plugin/plugin-list.xhtml";
+                    } else {
+                        throw new IllegalStateException("Unknown record selected: " + selectionEvent.getRecord());
                     }
-                    pane.setContentsURL(url + "?nomenu=true");
+                    url = addQueryStringParam(url, "nomenu=true");
+                    FullHTMLPane pane = new FullHTMLPane(url);
                     setContent(pane);
+
                     for (TreeGrid treeGrid : treeGrids) {
                         if (treeGrid != pluginsTreeGrid) {
                             treeGrid.deselectAllRecords();
@@ -282,10 +283,10 @@ public class AdministrationView extends HLayout implements ViewRenderer {
                     } else {
                         throw new IllegalStateException("Unknown record selected: " + selectionEvent.getRecord());
                     }
-                    url += "&nomenu=true";
-
+                    url = addQueryStringParam(url, "nomenu=true");
                     FullHTMLPane pane = new FullHTMLPane(url);
                     setContent(pane);
+
                     for (TreeGrid treeGrid : treeGrids) {
                         if (treeGrid != systemConfigTreeGrid) {
                             treeGrid.deselectAllRecords();
@@ -361,5 +362,10 @@ public class AdministrationView extends HLayout implements ViewRenderer {
             return new View(viewId);
         }
         throw new UnknownViewException();
+    }
+
+    private static String addQueryStringParam(String url, String param) {
+        char separatorChar = (url.indexOf('?') == -1) ? '?' : '&';
+        return url + separatorChar + param;
     }
 }

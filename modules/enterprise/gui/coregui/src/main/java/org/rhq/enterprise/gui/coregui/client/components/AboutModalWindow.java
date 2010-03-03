@@ -42,13 +42,14 @@ public class AboutModalWindow extends Window {
 
         setTitle(TITLE);
         setWidth(300);
-        setHeight(250);
+        setHeight(240);
         setOverflow(Overflow.VISIBLE);
         setShowMinimizeButton(false);
         setIsModal(true);
         setShowModalMask(true);
         setCanDragResize(false);
         setCanDragReposition(false);
+        setAlign(VerticalAlignment.TOP);
         centerInPage();
     }
 
@@ -57,11 +58,10 @@ public class AboutModalWindow extends Window {
         // NOTE: super.onDraw() is what will add the header bar to the Window, so we have to add our own content
         //       after it's called, otherwise the header bar end up below our content...
         super.onDraw();
-
+        
         VLayout contentPane = new VLayout();
+        contentPane.setMembersMargin(25);
         contentPane.setPadding(15);
-        contentPane.setAlign(VerticalAlignment.TOP);
-        addMember(contentPane);
         
         HTMLFlow htmlFlow = new HTMLFlow();
         String html =
@@ -75,6 +75,7 @@ public class AboutModalWindow extends Window {
                  "</a></p>\n" +
                  "<div style=\"top-margin: 10px\">All rights reserved.</div>\n";
         htmlFlow.setContents(html);
+        htmlFlow.setAutoHeight();
         contentPane.addMember(htmlFlow);
 
         HLayout bottomPanel = new HLayout();
@@ -92,5 +93,7 @@ public class AboutModalWindow extends Window {
             }
         });
         bottomPanel.addMember(closeButton);
+
+        addItem(contentPane);        
     }
 }

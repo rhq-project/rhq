@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import java.util.Set;
 import org.rhq.bundle.filetemplate.recipe.RecipeContext;
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
@@ -162,6 +164,8 @@ public class ProcessingRecipeContext extends RecipeContext {
 
         File scriptFile = new File(this.baseWorkingDirectory, exe);
 
+        ensureExecutable(scriptFile);
+
         ProcessExecution pe = new ProcessExecution(scriptFile.getAbsolutePath());
         pe.setArguments(exeArgs);
         pe.setWaitForCompletion(30 * 60 * 1000L);
@@ -171,6 +175,35 @@ public class ProcessingRecipeContext extends RecipeContext {
         if (results.getError() != null) {
             throw new RuntimeException("Could not execute script [" + pe + "]: " + results, results.getError());
         }
+    }
+
+    private void ensureExecutable(File scriptFile) {
+        boolean success;
+
+        try {
+            Method m = File.class.getMethod("setExecutable", Boolean.TYPE, Boolean.TYPE);
+            Boolean r = (Boolean) m.invoke(scriptFile, Boolean.TRUE, Boolean.TRUE);
+            success = r.booleanValue();
+        } catch (Exception e) {
+            // Oh, if only we'd just stop dilly-dallying and move to JDK6 already
+            if (this.systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) {
+                ProcessExecution pe = new ProcessExecution("chmod");
+                pe.setArguments(new String[] { "u+x", scriptFile.getAbsolutePath() });
+                pe.setWaitForCompletion(30000L);
+                pe.setCheckExecutableExists(false);
+                pe.setWorkingDirectory(scriptFile.getParent());
+                ProcessExecutionResults chmodResults = this.systemInfo.executeProcess(pe);
+                success = (chmodResults.getExitCode() != null && chmodResults.getExitCode().intValue() == 0);
+            } else {
+                success = true; // assume we can execute it on windows
+            }
+        }
+
+        if (!success) {
+            throw new RuntimeException("Cannot ensure that script [" + scriptFile + "] is executable");
+        }
+
+        return;
     }
 
     private ProcessExecution getUnzipExecution(File file, String directory) {

@@ -122,18 +122,22 @@ public class ProcessingRecipeContextTest {
         assert zippedFileContent.equals("zipped file content");
     }
 
-    @Test(enabled = false)
     public void testScriptRecipe() throws Exception {
         File testDir = getTestDir("testscript");
+        File testOutDir = getTestDir("testscript-out");
+        File echoOutput = new File(testOutDir, "out.txt");
+        echoOutput.getParentFile().mkdirs();
+        File script = writeFile("echo hello > \"" + echoOutput.getAbsolutePath() + "\"\n", testDir, "bin/test.sh");
 
-        addRecipeCommand("script echo hello");
+        addRecipeCommand("script bin/test.sh");
 
         RecipeContext context = parseRecipeNow(testDir);
 
         Set<String> scripts = context.getScriptFiles();
         assert scripts.size() == 1 : scripts;
-        assert scripts.contains("run-me.sh") : scripts;
-        assert scripts.contains("lots-o-params.sh") : scripts;
+        assert scripts.contains("bin/test.sh") : scripts;
+        String echoOutputContent = readFile(echoOutput);
+        assert echoOutputContent.trim().equals("hello");
     }
 
     private ProcessingRecipeContext parseRecipeNow(File testDir) throws Exception {

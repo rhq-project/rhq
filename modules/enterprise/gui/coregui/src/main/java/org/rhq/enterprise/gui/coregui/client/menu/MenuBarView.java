@@ -18,28 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.menu;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.DemoCanvas;
-import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-
-import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.ClickListener;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Hyperlink;
-import com.google.gwt.user.client.ui.Widget;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.WidgetCanvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuBar;
-import com.smartgwt.client.widgets.menu.MenuItem;
+import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
 
 import java.util.LinkedHashMap;
 
@@ -50,11 +36,11 @@ public class MenuBarView extends HLayout {
 
     MenuBar menuBar;
 
-
     LinkedHashMap<String, Menu> menus = new LinkedHashMap<String, Menu>();
 
-    public MenuBarView() {
+    private AboutModalWindow aboutModalWindow;
 
+    public MenuBarView() {
         setHeight(30);
         setAlign(VerticalAlignment.BOTTOM);
         setAlign(Alignment.LEFT);
@@ -68,14 +54,12 @@ public class MenuBarView extends HLayout {
         icon.addItem(new MenuItem("Dashboard"));
         menuBar.addMenus(new Menu[]{icon},0);
 
-
         Menu overview = new Menu();
         overview.setTitle("Applications");
         overview.addItem(new MenuItem("Content Configuration"));
         overview.addItem(new MenuItem("Monitoring"));
         overview.addItem(new MenuItem("Administration"));
         menuBar.addMenus(new Menu[]{overview},1);
-
 
         Menu views = new Menu();
         views.setTitle("Views");
@@ -85,10 +69,7 @@ public class MenuBarView extends HLayout {
         views.addItem(new MenuItem("Recent Administration"));
         menuBar.addMenus(new Menu[]{views},2);
 
-
         menuBar.setWidth100();
-
-        
 
         addChild(menuBar);
         setWidth100();*/
@@ -101,7 +82,13 @@ public class MenuBarView extends HLayout {
 
         setMembersMargin(20);
 
+        this.aboutModalWindow = new AboutModalWindow();
         Img logo = new Img("RHQ.png", 100, 35);
+        logo.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
+                MenuBarView.this.aboutModalWindow.show();
+            }
+        });
         addMember(logo);
 
         Hyperlink dashboardLink = new Hyperlink("Dashboard", "Dashboard");
@@ -120,14 +107,12 @@ public class MenuBarView extends HLayout {
         Hyperlink bundlesLink = new Hyperlink("Bundles", "Bundles");
         bundlesLink.setStylePrimaryName("TopSectionLink");
         addMember(bundlesLink);
-        
 
         Hyperlink adminLink = new Hyperlink("Administration", "Administration");
         adminLink.setStylePrimaryName("TopSectionLink");
         addMember(adminLink);
 
-
-
+        
 //
 //        LinkItem demoLink = new LinkItem("Demo");
 //        demoLink.setShowTitle(false);

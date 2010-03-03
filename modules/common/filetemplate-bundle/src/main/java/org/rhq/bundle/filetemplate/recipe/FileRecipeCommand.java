@@ -26,53 +26,60 @@ package org.rhq.bundle.filetemplate.recipe;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
-/**
- * @deprecated I think this command will not be used - probably should delete it
- * @author mazz
- */
-public class ConfigdefRecipeCommand implements RecipeCommand {
+public class FileRecipeCommand implements RecipeCommand {
 
     public String getName() {
-        return "configdef";
+        return "file";
     }
 
-    public void parse(RecipeContext context, String[] args) {
-        String sopts = ":f:";
-        LongOpt[] lopts = { new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f') };
+    public void parse(RecipeParser parser, RecipeContext context, String[] args) {
+        String sopts = ":s:d:";
+        LongOpt[] lopts = { new LongOpt("source", LongOpt.REQUIRED_ARGUMENT, null, 's'),
+            new LongOpt("destination", LongOpt.REQUIRED_ARGUMENT, null, 'd') };
 
-        String filename = null;
+        String source = null;
+        String destination = null;
 
-        Getopt getopt = new Getopt(context.toString(), args, sopts, lopts);
+        Getopt getopt = new Getopt(getName(), args, sopts, lopts);
         int code;
 
         while ((code = getopt.getopt()) != -1) {
             switch (code) {
             case ':':
             case '?': {
-                throw new IllegalArgumentException("Bad recipe argument.");
+                throw new IllegalArgumentException("Bad recipe command.");
             }
 
             case 1: {
-                throw new IllegalArgumentException("Bad recipe argument!");
+                throw new IllegalArgumentException("Bad recipe command!");
             }
 
-            case 'f': {
-                filename = getopt.getOptarg();
+            case 's': {
+                source = getopt.getOptarg();
+                break;
+            }
+
+            case 'd': {
+                destination = getopt.getOptarg();
                 break;
             }
 
             default: {
                 throw new IllegalArgumentException("Unexpected error in recipe command");
             }
+
             }
         }
 
-        if (filename == null) {
-            throw new IllegalArgumentException("Missing the -f argument to indicate what the config def filename is");
+        if (source == null) {
+            throw new IllegalArgumentException("Did not specify the source file to copy");
         }
 
-        // TODO: what to do? can I delete this command entirely?
+        if (destination == null) {
+            throw new IllegalArgumentException("Did not specify the destination where the file should be copied");
+        }
 
+        context.addFile(source, destination);
         return;
     }
 }

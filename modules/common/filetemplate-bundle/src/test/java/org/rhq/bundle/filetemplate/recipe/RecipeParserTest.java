@@ -24,6 +24,7 @@
 package org.rhq.bundle.filetemplate.recipe;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -37,6 +38,43 @@ public class RecipeParserTest {
     @BeforeMethod
     public void cleanRecipeBeforeMethod() {
         cleanRecipe();
+    }
+
+    public void testRealizeRecipe() throws Exception {
+        addRecipeCommand("realize --file=<%opt.dir%>/config.ini");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        Set<String> files = context.getRealizedFiles();
+        assert files.size() == 1 : files;
+        assert files.contains("<%opt.dir%>/config.ini") : files;
+    }
+
+    public void testFileRecipe() throws Exception {
+        addRecipeCommand("file --source=run-me.sh --destination=/opt/run.sh");
+        addRecipeCommand("file -s META-INF/another.xml -d /etc/another.xml");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        Map<String, String> files = context.getFiles();
+        assert files.size() == 2 : files;
+        assert files.get("run-me.sh") != null : files;
+        assert files.get("run-me.sh").equals("/opt/run.sh") : files;
+        assert files.get("META-INF/another.xml") != null : files;
+        assert files.get("META-INF/another.xml").equals("/etc/another.xml") : files;
+    }
+
+    public void testScriptRecipe() throws Exception {
+        addRecipeCommand("script run-me.sh");
+        addRecipeCommand("script lots-o-params.sh -d /opt/jboss -- foo.txt \"hello world\"");
+        addRecipeCommand("script run-me.sh with params");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        Set<String> scripts = context.getScriptFiles();
+        assert scripts.size() == 2 : scripts;
+        assert scripts.contains("run-me.sh") : scripts;
+        assert scripts.contains("lots-o-params.sh") : scripts;
     }
 
     public void testSimpleRecipeReplacementVariables() throws Exception {

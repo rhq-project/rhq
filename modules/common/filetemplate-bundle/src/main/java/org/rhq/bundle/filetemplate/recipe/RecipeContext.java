@@ -42,6 +42,7 @@ public class RecipeContext {
 
     private final String recipe;
     private final Map<String, String> deployFiles;
+    private final Map<String, String> files;
     private final Set<String> replacementVariables;
     private Configuration replacementVariableValues;
     private final List<Script> scripts;
@@ -49,6 +50,7 @@ public class RecipeContext {
     public RecipeContext(String recipe) {
         this.recipe = recipe;
         this.deployFiles = new HashMap<String, String>();
+        this.files = new HashMap<String, String>();
         this.replacementVariables = new HashSet<String>();
         this.scripts = new ArrayList<Script>();
     }
@@ -74,6 +76,22 @@ public class RecipeContext {
 
     public void addDeployFile(String filename, String directory) {
         this.deployFiles.put(filename, directory);
+    }
+
+    /**
+     * Returns all the files that are strictly to be copied to some location.
+     * The key is the bundle file's name, the value is the full path and filename where
+     * the file should be copied to. No processing of these files will occur other than
+     * they are copied.
+     * 
+     * @return map of all files to be deployed and the location where they are to be deployed
+     */
+    public Map<String, String> getFiles() {
+        return this.files;
+    }
+
+    public void addFile(String source, String destination) {
+        this.files.put(source, destination);
     }
 
     /**

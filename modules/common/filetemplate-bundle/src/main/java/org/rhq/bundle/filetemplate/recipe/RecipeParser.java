@@ -111,7 +111,11 @@ public class RecipeParser {
             context.addReplacementVariables(replacementVars);
         }
 
-        recipeCommand.parse(context, arguments);
+        try {
+            recipeCommand.parse(context, arguments);
+        } catch (Exception e) {
+            throw new Exception("Error in recipe, line [" + line + "]", e);
+        }
 
         return;
     }
@@ -120,6 +124,7 @@ public class RecipeParser {
         HashMap<String, RecipeCommand> commands = new HashMap<String, RecipeCommand>();
 
         RecipeCommand[] knownCommands = new RecipeCommand[] { new ScriptRecipeCommand(), //
+            new FileRecipeCommand(), //
             new DeployRecipeCommand() //
         };
 

@@ -40,6 +40,20 @@ public class RecipeParserTest {
         cleanRecipe();
     }
 
+    public void testFileRecipe() throws Exception {
+        addRecipeCommand("file --source=run-me.sh --destination=/opt/run.sh");
+        addRecipeCommand("file -s META-INF/another.xml -d /etc/another.xml");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        Map<String, String> files = context.getFiles();
+        assert files.size() == 2 : files;
+        assert files.get("run-me.sh") != null : files;
+        assert files.get("run-me.sh").equals("/opt/run.sh") : files;
+        assert files.get("META-INF/another.xml") != null : files;
+        assert files.get("META-INF/another.xml").equals("/etc/another.xml") : files;
+    }
+
     public void testScriptRecipe() throws Exception {
         addRecipeCommand("script run-me.sh");
         addRecipeCommand("script lots-o-params.sh -d /opt/jboss -- foo.txt \"hello world\"");

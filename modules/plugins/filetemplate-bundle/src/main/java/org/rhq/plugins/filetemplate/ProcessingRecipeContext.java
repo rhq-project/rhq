@@ -76,6 +76,17 @@ public class ProcessingRecipeContext extends RecipeContext {
     }
 
     @Override
+    public void addFile(String filename, String directory) {
+        super.addDeployFile(filename, directory);
+
+        File existingFile = new File(this.baseWorkingDirectory, filename);
+        File newFile = new File(directory, filename);
+        if (!existingFile.renameTo(newFile)) {
+            throw new RuntimeException("Failed to move file [" + existingFile + "] to [" + newFile + "]");
+        }
+    }
+
+    @Override
     public void addReplacementVariables(Set<String> replacementVariables) {
         super.addReplacementVariables(replacementVariables);
     }

@@ -40,6 +40,7 @@ import org.rhq.bundle.filetemplate.recipe.RecipeContext;
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.stream.StreamUtil;
@@ -122,18 +123,40 @@ public class ProcessingRecipeContextTest {
         assert zippedFileContent.equals("zipped file content");
     }
 
-    @Test(enabled = false)
     public void testScriptRecipe() throws Exception {
         File testDir = getTestDir("testscript");
+        File testOutDir = getTestDir("testscript-out");
+        File echoOutput = new File(testOutDir, "out.txt");
+        echoOutput.getParentFile().mkdirs();
+        File script = writeFile("echo hello > \"" + echoOutput.getAbsolutePath() + "\"\n", testDir, "bin/test.sh");
 
-        addRecipeCommand("script echo hello");
+        addRecipeCommand("script bin/test.sh");
 
         RecipeContext context = parseRecipeNow(testDir);
 
         Set<String> scripts = context.getScriptFiles();
         assert scripts.size() == 1 : scripts;
-        assert scripts.contains("run-me.sh") : scripts;
-        assert scripts.contains("lots-o-params.sh") : scripts;
+        assert scripts.contains("bin/test.sh") : scripts;
+        String echoOutputContent = readFile(echoOutput);
+        assert echoOutputContent.trim().equals("hello");
+    }
+
+    public void testCommandRecipe() throws Exception {
+        File testDir = getTestDir("testcommand");
+        File echoOutput = new File(testDir, "out.txt");
+        echoOutput.getParentFile().mkdirs();
+
+        SystemInfo sysinfo = SystemInfoFactory.createSystemInfo();
+        if (sysinfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
+            addRecipeCommand("command cmd /C \"echo helloWorld > '" + echoOutput.getAbsolutePath() + "'\"");
+        } else {
+            addRecipeCommand("command sh -c \"echo helloWorld > '" + echoOutput.getAbsolutePath() + "'\"");
+        }
+
+        RecipeContext context = parseRecipeNow(testDir);
+
+        String echoOutputContent = readFile(echoOutput);
+        assert echoOutputContent.trim().equals("helloWorld");
     }
 
     private ProcessingRecipeContext parseRecipeNow(File testDir) throws Exception {

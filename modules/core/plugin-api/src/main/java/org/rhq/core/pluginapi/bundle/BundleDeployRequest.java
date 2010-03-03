@@ -19,9 +19,12 @@
 
 package org.rhq.core.pluginapi.bundle;
 
+import java.io.File;
 import java.io.Serializable;
+import java.util.Map;
 
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.content.PackageVersion;
 
 /**
  * A request to deploy a bundle.
@@ -31,11 +34,44 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 public class BundleDeployRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private File bundleFilesLocation;
     private BundleDeployDefinition bundleDeployDefinition;
-    private BundleManagerProvider bundleManager;
+    private BundleManagerProvider bundleManagerProvider;
+    private Map<PackageVersion, File> packageVersionFiles;
+
+    public BundleDeployRequest() {
+    }
+
+    /**
+     * This returns the location where the plugin container has downloaded the bundle files.
+     * 
+     * @return the location where the bundle files have been downloaded
+     */
+    public File getBundleFilesLocation() {
+        return this.bundleFilesLocation;
+    }
+
+    public void setBundleFilesLocation(File bundleFilesLocation) {
+        this.bundleFilesLocation = bundleFilesLocation;
+    }
+
+    /**
+     * Maps all the package versions associated with the bundle and the locations
+     * where the package version contents can be found. These will all be located
+     * somewhere under the {@link #getBundleFilesLocation() bundle files location}.
+     * 
+     * @return packages and their locations on the local file system
+     */
+    public Map<PackageVersion, File> getPackageVersionFiles() {
+        return this.packageVersionFiles;
+    }
+
+    public void setPackageVersionFiles(Map<PackageVersion, File> packageVersionFiles) {
+        this.packageVersionFiles = packageVersionFiles;
+    }
 
     public BundleDeployDefinition getBundleDeployDefinition() {
-        return bundleDeployDefinition;
+        return this.bundleDeployDefinition;
     }
 
     public void setBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
@@ -43,11 +79,11 @@ public class BundleDeployRequest implements Serializable {
     }
 
     public BundleManagerProvider getBundleManagerProvider() {
-        return bundleManager;
+        return this.bundleManagerProvider;
     }
 
     public void setBundleManagerProvider(BundleManagerProvider provider) {
-        this.bundleManager = provider;
+        this.bundleManagerProvider = provider;
     }
 
 }

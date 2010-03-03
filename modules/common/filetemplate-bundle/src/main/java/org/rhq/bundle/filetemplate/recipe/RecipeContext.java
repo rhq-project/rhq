@@ -48,6 +48,7 @@ public class RecipeContext {
     private final Set<String> replacementVariables;
     private Configuration replacementVariableValues;
     private final List<Script> scripts;
+    private final List<Command> commands;
 
     public RecipeContext(String recipe) {
         this.recipe = recipe;
@@ -56,6 +57,7 @@ public class RecipeContext {
         this.realizedFiles = new HashSet<String>();
         this.replacementVariables = new HashSet<String>();
         this.scripts = new ArrayList<Script>();
+        this.commands = new ArrayList<Command>();
     }
 
     /**
@@ -190,10 +192,39 @@ public class RecipeContext {
     }
 
     class Script {
-        private final List<String> args;
         private final String exe;
+        private final List<String> args;
 
         public Script(String exe, List<String> args) {
+            this.exe = exe;
+            this.args = args;
+        }
+
+        public String getExecutable() {
+            return exe;
+        }
+
+        public List<String> getArguments() {
+            return args;
+        }
+    }
+
+    /**
+     * Adds a command that the recipe wants invoked. This command refers to an existing
+     * executable or shell command.
+     * 
+     * @param cmd the main executable that this command wants to execute
+     * @param exeArgs the arguments to pass to the command executable
+     */
+    public void addCommand(String exe, List<String> exeArgs) {
+        this.commands.add(new Command(exe, exeArgs));
+    }
+
+    class Command {
+        private final String exe;
+        private final List<String> args;
+
+        public Command(String exe, List<String> args) {
             this.exe = exe;
             this.args = args;
         }
@@ -210,7 +241,6 @@ public class RecipeContext {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("RecipeContext:\n");
-        str.append("Recipe Text:\n").append(getRecipe()).append("\n");
         str.append("Deploy Files: ").append(getDeployFiles()).append("\n");
         str.append("Replacement Vars: ").append(getReplacementVariables()).append("\n");
 
@@ -227,6 +257,14 @@ public class RecipeContext {
         for (Script script : this.scripts) {
             str.append("* ").append(script.getExecutable()).append(" ").append(script.getArguments()).append("\n");
         }
+
+        str.append("Commands: ").append("\n");
+        for (Command cmd : this.commands) {
+            str.append("* ").append(cmd.getExecutable()).append(" ").append(cmd.getArguments()).append("\n");
+        }
+
+        str.append("Recipe Text:\n-----------\n").append(getRecipe()).append("\n");
+
         return str.toString();
     }
 }

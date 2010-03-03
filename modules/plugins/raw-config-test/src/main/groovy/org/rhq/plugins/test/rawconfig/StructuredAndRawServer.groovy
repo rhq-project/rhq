@@ -168,14 +168,14 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
   void validateStructuredConfiguration(Configuration config) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredValidation")
     if (failValidation != null && failValidation.booleanValue) {
-      throw new RuntimeException("Validation failed for $config");
+      throw new RuntimeException("Structured validation failed for Structured and Raw Server");
     }
   }
 
   void persistStructuredConfiguration(Configuration config) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredUpdate")
     if (failValidation != null && failValidation.booleanValue) {
-      throw new RuntimeException("Update failed for $configuration");
+      throw new RuntimeException("Structured pdate failed for Structured and Raw Server");
     }
 
     pauseForStructuredUpdateIfDelaySet()

@@ -163,7 +163,7 @@ public class CoreGUI implements EntryPoint {
 //        canvas.addChild(new AdministrationView()) ; //DemoCanvas());
 
 
-        rootCanvas.draw();        
+        rootCanvas.draw();
 
         History.addValueChangeHandler(new ValueChangeHandler<String>() {
             public void onValueChange(ValueChangeEvent<String> historyChangeEvent) {
@@ -265,7 +265,7 @@ public class CoreGUI implements EntryPoint {
     public static void updateBreadCrumbDisplayName(ViewId viewId, String displayName) {
         int index = -1;
         for (ViewId current = viewId.getParent(); current != null; current = current.getParent()) {
-           index++;
+            index++;
         }
         List<Breadcrumb> breadcrumbs = breadCrumbTrailPane.getBreadcrumbs();
         if (index < breadcrumbs.size()) {
@@ -278,20 +278,29 @@ public class CoreGUI implements EntryPoint {
     }
 
     private class RootCanvas extends VLayout implements ViewRenderer {
+
+        ViewId currentViewId;
+        Canvas currentCanvas;
+
         private RootCanvas() {
             setWidth100(); // (1200);
             setHeight100(); // (900);
         }
 
         public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {
-            String path = viewId.getPath();
-            Canvas canvas = createContent(path);
-            if (canvas == null) {
-                throw new UnknownViewException();
+            if (!viewId.equals(currentViewId)) {
+                currentViewId = viewId;
+                String path = viewId.getPath();
+                Canvas canvas = createContent(path);
+                if (canvas == null) {
+                    throw new UnknownViewException();
+                }
+                currentCanvas = canvas;
+                setContent(canvas);
             }
-            setContent(canvas);
-            ViewRenderer descendantViewRender = (canvas instanceof ViewRenderer) ?
-                    (ViewRenderer)canvas : null;
+            ViewRenderer descendantViewRender = (currentCanvas instanceof ViewRenderer) ?
+                    (ViewRenderer) currentCanvas : null;
+
             return new View(viewId, descendantViewRender);
         }
     }

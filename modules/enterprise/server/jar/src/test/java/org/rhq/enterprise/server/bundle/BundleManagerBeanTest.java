@@ -36,7 +36,9 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -54,9 +56,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test
 public class BundleManagerBeanTest extends AbstractEJB3Test {
 
-    private static final String TEST_PREFIX = "bundletest";
+    private static final boolean TESTS_ENABLED = true;
 
-    private static final boolean ENABLED = true;
+    private static final String TEST_PREFIX = "bundletest";
 
     private BundleManagerLocal bundleManager;
 
@@ -65,7 +67,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     @BeforeMethod
     public void beforeMethod() {
-        super.startTest();
+        // try and clean up any junk that may be lying around from a failed run
+        cleanupDatabase();
 
         this.ps = new TestBundleServerPluginService();
         prepareCustomServerPluginService(this.ps);
@@ -76,6 +79,13 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     @AfterMethod(alwaysRun = true)
     public void afterMethod() throws Exception {
 
+        cleanupDatabase();
+
+        unprepareServerPluginService();
+        this.ps = null;
+    }
+
+    private void cleanupDatabase() {
         EntityManager em = null;
 
         try {
@@ -86,40 +96,61 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             List doomed;
 
             // clean up any tests that don't already clean up after themselves
-            q = em.createQuery("SELECT bv FROM BundleVersion bv WHERE bv.bundle.name LIKE '" + TEST_PREFIX + "%'");
+
+            // remove bundleversions which cascade remove bundlefiles and bundledeploydefs  
+            q = em.createQuery("SELECT bv FROM BundleVersion bv WHERE bv.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleVersion.class, ((BundleVersion) removeMe).getId()));
             }
-
+            // remove any orphaned bfs
+            q = em.createQuery("SELECT bf FROM BundleFile bf WHERE bf.generalPackage.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(BundleFile.class, ((BundleFile) removeMe).getId()));
+            }
+            // remove packages which cascade remove packageversions
+            q = em.createQuery("SELECT p FROM Package p WHERE p.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(Package.class, ((Package) removeMe).getId()));
+            }
+            // remove any orphaned pvs
+            q = em.createQuery("SELECT pv FROM PackageVersion pv WHERE pv.generalPackage.name LIKE '" + TEST_PREFIX
+                + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(PackageVersion.class, ((PackageVersion) removeMe).getId()));
+            }
+            // remove bundles which cascade remove repos            
             q = em.createQuery("SELECT b FROM Bundle b WHERE b.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(Bundle.class, ((Bundle) removeMe).getId()));
             }
-
+            // remove any orphaned repos            
             q = em.createQuery("SELECT r FROM Repo r WHERE r.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(Repo.class, ((Repo) removeMe).getId()));
             }
-
+            // remove ResourceTypes which cascade remove BundleTypes and PackageTypes            
+            q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(ResourceType.class, ((ResourceType) removeMe).getId()));
+            }
+            //  remove any orphaned BundleTypes
             q = em.createQuery("SELECT bt FROM BundleType bt WHERE bt.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleType.class, ((BundleType) removeMe).getId()));
             }
-
+            // remove any orphaned packagetypes            
             q = em.createQuery("SELECT pt FROM PackageType pt WHERE pt.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(PackageType.class, ((PackageType) removeMe).getId()));
-            }
-
-            q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.name LIKE '" + TEST_PREFIX + "%'");
-            doomed = q.getResultList();
-            for (Object removeMe : doomed) {
-                em.remove(em.getReference(ResourceType.class, ((ResourceType) removeMe).getId()));
             }
 
             getTransactionManager().commit();
@@ -136,14 +167,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
                 em.close();
             }
         }
-
-        unprepareServerPluginService();
-        this.ps = null;
-
-        super.endTest();
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = TESTS_ENABLED)
     public void testGetBundleTypes() throws Exception {
         BundleType bt1 = createBundleType("one");
         BundleType bt2 = createBundleType("two");
@@ -159,13 +185,13 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assert btNames.contains(bt2.getName());
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = TESTS_ENABLED)
     public void testCreateBundle() throws Exception {
         Bundle b1 = createBundle("one");
         assertNotNull(b1);
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = TESTS_ENABLED)
     public void testCreateBundleVersion() throws Exception {
         Bundle b1 = createBundle("one");
         assertNotNull(b1);
@@ -177,7 +203,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertEquals("1.1", bv2.getVersion());
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = TESTS_ENABLED)
     public void testAddBundleFiles() throws Exception {
         Bundle b1 = createBundle("one");
         assertNotNull(b1);
@@ -189,7 +215,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             + "-bundlefile-2", "1.0", null, "Test Bundle File # 2".getBytes(), false);
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = TESTS_ENABLED)
     public void testfindBundlesByCriteria() throws Exception {
         Bundle b1 = createBundle("one");
         Bundle b2 = createBundle("two");
@@ -246,7 +272,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertEquals(b.getName(), r.getName());
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = TESTS_ENABLED)
     public void testfindBundleVersionsByCriteria() throws Exception {
         Bundle b1 = createBundle("one");
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
@@ -331,7 +357,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     }
 
     private PackageType createPackageType(String name, ResourceType rt) throws Exception {
-        final String fullName = TEST_PREFIX + "-packagetype-" + name;
+        // the package type is named the same as the bundle type
+        final String fullName = TEST_PREFIX + "-type-" + name;
         PackageType pt = new PackageType(fullName, rt);
 
         TransactionManager txMgr = getTransactionManager();

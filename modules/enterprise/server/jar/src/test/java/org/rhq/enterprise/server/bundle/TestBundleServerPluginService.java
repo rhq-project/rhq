@@ -22,11 +22,15 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
@@ -40,6 +44,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginManager;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
@@ -164,6 +169,34 @@ public class TestBundleServerPluginService extends ServerPluginService implement
             ServerPluginComponent component = super.createServerPluginComponent(environment);
             components.put(environment.getPluginKey().getPluginName(), component);
             return component;
+        }
+
+        @Override
+        public BundleServerPluginFacet getBundleServerPluginFacet(String bundleTypeName) {
+
+            return new TestBundlePluginComponent();
+        }
+    }
+
+    class TestBundlePluginComponent implements BundleServerPluginFacet {
+
+        public TestBundlePluginComponent() {
+        };
+
+        public RecipeParseResults parseRecipe(String recipe) throws Exception {
+
+            ConfigurationDefinition configDef;
+            Set<String> bundleFileNames;
+
+            configDef = new ConfigurationDefinition("SampleBundle", "Stubbed ConfigDef for Sample Bundle");
+            configDef.put(new PropertyDefinitionSimple("sample.bundle.deploy.directory",
+                "Stubbed Property for deploy directory (must already exist on target platform)", true,
+                PropertySimpleType.STRING));
+
+            bundleFileNames = new HashSet<String>();
+            bundleFileNames.add("sample-bundle.war");
+
+            return new RecipeParseResults(configDef, bundleFileNames);
         }
     }
 }

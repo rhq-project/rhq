@@ -19,12 +19,9 @@
 
 package org.rhq.enterprise.server.bundle;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 /**
  * This class is general to all Bundle handling server side plugins.  It is returned by the SSP when parsing
@@ -46,14 +43,6 @@ public class RecipeParseResults {
     }
 
     public ConfigurationDefinition getConfigDef() {
-
-        // stub out a test ConfigDef here until we actual parse the recipe
-        System.out.println("!!!!!! REMOVE THIS TEST CODE !!!!!!!!");
-        configDef = new ConfigurationDefinition("SampleBundle", "Stubbed ConfigDef for Sample Bundle");
-        configDef.put(new PropertyDefinitionSimple("sample.bundle.deploy.directory",
-            "Stubbed Property for deploy directory (must already exist on target platform)", true,
-            PropertySimpleType.STRING));
-
         return configDef;
     }
 
@@ -62,12 +51,6 @@ public class RecipeParseResults {
     }
 
     public Set<String> getBundleFileNames() {
-        // stub out a test set of BundleFiles here until we actual parse the recipe. For now lets just deploy
-        // a war file into an existing app server dir.
-        System.out.println("!!!!!! REMOVE THIS TEST CODE !!!!!!!!");
-        bundleFileNames = new HashSet<String>();
-        bundleFileNames.add("sample-bundle.war");
-
         return bundleFileNames;
     }
 

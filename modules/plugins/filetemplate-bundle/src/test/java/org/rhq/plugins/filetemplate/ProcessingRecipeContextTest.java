@@ -40,6 +40,7 @@ import org.rhq.bundle.filetemplate.recipe.RecipeContext;
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.stream.StreamUtil;
@@ -138,6 +139,24 @@ public class ProcessingRecipeContextTest {
         assert scripts.contains("bin/test.sh") : scripts;
         String echoOutputContent = readFile(echoOutput);
         assert echoOutputContent.trim().equals("hello");
+    }
+
+    public void testCommandRecipe() throws Exception {
+        File testDir = getTestDir("testcommand");
+        File echoOutput = new File(testDir, "out.txt");
+        echoOutput.getParentFile().mkdirs();
+
+        SystemInfo sysinfo = SystemInfoFactory.createSystemInfo();
+        if (sysinfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
+            addRecipeCommand("command cmd /C \"echo helloWorld > '" + echoOutput.getAbsolutePath() + "'\"");
+        } else {
+            addRecipeCommand("command sh -c \"echo helloWorld > '" + echoOutput.getAbsolutePath() + "'\"");
+        }
+
+        RecipeContext context = parseRecipeNow(testDir);
+
+        String echoOutputContent = readFile(echoOutput);
+        assert echoOutputContent.trim().equals("helloWorld");
     }
 
     private ProcessingRecipeContext parseRecipeNow(File testDir) throws Exception {

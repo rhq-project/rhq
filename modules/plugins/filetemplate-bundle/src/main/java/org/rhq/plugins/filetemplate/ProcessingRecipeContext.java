@@ -177,6 +177,22 @@ public class ProcessingRecipeContext extends RecipeContext {
         }
     }
 
+    @Override
+    public void addCommand(String exe, List<String> exeArgs) {
+        super.addCommand(exe, exeArgs);
+
+        ProcessExecution pe = new ProcessExecution(exe);
+        pe.setArguments(exeArgs);
+        pe.setWaitForCompletion(30 * 60 * 1000L);
+        pe.setCheckExecutableExists(false);
+        pe.setWorkingDirectory(this.baseWorkingDirectory);
+
+        ProcessExecutionResults results = this.systemInfo.executeProcess(pe);
+        if (results.getError() != null) {
+            throw new RuntimeException("Could not execute command [" + pe + "]: " + results, results.getError());
+        }
+    }
+
     private void ensureExecutable(File scriptFile) {
         boolean success;
 

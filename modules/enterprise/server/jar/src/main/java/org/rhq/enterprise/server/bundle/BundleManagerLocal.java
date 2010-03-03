@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.bundle;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -30,6 +31,7 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
@@ -95,6 +97,24 @@ public interface BundleManagerLocal {
     Bundle createBundle(Subject subject, String name, int bundleTypeId) throws Exception;
 
     /**
+     * @param subject must be InventoryManager
+     * @param BundleVersionId the BundleVersion being deployed by this definition
+     * @param name a name for this definition. not null or empty
+     * @param description an optional longer description describing this deploy def 
+     * @param configuration a Configuration (pojo) to be associated with this deploy def. Although
+     *        it is not enforceable 
+     *        must be that of the associated BundleVersion.
+     * @param enforcePolicy if true enforce policy on deployments made with this deploy def
+     * @param enforceInterval if enforcePolicy is true check policy at this interval (in seconds), otherwise ignored
+     * @param pinToBundle if true this deploy def is disabled if a newer BundleVersion is generated for the Bundle
+     * @return
+     * @throws Exception
+     */
+    BundleDeployDefinition createBundleDeployDefinition(Subject subject, int bundleVersionId, String name,
+        String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
+        boolean pinToBundle) throws Exception;
+
+    /**
      * Not generally called. For use by Server Side Plugins when registering a Bundle Plugin.
      *  
      * @param subject must be InventoryManager
@@ -112,6 +132,20 @@ public interface BundleManagerLocal {
      * @return the persisted BundleVersion (id is assigned)
      */
     BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String bundleVersion, String recipe)
+        throws Exception;
+
+    /**
+     * Determine the files required for a BundleVersion and return all of the filenames or optionally, just those
+     * that lack BundleFiles for the BundleVersion.  The recipe may be parsed as part of this call.
+     *   
+     * @param subject must be InventoryManager
+     * @param bundleVersionId the BundleVersion being queried
+     * @param withoutBundleFileOnly if true omit any filenames that already have a corresponding BundleFile for
+     *        the BundleVersion.  
+     * @return The List of filenames.
+     * @throws Exception
+     */
+    Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)
         throws Exception;
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

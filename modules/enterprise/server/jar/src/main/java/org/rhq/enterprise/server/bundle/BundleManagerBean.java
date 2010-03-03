@@ -20,8 +20,10 @@ package org.rhq.enterprise.server.bundle;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.ejb.EJB;
@@ -33,6 +35,7 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
@@ -41,6 +44,8 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
@@ -112,6 +117,44 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         entityManager.persist(bundle);
 
         return bundle;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleDeployDefinition createBundleDeployDefinition(Subject subject, int bundleVersionId, String name,
+        String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
+        boolean pinToBundle) throws Exception {
+
+        if (null == name || "".equals(name.trim())) {
+            throw new IllegalArgumentException("Invalid bundleDeployDefinitionName: " + name);
+        }
+        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
+        if (null == bundleVersion) {
+            throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
+        }
+        ConfigurationDefinition configDef = bundleVersion.getConfigurationDefinition();
+        if (null != configDef) {
+            if (null == configuration) {
+                throw new IllegalArgumentException(
+                    "Missing Configuration. Configuration is required when the specified BundleVersion defines Configuration Properties.");
+            }
+            List<String> errors = ConfigurationUtility.validateConfiguration(configuration, configDef);
+            if (null != errors && !errors.isEmpty()) {
+                throw new IllegalArgumentException("Invalid Configuration: " + errors.toString());
+            }
+        }
+
+        BundleDeployDefinition deployDef = new BundleDeployDefinition(bundleVersion, name);
+        deployDef.setDescription(description);
+        deployDef.setConfiguration(configuration);
+        deployDef.setEnforcePolicy(enforcePolicy);
+        deployDef.setEnforcementInterval(enforcementInterval);
+        if (pinToBundle) {
+            deployDef.setBundle(bundleVersion.getBundle());
+        }
+
+        entityManager.persist(deployDef);
+
+        return deployDef;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -281,6 +324,46 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         packageTypeQuery.setParameter("name", bundleType.getName());
 
         return (PackageType) packageTypeQuery.getSingleResult();
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)
+        throws Exception {
+
+        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
+        if (null == bundleVersion) {
+            throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
+        }
+
+        // parse the recipe (validation occurs here) and get the config def and list of files
+        BundleType bundleType = bundleVersion.getBundle().getBundleType();
+        BundleServerPluginFacet bp = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
+            .getBundleServerPluginFacet(bundleType.getName());
+        RecipeParseResults parseResults = bp.parseRecipe(bundleVersion.getRecipe());
+
+        Set<String> result = parseResults.getBundleFileNames();
+
+        if (withoutBundleFileOnly) {
+            List<BundleFile> bundleFiles = bundleVersion.getBundleFiles();
+            Set<String> allFilenames = result;
+            result = new HashSet<String>(allFilenames.size() - bundleFiles.size());
+            for (String filename : allFilenames) {
+                boolean found = false;
+                for (BundleFile bundleFile : bundleFiles) {
+                    String name = bundleFile.getPackageVersion().getGeneralPackage().getName();
+                    if (name.equals(filename)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    result.add(filename);
+                }
+            }
+        }
+
+        return result;
+
     }
 
     @SuppressWarnings("unchecked")

@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.bundle;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -33,9 +34,12 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
@@ -108,6 +112,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleFile.class, ((BundleFile) removeMe).getId()));
+            }
+            // remove any orphaned bdds
+            q = em.createQuery("SELECT bdd FROM BundleDeployDefinition bdd WHERE bdd.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(BundleDeployDefinition.class, ((BundleDeployDefinition) removeMe).getId()));
             }
             // remove packages which cascade remove packageversions
             q = em.createQuery("SELECT p FROM Package p WHERE p.name LIKE '" + TEST_PREFIX + "%'");
@@ -213,6 +223,47 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             + "-bundlefile-1", "1.0", null, "Test Bundle File # 1".getBytes(), false);
         BundleFile bf2 = bundleManager.addBundleFileViaByteArray(getOverlord(), bv1.getId(), TEST_PREFIX
             + "-bundlefile-2", "1.0", null, "Test Bundle File # 2".getBytes(), false);
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testCreateBundleDeploymentDef() throws Exception {
+        Bundle b1 = createBundle("one");
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", null, b1);
+        assertNotNull(bv1);
+        Configuration config = new Configuration();
+        BundleDeployDefinition bdd1;
+        try {
+            bdd1 = createDeployDefinition("one", bv1, config);
+            fail("Bad config was accepted");
+        } catch (Exception e) {
+            System.out.println("EXPECTED EXCEPTION: " + e);
+            // expected due to bad config
+        }
+        config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
+        bdd1 = createDeployDefinition("one", bv1, config);
+        assertNotNull(bdd1);
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testGetBundleFilenames() throws Exception {
+        Bundle b1 = createBundle("one");
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
+        assertNotNull(bv1);
+        Set<String> filenames = bundleManager.getBundleVersionFilenames(getOverlord(), bv1.getId(), true);
+        assertNotNull(filenames);
+        assertEquals(2, filenames.size());
+        BundleFile bf1 = bundleManager.addBundleFileViaByteArray(getOverlord(), bv1.getId(), TEST_PREFIX
+            + "-bundlefile-1", "1.0", null, "Test Bundle File # 1".getBytes(), false);
+        filenames = bundleManager.getBundleVersionFilenames(getOverlord(), bv1.getId(), true);
+        assertNotNull(filenames);
+        assertEquals(1, filenames.size());
+        BundleFile bf2 = bundleManager.addBundleFileViaByteArray(getOverlord(), bv1.getId(), TEST_PREFIX
+            + "-bundlefile-2", "1.0", null, "Test Bundle File # 2".getBytes(), false);
+        filenames = bundleManager.getBundleVersionFilenames(getOverlord(), bv1.getId(), true);
+        assertNotNull(filenames);
+        assertEquals(0, filenames.size());
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -341,6 +392,17 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assert bv.getId() > 0;
         assert bv.getName().endsWith(fullName);
         return bv;
+    }
+
+    private BundleDeployDefinition createDeployDefinition(String name, BundleVersion bv, Configuration config)
+        throws Exception {
+        final String fullName = TEST_PREFIX + "-bundledeploydef-" + name;
+        BundleDeployDefinition bdd = bundleManager.createBundleDeployDefinition(getOverlord(), bv.getId(), fullName,
+            fullName, config, false, -1, false);
+
+        assert bdd.getId() > 0;
+        assert bdd.getName().endsWith(fullName);
+        return bdd;
     }
 
     private ResourceType createResourceType(String name) throws Exception {

@@ -188,13 +188,13 @@ public class TestBundleServerPluginService extends ServerPluginService implement
             ConfigurationDefinition configDef;
             Set<String> bundleFileNames;
 
-            configDef = new ConfigurationDefinition("SampleBundle", "Stubbed ConfigDef for Sample Bundle");
-            configDef.put(new PropertyDefinitionSimple("sample.bundle.deploy.directory",
-                "Stubbed Property for deploy directory (must already exist on target platform)", true,
-                PropertySimpleType.STRING));
+            configDef = new ConfigurationDefinition("bundletest-configdef", "Test Config Def for testing BundleVersion");
+            configDef.put(new PropertyDefinitionSimple("bundletest.property",
+                "Test property for BundleVersion Config Def testing", true, PropertySimpleType.STRING));
 
             bundleFileNames = new HashSet<String>();
-            bundleFileNames.add("sample-bundle.war");
+            bundleFileNames.add("bundletest-bundlefile-1");
+            bundleFileNames.add("bundletest-bundlefile-2");
 
             return new RecipeParseResults(configDef, bundleFileNames);
         }

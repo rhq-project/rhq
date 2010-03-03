@@ -24,18 +24,25 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.transaction.TransactionManager;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -49,12 +56,18 @@ public class BundleDeploymentHistoryManagerBeanTest extends AbstractEJB3Test {
     private static final String TEST_PREFIX = "bundledeploymenthistorytest";
 
     private static final boolean ENABLED = true;
+    private static final boolean DISABLED = false;
 
     private BundleDeploymentHistoryManagerLocal bundleDeploymentHistoryManager;
+    private BundleManagerLocal bundleManagerBean;
+
+    private RepoManagerLocal repoManager;
 
     @BeforeMethod
     public void beforeMethod() {
         bundleDeploymentHistoryManager = LookupUtil.getBundleDeploymentHistoryManager();
+        bundleManagerBean = LookupUtil.getBundleManager();
+        repoManager = LookupUtil.getRepoManagerLocal();
     }
 
     @AfterMethod(alwaysRun = true)
@@ -87,17 +100,22 @@ public class BundleDeploymentHistoryManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = DISABLED)
+    public void testInsertAndRetrieve() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
     public void testFindByPlatformId() throws Exception {
         assertNotNull(null);
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = DISABLED)
     public void testFindByBundleId() throws Exception {
         assertNotNull(null);
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = DISABLED)
     public void testFindByBundleDeploymentId() throws Exception {
         assertNotNull(null);
     }
@@ -115,6 +133,10 @@ public class BundleDeploymentHistoryManagerBeanTest extends AbstractEJB3Test {
         BundleDeploymentHistory history = new BundleDeploymentHistory(bundleDeployment, subject.getName(), auditTime,
             auditAction, auditMessage);
 
+        Bundle bundle = createBundle("deleteThisBundle");
+
+        history.setBundleDeployment(bundleDeployment);
+
         bundleDeploymentHistoryManager.addBundleDeploymentHistoryByBundleDeployment(history);
 
         BundleDeploymentHistoryCriteria criteria = new BundleDeploymentHistoryCriteria();
@@ -124,6 +146,55 @@ public class BundleDeploymentHistoryManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(histories);
         assertTrue(histories.size() > 0);
 
+    }
+
+    private BundleType createBundleType(String name) throws Exception {
+        final String fullName = TEST_PREFIX + "-type-" + name;
+        BundleType bt = new BundleType(fullName, createResourceType(name));
+        bt = bundleManagerBean.createBundleType(getOverlord(), bt);
+
+        assert bt.getId() > 0;
+        assert bt.getName().endsWith(fullName);
+        return bt;
+    }
+
+    private Bundle createBundle(String name) throws Exception {
+        BundleType bt = createBundleType(name);
+        return createBundle(name, bt);
+    }
+
+    private Bundle createBundle(String name, BundleType bt) throws Exception {
+        final String fullName = TEST_PREFIX + "-bundle-" + name;
+        Bundle b = new Bundle(fullName, bt);
+        b = bundleManagerBean.createBundle(getOverlord(), b);
+
+        assert b.getId() > 0;
+        assert b.getName().endsWith(fullName);
+        return b;
+    }
+
+    private BundleVersion createBundleVersion(String name, String version, Bundle bundle) throws Exception {
+        final String fullName = TEST_PREFIX + "-version-" + version + "-" + name;
+        final String recipe = TEST_PREFIX + "-recipe-" + name;
+        BundleVersion bv = new BundleVersion(fullName, version, bundle, recipe);
+        bv = bundleManagerBean.createBundleVersion(getOverlord(), bv);
+
+        assert bv.getId() > 0;
+        assert bv.getName().endsWith(fullName);
+        return bv;
+    }
+
+    private ResourceType createResourceType(String name) throws Exception {
+        final String fullName = TEST_PREFIX + "-resourcetype-" + name;
+        ResourceType rt = new ResourceType(fullName, "BundleManagerBeanTest", ResourceCategory.PLATFORM, null);
+
+        TransactionManager txMgr = getTransactionManager();
+        txMgr.begin();
+        EntityManager em = getEntityManager();
+        em.persist(rt);
+        em.close();
+        txMgr.commit();
+        return rt;
     }
 
     private Subject getOverlord() {

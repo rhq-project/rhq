@@ -18,13 +18,13 @@
  */
 package org.rhq.enterprise.server.bundle;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,12 +57,16 @@ public class BundleDeploymentHistoryManagerBean implements BundleDeploymentHisto
 
     public List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(Subject subject,
         BundleDeploymentHistoryCriteria criteria) {
-        List<BundleDeploymentHistory> histories = new ArrayList<BundleDeploymentHistory>();
+
+        Query q = entityManager.createNamedQuery(BundleDeploymentHistory.QUERY_FIND_ALL);
+        List<BundleDeploymentHistory> histories = (List<BundleDeploymentHistory>) q.getResultList();
         return histories;
     }
 
     public void addBundleDeploymentHistoryByBundleDeployment(BundleDeploymentHistory history)
         throws IllegalArgumentException {
+
+        entityManager.persist(history);
 
     }
 }

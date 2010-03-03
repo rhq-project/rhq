@@ -130,17 +130,14 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     private void lookupConfiguration() {
 
-
         try {
-//            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO replace with real subject
 
             OperationManagerLocal opMan = LookupUtil.getOperationManager();
             obtainOperationIds();
 
 
             if (operationId!=null) {
-                OperationDefinition operationDefinition = opMan.getOperationDefinition(subject, operationId);
+                OperationDefinition operationDefinition = opMan.getOperationDefinition(webUser, operationId);
                 configurationDefinition = operationDefinition.getParametersConfigurationDefinition();
 
 
@@ -175,8 +172,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         if (resId!=null) {
             OperationManagerLocal opMan = LookupUtil.getOperationManager();
 
-            Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO replace with real subject
-            List<OperationDefinition> opDefs = opMan.findSupportedResourceOperations(subject, resId, false);
+            List<OperationDefinition> opDefs = opMan.findSupportedResourceOperations(webUser, resId, false);
             for (OperationDefinition def : opDefs) {
                 operationIds.put(def.getDisplayName(),def.getId()); // TODO add more distinctive stuff in display
             }
@@ -195,7 +191,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public Integer getResId() {
-
+        System.out.println("OperationsBackingBean.getResId");
         if (resId==null) {
             PropertySimple prop = alertParameters.getSimple(OperationsSender.RESOURCE_ID);
             if (prop!=null)
@@ -219,8 +215,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
         if (resId!=null) {
             ResourceManagerLocal resMgr = LookupUtil.getResourceManager();
-            Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO replace with real subject
-            Resource res = resMgr.getResource(subject,resId);
+            Resource res = resMgr.getResource(webUser,resId);
 
             resourceName = res.getName() + " (" + res.getResourceType().getName() + ")";
         }
@@ -232,7 +227,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public Integer getOperationId() {
-
+        System.out.println("OperationsBackingBean.getOperationId, operationId=" + operationId);
         if (operationId ==null) {
             PropertySimple prop = alertParameters.getSimple(OperationsSender.OPERATION_ID);
             if (prop!=null)
@@ -258,10 +253,12 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
+        System.out.println("OperationsBackingBean.getConfigurationDefinition");
+
+        if (configurationDefinition==null)
+            lookupConfiguration();
+
         return configurationDefinition;
-
-
-
     }
 
     public void setConfigurationDefinition(ConfigurationDefinition configurationDefinition) {

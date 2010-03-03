@@ -71,23 +71,46 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
 
     @Override
     protected void changeToRawTab() throws ResourceNotFoundException, ConfigurationValidationException {
-        resourceConfiguration = translateToRaw();
+        translateToRaw();
+        validateRaw();
+    }
+
+    private void translateToRaw() throws ResourceNotFoundException, ConfigurationValidationException {
+        ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
+        resourceConfiguration = configurationMgr.translateResourceConfiguration(loggedInUser.getSubject(), resourceId,
+            resourceConfiguration, STRUCTURED_MODE);
+
         for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
             RawConfigUIBean uiBean = findRawConfigUIBeanByPath(raw.getPath());
             uiBean.setRawConfiguration(raw);
         }
     }
 
-    private Configuration translateToRaw() throws ResourceNotFoundException, ConfigurationValidationException {
-        ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
-        return configurationMgr.translateResourceConfiguration(loggedInUser.getSubject(), resourceId,
-            resourceConfiguration, STRUCTURED_MODE);
+    private void validateRaw() {
+        try {
+            ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
+            configurationMgr.validateResourceConfiguration(loggedInUser.getSubject(), resourceId, resourceConfiguration,
+                false);
+        }
+        catch (ConfigurationValidationException e) {
+            String msg = "Translating the configuration from structured to raw resulted in the following validation " +
+                "errors: " + e.getMessage();
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, msg);
+            copyErrorMessages(e);
+        }
     }
 
     @Override
     protected void changeToStructuredTab() throws ResourceNotFoundException, ConfigurationValidationException {
+        translateToStructured();
+        validateStructured();
+    }
 
-        resourceConfiguration = translateToStructured();
+    private void translateToStructured() throws ResourceNotFoundException, ConfigurationValidationException {
+        ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
+
+        resourceConfiguration = configurationMgr.translateResourceConfiguration(loggedInUser.getSubject(), resourceId,
+            resourceConfiguration, RAW_MODE);
 
         for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
             RawConfigUIBean uiBean = findRawConfigUIBeanByPath(raw.getPath());
@@ -95,20 +118,21 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
             if ((raw.errorMessage != null) && (!raw.errorMessage.equals(""))) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.errorMessage);
             }
-
         }
     }
 
-    private Configuration translateToStructured() throws ResourceNotFoundException, ConfigurationValidationException {
-        ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
-
-        Configuration result = configurationMgr.translateResourceConfiguration(loggedInUser.getSubject(), resourceId,
-            resourceConfiguration, RAW_MODE);
-
-        configurationMgr.validateResourceConfiguration(loggedInUser.getSubject(), resourceId, result, true);
-
-        return result;
-
+    private void validateStructured() {
+        try {
+            ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
+            configurationMgr.validateResourceConfiguration(loggedInUser.getSubject(), resourceId, resourceConfiguration,
+                true);
+        }
+        catch (ConfigurationValidationException e) {
+            String msg = "Translating the configuration from raw to structured resulted in the following validation " +
+                "errors: " + e.getMessage();
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, msg);
+            copyErrorMessages(e);
+        }
     }
 
     @Observer("rawConfigUpdate")

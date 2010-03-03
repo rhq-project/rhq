@@ -126,6 +126,7 @@
 	<classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/filetemplate-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/filetemplate-bundle/src/test/java"/>
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>

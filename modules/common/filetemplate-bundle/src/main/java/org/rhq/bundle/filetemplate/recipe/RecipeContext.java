@@ -23,8 +23,10 @@
 
 package org.rhq.bundle.filetemplate.recipe;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,21 +34,40 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
- * Contains information that is gleened from a recipe after it is parsed.
+ * Contains information that is gleened from a recipe during and after it is parsed.
  * 
  * @author John Mazzitelli
  */
 public class RecipeContext {
 
+    private RecipeParser parser;
     private final String recipe;
     private final Map<String, String> deployFiles;
+    private final Map<String, String> files;
+    private final Set<String> realizedFiles;
     private final Set<String> replacementVariables;
     private Configuration replacementVariableValues;
+    private final List<Script> scripts;
 
     public RecipeContext(String recipe) {
         this.recipe = recipe;
         this.deployFiles = new HashMap<String, String>();
+        this.files = new HashMap<String, String>();
+        this.realizedFiles = new HashSet<String>();
         this.replacementVariables = new HashSet<String>();
+        this.scripts = new ArrayList<Script>();
+    }
+
+    /**
+     * If this context is currently in use by a parser, this will be the reference to that parser.
+     * @return parser currently using this context
+     */
+    public RecipeParser getParser() {
+        return parser;
+    }
+
+    public void setParser(RecipeParser parser) {
+        this.parser = parser;
     }
 
     /**
@@ -70,6 +91,36 @@ public class RecipeContext {
 
     public void addDeployFile(String filename, String directory) {
         this.deployFiles.put(filename, directory);
+    }
+
+    /**
+     * Returns all the files that are strictly to be copied to some location.
+     * The key is the bundle file's name, the value is the full path and filename where
+     * the file should be copied to. No processing of these files will occur other than
+     * they are copied.
+     * 
+     * @return map of all files to be deployed and the location where they are to be deployed
+     */
+    public Map<String, String> getFiles() {
+        return this.files;
+    }
+
+    public void addFile(String source, String destination) {
+        this.files.put(source, destination);
+    }
+
+    /**
+     * Returns the pathnames of all files that are to be realized (meaning, those that should
+     * have replacement variables replaced).
+     * 
+     * @return set of all realized files
+     */
+    public Set<String> getRealizedFiles() {
+        return this.realizedFiles;
+    }
+
+    public void addRealizedFile(String file) {
+        this.realizedFiles.add(file);
     }
 
     /**
@@ -113,5 +164,69 @@ public class RecipeContext {
             setReplacementVariableValues(values);
         }
         values.put(new PropertySimple(name, value));
+    }
+
+    /**
+     * Returns a set of all the names of scripts found in the recipe.
+     * 
+     * @return script names
+     */
+    public Set<String> getScriptFiles() {
+        Set<String> scriptFiles = new HashSet<String>();
+        for (Script script : this.scripts) {
+            scriptFiles.add(script.getExecutable());
+        }
+        return scriptFiles;
+    }
+
+    /**
+     * Adds a script that the recipe wants invoked.
+     * 
+     * @param exe the script executable
+     * @param exeArgs the arguments to pass to the script
+     */
+    public void addScript(String exe, List<String> exeArgs) {
+        this.scripts.add(new Script(exe, exeArgs));
+    }
+
+    class Script {
+        private final List<String> args;
+        private final String exe;
+
+        public Script(String exe, List<String> args) {
+            this.exe = exe;
+            this.args = args;
+        }
+
+        public String getExecutable() {
+            return exe;
+        }
+
+        public List<String> getArguments() {
+            return args;
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder("RecipeContext:\n");
+        str.append("Recipe Text:\n").append(getRecipe()).append("\n");
+        str.append("Deploy Files: ").append(getDeployFiles()).append("\n");
+        str.append("Replacement Vars: ").append(getReplacementVariables()).append("\n");
+
+        str.append("Replacement Values: ");
+        Configuration values = getReplacementVariableValues();
+        if (values == null) {
+            str.append("<none>");
+        } else {
+            str.append(values.getProperties());
+        }
+        str.append("\n");
+
+        str.append("Script Files: ").append(getScriptFiles()).append("\n");
+        for (Script script : this.scripts) {
+            str.append("* ").append(script.getExecutable()).append(" ").append(script.getArguments()).append("\n");
+        }
+        return str.toString();
     }
 }

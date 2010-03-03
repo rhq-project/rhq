@@ -75,42 +75,25 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
             List<PackageVersion> packageVersions = bundleManager.getAllBundleVersionPackageVersions(bundleVersion);
             for (PackageVersion packageVersion : packageVersions) {
                 File packageFile = new File(tmpDir, packageVersion.getFileName());
-                packageFile.getParentFile().mkdirs();
-                FileOutputStream fos = new FileOutputStream(packageFile);
-                try {
-                    long size = bundleManager.getFileContent(packageVersion, fos);
-                    if (packageVersion.getFileSize() != null && size != packageVersion.getFileSize().longValue()) {
-                        log.warn("Downloaded bundle file [" + packageVersion + "] but its size was [" + size
-                            + "] when it was expected to be [" + packageVersion.getFileSize() + "].");
-                    }
-                } finally {
-                    fos.close();
-                }
 
-                // verify the content
-                if (packageVersion.getMD5() != null) {
-                    String realMD5 = MessageDigestGenerator.getDigestString(packageFile);
-                    if (!packageVersion.getMD5().equals(realMD5)) {
-                        throw new Exception("Package version [" + packageVersion + "] failed MD5 check. expected=["
-                            + packageVersion.getMD5() + "], actual=[" + realMD5 + "]");
-                    }
-                } else if (packageVersion.getSHA256() != null) {
-                    FileInputStream is = new FileInputStream(packageFile);
+                try {
+                    verifyHash(packageVersion, packageFile);
+                } catch (Exception e) {
+                    // file either doesn't exist or it hash doesn't match, download a new copy
+                    packageFile.getParentFile().mkdirs();
+                    FileOutputStream fos = new FileOutputStream(packageFile);
                     try {
-                        MessageDigestGenerator gen = new MessageDigestGenerator("SHA256");
-                        gen.add(is);
-                        String realSHA256 = gen.getDigestString();
-                        if (!packageVersion.getSHA256().equals(realSHA256)) {
-                            throw new Exception("Package version [" + packageVersion
-                                + "] failed SHA256 check. expected=[" + packageVersion.getSHA256() + "], actual=["
-                                + realSHA256 + "]");
+                        long size = bundleManager.getFileContent(packageVersion, fos);
+                        if (packageVersion.getFileSize() != null && size != packageVersion.getFileSize().longValue()) {
+                            log.warn("Downloaded bundle file [" + packageVersion + "] but its size was [" + size
+                                + "] when it was expected to be [" + packageVersion.getFileSize() + "].");
                         }
                     } finally {
-                        is.close();
+                        fos.close();
                     }
 
-                } else {
-                    log.debug("Package version [" + packageVersion + "] has no MD5/SHA256 hash - not verifying it");
+                    // now try to verify it again, if this throws an exception, that is very bad and we need to abort
+                    verifyHash(packageVersion, packageFile);
                 }
 
                 packageVersionFiles.put(packageVersion, packageFile);
@@ -130,5 +113,47 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
             result.setErrorMessage(t);
         }
         return result;
+    }
+
+    /**
+     * Checks to see if the package file's hash matches that of the given package version.
+     * If the file doesn't exist or the hash doesn't match, an exception is thrown.
+     * This method returns normally if the hash matches the file.
+     * If there is no known hash in the package version, this method returns normally.
+     * 
+     * @param packageVersion contains the hash that is expected
+     * @param packageFile the local file whose hash is to be checked
+     * @throws Exception if the file does not match the hash or the file doesn't exist
+     */
+    private void verifyHash(PackageVersion packageVersion, File packageFile) throws Exception {
+        if (!packageFile.exists()) {
+            throw new Exception("Package version [" + packageVersion + "] does not exist, cannot check hash");
+        }
+
+        if (packageVersion.getMD5() != null) {
+            String realMD5 = MessageDigestGenerator.getDigestString(packageFile);
+            if (!packageVersion.getMD5().equals(realMD5)) {
+                throw new Exception("Package version [" + packageVersion + "] failed MD5 check. expected=["
+                    + packageVersion.getMD5() + "], actual=[" + realMD5 + "]");
+            }
+        } else if (packageVersion.getSHA256() != null) {
+            FileInputStream is = new FileInputStream(packageFile);
+            try {
+                MessageDigestGenerator gen = new MessageDigestGenerator("SHA256");
+                gen.add(is);
+                String realSHA256 = gen.getDigestString();
+                if (!packageVersion.getSHA256().equals(realSHA256)) {
+                    throw new Exception("Package version [" + packageVersion + "] failed SHA256 check. expected=["
+                        + packageVersion.getSHA256() + "], actual=[" + realSHA256 + "]");
+                }
+            } finally {
+                is.close();
+            }
+
+        } else {
+            log.debug("Package version [" + packageVersion + "] has no MD5/SHA256 hash - not verifying it");
+        }
+
+        return;
     }
 }

@@ -23,21 +23,29 @@
 
 package org.rhq.bundle.filetemplate.recipe;
 
-public interface RecipeCommand {
+import java.util.ArrayList;
+import java.util.List;
 
-    /**
-     * The name of the recipe command. This must be the first word in the recipe line in order for this command to be triggered.
-     * 
-     * @return name of the recipe command
-     */
-    String getName();
+public class ScriptRecipeCommand implements RecipeCommand {
 
-    /**
-     * Parses this recipe command and optionally puts information in the context.
-     *
-     * @param parser the parser that is invoking this command 
-     * @param context information where the parser can store information regarding the command that was processed
-     * @param args arguments passed to the command.
-     */
-    void parse(RecipeParser recipeParser, RecipeContext context, String[] args);
+    public String getName() {
+        return "script";
+    }
+
+    public void parse(RecipeParser parser, RecipeContext context, String[] args) {
+
+        if (args == null || args.length == 0) {
+            throw new IllegalArgumentException("Missing the script command to execute");
+        }
+
+        String exe = args[0];
+        List<String> exeArgs = new ArrayList<String>(args.length - 1);
+        for (int i = 1; i < args.length; i++) {
+            exeArgs.add(args[i]);
+        }
+
+        context.addScript(exe, exeArgs);
+
+        return;
+    }
 }

@@ -26,19 +26,17 @@ package org.rhq.bundle.filetemplate.recipe;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
-public class DeployRecipeCommand implements RecipeCommand {
+public class RealizeRecipeCommand implements RecipeCommand {
 
     public String getName() {
-        return "deploy";
+        return "realize";
     }
 
     public void parse(RecipeParser parser, RecipeContext context, String[] args) {
-        String sopts = ":f:d:";
-        LongOpt[] lopts = { new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f'),
-            new LongOpt("directory", LongOpt.REQUIRED_ARGUMENT, null, 'd') };
+        String sopts = ":f:";
+        LongOpt[] lopts = { new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f') };
 
-        String filename = null;
-        String directory = null;
+        String file = null;
 
         Getopt getopt = new Getopt(getName(), args, sopts, lopts);
         int code;
@@ -55,12 +53,7 @@ public class DeployRecipeCommand implements RecipeCommand {
             }
 
             case 'f': {
-                filename = getopt.getOptarg();
-                break;
-            }
-
-            case 'd': {
-                directory = getopt.getOptarg();
+                file = getopt.getOptarg();
                 break;
             }
 
@@ -71,15 +64,11 @@ public class DeployRecipeCommand implements RecipeCommand {
             }
         }
 
-        if (filename == null) {
-            throw new IllegalArgumentException("Did not specify the name of the file to deploy");
+        if (file == null) {
+            throw new IllegalArgumentException("Did not specify the file to realize");
         }
 
-        if (directory == null) {
-            throw new IllegalArgumentException("Did not specify the directory where the file should be deployed");
-        }
-
-        context.addDeployFile(filename, directory);
+        context.addRealizedFile(file);
         return;
     }
 }

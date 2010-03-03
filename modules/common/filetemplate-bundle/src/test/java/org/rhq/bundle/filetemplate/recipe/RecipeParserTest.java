@@ -40,6 +40,16 @@ public class RecipeParserTest {
         cleanRecipe();
     }
 
+    public void testRealizeRecipe() throws Exception {
+        addRecipeCommand("realize --file=<%opt.dir%>/config.ini");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        Set<String> files = context.getRealizedFiles();
+        assert files.size() == 1 : files;
+        assert files.contains("<%opt.dir%>/config.ini") : files;
+    }
+
     public void testFileRecipe() throws Exception {
         addRecipeCommand("file --source=run-me.sh --destination=/opt/run.sh");
         addRecipeCommand("file -s META-INF/another.xml -d /etc/another.xml");

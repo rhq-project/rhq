@@ -32,7 +32,7 @@ public class DeployRecipeCommand implements RecipeCommand {
         return "deploy";
     }
 
-    public void parse(RecipeContext context, String[] args) {
+    public void parse(RecipeParser parser, RecipeContext context, String[] args) {
         String sopts = ":f:d:";
         LongOpt[] lopts = { new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f'),
             new LongOpt("directory", LongOpt.REQUIRED_ARGUMENT, null, 'd') };
@@ -40,7 +40,7 @@ public class DeployRecipeCommand implements RecipeCommand {
         String filename = null;
         String directory = null;
 
-        Getopt getopt = new Getopt(context.toString(), args, sopts, lopts);
+        Getopt getopt = new Getopt(getName(), args, sopts, lopts);
         int code;
 
         while ((code = getopt.getopt()) != -1) {

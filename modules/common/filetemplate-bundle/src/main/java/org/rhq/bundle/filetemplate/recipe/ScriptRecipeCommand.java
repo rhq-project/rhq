@@ -32,7 +32,7 @@ public class ScriptRecipeCommand implements RecipeCommand {
         return "script";
     }
 
-    public void parse(RecipeContext context, String[] args) {
+    public void parse(RecipeParser parser, RecipeContext context, String[] args) {
 
         if (args == null || args.length == 0) {
             throw new IllegalArgumentException("Missing the script command to execute");

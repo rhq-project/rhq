@@ -77,17 +77,22 @@ public class RecipeParser {
 
     public void parseRecipe(RecipeContext context) throws Exception {
 
-        BufferedReader recipeReader = new BufferedReader(new StringReader(context.getRecipe()));
-        String line = recipeReader.readLine();
-        while (line != null) {
-            parseRecipeCommandLine(context, line);
-            line = recipeReader.readLine();
+        context.setParser(this);
+        try {
+            BufferedReader recipeReader = new BufferedReader(new StringReader(context.getRecipe()));
+            String line = recipeReader.readLine();
+            while (line != null) {
+                parseRecipeCommandLine(context, line);
+                line = recipeReader.readLine();
+            }
+        } finally {
+            context.setParser(null);
         }
 
         return;
     }
 
-    public void parseRecipeCommandLine(RecipeContext context, String line) throws Exception {
+    protected void parseRecipeCommandLine(RecipeContext context, String line) throws Exception {
         // ignore blank lines or comment lines that start with #
         if (line == null || line.trim().length() == 0 || line.startsWith("#")) {
             return;
@@ -112,7 +117,7 @@ public class RecipeParser {
         }
 
         try {
-            recipeCommand.parse(context, arguments);
+            recipeCommand.parse(this, context, arguments);
         } catch (Exception e) {
             throw new Exception("Error in recipe, line [" + line + "]", e);
         }
@@ -125,6 +130,7 @@ public class RecipeParser {
 
         RecipeCommand[] knownCommands = new RecipeCommand[] { new ScriptRecipeCommand(), //
             new FileRecipeCommand(), //
+            new RealizeRecipeCommand(), //
             new DeployRecipeCommand() //
         };
 
@@ -156,14 +162,9 @@ public class RecipeParser {
         return replacementVariables;
     }
 
-    protected String replaceReplacementVariables(RecipeContext context, String input) {
+    public String replaceReplacementVariables(RecipeContext context, String input) {
 
-        // don't bother if we have no values to replace them with
         Configuration replacementValues = context.getReplacementVariableValues();
-        if (replacementValues == null) {
-            return input;
-        }
-
         TemplateEngine templateEngine = null;
         StringBuffer buffer = new StringBuffer();
         Matcher matcher = this.replacementVariableDeclarationPattern.matcher(input);
@@ -172,7 +173,7 @@ public class RecipeParser {
             Matcher nameMatcher = this.replacementVariableNamePattern.matcher(next);
             if (nameMatcher.find()) {
                 String key = nameMatcher.group();
-                String value = replacementValues.getSimpleValue(key, null);
+                String value = (replacementValues != null) ? replacementValues.getSimpleValue(key, null) : null;
                 if (value == null) {
                     // our replacement values don't know how to replace the key, see if our system info template engine can
                     if (templateEngine == null) {

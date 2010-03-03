@@ -34,15 +34,17 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
- * Contains information that is gleened from a recipe after it is parsed.
+ * Contains information that is gleened from a recipe during and after it is parsed.
  * 
  * @author John Mazzitelli
  */
 public class RecipeContext {
 
+    private RecipeParser parser;
     private final String recipe;
     private final Map<String, String> deployFiles;
     private final Map<String, String> files;
+    private final Set<String> realizedFiles;
     private final Set<String> replacementVariables;
     private Configuration replacementVariableValues;
     private final List<Script> scripts;
@@ -51,8 +53,21 @@ public class RecipeContext {
         this.recipe = recipe;
         this.deployFiles = new HashMap<String, String>();
         this.files = new HashMap<String, String>();
+        this.realizedFiles = new HashSet<String>();
         this.replacementVariables = new HashSet<String>();
         this.scripts = new ArrayList<Script>();
+    }
+
+    /**
+     * If this context is currently in use by a parser, this will be the reference to that parser.
+     * @return parser currently using this context
+     */
+    public RecipeParser getParser() {
+        return parser;
+    }
+
+    public void setParser(RecipeParser parser) {
+        this.parser = parser;
     }
 
     /**
@@ -92,6 +107,20 @@ public class RecipeContext {
 
     public void addFile(String source, String destination) {
         this.files.put(source, destination);
+    }
+
+    /**
+     * Returns the pathnames of all files that are to be realized (meaning, those that should
+     * have replacement variables replaced).
+     * 
+     * @return set of all realized files
+     */
+    public Set<String> getRealizedFiles() {
+        return this.realizedFiles;
+    }
+
+    public void addRealizedFile(String file) {
+        this.realizedFiles.add(file);
     }
 
     /**

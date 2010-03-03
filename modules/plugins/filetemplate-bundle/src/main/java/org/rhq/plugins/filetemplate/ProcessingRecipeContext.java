@@ -19,13 +19,17 @@
 
 package org.rhq.plugins.filetemplate;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.rhq.bundle.filetemplate.recipe.RecipeContext;
+import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
@@ -83,6 +87,60 @@ public class ProcessingRecipeContext extends RecipeContext {
         File newFile = new File(directory, filename);
         if (!existingFile.renameTo(newFile)) {
             throw new RuntimeException("Failed to move file [" + existingFile + "] to [" + newFile + "]");
+        }
+    }
+
+    @Override
+    public void addRealizedFile(String file) {
+        super.addRealizedFile(file);
+
+        File trueFile = new File(file);
+        RecipeParser parser = getParser();
+        File realizedTmpFile = null;
+        FileWriter realizedTmpFileWriter = null;
+        BufferedReader reader = null;
+
+        try {
+
+            realizedTmpFile = File.createTempFile("rhq-realize-", ".tmp", trueFile.getParentFile());
+            realizedTmpFileWriter = new FileWriter(realizedTmpFile);
+
+            reader = new BufferedReader(new FileReader(trueFile));
+            String line = reader.readLine();
+            while (line != null) {
+                line = parser.replaceReplacementVariables(this, line);
+                realizedTmpFileWriter.write(line);
+                realizedTmpFileWriter.write("\n");
+                line = reader.readLine();
+            }
+
+            realizedTmpFileWriter.close();
+            realizedTmpFileWriter = null;
+            reader.close();
+            reader = null;
+
+            trueFile.delete(); // remove the one with the replacement variables in it
+            if (!realizedTmpFile.renameTo(trueFile)) {
+                throw new RuntimeException("Failed to rename realized tmp file [" + realizedTmpFile + "]");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot realize file [" + file + "]", e);
+        } finally {
+            if (realizedTmpFileWriter != null) {
+                try {
+                    realizedTmpFileWriter.close();
+                } catch (Exception e) {
+                }
+            }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (Exception e) {
+                }
+            }
+            if (realizedTmpFile != null && realizedTmpFile.exists()) {
+                realizedTmpFile.delete();
+            }
         }
     }
 

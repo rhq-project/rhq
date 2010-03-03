@@ -26,19 +26,17 @@ package org.rhq.bundle.filetemplate.recipe;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
-public class FileRecipeCommand implements RecipeCommand {
+public class RealizeRecipeCommand implements RecipeCommand {
 
     public String getName() {
-        return "file";
+        return "realize";
     }
 
     public void parse(RecipeParser parser, RecipeContext context, String[] args) {
-        String sopts = ":s:d:";
-        LongOpt[] lopts = { new LongOpt("source", LongOpt.REQUIRED_ARGUMENT, null, 's'),
-            new LongOpt("destination", LongOpt.REQUIRED_ARGUMENT, null, 'd') };
+        String sopts = ":f:";
+        LongOpt[] lopts = { new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f') };
 
-        String source = null;
-        String destination = null;
+        String file = null;
 
         Getopt getopt = new Getopt(getName(), args, sopts, lopts);
         int code;
@@ -54,13 +52,8 @@ public class FileRecipeCommand implements RecipeCommand {
                 throw new IllegalArgumentException("Bad recipe command!");
             }
 
-            case 's': {
-                source = getopt.getOptarg();
-                break;
-            }
-
-            case 'd': {
-                destination = getopt.getOptarg();
+            case 'f': {
+                file = getopt.getOptarg();
                 break;
             }
 
@@ -71,15 +64,11 @@ public class FileRecipeCommand implements RecipeCommand {
             }
         }
 
-        if (source == null) {
-            throw new IllegalArgumentException("Did not specify the source file to copy");
+        if (file == null) {
+            throw new IllegalArgumentException("Did not specify the file to realize");
         }
 
-        if (destination == null) {
-            throw new IllegalArgumentException("Did not specify the destination where the file should be copied");
-        }
-
-        context.addFile(source, destination);
+        context.addRealizedFile(file);
         return;
     }
 }

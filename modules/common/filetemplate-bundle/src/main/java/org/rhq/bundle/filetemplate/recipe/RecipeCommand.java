@@ -34,9 +34,10 @@ public interface RecipeCommand {
 
     /**
      * Parses this recipe command and optionally puts information in the context.
-     * 
+     *
+     * @param parser the parser that is invoking this command 
      * @param context information where the parser can store information regarding the command that was processed
      * @param args arguments passed to the command.
      */
-    void parse(RecipeContext context, String[] args);
+    void parse(RecipeParser recipeParser, RecipeContext context, String[] args);
 }

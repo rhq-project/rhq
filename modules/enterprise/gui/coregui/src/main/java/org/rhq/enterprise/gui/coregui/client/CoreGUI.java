@@ -9,6 +9,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourcesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -45,6 +46,8 @@ public class CoreGUI implements EntryPoint {
 
     private static Subject sessionSubject;
     //private static Subject fullSubject;
+
+    private static UserPreferences userPreferences;
 
     private static ErrorHandler errorHandler = new ErrorHandler();
 
@@ -102,6 +105,7 @@ public class CoreGUI implements EntryPoint {
             public void onSuccess(Subject result) {
                 System.out.println("Logged in: " + result.getSessionId());
                 setSessionSubject(result);
+                userPreferences = new UserPreferences(result);
 
                 buildCoreUI();
 
@@ -234,6 +238,10 @@ public class CoreGUI implements EntryPoint {
 
     public static Subject getSessionSubject() {
         return sessionSubject;
+    }
+
+    public static UserPreferences getUserPreferences() {
+        return userPreferences;
     }
 
     public static void setSessionSubject(Subject subject) {

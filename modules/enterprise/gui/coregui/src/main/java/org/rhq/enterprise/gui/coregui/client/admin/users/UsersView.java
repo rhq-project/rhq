@@ -86,6 +86,7 @@ public class UsersView extends VLayout {
         gridHolder.addMember(listGrid);
 
         ToolStrip toolStrip = new ToolStrip();
+        toolStrip.setWidth100();
         toolStrip.setMembersMargin(15);
 
         final IButton removeButton = new IButton("Remove");

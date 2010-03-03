@@ -68,7 +68,20 @@ public class ResourceSearchView extends VLayout {
 
     private ArrayList<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
+    int parentResourceId;
+
+    /**
+     * A resource list of all resources in the system
+     */
     public ResourceSearchView() {
+        this(null);
+    }
+
+    /**
+     * Resource list filtered by a given criteria
+     * @param parentResourceId
+     */
+    public ResourceSearchView(Criteria criteria) {
 
         setWidth100();
         setHeight100();
@@ -94,7 +107,11 @@ public class ResourceSearchView extends VLayout {
         listGrid.setAutoFetchData(true);
         listGrid.setAlternateRecordStyles(true);
 //        listGrid.setAutoFitData(Autofit.HORIZONTAL);
-        listGrid.setCriteria(new Criteria("name", searchPanel.getValueAsString("query")));
+
+        if (criteria != null) {
+            listGrid.setInitialCriteria(criteria);
+        }
+
         listGrid.setSelectionType(SelectionStyle.SIMPLE);
         listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
         listGrid.setResizeFieldsInRealTime(true);
@@ -105,7 +122,7 @@ public class ResourceSearchView extends VLayout {
         ListGridField nameField = new ListGridField("name", "Name", 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Resource/" +  listGridRecord.getAttribute("id")  +"\">" + o + "</a>";
+                return "<a href=\"#Resource/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
             }
         });
 
@@ -116,7 +133,6 @@ public class ResourceSearchView extends VLayout {
         ListGridField categoryField = new ListGridField("category", "Category", 60);
 
 
-
         ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
         availabilityField.setAlign(Alignment.CENTER);
         listGrid.setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
@@ -125,6 +141,8 @@ public class ResourceSearchView extends VLayout {
         gridHolder.addMember(listGrid);
 
         ToolStrip toolStrip = new ToolStrip();
+        toolStrip.setPadding(5);
+        toolStrip.setWidth100();
         toolStrip.setMembersMargin(15);
 
         final IButton removeButton = new IButton("Remove");
@@ -142,8 +160,6 @@ public class ResourceSearchView extends VLayout {
         });
 
 
-
-
         final Label tableInfo = new Label("Total: " + listGrid.getTotalRows());
         tableInfo.setWrap(false);
 
@@ -156,12 +172,11 @@ public class ResourceSearchView extends VLayout {
 
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                int selectedCount = ((ListGrid)selectionEvent.getSource()).getSelection().length;
+                int selectedCount = ((ListGrid) selectionEvent.getSource()).getSelection().length;
                 tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
                 removeButton.setDisabled(selectedCount == 0);
             }
         });
-
 
 
         addMember(gridHolder);
@@ -169,7 +184,7 @@ public class ResourceSearchView extends VLayout {
 
         listGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                int selectedCount = ((ListGrid)dataArrivedEvent.getSource()).getSelection().length;
+                int selectedCount = ((ListGrid) dataArrivedEvent.getSource()).getSelection().length;
                 tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
             }
         });
@@ -177,9 +192,16 @@ public class ResourceSearchView extends VLayout {
 
         searchBox.addKeyPressHandler(new KeyPressHandler() {
             public void onKeyPress(KeyPressEvent event) {
-                if (event.getCharacterValue() == KeyCodes.KEY_ENTER) {
+                if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
                     datasource.setQuery((String) searchBox.getValue());
-                    Criteria c = new Criteria("name", (String) searchBox.getValue());
+
+                    Criteria c = listGrid.getCriteria();
+                    if (c == null) {
+                        c = new Criteria();
+                    }
+
+                    c.addCriteria("name",(String) searchBox.getValue());
+
                     long start = System.currentTimeMillis();
                     listGrid.fetchData(c);
                     System.out.println("Loaded in: " + (System.currentTimeMillis() - start));
@@ -192,5 +214,16 @@ public class ResourceSearchView extends VLayout {
     public void addResourceSelectedListener(ResourceSelectListener listener) {
         selectListeners.add(listener);
     }
+
+
+    // -------- Static Utility loaders ------------
+
+
+    public static ResourceSearchView getChildrenOf(int resourceId) {
+        return new ResourceSearchView(new Criteria("parentId",String.valueOf(resourceId)));
+    }
+
+
+
 
 }

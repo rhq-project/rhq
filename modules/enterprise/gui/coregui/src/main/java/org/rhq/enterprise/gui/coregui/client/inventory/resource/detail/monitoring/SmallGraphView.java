@@ -36,7 +36,6 @@ import ca.nanometrics.gflot.client.options.TickFormatter;
 
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
@@ -45,6 +44,8 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.WidgetCanvas;
+import com.smartgwt.client.widgets.events.MouseOutEvent;
+import com.smartgwt.client.widgets.events.MouseOutHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import java.util.Date;
@@ -80,8 +81,6 @@ public class SmallGraphView extends VLayout {
         setHeight100();
         setWidth100();
 //        setPadding(10);
-
-
     }
 
     public String getName() {
@@ -99,6 +98,16 @@ public class SmallGraphView extends VLayout {
         drawGraph();
     }
 
+
+    @Override
+    protected void onDetach() {
+        super.onDetach(); // TODO: Implement this method.
+    }
+
+    @Override
+    protected void onUnload() {
+        super.onUnload(); // TODO: Implement this method.
+    }
 
     @Override
     public void parentResized() {
@@ -158,6 +167,12 @@ public class SmallGraphView extends VLayout {
                 }
             }
         }, false);
+
+        addMouseOutHandler(new MouseOutHandler() {
+            public void onMouseOut(MouseOutEvent mouseOutEvent) {
+                hoverLabel.animateHide(AnimationEffect.FADE);
+            }
+        });
 
         hoverLabel.setOpacity(80);
         hoverLabel.setWrap(false);

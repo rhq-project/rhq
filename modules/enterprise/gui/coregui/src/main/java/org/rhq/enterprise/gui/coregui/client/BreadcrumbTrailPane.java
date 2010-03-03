@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import com.google.gwt.user.client.Window;
+import com.smartgwt.client.types.BkgndRepeat;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.HTMLPane;
 
@@ -38,6 +39,8 @@ public class BreadcrumbTrailPane extends HTMLPane {
     public BreadcrumbTrailPane() {
         setHeight(28);
         setBackgroundColor("#E6E3E3");
+        setBackgroundImage("[skin]images/ToolStrip/background.png");
+        setBackgroundRepeat(BkgndRepeat.REPEAT_X);
         setPadding(5);
         setOverflow(Overflow.CLIP_V);
     }

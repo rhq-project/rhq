@@ -20,6 +20,7 @@
 package org.rhq.enterprise.server.bundle;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +37,10 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentAction;
+import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
@@ -45,7 +50,9 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -63,8 +70,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     private static final boolean TESTS_ENABLED = true;
 
     private static final String TEST_PREFIX = "bundletest";
+    private BundleDeploymentHistoryManagerLocal bundleDeploymentHistoryManager;
 
     private BundleManagerLocal bundleManager;
+    private static final boolean ENABLED = true;
+    private static final boolean DISABLED = false;
+
 
     private TestBundleServerPluginService ps;
     private MasterServerPluginContainer pc;
@@ -77,6 +88,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         this.ps = new TestBundleServerPluginService();
         prepareCustomServerPluginService(this.ps);
         bundleManager = LookupUtil.getBundleManager();
+        bundleDeploymentHistoryManager = LookupUtil.getBundleDeploymentHistoryManager();
         this.ps.startMasterPluginContainer();
     }
 
@@ -357,6 +369,54 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNull(bv.getDistribution());
         assertNotNull(bv.getBundleDeployDefinitions());
         assertTrue(bv.getBundleDeployDefinitions().isEmpty());
+    }
+
+    @Test(enabled = DISABLED)
+    public void testInsertAndRetrieve() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
+    public void testFindByPlatformId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
+    public void testFindByBundleId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
+    public void testFindByBundleDeploymentId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = ENABLED)
+    public void testFindByCriteria() throws Exception {
+
+        Subject subject = getOverlord();
+        Long auditTime = new Date().getTime();
+        BundleDeploymentAction auditAction = BundleDeploymentAction.DEPLOYMENT_START;
+        String auditMessage = "This is my message";
+        BundleDeployDefinition def = new BundleDeployDefinition();
+        Resource resource = new Resource();
+        BundleDeployment bundleDeployment = new BundleDeployment(def, resource);
+        BundleDeploymentHistory history = new BundleDeploymentHistory(bundleDeployment, subject.getName(), auditTime,
+            auditAction, auditMessage);
+
+        Bundle bundle = createBundle("deleteThisBundle");
+
+        history.setBundleDeployment(bundleDeployment);
+
+        bundleDeploymentHistoryManager.addBundleDeploymentHistoryByBundleDeployment(history);
+
+        BundleDeploymentHistoryCriteria criteria = new BundleDeploymentHistoryCriteria();
+        List<BundleDeploymentHistory> histories = bundleDeploymentHistoryManager.findBundleDeploymentHistoryByCriteria(
+            subject, criteria);
+
+        assertNotNull(histories);
+        assertTrue(histories.size() > 0);
+
     }
 
     private BundleType createBundleType(String name) throws Exception {

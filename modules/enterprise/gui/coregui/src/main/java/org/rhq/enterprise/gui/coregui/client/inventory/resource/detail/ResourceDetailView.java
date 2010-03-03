@@ -26,10 +26,12 @@ import org.rhq.enterprise.gui.coregui.client.components.SubTabLayout;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -61,7 +63,7 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
 
     private TwoLevelTabSet topTabSet;
 
-    HTMLFlow title = new HTMLFlow();
+    private ResourceTitleBar titleBar;
 
     public void setResource(Resource resource) {
         this.resource = resource;
@@ -88,13 +90,13 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
         topTabSet.setEdgeSize(0);
 
         summaryTab = new TwoLevelTab("Summary", "/images/icons/Service_up_16.png");
-        summaryTab.registerSubTabs("Overview","Timeline");
+        summaryTab.registerSubTabs("Overview", "Timeline");
 
         monitoringTab = new TwoLevelTab("Monitoring", "/images/icons/Monitor_grey_16.png");
-        monitoringTab.registerSubTabs("Graphs","Tables","Traits","Availability","Schedules");
+        monitoringTab.registerSubTabs("Graphs", "Tables", "Traits", "Availability", "Schedules");
 
         inventoryTab = new TwoLevelTab("Inventory", "/images/icons/Inventory_grey_16.png");
-        inventoryTab.registerSubTabs("Children","Connection Settings");
+        inventoryTab.registerSubTabs("Children", "Connection Settings");
 
         operationsTab = new TwoLevelTab("Operations", "/images/icons/Operation_grey_16.png");
         operationsTab.registerSubTabs("History", "Scheduled");
@@ -111,8 +113,9 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
 
         topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab, eventsTab, contentTab);
 
-        title.setContents("Loading...");
-        addMember(title);
+
+        titleBar = new ResourceTitleBar();
+        addMember(titleBar);
 
         addMember(summaryPanel);
 
@@ -127,8 +130,7 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
 
         this.summaryView.onResourceSelected(resource);
 
-        title.setContents("<h2>" + resource.getName() + "</h2>");
-        title.markForRedraw();
+        titleBar.setResource(resource);
 
         int selectedTab = topTabSet.getSelectedTabNumber();
 
@@ -144,6 +146,10 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
         monitoringTab.updateSubTab("Traits", new FullHTMLPane("/rhq/resource/monitor/traits.xhtml?id=" + resource.getId()));
         monitoringTab.updateSubTab("Availability", new FullHTMLPane("/rhq/resource/monitor/availabilityHistory.xhtml?id=" + resource.getId()));
         monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules.xhtml?id=" + resource.getId()));
+
+        
+        inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
+        inventoryTab.updateSubTab("Connection Settings", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
 
 
         configurationTab.updateSubTab("Current", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId()));
@@ -176,7 +182,7 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
                             topTabSet.enableTab(eventsTab);
                         }
 
-                        if (type.getPackageTypes() == null || type.getPackageTypes().isEmpty())  {
+                        if (type.getPackageTypes() == null || type.getPackageTypes().isEmpty()) {
                             topTabSet.disableTab(contentTab);
                         } else {
                             topTabSet.enableTab(contentTab);

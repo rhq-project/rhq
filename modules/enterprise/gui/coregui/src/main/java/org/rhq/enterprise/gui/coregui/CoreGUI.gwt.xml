@@ -9,7 +9,9 @@
     <inherits name='com.smartgwt.SmartGwt' />
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
 
+<!--
     <inherits name="com.smartclient.theme.graphite.Graphite"/>
+-->
 
     <inherits name='ca.nanometrics.gflot.GFlot'/>
 

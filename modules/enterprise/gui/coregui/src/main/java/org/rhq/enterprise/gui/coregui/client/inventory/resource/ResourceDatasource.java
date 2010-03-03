@@ -83,7 +83,14 @@ public class ResourceDatasource extends RPCDataSource {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));
-        criteria.addFilterName(this.query);
+
+        if (request.getCriteria().getValues().get("parentId") != null) {
+            criteria.addFilterParentResourceId(Integer.parseInt((String) request.getCriteria().getValues().get("parentId")));
+        }
+
+        if (request.getCriteria().getValues().get("name") != null) {
+            criteria.addFilterName((String) request.getCriteria().getValues().get("name"));
+        }
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {

@@ -53,16 +53,16 @@ public class AboutModalWindow extends Window {
     }
 
     @Override
-    protected void onDraw() {
+    protected void onInit() {
+        super.onInit();
+
         // NOTE: super.onDraw() is what will add the header bar to the Window, so we have to add our own content
         //       after it's called, otherwise the header bar end up below our content...
-        super.onDraw();
 
         VLayout contentPane = new VLayout();
         contentPane.setPadding(15);
         contentPane.setAlign(VerticalAlignment.TOP);
-        addMember(contentPane);
-        
+
         HTMLFlow htmlFlow = new HTMLFlow();
         String html =
                  "<span class=\"DisplaySubhead\">\n" +
@@ -92,5 +92,9 @@ public class AboutModalWindow extends Window {
             }
         });
         bottomPanel.addMember(closeButton);
+
+
+
+        addItem(contentPane);        
     }
 }

@@ -61,6 +61,7 @@ public class SubTabLayout extends VLayout {
         buttonBar.setBackgroundColor("grey");
         buttonBar.setWidth100();
         buttonBar.setBorder(null);
+        buttonBar.setMembersMargin(30);
 
         addMember(buttonBar);
 
@@ -78,6 +79,7 @@ public class SubTabLayout extends VLayout {
             button.setActionType(SelectionType.RADIO);
             button.setRadioGroup("subtabs");
             button.setBorder(null);
+            button.setAutoFit(true);
 
             button.setBaseStyle("SubTabButton");
 

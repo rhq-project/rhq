@@ -169,7 +169,7 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
     }
 
     @Test(enabled = TESTS_ENABLED)
-    void testUpdateResourceConfiguration() throws InterruptedException {
+    void testUpdateResourceConfiguration() throws java.lang.Exception {
 
         Resource resource = findService("service-beta-1", "server-omega-1");
         //        Configuration config = WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id);

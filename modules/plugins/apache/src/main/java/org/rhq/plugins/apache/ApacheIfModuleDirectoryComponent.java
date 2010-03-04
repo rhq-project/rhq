@@ -42,7 +42,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
-public class ApacheIfModuleDirectoryComponent implements ResourceComponent<ApacheDirectoryComponent>, ConfigurationFacet, DeleteResourceFacet{ 
+public class ApacheIfModuleDirectoryComponent implements ResourceComponent<ApacheDirectoryComponent>, ConfigurationFacet { 
 
     private ResourceContext<ApacheDirectoryComponent> context;
     private List<String> position;
@@ -102,9 +102,6 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
         }
    }
-    public void deleteResource() throws Exception {
-    
-    }
     
     private AugeasNode getNode(AugeasNode virtualHost) {
         List<AugeasNode> directories = AugeasNodeSearch.getNodeByParentParams(virtualHost, IFMODULE_DIRECTIVE_NAME, position);

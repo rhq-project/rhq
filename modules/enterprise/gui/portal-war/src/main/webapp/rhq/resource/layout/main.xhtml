@@ -87,11 +87,14 @@ REQUEST PARAMETERS:
 
       </onc:tabBar>
 
+     <!-- Wrapping the global messages in an a4j outputPanel so that messages are rendered on ajax requests -->
+     <a4j:outputPanel ajaxRendered="true">
       <!-- Shows the results of the last action executed. -->
       <h:messages showSummary="true" showDetail="true"
          infoClass="InfoBlock" warnClass="WarnBlock"
          errorClass="ErrorBlock" fatalClass="FatalBlock"
          globalOnly="true" layout="table" width="100%" />
+     </a4j:outputPanel>
 
    </ui:define>
 

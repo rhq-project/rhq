@@ -32,10 +32,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.SectionItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,7 +81,7 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
         markForRedraw();
     }
 
-    private void loadValues() {
+    private void loadValues() {        
         GWTServiceLookup.getMeasurementDataService().findCurrentTraitsForResource(
                 resource.getId(),
                 DisplayType.SUMMARY,
@@ -106,6 +104,7 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
                     }
                 }
         );
+
     }
 
     private void buildForm(ResourceType type) {
@@ -176,8 +175,8 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
         setValue("typeItem", type.getName() + " (" + type.getPlugin() + ")");
         setValue("descriptionItem", resource.getDescription());
         setValue("versionItem", resource.getVersion());
-        setValue("parentItem", resource.getParentResource() == null ? null : (resource.getParentResource().getName() +
-           "'<a href=\"#Resource/" + resource.getParentResource().getId()) + "\">" + resource.getParentResource().getName() + "</a>'");
+        setValue("parentItem", resource.getParentResource() == null ? null : (resource.getParentResource().getResourceType().getName() +
+           " '<a href=\"#Resource/" + resource.getParentResource().getId()) + "\">" + resource.getParentResource().getName() + "</a>'");
 
 
     }

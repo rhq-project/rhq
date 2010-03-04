@@ -94,6 +94,7 @@ public class ResourceView extends HLayout implements ViewRenderer {
         } else {
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterId(resourceId);
+            criteria.fetchParentResource(true);
             resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
                 public void onFailure(Throwable caught) {
                     SC.say("Failed to load Resource with id " + resourceId + ": " + caught);

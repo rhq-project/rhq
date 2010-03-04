@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.bundle;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -55,6 +56,7 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
@@ -324,6 +326,38 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         packageTypeQuery.setParameter("name", bundleType.getName());
 
         return (PackageType) packageTypeQuery.getSingleResult();
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public List<BundleDeployment> deployBundle(Subject subject, int bundleDeployDefinitionId, int[] resourceIds)
+        throws Exception {
+
+        if (null == resourceIds || 0 == resourceIds.length) {
+            throw new IllegalArgumentException("Invalid resourceIds: " + resourceIds);
+        }
+
+        BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
+        if (null == deployDef) {
+            throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
+        }
+        Resource[] resources = new Resource[resourceIds.length];
+        for (int i = 0; (i < resourceIds.length); ++i) {
+            resources[i] = (Resource) entityManager.find(Resource.class, resourceIds[i]);
+            if (null == resources[i]) {
+                throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resources[i]);
+            }
+        }
+
+        List<BundleDeployment> result = new ArrayList<BundleDeployment>(resourceIds.length);
+        // create a BundleDeploy record for each deployment
+        for (Resource resource : resources) {
+            BundleDeployment deployment = new BundleDeployment(deployDef, resource);
+            deployDef.addDeployment(deployment);
+            result.add(deployment);
+            entityManager.persist(deployment);
+        }
+
+        return result;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

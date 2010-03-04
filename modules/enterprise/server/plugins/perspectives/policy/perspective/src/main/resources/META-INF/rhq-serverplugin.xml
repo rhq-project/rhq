@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<perspective-plugin
+   apiVersion="1.0"
+   version="1.0"
+   description="a perspective that adds support to the GUI for policy and provisioning"
+   displayName="Policy Perspective"
+   name="PolicyPerspective"
+   package="org.rhq.perspective.sample"
+   xmlns="urn:xmlns:rhq-serverplugin.perspective"
+   xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+   <!-- Declare supporting applications for this perspective -->
+   <application
+      name="policy"
+      baseUrl="/rhq-policy-perspective" />
+
+   <!-- Administration > Provisioning -->
+   <menu-item
+      name="administration.provisioning"
+      displayName="Provisioning Bundles"
+      application="policy"
+      url="bundles.seam">
+      <position
+         name="administration.content"
+         placement="after" />
+   </menu-item>
+
+</perspective-plugin>

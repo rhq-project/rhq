@@ -66,5 +66,6 @@
 
    <modules>
       <module>jboss-as</module>
+      <module>filetemplate-bundle</module>
    </modules>
 </project>

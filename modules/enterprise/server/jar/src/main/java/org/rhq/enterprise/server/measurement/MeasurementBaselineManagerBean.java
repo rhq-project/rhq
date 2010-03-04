@@ -157,6 +157,30 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                  *   3) the user tended to import all new resources / platforms at the same time of day, thus bypassing
                  *      the implicit optimization of trying to stagger the calculations by resource commit time
                  *  
+                 * 2/18/2010 NOTE: Limits weren't / aren't actually achieving the affect we want.  The baseline query
+                 * follows the general form of "insert into...select from <big query> having <subquery> limit X".
+                 * In this case, the limit was reducing the number of rows inserted, but it was still taking the full
+                 * cost of calculating everything that should have been inserted.  The limit was intended as a cheap
+                 * method of chunking or partitioning the work, but wasn't properly chunking the expensive
+                 * part - the "big query".  What we actually want to do is come of with a strategy that lessens the
+                 * amount of data we need to select, thereby reducing the amount of time it takes to calculate the
+                 * insertion list.
+                 * 
+                 * One proposed strategy for this would be to chunk on the scheduleId.  So if there were, say,
+                 * 5M scheduleIds in the systems, we might take 500K of them at a time and then execute the
+                 * baseline insertion job 10 times against a much smaller set of data each time.  But the
+                 * complication here is how to calculate precise groups of 500K schedules at a time, and then
+                 * walk that chunked list.
+                 * 
+                 * Another strategy would be to divy things up by resource type. Since a measurementSchedule is
+                 * linked to a measurementDefinition which is linked to a resourceType, we could very easily chunk
+                 * the insertion based off the schedules that belong to each resourceType.  This would create
+                 * one insert statement for each type of resource in system.  The complication here, however,
+                 * is that you may have millions of resources of one type, but hardly any resources of another.
+                 * So there's still a chance that some insertions proceed slowly (in the worst case).
+                 * 
+                 * In any event, an appropriate chunking solution needs to be found, and that partitioning strategy
+                 * needs to replace the limits in the query today.
                  */
                 int inserted = measurementBaselineManager._calculateAutoBaselinesINSERT(amountOfData);
                 totalInserted += inserted;

@@ -3191,10 +3191,21 @@
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_MESSAGE" columnType="LONGVARCHAR" />
 
                <!-- Changes to RHQ_BUNDLE_FILE -->
-               <schema-alterColumn table="RHQ_BUNDLE_FILE" column="PACKAGE_VERSION_ID" nullable="FALSE" />
-
+               <schema-alterColumn table="RHQ_BUNDLE_FILE" column="PACKAGE_VERSION_ID" nullable="FALSE" />               
             </schemaSpec>
-
+           
+            <schemaSpec version="2.78.1">
+               <schema-addColumn   table="RHQ_BUNDLE" column="REPO_ID" columnType="INTEGER" />
+               <schema-directSQL>
+                   <statement desc="Creating RHQ_BUNDLE foreign key relation to RHQ_REPO">
+                       ALTER TABLE RHQ_BUNDLE
+                       ADD CONSTRAINT RHQ_REPO_ID_FK
+                       FOREIGN KEY (REPO_ID)
+                       REFERENCES RHQ_REPO (ID)
+                   </statement>
+               </schema-directSQL>               
+            </schemaSpec>
+           
             <schemaSpec version="2.79">
                 <schema-directSQL>
                     <statement desc="Normalizing resource group descriptions">

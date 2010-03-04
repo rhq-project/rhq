@@ -30,5 +30,10 @@ package org.rhq.core.clientapi.agent.bundle;
  * @author John Mazzitelli
  */
 public interface BundleAgentService {
-    BundleUpdateResponse update(BundleUpdateRequest request);
+    /**
+     * Schedules the deployment of a bundle to occur immediately.
+     * @param request
+     * @return the results of the immediate scheduling
+     */
+    BundleScheduleResponse schedule(BundleScheduleRequest request);
 }

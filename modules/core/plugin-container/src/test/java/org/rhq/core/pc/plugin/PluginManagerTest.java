@@ -47,13 +47,14 @@ import java.io.File;
 
 public class PluginManagerTest {
 
-    static final String PLATFORM_PLUGIN = "org/rhq/rhq-platform-plugin/1.4.0-SNAPSHOT/rhq-platform-plugin-1.4.0-SNAPSHOT.jar";
+    static final String VERSION = System.getProperty("rhq.version");
+    static final String PLATFORM_PLUGIN = "org/rhq/rhq-platform-plugin/" + VERSION + "/rhq-platform-plugin-" + VERSION + ".jar";
 
-    static final String HOSTS_PLUGIN = "org/rhq/rhq-hosts-plugin/1.4.0-SNAPSHOT/rhq-hosts-plugin-1.4.0-SNAPSHOT.jar";
+    static final String HOSTS_PLUGIN = "org/rhq/rhq-hosts-plugin/" + VERSION + "/rhq-hosts-plugin-" + VERSION + ".jar";
 
-    static final String AUGEAS_PLUGIN = "org/rhq/rhq-augeas-plugin/1.4.0-SNAPSHOT/rhq-augeas-plugin-1.4.0-SNAPSHOT.jar";
+    static final String AUGEAS_PLUGIN = "org/rhq/rhq-augeas-plugin/" + VERSION + "/rhq-augeas-plugin-" + VERSION + ".jar";
 
-    static final String JMX_PLUGIN = "org/rhq/rhq-jmx-plugin/1.4.0-SNAPSHOT/rhq-jmx-plugin-1.4.0-SNAPSHOT.jar";
+    static final String JMX_PLUGIN = "org/rhq/rhq-jmx-plugin/" + VERSION + "/rhq-jmx-plugin-" + VERSION + ".jar";
 
     String m2RepoDir;
 

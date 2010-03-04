@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>f
+<?xml version="1.0" encoding="UTF-8"?>
         
 <dbsetup name="content-schema.xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="urn:xmlns:rhq-dbsetup-schema">
@@ -491,6 +491,7 @@
     <table name="RHQ_BUNDLE_TYPE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
     </table>
 
     <!-- BUNDLE is a named piece of content that can be versioned and installed somewhere -->
@@ -498,6 +499,7 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="BUNDLE_TYPE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_TYPE"/>
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>        
     </table>
 
     <!-- BUNDLE_VERSION represents an actual piece of content that needs to be installed somewhere -->
@@ -506,6 +508,7 @@
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="VERSION" size="500" type="VARCHAR2" required="true"/>
         <column name="ACTION" type="CLOB" required="true"/>
+        <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF" />
         <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>
         <column name="DISTRIBUTION_ID" type="INTEGER" required="false" references="RHQ_DISTRIBUTION"/>
     </table>
@@ -527,32 +530,45 @@
     <table name="RHQ_BUNDLE_FILE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
-        <!-- this probably needs a DTYPE discriminator so we know if its a package or a specific package version -->
-        <column name="PACKAGE_VERSION_ID" type="INTEGER" required="false" references="RHQ_PACKAGE_VERSION"/>
+        <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
         <column name="PACKAGE_ID" type="INTEGER" required="false" references="RHQ_PACKAGE"/>
-    </table>
+    </table>    
 
-    <!-- A set of configuration values that are used to customize how/where a bundle version is installed -->
-    <table name="RHQ_BUNDLE_CONFIG">
+    <!-- A set of configuration values that are used to customize how a bundle version is installed -->
+    <table name="RHQ_BUNDLE_DEPLOY_DEF">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />
-        <!-- this probably needs a DTYPE discriminator so we know if its a bundle or a specific bundle version -->
-        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="false" references="RHQ_BUNDLE_VERSION"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>        
+        <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />        
+        <column name="ENFORCE_POLICY" type="BOOLEAN" required="true"/> 
+        <column name="ENFORCEMENT_INTERVAL" type="INTEGER" required="false"/>
+        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
         <column name="BUNDLE_ID" type="INTEGER" required="false" references="RHQ_BUNDLE"/>
     </table>
 
-    <!-- Represents a bundle version that is deployed on a resource -->
-    <table name="RHQ_BUNDLE_DEPLOYMENT">
-        <column name="BUNDLE_CONFIG_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_CONFIG"/>
+    <!-- Represents a bundle version that is deployed on a platform resource -->
+    <table name="RHQ_BUNDLE_DEPLOY">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>    
+        <column name="BUNDLE_DEPLOY_DEF_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOY_DEF" />
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE" />
+        <column name="CTIME" type="LONG" required="true"/>        
 
-        <constraint name="RHQ_BUNDLE_DEPLOYMENT_KEY">
-            <primaryKey>
-                <field ref="BUNDLE_CONFIG_ID"/>
-                <field ref="RESOURCE_ID"/>
-            </primaryKey>
-        </constraint>
+        <index name="RHQ_DEPLOY_DEF_RESOURCE_IDX" unique="true">
+            <field ref="BUNDLE_DEPLOY_DEF_ID"/>
+            <field ref="RESOURCE_ID"/>
+        </index>
     </table>
+    
+    <table name="RHQ_BUNDLE_DEPLOY_HIST">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="BUNDLE_DEPLOY_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOY" />        
+        <column name="SUBJECT_NAME" required="false" size="255" type="VARCHAR2"/>
+        <column name="AUDIT_TIME" required="true" type="LONG"/>
+        <column name="AUDIT_ACTION" required="true" size="50" type="VARCHAR2"/>
+        <column name="AUDIT_MESSAGE" required="false" type="LONGVARCHAR"/>
+    </table>    
 
 </dbsetup>
 

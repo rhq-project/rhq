@@ -27,6 +27,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -49,11 +50,16 @@ import org.hibernate.engine.NamedQueryDefinition;
 import org.hibernate.engine.SessionFactoryImplementor;
 import org.hibernate.jmx.StatisticsService;
 import org.hibernate.stat.Statistics;
+import org.hibernate.type.CustomType;
+import org.hibernate.type.EntityType;
+import org.hibernate.type.PrimitiveType;
+import org.hibernate.type.Type;
 
 /**
  * Various persistence utility methods - mostly Hibernate-specific.
  *
  * @author Heiko Rupp
+ * @author Joseph Marques
  * @author Greg Hinkle
  */
 public class PersistenceUtility {
@@ -65,6 +71,90 @@ public class PersistenceUtility {
         | Pattern.MULTILINE | Pattern.DOTALL);
 
     public static final String HIBERNATE_STATISTICS_MBEAN_OBJECTNAME = "Hibernate:type=statistics,application=RHQ";
+
+    public static String getDisplayString(Type hibernateType) {
+        if (hibernateType instanceof EntityType) {
+            return hibernateType.getName() + " (enter integer of ID / primary key field)";
+        } else if (hibernateType instanceof CustomType) {
+            if (Enum.class.isAssignableFrom(hibernateType.getReturnedClass())) {
+                Class<? extends Enum<?>> enumClass = hibernateType.getReturnedClass();
+                StringBuilder result = new StringBuilder();
+                result.append(enumClass.getName());
+                result.append(" (");
+                boolean first = true;
+                for (Enum<?> nextEnum : enumClass.getEnumConstants()) {
+                    if (!first) {
+                        result.append(" | ");
+                    } else {
+                        first = false;
+                    }
+                    result.append(nextEnum.name());
+                }
+                result.append(")");
+                return result.toString();
+            }
+        }
+        return hibernateType.getName();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Object cast(String value, Type hibernateType) {
+        if (hibernateType instanceof PrimitiveType) {
+            Class<?> type = ((PrimitiveType) hibernateType).getPrimitiveClass();
+            if (type.equals(Byte.TYPE)) {
+                return Byte.valueOf(value);
+            } else if (type.equals(Short.TYPE)) {
+                return Short.valueOf(value);
+            } else if (type.equals(Integer.TYPE)) {
+                return Integer.valueOf(value);
+            } else if (type.equals(Long.TYPE)) {
+                return Long.valueOf(value);
+            } else if (type.equals(Float.TYPE)) {
+                return Float.valueOf(value);
+            } else if (type.equals(Double.TYPE)) {
+                return Double.valueOf(value);
+            } else if (type.equals(Boolean.TYPE)) {
+                return Boolean.valueOf(value);
+            }
+        } else if (hibernateType instanceof EntityType) {
+            String entityName = ((EntityType) hibernateType).getAssociatedEntityName();
+            try {
+                Class<?> entityClass = Class.forName(entityName);
+                Object entity = entityClass.newInstance();
+
+                Field primaryKeyField = entityClass.getDeclaredField("id");
+                primaryKeyField.setAccessible(true);
+                primaryKeyField.setInt(entity, Integer.valueOf(value));
+                return entity;
+            } catch (Throwable t) {
+                throw new IllegalArgumentException("Type[" + entityName + "] must have PK field named 'id'");
+            }
+        } else if (hibernateType instanceof CustomType) {
+            if (Enum.class.isAssignableFrom(hibernateType.getReturnedClass())) {
+                Class<? extends Enum<?>> enumClass = hibernateType.getReturnedClass();
+                Enum<?>[] enumValues = enumClass.getEnumConstants();
+                try {
+                    int enumOrdinal = Integer.valueOf(value);
+                    try {
+                        return enumValues[enumOrdinal];
+                    } catch (ArrayIndexOutOfBoundsException aioobe) {
+                        throw new IllegalArgumentException("There is no " + enumClass.getSimpleName()
+                            + " enum with ordinal '" + enumOrdinal + "'");
+                    }
+                } catch (NumberFormatException nfe) {
+                    String ucaseValue = value.toUpperCase();
+                    for (Enum<?> nextEnum : enumValues) {
+                        if (nextEnum.name().toUpperCase().equals(ucaseValue)) {
+                            return nextEnum;
+                        }
+                    }
+                    throw new IllegalArgumentException("There is no " + enumClass.getSimpleName() + " enum with name '"
+                        + value + "'");
+                }
+            }
+        }
+        return value;
+    }
 
     /**
      * Used to create queries to use with the {@link org.rhq.core.domain.util.PageControl} objects. The query will already have its sort column

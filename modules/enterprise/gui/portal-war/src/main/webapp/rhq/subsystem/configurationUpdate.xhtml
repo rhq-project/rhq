@@ -92,23 +92,17 @@
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{item.resourceId}" />
-                     <h:outputText value="#{item.resourceName}" />
+                     <f:param name="id" value="#{item.original.resourceId}" />
+                     <h:outputText value="#{item.original.resourceName}" />
                   </h:outputLink>
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="parent.name">
-                        <h:outputText styleClass="headerText" value="Parent" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Parent" />
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}"
-                                rendered="#{not empty item.parentResourceId}">
-                     <f:param name="id" value="#{item.parentResourceId}" />
-                     <h:outputText value="#{item.parentResourceName}" />
-                  </h:outputLink>
+                  <onc:resourcePartialLineage parents="#{item.parents}" />
                </rich:column>
 
                <rich:column>
@@ -119,9 +113,9 @@
                   </f:facet>
 
                   <h:outputLink value="/rhq/resource/configuration/history.xhtml">
-                     <f:param name="id" value="#{item.resourceId}" />
-                     <f:param name="configId" value="#{item.id}" />
-                     <h:outputText value="#{item.createdTime}">
+                     <f:param name="id" value="#{item.original.resourceId}" />
+                     <f:param name="configId" value="#{item.original.id}" />
+                     <h:outputText value="#{item.original.createdTime}">
                         <f:converter converterId="UserDateTimeConverter" />
                      </h:outputText>
                   </h:outputLink>
@@ -134,7 +128,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}" >
+                  <h:outputText value="#{item.original.modifiedTime}" rendered="#{item.original.status ne 'INPROGRESS'}" >
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>
@@ -146,15 +140,15 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink rendered="#{item.status eq 'FAILURE'}"
-                                value="javascript:displayMessageModal('Stack Trace','#{item.errorMessage}')">
+                  <h:outputLink rendered="#{item.original.status eq 'FAILURE'}"
+                                value="javascript:displayMessageModal('Stack Trace','#{item.original.errorMessage}')">
                       <h:graphicImage value="/images/icons/Configure_failed_16.png"/>
-                      <h:outputText value="#{item.status}"/>
+                      <h:outputText value="#{item.original.status}"/>
                   </h:outputLink>
 
-                   <h:graphicImage value="/images/icons/Configure_ok_16.png" rendered="#{item.status eq 'SUCCESS'}"/>
+                   <h:graphicImage value="/images/icons/Configure_ok_16.png" rendered="#{item.original.status eq 'SUCCESS'}"/>
 
-                  <h:outputText rendered="#{item.status ne 'FAILURE'}" value="#{item.status}"/>
+                  <h:outputText rendered="#{item.original.status ne 'FAILURE'}" value="#{item.original.status}"/>
                </rich:column>
 
                <rich:column>
@@ -164,8 +158,8 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.subjectName}" rendered="#{not empty item.subjectName}" />
-                  <h:outputText value="External Change Detected" rendered="#{empty item.subjectName}" />
+                  <h:outputText value="#{item.original.subjectName}" rendered="#{not empty item.original.subjectName}" />
+                  <h:outputText value="External Change Detected" rendered="#{empty item.original.subjectName}" />
                </rich:column>
 
                <f:facet name="footer">

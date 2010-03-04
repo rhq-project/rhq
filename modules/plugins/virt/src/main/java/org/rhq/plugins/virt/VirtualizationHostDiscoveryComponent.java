@@ -74,7 +74,6 @@ public class VirtualizationHostDiscoveryComponent implements ResourceDiscoveryCo
         return res;
     }
 
-    @Override
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
         ResourceDiscoveryContext context) throws InvalidPluginConfigurationException {
         return getResource(context.getResourceType(), pluginConfiguration);

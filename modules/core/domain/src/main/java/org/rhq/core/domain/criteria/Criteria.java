@@ -195,9 +195,6 @@ public abstract class Criteria implements Serializable {
         this.requiredPermissions = Arrays.asList(requiredPermissions);
     }
 
-
-
-
     public String getAlias() {
         if (this.alias == null) {
             // Base alias on persistent class's name: org.rhq.core.domain.ResourceType -> "resourcetype"

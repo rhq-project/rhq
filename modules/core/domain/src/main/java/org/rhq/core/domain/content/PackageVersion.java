@@ -95,7 +95,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + " WHERE pv.id IN (SELECT DISTINCT pv1.id " + "                   FROM PackageVersion pv1 "
         + "                        LEFT JOIN pv1.repoPackageVersions cpv "
         + "                  WHERE cpv.repo.id = :repoId"
-        + "                          AND (UPPER(pv1.displayName) LIKE :filter "
+        + "                          AND (UPPER(pv1.displayName) LIKE :filter ESCAPE :escapeChar "
         + "                             OR :filter IS NULL)) "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_METADATA_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionMetadataComposite "
         + "                ( "

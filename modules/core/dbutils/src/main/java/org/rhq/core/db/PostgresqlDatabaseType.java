@@ -165,8 +165,12 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
 
     /**
      * This is overridden for Postgres because by default (at least in our currently supported versions)
-     * postgres does not treat the backslash as a string literal, which breaks the sql standard. See
-     * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674 for more.
+     * postgres treats '\' as an escape character in a string literal and the ESCAPE character for
+     * LIKE syntax is specified as a string literal. Therefore, ESCAPE '\\' is required to
+     * specify that the escape character is in fact a single backslash.
+     * Note 1: The default behavior may change in a future version of postgres given that
+     * the standard_conforming_strings setting may change from 'off' to 'on' out of the box.
+     * Note 2: Also related, http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674 for more.
      * 
      * @see DatabaseType#getEscapeCharacter()
      */

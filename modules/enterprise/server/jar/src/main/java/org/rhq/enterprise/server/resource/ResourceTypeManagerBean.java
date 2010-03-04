@@ -223,6 +223,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
         query.setParameter("category", category);
         query.setParameter("nameFilter", QueryUtility.formatSearchParameter(nameFilter));
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
         query.setParameter("pluginName", pluginName);
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 

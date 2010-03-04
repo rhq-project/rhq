@@ -52,7 +52,7 @@ import org.rhq.core.domain.content.PackageVersion;
     @NamedQuery(name = BundleFile.QUERY_FIND_ALL, query = "SELECT bf FROM BundleFile bf"), //
     @NamedQuery(name = BundleFile.QUERY_FIND_BY_BUNDLE_VERSION_ID, query = "SELECT bf FROM BundleFile bf WHERE bf.bundleVersion.id = :id") //
 })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_CONFIG_ID_SEQ")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_FILE_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_FILE")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleFile implements Serializable {
@@ -72,9 +72,9 @@ public class BundleFile implements Serializable {
 
     @JoinColumn(name = "PACKAGE_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(fetch = FetchType.LAZY)
-    private Package pkg;
+    private Package generalPackage;
 
-    @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = true)
+    @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private PackageVersion packageVersion;
 
@@ -99,11 +99,11 @@ public class BundleFile implements Serializable {
     }
 
     public Package getPackage() {
-        return pkg;
+        return generalPackage;
     }
 
     public void setPackage(Package pkg) {
-        this.pkg = pkg;
+        this.generalPackage = pkg;
     }
 
     public PackageVersion getPackageVersion() {
@@ -124,7 +124,7 @@ public class BundleFile implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((bundleVersion == null) ? 0 : bundleVersion.hashCode());
-        result = prime * result + ((pkg == null) ? 0 : pkg.hashCode());
+        result = prime * result + ((generalPackage == null) ? 0 : generalPackage.hashCode());
         result = prime * result + ((packageVersion == null) ? 0 : packageVersion.hashCode());
         return result;
     }
@@ -148,11 +148,11 @@ public class BundleFile implements Serializable {
             return false;
         }
 
-        if (pkg == null) {
-            if (other.pkg != null) {
+        if (generalPackage == null) {
+            if (other.generalPackage != null) {
                 return false;
             }
-        } else if (!pkg.equals(other.pkg)) {
+        } else if (!generalPackage.equals(other.generalPackage)) {
             return false;
         }
 

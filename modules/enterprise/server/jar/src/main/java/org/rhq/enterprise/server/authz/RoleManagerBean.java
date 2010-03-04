@@ -133,11 +133,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             for (Integer roleId : doomedRoleIds) {
                 Role doomedRole = entityManager.find(Role.class, roleId);
 
-                Query deleteNotificationQuery = entityManager
-                    .createQuery("DELETE FROM RoleNotification rn WHERE rn.role.id = :roleId");
-                deleteNotificationQuery.setParameter("roleId", roleId);
-                deleteNotificationQuery.executeUpdate(); // discard result, might not have been set for any notifications
-
                 Set<Subject> subjectsToUnhook = new HashSet<Subject>(doomedRole.getSubjects()); // avoid concurrent mod exception
                 for (Subject doomedSubjectRelationship : subjectsToUnhook) {
                     doomedRole.removeSubject(doomedSubjectRelationship);
@@ -386,42 +381,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public PageList<Role> findSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) {
         return findAvailableRolesForSubject(subject, subjectId, null, pc);
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<Role> findAvailableRolesForAlertDefinition(Subject subject, Integer alertDefinitionId,
-        Integer[] pendingRoleIds, PageControl pc) {
-        pc.initDefaultOrderingField("r.name");
-
-        String queryName;
-
-        if ((pendingRoleIds == null) || (pendingRoleIds.length == 0)) {
-            queryName = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION;
-        } else {
-            queryName = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION_WITH_EXCLUDES;
-        }
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName, "distinct r");
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
-
-        queryCount.setParameter("alertDefinitionId", alertDefinitionId);
-        query.setParameter("alertDefinitionId", alertDefinitionId);
-
-        if ((pendingRoleIds != null) && (pendingRoleIds.length > 0)) {
-            List<Integer> pendingidslist = Arrays.asList(pendingRoleIds);
-            queryCount.setParameter("excludes", pendingidslist);
-            query.setParameter("excludes", pendingidslist);
-        }
-
-        long count = (Long) queryCount.getSingleResult();
-        List<Role> roles = query.getResultList();
-
-        // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
-        for (Role role : roles) {
-            role.getMemberCount();
-        }
-
-        return new PageList<Role>(roles, (int) count, pc);
     }
 
     /**

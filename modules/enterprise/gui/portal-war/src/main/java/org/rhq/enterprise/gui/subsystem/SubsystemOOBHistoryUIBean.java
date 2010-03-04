@@ -24,9 +24,10 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -47,7 +48,13 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
 
 
     private MeasurementOOBManagerLocal manager = LookupUtil.getOOBManager();
-
+    
+    private static final IntExtractor<MeasurementOOBComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<MeasurementOOBComposite>() {
+        public int extract(MeasurementOOBComposite value) {
+            return value.getResourceId();
+        }
+    };
+        
     public SubsystemOOBHistoryUIBean() {
 
     }
@@ -92,13 +99,13 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
     }
 
 
-    private class ResultsDataModel extends PagedListDataModel<MeasurementOOBComposite> {
+    private class ResultsDataModel extends ResourceNameDisambiguatingPagedListDataModel<MeasurementOOBComposite> {
 
         public ResultsDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
-        public PageList<MeasurementOOBComposite> fetchPage(PageControl pc) {
+        public PageList<MeasurementOOBComposite> fetchDataForPage(PageControl pc) {
             getDataFromRequest();
             String metricFilter = getMetricFilter();
             String resourceFilter = getResourceFilter();
@@ -111,6 +118,10 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
             return result;
         }
 
+        protected IntExtractor<MeasurementOOBComposite> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRACTOR;
+        }
+        
         private void getDataFromRequest() {
             SubsystemOOBHistoryUIBean outer = SubsystemOOBHistoryUIBean.this;
             outer.metricFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "metricFilter");

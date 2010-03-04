@@ -30,6 +30,8 @@ import javassist.CtNewMethod;
 import javassist.NotFoundException;
 import javassist.bytecode.ParameterAnnotationsAttribute;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 
 import org.rhq.core.domain.auth.Subject;
@@ -39,11 +41,11 @@ import org.rhq.core.server.ExternalizableStrategy;
  * This class acts as a local SLSB proxy to make remote invocations
  * to SLSB Remotes over a remoting invoker.
  *
- *
  * @author Greg Hinkle
  */
 @SuppressWarnings("unchecked")
 public class RemoteClientProxy implements InvocationHandler {
+    private static final Log LOG = LogFactory.getLog(RemoteClientProxy.class);
 
     private RemoteClient client;
     private RemoteClient.Manager manager;
@@ -78,13 +80,14 @@ public class RemoteClientProxy implements InvocationHandler {
             String simpleName = intf.getName() + "Simple";
 
             try {
+                @SuppressWarnings({"UnusedDeclaration"})
                 CtClass cached = cp.get(simpleName);
                 return Class.forName(simpleName, false, cp.getClassLoader());
 
             } catch (NotFoundException e) {
                 // ok... load it
             } catch (ClassNotFoundException e) {
-                e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+                LOG.debug("Class [" + simpleName + "] not found - cause: " + e);
             }
 
             CtClass cc = cp.get(intf.getName());
@@ -121,11 +124,10 @@ public class RemoteClientProxy implements InvocationHandler {
                             .getAnnotations();
                         javassist.bytecode.annotation.Annotation[][] newAnnotations = new javassist.bytecode.annotation.Annotation[originalAnnotations.length - 1][];
 
-                        int i = 1;
-                        for (int x = 1; x < originalAnnotations.length; x++) {
-                            newAnnotations[x - 1] = new javassist.bytecode.annotation.Annotation[originalAnnotations[x].length];
-                            System.arraycopy(originalAnnotations[x], 0, newAnnotations[x - 1], 0,
-                                originalAnnotations[x].length);
+                        for (int i = 1; i < originalAnnotations.length; i++) {
+                            newAnnotations[i - 1] = new javassist.bytecode.annotation.Annotation[originalAnnotations[i].length];
+                            System.arraycopy(originalAnnotations[i], 0, newAnnotations[i - 1], 0,
+                                originalAnnotations[i].length);
                         }
 
                         ParameterAnnotationsAttribute newAnnotationsAttribute = new ParameterAnnotationsAttribute(
@@ -144,9 +146,9 @@ public class RemoteClientProxy implements InvocationHandler {
             return cz.toClass();
 
         } catch (NotFoundException e) {
-            e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+            LOG.debug("Failed to simplify " + intf + " - cause: " + e);
         } catch (CannotCompileException e) {
-            e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+            LOG.error("Failed to simplify " + intf + ".", e);
         }
         return intf;
     }
@@ -164,7 +166,7 @@ public class RemoteClientProxy implements InvocationHandler {
             try {
                 Class[] interfaces = method.getDeclaringClass().getInterfaces();
 
-                Class originalClass = null;
+                Class originalClass;
                 if (interfaces != null && interfaces.length > 0) {
                     originalClass = interfaces[0];
                 } else {
@@ -215,5 +217,4 @@ public class RemoteClientProxy implements InvocationHandler {
         }
         return paramSig;
     }
-
 }

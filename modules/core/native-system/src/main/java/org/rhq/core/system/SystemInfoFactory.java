@@ -26,8 +26,10 @@ import java.io.File;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -42,6 +44,12 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * @author John Mazzitelli
  */
 public class SystemInfoFactory {
+    /**
+     * All template engine replacement variables that this factory's template engine will know about
+     * will be prefixed with this string.
+     */
+    public static final String TOKEN_PREFIX = "rhq.system.";
+
     private static final Log LOG = LogFactory.getLog(SystemInfoFactory.class);
 
     private static final String NATIVE_LIBRARY_CLASS_NAME = "org.hyperic.sigar.Sigar";
@@ -353,30 +361,60 @@ public class SystemInfoFactory {
 
     public static TemplateEngine fetchTemplateEngine() {
 
-        SystemInfo systemInfo = createSystemInfo();
+        try {
+            SystemInfo systemInfo = createSystemInfo();
 
-        Map<String, String> tokens = new HashMap<String, String>();
-        tokens.put("rhq.hostname", systemInfo.getHostname());
-        tokens.put("rhq.os.name", systemInfo.getOperatingSystemName());
-        tokens.put("rhq.os.version", systemInfo.getOperatingSystemVersion());
-        tokens.put("rhq.os.type", systemInfo.getOperatingSystemType().toString());
-        tokens.put("rhq.cpu.count", Integer.toString(systemInfo.getNumberOfCpus()));
-        tokens.put("rhq.architecture", systemInfo.getSystemArchitecture());
+            Map<String, String> tokens = new HashMap<String, String>();
+            tokens.put(TOKEN_PREFIX + "hostname", systemInfo.getHostname());
 
-        for (NetworkAdapterInfo networkAdapter : systemInfo.getAllNetworkAdapters()) {
-            String key = "rhq.interfaces." + networkAdapter.getName();
-            tokens.put(key + ".mac", networkAdapter.getMacAddressString());
-            tokens.put(key + ".type", networkAdapter.getType());
-            tokens.put(key + ".flags", networkAdapter.getAllFlags());
-
-            if (!networkAdapter.getUnicastAddresses().isEmpty()) {
-                tokens.put(key + ".address", networkAdapter.getUnicastAddresses().get(0).getHostAddress());
+            tokens.put(TOKEN_PREFIX + "os.name", systemInfo.getOperatingSystemName());
+            tokens.put(TOKEN_PREFIX + "os.version", systemInfo.getOperatingSystemVersion());
+            tokens.put(TOKEN_PREFIX + "os.type", systemInfo.getOperatingSystemType().toString());
+            tokens.put(TOKEN_PREFIX + "architecture", systemInfo.getSystemArchitecture());
+            try {
+                tokens.put(TOKEN_PREFIX + "cpu.count", Integer.toString(systemInfo.getNumberOfCpus()));
+            } catch (Exception e) {
+                tokens.put(TOKEN_PREFIX + "cpu.count", "?");
             }
-            if (!networkAdapter.getMulticastAddresses().isEmpty()) {
-                tokens.put(key + ".multicast.address", networkAdapter.getMulticastAddresses().get(0).getHostAddress());
+
+            List<NetworkAdapterInfo> allNetworkAdapters = null;
+            try {
+                allNetworkAdapters = systemInfo.getAllNetworkAdapters();
+            } catch (Exception e) {
             }
+            if (allNetworkAdapters != null) {
+                for (NetworkAdapterInfo networkAdapter : allNetworkAdapters) {
+                    String key = TOKEN_PREFIX + "interfaces." + networkAdapter.getName();
+                    tokens.put(key + ".mac", networkAdapter.getMacAddressString());
+                    tokens.put(key + ".type", networkAdapter.getType());
+                    tokens.put(key + ".flags", networkAdapter.getAllFlags());
+
+                    if (!networkAdapter.getUnicastAddresses().isEmpty()) {
+                        tokens.put(key + ".address", networkAdapter.getUnicastAddresses().get(0).getHostAddress());
+                    }
+                    if (!networkAdapter.getMulticastAddresses().isEmpty()) {
+                        tokens.put(key + ".multicast.address", networkAdapter.getMulticastAddresses().get(0)
+                            .getHostAddress());
+                    }
+                }
+            }
+
+            // create a base IP address - this one is known to java and should always exist no matter what platform we are on 
+            try {
+                try {
+                    tokens.put(TOKEN_PREFIX + "interfaces.java.address", InetAddress
+                        .getByName(systemInfo.getHostname()).getHostAddress());
+                } catch (Exception e) {
+                    tokens.put(TOKEN_PREFIX + "interfaces.java.address", InetAddress.getLocalHost().getHostAddress());
+                }
+            } catch (Exception e2) {
+            }
+
+            TemplateEngine templateEngine = new TemplateEngine(tokens);
+            return templateEngine;
+        } catch (Exception e) {
+            // some rare exception occurred that we didn't expect, rather than blow up entirely, just don't provide any values
+            return new TemplateEngine(new HashMap<String, String>());
         }
-        TemplateEngine templateEngine = new TemplateEngine(tokens);
-        return templateEngine;
     }
 }

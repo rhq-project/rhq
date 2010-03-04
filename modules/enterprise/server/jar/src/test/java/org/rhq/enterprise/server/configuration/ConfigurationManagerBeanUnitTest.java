@@ -255,17 +255,22 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         final Sequence configUdpate = context.sequence("structured-config-update");
 
         context.checking(new Expectations() {{
+            allowing(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId); will(returnValue(true));
+
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+
+            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
+
+            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+
+            oneOf(configAgentService).validate(fixture.configuration, fixture.resourceId, FROM_STRUCTURED);
+            inSequence(configUdpate);
 
             oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
                 fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
                 fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
             inSequence(configUdpate);
-
-            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
-
-            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
 
             oneOf(configAgentService).updateResourceConfiguration(with(matchingUpdateRequest(expectedUpdateRequest)));
             inSequence(configUdpate);

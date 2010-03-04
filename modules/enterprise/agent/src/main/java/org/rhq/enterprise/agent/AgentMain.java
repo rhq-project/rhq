@@ -68,6 +68,7 @@ import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 import org.jboss.util.StringPropertyReplacer;
 
+import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.core.AgentNotSupportedException;
@@ -481,12 +482,14 @@ public class AgentMain {
 
         m_commandLineArgs = args;
         processArguments(m_commandLineArgs);
-        if (m_input == null) {
-            m_input = AgentInputReaderFactory.create(this);
-        }
 
         m_promptCommands = new HashMap<String, Class<? extends AgentPromptCommand>>();
         setupPromptCommandsMap(m_promptCommands);
+
+        // Move this last to allow for commands to be inserted into tab-completion.
+        if (m_input == null) {
+            m_input = AgentInputReaderFactory.create(this);
+        }
 
         prepareNativeSystem();
 
@@ -1058,8 +1061,12 @@ public class AgentMain {
             try {
                 m_output.flush();
                 input_string = m_input.readLine();
+                if (input_string == null) {
+                    LOG.debug(AgentI18NResourceKeys.INPUT_EOF);
+                }
             } catch (Exception e) {
                 input_string = null;
+                LOG.debug(AgentI18NResourceKeys.INPUT_EXCEPTION, ThrowableUtil.getAllMessages(e));
             }
         }
 
@@ -1081,6 +1088,7 @@ public class AgentMain {
                     m_input = AgentInputReaderFactory.create(this);
                 } catch (IOException e1) {
                     m_input = null;
+                    LOG.debug(e1, AgentI18NResourceKeys.INPUT_FACTORY_EXCEPTION);
                 }
                 m_stdinInput = true;
                 input_string = "";
@@ -1646,6 +1654,7 @@ public class AgentMain {
                 .getRemotePojo(ResourceFactoryServerService.class);
             ContentServerService contentServerService = factory.getRemotePojo(ContentServerService.class);
             EventServerService eventServerService = factory.getRemotePojo(EventServerService.class);
+            BundleServerService bundleServerService = factory.getRemotePojo(BundleServerService.class);
 
             ServerServices serverServices = new ServerServices();
             serverServices.setCoreServerService(coreServerService);
@@ -1656,6 +1665,7 @@ public class AgentMain {
             serverServices.setResourceFactoryServerService(resourceFactoryServerSerfice);
             serverServices.setContentServerService(contentServerService);
             serverServices.setEventServerService(eventServerService);
+            serverServices.setBundleServerService(bundleServerService);
 
             pc_config.setServerServices(serverServices);
         } catch (Exception e) {

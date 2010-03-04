@@ -25,15 +25,12 @@ import javax.ejb.Local;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.NotificationTemplate;
-import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
+import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 
 /**
  * @author Joseph Marques
@@ -41,23 +38,6 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 
 @Local
 public interface AlertNotificationManagerLocal {
-
-    int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds);
-
-    int addSubjectNotifications(Subject subject, Integer alertDefinitionId, Integer[] subjectId);
-
-
-    PageList<RoleNotification> getRoleNotifications(Integer alertDefinitionId, PageControl pageControl);
-
-    PageList<SubjectNotification> getSubjectNotifications(Integer alertDefinitionId, PageControl pageControl);
-
-    PageList<RoleNotification> getRoleNotifications(Integer[] alertNotificationIds, PageControl pageControl);
-
-    PageList<SubjectNotification> getSubjectNotifications(Integer[] alertNotificationIds, PageControl pageControl);
-
-    PageList<RoleNotification> getRoleNotificationsByRoles(Integer[] roleIds, PageControl pageControl);
-
-    PageList<SubjectNotification> getSubjectNotificationsBySubjects(Integer[] subjectId, PageControl pageControl);
 
     /**
      * Remove the passed notifications from the passed alert definition (all identified by their id)
@@ -123,9 +103,10 @@ public interface AlertNotificationManagerLocal {
     /**
      * Return the backing bean for the AlertSender with the passed shortNama
      * @param shortName name of a sender
+     * @param alertNotificationId
      * @return an initialized BackingBean or null in case of error
      */
-    Object getBackingBeanForSender(String shortName);
+    CustomAlertSenderBackingBean getBackingBeanForSender(String shortName, Integer alertNotificationId);
 
     String getBackingBeanNameForSender(String shortName);
 
@@ -144,10 +125,12 @@ public interface AlertNotificationManagerLocal {
      * @param name name of this notification template. Must be unique
      * @param description description of the template
      * @param notifications notifications that make up the template
+     * @param copyNotifications
      * @return the newly created template
      * @throws IllegalArgumentException when a template with the passed name already exists
      */
-    NotificationTemplate createNotificationTemplate(String name, String description, List<AlertNotification> notifications) throws IllegalArgumentException;
+    NotificationTemplate createNotificationTemplate(String name, String description,
+                                                    List<AlertNotification> notifications, boolean copyNotifications) throws IllegalArgumentException;
 
     /**
      * Get all defined notification templates in the system along with their AlertNotifications

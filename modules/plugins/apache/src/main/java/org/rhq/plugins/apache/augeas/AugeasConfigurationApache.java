@@ -23,7 +23,6 @@
 package org.rhq.plugins.apache.augeas;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -32,7 +31,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.rhq.augeas.config.AugeasConfiguration;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
@@ -83,7 +81,7 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
 
             allConfigFiles = getIncludeFiles(serverRootPath, foundIncludes);
         } catch (Exception e) {
-            throw new AugeasRhqException(e.getMessage());
+            throw new AugeasRhqException(e);
         }
     }
 
@@ -101,13 +99,23 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
         return allConfigFiles;
     }
 
-    private void loadIncludes(String expression, List<String> foundIncludes) {
-        foundIncludes.add(expression);
+    private void loadIncludes(String expression, List<String> foundIncludes) {       
         try {
             File file = new File(expression);
+            
+            List<File> files = new ArrayList<File>();
 
-            if (file.exists()) {
-                FileInputStream fstream = new FileInputStream(file);
+            if (!file.isAbsolute()) {      
+                File serverRootFile = new File(serverRootPath);
+                files =  Glob.match(serverRootFile, expression);
+            }else
+                files.add(file);
+            
+           for (File fl : files){         
+            if (fl.exists()) {
+                foundIncludes.add(fl.getAbsolutePath());
+                
+                FileInputStream fstream = new FileInputStream(fl);
                 BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
                 String strLine;
                 while ((strLine = br.readLine()) != null) {
@@ -125,6 +133,7 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
                 }
                 br.close();
             }
+           }
 
         } catch (Exception e) {
             throw new IllegalStateException(e);

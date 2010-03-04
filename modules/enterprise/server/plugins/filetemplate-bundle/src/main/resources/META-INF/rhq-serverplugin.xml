@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<bundle-plugin name="FileTemplateBundleServerPlugin"
+               displayName="File Template Bundle Processor"
+               description="Processes file template bundles"
+               package="org.rhq.enterprise.server.plugins.filetemplate"
+               xmlns="urn:xmlns:rhq-serverplugin.bundle"
+               xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+               xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:help><![CDATA[
+        Processes file template bundles on the server side.
+    ]]></serverplugin:help>
+
+    <serverplugin:plugin-component class="BundleServerPluginComponent">
+        <serverplugin:control name="testControl" description="A test control operation">
+        </serverplugin:control>
+    </serverplugin:plugin-component>
+
+    <!-- custom global config - unrelated to schedules  -->
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="myCustomBundleProperty" type="string" required="true" default="custom-bundle-prop-value"
+                           description="A property my bundle plugin needs to be properly configured" />
+    </serverplugin:plugin-configuration>
+
+    <bundle type="File Template Bundle"/>
+
+</bundle-plugin>

@@ -120,6 +120,7 @@ public class LibVirtConnection {
             info.domainInfo = domain.getInfo();
             info.name = domainName;
             info.uuid = domain.getUUIDString();
+            domain.free();
 
             return info;
         } catch (LibvirtException e) {
@@ -136,6 +137,7 @@ public class LibVirtConnection {
             info.domainInfo = domain.getInfo();
             info.name = domain.getName();
             info.uuid = domain.getUUIDString();
+            domain.free();
 
             return info;
         } catch (LibvirtException e) {
@@ -146,12 +148,16 @@ public class LibVirtConnection {
 
     public String getDomainXML(String domainName) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
-        return domain.getXMLDesc(0);
+        String returnValue = domain.getXMLDesc(0);
+        domain.free();
+
+        return returnValue;
     }
 
     public int domainReboot(String domainName) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
         domain.reboot(0);
+        domain.free();
         return SUCCESS;
     }
 
@@ -162,79 +168,97 @@ public class LibVirtConnection {
 
     public int domainDestroy(String domainName) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
-        domain.destroy() ;
+        domain.destroy();
+        domain.free();
         return SUCCESS;
     }
-    
+
     public int domainDelete(String domainName) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
-        DomainState state = domain.getInfo().state ;
-        
+        DomainState state = domain.getInfo().state;
+
         if ((state != DomainState.VIR_DOMAIN_SHUTDOWN) && (state != DomainState.VIR_DOMAIN_SHUTOFF)) {
-            domain.destroy() ;
-        }        
-        domain.undefine() ;        
+            domain.destroy();
+        }
+        domain.undefine();
+        domain.free();
         return SUCCESS;
-    }    
-    
+    }
+
     public int domainSave(String domainName, String toPath) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
         domain.save(toPath);
+        domain.free();
         return SUCCESS;
-    }    
+    }
 
     public int domainResume(String domainName) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
         domain.resume();
+        domain.free();
         return SUCCESS;
     }
 
     public int domainShutdown(String domainName) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
         domain.shutdown();
+        domain.free();
         return SUCCESS;
     }
 
     public int domainSuspend(String domainName) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
         domain.suspend();
+        domain.free();
         return SUCCESS;
     }
 
     public int domainCreate(String domainName) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
         domain.create();
+        domain.free();
         return SUCCESS;
     }
 
     public boolean defineDomain(String xml) throws LibvirtException {
         Domain dom = connection.domainDefineXML(xml);
-        return dom != null;
+        boolean returnValue = (dom != null);
+        if (returnValue) {
+            dom.free();
+        }
+        return returnValue;
     }
 
     public void setMaxMemory(String domainName, long size) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
         domain.setMaxMemory(size);
+        domain.free();
     }
 
     public void setMemory(String domainName, long size) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
         domain.setMemory(size);
+        domain.free();
     }
 
     public void setVcpus(String domainName, int count) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
         domain.setVcpus(count);
+        domain.free();
     }
 
     public DomainInterfaceStats getDomainInterfaceStats(String domainName, String path) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
-        return domain.interfaceStats(path);
+        DomainInterfaceStats returnValue = domain.interfaceStats(path);
+        domain.free();
+        return returnValue;
     }
 
     public DomainBlockStats getDomainBlockStats(String domainName, String path) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
-        return domain.blockStats(path);
+        DomainBlockStats returnValue = domain.blockStats(path);
+        domain.free();
+        return returnValue;
     }
 
     public int close() throws LibvirtException {
@@ -261,6 +285,7 @@ public class LibVirtConnection {
         for (int id : connection.listDomains()) {
             Domain domain = connection.domainLookupByID(id);
             cpuTime += domain.getInfo().cpuTime;
+            domain.free();
         }
         return cpuTime;
     }
@@ -296,19 +321,28 @@ public class LibVirtConnection {
         return getNetworks().contains(name);
     }
 
-    public Network getNetwork(String name) throws LibvirtException {
-        return connection.networkLookupByName(name);
+    //TODO NEED TO ADD A NETWORK OBJECT AND FREE THE LIBVIRT ONE
+    public NetworkInfo getNetwork(String name) throws LibvirtException {
+        NetworkInfo info = new NetworkInfo();
+        Network net = connection.networkLookupByName(name);
+        info.name = net.getName();
+        info.autostart = net.getAutostart();
+        info.bridgeName = net.getBridgeName();
+        return info;
     }
 
     public String getNetworkXML(String name) throws LibvirtException {
         Network network = connection.networkLookupByName(name);
-        return network.getXMLDesc(0);
+        String returnValue = network.getXMLDesc(0);
+        network.free();
+        return returnValue;
     }
 
     public void updateNetwork(String name, String xml, boolean autostart) throws LibvirtException {
         connection.networkDefineXML(xml);
         Network network = connection.networkLookupByName(name);
         network.setAutostart(autostart);
+        network.free();
     }
 
     public static class DomainInfo {
@@ -316,6 +350,12 @@ public class LibVirtConnection {
         public String name;
         public String uuid;
         public org.libvirt.DomainInfo domainInfo;
+    }
+
+    public static class NetworkInfo {
+        public String name;
+        public boolean autostart;
+        public String bridgeName;
     }
 
     public static class HVInfo {
@@ -346,6 +386,7 @@ public class LibVirtConnection {
         }
     }
 }
+
 //TODO Put the callbacks in
 /* Comment this out untilt he callbacks get in*/
 class Logger extends org.libvirt.ErrorCallback {
@@ -360,4 +401,4 @@ class Logger extends org.libvirt.ErrorCallback {
     public void errorCallback(Pointer arg0, virError arg1) {
         log.warn("Libvirt Error: " + arg1.message);
     }
-}    
+}

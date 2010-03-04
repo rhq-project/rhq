@@ -176,23 +176,6 @@ public interface SubjectManagerLocal {
     PageList<Subject> findAvailableSubjectsForRole(Subject whoami, Integer roleId, Integer[] pendingSubjectIds,
         PageControl pc);
 
-    /**
-     * This returns a list of subjects that are available to be assigned to a given alert definition but not yet
-     * assigned to that alert definition. This excludes subjects already assigned to the alert definition. The returned
-     * list will not include the subjects identified by <code>pendingSubjectIds</code> since it is assumed the pending
-     * subjects will be assigned to the alert definition.
-     *
-     * @param  whoami            user attempting to make this call
-     * @param  alertDefinitionId the alert definition whose list of available subjects are to be returned
-     * @param  pendingSubjectIds the list of subjects that are planned to be given to the alert definition
-     * @param  pc
-     *
-     * @return the list of subjects that can be assigned to the given alert definition, not including the pending
-     *         subjects
-     */
-    PageList<Subject> findAvailableSubjectsForAlertDefinition(Subject whoami, Integer alertDefinitionId,
-        Integer[] pendingSubjectIds, PageControl pc);
-
     void logout(int sessionId);
 
     Subject getSubjectById(int id);

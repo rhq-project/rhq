@@ -6,55 +6,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
-<c:url var="viewRolesUrl" value="/alerts/Config.do">
-  <c:param name="mode" value="viewRoles"/>
-  <c:choose>
-  <c:when test="${not empty Resource}">
-    <c:param name="id" value="${Resource.id}"/>
-  </c:when>
-  <c:when test="${not empty ResourceGroup}">
-    <c:param name="groupId" value="${ResourceGroup.id}"/>
-  </c:when>
-  <c:otherwise>
-    <c:param name="type" value="${ResourceType.id}"/>
-  </c:otherwise>
-  </c:choose>
-  <c:param name="ad" value="${alertDef.id}"/>
-</c:url>
-
-
-<c:url var="viewUsersUrl" value="/alerts/Config.do">
-  <c:param name="mode" value="viewUsers"/>
-  <c:choose>
-  <c:when test="${not empty Resource}">
-    <c:param name="id" value="${Resource.id}"/>
-  </c:when>
-  <c:when test="${not empty ResourceGroup}">
-    <c:param name="groupId" value="${ResourceGroup.id}"/>
-  </c:when>
-  <c:otherwise>
-    <c:param name="type" value="${ResourceType.id}"/>
-  </c:otherwise>
-  </c:choose>
-  <c:param name="ad" value="${alertDef.id}"/>
-</c:url>
-
-
-<c:url var="viewOthersUrl" value="/alerts/Config.do">
-  <c:param name="mode" value="viewOthers"/>
-  <c:choose>
-  <c:when test="${not empty Resource}">
-    <c:param name="id" value="${Resource.id}"/>
-  </c:when>
-  <c:when test="${not empty ResourceGroup}">
-    <c:param name="groupId" value="${ResourceGroup.id}"/>
-  </c:when>
-  <c:otherwise>
-    <c:param name="type" value="${ResourceType.id}"/>
-  </c:otherwise>
-  </c:choose>
-  <c:param name="ad" value="${alertDef.id}"/>
-</c:url>
 
 
 <tiles:insert definition=".events.config.view.notifications.tabs">

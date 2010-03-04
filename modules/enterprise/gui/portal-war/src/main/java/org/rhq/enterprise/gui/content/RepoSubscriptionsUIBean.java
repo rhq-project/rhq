@@ -26,9 +26,10 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -42,6 +43,12 @@ public class RepoSubscriptionsUIBean extends PagedDataTableUIBean {
     public RepoSubscriptionsUIBean() {
     }
 
+    private static final IntExtractor<Resource> RESOURCE_ID_EXTRACTOR = new IntExtractor<Resource>() {
+        public int extract(Resource r) {
+            return r.getId();
+        }
+    };
+    
     public String deleteSelectedRepoSubscriptions() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedRepoSubscriptions();
@@ -77,20 +84,22 @@ public class RepoSubscriptionsUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class RepoSubscriptionsDataModel extends PagedListDataModel<Resource> {
+    private class RepoSubscriptionsDataModel extends ResourceNameDisambiguatingPagedListDataModel<Resource> {
         public RepoSubscriptionsDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
-        @Override
-        @SuppressWarnings("unchecked")
-        public PageList<Resource> fetchPage(PageControl pc) {
+        public PageList<Resource> fetchDataForPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
 
             PageList<Resource> results = manager.findSubscribedResources(subject, id, pc);
             return results;
+        }
+        
+        protected IntExtractor<Resource> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRACTOR;
         }
     }
 

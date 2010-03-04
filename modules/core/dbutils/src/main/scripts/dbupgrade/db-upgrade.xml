@@ -1,3 +1,4 @@
+
 <project name="db-upgrade" default="upgrade" basedir=".">
 
     <!--
@@ -3013,6 +3014,255 @@
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_port"/>
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_oid"/>
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="email_address"/>
+            </schemaSpec>
+            <schemaSpec version="2.77.3">
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="role_id"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="subject_id"/>
+            </schemaSpec>
+            <schemaSpec version="2.77.4">
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="roles"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="subjects"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="emails"/>
+
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4000" />
+            </schemaSpec>
+            <schemaSpec version="2.77.5">
+                <schema-directSQL>
+                    <statement>
+                        DROP INDEX IF EXISTS RHQ_ALERT_IDX_ALERT
+                    </statement>
+                    <statement>
+                        CREATE INDEX RHQ_ALERT_IDX_ALERT ON RHQ_ALERT_NOTIF_LOG (alert_id)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+            <schemaSpec version="2.78">
+               <!-- Remove obsolete tables RHQ_BUNDLE_CONFIG and RHQ_BUNDLE_DEPLOYMENT (the latter by cascade) -->
+               <schema-dropTable table="RHQ_BUNDLE_DEPLOYMENT" />
+               <schema-dropTable table="RHQ_BUNDLE_CONFIG" />
+               <schema-dropSequence name="rhq_bundle_config_id_seq" />
+
+               <schema-addColumn table="RHQ_BUNDLE_VERSION" column="CONFIG_DEF_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_VERSION foreign key relation to RHQ_CONFIG_DEF">
+                        ALTER TABLE RHQ_BUNDLE_VERSION
+                        ADD CONSTRAINT RHQ_CONFIG_DEF_ID_FK
+                        FOREIGN KEY (CONFIG_DEF_ID)
+                        REFERENCES RHQ_CONFIG_DEF (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <schema-addColumn table="RHQ_BUNDLE_TYPE" column="RESOURCE_TYPE_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_TYPE foreign key relation to RHQ_RESOURCE_TYPE">
+                        ALTER TABLE RHQ_BUNDLE_TYPE
+                        ADD CONSTRAINT RHQ_RESOURCE_TYPE_ID_FK
+                        FOREIGN KEY (RESOURCE_TYPE_ID)
+                        REFERENCES RHQ_RESOURCE_TYPE (ID)
+                    </statement>
+                </schema-directSQL>
+
+               <!-- RHQ_BUNDLE_DEPLOY_DEF -->
+               <schema-directSQL>
+                   <statement desc="Creating table RHQ_BUNDLE_DEPLOY_DEF">
+                       CREATE TABLE RHQ_BUNDLE_DEPLOY_DEF ( ID INTEGER )
+                   </statement>
+               </schema-directSQL>
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="ID" nullable="FALSE" />
+               <schema-createSequence name="RHQ_BUNDLE_DEPLOY_DEF_ID_SEQ" initial="10001" />
+               <schema-directSQL>
+                   <statement desc="Creating primary key for RHQ_BUNDLE_DEPLOY_DEF">
+                       ALTER TABLE RHQ_BUNDLE_DEPLOY_DEF ADD PRIMARY KEY ( ID )
+                   </statement>
+               </schema-directSQL>
+
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="NAME" columnType="VARCHAR2" precision="200" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="NAME" nullable="FALSE" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="CTIME" columnType="LONG" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="CTIME" nullable="FALSE" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="MTIME" columnType="LONG" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="MTIME" nullable="FALSE" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="CONFIG_ID" columnType="INTEGER" />
+               <schema-directSQL>
+                   <statement desc="Creating RHQ_BUNDLE_DEPLOY_DEF foreign key relation to RHQ_CONFIG">
+                       ALTER TABLE RHQ_BUNDLE_DEPLOY_DEF
+                       ADD CONSTRAINT RHQ_CONFIG_ID_FK
+                       FOREIGN KEY (CONFIG_ID)
+                       REFERENCES RHQ_CONFIG (ID)
+                   </statement>
+               </schema-directSQL>
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCE_POLICY" columnType="BOOLEAN" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCE_POLICY" nullable="FALSE" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCEMENT_INTERVAL" columnType="INTEGER" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_VERSION_ID" columnType="INTEGER" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_VERSION_ID" nullable="FALSE" />
+               <schema-directSQL>
+                   <statement desc="Creating RHQ_BUNDLE_DEPLOY_DEF foreign key relation to RHQ_BUNDLE_VERSION">
+                       ALTER TABLE RHQ_BUNDLE_DEPLOY_DEF
+                       ADD CONSTRAINT RHQ_BUNDLE_VERSION_ID_FK
+                       FOREIGN KEY (BUNDLE_VERSION_ID)
+                       REFERENCES RHQ_BUNDLE_VERSION (ID)
+                   </statement>
+               </schema-directSQL>
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_ID" columnType="INTEGER" />
+               <schema-directSQL>
+                   <statement desc="Creating RHQ_BUNDLE_DEPLOY_DEF foreign key relation to RHQ_BUNDLE">
+                       ALTER TABLE RHQ_BUNDLE_DEPLOY_DEF
+                       ADD CONSTRAINT RHQ_BUNDLE_ID_FK
+                       FOREIGN KEY (BUNDLE_ID)
+                       REFERENCES RHQ_BUNDLE (ID)
+                   </statement>
+               </schema-directSQL>
+
+               <!-- RHQ_BUNDLE_DEPLOY -->
+               <schema-directSQL>
+                   <statement desc="Creating table RHQ_BUNDLE_DEPLOY">
+                       CREATE TABLE RHQ_BUNDLE_DEPLOY ( ID INTEGER )
+                   </statement>
+               </schema-directSQL>
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="ID" nullable="FALSE" />
+               <schema-createSequence name="RHQ_BUNDLE_DEPLOY_ID_SEQ" initial="10001" />
+               <schema-directSQL>
+                   <statement desc="Creating primary key for RHQ_BUNDLE_DEPLOY">
+                       ALTER TABLE RHQ_BUNDLE_DEPLOY ADD PRIMARY KEY ( ID )
+                   </statement>
+               </schema-directSQL>
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="BUNDLE_DEPLOY_DEF_ID" columnType="INTEGER" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="BUNDLE_DEPLOY_DEF_ID" nullable="FALSE" />
+               <schema-directSQL>
+                   <statement desc="Creating RHQ_BUNDLE_DEPLOY foreign key relation to BUNDLE_DEPLOY_DEF">
+                       ALTER TABLE RHQ_BUNDLE_DEPLOY
+                       ADD CONSTRAINT RHQ_BUNDLE_DEPLOY_DEF_ID_FK
+                       FOREIGN KEY (BUNDLE_DEPLOY_DEF_ID)
+                       REFERENCES RHQ_BUNDLE_DEPLOY_DEF (ID)
+                   </statement>
+               </schema-directSQL>
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="RESOURCE_ID" columnType="INTEGER" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="RESOURCE_ID" nullable="FALSE" />
+               <schema-directSQL>
+                   <statement desc="Creating RHQ_BUNDLE_DEPLOY foreign key relation to RESOURCE">
+                       ALTER TABLE RHQ_BUNDLE_DEPLOY
+                       ADD CONSTRAINT RHQ_RESOURCE_ID_FK
+                       FOREIGN KEY (RESOURCE_ID)
+                       REFERENCES RHQ_RESOURCE (ID)
+                   </statement>
+               </schema-directSQL>
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="CTIME" columnType="LONG" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="CTIME" nullable="FALSE" />
+               <schema-directSQL>
+                   <statement desc="Creating RHQ_BUNDLE_DEPLOY unique constraint on def-resource mapping">
+                       CREATE UNIQUE INDEX RHQ_BUNDLE_DEPLOY_MAP_IX ON RHQ_BUNDLE_DEPLOY (BUNDLE_DEPLOY_DEF_ID, RESOURCE_ID)
+                   </statement>
+               </schema-directSQL>
+
+               <!-- RHQ_BUNDLE_DEPLOY_HIST -->
+               <schema-directSQL>
+                   <statement desc="Creating table RHQ_BUNDLE_DEPLOY_HIST">
+                       CREATE TABLE RHQ_BUNDLE_DEPLOY_HIST ( ID INTEGER )
+                   </statement>
+               </schema-directSQL>
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="ID" nullable="FALSE" />
+               <schema-createSequence name="RHQ_BUNDLE_DEPLOY_HIST_ID_SEQ" initial="10001" />
+               <schema-directSQL>
+                   <statement desc="Creating primary key for RHQ_BUNDLE_DEPLOY_HIST">
+                       ALTER TABLE RHQ_BUNDLE_DEPLOY_HIST ADD PRIMARY KEY ( ID )
+                   </statement>
+               </schema-directSQL>
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="BUNDLE_DEPLOY_ID" columnType="INTEGER" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="BUNDLE_DEPLOY_ID" nullable="FALSE" />
+               <schema-directSQL>
+                   <statement desc="Creating RHQ_BUNDLE_DEPLOY_HIST foreign key relation to BUNDLE_DEPLOY">
+                       ALTER TABLE RHQ_BUNDLE_DEPLOY_HIST
+                       ADD CONSTRAINT RHQ_BUNDLE_DEPLOY_ID_FK
+                       FOREIGN KEY (BUNDLE_DEPLOY_ID)
+                       REFERENCES RHQ_BUNDLE_DEPLOY (ID)
+                   </statement>
+               </schema-directSQL>
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="SUBJECT_NAME" columnType="VARCHAR2" precision="255" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_TIME" columnType="LONG" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_TIME" nullable="FALSE" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_ACTION" columnType="VARCHAR2" precision="50" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_ACTION" nullable="FALSE" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_MESSAGE" columnType="LONGVARCHAR" />
+
+               <!-- Changes to RHQ_BUNDLE_FILE -->
+               <schema-alterColumn table="RHQ_BUNDLE_FILE" column="PACKAGE_VERSION_ID" nullable="FALSE" />
+            </schemaSpec>
+
+            <schemaSpec version="2.78.1">
+               <schema-addColumn   table="RHQ_BUNDLE" column="REPO_ID" columnType="INTEGER" />
+               <schema-directSQL>
+                   <statement desc="Creating RHQ_BUNDLE foreign key relation to RHQ_REPO">
+                       ALTER TABLE RHQ_BUNDLE
+                       ADD CONSTRAINT RHQ_REPO_ID_FK
+                       FOREIGN KEY (REPO_ID)
+                       REFERENCES RHQ_REPO (ID)
+                   </statement>
+               </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.79">
+                <schema-directSQL>
+                    <statement desc="Normalizing resource group descriptions">
+                        UPDATE RHQ_RESOURCE_GROUP SET DESCRIPTION = NULL WHERE DESCRIPTION = ''
+                     </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.82">
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_SAVED_SEARCH">
+                        CREATE TABLE RHQ_SAVED_SEARCH ( ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement desc="Creating primary key for RHQ_AFFINITY_GROUP">
+                        ALTER TABLE RHQ_SAVED_SEARCH ADD PRIMARY KEY ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="CONTEXT" columnType="VARCHAR2" precision="25" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" nullable="FALSE" />
+
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="NAME" columnType="VARCHAR2" precision="200" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="PATTERN" columnType="VARCHAR2" precision="1000" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="PATTERN" nullable="FALSE" />
+
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="JPQL_TRANSLATION" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="RESULT_COUNT" columnType="LONG" />
+
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="GLOBAL" columnType="BOOLEAN" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" nullable="FALSE" />
+
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql" desc="Inserting global default saved search 'Downed Platforms'">
+                        INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
+                        VALUES (1, 'Resource', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, true)
+                    </statement>
+                    <statement targetDBVendor="oracle" desc="Inserting global default saved search 'Downed Platforms'">
+                        INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
+                        VALUES (1, 'Resource', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, 1)
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql" desc="Inserting global default saved search 'Downed Servers'">
+                        INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
+                        VALUES (2, 'Resource', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, true)
+                    </statement>
+                    <statement targetDBVendor="oracle" desc="Inserting global default saved search 'Downed Servers'">
+                        INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
+                        VALUES (2, 'Resource', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, 1)
+                    </statement>
+                </schema-directSQL>
             </schemaSpec>
         </dbupgrade>
     </target>

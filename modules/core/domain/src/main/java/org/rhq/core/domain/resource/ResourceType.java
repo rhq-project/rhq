@@ -22,12 +22,16 @@
  */
 package org.rhq.core.domain.resource;
 
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.event.EventDefinition;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.util.Summary;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -48,6 +52,7 @@ import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -58,18 +63,13 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.event.EventDefinition;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.util.Summary;
 
 /**
  * Defines a type of {@link Resource} (e.g. a Linux platform, a JBossAS server, or a Datasource service).
@@ -80,7 +80,7 @@ import java.util.Set;
  * @author Ian Springer
  */
 @Entity
-@Table(name = "RHQ_RESOURCE_TYPE")
+@Table(name = ResourceType.TABLE_NAME)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
 @NamedQueries( {
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME, // TODO: QUERY: This breaks rules, names may not be unique between plugins
@@ -118,14 +118,14 @@ import java.util.Set;
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s " //
         + "WHERE s = :subject " //
         + "AND res.resourceType.category = :category "
-        + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
+        + "AND (UPPER(res.name) LIKE :nameFilter ESCAPE :escapeChar OR :nameFilter is null) "
         + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
         + "ORDER BY res.resourceType.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY_admin, query = "SELECT DISTINCT res.resourceType "
         + "FROM Resource res " //
         + "WHERE res.resourceType.category = :category "
-        + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
+        + "AND (UPPER(res.name) LIKE :nameFilter ESCAPE :escapeChar OR :nameFilter is null) "
         + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
         + "ORDER BY res.resourceType.name "),
@@ -185,9 +185,9 @@ import java.util.Set;
         + "  SELECT rt.name " //
         + "    FROM ResourceType rt " //
         + "GROUP BY rt.name " //
-        + "  HAVING COUNT(rt.name) > 1"),
+        + "  HAVING COUNT(rt.name) > 1"), //
     @NamedQuery(name = ResourceType.QUERY_DYNAMIC_CONFIG_WITH_PLUGIN, query = "" //
-        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt" )
+        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt") //
 })
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
@@ -234,12 +234,14 @@ import java.util.Set;
         + "FROM RHQ_resource_type_parents rtp2 "
         + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ? " +
         //               "ORDER BY crt2.name" +
-        ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY)
-    })
+        ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) //
+})
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Serializable, Comparable<ResourceType> {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
+
+    public static final String TABLE_NAME = "RHQ_RESOURCE_TYPE";
 
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
@@ -375,6 +377,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private Set<ProductVersion> productVersions;
+
+    @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
+    private BundleType bundleType;
 
     @Transient
     private transient String helpText;
@@ -753,6 +758,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         this.classLoaderType = classLoaderType;
     }
 
+    public BundleType getBundleType() {
+        return this.bundleType;
+    }
+
+    public void setBundleType(BundleType bundleType) {
+        this.bundleType = bundleType;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -847,6 +860,7 @@ TODO: GWT
         out.writeLong(this.ctime);
         out.writeLong(this.mtime);
         out.writeObject(this.subCategory);
+        out.writeObject(this.bundleType);
         out.writeObject((null == childResourceTypes) ? null : new LinkedHashSet<ResourceType>(childResourceTypes));
         out.writeObject((null == parentResourceTypes) ? null : new LinkedHashSet<ResourceType>(parentResourceTypes));
         out.writeObject(pluginConfigurationDefinition);

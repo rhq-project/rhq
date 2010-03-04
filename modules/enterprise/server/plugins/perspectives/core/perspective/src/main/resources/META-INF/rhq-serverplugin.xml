@@ -111,19 +111,27 @@
 
    <!--  Core Menu: Resources -->
    <menu-item
-      name="resources.platforms"
-      displayName="Platforms"
-      iconUrl="/images/icons/Platform_up_16.png"
-      url="/ResourceHub.do?resourceCategory=PLATFORM">
+      name="resources.all"
+      displayName="All Resources"
+      url="/rhq/inventory/browseResources.xhtml?subtab=all">
       <position
          name="resources"
          placement="firstChild" />
    </menu-item>
    <menu-item
+      name="resources.platforms"
+      displayName="Platforms"
+      iconUrl="/images/icons/Platform_up_16.png"
+      url="/rhq/inventory/browseResources.xhtml?subtab=platform">
+      <position
+         name="resources.all"
+         placement="after" />
+   </menu-item>
+   <menu-item
       name="resources.servers"
       displayName="Servers"
       iconUrl="/images/icons/Server_up_16.png"
-      url="/ResourceHub.do?resourceCategory=SERVER">
+      url="/rhq/inventory/browseResources.xhtml?subtab=server">
       <position
          name="resources.platforms"
          placement="after" />
@@ -132,7 +140,7 @@
       name="resources.services"
       displayName="Services"
       iconUrl="/images/icons/Service_up_16.png"
-      url="/ResourceHub.do?resourceCategory=SERVICE">
+      url="/rhq/inventory/browseResources.xhtml?subtab=service">
       <position
          name="resources.servers"
          placement="after" />
@@ -168,19 +176,27 @@
 
    <!--  Core Menu: Groups -->
    <menu-item
-      name="groups.compatibleGroups"
-      displayName="Compatible Groups"
-      iconUrl="/images/icons/Cluster_up_16.png"
-      url="/GroupHub.do?groupCategory=COMPATIBLE">
+      name="groups.all"
+      displayName="All Groups"
+      url="/rhq/inventory/browseGroups.xhtml?subtab=all">
       <position
          name="groups"
          placement="firstChild" />
    </menu-item>
    <menu-item
+      name="groups.compatibleGroups"
+      displayName="Compatible Groups"
+      iconUrl="/images/icons/Cluster_up_16.png"
+      url="/rhq/inventory/browseGroups.xhtml?subtab=compatible">
+      <position
+         name="groups.all"
+         placement="after" />
+   </menu-item>
+   <menu-item
       name="groups.mixedGroups"
       displayName="Mixed Groups"
       iconUrl="/images/icons/Group_up_16.png"
-      url="/GroupHub.do?groupCategory=MIXED">
+      url="/rhq/inventory/browseGroups.xhtml?subtab=mixed">
       <position
          name="groups.compatibleGroups"
          placement="after" />
@@ -294,8 +310,8 @@
          placement="after" />
    </menu-item>
    <menu-item
-      name="administration.download"
-      displayName="Download"
+      name="administration.downloads"
+      displayName="Downloads"
       iconUrl="/images/icons/Save_16.png"
       url="/rhq/admin/downloads.xhtml">
       <position
@@ -307,7 +323,7 @@
       displayName="License"
       url="/admin/license/LicenseAdmin.do?mode=view">
       <position
-         name="administration.download"
+         name="administration.downloads"
          placement="after" />
       <activators>
          <global-permission
@@ -496,6 +512,18 @@
          <global-permission
             name="MANAGE_INVENTORY" />
       </activators>
+   </menu-item>
+
+   <menu-item
+      name="administration.systemConfiguration.notifcationTemplates"
+      displayName="Alert Notification Templates"
+      url="/rhq/resource/alert/notif/notificationTemplates.xhtml">
+       <position name="administration.systemConfiguration.templates"
+                 placement="after"/>
+       <activators>
+           <global-permission
+               name="MANAGE_SETTINGS"/>
+       </activators>
    </menu-item>
 
    <!--  Core Menu: administration.content -->

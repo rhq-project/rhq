@@ -375,6 +375,18 @@
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
+      <!-- ============ Testing ========================-->
+      <dependency>
+          <groupId>jboss</groupId>
+          <artifactId>javassist</artifactId>
+          <scope>test</scope>
+      </dependency>
+
+      <dependency>
+          <groupId>org.codehaus.groovy</groupId>
+          <artifactId>groovy-all</artifactId>
+          <version>1.6.4</version>
+      </dependency>
 
    </dependencies>
 
@@ -382,19 +394,23 @@
       <finalName>rhq-portal</finalName>
       <plugins>
 
+          <plugin>
+              <groupId>org.codehaus.groovy.maven</groupId>
+              <artifactId>gmaven-plugin</artifactId>
+              <version>1.0</version>
+              <executions>
+                  <execution>
+                      <goals>
+                          <goal>compile</goal>
+                          <goal>testCompile</goal>
+                      </goals>
+                  </execution>
+              </executions>
+          </plugin>
+
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
-            <version>2.1-alpha-1</version>
             <configuration>
-               <archive>
-                  <manifest>
-                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                  </manifest>
-                  <manifestEntries>
-                     <Build-Number>${buildNumber}</Build-Number>
-                  </manifestEntries>
-               </archive>
                <webResources>
                   <resource>
                      <filtering>false</filtering>
@@ -410,7 +426,6 @@
 
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.1</version>
             <executions>
                <execution>
                   <id>Generate I18N Resource Bundles</id>

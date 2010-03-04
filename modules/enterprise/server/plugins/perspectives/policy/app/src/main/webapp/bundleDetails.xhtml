@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+
+<ui:composition
+        template="/WEB-INF/templates/mainTemplate.xhtml"
+        xmlns="http://www.w3.org/1999/xhtml"
+        xmlns:f="http://java.sun.com/jsf/core"
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:ui="http://java.sun.com/jsf/facelets"
+        xmlns:c="http://java.sun.com/jstl/core"
+        xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+        xmlns:a4j="http://richfaces.org/a4j"
+        xmlns:rich="http://richfaces.org/rich"
+        xmlns:rhq="http://rhq-project.org/rhq"
+        xmlns:onc="http://jboss.org/on/component">
+
+    <ui:param name="bundle" value="#{BundleDetailsUIBean.bundle}"/>
+
+    <ui:define name="breadcrumbs">
+        Administration &gt;
+        <h:outputLink value="bundles.seam">Provisioning Bundles</h:outputLink>  &gt; 
+        #{bundle.bundleType.name} Bundle '#{bundle.name}'
+    </ui:define>
+
+    <ui:define name="body">
+
+        <rich:panel>
+            <div><h:panelGroup layout="block" rendered="#{ServerInfoUIBean.debugModeEnabled}">
+                <b>Id:</b> #{bundle.id}
+            </h:panelGroup></div>
+            <div><h:panelGroup layout="block">
+                <b>Name:</b> #{bundle.name}
+            </h:panelGroup></div>
+            <div><h:panelGroup layout="block">
+                <b>Type:</b> #{bundle.bundleType.name}
+            </h:panelGroup></div>
+        </rich:panel>
+        
+        <ui:remove><!-- NOTE: The table needs to be surrounded by a form for paging and sorting to work! --></ui:remove>
+        <a4j:form ajaxSubmit="false" reRender="bundlesVersionsDataTable">
+
+            <f:param name="bundleId" value="#{param.bundleId}"/>
+            
+            <rich:dataTable id="bundleVersionsDataTable"
+                            value="#{BundleDetailsUIBean.dataModel}" var="bundleVersion"
+                            first="#{BundleDetailsUIBean.pageControl.pageNumber}"
+                            rows="#{BundleDetailsUIBean.pageControl.pageSize}"
+                            sortMode="multi"
+                            width="100%">
+
+                <f:facet name="header">
+                    <h:outputText value="Versions"/>
+                </f:facet>
+
+                <rich:column width="20">
+                    <f:facet name="header">
+                        <rhq:allRowsSelector/>
+                    </f:facet>
+                    <rhq:rowSelector value="#{BundleDetailsUIBean.selectedBundleVersions}"/>
+                </rich:column>
+
+                <rich:column width="70">
+                    <f:facet name="header">
+                        <rhq:sortableColumnHeader sortBy="BundleVersion.version">
+                            <a4j:support event="onclick"
+                                         actionListener="#{BundleDetailsUIBean.ajaxSortListener}"/>
+                            <h:outputText value="Version"/>
+                        </rhq:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputText value="#{bundleVersion.version}"/>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <rhq:sortableColumnHeader sortBy="BundleVersion.name">
+                            <a4j:support event="onclick"
+                                         actionListener="#{BundleDetailsUIBean.ajaxSortListener}"/>
+                            <h:outputText value="Name"/>
+                        </rhq:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputLink value="bundleVersionDetails.seam">
+                        <f:param name="bundleVersionId" value="#{bundleVersion.id}"/>
+                        <h:outputText value="#{bundleVersion.name}"/>
+                    </h:outputLink>
+                </rich:column>
+
+                <f:facet name="footer">
+                    <rich:columnGroup>
+                        <rich:column colspan="3">
+                            <rhq:selectedRowsCommandButton
+                                    value="DELETE"
+                                    action="#{BundleDetailsUIBean.deleteSelectedBundleVersions}"
+                                    rendered="#{BundleDetailsUIBean.dataModel.rowCount gt 0}"/>
+
+                            <ui:include src="/WEB-INF/includes/pageControls.xhtml">
+                                <ui:param name="pagedDataUIBean" value="#{BundleDetailsUIBean}"/>
+                                <ui:param name="dataTableName" value="bundleVersionsDataTable"/>
+                            </ui:include>
+                        </rich:column>
+                    </rich:columnGroup>
+                </f:facet>
+            </rich:dataTable>
+        </a4j:form>
+
+    </ui:define>
+
+</ui:composition>

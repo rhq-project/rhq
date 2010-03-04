@@ -58,6 +58,7 @@ import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesExpressionUtility;
 import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
+import org.rhq.core.template.TemplateEngine;
 
 /**
 * A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s.
@@ -130,6 +131,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         this.topLevel = topLevel;
         this.valueExpressionFormat = valueExpressionFormat;
         this.overrideExpressionFormat = getOverrideExpressionFormat(valueExpressionFormat);
+        
         // The below variable is for the new group config impl being implemented by Ian.
         this.isGroup = (this.config instanceof ConfigurationSetComponent);
         if (this.isGroup) {
@@ -280,7 +282,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
     private void addProperty(UIComponent parent, PropertyDefinition propertyDefinition, String rowStyleClass) {
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
-            addSimpleProperty(parent, (PropertyDefinitionSimple) propertyDefinition, rowStyleClass);
+            addSimpleProperty(parent, (PropertyDefinitionSimple) propertyDefinition, rowStyleClass, config.getTemplateEngine());
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
             addListProperty(parent, (PropertyDefinitionList) propertyDefinition, rowStyleClass);
         } else if (propertyDefinition instanceof PropertyDefinitionMap) {
@@ -349,7 +351,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     }
 
     private void addSimpleProperty(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
-        String rowStyleClass) {
+        String rowStyleClass, TemplateEngine templateEngine) {
         addDebug(parent, true, ".addSimpleProperty()");
 
         FacesComponentUtility.addVerbatimText(parent, "\n\n<tr class='" + rowStyleClass + "'>");
@@ -364,7 +366,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             // need to know the input component's id in order to render the unset control.
             input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple, propertySimple,
                 propertyValueExpression, getListIndex(), this.isGroup, this.config.isReadOnly(), this.config
-                    .isFullyEditable(), this.config.isPrevalidate());
+                    .isFullyEditable(), this.config.isPrevalidate(), templateEngine);
 
         FacesComponentUtility
             .addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>");

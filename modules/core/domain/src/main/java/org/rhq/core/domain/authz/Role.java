@@ -46,7 +46,6 @@ import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.CollectionOfElements;
 import org.jetbrains.annotations.NotNull;
 
-import org.rhq.core.domain.alert.notification.RoleNotification;
 import org.rhq.core.domain.auth.Subject;
 
 /**
@@ -78,19 +77,6 @@ import org.rhq.core.domain.auth.Subject;
         + "                          FROM Subject ss " //
         + "                          JOIN ss.roles AS rr " //
         + "                         WHERE ss.id = :subjectId )"), //
-    @NamedQuery(name = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION_WITH_EXCLUDES, query = "" //
-        + "SELECT r" //
-        + "  FROM Role r" //
-        + " WHERE r.id NOT IN ( SELECT rn.role.id " //
-        + "                       FROM RoleNotification rn" //
-        + "                      WHERE rn.alertDefinition.id = :alertDefinitionId ) " //
-        + "   AND r.id NOT IN ( :excludes )"), //
-    @NamedQuery(name = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION, query = "" //
-        + "SELECT r" //
-        + "  FROM Role r" //
-        + " WHERE r.id NOT IN ( SELECT rn.role.id " //
-        + "                       FROM RoleNotification rn" //
-        + "                      WHERE rn.alertDefinition.id = :alertDefinitionId ) "), //
     @NamedQuery(name = Role.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
         + "SELECT r.name, r.name FROM Role AS r")
 })
@@ -101,8 +87,6 @@ public class Role implements Serializable {
     public static final String QUERY_FIND_BY_IDS = "Role.findByIds";
     public static final String QUERY_FIND_AVAILABLE_ROLES_WITH_EXCLUDES = "Role.findAvailableRolesWithExcludes";
     public static final String QUERY_FIND_AVAILABLE_ROLES = "Role.findAvailableRoles";
-    public static final String QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION_WITH_EXCLUDES = "Role.findAvailableRolesForAlertDefinitionWithExcludes";
-    public static final String QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION = "Role.findAvailableRolesForAlertDefinition";
 
     public static final String QUERY_DYNAMIC_CONFIG_VALUES = "Role.dynamicConfigValues";
 
@@ -133,9 +117,6 @@ public class Role implements Serializable {
     @Column(name = "operation")
     @JoinTable(name = "RHQ_PERMISSION", joinColumns = @JoinColumn(name = "ROLE_ID"))
     private Set<Permission> permissions = new HashSet<Permission>();
-
-    @OneToMany(mappedBy = "role", cascade = javax.persistence.CascadeType.ALL)
-    private Set<RoleNotification> roleNotifications = new HashSet<RoleNotification>();
 
     public Role() {
         fsystem = Boolean.FALSE;
@@ -249,18 +230,6 @@ public class Role implements Serializable {
 
         resourceGroup.removeRole(this);
         this.resourceGroups.remove(resourceGroup);
-    }
-
-    public Set<RoleNotification> getRoleNotifications() {
-        return roleNotifications;
-    }
-
-    public void setRoleNotifications(Set<RoleNotification> roleNotifications) {
-        this.roleNotifications = roleNotifications;
-    }
-
-    public void addRoleNotification(RoleNotification roleNotification) {
-        this.roleNotifications.add(roleNotification);
     }
 
     public int getMemberCount() {

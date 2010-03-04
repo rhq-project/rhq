@@ -33,6 +33,7 @@ import org.rhq.core.gui.configuration.AbstractConfigurationComponent;
 import org.rhq.core.gui.util.FacesComponentIdFactory;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesExpressionUtility;
+import org.rhq.core.template.TemplateEngine;
 
 /**
  * A component that represents a set of RHQ Configurations which share the same ConfigurationDefinition.
@@ -91,5 +92,11 @@ public class ConfigurationSetComponent extends AbstractConfigurationComponent im
     public HtmlModalPanel getPropSetModalPanel() {
         UIForm configSetForm = FacesComponentUtility.getEnclosingForm(this);
         return (HtmlModalPanel) configSetForm.getParent().findComponent(getPropSetModalPanelId(this));
+    }
+
+    @Override
+    public TemplateEngine getTemplateEngine() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

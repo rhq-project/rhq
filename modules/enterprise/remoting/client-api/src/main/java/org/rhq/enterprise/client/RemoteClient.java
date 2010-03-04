@@ -33,6 +33,7 @@ import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
+import org.rhq.enterprise.server.bundle.BundleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.AdvisoryManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
@@ -53,6 +54,7 @@ import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
+import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
@@ -72,6 +74,7 @@ public class RemoteClient {
         AlertManager(AlertManagerRemote.class), //
         AlertDefinitionManager(AlertDefinitionManagerRemote.class), //
         AvailabilityManager(AvailabilityManagerRemote.class), //
+        BundleManager(BundleManagerRemote.class), //
         CallTimeDataManager(CallTimeDataManagerRemote.class), //
         RepoManager(RepoManagerRemote.class), //
         ConfigurationManager(ConfigurationManagerRemote.class), //
@@ -92,6 +95,7 @@ public class RemoteClient {
         ResourceGroupManager(ResourceGroupManagerRemote.class), //
         ResourceTypeManager(ResourceTypeManagerRemote.class), //
         RoleManager(RoleManagerRemote.class), //
+        SavedSearchManager(SavedSearchManagerRemote.class), //
         SubjectManager(SubjectManagerRemote.class), //
         SupportManager(SupportManagerRemote.class), //
         SystemManager(SystemManagerRemote.class) //
@@ -319,6 +323,10 @@ public class RemoteClient {
 
     public AvailabilityManagerRemote getAvailabilityManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.AvailabilityManager);
+    }
+
+    public BundleManagerRemote getBundleManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.BundleManager);
     }
 
     public CallTimeDataManagerRemote getCallTimeDataManagerRemote() {

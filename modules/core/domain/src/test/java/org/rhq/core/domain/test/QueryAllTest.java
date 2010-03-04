@@ -45,13 +45,11 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleConfig;
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
@@ -122,8 +120,6 @@ public class QueryAllTest extends AbstractEJB3Test {
         AlertConditionLog.class.getSimpleName(),
         AlertDefinition.class.getSimpleName(),
         AlertNotification.class.getSimpleName(),
-        RoleNotification.class.getSimpleName(),
-        SubjectNotification.class.getSimpleName(),
 
         // measurement stuff
         MeasurementDataTrait.class.getSimpleName(),
@@ -153,7 +149,7 @@ public class QueryAllTest extends AbstractEJB3Test {
 
         // bundle stuff
         BundleType.class.getSimpleName(), Bundle.class.getSimpleName(), BundleVersion.class.getSimpleName(),
-        BundleVersionRepo.class.getSimpleName(), BundleConfig.class.getSimpleName(), BundleFile.class.getSimpleName(),
+        BundleVersionRepo.class.getSimpleName(), BundleDeployDefinition.class.getSimpleName(), BundleFile.class.getSimpleName(),
         BundleDeployment.class.getSimpleName(),
 
         // group stuff

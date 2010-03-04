@@ -83,7 +83,7 @@
                      <onc:allSelect target="selectedRepoSubscriptions" />
                   </f:facet>
 
-                  <onc:select name="selectedRepoSubscriptions" value="#{resourceitem.id}" />
+                  <onc:select name="selectedRepoSubscriptions" value="#{resourceitem.original.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -93,7 +93,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{resourceitem.id}"/>
+                  <h:outputText value="#{resourceitem.original.id}"/>
                </rich:column>
 
                <rich:column>
@@ -104,11 +104,18 @@
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{resourceitem.id}"/>
-                     <h:outputText value="#{resourceitem.name}" />
+                     <f:param name="id" value="#{resourceitem.original.id}"/>
+                     <h:outputText value="#{resourceitem.original.name}" />
                   </h:outputLink>
                </rich:column>
 
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText value="Parent" />
+                  </f:facet> 
+                  <onc:resourcePartialLineage parents="#{resourceitem.parents}" />
+               </rich:column>
+               
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="rc.resource.resourceType.name">
@@ -116,7 +123,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{resourceitem.resourceType.name}"/>
+                  <h:outputText value="#{resourceitem.resourceTypeName}"/>
                </rich:column>
 
                <rich:column>
@@ -124,7 +131,7 @@
                         <h:outputText styleClass="headerText" value="Version" />
                   </f:facet>
 
-                  <h:outputText value="#{resourceitem.version}"/>
+                  <h:outputText value="#{resourceitem.original.version}"/>
                </rich:column>
 
                <rich:column>
@@ -132,7 +139,7 @@
                      <h:outputText styleClass="headerText" value="Description" />
                   </f:facet>
 
-                  <h:outputText value="#{resourceitem.description}"/>
+                  <h:outputText value="#{resourceitem.original.description}"/>
                </rich:column>
 
                <f:facet name="footer">
@@ -219,7 +226,7 @@
                      <onc:allSelect target="selectedRepoUnsubscriptions" />
                   </f:facet>
 
-                  <onc:select name="selectedRepoUnsubscriptions" value="#{availableitem.id}" />
+                  <onc:select name="selectedRepoUnsubscriptions" value="#{availableitem.original.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -229,7 +236,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{availableitem.id}"/>
+                  <h:outputText value="#{availableitem.original.id}"/>
                </rich:column>
 
                <rich:column>
@@ -240,11 +247,19 @@
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{availableitem.id}"/>
-                     <h:outputText value="#{availableitem.name}" />
+                     <f:param name="id" value="#{availableitem.original.id}"/>
+                     <h:outputText value="#{availableitem.original.name}" />
                   </h:outputLink>
                </rich:column>
 
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText value="Parent"/>
+                  </f:facet>
+                  
+                  <onc:resourcePartialLineage parents="#{availableitem.parents}"/>
+               </rich:column>
+               
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="res.resourceType.name">
@@ -252,7 +267,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{availableitem.resourceType.name}"/>
+                  <h:outputText value="#{availableitem.resourceTypeName}"/>
                </rich:column>
 
                <rich:column>
@@ -262,7 +277,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{availableitem.version}"/>
+                  <h:outputText value="#{availableitem.original.version}"/>
                </rich:column>
 
                <rich:column>
@@ -270,7 +285,7 @@
                      <h:outputText styleClass="headerText" value="Description" />
                   </f:facet>
 
-                  <h:outputText value="#{availableitem.description}"/>
+                  <h:outputText value="#{availableitem.original.description}"/>
                </rich:column>
 
                <f:facet name="footer">

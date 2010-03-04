@@ -478,11 +478,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 throw new PermissionException("You cannot remove yourself: " + doomedSubject.getName());
             }
 
-            Query deleteNotificationQuery = entityManager
-                .createQuery("DELETE FROM SubjectNotification sn WHERE sn.subject.id = :subjectId");
-            deleteNotificationQuery.setParameter("subjectId", doomedSubjectId);
-            deleteNotificationQuery.executeUpdate(); // discard result, might not have been set for any notifications
-
             Set<Role> roles = doomedSubject.getRoles();
             doomedSubject.setRoles(new HashSet<Role>()); // clean out roles
 
@@ -583,42 +578,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         } catch (Exception e) {
             return false;
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<Subject> findAvailableSubjectsForAlertDefinition(Subject whoami, Integer alertDefinitionId,
-        Integer[] pendingSubjectIds, PageControl pc) {
-        pc.initDefaultOrderingField("s.name");
-
-        String queryName;
-
-        if ((pendingSubjectIds == null) || (pendingSubjectIds.length == 0)) {
-            queryName = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION;
-        } else {
-            queryName = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION_WITH_EXCLUDES;
-        }
-
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, queryName, "distinct s");
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
-
-        countQuery.setParameter("alertDefinitionId", alertDefinitionId);
-        query.setParameter("alertDefinitionId", alertDefinitionId);
-
-        if ((pendingSubjectIds != null) && (pendingSubjectIds.length > 0)) {
-            List<Integer> pendingIdsList = Arrays.asList(pendingSubjectIds);
-            countQuery.setParameter("excludes", pendingIdsList);
-            query.setParameter("excludes", pendingIdsList);
-        }
-
-        long count = (Long) countQuery.getSingleResult();
-        List<Subject> subjects = query.getResultList();
-
-        // eagerly load in the roles - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
-        for (Subject subject : subjects) {
-            subject.getRoles().size();
-        }
-
-        return new PageList<Subject>(subjects, (int) count, pc);
     }
 
     @RequiredPermission(Permission.MANAGE_SECURITY)

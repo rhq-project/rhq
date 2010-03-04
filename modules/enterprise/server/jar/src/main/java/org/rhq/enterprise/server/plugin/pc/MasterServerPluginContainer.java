@@ -37,6 +37,7 @@ import org.quartz.simpl.SimpleThreadPool;
 
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.entitlement.EntitlementServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
@@ -135,16 +136,23 @@ public class MasterServerPluginContainer {
                     String pluginName = descriptor.getName();
                     ServerPluginType pluginType = new ServerPluginType(descriptor);
                     PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType.stringify(), pluginName);
-                    ClassLoader classLoader = this.classLoaderManager.obtainServerPluginClassLoader(pluginKey);
-                    log.debug("Pre-loading server plugin [" + pluginKey + "] from [" + pluginUrl
-                        + "] into its plugin container");
                     try {
-                        ServerPluginEnvironment env = new ServerPluginEnvironment(pluginUrl, classLoader, descriptor);
-                        boolean enabled = !allDisabledPlugins.contains(pluginKey);
-                        pc.loadPlugin(env, enabled);
-                        log.info("Preloaded server plugin [" + pluginKey.getPluginName() + "]");
+                        ClassLoader classLoader = this.classLoaderManager.obtainServerPluginClassLoader(pluginKey);
+                        log.debug("Pre-loading server plugin [" + pluginKey + "] from [" + pluginUrl
+                            + "] into its plugin container");
+                        try {
+                            ServerPluginEnvironment env = new ServerPluginEnvironment(pluginUrl, classLoader,
+                                descriptor);
+                            boolean enabled = !allDisabledPlugins.contains(pluginKey);
+                            pc.loadPlugin(env, enabled);
+                            log.info("Preloaded server plugin [" + pluginName + "]");
+                        } catch (Exception e) {
+                            log.warn("Failed to preload server plugin [" + pluginName + "] from URL [" + pluginUrl
+                                + "]", e);
+                        }
                     } catch (Exception e) {
-                        log.warn("Failed to preload server plugin [" + pluginUrl + "]", e);
+                        log.warn("Failed to preload server plugin [" + pluginName
+                            + "]; cannot get its classloader from URL [ " + pluginUrl + "]", e);
                     }
                 } else {
                     log.warn("There is no server plugin container to support plugin: " + pluginUrl);
@@ -454,6 +462,7 @@ public class MasterServerPluginContainer {
         pcs.add(new PerspectiveServerPluginContainer(this));
         pcs.add(new AlertServerPluginContainer(this));
         pcs.add(new EntitlementServerPluginContainer(this));
+        pcs.add(new BundleServerPluginContainer(this));
         return pcs;
     }
 

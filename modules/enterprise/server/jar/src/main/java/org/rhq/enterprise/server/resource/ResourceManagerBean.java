@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.resource;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -88,6 +90,7 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.LockedResource;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
@@ -95,13 +98,17 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
+import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
+import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.collection.ArrayUtils;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -144,6 +151,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @EJB
     private ResourceManagerLocal resourceManager; // ourself, for xactional semantic consistency
     @EJB
+    private ResourceTypeManagerLocal typeManager;
+    @EJB
     @IgnoreDependency
     private OperationManagerLocal operationManager;
     @EJB
@@ -180,7 +189,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         entityManager.persist(resource);
-        log.error("********* resource persisted ************");
+        log.debug("********* resource persisted ************");
         // Execute sub-methods as overlord to bypass additional security checks.
         Subject overlord = this.subjectManager.getOverlord();
         updateImplicitMembership(overlord, resource);
@@ -358,7 +367,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0,
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first delete the config objects
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then the history objects wrapping those configs
-            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't 
+            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't
             AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
             Alert.QUERY_DELETE_BY_RESOURCES, //                order
             AlertCondition.QUERY_DELETE_BY_RESOURCES, //       of
@@ -880,6 +889,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         queryCount.setParameter("pluginName", pluginName);
         query.setParameter("search", searchString);
         queryCount.setParameter("search", searchString);
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         queryCount.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         query.setParameter("parentResource", parentResource);
@@ -1482,6 +1493,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         query.setParameter("search", nameFilter);
         queryCount.setParameter("search", nameFilter);
 
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         queryCount.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
@@ -1508,6 +1522,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         search = QueryUtility.formatSearchParameter(search);
         queryCount.setParameter("search", search);
         query.setParameter("search", search);
+
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
 
         queryCount.setParameter("category", category);
         query.setParameter("category", category);
@@ -2089,6 +2106,22 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    public PageList<ResourceComposite> findResourceCompositesByCriteria(Subject subject, ResourceCriteria criteria) {
+        PageList<Resource> intermediate = findResourcesByCriteria(subject, criteria);
+
+        List<ResourceComposite> results = new ArrayList<ResourceComposite>();
+        for (Resource next : intermediate) {
+            AvailabilityType availType = next.getCurrentAvailability().getAvailabilityType();
+            Resource parent = next.getParentResource();
+            ResourceComposite composite = new ResourceComposite(next, parent, availType);
+            composite.setResourceFacets(typeManager.getResourceFacets(next.getResourceType().getId()));
+            results.add(composite);
+        }
+
+        return new PageList<ResourceComposite>(results, (int) intermediate.getTotalSize(), intermediate
+            .getPageControl());
+    }
+
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
@@ -2107,6 +2140,33 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return queryRunner.execute();
     }
 
+    public Resource getPlaformOfResource(Subject subject, int resourceId) {
+        Resource resource = null;
+        Resource parent = null;
+        do {
+            resource = parent;
+            if (resource != null) {
+                resourceId = parent.getId();
+            }
+            parent = getParentResource(resourceId);
+            if (parent==null)
+                break;
+            if (parent.getResourceType().getCategory().equals(ResourceCategory.PLATFORM)){
+                resource = parent;
+                parent = null;
+                break;
+            }
+
+        } while (parent != null);
+        if (resource != null) {
+            if (!authorizationManager.canViewResource(subject, resource.getId())) {
+                throw new PermissionException("User [" + subject + "] does not have permission to view resource ["
+                    + resource.getId() + "]");
+            }
+        }
+        return resource;
+    }
+
     public Resource getParentResource(Subject subject, int resourceId) {
         Resource resource = getParentResource(resourceId);
 
@@ -2122,5 +2182,141 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Resource parentResource = getResourceById(subject, parentResourceId);
 
         return (findChildResources(subject, parentResource, pageControl));
+    }
+
+    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwaysIncludeParent,
+        IntExtractor<? super T> extractor) {
+
+        if (results.isEmpty()) {
+            return new ResourceNamesDisambiguationResult<T>(new ArrayList<DisambiguationReport<T>>(), false, false,
+                false);
+        }
+
+        boolean typeResolutionNeeded = false;
+        boolean pluginResolutionNeeded = false;
+        boolean parentResolutionNeeded = false;
+
+        //we can't assume the ordering of the provided results and the disambiguation query results
+        //will be the same.
+
+        //this list contains the resulting reports in the same order as the original results
+        List<MutableDisambiguationReport<T>> reports = new ArrayList<MutableDisambiguationReport<T>>(results.size());
+
+        //this maps the reports to resourceIds. More than one report can correspond to a single
+        //resource id. The reports in this map are the same instances as in the reports list.
+        Map<Integer, List<MutableDisambiguationReport<T>>> reportsByResourceId = new HashMap<Integer, List<MutableDisambiguationReport<T>>>();
+        for (T r : results) {
+            MutableDisambiguationReport<T> value = new MutableDisambiguationReport<T>();
+            value.original = r;
+            int resourceId = extractor.extract(r);
+            if (resourceId > 0) {
+                List<MutableDisambiguationReport<T>> correspondingResults = reportsByResourceId.get(resourceId);
+                if (correspondingResults == null) {
+                    correspondingResults = new ArrayList<MutableDisambiguationReport<T>>();
+                    reportsByResourceId.put(resourceId, correspondingResults);
+                }
+                correspondingResults.add(value);
+            }
+            reports.add(value);
+        }
+
+        //check that we still have something to disambiguate
+        if (reportsByResourceId.size() > 0) {
+            //first find out how many ancestors we are going to require to disambiguate the resuls
+            String query = Resource.NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL;
+
+            query = JDBCUtil.transformQueryForMultipleInParameters(query, "@@RESOURCE_IDS@@", results.size());
+            Query disambiguateQuery = entityManager.createNativeQuery(query);
+            int i = 1;
+            for (T r : results) {
+                disambiguateQuery.setParameter(i++, extractor.extract(r));
+            }
+
+            Object[] rs = (Object[]) disambiguateQuery.getSingleResult();
+
+            int disambiguationLevel = Resource.MAX_SUPPORTED_RESOURCE_HIERARCHY_DEPTH; //the max we support
+
+            int targetCnt = ((BigInteger) rs[0]).intValue();
+            int typeCnt = ((BigInteger) rs[1]).intValue();
+            int typeAndPluginCnt = ((BigInteger) rs[2]).intValue();
+            for (i = 1; i <= Resource.MAX_SUPPORTED_RESOURCE_HIERARCHY_DEPTH; ++i) {
+                int levelCnt = ((BigInteger) rs[2 + i]).intValue();
+                if (levelCnt == targetCnt) {
+                    disambiguationLevel = i - 1;
+                    break;
+                }
+            }
+
+            if (alwaysIncludeParent && disambiguationLevel == 0) {
+                disambiguationLevel = 1;
+            }
+
+            typeResolutionNeeded = typeAndPluginCnt > 1;
+            pluginResolutionNeeded = typeAndPluginCnt > typeCnt;
+            parentResolutionNeeded = disambiguationLevel > 0;
+
+            //k, now let's construct the JPQL query to get the parents and type infos...
+            StringBuilder selectBuilder = new StringBuilder(
+                "SELECT r0.id, r0.resourceType.name, r0.resourceType.plugin");
+            StringBuilder fromBuilder = new StringBuilder("FROM Resource r0");
+
+            for (i = 1; i <= disambiguationLevel; ++i) {
+                int pi = i - 1;
+                selectBuilder.append(", r").append(i).append(".id");
+                selectBuilder.append(", r").append(i).append(".name");
+                fromBuilder.append(" left join r").append(pi).append(".parentResource r").append(i);
+            }
+
+            fromBuilder.append(" WHERE r0.id IN (:resourceIds)");
+
+            Query parentsQuery = entityManager.createQuery(selectBuilder.append(" ").append(fromBuilder).toString());
+
+            parentsQuery.setParameter("resourceIds", reportsByResourceId.keySet());
+
+            @SuppressWarnings("unchecked")
+            List<Object[]> parentsResults = (List<Object[]>) parentsQuery.getResultList();
+            for (Object[] parentsResult : parentsResults) {
+                List<ResourceParentFlyweight> parents = new ArrayList<ResourceParentFlyweight>(disambiguationLevel);
+                Integer resourceId = (Integer) parentsResult[0];
+                String typeName = (String) parentsResult[1];
+                String pluginName = (String) parentsResult[2];
+
+                for (i = 1; i <= disambiguationLevel; ++i) {
+                    Integer parentId = (Integer) parentsResult[2 * i + 1];
+                    if (parentId == null)
+                        break;
+                    String parentName = (String) parentsResult[2 * i + 2];
+                    parents.add(new ResourceParentFlyweight(parentId, parentName));
+                }
+
+                //update all the reports that correspond to this resourceId
+                for(MutableDisambiguationReport<T> report : reportsByResourceId.get(resourceId)) {
+                    report.typeName = typeName;
+                    report.pluginName = pluginName;
+                    report.parents = parents;
+                }
+            }
+        }
+
+        List<DisambiguationReport<T>> resolution = new ArrayList<DisambiguationReport<T>>(results.size());
+
+        for (MutableDisambiguationReport<T> report : reports) {
+            resolution.add(report.getReport());
+        }
+
+        return new ResourceNamesDisambiguationResult<T>(resolution, typeResolutionNeeded, parentResolutionNeeded,
+            pluginResolutionNeeded);
+    }
+
+    private static class MutableDisambiguationReport<T> {
+        public T original;
+        public String typeName;
+        public String pluginName;
+        public List<ResourceParentFlyweight> parents;
+
+        public DisambiguationReport<T> getReport() {
+            return new DisambiguationReport<T>(original, parents == null ? Collections
+                .<ResourceParentFlyweight> emptyList() : parents, typeName, pluginName);
+        }
     }
 }

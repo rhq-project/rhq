@@ -571,9 +571,9 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
             query += " ) ";
         }
         if (isFilled(searchString))
-            query += " AND upper(ev.detail) LIKE ? ";
+            query += " AND upper(ev.detail) LIKE ? " + QueryUtility.getEscapeClause();
         if (isFilled(source))
-            query += " AND upper(evs.location) LIKE ? ";
+            query += " AND upper(evs.location) LIKE ? " + QueryUtility.getEscapeClause();
         if (!isCountQuery) {
             pc.initDefaultOrderingField("ev.timestamp", PageOrdering.DESC);
             if (this.dbType instanceof PostgresqlDatabaseType) {

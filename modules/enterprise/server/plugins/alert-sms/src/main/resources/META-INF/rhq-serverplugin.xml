@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-sms"
+        displayName="Alert:SMS"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertSms"
+        description="Alert sender plugin that sends alert notifications via SMS"
+        >
+
+    <serverplugin:help>
+        This alert sender plugin is used to send notifications via SMS. Note that this
+        needs an account with www.developergraden.com. Also if you want to use the production
+        system, you need to pay per SMS sent. In the sandbox, you have 10 SMS for free per day,
+        which will include a notice about developergarden.
+    </serverplugin:help>
+
+
+    <!-- Global preferences for all sms alerts -->
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="login" type="string" description="Login to the provider" required="true"/>
+        <c:simple-property name="password" type="password" description="Password for the provider" required="true"/>
+        <c:simple-property name="environment">
+            <c:property-options>
+                <c:option value="sandbox" default="true"/>
+                <c:option value="production"/>
+            </c:property-options>
+        </c:simple-property>
+
+    </serverplugin:plugin-configuration>
+
+    <short-name>SMS</short-name>
+    <plugin-class>SmsSender</plugin-class>
+
+    <alert-configuration>
+        <c:simple-property name="tel" type="string" description="Telephone number to send SMS to"/>
+    </alert-configuration>
+
+</alert-plugin>

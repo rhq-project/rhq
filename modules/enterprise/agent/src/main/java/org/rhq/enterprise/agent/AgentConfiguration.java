@@ -21,6 +21,9 @@ package org.rhq.enterprise.agent;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -1167,6 +1170,14 @@ public class AgentConfiguration {
             tmp_directory.mkdir();
         }
 
+        // determine what, if any, plugins are to be disabled
+        String disabled_pref = m_preferences.get(AgentConfigurationConstants.PLUGINS_DISABLED, null);
+        List<String> disabled_plugins = null;
+        if (disabled_pref != null) {
+            String[] array = disabled_pref.split(",");
+            disabled_plugins = new ArrayList<String>(Arrays.asList(array));
+        }
+
         // Define what plugin container/agent classes are to be hidden from our plugins.
         String clRegex = m_preferences.get(AgentConfigurationConstants.PLUGINS_ROOT_PLUGIN_CLASSLOADER_REGEX, null);
         if (clRegex == null) {
@@ -1249,6 +1260,7 @@ public class AgentConfiguration {
         config.setPluginDirectory(plugin_dir);
         config.setDataDirectory(data_directory);
         config.setTemporaryDirectory(tmp_directory);
+        config.setDisabledPlugins(disabled_plugins);
         config.setRootPluginClassLoaderRegex(clRegex);
         config.setServerDiscoveryInitialDelay(server_discovery_initial_delay);
         config.setServerDiscoveryPeriod(server_discovery_period);

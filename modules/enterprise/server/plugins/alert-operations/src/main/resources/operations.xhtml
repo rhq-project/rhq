@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:a4j="https://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      >
+<head>
+    <title>Operations sender</title>
+</head>
+<body>
+<h:panelGrid columns="2" style="vertical-align:top" >
+    <h:panelGroup style="width:40%" >
+        <rich:panel>
+            <h:outputText value="Select mode"/>
+            <br/>
+            <h:selectOneMenu id="resMode" value="#{operationsBean.resMode}">
+                <f:selectItem itemValue="fixed" itemLabel="Resource ID"/>
+                <f:selectItem itemValue="deferred" itemLabel="Path to resource"/>
+            </h:selectOneMenu>
+            <p/>
+            <h:outputText value="Target resource"/>
+            <br/>
+            <h:inputText id="resourceId" title="Target Resource" value="#{operationsBean.resId}"/>
+            <p/>
+            <h:commandButton id="resourceIdSubmit"
+                             value="Select"
+                             type="submit"
+                             action="#{operationsBean.selectResource}"
+                             styleClass="buttonmed"
+                    />
+        </rich:panel>
+    </h:panelGroup>
+
+    <h:panelGroup style="width:60%; vertical-align:top;" >
+        <rich:panel rendered="#{not empty operationsBean.operationIds}">
+
+            Operations for:  <h:outputText value=" #{operationsBean.resourceName}"/>
+            <br/>
+
+            <h:selectOneMenu id="selectOperationMenu" value="#{operationsBean.operationId}">
+                <f:selectItems value="#{operationsBean.operationIds}"/>
+            </h:selectOneMenu>
+            <p/>
+            <h:commandButton id="opNameSubmit"
+                             value="Select"
+                             type="submit"
+                             action="#{operationsBean.selectOperation}"
+                             styleClass="buttonmed"
+                    />
+        </rich:panel>
+    </h:panelGroup>
+</h:panelGrid>
+<p/>
+    <h:panelGroup style="width:100%">
+        <h:messages />
+        <rich:panel rendered="#{not empty operationsBean.operationId}">
+            <br/>
+            Parameters for operation '<h:outputText value=" #{operationsBean.operationName}"/>':
+            <p/>
+            <h:selectOneMenu id="tokenModeMenu" value="#{operationsBean.tokenMode}">
+                <f:selectItem itemValue="literal" itemLabel="Literal"/>
+                <f:selectItem itemValue="interpreted" itemLabel="Interpreted"/>
+            </h:selectOneMenu>
+            <p/>
+            <onc:config configurationDefinition="#{operationsBean.configurationDefinition}"
+                        configuration="#{operationsBean.configuration}"
+                        nullConfigurationDefinitionMessage="#{operationsBean.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{nullConfigurationMessage}"
+                        nullConfigurationStyle="InfoBlock"
+                        readOnly="false"
+                    />
+            <p/>
+            <h:commandButton id="opParamSubmit"
+                             value="Set"
+                             type="submit"
+                             action="#{operationsBean.useConfiguration}"
+                             styleClass="buttonmed"
+                    />
+        </rich:panel>
+    </h:panelGroup>
+
+</body>
+</html>

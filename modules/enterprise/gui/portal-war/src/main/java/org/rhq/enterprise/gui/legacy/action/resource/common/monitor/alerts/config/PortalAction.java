@@ -67,13 +67,7 @@ public class PortalAction extends ResourceController {
         keyMethodMap.setProperty("editProperties", "editDefinitionProperties");
         keyMethodMap.setProperty("editConditions", "editDefinitionConditions");
         keyMethodMap.setProperty("editControlAction", "editDefinitionControlAction");
-        keyMethodMap.setProperty("editSyslogAction", "editDefinitionSyslogAction");
 
-        keyMethodMap.setProperty("viewRoles", "viewDefinitionRoles");
-        keyMethodMap.setProperty("viewUsers", "viewDefinitionUsers");
-
-        keyMethodMap.setProperty("addRoles", "addRolesDefinitions");
-        keyMethodMap.setProperty("addUsers", "addUsersDefinitions");
     }
 
     @Override
@@ -173,44 +167,6 @@ public class PortalAction extends ResourceController {
         return null;
     }
 
-    public ActionForward editDefinitionSyslogAction(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        setResource(request);
-        Portal portal = Portal.createPortal();
-        setTitle(request, portal, "alerts.config.platform.EditSyslogAction.Title");
-        portal.addPortlet(new Portlet(".events.config.edit.syslogaction"), 1);
-        portal.setDialog(true);
-        request.setAttribute(Constants.PORTAL_KEY, portal);
-
-        return null;
-    }
-
-    public ActionForward viewDefinitionRoles(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        setResource(request);
-        Portal portal = Portal.createPortal();
-        setTitle(request, portal, "alert.config.platform.props.ViewDef.roles.Title");
-        portal.addPortlet(new Portlet(".events.config.view.roles"), 1);
-
-        // JW - this shouldn't be a dialog ... portal.setDialog(true);
-        request.setAttribute(Constants.PORTAL_KEY, portal);
-
-        return null;
-    }
-
-    public ActionForward viewDefinitionUsers(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        setResource(request);
-        Portal portal = Portal.createPortal();
-        setTitle(request, portal, "alert.config.platform.props.ViewDef.users.Title");
-        portal.addPortlet(new Portlet(".events.config.view.users"), 1);
-
-        // JW - this shouldn't be a dialog ... portal.setDialog(true);
-        request.setAttribute(Constants.PORTAL_KEY, portal);
-
-        return null;
-    }
-
 
     public ActionForward monitorConfigureAlerts(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
@@ -255,30 +211,6 @@ public class PortalAction extends ResourceController {
 
         request.setAttribute(Constants.PORTAL_KEY, portal);
 
-        return null;
-    }
-
-    public ActionForward addUsersDefinitions(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        setResource(request);
-        Portal portal = Portal.createPortal();
-        setTitle(request, portal, "alerts.config.platform.AssignUsersToAlertDefinition.Title");
-        portal.addPortlet(new Portlet(".events.config.addusers"), 1);
-        portal.setDialog(false);
-
-        request.setAttribute(Constants.PORTAL_KEY, portal);
-        return null;
-    }
-
-    public ActionForward addRolesDefinitions(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        setResource(request);
-        Portal portal = Portal.createPortal();
-        setTitle(request, portal, "alerts.config.platform.AssignRolesToAlertDefinition.Title");
-        portal.addPortlet(new Portlet(".events.config.addroles"), 1);
-        portal.setDialog(false);
-
-        request.setAttribute(Constants.PORTAL_KEY, portal);
         return null;
     }
 

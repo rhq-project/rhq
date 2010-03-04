@@ -59,17 +59,19 @@ public final class CriteriaQueryGenerator {
 
     public enum AuthorizationTokenType {
         RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking 
-        GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking
+        GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking 
     }
 
     private Criteria criteria;
 
     private String authorizationJoinFragment;
     private String authorizationPermsFragment;
+    private String authorizationCustomConditionFragment;
     private int authorizationSubjectId;
 
     private String alias;
     private String className;
+    private String projection;
     private static String NL = System.getProperty("line.separator");
 
     private List<Field> persistentBagFields = new ArrayList<Field>();
@@ -78,6 +80,10 @@ public final class CriteriaQueryGenerator {
         this.criteria = criteria;
         this.className = criteria.getPersistentClass().getSimpleName();        
         this.alias = this.criteria.getAlias();
+    }
+
+    public void setAuthorizationCustomConditionFragment(String fragment) {
+        this.authorizationCustomConditionFragment = fragment;
     }
 
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, int subjectId) {
@@ -108,7 +114,7 @@ public final class CriteriaQueryGenerator {
         }
 
         if (fuzzyMatch) {
-            expression += " ESCAPE '" + QueryUtility.getEscapeCharacter() + "'";
+            expression += QueryUtility.getEscapeClause();
         }
 
         return expression;
@@ -169,7 +175,11 @@ public final class CriteriaQueryGenerator {
         if (countQuery) {
             results.append("COUNT(").append(alias).append(")").append(NL);
         } else {
-            results.append(alias).append(NL);
+            if (projection == null) {
+                results.append(alias).append(NL);
+            } else {
+                results.append(projection).append(NL);
+            }
         }
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
         if (countQuery == false) {
@@ -220,7 +230,7 @@ public final class CriteriaQueryGenerator {
                     } else {
                         fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                     }
-                    fragment += " ESCAPE '" + QueryUtility.getEscapeCharacter() + "'";
+                    fragment += QueryUtility.getEscapeClause();
                 } else {
                     fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                 }
@@ -245,6 +255,16 @@ public final class CriteriaQueryGenerator {
             if (null != this.authorizationPermsFragment) {
                 results.append(this.authorizationPermsFragment + " ");
             }
+        }
+
+        if (authorizationCustomConditionFragment != null) {
+            if (firstCrit) {
+                firstCrit = false;
+            } else {
+                // always want AND for security, regardless of conjunctiveFragment
+                results.append(NL).append(" AND ");
+            }
+            results.append(this.authorizationCustomConditionFragment);
         }
 
         if (countQuery == false) {
@@ -368,7 +388,7 @@ public final class CriteriaQueryGenerator {
             return true;
         }
 
-        for (Class declaredInterface : fieldType.getInterfaces()) {
+        for (Class<?> declaredInterface : fieldType.getInterfaces()) {
             if (List.class.isAssignableFrom(declaredInterface)) {
                 return true;
             }
@@ -396,6 +416,19 @@ public final class CriteriaQueryGenerator {
         return persistentBagFields;
     }
 
+    /**
+     * If you want to return something other than the list of entities represented by the passed Criteria object,
+     * you can alter the projection here to return a customized subset or superset of data.  The projection will
+     * only affect the ResultSet for the data query, not the count query.
+     * 
+     * If you are projecting a composite object that does not directly extend the entity your Criteria object 
+     * represents, then you will need to manually initialize the persistent bags using the methods exposed on
+     * {@link CriteriaQueryRunner} 
+     */
+    public void alterProjection(String projection) {
+        this.projection = projection;
+    }
+
     public Query getQuery(EntityManager em) {
         String queryString = getQueryString(false);
         Query query = em.createQuery(queryString);
@@ -419,20 +452,15 @@ public final class CriteriaQueryGenerator {
             Object value = critField.getValue();
             if (value instanceof String) {
                 String formattedValue = (String) value;
+
+                if (wantsFuzzyMatching) {
+                    formattedValue = "%" + QueryUtility.escapeSearchParameter(formattedValue) + "%";
+                }
+
                 if (wantCaseInsensitiveMatch) {
                     formattedValue = formattedValue.toLowerCase();
                 }
-                /* 
-                 * Double escape backslashes if they are not treated as string literals by the db vendor
-                 * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
-                 */
-                formattedValue = QueryUtility.handleDoubleEscaping(formattedValue);
 
-                if (wantsFuzzyMatching) {
-                    // append '%' onto edges that don't already have '%' explicitly set from the caller
-                    formattedValue = (formattedValue.startsWith("%") ? "" : "%") + formattedValue
-                        + (formattedValue.endsWith("%") ? "" : "%");
-                }
                 value = formattedValue;
             }
             if (LOG.isDebugEnabled()) {

@@ -25,36 +25,10 @@
     <dependencies>
 
         <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-enterprise-server</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <!--
-            TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes. It is fixed in JDK 6
-        -->
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>jboss.jboss-embeddable-ejb3</groupId>
-            <artifactId>hibernate-all</artifactId>
-            <version>1.0.0.Alpha9</version>
-            <scope>provided</scope>
-            <!-- needed for referenced domain entities that use Hibernate annotations -->
-        </dependency>
-
-        <dependency>
             <groupId>org.snmp4j</groupId>
             <artifactId>snmp4j</artifactId>
             <version>1.8.2</version>
         </dependency>
-
 
     </dependencies>
 

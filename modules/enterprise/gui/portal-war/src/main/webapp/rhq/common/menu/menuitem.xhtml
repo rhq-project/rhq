@@ -9,6 +9,7 @@
    xmlns:ui="http://java.sun.com/jsf/facelets"
    xmlns:rich="http://richfaces.ajax4jsf.org/rich"
    xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+   xmlns:onc="http://jboss.org/on/component"
    xmlns:onf="http://jboss.org/on/function">
 
 <body>
@@ -218,7 +219,7 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                         suggestionAction="#{ResourceSelectUIBean.autocomplete}"
                         var="result"
                         data="foo"
-                        fetchValue="#{result.resource.id}"
+                        fetchValue="#{result.original.resource.id}"
                         nothingLabel="No matching resources found"
                         style="background-color: #cccccc;"
                         onselect="document.location.href='#{onf:getDefaultResourceTabURL()}?id=' + #{rich:element('selectedResource')}.value"
@@ -228,15 +229,19 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                         <h:column>
                            <f:facet name="header">Avail</f:facet>
                            <h:graphicImage
-                              value="/images/icons/availability_#{result.availability == 'UP' ? 'green' : 'red'}_16.png" />
+                              value="/images/icons/availability_#{result.original.availability == 'UP' ? 'green' : 'red'}_16.png" />
                         </h:column>
                         <h:column>
                            <f:facet name="header">Resource</f:facet>
-                           <h:outputText value="#{result.resource.name}" />
+                           <h:outputText value="#{result.original.resource.name}" />
                         </h:column>
-                        <h:column>
+                        <h:column rendered="#{result.typeResolutionNeeded}">
+                            <f:facet name="header">Type</f:facet>
+                            <h:outputText value="#{result.resourceTypeName}"/>
+                        </h:column>
+                        <h:column rendered="#{result.parentResolutionNeeded}">
                            <f:facet name="header">Parent</f:facet>
-                           <h:outputText value="#{result.parent.name}" />
+                           <onc:resourcePartialLineage parents="#{result.parents}" renderLinks="false" />
                         </h:column>
                      </rich:suggestionbox>
                   </h:panelGroup>

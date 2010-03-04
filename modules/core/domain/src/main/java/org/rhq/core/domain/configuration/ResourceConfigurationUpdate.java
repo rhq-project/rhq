@@ -104,8 +104,8 @@ import org.rhq.core.domain.resource.Resource;
         + "    WHERE (cu.modifiedTime <> (SELECT MIN(icu.modifiedTime) " // 
         + "                                 FROM ResourceConfigurationUpdate icu " //
         + "                                WHERE icu.resource.id = res.id))" //
-        + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
-        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (UPPER(res.name) LIKE :resourceFilter ESCAPE :escapeChar OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter ESCAPE :escapeChar OR :parentFilter IS NULL) " //
         + "      AND (cu.createdTime > :startTime OR :startTime IS NULL) " //
         + "      AND (cu.modifiedTime < :endTime OR :endTime IS NULL) " //
         + "      AND (cu.status LIKE :status OR :status IS NULL) "),
@@ -122,8 +122,8 @@ import org.rhq.core.domain.resource.Resource;
         + "      AND (cu.modifiedTime <> (SELECT MIN(icu.modifiedTime) " // 
         + "                                 FROM ResourceConfigurationUpdate icu " //
         + "                                WHERE icu.resource.id = res.id))" //
-        + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
-        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (UPPER(res.name) LIKE :resourceFilter ESCAPE :escapeChar OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter ESCAPE :escapeChar OR :parentFilter IS NULL) " //
         + "      AND (cu.createdTime > :startTime OR :startTime IS NULL) " //
         + "      AND (cu.modifiedTime < :endTime OR :endTime IS NULL) " //
         + "      AND (cu.status LIKE :status OR :status IS NULL) "),

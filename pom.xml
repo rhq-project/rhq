@@ -73,8 +73,8 @@
     <postgresql.version>8.4-701.jdbc3</postgresql.version>
     <h2.version>1.1.117</h2.version>
     <jtds.version>1.2.2</jtds.version>
+    <richfaces.version>3.3.2.GA</richfaces.version>
     <jline.version>0.9.94</jline.version>
-    <richfaces.version>3.3.2.SR1</richfaces.version>
     <sigar.version>1.6.3.82</sigar.version>
     <quartz.version>1.6.5</quartz.version>
     <jna.version>3.2.2</jna.version>
@@ -505,12 +505,22 @@
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>build-helper-maven-plugin</artifactId>
-           <version>1.3</version>
+           <version>1.4</version>
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>buildnumber-maven-plugin</artifactId>
-           <version>1.0-beta-3</version>
+           <version>1.0-beta-4</version>
+         </plugin>
+         <plugin>
+           <groupId>org.codehaus.mojo</groupId>
+           <artifactId>exec-maven-plugin</artifactId>
+           <version>1.1</version>
+         </plugin>
+         <plugin>
+           <groupId>org.codehaus.mojo</groupId>
+           <artifactId>properties-maven-plugin</artifactId>
+           <version>1.0-alpha-2</version>
          </plugin>
        </plugins>
      </pluginManagement>
@@ -525,7 +535,7 @@
          <artifactId>build-helper-maven-plugin</artifactId>
          <executions>
            <execution>
-             <phase>validate</phase>
+             <phase>initialize</phase>
              <goals>
                <goal>maven-version</goal>
              </goals>
@@ -533,27 +543,83 @@
          </executions>
       </plugin>
 
-      <!-- Set the 'buildNumber' property to the current SVN revision, or to '0'
-           if an SVN revision cannot be determined, so we can include the SVN
-           revision in the MANIFEST.MF files of all build artifacts. -->
       <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>buildnumber-maven-plugin</artifactId>
-          <executions>
-             <execution>
-                <phase>validate</phase>
-                <goals>
-                   <goal>create</goal>
-                </goals>
-             </execution>
-             </executions>
-             <configuration>
-             <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
-             <revisionOnScmFailure>0</revisionOnScmFailure>
-             <doCheck>false</doCheck>
-             <doUpdate>false</doUpdate>
-             <timestampFormat>{0, date, long} {0, time, long}</timestampFormat>
-          </configuration>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>write-build-time-properties-file</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>generate-resources</phase>
+            <configuration>
+              <tasks>
+                <tstamp>
+                  <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT"/>
+                </tstamp>
+                <mkdir dir="target"/>
+                <echo file="target/build-time.properties" level="error">buildTime = ${buildTime}</echo>
+              </tasks>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>echo-build-properties</id>
+            <phase>compile</phase>
+            <inherited>false</inherited>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <tasks>
+                <echo level="debug">buildTime = ${buildTime}</echo>
+                <echo level="debug">buildNumber = ${buildNumber}</echo>
+              </tasks>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+                <execution>
+                    <id>generate-build-number-properties</id>
+                    <phase>generate-resources</phase>
+                    <goals>
+                        <goal>exec</goal>
+                    </goals>
+                    <configuration>
+                        <executable>git</executable>
+                        <arguments>
+                            <argument>log</argument>
+                            <argument>--pretty=format:buildNumber = %h</argument>
+                            <argument>-n1</argument>
+                        </arguments>
+                        <outputFile>${project.build.directory}/build-number.properties</outputFile>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>read-project-properties</goal>
+            </goals>
+            <configuration>
+              <files>
+                <file>${project.build.directory}/build-time.properties</file>
+                <file>${project.build.directory}/build-number.properties</file>
+              </files>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <!-- Ensure all code compiles and runs on Java 5 or later. -->
@@ -588,7 +654,77 @@
                <Os-Arch>${os.arch}</Os-Arch>
                <Os-Version>${os.version}</Os-Version>
                <Build-Number>${buildNumber}</Build-Number>
-               <Build-Time>${timestamp}</Build-Time>
+               <Build-Time>${buildTime}</Build-Time>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-ejb-plugin</artifactId>
+        <configuration>
+          <ejbVersion>3.0</ejbVersion>
+          <archive>
+            <manifest>
+               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+               <addClasspath>true</addClasspath>
+               <classpathPrefix>lib/</classpathPrefix>
+            </manifest>
+            <manifestEntries>
+               <Maven-Version>${maven.version}</Maven-Version>
+               <Java-Version>${java.version}</Java-Version>
+               <Java-Vendor>${java.vendor}</Java-Vendor>
+               <Os-Name>${os.name}</Os-Name>
+               <Os-Arch>${os.arch}</Os-Arch>
+               <Os-Version>${os.version}</Os-Version>
+               <Build-Number>${buildNumber}</Build-Number>
+               <Build-Time>${buildTime}</Build-Time>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-war-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+            <manifestEntries>
+               <Maven-Version>${maven.version}</Maven-Version>
+               <Java-Version>${java.version}</Java-Version>
+               <Java-Vendor>${java.vendor}</Java-Vendor>
+               <Os-Name>${os.name}</Os-Name>
+               <Os-Arch>${os.arch}</Os-Arch>
+               <Os-Version>${os.version}</Os-Version>
+               <Build-Number>${buildNumber}</Build-Number>
+               <Build-Time>${buildTime}</Build-Time>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-ear-plugin</artifactId>
+        <configuration>
+          <version>1.4</version>  <!-- JEE version -->
+          <archive>
+            <manifest>
+               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+            <manifestEntries>
+               <Maven-Version>${maven.version}</Maven-Version>
+               <Java-Version>${java.version}</Java-Version>
+               <Java-Vendor>${java.vendor}</Java-Vendor>
+               <Os-Name>${os.name}</Os-Name>
+               <Os-Arch>${os.arch}</Os-Arch>
+               <Os-Version>${os.version}</Os-Version>
+               <Build-Number>${buildNumber}</Build-Number>
+               <Build-Time>${buildTime}</Build-Time>
             </manifestEntries>
           </archive>
         </configuration>
@@ -600,9 +736,7 @@
           <execution>
             <id>enforce-versions</id>
             <goals>
-              <!-- IMPORTANT: Use enforce goal, rather than enforce-once goal, otherwise reactor
-                              builds will fail due to http://jira.codehaus.org/browse/MENFORCER-11 -->
-              <goal>enforce</goal>
+              <goal>enforce-once</goal>
             </goals>
             <configuration>
               <rules>
@@ -719,7 +853,7 @@
             <property>
                <name>rhq.m2.repo.url.oracle</name>
             </property>
-         </activation>        
+         </activation>
 
         <dependencies>
             <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.

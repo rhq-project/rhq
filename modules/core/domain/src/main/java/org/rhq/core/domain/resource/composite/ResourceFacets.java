@@ -39,7 +39,7 @@ public class ResourceFacets implements Serializable {
     public static ResourceFacets ALL = new ResourceFacets(-1, true, true, true, true, true, true, true, true);
     /*
      * immutable private member data makes this object safe to use in a concurrent environment, such as a 
-     * concurrent-acess cache of ResourceFacets objects
+     * concurrent-access cache of ResourceFacets objects
      */
     private final int resourceTypeId;
     private final boolean measurement;

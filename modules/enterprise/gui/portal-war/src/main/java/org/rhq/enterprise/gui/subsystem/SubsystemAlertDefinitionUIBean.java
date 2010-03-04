@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,12 +34,15 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.composite.AlertDefinitionComposite;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -68,6 +71,14 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
     private Date dateEndFilter;
     private String categoryFilter;
     private SelectItem[] categoryFilterItems;
+
+    private IntExtractor<AlertDefinitionComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<AlertDefinitionComposite>() {
+
+        public int extract(AlertDefinitionComposite object) {
+            Resource resource = object.getAlertDefinition().getResource();
+            return resource == null ? 0 : resource.getId();
+        }
+    };
 
     public SubsystemAlertDefinitionUIBean() {
         datePattern = EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getDateTimeDisplayPreferences()
@@ -167,6 +178,84 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
         return "success";
     }
 
+    public String disableSelected() {
+        Integer[] selected = getSelectedItems();
+
+        try {
+            Subject subject = getSubject();
+
+            List<Integer> resourceDefinitions = new ArrayList<Integer>();
+            List<Integer> groupDefinitions = new ArrayList<Integer>();
+            List<Integer> typeDefinitions = new ArrayList<Integer>();
+
+            for (Integer definitionId : selected) {
+                if (alertDefinitionManager.isTemplate(definitionId)) {
+                    typeDefinitions.add(definitionId);
+                } else if (alertDefinitionManager.isGroupAlertDefinition(definitionId)) {
+                    groupDefinitions.add(definitionId);
+                } else {
+                    resourceDefinitions.add(definitionId);
+                }
+            }
+
+            // delete resources first
+            alertDefinitionManager.disableAlertDefinitions(subject, resourceDefinitions
+                .toArray(new Integer[resourceDefinitions.size()]));
+
+            // then delete templates and group alert defs, which are both tolerant of missing child definitions
+            groupAlertDefinitionManager.disableGroupAlertDefinitions(subject, groupDefinitions
+                .toArray(new Integer[groupDefinitions.size()]));
+            alertTemplateManager.removeAlertTemplates(subject, typeDefinitions.toArray(new Integer[typeDefinitions
+                .size()]));
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disable selected alert definitions.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to disable selected alert definitions.",
+                e);
+        }
+
+        return "success";
+    }
+
+    public String enableSelected() {
+        Integer[] selected = getSelectedItems();
+
+        try {
+            Subject subject = getSubject();
+
+            List<Integer> resourceDefinitions = new ArrayList<Integer>();
+            List<Integer> groupDefinitions = new ArrayList<Integer>();
+            List<Integer> typeDefinitions = new ArrayList<Integer>();
+
+            for (Integer definitionId : selected) {
+                if (alertDefinitionManager.isTemplate(definitionId)) {
+                    typeDefinitions.add(definitionId);
+                } else if (alertDefinitionManager.isGroupAlertDefinition(definitionId)) {
+                    groupDefinitions.add(definitionId);
+                } else {
+                    resourceDefinitions.add(definitionId);
+                }
+            }
+
+            // delete resources first
+            alertDefinitionManager.enableAlertDefinitions(subject, resourceDefinitions
+                .toArray(new Integer[resourceDefinitions.size()]));
+
+            // then delete templates and group alert defs, which are both tolerant of missing child definitions
+            groupAlertDefinitionManager.enableGroupAlertDefinitions(subject, groupDefinitions
+                .toArray(new Integer[groupDefinitions.size()]));
+            alertTemplateManager.removeAlertTemplates(subject, typeDefinitions.toArray(new Integer[typeDefinitions
+                .size()]));
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enable selected alert definitions.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to enable selected alert definitions.",
+                e);
+        }
+
+        return "success";
+    }
+
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
@@ -176,13 +265,13 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
         return dataModel;
     }
 
-    private class ResultsDataModel extends PagedListDataModel<AlertDefinitionComposite> {
+    private class ResultsDataModel extends ResourceNameDisambiguatingPagedListDataModel<AlertDefinitionComposite> {
         public ResultsDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
         @Override
-        public PageList<AlertDefinitionComposite> fetchPage(PageControl pc) {
+        public PageList<AlertDefinitionComposite> fetchDataForPage(PageControl pc) {
             getDataFromRequest();
 
             String resourceFilter = getResourceFilter();
@@ -213,6 +302,10 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
                 }
             }
             return result;
+        }
+
+        protected IntExtractor<AlertDefinitionComposite> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRACTOR;
         }
 
         private void getDataFromRequest() {

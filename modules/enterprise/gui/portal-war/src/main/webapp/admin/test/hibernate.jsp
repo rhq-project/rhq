@@ -7,6 +7,7 @@
 <%@ page import="org.hibernate.type.IntegerType" %>
 <%@ page import="org.hibernate.type.LongType" %>
 <%@ page import="org.hibernate.type.Type" %>
+<%@ page import="org.rhq.core.domain.util.PersistenceUtility" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="javax.naming.InitialContext" %>
@@ -106,7 +107,7 @@
 <%
     if (hql != null || namedQuery != null) {
         System.out.println("hql: " + hql);
-        String sql = null;
+        List<String> sqlStrings = null;
         Set<String> parameterNames = null;
         try {
             qt = new ASTQueryTranslatorFactory().createQueryTranslator(
@@ -116,12 +117,10 @@
                     (SessionFactoryImplementor) s.getSessionFactory());
 
             qt.compile(null, false);
-            sql = qt.getSQLString();
+            sqlStrings = qt.collectSqlStrings();
 
-            if (sql == null) {
-               out.write("Could not get SQL translation for DML-style operation");
-            } else {
-               out.write("<b>SQL: </b><textarea rows=\"10\" cols=\"120\">" + sql + "</textarea>");
+            for (String nextSQL : sqlStrings) {
+               out.write("<b>SQL: </b><textarea rows=\"10\" cols=\"120\">" + nextSQL + "</textarea>");
             }
 
             ParameterTranslations pt = qt.getParameterTranslations();
@@ -145,7 +144,7 @@
                 <td><input type="text" name="${pn}" value="${param[pn]}"></td>
                 <td>
                     <c:set value="${pn}" var="pn" scope="request"/>
-                    <%=qt.getParameterTranslations().getNamedParameterExpectedType((String) request.getAttribute("pn")).getName()%>
+                    <%=PersistenceUtility.getDisplayString(qt.getParameterTranslations().getNamedParameterExpectedType((String) request.getAttribute("pn")))%>
                 </td>
             </tr>
         </c:forEach>
@@ -165,15 +164,10 @@
                 Iterator iter = parameterNames.iterator();
                 while (iter.hasNext()) {
                     String pn = (String) iter.next();
-                    Object paramterValue = request.getParameter(pn);
+                    Object paramValue = request.getParameter(pn);
                     Type type = qt.getParameterTranslations().getNamedParameterExpectedType(pn);
-                    if (type instanceof LongType)
-                        paramterValue = Long.parseLong((String) paramterValue);
-                    else if (type instanceof IntegerType)
-                        paramterValue = Integer.parseInt((String) paramterValue);
-
-                    //out.println("parameter " + pn + " = " + paramterValue);
-                    q.setParameter(pn, paramterValue);
+                    paramValue = PersistenceUtility.cast((String)paramValue, type);
+                    q.setParameter(pn, paramValue);
                 }
                 
                 if (isDMLStyle) {

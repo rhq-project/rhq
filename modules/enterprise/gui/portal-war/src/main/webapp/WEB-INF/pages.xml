@@ -1,7 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <pages xmlns="http://jboss.com/products/seam/pages"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://jboss.com/products/seam/pages 
+       xsi:schemaLocation="http://jboss.com/products/seam/pages
                            http://jboss.com/products/seam/pages-2.1.xsd">
+
+    <page view-id="/rhq/resource/alert/viewAlert.xhtml" action="#{alertNotificationStoreSelector.select('alertDefinitionNotificationStore')}" />
+
+    <page view-id="/rhq/resource/alert/notif/notificationTemplates.xhtml" action="#{alertNotificationStoreSelector.select('alertNotificationTemplateStore')}" />
+
+  <page view-id="/rhq/resource/configuration/view.xhtml">
+    <action execute="#{configurationViewer.initialize}" on-postback="false"/>
+
+    <navigation from-action="#{ConfigHelperUIBean.accessMap}">
+      <redirect view-id="/rhq/resource/configuration/view-map.xhtml">
+        <param name="id" value="#{ResourceUIBean.id}"/>
+        <param name="listName" value="#{param.listName}"/>
+        <param name="listIndex" value="#{param.listIndex}"/>
+      </redirect>
+    </navigation>
+  </page>
+
+  <page view-id="/rhq/resource/configuration/view-map.xhtml" action="#{configurationViewer.initialize}"/>
+
+  <page view-id="/rhq/resource/configuration/edit.xhtml" concurrent-request-timeout="15000" timeout="180000">
+    <action execute="#{configurationEditor.initialize}"
+            on-postback="false"
+            if="#{!conversation.longRunning or (empty resourceConfiguration or resourceConfiguration.id ne ResourceUIBean.id)}"/>
+
+    <navigation from-action="#{configurationEditor.initialize}">
+      <rule if="#{configurationEditor.initialized}">
+        <begin-conversation join="true"/>
+      </rule>
+
+      <rule if="#{configurationEditor.updateInProgress}">
+        <redirect view-id="/rhq/resource/configuration/view.xhtml" include-page-params="true">
+          <param name="id" value="#{ResourceUIBean.id}"/>
+        </redirect>
+      </rule>
+    </navigation>
+
+    <navigation from-action="#{configurationEditor.updateConfiguration}">
+      <!-- success out is used for both success and in progress update statuses -->
+      <rule if-outcome="success">
+        <end-conversation before-redirect="false"/>
+        <redirect view-id="/rhq/resource/configuration/history.xhtml">
+          <param name="id" value="#{ResourceUIBean.id}"/>
+        </redirect>
+      </rule>
+
+      <rule if-outcome="#{nochange or failure}">
+        <render view-id="/rhq/resource/configuration/edit.xhtml"/>
+      </rule>
+    </navigation>
+
+    <navigation from-action="#{configurationEditor.finishAddMap}">
+      <render view-id="/rhq/resource/configuration/edit.xhtml"/>
+    </navigation>
+
+    <navigation from-action="#{configurationEditor.finishEditMap}">
+      <render view-id="/rhq/resource/configuration/edit.xhtml"/>
+    </navigation>
+  </page>
 
 </pages>

@@ -58,7 +58,6 @@ public class AugeasProxy {
     private Augeas augeas;
     private List<String> modules;
     private AugeasTreeBuilder augeasTreeBuilder;
- 
     
     /**
      * Instantiates new proxy with supplied configuration and
@@ -96,7 +95,7 @@ public class AugeasProxy {
      * @throws AugeasTreeException
      * @throws AugeasException if Augeas could not be initialized.
      */
-    public void load() throws AugeasTreeException, AugeasException {
+    public void load() throws AugeasTreeException {
         try {
             config.loadFiles();
             augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());

@@ -36,7 +36,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;

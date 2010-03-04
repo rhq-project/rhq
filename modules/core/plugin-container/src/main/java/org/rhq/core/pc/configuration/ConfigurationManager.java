@@ -54,7 +54,8 @@ import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.core.template.TemplateEngine;
+
+import org.rhq.core.util.exception.WrappedRemotingException;
 
 /**
  * Manages configuration of all resources across all plugins.
@@ -185,15 +186,12 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private void mergeRawsIntoStructured(Configuration configuration, ResourceConfigurationFacet facet) {
         Configuration structuredConfig = facet.loadStructuredConfiguration();
 
-        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
-
         if (structuredConfig != null) {
             prepareConfigForMergeIntoStructured(configuration, structuredConfig);
 
             for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
-                String contents = templateEngine.replaceTokens(new String(rawConfig.getContents()));
+                String contents = rawConfig.getContents();
                 rawConfig.setContents(contents);
-
                 structuredConfig.addRawConfiguration(rawConfig);
                 facet.mergeStructuredConfiguration(rawConfig, configuration);
             }
@@ -217,14 +215,13 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         prepareConfigForMergeIntoRaws(configuration, rawConfigs);
 
         Queue<RawConfiguration> queue = new LinkedList<RawConfiguration>(rawConfigs);
-        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
 
         while (!queue.isEmpty()) {
             RawConfiguration originalRaw = queue.poll();
             RawConfiguration mergedRaw = facet.mergeRawConfiguration(configuration, originalRaw);
             if (mergedRaw != null) {
                 //TODO bypass validation of structured config for template values
-                mergedRaw.setContents(templateEngine.replaceTokens(mergedRaw.getContents()));
+                mergedRaw.setContents(mergedRaw.getContents());
                 updateRawConfig(configuration, originalRaw, mergedRaw);
             }
         }
@@ -267,40 +264,6 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return "Plugin Error: Resource Component for [" + resourceType.getName() + "] Resource with id [" + resourceId
             + "]: " + msg;
     }
-
-    //    public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {
-    //        ResourceType resourceType = getResourceType(resourceId);
-    //        ConfigurationFacet configComponent = getConfigurationFacet(resourceId, FacetLockType.READ);
-    //        try {
-    //            Configuration configuration = configComponent.loadResourceConfiguration();
-    //            if (configuration == null) {
-    //                throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
-    //                        + "] Resource with id [" + resourceId + "] returned a null Configuration.");
-    //            }
-    //
-    //            // If the plugin didn't already set the notes field, set it to something useful.
-    //            if (configuration.getNotes() == null) {
-    //                configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
-    //            }
-    //
-    //            ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
-    //
-    //            // Normalize and validate the config.
-    //            ConfigurationUtility.normalizeConfiguration(configuration, configurationDefinition);
-    //            List<String> errorMessages = ConfigurationUtility.validateConfiguration(configuration,
-    //                configurationDefinition);
-    //            for (String errorMessage : errorMessages) {
-    //                log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
-    //                    + resourceType.getPlugin() + " plugin - " + errorMessage);
-    //            }
-    //
-    //            return configuration;
-    //        } catch (Throwable t) {
-    //            //noinspection ThrowableInstanceNeverThrown
-    //            throw new PluginContainerException("Cannot load Resource configuration for [" + resourceId + "]",
-    //                new WrappedRemotingException(t));
-    //        }
-    //    }
 
     /**
      * Returns a thread pool that this object will use when asychronously executing configuration operations on a
@@ -365,36 +328,36 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return null;
     }
 
-    public void validate(Configuration configuration, int resourceId, boolean isStructured)
+    public Configuration validate(Configuration configuration, int resourceId, boolean isStructured)
         throws PluginContainerException {
+
+        boolean success = true;
+
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
         ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
             FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
         if (isStructured) {
-            return;
-        } else {
-            StringBuilder errorMessage = null;
-
             try {
-                for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
-                    try {
-                        facet.validateRawConfiguration(rawConfiguration);
-                    } catch (IllegalArgumentException e) {
-                        if (null == errorMessage) {
-                            errorMessage = new StringBuilder();
-                        }
-                        errorMessage.append("file " + rawConfiguration.getPath() + " failed validation with "
-                            + e.getMessage() + ".");
-                    }
-                }
+                facet.validateStructuredConfiguration(configuration);
+            } catch (IllegalArgumentException e) {
+                success = false;
             } catch (Throwable t) {
-                errorMessage = new StringBuilder();
-                errorMessage.append("configuation validation failed with" + t.getMessage() + ".");
+                throw new PluginContainerException(t.getMessage(), t);
             }
-            if (null != errorMessage) {
-                throw new PluginContainerException(errorMessage.toString());
+        } else {
+            for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
+                try {
+                    facet.validateRawConfiguration(rawConfiguration);
+                } catch (IllegalArgumentException e) {
+                    success = false;
+                    rawConfiguration.errorMessage = e.getMessage();
+                } catch (Throwable t) {
+                    success = false;
+                    rawConfiguration.errorMessage = t.getMessage();
+                }
             }
         }
+        return success ?  null: configuration;
     }
 }

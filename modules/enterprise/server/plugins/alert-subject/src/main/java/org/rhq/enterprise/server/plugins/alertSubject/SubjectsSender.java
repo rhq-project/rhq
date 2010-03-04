@@ -18,14 +18,20 @@
  */
 package org.rhq.enterprise.server.plugins.alertSubject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.notification.ResultState;
+import org.rhq.core.domain.alert.notification.SenderResult;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
-import org.rhq.enterprise.server.plugin.pc.alert.ResultState;
-import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * AlertSender that notifies RHQ subjects by gathering the email addresses of the
@@ -41,9 +47,30 @@ public class SubjectsSender extends AlertSender {
     @Override
     public SenderResult send(Alert alert) {
 
+        SenderResult noSubjects = new SenderResult(ResultState.FAILURE,"No subjects defined");
 
         PropertySimple subjectIdProp = alertParameters.getSimple("subjectId");
+        if (subjectIdProp==null )
+            return noSubjects;
 
-        return new SenderResult(ResultState.FAILURE,"Not yet implemented");
+        String subjectIdString = subjectIdProp.getStringValue();
+        if (subjectIdString==null)
+            return noSubjects;
+
+        String[] subjectIds = subjectIdString.split(",");
+
+        List<String> emails = new ArrayList<String>(subjectIds.length);
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        for (String subjectId : subjectIds ) {
+            Subject subject = subjectMgr.getSubjectById(Integer.parseInt(subjectId));
+            String emailAddress = subject.getEmailAddress();
+            if (emailAddress!=null)
+                emails.add(emailAddress);
+            else
+                if (log.isDebugEnabled())
+                    log.debug("Subject " + subject.getId() + " has no email associated ");
+        }
+
+        return new SenderResult(ResultState.DEFERRED_EMAIL,"Sending to subject ids " + subjectIdString , emails);
     }
 }

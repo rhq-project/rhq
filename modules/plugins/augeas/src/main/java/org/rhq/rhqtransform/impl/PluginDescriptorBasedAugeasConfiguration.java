@@ -36,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.augeas.config.AugeasConfiguration;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.util.Glob;
+import org.rhq.augeas.util.LensHelper;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.rhqtransform.AugeasRhqException;
@@ -78,15 +79,30 @@ public class PluginDescriptorBasedAugeasConfiguration implements AugeasConfigura
         modules = new ArrayList<AugeasModuleConfig>();
         if (includes.isEmpty())
             throw new AugeasRhqException("At least one Include glob must be defined.");
-
+        String augeasModuleName = getAugeasModuleName(pluginConfiguration);
+        File tempDir = null;
+        try {
+          loadPath = pluginConfiguration.getSimpleValue(AUGEAS_LOAD_PATH, "");
+           if (loadPath.equals("")){
+        	   tempDir = LensHelper.createTempDir(augeasModuleName);
+        	   loadPath = tempDir.getAbsolutePath(); 
+             }else{
+            	 tempDir = new File(loadPath);
+             }
+       
         AugeasModuleConfig config = new AugeasModuleConfig();
-        config.setIncludedGlobs(includes);
-        config.setExcludedGlobs(excludes);
-        config.setLensPath(getAugeasModuleName(pluginConfiguration) + ".lns");
-        config.setModuletName(getAugeasModuleName(pluginConfiguration));
+          config.setIncludedGlobs(includes);
+          config.setExcludedGlobs(excludes);
+          String modName = Character.toLowerCase(augeasModuleName.charAt(0))+augeasModuleName.substring(1);
+          LensHelper.cpFileFromPluginToTemp(this.getClass().getClassLoader(),tempDir, modName+".aug");
+          config.setLensPath(getAugeasModuleName(pluginConfiguration) + ".lns");
+          config.setModuletName(getAugeasModuleName(pluginConfiguration));
         modules.add(config);
-
-        loadPath = pluginConfiguration.getSimpleValue(AUGEAS_LOAD_PATH, DEFAULT_AUGEAS_LOAD_PATH);
+        
+        }catch(Exception e){
+        	log.error("Creation of temporary Directory for augeas lens failed.");
+        	throw new AugeasRhqException("Creation of temporary Directory for augeas lens failed.",e);
+        }
     }
 
     protected List<String> determineGlobs(Configuration configuration, String name) {

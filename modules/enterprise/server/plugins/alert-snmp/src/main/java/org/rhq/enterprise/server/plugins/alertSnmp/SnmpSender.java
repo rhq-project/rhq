@@ -25,12 +25,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.notification.ResultState;
+import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.plugin.pc.alert.ResultState;
 import org.rhq.enterprise.server.plugins.alertSnmp.SnmpTrapSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
-import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -68,7 +68,7 @@ public class SnmpSender extends AlertSender {
         String result;
         List<Resource> lineage = resourceManager.getResourceLineage(alert.getAlertDefinition().getResource().getId());
         String platformName = lineage.get(0).getName();
-        String conditions = alertManager.prettyPrintAlertConditions(alert);
+        String conditions = alertManager.prettyPrintAlertConditions(alert, false);
         String alertUrl = alertManager.prettyPrintAlertURL(alert);
 
         SenderResult res ;

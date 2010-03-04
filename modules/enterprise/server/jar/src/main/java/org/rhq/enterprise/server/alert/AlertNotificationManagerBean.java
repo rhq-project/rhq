@@ -20,8 +20,6 @@ package org.rhq.enterprise.server.alert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,17 +39,11 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.NotificationTemplate;
-import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.PluginKey;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -62,6 +54,7 @@ import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataMan
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
+import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
 /**
@@ -136,176 +129,11 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
                 alertDefinition.getResource().getId());
         }
 
-        if (hasPermission == false) {
+        if (!hasPermission) {
             throw new PermissionException(subject + " is not authorized to edit this alert definition");
         }
     }
 
-    public int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds) {
-        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Collection<AlertNotification> notifications = alertDefinition.getAlertNotifications();
-
-        List<Role> roles = roleManager.findRolesByIds(roleIds, PageControl.getUnlimitedInstance());
-
-        int added = 0;
-        for (Role role : roles) {
-            RoleNotification notification = new RoleNotification(alertDefinition, role);
-
-            // only increment for non-duplicate additions
-            if (notifications.contains(notification) == false) {
-                added++;
-                notifications.add(notification); // cascading should take care of persisting
-            }
-        }
-
-        postProcessAlertDefinition(alertDefinition);
-
-        return added;
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<RoleNotification> getRoleNotifications(Integer alertDefinitionId, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("rn.role.name");
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            RoleNotification.QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            RoleNotification.QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID, pageControl);
-
-        queryCount.setParameter("alertDefinitionId", alertDefinitionId);
-        query.setParameter("alertDefinitionId", alertDefinitionId);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<RoleNotification> results = query.getResultList();
-
-        return new PageList<RoleNotification>(results, (int) count, pageControl);
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<RoleNotification> getRoleNotifications(Integer[] alertNotificationIds, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("rn.role.name");
-
-        if ((alertNotificationIds == null) || (alertNotificationIds.length == 0)) {
-            return new PageList<RoleNotification>(Collections.EMPTY_LIST, 0, pageControl);
-        }
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, RoleNotification.QUERY_FIND_BY_IDS);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, RoleNotification.QUERY_FIND_BY_IDS,
-            pageControl);
-
-        queryCount.setParameter("ids", alertNotificationIds);
-        query.setParameter("ids", alertNotificationIds);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<RoleNotification> results = query.getResultList();
-
-        return new PageList<RoleNotification>(results, (int) count, pageControl);
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<RoleNotification> getRoleNotificationsByRoles(Integer[] roleIds, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("rn.role.name");
-
-        if ((roleIds == null) || (roleIds.length == 0)) {
-            return new PageList<RoleNotification>(Collections.EMPTY_LIST, 0, pageControl);
-        }
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, RoleNotification.QUERY_FIND_BY_ROLE_IDS);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, RoleNotification.QUERY_FIND_BY_ROLE_IDS,
-            pageControl);
-
-        queryCount.setParameter("ids", roleIds);
-        query.setParameter("ids", roleIds);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<RoleNotification> results = query.getResultList();
-
-        return new PageList<RoleNotification>(results, (int) count, pageControl);
-    }
-
-    public int addSubjectNotifications(Subject user, Integer alertDefinitionId, Integer[] subjectIds) {
-        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Collection<AlertNotification> notifications = alertDefinition.getAlertNotifications();
-
-        List<Subject> subjects = subjectManager.findSubjectsById(subjectIds, PageControl.getUnlimitedInstance());
-
-        int added = 0;
-        for (Subject subject : subjects) {
-            SubjectNotification notification = new SubjectNotification(alertDefinition, subject);
-
-            // only increment for non-duplicate additions
-            if (notifications.contains(notification) == false) {
-                added++;
-                notifications.add(notification); // cascading should take care of persisting
-            }
-        }
-
-        postProcessAlertDefinition(alertDefinition);
-
-        return added;
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<SubjectNotification> getSubjectNotifications(Integer alertDefinitionId, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("sn.subject.name");
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            SubjectNotification.QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            SubjectNotification.QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID, pageControl);
-
-        queryCount.setParameter("alertDefinitionId", alertDefinitionId);
-        query.setParameter("alertDefinitionId", alertDefinitionId);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<SubjectNotification> results = query.getResultList();
-
-        return new PageList<SubjectNotification>(results, (int) count, pageControl);
-    }
-
-
-    @SuppressWarnings("unchecked")
-    public PageList<SubjectNotification> getSubjectNotifications(Integer[] alertNotificationIds, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("sn.subject.name");
-
-        if ((alertNotificationIds == null) || (alertNotificationIds.length == 0)) {
-            return new PageList<SubjectNotification>(Collections.EMPTY_LIST, 0, pageControl);
-        }
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, SubjectNotification.QUERY_FIND_BY_IDS);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, SubjectNotification.QUERY_FIND_BY_IDS,
-            pageControl);
-
-        queryCount.setParameter("ids", alertNotificationIds);
-        query.setParameter("ids", alertNotificationIds);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<SubjectNotification> results = query.getResultList();
-
-        return new PageList<SubjectNotification>(results, (int) count, pageControl);
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<SubjectNotification> getSubjectNotificationsBySubjects(Integer[] subjectIds, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("rn.role.name");
-
-        if ((subjectIds == null) || (subjectIds.length == 0)) {
-            return new PageList<SubjectNotification>(Collections.EMPTY_LIST, 0, pageControl);
-        }
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            SubjectNotification.QUERY_FIND_BY_SUBJECT_IDS);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            SubjectNotification.QUERY_FIND_BY_SUBJECT_IDS, pageControl);
-
-        queryCount.setParameter("ids", subjectIds);
-        query.setParameter("ids", subjectIds);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<SubjectNotification> results = query.getResultList();
-
-        return new PageList<SubjectNotification>(results, (int) count, pageControl);
-    }
 
     public int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
@@ -322,6 +150,18 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             if (notificationIdSet.contains(notification.getId())) {
                 toBeRemoved.add(notification);
                 removed--;
+            }
+        }
+
+        // Before we delete the notification, check if has a custom backing bean
+        // and give it the possibility to clean up
+        for (AlertNotification notification : toBeRemoved) {
+            CustomAlertSenderBackingBean bb = getBackingBeanForSender(notification.getSenderName(),notification.getId());
+            try {
+                bb.internalCleanup();
+            }
+            catch (Throwable t ) {
+                LOG.error("removeNotifications, calling backingBean.internalCleanup() resulted in " + t.getMessage());
             }
         }
 
@@ -430,13 +270,33 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
 
     /**
-     * Return the backing bean for the AlertSender with the passed shortName
+     * Return the backing bean for the AlertSender with the passed shortName. If a notificationId is passed,
+     * we try to load the configuration for this notification and pass it to the CustomAlertSenderBackingBean instance
      * @param shortName name of a sender
+     * @param alertNotificationId id of the notification we assign this sender + its backing bean to
      * @return an initialized BackingBean or null in case of error
      */
-    public Object getBackingBeanForSender(String shortName) {
+    public CustomAlertSenderBackingBean getBackingBeanForSender(String shortName, Integer alertNotificationId) {
+
         AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
-        return pluginmanager.getBackingBeanForSender(shortName);
+        CustomAlertSenderBackingBean bean = pluginmanager.getBackingBeanForSender(shortName);
+
+        if (alertNotificationId!=null) {
+            AlertNotification notification = entityManager.find(AlertNotification.class, alertNotificationId);
+            if (notification!=null && bean != null) {
+                Configuration config = notification.getConfiguration();
+                Configuration config2 = config.deepCopy(true);
+
+                bean.setAlertParameters(config2);
+                try {
+                    bean.internalInit();
+                }
+                catch (Throwable t ) {
+                    LOG.error("getBackinBean, calling backingBean.internalInit() resulted in " + t.getMessage());
+                }
+            }
+        }
+        return bean;
     }
 
     public String getBackingBeanNameForSender(String shortName) {
@@ -554,11 +414,14 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @param name name of this notification template. Must be unique
      * @param description description of the template
      * @param notifications notifications that make up the template
+     * @param copyNotifications
      * @return the newly created template
      * @throws IllegalArgumentException when a template with the passed name already exists
      */
     @SuppressWarnings("unchecked")
-    public NotificationTemplate createNotificationTemplate(String name, String description, List<AlertNotification> notifications) throws IllegalArgumentException {
+    public NotificationTemplate createNotificationTemplate(String name, String description,
+                                                           List<AlertNotification> notifications,
+                                                           boolean copyNotifications) throws IllegalArgumentException {
 
         Query q = entityManager.createNamedQuery(NotificationTemplate.FIND_BY_NAME);
         q.setParameter("name",name);
@@ -570,9 +433,14 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         NotificationTemplate templ = new NotificationTemplate(name,description);
         entityManager.persist(templ);
         for (AlertNotification n : notifications) {
-            n.setNotificationTemplate(templ);
-            templ.addNotification(n);
-            entityManager.persist(n);
+            if (copyNotifications) {
+//                AlertNotification alNo = n.copyWithAlertDefintion() TODO implement / fix this
+            }
+            else {
+                n.setNotificationTemplate(templ);
+                templ.addNotification(n);
+                entityManager.persist(n);
+            }
 
         }
         return templ;

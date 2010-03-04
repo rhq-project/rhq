@@ -39,33 +39,47 @@ public class FavoritesUIBean {
 
     private Boolean favorite; // true if this resource has been added to the favorites dashboard portlet
 
+    /**
+     * resourceUIBean is injected through JSF in inventory-beans.xml. ResourceUIBean is injected because this class
+     * needs access to the currently requested resource id, but the id is not available as a parameter with all
+     * requests, particularly with the raw config editor. The raw config editor however extends the life of the
+     * current ResourceUIBean beyond the current request so that the id can be accessed through ResourceUIBean. 
+     */
+    private ResourceUIBean resourceUIBean;
+
     public FavoritesUIBean() {
+    }
+
+    public ResourceUIBean getResourceUIBean() {
+        return resourceUIBean;
+    }
+
+    public void setResourceUIBean(ResourceUIBean resourceUIBean) {
+        this.resourceUIBean = resourceUIBean;
     }
 
     public boolean isFavorite() {
         if (favorite == null) {
-            log.debug("isFavorite for " + getResourceId());
-            favorite = QuickFavoritesUtil.determineIfFavoriteResource(FacesContextUtility.getRequest());
+            log.debug("isFavorite for " + resourceUIBean.getId());
+            favorite = QuickFavoritesUtil.determineIfFavoriteResource(resourceUIBean.getId());
         }
         return favorite;
     }
 
     public String toggleFavorite() {
-        log.debug("toggleFavorite for " + getResourceId());
+        log.debug("toggleFavorite for " + resourceUIBean.getId());
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         WebUserPreferences preferences = user.getWebPreferences();
         WebUserPreferences.FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
             .getFavoriteResourcePortletPreferences();
 
-        int resourceId = WebUtility.getResourceId(FacesContextUtility.getRequest());
-
-        boolean isFav = favoriteResourcePreferences.isFavorite(resourceId);
+        boolean isFav = favoriteResourcePreferences.isFavorite(resourceUIBean.getId());
         if (isFav) {
-            favoriteResourcePreferences.removeFavorite(resourceId);
-            log.debug("Removing favorite: " + resourceId);
+            favoriteResourcePreferences.removeFavorite(resourceUIBean.getId());
+            log.debug("Removing favorite: " + resourceUIBean.getId());
         } else {
-            favoriteResourcePreferences.addFavorite(resourceId);
-            log.debug("Adding favorite: " + resourceId);
+            favoriteResourcePreferences.addFavorite(resourceUIBean.getId());
+            log.debug("Adding favorite: " + resourceUIBean.getId());
         }
 
         preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
@@ -75,7 +89,4 @@ public class FavoritesUIBean {
         return null;
     }
 
-    private int getResourceId() {
-        return WebUtility.getResourceId(FacesContextUtility.getRequest());
-    }
 }

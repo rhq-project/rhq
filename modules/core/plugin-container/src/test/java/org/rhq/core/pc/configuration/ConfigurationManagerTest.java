@@ -23,8 +23,18 @@
 
 package org.rhq.core.pc.configuration;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+
+import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+
 import org.hamcrest.Matcher;
 import org.jmock.Expectations;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
@@ -37,15 +47,6 @@ import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.test.jmock.PropertyMatcher;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 
 public class ConfigurationManagerTest extends ConfigManagementTest {
 
@@ -322,9 +323,37 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
         });
         try {
             configurationMgr.validate(configuration, resourceId, false);
-            assertTrue(false);
         } catch (PluginContainerException exception) {
-            assertEquals(exception.getMessage(), "file /tmp/foo.txt failed validation with message.");
+            assertTrue(false, "Validate should have caught the exception.");
+        }
+    }
+
+    @Test
+    public void catchExceptionThrownByFailedValidationOfStructuredConfigs() throws Exception {
+
+        final Configuration configuration = new Configuration();
+        //final RawConfiguration rawConfiguration = createRawConfiguration("/tmp/foo.txt");
+        //configuration.addRawConfiguration(rawConfiguration);
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations() {
+            {
+                allowing(componentService).getResourceType(resourceId);
+                will(returnValue(resourceType));
+
+                atLeast(1).of(componentService).getComponent(resourceId, ResourceConfigurationFacet.class,
+                    FacetLockType.READ, ConfigManagement.FACET_METHOD_TIMEOUT, daemonThread, onlyIfStarted);
+                will(returnValue(facet));
+
+                //allowing(facet).validateRawConfiguration(rawConfiguration);
+                allowing(facet).validateStructuredConfiguration(configuration);
+                will(throwException(new IllegalArgumentException("message")));
+            }
+        });
+        try {
+            configurationMgr.validate(configuration, resourceId, true);
+        } catch (PluginContainerException exception) {
+            assertTrue(false, "validate should have caught exception");
         }
     }
 

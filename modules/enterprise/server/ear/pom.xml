@@ -63,7 +63,7 @@
          <version>${project.version}</version>
          <type>war</type>
       </dependency>
-      
+
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-content_http</artifactId>
@@ -141,7 +141,7 @@
          <plugin>
             <artifactId>maven-ear-plugin</artifactId>
             <configuration>
-               <displayName>RHQ</displayName>               
+               <displayName>RHQ</displayName>
                <workDirectory>${earDirectory}</workDirectory>
                <resourcesDir>${basedir}/target/classes</resourcesDir>
                <defaultJavaBundleDir>lib</defaultJavaBundleDir>
@@ -165,7 +165,7 @@
                      <bundleFileName>rhq-webdav.war</bundleFileName>
                      <contextRoot>/webdav</contextRoot>
                   </webModule>
-                  
+
                   <!--  used to expose content through http -->
                   <webModule>
                      <groupId>${project.groupId}</groupId>
@@ -226,7 +226,6 @@
                   </goals>
                   <configuration>
                      <artifactItems>
-
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-platform-plugin</artifactId>
@@ -244,8 +243,6 @@
                            <artifactId>rhq-jmx-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
-
-                        <!-- NOTE: The rest of the plugins are copied by enabled-by-default profiles defined below. -->
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
                   </configuration>
@@ -259,7 +256,6 @@
                   </goals>
                   <configuration>
                      <artifactItems>
-
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-serverplugin-disk</artifactId>
@@ -285,11 +281,52 @@
                         </artifactItem>
 
                         <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-enterprise-server-policy-perspective</artifactId>
+                           <groupId>org.rhq.server</groupId>
+                           <artifactId>alert-email</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
 
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-irc</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-mobicents</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-microblog</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-roles</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                            <artifactId>alert-scriptlang</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                            <artifactId>alert-snmp</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                            <artifactId>alert-subject</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
                   </configuration>
@@ -311,7 +348,7 @@
              </activation>
 
              <build>
-               <plugins>   
+               <plugins>
                  <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <executions>
@@ -399,7 +436,7 @@
              </activation>
 
              <build>
-               <plugins>   
+               <plugins>
                  <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <executions>
@@ -524,7 +561,7 @@
              </activation>
 
              <build>
-               <plugins>   
+               <plugins>
                  <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <executions>

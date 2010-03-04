@@ -170,6 +170,28 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
         return "success";
     }
 
+    public String acknowledgeSelectedAlerts() {
+
+                Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Resource resource = EnterpriseFacesContextUtility.getResource();
+
+        String[] selectedAlerts = getSelectedAlerts();
+        Integer[] alertIds = StringUtility.getIntegerArray(selectedAlerts);
+
+        try {
+            int num = alertManager.acknowledgeAlerts(subject,resource.getId(),alertIds);
+            if (num==-1)
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,"No Alerts passed to ack");
+            else
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,"Acknowledged " + num + " alerts");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to acknowledge selected alerts.", e);
+        }
+
+        return "success";
+
+    }
+
     public String purgeAllAlerts() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Resource resource = EnterpriseFacesContextUtility.getResource();

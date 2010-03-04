@@ -187,7 +187,9 @@
                
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Description" />
+                     <onc:sortableColumnHeader sort="r.description">
+                        <h:outputText styleClass="headerText" value="Description" />
+                     </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputText value="#{item.original.resource.description}" />

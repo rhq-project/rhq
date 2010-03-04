@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dbsetup name="search-data.xml">
+
+    <!-- overlord-created, global, default saved searches -->
+    <table name="RHQ_SAVED_SEARCH">
+        <data ID="1" 
+              CONTEXT="Resource" 
+              NAME="Downed Platforms" 
+              DESCRIPTION="All downed machines across the entire enterprise" 
+              PATTERN="down platform" 
+              LAST_COMPUTE_TIME="0"
+              SUBJECT_ID="1"
+              GLOBAL="TRUE" />
+        <data ID="2" 
+              CONTEXT="Resource" 
+              NAME="Downed Servers" 
+              DESCRIPTION="All downed servers across the entire enterprise" 
+              PATTERN="down server" 
+              LAST_COMPUTE_TIME="0"
+              SUBJECT_ID="1"
+              GLOBAL="TRUE" />
+    </table>
+
+</dbsetup>

@@ -148,7 +148,7 @@
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultGroupTabURL()}">
-                     <f:param name="id" value="#{item.resourceGroup.id}" />
+                     <f:param name="groupId" value="#{item.resourceGroup.id}" />
                      <h:outputText value="#{item.resourceGroup.name}" />
                   </h:outputLink>
                </rich:column>
@@ -175,7 +175,9 @@
                
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Description" />
+                     <onc:sortableColumnHeader sort="rg.description">
+                        <h:outputText styleClass="headerText" value="Description" />
+                     </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputText value="#{item.resourceGroup.description}" />

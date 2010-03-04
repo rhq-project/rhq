@@ -372,7 +372,7 @@ public class PropertySetRenderer extends Renderer {
         if (propertyDefinitionSimple != null)
             input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple, propertyInfo
                 .getProperty(), propertyInfo.getPropertyValueExpression(), propertySetComponent.getListIndex(), false,
-                propertySetComponent.getReadOnly(), false, true);
+                propertySetComponent.getReadOnly(), false, true,null);
         else
             input = PropertyRenderingUtility.createInputForSimpleProperty(propertyInfo.getProperty(), propertyInfo
                 .getPropertyValueExpression(), propertySetComponent.getReadOnly());

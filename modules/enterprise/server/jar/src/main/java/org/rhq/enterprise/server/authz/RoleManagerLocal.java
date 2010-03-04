@@ -140,22 +140,6 @@ public interface RoleManagerLocal {
     PageList<Role> findAvailableRolesForSubject(Subject subject, Integer subjectId, Integer[] pendingRoleIds,
         PageControl pc);
 
-    /**
-     * This returns a list of roles that are available to be assigned to a given alert definition but not yet assigned
-     * to that alert definition. This excludes roles already assigned to the alert definition. The returned list will
-     * not include the roles identified by <code>pendingRoleIds</code> since it is assumed the pending roles will be
-     * assigned to the alert definition.
-     *
-     * @param  subject           user attempting to make this call
-     * @param  alertDefinitionId the alert definition whose list of available roles are to be returned
-     * @param  pendingRoleIds    the list of roles that are planned to be given to the alert definition
-     * @param  pc
-     *
-     * @return the list of roles that can be assigned to the given alert definition, not including the pending roles
-     */
-    PageList<Role> findAvailableRolesForAlertDefinition(Subject subject, Integer alertDefinitionId,
-        Integer[] pendingRoleIds, PageControl pc);
-
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -177,7 +161,7 @@ public interface RoleManagerLocal {
 
     PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc);
 
-    //This is a proxy of getAvailableRolesForSubject but without pendingRoleIds as required by remote spec 
+    //This is a proxy of getAvailableRolesForSubject but without pendingRoleIds as required by remote spec
     PageList<Role> findSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc);
 
     /**

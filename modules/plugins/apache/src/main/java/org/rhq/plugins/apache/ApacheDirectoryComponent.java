@@ -23,6 +23,7 @@
 
 package org.rhq.plugins.apache;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -31,6 +32,8 @@ import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -40,6 +43,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
+import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
 /**
  * Component for configuring the &lt;Directory&gt; and underlying directives inside
@@ -52,12 +56,23 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
 	private final Log log = LogFactory.getLog(this.getClass());
     public static final String DIRECTIVE_INDEX_PROP = "directiveIndex";
     public static final String REGEXP_PROP = "regexp";
+    public static final String PARAMS_PROPERTY_NAME = "ifmoduleParams";
+    public static final String DIRECTORY_DIRECTIVE = "<Directory";
+    private List<String> position;
     
     private ResourceContext<ApacheVirtualHostServiceComponent> resourceContext;
     
     public void start(ResourceContext<ApacheVirtualHostServiceComponent> context) throws InvalidPluginConfigurationException, Exception {
         resourceContext = context;
-    }
+        String key = context.getResourceKey();
+        position = new ArrayList<String>();
+        String param = key.substring(0,key.indexOf("|"));          
+           for (String pm :param.split(";")){
+               position.add(pm);
+           }
+           
+        }
+    
 
     public void stop() {
     }
@@ -130,8 +145,8 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
      * @param virtualHost the node of the parent virtualHost (or root node of the augeas tree)
      * @return
      */
-    private AugeasNode getNode(AugeasNode virtualHost) {
-        List<AugeasNode> directories = virtualHost.getChildByLabel("<Directory");
+    public AugeasNode getNode(AugeasNode virtualHost) {
+        List<AugeasNode> directories = AugeasNodeSearch.getNodeByParentParams(virtualHost, DIRECTORY_DIRECTIVE, position);
         int index = resourceContext.getPluginConfiguration().getSimple(DIRECTIVE_INDEX_PROP).getIntegerValue();
         
         for(AugeasNode dir : directories) {
@@ -141,5 +156,23 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
         }
         
         return null;
+    }
+    
+    public AugeasNode getNode(){
+        ApacheVirtualHostServiceComponent virtHost = resourceContext.getParentResourceComponent();
+        AugeasTree tree = virtHost.getServerConfigurationTree();
+        AugeasNode virtHostNode = resourceContext.getParentResourceComponent().getNode(tree);
+        return getNode(virtHostNode);
+    }
+    
+    public AugeasTree getServerConfigurationTree(){
+        return resourceContext.getParentResourceComponent().getServerConfigurationTree();
+    }
+    
+    /**
+     * @see ApacheServerComponent#finishConfigurationUpdate(ConfigurationUpdateReport)
+     */
+    public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
+        resourceContext.getParentResourceComponent().finishConfigurationUpdate(report);
     }
 }

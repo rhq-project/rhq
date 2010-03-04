@@ -96,9 +96,10 @@ public interface AlertManagerLocal {
     /**
      * Create a human readable description of the conditions that led to this alert.
      * @param alert Alert to create human readable condition description
+     * @param shortVersion if true the messages printed are abbreviated to save space
      * @return human readable condition log
      */
-    String prettyPrintAlertConditions(Alert alert);
+    String prettyPrintAlertConditions(Alert alert, boolean shortVersion);
 
     /**
      * Tells us if the definition of the passed alert will be disabled after this alert was fired
@@ -116,4 +117,22 @@ public interface AlertManagerLocal {
     PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria);
 
     String prettyPrintAlertURL(Alert alert);
+
+    /**
+     * Acknowledge the alerts (that got fired) so that admins know who is working
+     * on fixing the situation.
+     * @param user calling user
+     * @param resourceId resource the alerts happened on
+     * @param alertIds PKs of the alerts to ack
+     * @return number of alerts acknowledged
+     */
+    int acknowledgeAlerts(Subject user, int resourceId, Integer[] alertIds);
+
+    /**
+     * Remove the alerts with the specified id's.
+     * @param user caller
+     * @param ids primary keys of the alerts to delete
+     * @return number of alerts deleted
+     */
+    int deleteAlerts(Subject user, Integer[] ids);
 }

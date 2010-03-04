@@ -63,28 +63,33 @@ public class ResourceGroupComposite implements Serializable {
     private ResourceGroupComposite() {
     }
 
-    public ResourceGroupComposite(long explicitCount, double explicitAvailability, long implicitCount,
-        double implicitAvailability, ResourceGroup resourceGroup) {
+    public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
+        Double implicitAvailability, ResourceGroup resourceGroup) {
         this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null);
     }
 
-    public ResourceGroupComposite(long explicitCount, double explicitAvailability, long implicitCount,
-        double implicitAvailability, ResourceGroup resourceGroup, ResourceFacets facets) {
+    public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
+        Double implicitAvailability, ResourceGroup resourceGroup, ResourceFacets facets) {
 
-        explicitUp = Math.round(explicitCount * explicitAvailability);
-        explicitDown = explicitCount - explicitUp;
+        long expCount = (explicitCount == null ? 0 : explicitCount);
+        double expAvail = (explicitAvailability == null ? 0 : explicitAvailability);
+        long impCount = (implicitCount == null ? 0 : implicitCount);
+        double impAvail = (implicitAvailability == null ? 0 : implicitAvailability);
+
+        explicitUp = Math.round(expCount * expAvail);
+        explicitDown = expCount - explicitUp;
         if (explicitUp + explicitDown > 0) {
             // keep explicitAvail null if there are no explicit resources in the group
-            explicitAvail = explicitAvailability;
+            explicitAvail = expAvail;
         } else {
             explicitAvail = null;
         }
 
-        implicitUp = Math.round(implicitCount * implicitAvailability);
-        implicitDown = implicitCount - implicitUp;
+        implicitUp = Math.round(impCount * impAvail);
+        implicitDown = impCount - implicitUp;
         if (implicitUp + implicitDown > 0) {
             // keep implicitAvail null if there are no implicit resources in the group
-            implicitAvail = implicitAvailability;
+            implicitAvail = impAvail;
         } else {
             implicitAvail = null;
         }
@@ -159,7 +164,7 @@ public class ResourceGroupComposite implements Serializable {
      * @return query string snippet that can appear after the "?" in group URLs.
      */
     public String getGroupQueryString() {
-        return "category=" + getCategory().getName() + "&amp;groupId=" + getResourceGroup().getId();
+        return "groupId=" + getResourceGroup().getId();
     }
 
     private String getAlignedAvailabilityResults(long up, long down) {

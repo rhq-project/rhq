@@ -18,9 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 
@@ -29,13 +32,16 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import java.util.List;
 
 /**
+ * Base GWT-RPC oriented DataSource class.
+ *
  * @author Greg Hinkle
  */
-public abstract class RPCDataSource extends DataSource {
+public abstract class RPCDataSource<T> extends DataSource {
 
     public RPCDataSource() {
         setClientOnly(false);
@@ -51,8 +57,6 @@ public abstract class RPCDataSource extends DataSource {
         setDataFormat(DSDataFormat.CUSTOM);
 
     }
-
-
 
     @Override
     protected Object transformRequest(DSRequest request) {
@@ -115,7 +119,38 @@ public abstract class RPCDataSource extends DataSource {
     }
 
 
+
+
+    public ListGridRecord[] buildRecords(PageList<T> list) {
+        if (list == null) {
+            return null;
+        }
+
+        ListGridRecord[] records = new ListGridRecord[list.size()];
+        int i = 0;
+        for (T item : list) {
+            records[i++] = copyValues(item);
+        }
+        return records;
+    }
+
+
+    /**
+     * Extensions should implement this method to retrieve data. Paging solutions should use
+     * @see getPageControl(). All implementations should call processResponse whether they
+     * fail or succeed. Data should be set on the request via setData. Implementations can use
+     * buildRecords to get the list of records.
+     *
+     * @param request
+     * @param response
+     */
     protected abstract void executeFetch(final DSRequest request, final DSResponse response);
+
+
+    public abstract T copyValues(ListGridRecord from);
+
+    public abstract ListGridRecord copyValues(T from);
+
 
     /**
      * Executed on <code>REMOVE</code> operation. <code>processResponse (requestId, response)</code>

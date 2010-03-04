@@ -847,9 +847,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
 
-        if (!authorizationManager.canViewResource(subject, resourceId)) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resourceId)) {
             throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to view resource[id=" + resourceId + "]");
+                + "] does not have permission to manage configuration for resource[id=" + resourceId + "]");
         }
 
         Resource resource = entityManager.find(Resource.class, resourceId);

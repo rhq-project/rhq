@@ -19,8 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -28,12 +26,10 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -42,14 +38,24 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupsDataSource extends RPCDataSource {
+public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
     private String query;
 
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
+    private static ResourceGroupsDataSource INSTANCE;
 
-    public ResourceGroupsDataSource() {
+    public static ResourceGroupsDataSource getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new ResourceGroupsDataSource();
+        }
+        return INSTANCE;
+    }
+
+
+    private ResourceGroupsDataSource() {
+        super("ResourceGroups");
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
@@ -93,31 +99,27 @@ public class ResourceGroupsDataSource extends RPCDataSource {
         });
     }
 
+    @Override
+    public ResourceGroup copyValues(ListGridRecord from) {
+        return null;  // TODO: Implement this method.
+    }
 
-    public static ListGridRecord[] buildRecords(PageList<ResourceGroup> groupList) {
+    @Override
+    public ListGridRecord copyValues(ResourceGroup from) {
+        ListGridRecord record = new ListGridRecord();
+        record.setAttribute("group", from);
+        record.setAttribute("id", from.getId());
+        record.setAttribute("name", from.getName());
+        record.setAttribute("description", from.getDescription());
+        record.setAttribute("groupCategory", from.getGroupCategory());
 
-        ListGridRecord[] records = null;
-        if (groupList != null) {
-            records = new ListGridRecord[groupList.size()];
-
-            for (int x = 0; x < groupList.size(); x++) {
-                ResourceGroup group = groupList.get(x);
-                ListGridRecord record = new ListGridRecord();
-                record.setAttribute("group", group);
-                record.setAttribute("id", group.getId());
-                record.setAttribute("name", group.getName());
-                record.setAttribute("description", group.getDescription());
-                record.setAttribute("groupCategory", group.getGroupCategory());
-
-                if (group.getResourceType() != null) {
-                    record.setAttribute("resourceType", group.getResourceType());
-                    record.setAttribute("typeName", group.getResourceType().getName());
-                    record.setAttribute("pluginName", group.getResourceType().getPlugin());
-                }
-                records[x] = record;
-            }
+        if (from.getResourceType() != null) {
+            record.setAttribute("resourceType", from.getResourceType());
+            record.setAttribute("typeName", from.getResourceType().getName());
+            record.setAttribute("pluginName", from.getResourceType().getPlugin());
         }
-        return records;
+
+        return record;
     }
 
 }

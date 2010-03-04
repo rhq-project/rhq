@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
@@ -153,7 +154,7 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
 
 
         configurationTab.updateSubTab("Current", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId()));
-
+        configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
 
         topTabSet.setSelectedTab(selectedTab);
 

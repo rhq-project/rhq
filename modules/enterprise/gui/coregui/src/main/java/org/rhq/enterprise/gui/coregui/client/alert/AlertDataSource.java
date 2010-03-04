@@ -49,7 +49,7 @@ import java.util.Set;
  *
  * @author Ian Springer
  */
-public class AlertDataSource extends RPCDataSource {
+public class AlertDataSource extends RPCDataSource<Alert> {
     private static final String NAME = "Alert";
     private static final DateTimeFormat DATE_TIME_FORMAT = DateTimeFormat.getMediumDateTimeFormat();
 
@@ -146,14 +146,7 @@ public class AlertDataSource extends RPCDataSource {
                 long fetchTime = System.currentTimeMillis() - start;
                 System.out.println(result.size() + " Alerts fetched in: " + fetchTime + "ms");
 
-                ListGridRecord[] records = new ListGridRecord[result.size()];
-                for (int i = 0; i < result.size(); i++) {
-                    Alert alert = result.get(i);
-                    ListGridRecord record = createRecord(alert);
-                    records[i] = record;
-                }
-
-                response.setData(records);
+                response.setData(buildRecords(result));
                 // For paging to work, we have to specify size of full result set.
                 response.setTotalRows(result.getTotalSize());
                 processResponse(request.getRequestId(), response);
@@ -161,21 +154,21 @@ public class AlertDataSource extends RPCDataSource {
         });
     }
 
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData ();
-        ListGridRecord record = new ListGridRecord(data);
-        Window.alert(String.valueOf(record.getAttributeAsInt("id")));
+    @Override
+    public Alert copyValues(ListGridRecord from) {
+        return null;  // TODO: Implement this method.
     }
 
-    private ListGridRecord createRecord(Alert alert) {
+    @Override
+    public ListGridRecord copyValues(Alert from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute("id", alert.getId());
-        record.setAttribute("resourceId", alert.getAlertDefinition().getResource().getId());        
-        record.setAttribute("name", alert.getAlertDefinition().getName());
-        record.setAttribute("priority", alert.getAlertDefinition().getPriority().name());
-        record.setAttribute("ctime", DATE_TIME_FORMAT.format(new Date(alert.getCtime())));
+        record.setAttribute("id", from.getId());
+        record.setAttribute("resourceId", from.getAlertDefinition().getResource().getId());
+        record.setAttribute("name", from.getAlertDefinition().getName());
+        record.setAttribute("priority", from.getAlertDefinition().getPriority().name());
+        record.setAttribute("ctime", DATE_TIME_FORMAT.format(new Date(from.getCtime())));
 
-        Set<AlertConditionLog> conditionLogs = alert.getConditionLogs();
+        Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;
         String conditionValue;
         if (conditionLogs.size() > 1) {
@@ -197,8 +190,15 @@ public class AlertDataSource extends RPCDataSource {
         record.setAttribute("conditionText", conditionText);
         record.setAttribute("conditionValue", conditionValue);
 
-        String recoveryInfo = AlertFormatUtility.getAlertRecoveryInfo(alert);
+        String recoveryInfo = AlertFormatUtility.getAlertRecoveryInfo(from);
         record.setAttribute("recoveryInfo", recoveryInfo);
         return record;
     }
+
+    protected void executeRemove(final DSRequest request, final DSResponse response) {
+        JavaScriptObject data = request.getData ();
+        ListGridRecord record = new ListGridRecord(data);
+        Window.alert(String.valueOf(record.getAttributeAsInt("id")));
+    }
+
 }

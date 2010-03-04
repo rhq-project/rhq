@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
@@ -54,27 +54,27 @@ import java.util.ArrayList;
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupListView extends VLayout {
+public class ConfigurationHistoryView extends VLayout {
 
     private ListGrid listGrid;
 
+    /**
+     * A resource list of all resources in the system
+     */
+    public ConfigurationHistoryView() {
+        this(null);
+    }
 
-    public ResourceGroupListView() {
+    /**
+     * Resource list filtered by a given criteria
+     */
+    public ConfigurationHistoryView(Criteria criteria) {
 
         setWidth100();
         setHeight100();
 
-//        DynamicForm searchPanel = new DynamicForm();
-//        final TextItem searchBox = new TextItem("query", "Search Resources");
-//        searchBox.setValue("");
-//        searchPanel.setWrapItemTitles(false);
-//        searchPanel.setFields(searchBox);
-//
-//
-//        addMember(searchPanel);
 
-
-        final ResourceGroupsDataSource datasource = ResourceGroupsDataSource.getInstance();
+        final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
 
         VLayout gridHolder = new VLayout();
 
@@ -84,45 +84,29 @@ public class ResourceGroupListView extends VLayout {
         listGrid.setDataSource(datasource);
         listGrid.setAutoFetchData(true);
         listGrid.setAlternateRecordStyles(true);
-//        listGrid.setAutoFitData(Autofit.HORIZONTAL);
-//        listGrid.setCriteria(new Criteria("name", searchPanel.getValueAsString("query")));
+        listGrid.setUseAllDataSourceFields(true);
+
+        if (criteria != null) {
+            listGrid.setInitialCriteria(criteria);
+        }
 
         listGrid.setSelectionType(SelectionStyle.SIMPLE);
         listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
         listGrid.setResizeFieldsInRealTime(true);
 
 
-        ListGridField idField = new ListGridField("id", "Id", 55);
-        idField.setType(ListGridFieldType.INTEGER);
-        ListGridField nameField = new ListGridField("name", "Name", 250);
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#ResourceGroup/" +  listGridRecord.getAttribute("id")  +"\">" + o + "</a>";
-            }
-        });
-
-
-        ListGridField descriptionField = new ListGridField("description", "Description");
-        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
-        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
-        ListGridField categoryField = new ListGridField("category", "Category", 60);
-
-        ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
-
-        availabilityField.setAlign(Alignment.CENTER);
-        listGrid.setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
-
-
         gridHolder.addMember(listGrid);
 
         ToolStrip toolStrip = new ToolStrip();
+        toolStrip.setPadding(5);
+        toolStrip.setWidth100();
         toolStrip.setMembersMargin(15);
 
         final IButton removeButton = new IButton("Remove");
         removeButton.setDisabled(true);
         removeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " resources?",
+                SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " configurations?",
                         new BooleanCallback() {
                             public void execute(Boolean aBoolean) {
 
@@ -131,8 +115,6 @@ public class ResourceGroupListView extends VLayout {
                 );
             }
         });
-
-
 
 
         final Label tableInfo = new Label("Total: " + listGrid.getTotalRows());
@@ -147,12 +129,11 @@ public class ResourceGroupListView extends VLayout {
 
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                int selectedCount = ((ListGrid)selectionEvent.getSource()).getSelection().length;
+                int selectedCount = ((ListGrid) selectionEvent.getSource()).getSelection().length;
                 tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
                 removeButton.setDisabled(selectedCount == 0);
             }
         });
-
 
 
         addMember(gridHolder);
@@ -160,23 +141,22 @@ public class ResourceGroupListView extends VLayout {
 
         listGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                int selectedCount = ((ListGrid)dataArrivedEvent.getSource()).getSelection().length;
+                int selectedCount = ((ListGrid) dataArrivedEvent.getSource()).getSelection().length;
                 tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
             }
         });
-
-    /*
-            searchBox.addKeyPressHandler(new KeyPressHandler() {
-                public void onKeyPress(KeyPressEvent event) {
-                    if (event.getCharacterValue() == KeyCodes.KEY_ENTER) {
-                        datasource.setQuery((String) searchBox.getValue());
-                        Criteria c = new Criteria("name", (String) searchBox.getValue());
-                        long start = System.currentTimeMillis();
-                        listGrid.fetchData(c);
-                        System.out.println("Loaded in: " + (System.currentTimeMillis() - start));
-                    }
-                }
-            });*/
     }
+
+
+
+    // -------- Static Utility loaders ------------
+
+
+    public static ConfigurationHistoryView getHistoryOf(int resourceId) {
+        return new ConfigurationHistoryView(new Criteria("resourceId",String.valueOf(resourceId)));
+    }
+
+
+
 
 }

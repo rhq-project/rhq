@@ -43,7 +43,7 @@ public class UserPreferences {
 
     public UserPreferences(Subject subject) {
         this.subject = subject;
-        subject.getUserConfiguration();
+        this.userConfiguration = subject.getUserConfiguration();
     }
 
     

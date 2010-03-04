@@ -24,8 +24,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
@@ -34,10 +32,7 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.ResetItem;
-import com.smartgwt.client.widgets.form.fields.SectionItem;
 import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -45,8 +40,6 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -103,7 +96,6 @@ public class RoleEditView extends VLayout {
         permissionEditorItem = new PermissionEditorView("permissionEditor", "Permissions");
         permissionEditorItem.setShowTitle(false);
         permissionEditorItem.setColSpan(2);
-
 
 
         assignedGroupEditorItem = new RoleGroupsEditorItem("assignedGroups", "Assigned Groups");
@@ -163,27 +155,12 @@ public class RoleEditView extends VLayout {
     }
 
     public void editNew() {
-        ListGridRecord r = new ListGridRecord();
-        Role newRole = new Role(null); // todo make default constructor public
-        RolesDataSource.copyValues(newRole, r);
+        ListGridRecord r = RolesDataSource.getInstance().copyValues(new Role());
         editRecord(r);
         form.setSaveOperationType(DSOperationType.ADD);
 
-//
-//        HashSet<Permission> permissions = new HashSet<Permission>();
-//        HashMap values = new HashMap();
-//        values.put("permssions", permissions);
-//
-//        form.editNewRecord();
-
-
         editLabel.setContents("Create Role");
-//        permissionEditorItem.setPermissions(permissions);
-
-//        message.hide();
-//        editCanvas.show();
     }
-
 
 
     public void save() {

@@ -44,18 +44,17 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Greg Hinkle
  */
-public class RolesDataSource extends RPCDataSource {
-
-    private static RolesDataSource INSTANCE;
+public class RolesDataSource extends RPCDataSource<Role> {
 
     private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
+
+    private static RolesDataSource INSTANCE;
 
     public static RolesDataSource getInstance() {
         if (INSTANCE == null) {
@@ -64,7 +63,7 @@ public class RolesDataSource extends RPCDataSource {
         return INSTANCE;
     }
 
-    protected RolesDataSource() {
+    private RolesDataSource() {
         super("Roles");
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
@@ -108,10 +107,7 @@ public class RolesDataSource extends RPCDataSource {
                 ListGridRecord[] records = new ListGridRecord[result.size()];
                 for (int x = 0; x < result.size(); x++) {
                     Role role = result.get(x);
-                    ListGridRecord record = new ListGridRecord();
-
-                    copyValues(role, record);
-
+                    ListGridRecord record = copyValues(role);
                     records[x] = record;
                 }
 
@@ -127,8 +123,7 @@ public class RolesDataSource extends RPCDataSource {
     protected void executeAdd(final DSRequest request, final DSResponse response) {
         JavaScriptObject data = request.getData();
         final ListGridRecord rec = new ListGridRecord(data);
-        Role newRole = new Role("newName"); // TODO GH: Make default constructor public
-        copyValues(rec, newRole);
+        Role newRole = copyValues(rec);
 
         roleService.createRole(newRole, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
@@ -142,8 +137,7 @@ public class RolesDataSource extends RPCDataSource {
 
             public void onSuccess(Role result) {
                 ListGridRecord record = new ListGridRecord();
-                copyValues(result,record);
-                response.setData(new Record[] {record});
+                response.setData(new Record[] {copyValues(result)});
                 processResponse(request.getRequestId(),response);
             }
         });
@@ -154,8 +148,7 @@ public class RolesDataSource extends RPCDataSource {
     protected void executeUpdate(final DSRequest request, final DSResponse response) {
         final ListGridRecord record = getEditedRecord(request);
         System.out.println("Updating record: " + record);
-        Role updatedRole = new Role("foo");
-        copyValues(record, updatedRole);
+        Role updatedRole = copyValues(record);
         roleService.updateRole(updatedRole, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to update role",caught);
@@ -163,8 +156,7 @@ public class RolesDataSource extends RPCDataSource {
 
             public void onSuccess(Role result) {
                 System.out.println("Role Updated");
-                copyValues(result,record);
-                response.setData(new Record[] {record});
+                response.setData(new Record[] {copyValues(result)});
                 processResponse(request.getRequestId(),response);
             }
         });
@@ -174,8 +166,7 @@ public class RolesDataSource extends RPCDataSource {
     protected void executeRemove(final DSRequest request, final DSResponse response) {
         JavaScriptObject data = request.getData();
         final ListGridRecord rec = new ListGridRecord(data);
-        Role newRole = new Role("newName"); // TODO GH: Make default constructor public
-        copyValues(rec, newRole);
+        Role newRole = copyValues(rec);
 
         roleService.removeRoles(new Integer[]{newRole.getId()}, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
@@ -191,7 +182,8 @@ public class RolesDataSource extends RPCDataSource {
 
     }
 
-    private static void copyValues(ListGridRecord from, Role to) {
+    public Role copyValues(ListGridRecord from) {
+        Role to = new Role();
         to.setId(from.getAttributeAsInt("id"));
         to.setName(from.getAttributeAsString("name"));
 //        to.setDate (from.getAttributeAsDate ("date"));
@@ -199,9 +191,11 @@ public class RolesDataSource extends RPCDataSource {
         to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject("resourceGroups"));
         to.setPermissions((Set<Permission>) from.getAttributeAsObject("permissions"));
         to.setSubjects((Set<Subject>) from.getAttributeAsObject("subjects"));
+        return to;
     }
 
-    static void copyValues(Role from, ListGridRecord to) {
+    public ListGridRecord copyValues(Role from) {
+        ListGridRecord to = new ListGridRecord();
         to.setAttribute("id", from.getId());
         to.setAttribute("name", from.getName());
         to.setAttribute("resourceGroups", from.getResourceGroups());
@@ -209,6 +203,7 @@ public class RolesDataSource extends RPCDataSource {
         to.setAttribute("subjects", from.getSubjects());
 
         to.setAttribute("entity", from);
+        return to;
     }
 
 
@@ -226,12 +221,11 @@ public class RolesDataSource extends RPCDataSource {
         return newRecord;
     }
 
-    public static ListGridRecord[] buildRecords(Collection<Role> roles) {
+    public ListGridRecord[] buildRecords(Collection<Role> roles) {
         ListGridRecord[] roleRecords = new ListGridRecord[roles.size()];
         int i = 0;
         for (Role role : roles) {
-            ListGridRecord record = new ListGridRecord();
-            copyValues(role, record);
+            ListGridRecord record = copyValues(role);
             roleRecords[i++] = record;
         }
         return roleRecords;

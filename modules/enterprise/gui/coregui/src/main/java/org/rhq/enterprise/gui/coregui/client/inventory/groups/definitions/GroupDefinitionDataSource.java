@@ -38,7 +38,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 /**
  * @author Greg Hinkle
  */
-public class GroupDefinitionDataSource extends RPCDataSource {
+public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
 
 
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
@@ -88,27 +88,25 @@ public class GroupDefinitionDataSource extends RPCDataSource {
         });
     }
 
+    @Override
+    public GroupDefinition copyValues(ListGridRecord from) {
+        return null;  // TODO: Implement this method.
+    }
 
-    public ListGridRecord[] buildRecords(PageList<GroupDefinition> definitions) {
+    @Override
+    public ListGridRecord copyValues(GroupDefinition from) {
+        ListGridRecord record = new ListGridRecord();
+        record.setAttribute("id", from.getId());
+        record.setAttribute("name", from.getName());
+        record.setAttribute("description", from.getDescription());
+        record.setAttribute("expression", from.getExpression());
+        record.setAttribute("recalculationInterval", from.getRecalculationInterval());
+        record.setAttribute("modifiedTime", from.getModifiedTime());
+        record.setAttribute("createdTime", from.getCreatedTime());
+        record.setAttribute("lastCalculationTime", from.getLastCalculationTime());
+        record.setAttribute("nextCalculationTime", from.getNextCalculationTime());
+        record.setAttribute("managedResourceGroups", from.getManagedResourceGroups());
 
-        ListGridRecord[] records = new ListGridRecord[definitions.size()];
-        int i = 0;
-        for (GroupDefinition def : definitions) {
-            ListGridRecord record = new ListGridRecord();
-            record.setAttribute("id", def.getId());
-            record.setAttribute("name", def.getName());
-            record.setAttribute("description", def.getDescription());
-            record.setAttribute("expression", def.getExpression());
-            record.setAttribute("recalculationInterval", def.getRecalculationInterval());
-            record.setAttribute("modifiedTime", def.getModifiedTime());
-            record.setAttribute("createdTime", def.getCreatedTime());
-            record.setAttribute("lastCalculationTime", def.getLastCalculationTime());
-            record.setAttribute("nextCalculationTime", def.getNextCalculationTime());
-            record.setAttribute("managedResourceGroups", def.getManagedResourceGroups());
-
-            records[i++] = record;
-        }
-
-        return records;
+        return record;
     }
 }

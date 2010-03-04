@@ -23,6 +23,7 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuBar;
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
@@ -91,54 +92,38 @@ public class MenuBarView extends HLayout {
         });
         addMember(logo);
 
+        VLayout right = new VLayout();
+
+
+
+        HLayout links = new HLayout(25);
+
         Hyperlink dashboardLink = new Hyperlink("Dashboard", "Dashboard");
         dashboardLink.setStylePrimaryName("TopSectionLink");
         dashboardLink.setStyleName("TopSectionLink");
-        addMember(dashboardLink);
+        links.addMember(dashboardLink);
 
         Hyperlink demoLink = new Hyperlink("Demo", "Demo");
         demoLink.setStylePrimaryName("TopSectionLink");
-        addMember(demoLink);
+        links.addMember(demoLink);
 
         Hyperlink resourcesLink = new Hyperlink("Resources", "Resources");
         resourcesLink.setStylePrimaryName("TopSectionLink");
-        addMember(resourcesLink);
+        links.addMember(resourcesLink);
 
         Hyperlink bundlesLink = new Hyperlink("Bundles", "Bundles");
         bundlesLink.setStylePrimaryName("TopSectionLink");
-        addMember(bundlesLink);
+        links.addMember(bundlesLink);
 
         Hyperlink adminLink = new Hyperlink("Administration", "Administration");
         adminLink.setStylePrimaryName("TopSectionLink");
-        addMember(adminLink);
+        links.addMember(adminLink);
 
-        
-//
-//        LinkItem demoLink = new LinkItem("Demo");
-//        demoLink.setShowTitle(false);
-//        demoLink.setLinkTitle("Demo");
-//        demoLink.addClickHandler(new ClickHandler() {
-//            public void onClick(ClickEvent clickEvent) {
-//                CoreGUI.setContent(new DemoCanvas());
-//            }
-//        });
-//
-//
-//        LinkItem adminLink = new LinkItem("Administration");
-//        adminLink.setShowTitle(false);
-//        adminLink.setLinkTitle("Administration");
-//
-//        demoLink.addClickHandler(new ClickHandler() {
-//            public void onClick(ClickEvent clickEvent) {
-//                CoreGUI.setContent(new AdministrationView());
-//            }
-//        });
-//
-//        DynamicForm form = new DynamicForm();
-//
-//        form.setItems(demoLink, adminLink);
-//
-//        addMember(form);
 
+        right.addMember(links);
+        right.addMember(new SearchBarPane());
+
+
+        addMember(right);
     }
 }

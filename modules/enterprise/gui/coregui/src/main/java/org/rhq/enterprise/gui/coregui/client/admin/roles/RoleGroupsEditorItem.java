@@ -57,7 +57,7 @@ public class RoleGroupsEditorItem extends CanvasItem {
         availableGroupGrid.setCanDragRecordsOut(true);
         availableGroupGrid.setDragTrackerMode(DragTrackerMode.RECORD);
         availableGroupGrid.setDragDataAction(DragDataAction.MOVE);
-        availableGroupGrid.setDataSource(new ResourceGroupsDataSource());
+        availableGroupGrid.setDataSource(ResourceGroupsDataSource.getInstance());
         availableGroupGrid.setAutoFetchData(true);
         availableGroupGrid.setFields(new ListGridField("id",50), new ListGridField("name"));
 
@@ -82,7 +82,7 @@ public class RoleGroupsEditorItem extends CanvasItem {
         assignedGroupGrid.setHeight(350);
         assignedGroupGrid.setCanDragRecordsOut(true);
         assignedGroupGrid.setCanAcceptDroppedRecords(true);
-        assignedGroupGrid.setDataSource(new ResourceGroupsDataSource());
+        assignedGroupGrid.setDataSource(ResourceGroupsDataSource.getInstance());
         assignedGroupGrid.setFields(new ListGridField("id", 50), new ListGridField("name"));
 
         layout.addMember(assignedGroupGrid);
@@ -94,7 +94,7 @@ public class RoleGroupsEditorItem extends CanvasItem {
     public void setGroups(PageList<ResourceGroup> assignedGroups) {
         this.assignedGroups = assignedGroups;
 
-        assignedGroupGrid.setData(ResourceGroupsDataSource.buildRecords(assignedGroups));
+        assignedGroupGrid.setData(ResourceGroupsDataSource.getInstance().buildRecords(assignedGroups));
     }
 
 }

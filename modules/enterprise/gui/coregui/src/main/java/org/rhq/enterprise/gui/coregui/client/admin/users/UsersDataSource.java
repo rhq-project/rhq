@@ -54,7 +54,7 @@ import java.util.Set;
 /**
  * @author Greg Hinkle
  */
-public class UsersDataSource extends RPCDataSource {
+public class UsersDataSource extends RPCDataSource<Subject> {
 
     private static UsersDataSource INSTANCE;
 
@@ -69,7 +69,7 @@ public class UsersDataSource extends RPCDataSource {
     }
 
 
-    protected UsersDataSource() {
+    private UsersDataSource() {
         super("Users");
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
@@ -137,11 +137,8 @@ public class UsersDataSource extends RPCDataSource {
                 ListGridRecord[] records = new ListGridRecord[result.size()];
                 for (int x = 0; x < result.size(); x++) {
                     Subject subject = result.get(x);
-                    ListGridRecord record = new ListGridRecord();
 
-                    copyValues(subject, record);
-
-                    records[x] = record;
+                    records[x] = copyValues(subject);
                 }
 
                 response.setData(records);
@@ -152,18 +149,16 @@ public class UsersDataSource extends RPCDataSource {
     }
 
 
-
-       @Override
+    @Override
     protected void executeAdd(final DSRequest request, final DSResponse response) {
         JavaScriptObject data = request.getData();
         final ListGridRecord rec = new ListGridRecord(data);
-        Subject newSubject = new Subject();
-        copyValues(rec, newSubject);
+        Subject newSubject = copyValues(rec);
 
         subjectService.createSubject(newSubject, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
                 // TODO better exceptions so we can set the right validation errors
-                Map<String,String> errors = new HashMap<String, String>();
+                Map<String, String> errors = new HashMap<String, String>();
                 errors.put("username", "A user with this name already exists.");
                 response.setErrors(errors);
 //                CoreGUI.getErrorHandler().handleError("Failed to create role",caught);
@@ -172,10 +167,8 @@ public class UsersDataSource extends RPCDataSource {
             }
 
             public void onSuccess(Subject result) {
-                ListGridRecord record = new ListGridRecord();
-                copyValues(result,record);
-                response.setData(new Record[] {record});
-                processResponse(request.getRequestId(),response);
+                response.setData(new Record[]{copyValues(result)});
+                processResponse(request.getRequestId(), response);
             }
         });
 
@@ -185,11 +178,10 @@ public class UsersDataSource extends RPCDataSource {
     protected void executeUpdate(final DSRequest request, final DSResponse response) {
         final ListGridRecord record = getEditedRecord(request);
         System.out.println("Updating record: " + record);
-        final Subject updatedSubject = new Subject();
-        copyValues(record, updatedSubject);
+        final Subject updatedSubject = copyValues(record);
         subjectService.updateSubject(updatedSubject, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to update subject",caught);
+                CoreGUI.getErrorHandler().handleError("Failed to update subject", caught);
             }
 
             public void onSuccess(final Subject result) {
@@ -198,22 +190,20 @@ public class UsersDataSource extends RPCDataSource {
                 if (password != null) {
                     subjectService.changePassword(updatedSubject.getName(), password, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to update subject's password",caught);
+                            CoreGUI.getErrorHandler().handleError("Failed to update subject's password", caught);
                         }
 
                         public void onSuccess(Void nothing) {
                             System.out.println("Subject Updated");
-                            copyValues(result,record);
-                            response.setData(new Record[] {record});
-                            processResponse(request.getRequestId(),response);
+                            response.setData(new Record[]{copyValues(result)});
+                            processResponse(request.getRequestId(), response);
 
                         }
                     });
                 } else {
                     System.out.println("Subject Updated");
-                    copyValues(result,record);
-                    response.setData(new Record[] {record});
-                    processResponse(request.getRequestId(),response);
+                    response.setData(new Record[]{copyValues(result)});
+                    processResponse(request.getRequestId(), response);
                 }
             }
         });
@@ -223,12 +213,11 @@ public class UsersDataSource extends RPCDataSource {
     protected void executeRemove(final DSRequest request, final DSResponse response) {
         JavaScriptObject data = request.getData();
         final ListGridRecord rec = new ListGridRecord(data);
-        Subject subjectToDelete = new Subject(); // TODO GH: Make default constructor public
-        copyValues(rec, subjectToDelete);
+        Subject subjectToDelete = copyValues(rec);
 
         subjectService.deleteSubjects(new int[]{subjectToDelete.getId()}, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete role",caught);
+                CoreGUI.getErrorHandler().handleError("Failed to delete role", caught);
             }
 
             public void onSuccess(Void result) {
@@ -241,8 +230,8 @@ public class UsersDataSource extends RPCDataSource {
     }
 
 
-
-    private static void copyValues(ListGridRecord from, Subject to) {
+    public Subject copyValues(ListGridRecord from) {
+        Subject to = new Subject();
         to.setId(from.getAttributeAsInt("id"));
         to.setName(from.getAttributeAsString("username"));
         to.setFirstName(from.getAttributeAsString("firstName"));
@@ -253,9 +242,11 @@ public class UsersDataSource extends RPCDataSource {
         to.setEmailAddress(from.getAttributeAsString("email"));
 
         to.setRoles((Set<Role>) from.getAttributeAsObject("roles"));
+        return to;
     }
 
-    static void copyValues(Subject from, ListGridRecord to) {
+    public ListGridRecord copyValues(Subject from) {
+        ListGridRecord to = new ListGridRecord();
         to.setAttribute("id", from.getId());
         to.setAttribute("username", from.getName());
         to.setAttribute("firstName", from.getFirstName());
@@ -265,11 +256,11 @@ public class UsersDataSource extends RPCDataSource {
         to.setAttribute("phoneNumber", from.getPhoneNumber());
         to.setAttribute("email", from.getEmailAddress());
 
-        to.setAttribute("roles",from.getRoles());
+        to.setAttribute("roles", from.getRoles());
 
         to.setAttribute("entity", from);
+        return to;
     }
-
 
 
     private ListGridRecord getEditedRecord(DSRequest request) {

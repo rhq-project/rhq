@@ -578,6 +578,7 @@ public class ConfigurationEditor extends VLayout {
         VLayout summaryTableHolder = new VLayout();
 
         ToolStrip toolStrip = new ToolStrip();
+        toolStrip.setWidth100();
         IButton addRowButton = new IButton();
         addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
         addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {

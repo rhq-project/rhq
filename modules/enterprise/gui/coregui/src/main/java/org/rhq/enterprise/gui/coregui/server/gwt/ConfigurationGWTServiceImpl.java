@@ -3,7 +3,11 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
@@ -14,9 +18,10 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implements ConfigurationGWTService {
 
 
+    private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+
     public Configuration getPluginConfiguration(int resourceId) {
 
-        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
         Configuration configuration = configurationManager.getPluginConfiguration(getSessionSubject(), resourceId);
 
@@ -24,7 +29,6 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     public ConfigurationDefinition getPluginConfigurationDefinition(int resourceTypeId) {
-        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
         ConfigurationDefinition definition = configurationManager.getPluginConfigurationDefinitionForResourceType(getSessionSubject(), resourceTypeId);
         return SerialUtility.prepare(definition, "PluginDefinition");
@@ -33,18 +37,28 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
     public Configuration getResourceConfiguration(int resourceId) {
 
-        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-
         Configuration configuration = configurationManager.getResourceConfiguration(getSessionSubject(),  resourceId);
         return SerialUtility.prepare(configuration, "ResourceConfiguration");
     }
 
     public ConfigurationDefinition getResourceConfigurationDefinition(int resourceTypeId) {
-        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
         ConfigurationDefinition definition = configurationManager.getResourceConfigurationDefinitionWithTemplatesForResourceType(getSessionSubject(), resourceTypeId);
         return SerialUtility.prepare(definition, "ResourceDefinition");
     }
+
+    public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(int resourceId) {
+        PageList<ResourceConfigurationUpdate> result;
+
+        PageControl pc = PageControl.getUnlimitedInstance();
+        pc.initDefaultOrderingField("cu.id", PageOrdering.DESC);
+
+        // TODO GH: I'd prefer a criteria based solution here
+        result = configurationManager.findResourceConfigurationUpdates(getSessionSubject(), resourceId, null, null, false, pc);
+
+        return SerialUtility.prepare(result,"ConfigurationService.findResourceConfigurationUpdates");
+    }
+
 
     public RawConfiguration dummy(RawConfiguration config) {
         System.out.println(config.getPath());

@@ -106,7 +106,7 @@ public class SubjectRolesEditorItem extends CanvasItem {
     public void setRoles(Set<Role> assignedRoles) {
         this.assignedRoles = assignedRoles;
 
-        assignedRoleGrid.setData(RolesDataSource.buildRecords(assignedRoles));
+        assignedRoleGrid.setData(RolesDataSource.getInstance().buildRecords(assignedRoles));
     }
 
     public Set<Role> getRoles() {

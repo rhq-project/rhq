@@ -40,7 +40,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 /**
  * @author Greg Hinkle
  */
-public class ResourceDatasource extends RPCDataSource {
+public class ResourceDatasource extends RPCDataSource<Resource> {
 
     private String query;
 
@@ -104,29 +104,35 @@ public class ResourceDatasource extends RPCDataSource {
 
                 System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
 
-                ListGridRecord[] records = new ListGridRecord[result.size()];
-                for (int x=0; x<result.size(); x++) {
-                    Resource res = result.get(x);
-                    ListGridRecord record = new ListGridRecord();
-                    record.setAttribute("resource",res);
-                    record.setAttribute("id",res.getId());
-                    record.setAttribute("name",res.getName());
-                    record.setAttribute("description",res.getDescription());
-                    record.setAttribute("typeName",res.getResourceType().getName());
-                    record.setAttribute("pluginName",res.getResourceType().getPlugin());
-                    record.setAttribute("category",res.getResourceType().getCategory().getDisplayName());
-
-                    record.setAttribute("currentAvailability",
-                            res.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP
-                            ? "/images/icons/availability_green_16.png" 
-                            : "/images/icons/availability_red_16.png");
-                    records[x] = record;
-                }
-
+                ListGridRecord[] records = buildRecords(result);
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize());	// for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }
         });
+    }
+
+    @Override
+    public Resource copyValues(ListGridRecord from) {
+        return null;  // TODO: Implement this method.
+    }
+
+    @Override
+    public ListGridRecord copyValues(Resource from) {
+        ListGridRecord record = new ListGridRecord();
+        record.setAttribute("resource",from);
+        record.setAttribute("id",from.getId());
+        record.setAttribute("name",from.getName());
+        record.setAttribute("description",from.getDescription());
+        record.setAttribute("typeName",from.getResourceType().getName());
+        record.setAttribute("pluginName",from.getResourceType().getPlugin());
+        record.setAttribute("category",from.getResourceType().getCategory().getDisplayName());
+
+        record.setAttribute("currentAvailability",
+                from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP
+                ? "/images/icons/availability_green_16.png"
+                : "/images/icons/availability_red_16.png");
+
+        return record;
     }
 }

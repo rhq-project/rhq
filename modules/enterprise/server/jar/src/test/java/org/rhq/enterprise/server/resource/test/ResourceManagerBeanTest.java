@@ -162,7 +162,7 @@ public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
             try {
                 ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
                 Resource res = em.find(Resource.class, resource.getId());
-                Agent agent = em.find(Agent.class, resource.getAgent().getId());
+                Agent agent = em.find(Agent.class, res.getAgent().getId());
 
                 List<Integer> deletedIds = resourceManager.deleteResource(superuser, res.getId());
                 for (Integer deletedResourceId : deletedIds) {

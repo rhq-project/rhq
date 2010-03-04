@@ -41,6 +41,7 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
@@ -75,7 +76,6 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     private BundleManagerLocal bundleManager;
     private static final boolean ENABLED = true;
     private static final boolean DISABLED = false;
-
 
     private TestBundleServerPluginService ps;
     private MasterServerPluginContainer pc;
@@ -112,6 +112,17 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             List doomed;
 
             // clean up any tests that don't already clean up after themselves
+
+            /*
+              
+            
+             q = em
+                .createQuery("SELECT bdh FROM BundleDeploymentHistory bdh WHERE bdh.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(BundleDeploymentHistory.class, ((BundleDeploymentHistory) removeMe).getId()));
+            }
+            */
 
             // remove bundleversions which cascade remove bundlefiles and bundledeploydefs  
             q = em.createQuery("SELECT bv FROM BundleVersion bv WHERE bv.name LIKE '" + TEST_PREFIX + "%'");
@@ -392,7 +403,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLED)
-    public void testFindByCriteria() throws Exception {
+    public void testFindHistoryByCriteria() throws Exception {
 
         Subject subject = getOverlord();
         Long auditTime = new Date().getTime();
@@ -400,6 +411,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         String auditMessage = "This is my message";
         BundleDeployDefinition def = new BundleDeployDefinition();
         Resource resource = new Resource();
+
         BundleDeployment bundleDeployment = new BundleDeployment(def, resource);
         BundleDeploymentHistory history = new BundleDeploymentHistory(bundleDeployment, subject.getName(), auditTime,
             auditAction, auditMessage);

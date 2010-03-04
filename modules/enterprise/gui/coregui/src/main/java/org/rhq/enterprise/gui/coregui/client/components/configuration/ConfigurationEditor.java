@@ -195,6 +195,7 @@ public class ConfigurationEditor extends VLayout {
                     System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                     definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
                     if (definition == null) {
+                        loadingLabel.hide();
                         showError("No configuration supported for this resource");
                     }
                     reload();

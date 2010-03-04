@@ -30,7 +30,10 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
+import java.util.Date;
 
 /**
  * @author Greg Hinkle
@@ -51,6 +54,7 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
         addField(idField);
 
         DataSourceTextField submittedField = new DataSourceTextField("createdTime");
+        submittedField.setType(FieldType.DATETIME);
         addField(submittedField);
 
         DataSourceTextField statusField = new DataSourceTextField("status");
@@ -98,12 +102,13 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
         record.setAttribute("resource",from.getResource());
         record.setAttribute("subject",from.getSubjectName());
         record.setAttribute("configuration", from.getConfiguration());
-        record.setAttribute("createdTime",from.getCreatedTime());
+        record.setAttribute("createdTime",new Date(from.getCreatedTime()));
         record.setAttribute("duration", from.getDuration());
         record.setAttribute("errorMessage", from.getErrorMessage());
-        record.setAttribute("modifiedTime", from.getModifiedTime());
-        record.setAttribute("status",from.getStatus());
+        record.setAttribute("modifiedTime", new Date(from.getModifiedTime()));
+        record.setAttribute("status",from.getStatus().name());
 
+        record.setAttribute("entity",from);
         return record;
     }
 }

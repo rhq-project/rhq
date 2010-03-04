@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
@@ -68,7 +71,7 @@ public class ConfigurationHistoryView extends VLayout {
     /**
      * Resource list filtered by a given criteria
      */
-    public ConfigurationHistoryView(Criteria criteria) {
+    public ConfigurationHistoryView(final Criteria criteria) {
 
         setWidth100();
         setHeight100();
@@ -85,6 +88,14 @@ public class ConfigurationHistoryView extends VLayout {
         listGrid.setAutoFetchData(true);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setUseAllDataSourceFields(true);
+
+
+        ListGridField idField = new ListGridField("id","ID",60);
+        ListGridField createdField = new ListGridField("createdTime","Timestamp",200);
+        ListGridField statusField = new ListGridField("status","Status",100);
+        ListGridField userField = new ListGridField("subject","User",150);
+        listGrid.setFields(idField,createdField,statusField,userField);
+
 
         if (criteria != null) {
             listGrid.setInitialCriteria(criteria);
@@ -117,10 +128,30 @@ public class ConfigurationHistoryView extends VLayout {
         });
 
 
+        final IButton compareButton = new IButton("Compare");
+        compareButton.setDisabled(true);
+        compareButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                int resourceId = Integer.parseInt((String)criteria.getValues().get("resourceId"));
+
+                ListGridRecord[] selection = listGrid.getSelection();
+                ArrayList<ResourceConfigurationUpdate> configs = new ArrayList<ResourceConfigurationUpdate>();
+                for (ListGridRecord record : selection) {
+                    ResourceConfigurationUpdate update = (ResourceConfigurationUpdate) record.getAttributeAsObject("entity");
+                    configs.add(update);
+                }
+
+
+                ConfigurationComparisonView.displayComparisonDialog(configs);
+            }
+        });
+
+
         final Label tableInfo = new Label("Total: " + listGrid.getTotalRows());
         tableInfo.setWrap(false);
 
         toolStrip.addMember(removeButton);
+        toolStrip.addMember(compareButton);
         toolStrip.addMember(new LayoutSpacer());
         toolStrip.addMember(tableInfo);
 
@@ -132,6 +163,7 @@ public class ConfigurationHistoryView extends VLayout {
                 int selectedCount = ((ListGrid) selectionEvent.getSource()).getSelection().length;
                 tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
                 removeButton.setDisabled(selectedCount == 0);
+                compareButton.setDisabled(selectedCount == 0);
             }
         });
 

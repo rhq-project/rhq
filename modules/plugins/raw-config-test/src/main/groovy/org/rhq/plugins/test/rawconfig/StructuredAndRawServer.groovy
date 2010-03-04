@@ -160,7 +160,7 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
       def match = fileNames.find { rawConfig.path.endsWith(it) }
 
       if (match) {
-        throw new RuntimeException("Validation failed for ${rawConfig.path}");
+        throw new RuntimeException("Raw validation failed for ${rawConfig.path}");
       }
     }
   }
@@ -168,14 +168,14 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
   void validateStructuredConfiguration(Configuration config) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredValidation")
     if (failValidation != null && failValidation.booleanValue) {
-      throw new RuntimeException("Structured validation failed for Structured and Raw Server");
+      throw new RuntimeException("Structured validation failed");
     }
   }
 
   void persistStructuredConfiguration(Configuration config) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredUpdate")
     if (failValidation != null && failValidation.booleanValue) {
-      throw new RuntimeException("Structured pdate failed for Structured and Raw Server");
+      throw new RuntimeException("Structured update failed");
     }
 
     pauseForStructuredUpdateIfDelaySet()
@@ -188,7 +188,7 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
       def match = fileNames.find { rawConfiguration.path.endsWith(it) }
 
       if (match) {
-        throw new RuntimeException("Update failed for ${rawConfiguration.path}");
+        throw new RuntimeException("Raw update failed for ${rawConfiguration.path}");
       }
     }
 

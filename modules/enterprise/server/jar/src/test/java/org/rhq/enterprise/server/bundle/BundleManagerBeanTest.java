@@ -121,7 +121,6 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             }
 
             // remove bundleversions which cascade remove bundlefiles and bundledeploydefs  
-            // removal of bundledeploydefs cascade remove bundledeployments
             q = em.createQuery("SELECT bv FROM BundleVersion bv WHERE bv.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
@@ -430,16 +429,15 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(null);
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = DISABLED)
     public void testFindHistoryByCriteria() throws Exception {
 
-        Subject subject = getOverlord();
         Long auditTime = new Date().getTime();
         BundleDeploymentAction auditAction = BundleDeploymentAction.DEPLOYMENT_START;
         String auditMessage = "This is my message";
 
         BundleDeployment bundleDeployment = createDeployment();
-        BundleDeploymentHistory history = new BundleDeploymentHistory(bundleDeployment, subject.getName(), auditTime,
+        BundleDeploymentHistory history = new BundleDeploymentHistory(bundleDeployment, overlord.getName(), auditTime,
             auditAction, auditMessage);
 
         Bundle bundle = createBundle("deleteThisBundle");
@@ -449,8 +447,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         bundleManager.addBundleDeploymentHistoryByBundleDeployment(history);
 
         BundleDeploymentHistoryCriteria criteria = new BundleDeploymentHistoryCriteria();
-        List<BundleDeploymentHistory> histories = bundleManager
-            .findBundleDeploymentHistoryByCriteria(subject, criteria);
+        List<BundleDeploymentHistory> histories = bundleManager.findBundleDeploymentHistoryByCriteria(overlord,
+            criteria);
 
         assertNotNull(histories);
         assertTrue(histories.size() > 0);

@@ -18,26 +18,67 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
+import com.google.gwt.event.shared.DefaultHandlerRegistration;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
+import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
+import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
+
+import java.util.ArrayList;
 
 /**
  * @author Greg Hinkle
  */
-public class TwoLevelTabSet extends TabSet {
+public class TwoLevelTabSet extends TabSet implements TabSelectedHandler, TwoLevelTabSelectedHandler {
 
 
-    @Override
-    public void setTabs(Tab... tabs) {
+
+    public void setTabs(TwoLevelTab... tabs) {
         super.setTabs(tabs);
-        for (Tab tab : tabs) {
-            TwoLevelTab tltab = (TwoLevelTab) tab;
+        for (TwoLevelTab tab : tabs) {
 
+            tab.getLayout().addTwoLevelTabSelectedHandler(this);
 
-            updateTab(tab,tltab.getPane());
-
+            updateTab(tab,tab.getPane());
         }
 
+        addTabSelectedHandler(this);
+    }
+
+
+
+
+
+    // ------- Event support -------
+    // Done with a separate handler manager from parent class on purpose (compatibility issue)
+
+    private HandlerManager m = new HandlerManager(this);
+
+    public HandlerRegistration addTwoLevelTabSelectedHandler(TwoLevelTabSelectedHandler handler) {
+        return m.addHandler(TwoLevelTabSelectedEvent.TYPE,handler);
+    }
+
+    public void onTabSelected(TabSelectedEvent tabSelectedEvent) {
+
+        TwoLevelTab tab = (TwoLevelTab) getSelectedTab();
+
+        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(
+                getSelectedTab().getTitle(),
+                tab.getLayout().currentlySelected,
+                tabSelectedEvent.getTabNum(),
+                tab.getLayout().getCurrentIndex(),
+                tab.getLayout().currentlyDisplayed
+        );
+        m.fireEvent(event);
+    }
+
+    public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
+        tabSelectedEvent.setTabNum(getSelectedTabNumber());
+        tabSelectedEvent.setId(getSelectedTab().getTitle());
+
+        m.fireEvent(tabSelectedEvent);
     }
 }
 

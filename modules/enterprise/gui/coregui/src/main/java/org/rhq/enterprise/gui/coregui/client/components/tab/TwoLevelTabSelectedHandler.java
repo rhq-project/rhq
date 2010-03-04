@@ -18,42 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.tab.Tab;
-
 /**
  * @author Greg Hinkle
  */
-public class TwoLevelTab extends Tab {
+public interface TwoLevelTabSelectedHandler extends com.google.gwt.event.shared.EventHandler {
 
-    private SubTabLayout layout;
-
-    public TwoLevelTab(String title, String icon) {
-        super(title, icon);
-
-        layout = new SubTabLayout();
-    }
-
-
-    public void updateSubTab(String tab, Canvas canvas) {
-        layout.updateSubTab(tab, canvas);
-    }
-
-    public void registerSubTabs(String... tabs) {
-        for (String tab :tabs) {
-            layout.registerSubTab(tab, null);
-        }
-    }
-
-    public SubTabLayout getLayout() {
-        return layout;
-    }
-
-    @Override
-    public Canvas getPane() {
-        return layout;
-    }
-
-
+    void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent);
 
 }

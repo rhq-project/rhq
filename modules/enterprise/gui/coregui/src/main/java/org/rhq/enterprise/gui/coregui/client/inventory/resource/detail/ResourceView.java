@@ -47,7 +47,7 @@ public class ResourceView extends HLayout implements ViewRenderer {
     //private Resource resourcePlatform;
 
     private ResourceTreeView treeView;
-    private ResourceDetailView detailView;
+    private ResourceDetailView detailView = new ResourceDetailView();
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -77,7 +77,8 @@ public class ResourceView extends HLayout implements ViewRenderer {
         addMember(contentCanvas);
 
 
-        detailView = new ResourceDetailView();
+        // created above
+//        detailView = new ResourceDetailView();
 
         treeView.addResourceSelectListener(detailView);
 
@@ -147,6 +148,9 @@ public class ResourceView extends HLayout implements ViewRenderer {
         // Use "..." as temporary display name for breadcrumb. If the Resource is fetched successfully, the display name
         // will be updated to be the Resource's name.
         Breadcrumb breadcrumb = new Breadcrumb(viewId.getName(), "...");
-        return new View(viewId, breadcrumb);
+
+//        detailView.renderView(viewId, lastNode);
+
+        return new View(viewId, detailView, breadcrumb);
     }
 }

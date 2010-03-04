@@ -20,11 +20,18 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
+import org.rhq.enterprise.gui.coregui.client.UnknownViewException;
+import org.rhq.enterprise.gui.coregui.client.View;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewRenderer;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
 import org.rhq.enterprise.gui.coregui.client.components.SubTabLayout;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
+import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
+import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
@@ -32,12 +39,15 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
+import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
+import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
+import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
 import java.util.EnumSet;
 
@@ -46,7 +56,7 @@ import java.util.EnumSet;
  *
  * @author Greg Hinkle
  */
-public class ResourceDetailView extends VLayout implements ResourceSelectListener {
+public class ResourceDetailView extends VLayout implements ViewRenderer, ResourceSelectListener, TwoLevelTabSelectedHandler {
 
     private Resource resource;
 
@@ -65,6 +75,9 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
     private TwoLevelTabSet topTabSet;
 
     private ResourceTitleBar titleBar;
+
+    private ViewId currentView;
+    private ViewId baseViewId;
 
     public void setResource(Resource resource) {
         this.resource = resource;
@@ -115,6 +128,8 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
         topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab, eventsTab, contentTab);
 
 
+        topTabSet.addTwoLevelTabSelectedHandler(this);
+
         titleBar = new ResourceTitleBar();
         addMember(titleBar);
 
@@ -148,7 +163,7 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
         monitoringTab.updateSubTab("Availability", new FullHTMLPane("/rhq/resource/monitor/availabilityHistory.xhtml?id=" + resource.getId()));
         monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules.xhtml?id=" + resource.getId()));
 
-        
+
         inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
         inventoryTab.updateSubTab("Connection Settings", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
 
@@ -204,4 +219,58 @@ public class ResourceDetailView extends VLayout implements ResourceSelectListene
 
     }
 
+    public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
+        // TODO: Implement this method.
+
+        String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
+
+
+//        System.out.println("TAB: " + currentView.getPath() + tabPath);
+
+        if (resource != null) {
+            History.newItem("Resource/" + resource.getId() + tabPath, false);
+        }
+    }
+
+    public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {
+
+        if (baseViewId == null) {
+            baseViewId = viewId;
+        }
+        currentView = viewId;
+
+        String[] parts = currentView.getPath().split("/");
+        Breadcrumb crumb = null;
+        if (parts.length >= 3) {
+            for (Tab t : topTabSet.getTabs()) {
+                TwoLevelTab tab = (TwoLevelTab) t;
+
+                if (tab.getTitle().equals(parts[2])) {
+
+                    if (parts.length == 3) {
+                        crumb = new Breadcrumb(parts[2], parts[2]);
+                    }
+
+
+                    if (parts.length >= 4) {
+                        tab.getLayout().selectTab(parts[3]);
+
+                        // Switch the top tab after the subtab to avoid an extra subtab render
+                        topTabSet.selectTab(tab);
+
+
+                        if (parts.length == 4) {
+                            crumb = new Breadcrumb(parts[3], parts[3]);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (crumb != null) {
+            return new View(viewId, crumb);
+        } else {
+            return new View(viewId);
+        }
+    }
 }

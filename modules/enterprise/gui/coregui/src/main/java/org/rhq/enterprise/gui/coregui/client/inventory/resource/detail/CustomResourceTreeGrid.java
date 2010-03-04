@@ -41,9 +41,12 @@ public class CustomResourceTreeGrid extends TreeGrid {
 
             boolean up = resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP;
 
+            if (resource.getResourceType().getChildResourceTypes() == null || resource.getResourceType().getChildResourceTypes().isEmpty()) {
+                return "resources/Service_" + (up ? "up" : "down") + "_16.png";
 
-            return "resources/folder_" + (up ? "" : "down_") + (open ? "opened" : "closed") + ".png";
-
+            } else {
+                return "resources/folder_" + (up ? "" : "down_") + (open ? "opened" : "closed") + ".png";
+            }
         } else {
             return "resources/folder_group_" + (open ? "opened" : "closed") + ".png";
         }

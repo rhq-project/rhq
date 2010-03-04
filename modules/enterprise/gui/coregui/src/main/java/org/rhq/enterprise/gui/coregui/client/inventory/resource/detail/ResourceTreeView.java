@@ -135,10 +135,16 @@ public class ResourceTreeView extends VLayout {
                     if (treeGrid.getSelectedRecord() instanceof ResourceTreeDatasource.ResourceTreeNode) {
                         ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) treeGrid.getSelectedRecord();
                         System.out.println("Resource selected in tree: " + node.getResource());
-                        History.newItem("Resource/" + node.getResource().getId());
-//                        for (ResourceSelectListener l : selectListeners) {
-//                            l.onResourceSelected(node.getResource());
-//                        }
+
+                        String newToken = "Resource/" + node.getResource().getId();
+                        String currentToken = History.getToken();
+                        if (!currentToken.startsWith(newToken)) {
+
+                            String ending = currentToken.replaceFirst("^[^\\/]*\\/[^\\/]*","");
+
+                            History.newItem("Resource/" + node.getResource().getId() + ending);
+
+                        }
                     }
 
                 }
@@ -340,9 +346,17 @@ public class ResourceTreeView extends VLayout {
                                     System.out.println("Trying to preopen: " + selectedNode);
                                     if (selectedNode != null) {
                                         System.out.println("Preopen node!!!");
-                                        treeGrid.getTree().openFolders(treeGrid.getTree().getParents(selectedNode));
+                                        TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
+                                        treeGrid.getTree().openFolders(parents);
+                                        treeGrid.getTree().openFolder(selectedNode);
+
+                                        for (TreeNode p : parents) {
+                                            System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p);
+                                        }
+
                                         treeGrid.selectRecord(selectedNode);
                                         initialSelect = true;
+                                        treeGrid.markForRedraw();
                                     }
                                 }
                             }

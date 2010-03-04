@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionType;
 import com.smartgwt.client.widgets.Button;
@@ -25,6 +27,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import java.util.LinkedHashMap;
@@ -71,6 +74,7 @@ public class SubTabLayout extends VLayout {
         for (final String title : subtabs.keySet()) {
             if (currentlyDisplayed == null) {
                 currentlyDisplayed = subtabs.get(title);
+                currentlySelected = title;
             }
 
 
@@ -92,6 +96,7 @@ public class SubTabLayout extends VLayout {
                 public void onClick(ClickEvent clickEvent) {
                     currentlySelected = title;
                     currentIndex = index;
+                    fireSubTabSelection();
                     draw(subtabs.get(title));
                 }
             });
@@ -101,11 +106,7 @@ public class SubTabLayout extends VLayout {
         }
 
         // Initial settings
-        Button b = (Button) buttonBar.getMember(0);
-        b.select();
-        if (currentlyDisplayed != null) {
-            addMember(currentlyDisplayed);
-        }
+        selectTab(currentlySelected);
     }
 
     public void updateSubTab(String title, Canvas canvas) {
@@ -145,5 +146,48 @@ public class SubTabLayout extends VLayout {
 
     public int getCurrentIndex() {
         return currentIndex;
+    }
+
+
+
+    public void selectTab(String title) {
+        currentlySelected = title;
+        int i = 0;
+        for (String sub : subtabs.keySet()) {
+            if (sub.equals(title)) {
+                currentIndex = i;
+                break;
+            }
+            i++;
+        }
+
+
+        if (isDrawn()) {
+            ((Button)buttonBar.getMember(currentIndex)).select();
+            draw(subtabs.get(title));
+        }
+    }
+
+
+
+
+    // ------- Event support -------
+    // Done with a separate handler manager from parent class on purpose (compatibility issue)
+
+    private HandlerManager hm = new HandlerManager(this);
+
+    public HandlerRegistration addTwoLevelTabSelectedHandler(TwoLevelTabSelectedHandler handler) {
+        return hm.addHandler(TwoLevelTabSelectedEvent.TYPE, handler);
+    }
+
+    public void fireSubTabSelection() {
+        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(
+                "?",
+                currentlySelected,
+                -1,
+                currentIndex,
+                currentlyDisplayed
+        );
+        hm.fireEvent(event);
     }
 }

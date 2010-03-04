@@ -47,6 +47,8 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
+ * This doesn't extend RPCDataSource because it is tree oriented and
+ * behaves different from normal list data sources in some places.
  * @author Greg Hinkle
  */
 public class ResourceTreeDatasource extends DataSource {
@@ -276,18 +278,9 @@ public class ResourceTreeDatasource extends DataSource {
                             ? "/images/icons/availability_green_16.png"
                             : "/images/icons/availability_red_16.png");
 
+            setIsFolder((resource.getResourceType().getChildResourceTypes() != null &&
+                    !resource.getResourceType().getChildResourceTypes().isEmpty()));
         }
-
-        @Override
-        public String getIcon() {
-
-            boolean up = resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP;
-
-            // (open ? "opened" : "closed") +
-
-            return "resources/folder_" + (up ? "" : "down_") + ".png";
-        }
-
 
         public Resource getResource() {
             return resource;

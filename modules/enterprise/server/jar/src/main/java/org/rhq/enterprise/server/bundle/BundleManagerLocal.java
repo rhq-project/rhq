@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.bundle;
 
 import java.io.InputStream;
-import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -27,17 +26,12 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
-import org.rhq.core.domain.criteria.BundleVersionCriteria;
-import org.rhq.core.domain.util.PageList;
 
 /**
  * Local interface to the manager responsible for creating and managing bundles.
@@ -45,7 +39,7 @@ import org.rhq.core.domain.util.PageList;
  * @author John Mazzitelli
  */
 @Local
-public interface BundleManagerLocal {
+public interface BundleManagerLocal extends BundleManagerRemote {
 
     /**
      * Adds a BundleFile to the BundleVersion and implicitly creates the backing PackageVersion. If the PackageVersion
@@ -148,24 +142,11 @@ public interface BundleManagerLocal {
     Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)
         throws Exception;
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    void addBundleDeploymentHistoryByBundleDeployment(BundleDeploymentHistory history) throws IllegalArgumentException;
+
     //
-    // The remaining methods are shared with the Remote Interface.
+    // Methods shared with remote have been removed
+    // This interface now extends remote instead
     //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
-        BundleDeployDefinitionCriteria criteria);
-
-    PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria);
-
-    PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria);
-
-    PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria);
-
-    List<BundleType> getAllBundleTypes(Subject subject);
-
-    void deleteBundles(Subject subject, int[] bundleIds);
-
-    void deleteBundleVersions(Subject subject, int[] bundleVersionIds);
 }

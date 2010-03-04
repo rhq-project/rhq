@@ -55,8 +55,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
-import org.rhq.enterprise.server.bundle.BundleDeploymentHistoryManagerBean;
-import org.rhq.enterprise.server.bundle.BundleDeploymentHistoryManagerLocal;
 import org.rhq.enterprise.server.bundle.BundleManagerBean;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerBean;
@@ -655,10 +653,6 @@ public final class LookupUtil {
 
     public static DataAccessManagerLocal getDataAccessManager() {
         return lookupLocal(DataAccessManagerBean.class);
-    }
-
-    public static BundleDeploymentHistoryManagerLocal getBundleDeploymentHistoryManager() {
-        return lookupLocal(BundleDeploymentHistoryManagerBean.class);
     }
 
 }

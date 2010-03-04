@@ -36,8 +36,6 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleFile;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
@@ -71,7 +69,6 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     private static final boolean TESTS_ENABLED = true;
 
     private static final String TEST_PREFIX = "bundletest";
-    private BundleDeploymentHistoryManagerLocal bundleDeploymentHistoryManager;
 
     private BundleManagerLocal bundleManager;
     private static final boolean ENABLED = true;
@@ -88,7 +85,6 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         this.ps = new TestBundleServerPluginService();
         prepareCustomServerPluginService(this.ps);
         bundleManager = LookupUtil.getBundleManager();
-        bundleDeploymentHistoryManager = LookupUtil.getBundleDeploymentHistoryManager();
         this.ps.startMasterPluginContainer();
     }
 
@@ -113,16 +109,11 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
             // clean up any tests that don't already clean up after themselves
 
-            /*
-              
-            
-             q = em
-                .createQuery("SELECT bdh FROM BundleDeploymentHistory bdh WHERE bdh.name LIKE '" + TEST_PREFIX + "%'");
+            q = em.createQuery("SELECT bdh FROM BundleDeploymentHistory bdh ");//WHERE bdh.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleDeploymentHistory.class, ((BundleDeploymentHistory) removeMe).getId()));
             }
-            */
 
             // remove bundleversions which cascade remove bundlefiles and bundledeploydefs  
             q = em.createQuery("SELECT bv FROM BundleVersion bv WHERE bv.name LIKE '" + TEST_PREFIX + "%'");
@@ -409,10 +400,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         Long auditTime = new Date().getTime();
         BundleDeploymentAction auditAction = BundleDeploymentAction.DEPLOYMENT_START;
         String auditMessage = "This is my message";
-        BundleDeployDefinition def = new BundleDeployDefinition();
-        Resource resource = new Resource();
 
-        BundleDeployment bundleDeployment = new BundleDeployment(def, resource);
+        BundleDeployment bundleDeployment = createDeployment();
         BundleDeploymentHistory history = new BundleDeploymentHistory(bundleDeployment, subject.getName(), auditTime,
             auditAction, auditMessage);
 
@@ -420,15 +409,23 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         history.setBundleDeployment(bundleDeployment);
 
-        bundleDeploymentHistoryManager.addBundleDeploymentHistoryByBundleDeployment(history);
+        bundleManager.addBundleDeploymentHistoryByBundleDeployment(history);
 
         BundleDeploymentHistoryCriteria criteria = new BundleDeploymentHistoryCriteria();
-        List<BundleDeploymentHistory> histories = bundleDeploymentHistoryManager.findBundleDeploymentHistoryByCriteria(
-            subject, criteria);
+        List<BundleDeploymentHistory> histories = bundleManager
+            .findBundleDeploymentHistoryByCriteria(subject, criteria);
 
         assertNotNull(histories);
         assertTrue(histories.size() > 0);
 
+    }
+
+    private BundleDeployment createDeployment() {
+        Resource resource = new Resource();
+
+        BundleDeployDefinition def = new BundleDeployDefinition();
+
+        return new BundleDeployment(def, resource);
     }
 
     private BundleType createBundleType(String name) throws Exception {

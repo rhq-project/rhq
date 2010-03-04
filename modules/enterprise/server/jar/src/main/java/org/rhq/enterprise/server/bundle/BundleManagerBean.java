@@ -41,6 +41,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -54,6 +55,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -487,5 +489,20 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         bundle = entityManager.merge(bundle);
         return bundle;
+    }
+
+    public List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(Subject subject,
+        BundleDeploymentHistoryCriteria criteria) {
+
+        Query q = entityManager.createNamedQuery(BundleDeploymentHistory.QUERY_FIND_ALL);
+        List<BundleDeploymentHistory> histories = (List<BundleDeploymentHistory>) q.getResultList();
+        return histories;
+    }
+
+    public void addBundleDeploymentHistoryByBundleDeployment(BundleDeploymentHistory history)
+        throws IllegalArgumentException {
+
+        entityManager.persist(history);
+
     }
 }

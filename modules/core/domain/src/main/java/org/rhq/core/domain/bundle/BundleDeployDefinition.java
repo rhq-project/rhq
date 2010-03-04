@@ -203,6 +203,15 @@ public class BundleDeployDefinition implements Serializable {
         return deployments;
     }
 
+    public void addDeployment(BundleDeployment bundleDeployment) {
+        this.deployments.add(bundleDeployment);
+        bundleDeployment.setBundleDeployDefinition(this);
+    }
+
+    public void setDeployments(List<BundleDeployment> deployments) {
+        this.deployments = deployments;
+    }
+
     @Override
     public String toString() {
         return "BundleDeployDefinition[id=" + id + ", name=" + name + "]";

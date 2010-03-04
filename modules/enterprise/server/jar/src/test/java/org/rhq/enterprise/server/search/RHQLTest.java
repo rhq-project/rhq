@@ -59,7 +59,6 @@ public class RHQLTest extends AssertJUnit {
             this.line = line;
         }
 
-        @Override
         public TestResult call() throws Exception {
             try {
                 System.out.println(line);

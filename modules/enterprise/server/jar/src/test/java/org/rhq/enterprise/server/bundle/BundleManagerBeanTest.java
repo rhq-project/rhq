@@ -20,6 +20,7 @@
 package org.rhq.enterprise.server.bundle;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +37,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentAction;
+import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -46,6 +49,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -70,6 +74,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private BundleManagerLocal bundleManager;
     private ResourceManagerLocal resourceManager;
+    private static final boolean ENABLED = true;
+    private static final boolean DISABLED = false;
+
     private TestBundleServerPluginService ps;
     private MasterServerPluginContainer pc;
     private Subject overlord;
@@ -106,6 +113,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             List doomed;
 
             // clean up any tests that don't already clean up after themselves
+
+            q = em.createQuery("SELECT bdh FROM BundleDeploymentHistory bdh ");//WHERE bdh.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(BundleDeploymentHistory.class, ((BundleDeploymentHistory) removeMe).getId()));
+            }
 
             // remove bundleversions which cascade remove bundlefiles and bundledeploydefs  
             // removal of bundledeploydefs cascade remove bundledeployments
@@ -395,6 +408,61 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNull(bv.getDistribution());
         assertNotNull(bv.getBundleDeployDefinitions());
         assertTrue(bv.getBundleDeployDefinitions().isEmpty());
+    }
+
+    @Test(enabled = DISABLED)
+    public void testInsertAndRetrieve() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
+    public void testFindByPlatformId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
+    public void testFindByBundleId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
+    public void testFindByBundleDeploymentId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = ENABLED)
+    public void testFindHistoryByCriteria() throws Exception {
+
+        Subject subject = getOverlord();
+        Long auditTime = new Date().getTime();
+        BundleDeploymentAction auditAction = BundleDeploymentAction.DEPLOYMENT_START;
+        String auditMessage = "This is my message";
+
+        BundleDeployment bundleDeployment = createDeployment();
+        BundleDeploymentHistory history = new BundleDeploymentHistory(bundleDeployment, subject.getName(), auditTime,
+            auditAction, auditMessage);
+
+        Bundle bundle = createBundle("deleteThisBundle");
+
+        history.setBundleDeployment(bundleDeployment);
+
+        bundleManager.addBundleDeploymentHistoryByBundleDeployment(history);
+
+        BundleDeploymentHistoryCriteria criteria = new BundleDeploymentHistoryCriteria();
+        List<BundleDeploymentHistory> histories = bundleManager
+            .findBundleDeploymentHistoryByCriteria(subject, criteria);
+
+        assertNotNull(histories);
+        assertTrue(histories.size() > 0);
+
+    }
+
+    private BundleDeployment createDeployment() {
+        Resource resource = new Resource();
+
+        BundleDeployDefinition def = new BundleDeployDefinition();
+
+        return new BundleDeployment(def, resource);
     }
 
     private BundleType createBundleType(String name) throws Exception {

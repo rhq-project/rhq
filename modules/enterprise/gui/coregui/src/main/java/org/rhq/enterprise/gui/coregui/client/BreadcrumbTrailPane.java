@@ -39,7 +39,7 @@ public class BreadcrumbTrailPane extends HTMLPane {
     public BreadcrumbTrailPane() {
         setHeight(28);
         setBackgroundColor("#E6E3E3");
-        setBackgroundImage("[skin]images/ToolStrip/background.png");
+        setBackgroundImage("[skin]images/SectionHeader/header_opened_stretch.png");   //ToolStrip/background.png");
         setBackgroundRepeat(BkgndRepeat.REPEAT_X);
         setPadding(5);
         setOverflow(Overflow.CLIP_V);

@@ -19,7 +19,10 @@
 package org.rhq.enterprise.gui.coregui.client.menu;
 
 import com.google.gwt.user.client.ui.TextBox;
+import com.smartgwt.client.types.FormLayoutType;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -46,8 +49,9 @@ public class SearchBarPane extends HLayout {
         super.onInit();
 
         DynamicForm form = new DynamicForm();
-        form.setNumCols(3);
-        form.setWidth100();
+        form.setNumCols(4);
+        form.setItemLayout(FormLayoutType.ABSOLUTE);
+//        form.setWidth100();
 
 
         LinkedHashMap<String, String> values = new LinkedHashMap<String, String>();
@@ -59,14 +63,21 @@ public class SearchBarPane extends HLayout {
         values.put("Roles", "Roles");
 
         SelectItem searchType = new SelectItem("searchType", "Search");
+        searchType.setWidth(150);
         searchType.setValueMap(values);
 
 
         TextItem query = new TextItem("query");
-        query.setWidth("100%");
+        query.setLeft(210);
+        query.setWidth(400);
         query.setShowTitle(false);
 
-        form.setItems(searchType, query);
+        ButtonItem search = new ButtonItem("Search", "Search");
+        search.setLeft(620);
+        search.setIcon(Window.getImgURL("[SKIN]/actions/view.png"));
+
+
+        form.setItems(searchType, query, search);
 
         addMember(form);
     }

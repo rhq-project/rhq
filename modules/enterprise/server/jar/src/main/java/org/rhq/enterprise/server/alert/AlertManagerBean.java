@@ -184,7 +184,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     + "for the following Resource(s): " + forbiddenResources);
         }
 
-        deleteAlerts(alertIds);
+        deleteAlerts(user, alertIds);
     }
 
     public void deleteAlerts(Subject user, int resourceId, Integer[] ids) {

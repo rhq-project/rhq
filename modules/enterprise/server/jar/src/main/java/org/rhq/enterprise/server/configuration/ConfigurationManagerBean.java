@@ -58,6 +58,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;

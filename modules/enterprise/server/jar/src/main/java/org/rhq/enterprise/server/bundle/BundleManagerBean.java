@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.bundle;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -59,7 +60,7 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -333,7 +334,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         throws Exception {
 
         if (null == resourceIds || 0 == resourceIds.length) {
-            throw new IllegalArgumentException("Invalid resourceIds: " + resourceIds);
+            throw new IllegalArgumentException("Invalid resourceIds: " + Arrays.toString(resourceIds));
         }
 
         BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
@@ -342,7 +343,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
         Resource[] resources = new Resource[resourceIds.length];
         for (int i = 0; (i < resourceIds.length); ++i) {
-            resources[i] = (Resource) entityManager.find(Resource.class, resourceIds[i]);
+            resources[i] = entityManager.find(Resource.class, resourceIds[i]);
             if (null == resources[i]) {
                 throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resources[i]);
             }

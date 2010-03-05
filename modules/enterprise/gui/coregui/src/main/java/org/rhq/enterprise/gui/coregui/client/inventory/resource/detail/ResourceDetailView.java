@@ -242,7 +242,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
                 if (tab.getTitle().equals(parts[2])) {
 
                     if (parts.length == 3) {
-                        crumb = new Breadcrumb(parts[2], parts[2]);
+                        crumb = new Breadcrumb(parts[2], parts[2], false);
                     }
 
 
@@ -254,7 +254,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
 
 
                         if (parts.length == 4) {
-                            crumb = new Breadcrumb(parts[3], parts[3]);
+                            crumb = new Breadcrumb(parts[3], parts[3], false);
                         }
                     }
                 }

@@ -649,22 +649,15 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public List<Resource> getResourceLineageAndSiblings(int resourceId) {
-        LinkedList<Resource> resourceLineage = new LinkedList<Resource>();
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        if (resource == null) {
-            throw new ResourceNotFoundException(resourceId);
+        List<Resource> resourceLineage = getResourceLineage(resourceId);
+        LinkedList<Resource> result = new LinkedList<Resource>();
+
+        result.add(resourceLineage.get(0));
+        for (Resource resource : resourceLineage) {
+            result.addAll(resource.getChildResources());
         }
 
-        resourceLineage.add(resource);
-        int childResourceId = resourceId;
-        Resource parent;
-        while ((parent = getParentResource(childResourceId)) != null) {
-            resourceLineage.addAll(parent.getChildResources());
-            resourceLineage.addFirst(parent);
-            childResourceId = parent.getId(); // This also ensures Hibernate actually populates parent's fields.
-        }
-
-        return resourceLineage;
+        return result;
     }
 
 

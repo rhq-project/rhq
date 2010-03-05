@@ -18,11 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionAppearance;
@@ -33,10 +31,6 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
-import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -49,14 +43,12 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
-import java.util.ArrayList;
-
 /**
  * @author Greg Hinkle
  */
 public class ResourceGroupListView extends VLayout {
 
-    private ListGrid listGrid;
+    private Table table;
 
 
     public ResourceGroupListView() {
@@ -64,32 +56,15 @@ public class ResourceGroupListView extends VLayout {
         setWidth100();
         setHeight100();
 
-//        DynamicForm searchPanel = new DynamicForm();
-//        final TextItem searchBox = new TextItem("query", "Search Resources");
-//        searchBox.setValue("");
-//        searchPanel.setWrapItemTitles(false);
-//        searchPanel.setFields(searchBox);
-//
-//
-//        addMember(searchPanel);
-
-
         final ResourceGroupsDataSource datasource = ResourceGroupsDataSource.getInstance();
 
-        VLayout gridHolder = new VLayout();
 
-        listGrid = new ListGrid();
-        listGrid.setWidth100();
-        listGrid.setHeight100();
-        listGrid.setDataSource(datasource);
-        listGrid.setAutoFetchData(true);
-        listGrid.setAlternateRecordStyles(true);
-//        listGrid.setAutoFitData(Autofit.HORIZONTAL);
-//        listGrid.setCriteria(new Criteria("name", searchPanel.getValueAsString("query")));
+        table = new Table("Resource Groups");
+        table.setDataSource(datasource);
 
-        listGrid.setSelectionType(SelectionStyle.SIMPLE);
-        listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
-        listGrid.setResizeFieldsInRealTime(true);
+        table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
+        table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
+        table.getListGrid().setResizeFieldsInRealTime(true);
 
 
         ListGridField idField = new ListGridField("id", "Id", 55);
@@ -110,73 +85,21 @@ public class ResourceGroupListView extends VLayout {
         ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
 
         availabilityField.setAlign(Alignment.CENTER);
-        listGrid.setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
+        table.getListGrid().setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
 
 
-        gridHolder.addMember(listGrid);
-
-        ToolStrip toolStrip = new ToolStrip();
-        toolStrip.setMembersMargin(15);
-
-        final IButton removeButton = new IButton("Remove");
-        removeButton.setDisabled(true);
-        removeButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " resources?",
-                        new BooleanCallback() {
-                            public void execute(Boolean aBoolean) {
-
-                            }
-                        }
-                );
-            }
-        });
-
-
-
-
-        final Label tableInfo = new Label("Total: " + listGrid.getTotalRows());
-        tableInfo.setWrap(false);
-
-        toolStrip.addMember(removeButton);
-        toolStrip.addMember(new LayoutSpacer());
-        toolStrip.addMember(tableInfo);
-
-        gridHolder.addMember(toolStrip);
-
-
-        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                int selectedCount = ((ListGrid)selectionEvent.getSource()).getSelection().length;
-                tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
-                removeButton.setDisabled(selectedCount == 0);
-            }
-        });
-
-
-
-        addMember(gridHolder);
-
-
-        listGrid.addDataArrivedHandler(new DataArrivedHandler() {
-            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                int selectedCount = ((ListGrid)dataArrivedEvent.getSource()).getSelection().length;
-                tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
-            }
-        });
-
-    /*
-            searchBox.addKeyPressHandler(new KeyPressHandler() {
-                public void onKeyPress(KeyPressEvent event) {
-                    if (event.getCharacterValue() == KeyCodes.KEY_ENTER) {
-                        datasource.setQuery((String) searchBox.getValue());
-                        Criteria c = new Criteria("name", (String) searchBox.getValue());
-                        long start = System.currentTimeMillis();
-                        listGrid.fetchData(c);
-                        System.out.println("Loaded in: " + (System.currentTimeMillis() - start));
+        table.addTableAction(
+                "Delete Groups",
+                Table.SelectionEnablement.MULTIPLE,
+                "Are you sure you want to delete # groups?",
+                new TableAction() {
+                    public void executeAction(ListGridRecord[] selection) {
+                        // TODO: Implement this method.
                     }
-                }
-            });*/
+                });
+
+        addMember(table);
+
     }
 
 }

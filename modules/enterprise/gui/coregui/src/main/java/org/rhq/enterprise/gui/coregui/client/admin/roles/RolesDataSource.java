@@ -104,14 +104,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
                 System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
 
-                ListGridRecord[] records = new ListGridRecord[result.size()];
-                for (int x = 0; x < result.size(); x++) {
-                    Role role = result.get(x);
-                    ListGridRecord record = copyValues(role);
-                    records[x] = record;
-                }
-
-                response.setData(records);
+                response.setData(buildRecords(result));
                 response.setTotalRows(result.getTotalSize());    // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }

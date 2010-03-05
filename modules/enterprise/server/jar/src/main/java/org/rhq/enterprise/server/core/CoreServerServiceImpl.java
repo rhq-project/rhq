@@ -42,6 +42,7 @@ import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.ConnectAgentRequest;
 import org.rhq.core.clientapi.server.core.ConnectAgentResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
+import org.rhq.core.db.ant.Base64;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.composite.FailoverListComposite;
@@ -443,19 +444,18 @@ public class CoreServerServiceImpl implements CoreServerService {
         return;
     }
 
-
     private synchronized String generateAgentToken() {
         if (random == null) {
             try {
                 random = SecureRandom.getInstance("SHA1PRNG");
             } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("Could not load SecureRandom algorithm",e);
+                throw new RuntimeException("Could not load SecureRandom algorithm", e);
             }
         }
 
         byte[] tokenBytes = new byte[50];
         random.nextBytes(tokenBytes);
-        return new String(tokenBytes);
+        return Base64.encode(tokenBytes);
     }
 
 }

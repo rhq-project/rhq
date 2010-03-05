@@ -96,7 +96,7 @@ public class ResourceTreeView extends VLayout {
         treeGrid.setShowRollOver(false);
         treeGrid.setSortField("name");
         treeGrid.setShowHeader(false);
-        
+
 
         contextMenu = new Menu();
         MenuItem item = new MenuItem("Expand node");
@@ -140,7 +140,7 @@ public class ResourceTreeView extends VLayout {
                         String currentToken = History.getToken();
                         if (!currentToken.startsWith(newToken)) {
 
-                            String ending = currentToken.replaceFirst("^[^\\/]*\\/[^\\/]*","");
+                            String ending = currentToken.replaceFirst("^[^\\/]*\\/[^\\/]*", "");
 
                             History.newItem("Resource/" + node.getResource().getId() + ending);
 
@@ -257,7 +257,6 @@ public class ResourceTreeView extends VLayout {
         contextMenu.addItem(operations);
 
 
-
         // Create Menu
         MenuItem createChildMenu = new MenuItem("Create Child");
         Menu createChildSubMenu = new Menu();
@@ -288,14 +287,14 @@ public class ResourceTreeView extends VLayout {
     }
 
     Resource getResource(int resourceId) {
-         if (this.treeGrid != null && this.treeGrid.getTree() != null) {
-             ResourceTreeDatasource.ResourceTreeNode treeNode =
-                     (ResourceTreeDatasource.ResourceTreeNode) this.treeGrid.getTree().findById(String.valueOf(resourceId));
-             if (treeNode != null) {
-                 return treeNode.getResource();
-             }
-         }
-         return null;       
+        if (this.treeGrid != null && this.treeGrid.getTree() != null) {
+            ResourceTreeDatasource.ResourceTreeNode treeNode =
+                    (ResourceTreeDatasource.ResourceTreeNode) this.treeGrid.getTree().findById(String.valueOf(resourceId));
+            if (treeNode != null) {
+                return treeNode.getResource();
+            }
+        }
+        return null;
     }
 
     private void setRootResource(Resource rootResource) {
@@ -309,6 +308,8 @@ public class ResourceTreeView extends VLayout {
         if (treeGrid != null && treeGrid.getTree() != null
                 && (node = treeGrid.getTree().findById(String.valueOf(selectedResource.getId()))) != null) {
             treeGrid.getTree().openFolder(node);
+            treeGrid.deselectAllRecords();
+            treeGrid.selectRecord(node);
         } else {
             final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
             resourceService.getResourceLineageAndSiblings(selectedResource.getId(), new AsyncCallback<List<Resource>>() {
@@ -329,14 +330,6 @@ public class ResourceTreeView extends VLayout {
 
                         setRootResource(root);
 
-                        ResourceTreeDatasource dataSource = new ResourceTreeDatasource(result);
-                        treeGrid.setDataSource(dataSource);
-                        // GH: couldn't get initial data to mix with the datasource... so i put the inital data in
-                        // the first datasource request
-//                    treeGrid.setInitialData(selectedLineage);
-
-                        addMember(treeGrid);
-
 
                         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
                             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
@@ -351,7 +344,7 @@ public class ResourceTreeView extends VLayout {
                                         treeGrid.getTree().openFolder(selectedNode);
 
                                         for (TreeNode p : parents) {
-                                            System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p);
+                                            System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
                                         }
 
                                         treeGrid.selectRecord(selectedNode);
@@ -361,6 +354,33 @@ public class ResourceTreeView extends VLayout {
                                 }
                             }
                         });
+
+                        ResourceTreeDatasource dataSource = new ResourceTreeDatasource(result);
+                        treeGrid.setDataSource(dataSource);
+                        // GH: couldn't get initial data to mix with the datasource... so i put the inital data in
+                        // the first datasource request
+//                    treeGrid.setInitialData(selectedLineage);
+
+                        addMember(treeGrid);
+
+
+                        TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResource.getId()));
+                        System.out.println("Trying to preopen: " + selectedNode);
+                        if (selectedNode != null) {
+                            System.out.println("Preopen node!!!");
+                            TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
+                            treeGrid.getTree().openFolders(parents);
+                            treeGrid.getTree().openFolder(selectedNode);
+
+                            for (TreeNode p : parents) {
+                                System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
+                            }
+
+                            treeGrid.selectRecord(selectedNode);
+                            initialSelect = true;
+                            treeGrid.markForRedraw();
+                        }
+
 
 //                    treeGrid.fegetTree().openFolder(rootData[0]);
 

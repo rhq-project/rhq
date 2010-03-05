@@ -176,9 +176,8 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
         setValue("descriptionItem", resource.getDescription());
         setValue("versionItem", resource.getVersion());
         setValue("parentItem", resource.getParentResource() == null ? null :
-                (resource.getParentResource().getResourceType().getName() +
-                        " '<a href=\"#Resource/" + resource.getParentResource().getId() + "\">" +
-                        resource.getParentResource().getName() + "</a>'"));
+                ("<a href=\"#Resource/" + resource.getParentResource().getId() + "\">" +
+                        resource.getParentResource().getName() + "</a>"));
 
 
     }

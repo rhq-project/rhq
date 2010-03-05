@@ -18,20 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import com.smartgwt.client.types.Autofit;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.util.BooleanCallback;
-import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
@@ -54,24 +50,11 @@ public class UsersView extends VLayout {
 
         final UsersDataSource datasource = UsersDataSource.getInstance();
 
-        VLayout gridHolder = new VLayout();
-        gridHolder.setWidth100();
-        gridHolder.setHeight("50%");
-        gridHolder.setShowResizeBar(true);
+        final Table table = new Table("Users");
+        table.setHeight("50%");
+        table.setShowResizeBar(true);
+        table.setDataSource(datasource);
 
-        final ListGrid listGrid = new ListGrid();
-        listGrid.setWidth100();
-        listGrid.setHeight100();
-        listGrid.setDataSource(datasource);
-        listGrid.setAutoFetchData(true);
-        listGrid.setAutoFitData(Autofit.HORIZONTAL);
-//        listGrid.setAutoFitData(Autofit.HORIZONTAL);
-        listGrid.setAlternateRecordStyles(true);
-//        listGrid.setAutoFitData(Autofit.HORIZONTAL);
-//        listGrid.setSelectionType(SelectionStyle.SIMPLE);
-//        listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
-
-        listGrid.setShowFilterEditor(true);
 
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
@@ -80,66 +63,36 @@ public class UsersView extends VLayout {
 
         ListGridField emailField = new ListGridField("email", "Email Address");
 
-        listGrid.setFields(idField, nameField, emailField);
-
-
-        gridHolder.addMember(listGrid);
+        table.getListGrid().setFields(idField, nameField, emailField);
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
         toolStrip.setMembersMargin(15);
 
-        final IButton removeButton = new IButton("Remove");
-        removeButton.setDisabled(true);
-        removeButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " users?",
-                        new BooleanCallback() {
-                            public void execute(Boolean aBoolean) {
-                                // todo
-                            }
-                        }
-                );
-            }
-        });
+        table.addTableAction("Remove",
+                Table.SelectionEnablement.MULTIPLE,
+                "Are you sure you want to delete # roles?",
+                new TableAction() {
+                    public void executeAction(ListGridRecord[] selection) {
+                        table.getListGrid().removeSelectedData();
+                    }
+                });
 
-
-        final Label tableInfo = new Label("Total: " + listGrid.getTotalRows());
-        tableInfo.setWrap(false);
-
-
-        final IButton addButton = new IButton("Add Role");
-        addButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                createUser();
-            }
-        });
-
-
-        toolStrip.addMember(removeButton);
-        toolStrip.addMember(addButton);
-        toolStrip.addMember(new LayoutSpacer());
-        toolStrip.addMember(tableInfo);
-
-        gridHolder.addMember(toolStrip);
+        table.addTableAction("Add Role",
+                new TableAction() {
+                    public void executeAction(ListGridRecord[] selection) {
+                        createUser();
+                    }
+                });
 
 
         final UserEditView userEditor = new UserEditView();
-
-
-        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                int selectedCount = ((ListGrid) selectionEvent.getSource()).getSelection().length;
-                tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
-                removeButton.setDisabled(selectedCount == 0);
-            }
-        });
 
         final SectionStackSection detailsSection = new SectionStackSection("Details");
         detailsSection.setItems(new Label("Select a user to edit..."));
         detailsSection.setExpanded(false);
 
-        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+        table.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
                     userEditor.editRecord(selectionEvent.getRecord());
@@ -150,7 +103,7 @@ public class UsersView extends VLayout {
         });
 
 
-        addMember(gridHolder);
+        addMember(table);
         addMember(userEditor);
     }
 

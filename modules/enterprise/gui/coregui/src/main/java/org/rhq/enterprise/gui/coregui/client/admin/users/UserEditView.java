@@ -142,11 +142,13 @@ public class UserEditView extends VLayout {
         form.show();
         form.setSaveOperationType(DSOperationType.UPDATE);
 
+        markForRedraw();
     }
 
     public void editNone() {
         message.show();
         form.hide();
+        markForRedraw();
     }
 
     public void editNew() {

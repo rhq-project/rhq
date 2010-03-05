@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
-import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -33,8 +29,6 @@ import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
-import java.util.List;
 
 /**
  * Base GWT-RPC oriented DataSource class.
@@ -110,7 +104,6 @@ public abstract class RPCDataSource<T> extends DataSource {
             for (String sort : sorts) {
                 PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
                 String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
-                ResourceCriteria c;
                 pageControl.addDefaultOrderingField(columnName, ordering);
             }
         }

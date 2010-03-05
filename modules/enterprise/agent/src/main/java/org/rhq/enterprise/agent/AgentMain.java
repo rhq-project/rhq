@@ -68,6 +68,7 @@ import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 import org.jboss.util.StringPropertyReplacer;
 
+import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.core.AgentNotSupportedException;
@@ -1648,6 +1649,7 @@ public class AgentMain {
                 .getRemotePojo(ResourceFactoryServerService.class);
             ContentServerService contentServerService = factory.getRemotePojo(ContentServerService.class);
             EventServerService eventServerService = factory.getRemotePojo(EventServerService.class);
+            BundleServerService bundleServerService = factory.getRemotePojo(BundleServerService.class);
 
             ServerServices serverServices = new ServerServices();
             serverServices.setCoreServerService(coreServerService);
@@ -1658,6 +1660,7 @@ public class AgentMain {
             serverServices.setResourceFactoryServerService(resourceFactoryServerSerfice);
             serverServices.setContentServerService(contentServerService);
             serverServices.setEventServerService(eventServerService);
+            serverServices.setBundleServerService(bundleServerService);
 
             pc_config.setServerServices(serverServices);
         } catch (Exception e) {

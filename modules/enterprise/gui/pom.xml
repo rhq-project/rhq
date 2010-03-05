@@ -34,6 +34,8 @@
       <modules>
         <module>portal-war</module>
         <module>installer-war</module>
+        <module>base-perspective-jar</module>
+        <module>base-perspective-war</module>
         <module>webdav-war</module>
         <module>content_http-war</module>
         <module>alert-migration</module>
@@ -43,3 +45,4 @@
   </profiles>
 
 </project>
+

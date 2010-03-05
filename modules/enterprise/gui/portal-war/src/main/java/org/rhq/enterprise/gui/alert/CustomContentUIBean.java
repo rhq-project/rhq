@@ -26,6 +26,8 @@ import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.contexts.Context;
 import org.jboss.seam.contexts.Contexts;
+
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
@@ -42,6 +44,9 @@ public class CustomContentUIBean {
 
     @In
     private AlertNotificationManagerLocal alertNotificationManager;
+
+    @In("#{webUser.subject}")
+    private Subject subject;
 
     private String contentUrl;
 
@@ -62,6 +67,7 @@ public class CustomContentUIBean {
                 notificationId);
 
         if (backingBeanName != null && backingBean != null) {
+            backingBean.setWebUser(subject);
             outjectBean(backingBeanName, backingBean);
         }
     }

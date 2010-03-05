@@ -22,7 +22,14 @@
  */
 package org.rhq.core.clientapi.server.bundle;
 
+import java.io.OutputStream;
+import java.util.List;
+
+import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.communications.command.annotation.Asynchronous;
+import org.rhq.core.communications.command.annotation.LimitedConcurrency;
+import org.rhq.core.communications.command.annotation.Timeout;
+import org.rhq.core.domain.content.PackageVersion;
 
 /**
  * Interface for agents to use when needing to inform the server about bundle tasks. Implementations of this interface, once registered with the
@@ -33,5 +40,23 @@ import org.rhq.core.communications.command.annotation.Asynchronous;
 public interface BundleServerService {
 
     @Asynchronous(guaranteedDelivery = true)
-    void updateComplete(BundleUpdateComplete buc);
+    void updateStatus(BundleStatusUpdate update);
+
+    List<PackageVersion> getAllBundleVersionPackageVersions(int bundleVersionId);
+
+    /**
+     * Requests that the server download and stream the bits for the specified package version.
+     * If the package cannot be found, an exception will be thrown.
+     *
+     * @param  packageVersion identifies the package to download
+     * @param  outputStream   an output stream where the server should write the package contents. It is up to the
+     *                        caller to prepare this output stream in order to write the package content to an
+     *                        appropriate location.
+     *
+     * @return the number of bytes written to the output stream - this is the size of the package version that was
+     *         downloaded
+     */
+    @Timeout(45 * 60 * 1000L)
+    @LimitedConcurrency(ContentServerService.CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
+    long downloadPackageBits(PackageVersion packageVersion, OutputStream outputStream);
 }

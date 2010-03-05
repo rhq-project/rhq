@@ -21,7 +21,12 @@ package org.rhq.plugins.filetemplate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.bundle.filetemplate.recipe.RecipeParser;
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
+import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -45,5 +50,28 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
 
     public AvailabilityType getAvailability() {
         return AvailabilityType.UP;
+    }
+
+    public BundleDeployResult deployBundle(BundleDeployRequest request) {
+        BundleDeployResult result = new BundleDeployResult();
+        try {
+            BundleDeployDefinition bundleDeployDef = request.getBundleDeployDefinition();
+            BundleVersion bundleVersion = bundleDeployDef.getBundleVersion();
+
+            // process the recipe
+            String recipe = bundleVersion.getRecipe();
+            RecipeParser parser = new RecipeParser();
+            ProcessingRecipeContext recipeContext = new ProcessingRecipeContext(recipe, request
+                .getPackageVersionFiles(), this.resourceContext.getSystemInformation(), request
+                .getBundleFilesLocation().getAbsolutePath());
+            recipeContext.setReplacementVariableValues(bundleDeployDef.getConfiguration());
+            parser.setReplaceReplacementVariables(true);
+            parser.parseRecipe(recipeContext);
+
+        } catch (Throwable t) {
+            log.error("Failed to deploy bundle [" + request + "]", t);
+            result.setErrorMessage(t);
+        }
+        return result;
     }
 }

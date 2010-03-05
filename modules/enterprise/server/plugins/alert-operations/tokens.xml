@@ -1,0 +1,137 @@
+<!-- this file was generated from the Token + TokenClass enums via PrintTokens tool -->
+<tokenClasses>
+  <tokenClass name="alert" description="Information about the alert itself">
+    <token name="willBeDisabled">
+      <fullName>alert.willBeDisabled</fullName>
+      <descr>Will the alert definition be disabled after firing?</descr>
+    </token>
+    <token name="id">
+      <fullName>alert.id</fullName>
+      <descr>The id of this particular alert</descr>
+    </token>
+    <token name="url">
+      <fullName>alert.url</fullName>
+      <descr>Url to the alert details page</descr>
+    </token>
+    <token name="name">
+      <fullName>alert.name</fullName>
+      <descr>Name from the defining alert definition</descr>
+    </token>
+    <token name="priority">
+      <fullName>alert.priority</fullName>
+      <descr>Priority of this alert</descr>
+    </token>
+    <token name="description">
+      <fullName>alert.description</fullName>
+      <descr>Description of this alert</descr>
+    </token>
+    <token name="firedAt">
+      <fullName>alert.firedAt</fullName>
+      <descr>Time the alert fired</descr>
+    </token>
+    <token name="conditions">
+      <fullName>alert.conditions</fullName>
+      <descr>A text representation of the conditions that led to this alert</descr>
+    </token>
+    <token name="willRecover">
+      <fullName>alert.willRecover</fullName>
+      <descr>?? TODO</descr>
+    </token>
+  </tokenClass>
+  <tokenClass name="resource" description="Information about the resource that triggered the alert">
+    <token name="id">
+      <fullName>resource.id</fullName>
+      <descr>Id of the resource</descr>
+    </token>
+    <token name="platformType">
+      <fullName>resource.platformType</fullName>
+      <descr>Type of the platform the resource is on</descr>
+    </token>
+    <token name="platformName">
+      <fullName>resource.platformName</fullName>
+      <descr>Name of the platform the resource is on</descr>
+    </token>
+    <token name="typeName">
+      <fullName>resource.typeName</fullName>
+      <descr>Resource type name</descr>
+    </token>
+    <token name="name">
+      <fullName>resource.name</fullName>
+      <descr>Name of the resource</descr>
+    </token>
+    <token name="platformId">
+      <fullName>resource.platformId</fullName>
+      <descr>Id of the platform the resource is on</descr>
+    </token>
+    <token name="parentName">
+      <fullName>resource.parentName</fullName>
+      <descr>Name of the parent resource</descr>
+    </token>
+    <token name="parentId">
+      <fullName>resource.parentId</fullName>
+      <descr>Id of the parent resource</descr>
+    </token>
+    <token name="typeId">
+      <fullName>resource.typeId</fullName>
+      <descr>Resource type id</descr>
+    </token>
+  </tokenClass>
+  <tokenClass name="targetResource" description="Information about the resource the alert is fired on ">
+    <token name="parentId">
+      <fullName>targetResource.parentId</fullName>
+      <descr>Id of the target's parent resource</descr>
+    </token>
+    <token name="platformName">
+      <fullName>targetResource.platformName</fullName>
+      <descr>Name of the platform the target resource is on</descr>
+    </token>
+    <token name="platformId">
+      <fullName>targetResource.platformId</fullName>
+      <descr>Id of the platform the target resource is on</descr>
+    </token>
+    <token name="parentName">
+      <fullName>targetResource.parentName</fullName>
+      <descr>Name of the target's parent resource</descr>
+    </token>
+    <token name="typeId">
+      <fullName>targetResource.typeId</fullName>
+      <descr>Resource type of the target resource id</descr>
+    </token>
+    <token name="platformType">
+      <fullName>targetResource.platformType</fullName>
+      <descr>Type of the platform the target resource is on</descr>
+    </token>
+    <token name="name">
+      <fullName>targetResource.name</fullName>
+      <descr>Name of the target resource</descr>
+    </token>
+    <token name="id">
+      <fullName>targetResource.id</fullName>
+      <descr>Id of the target resource</descr>
+    </token>
+    <token name="typeName">
+      <fullName>targetResource.typeName</fullName>
+      <descr>Resource type name of the target resource</descr>
+    </token>
+  </tokenClass>
+  <tokenClass name="operation" description="Information about the triggered operation">
+    <token name="id">
+      <fullName>operation.id</fullName>
+      <descr>Id of the operation fired</descr>
+    </token>
+    <token name="name">
+      <fullName>operation.name</fullName>
+      <descr>Name of the operation fired</descr>
+    </token>
+  </tokenClass>
+  <tokenClass name="test" description="Just some dummies for internal testing purposes">
+    <token name="echo">
+      <fullName>test.echo</fullName>
+      <descr>Echo the input</descr>
+    </token>
+    <token name="fix">
+      <fullName>test.fix</fullName>
+      <descr>Return a fixed string</descr>
+    </token>
+  </tokenClass>
+</tokenClasses>

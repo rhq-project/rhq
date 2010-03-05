@@ -119,6 +119,10 @@ public class BundleDeployment implements Serializable {
         this.ctime = System.currentTimeMillis();
     }
 
+    public void setBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
+        this.bundleDeployDefinition = bundleDeployDefinition;
+    }
+
     public List<BundleDeploymentHistory> getBundleDeploymentHistories() {
         return histories;
     }

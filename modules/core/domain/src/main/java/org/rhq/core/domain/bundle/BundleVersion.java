@@ -23,6 +23,8 @@
 package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -35,6 +37,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -74,7 +77,7 @@ public class BundleVersion implements Serializable {
     private String version;
 
     @Column(name = "ACTION", nullable = false)
-    private String action;
+    private String recipe;
 
     @JoinColumn(name = "BUNDLE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -88,14 +91,21 @@ public class BundleVersion implements Serializable {
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ConfigurationDefinition configurationDefinition;
 
+    @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleDeployDefinition> bundleDeployDefinitions = new ArrayList<BundleDeployDefinition>();
+
+    @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleFile> bundleFiles = new ArrayList<BundleFile>();
+
     public BundleVersion() {
         // for JPA use
     }
 
-    public BundleVersion(String name, String version, Bundle bundle) {
+    public BundleVersion(String name, String version, Bundle bundle, String recipe) {
         setName(name);
         setVersion(version);
         setBundle(bundle);
+        setRecipe(recipe);
     }
 
     public int getId() {
@@ -122,12 +132,12 @@ public class BundleVersion implements Serializable {
         this.version = version;
     }
 
-    public String getAction() {
-        return action;
+    public String getRecipe() {
+        return recipe;
     }
 
-    public void setAction(String action) {
-        this.action = action;
+    public void setRecipe(String recipe) {
+        this.recipe = recipe;
     }
 
     public Bundle getBundle() {
@@ -162,6 +172,32 @@ public class BundleVersion implements Serializable {
         this.configurationDefinition = configurationDefinition;
     }
 
+    public List<BundleDeployDefinition> getBundleDeployDefinitions() {
+        return bundleDeployDefinitions;
+    }
+
+    public void addBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
+        this.bundleDeployDefinitions.add(bundleDeployDefinition);
+        bundleDeployDefinition.setBundleVersion(this);
+    }
+
+    public void setBundleDeployDefinitions(List<BundleDeployDefinition> bundleDeployDefinitions) {
+        this.bundleDeployDefinitions = bundleDeployDefinitions;
+    }
+
+    public List<BundleFile> getBundleFiles() {
+        return bundleFiles;
+    }
+
+    public void addBundleFile(BundleFile bundleFile) {
+        this.bundleFiles.add(bundleFile);
+        bundleFile.setBundleVersion(this);
+    }
+
+    public void setBundleFiles(List<BundleFile> bundleFiles) {
+        this.bundleFiles = bundleFiles;
+    }
+
     @Override
     public String toString() {
         return "BundleVersion[id=" + id + ",name=" + name + ",version=" + version + ",bundle=" + bundle + "]";
@@ -173,7 +209,6 @@ public class BundleVersion implements Serializable {
         int result = 1;
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((version == null) ? 0 : version.hashCode());
-        result = prime * result + ((bundle == null) ? 0 : bundle.hashCode());
         return result;
     }
 
@@ -201,14 +236,6 @@ public class BundleVersion implements Serializable {
                 return false;
             }
         } else if (!version.equals(other.version)) {
-            return false;
-        }
-
-        if (bundle == null) {
-            if (other.bundle != null) {
-                return false;
-            }
-        } else if (!bundle.equals(other.bundle)) {
             return false;
         }
 

@@ -101,6 +101,13 @@
          <version>${version}</version>
          <scope>test</scope>
       </dependency>
+
+      <dependency>
+         <groupId>commons-io</groupId>
+         <artifactId>commons-io</artifactId>
+         <version>1.4</version>
+         <scope>test</scope>
+      </dependency>
       
    </dependencies>
 
@@ -150,6 +157,10 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <systemPropertyVariables>
+             <rhq.version>${project.version}</rhq.version>
+          </systemPropertyVariables>
+
           <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
           <!-- need to point the library path to the location of the native libraries -->
           <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>

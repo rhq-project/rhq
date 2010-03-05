@@ -22,7 +22,6 @@
  */
 package org.rhq.core.domain.auth;
 
-import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.util.Recordizable;
@@ -40,7 +39,6 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
@@ -53,7 +51,6 @@ import java.util.Set;
 
 /**
  * @author Greg Hinkle
- * 
  */
 @Entity
 @NamedQueries( {

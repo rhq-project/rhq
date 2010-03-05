@@ -41,12 +41,13 @@ import java.util.Map;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Criteria implements Serializable {
-
     public enum Type {
-        FILTER, FETCH, SORT;
+        FILTER, FETCH, SORT
     }
 
     private static final long serialVersionUID = 1L;
+
+    private Class<?> persistentClass;
 
     private Integer pageNumber;
     private Integer pageSize;
@@ -69,10 +70,12 @@ public abstract class Criteria implements Serializable {
     }
 
     public Criteria(Class<?> persistentClass) {
-        filterOverrides = new HashMap<String, String>();
-        sortOverrides = new HashMap<String, String>();
+        this.persistentClass = persistentClass;
 
-        orderingFieldNames = new ArrayList<String>();
+        this.filterOverrides = new HashMap<String, String>();
+        this.sortOverrides = new HashMap<String, String>();
+
+        this.orderingFieldNames = new ArrayList<String>();
 
         /*
          * reasonably large default, but prevent accidentally returning 100K objects
@@ -81,7 +84,9 @@ public abstract class Criteria implements Serializable {
         setPaging(0, 200);
     }
 
-    public abstract Class getPersistentClass();
+    public Class<?> getPersistentClass() {
+        return persistentClass;
+    }
 
     public Integer getPageNumber() {
         return pageNumber;

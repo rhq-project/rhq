@@ -66,7 +66,7 @@ public class MeasurementParser {
 
             if ((fromUnits == null) || (!fromUnits.isComparableTo(targetUnits))) {
                 throw new MeasurementConversionException("The units in '" + input + "' were not valid, " + "expected '"
-                    + targetUnits.getFamily() + "' units " + "received '" + units + "' units");
+                    + targetUnits.getFamily() + "' units, received '" + units + "' units");
             }
         }
 

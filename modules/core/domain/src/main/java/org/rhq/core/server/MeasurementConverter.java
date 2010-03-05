@@ -22,18 +22,14 @@
   */
 package org.rhq.core.server;
 
-   import java.text.DecimalFormat;
-   import java.text.NumberFormat;
-   import java.text.ParseException;
-   import java.util.HashSet;
-   import java.util.Set;
-   import java.util.regex.Matcher;
-   import java.util.regex.Pattern;
+import java.text.NumberFormat;
+import java.util.HashSet;
+import java.util.Set;
 
-   import org.rhq.core.domain.measurement.MeasurementSchedule;
-   import org.rhq.core.domain.measurement.MeasurementUnits;
-   import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
-   import org.rhq.core.domain.measurement.util.MeasurementConversionException;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
+import org.rhq.core.domain.measurement.util.MeasurementConversionException;
 
 public class MeasurementConverter {
    private static final int MAX_PRECISION_DIGITS = 4;

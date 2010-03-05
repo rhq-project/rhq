@@ -81,7 +81,7 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
         markForRedraw();
     }
 
-    private void loadValues() {        
+    private void loadValues() {
         GWTServiceLookup.getMeasurementDataService().findCurrentTraitsForResource(
                 resource.getId(),
                 DisplayType.SUMMARY,
@@ -93,11 +93,11 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
                     public void onSuccess(List<MeasurementDataTrait> result) {
                         // TODO: Implement this method.
                         for (MeasurementDataTrait trait : result) {
-                            String formId = trait.getName().replaceAll("\\.", "_").replaceAll(" ","__");
+                            String formId = trait.getName().replaceAll("\\.", "_").replaceAll(" ", "__");
                             FormItem item = getItem(formId);
-                            
+
                             if (item != null) {
-                                setValue(formId,trait.getValue());
+                                setValue(formId, trait.getValue());
                             }
                         }
                         markForRedraw();
@@ -127,31 +127,31 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
         ArrayList<String> itemIds = new ArrayList<String>();
 
 
-        StaticTextItem typeItem = new StaticTextItem("typeItem","Type");
+        StaticTextItem typeItem = new StaticTextItem("typeItem", "Type");
         typeItem.setTooltip("Plugin: " + type.getPlugin() + "\n<br>" + "Type: " + type.getName());
         typeItem.setValue(type.getName() + " (" + type.getPlugin() + ")");
         formItems.add(typeItem);
         itemIds.add(typeItem.getName());
 
-        StaticTextItem descriptionItem = new StaticTextItem("descriptionItem","Description");
+        StaticTextItem descriptionItem = new StaticTextItem("descriptionItem", "Description");
         descriptionItem.setValue(resource.getDescription());
         formItems.add(descriptionItem);
         itemIds.add(descriptionItem.getName());
 
 
-        StaticTextItem versionItem = new StaticTextItem("versionItem","Version");
+        StaticTextItem versionItem = new StaticTextItem("versionItem", "Version");
         formItems.add(versionItem);
         itemIds.add(versionItem.getName());
-        
 
-        StaticTextItem parentItem = new StaticTextItem("parentItem","Parent");
+
+        StaticTextItem parentItem = new StaticTextItem("parentItem", "Parent");
         formItems.add(parentItem);
         itemIds.add(parentItem.getName());
 
 
         for (MeasurementDefinition trait : traits) {
 
-            String id = trait.getDisplayName().replaceAll("\\.", "_").replaceAll(" ","__");
+            String id = trait.getDisplayName().replaceAll("\\.", "_").replaceAll(" ", "__");
             itemIds.add(id);
 
             StaticTextItem item = new StaticTextItem(id, trait.getDisplayName());
@@ -171,12 +171,14 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
         formItems.add(new SpacerItem());
         setItems(formItems.toArray(new FormItem[formItems.size()]));
 
-        
+
         setValue("typeItem", type.getName() + " (" + type.getPlugin() + ")");
         setValue("descriptionItem", resource.getDescription());
         setValue("versionItem", resource.getVersion());
-        setValue("parentItem", resource.getParentResource() == null ? null : (resource.getParentResource().getResourceType().getName() +
-           " '<a href=\"#Resource/" + resource.getParentResource().getId()) + "\">" + resource.getParentResource().getName() + "</a>'");
+        setValue("parentItem", resource.getParentResource() == null ? null :
+                (resource.getParentResource().getResourceType().getName() +
+                        " '<a href=\"#Resource/" + resource.getParentResource().getId() + "\">" +
+                        resource.getParentResource().getName() + "</a>'"));
 
 
     }

@@ -72,7 +72,8 @@ public class SubTabLayout extends VLayout {
         int i = 0;
 
         for (final String title : subtabs.keySet()) {
-            if (currentlyDisplayed == null) {
+
+            if (currentlySelected == null) {
                 currentlyDisplayed = subtabs.get(title);
                 currentlySelected = title;
             }

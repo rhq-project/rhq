@@ -18,9 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -48,10 +51,19 @@ import org.rhq.enterprise.gui.coregui.client.admin.roles.RoleEditView;
  *
  * @author Ian Springer
  */
-public class AlertsView extends SectionStack {
+public abstract class AbstractAlertsView extends SectionStack {
+    private static final SortSpecifier[] INITIAL_SORT_SPECIFIERS = new SortSpecifier[] {
+        new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME, SortDirection.DESCENDING),
+        new SortSpecifier(AlertCriteria.SORT_FIELD_NAME, SortDirection.ASCENDING)
+    };
+
     private ListGrid listGrid;
     private IButton removeButton;
     private Label tableInfo;
+    private AbstractAlertDataSource dataSource;
+        
+    public AbstractAlertsView() {
+    }
 
     @Override
     protected void onInit() {
@@ -61,26 +73,27 @@ public class AlertsView extends SectionStack {
         setWidth100();
         setHeight100();
 
-        final AlertDataSource dataSource = AlertDataSource.getInstance();
-
         VLayout gridHolder = new VLayout();
         gridHolder.setWidth100();
         gridHolder.setHeight100();
 
         this.listGrid = new ListGrid();
+
+        // Appearance settings.
         this.listGrid.setWidth100();
         this.listGrid.setHeight100();
-        this.listGrid.setDataSource(dataSource);
-        this.listGrid.setAutoFetchData(true);
         this.listGrid.setAutoFitData(Autofit.HORIZONTAL);
         this.listGrid.setAlternateRecordStyles(true);
         this.listGrid.setSelectionType(SelectionStyle.SIMPLE);
         this.listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
+        //this.listGrid.setShowFilterEditor(true);
 
-        this.listGrid.setShowFilterEditor(true);
-
+        // Data settings.
+        this.dataSource = (AbstractAlertDataSource) createDataSource();
+        this.listGrid.setDataSource(createDataSource());
         this.listGrid.setUseAllDataSourceFields(true);
-        this.listGrid.setSortField(AlertCriteria.SORT_FIELD_NAME);
+        this.listGrid.setAutoFetchData(true);
+        this.listGrid.setInitialSort(INITIAL_SORT_SPECIFIERS);
 
         gridHolder.addMember(this.listGrid);
 
@@ -91,13 +104,13 @@ public class AlertsView extends SectionStack {
         this.removeButton.setDisabled(true);
         this.removeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                SC.confirm("Are you sure you want to delete the " + AlertsView.this.listGrid.getSelection().length
+                SC.confirm("Are you sure you want to delete the " + AbstractAlertsView.this.listGrid.getSelection().length
                         + " selected alerts?",
                         new BooleanCallback() {
                             public void execute(Boolean confirmed) {
                                 if (confirmed) {
                                     //listGrid.removeSelectedData();
-                                    dataSource.deleteAlerts(AlertsView.this);
+                                    dataSource.deleteAlerts(AbstractAlertsView.this);
                                 }
                             }
                         }
@@ -147,6 +160,8 @@ public class AlertsView extends SectionStack {
             }
         });
     }
+
+    protected abstract DataSource createDataSource();
 
     ListGrid getListGrid() {
         return this.listGrid;

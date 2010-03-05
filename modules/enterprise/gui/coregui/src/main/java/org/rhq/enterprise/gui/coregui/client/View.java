@@ -29,22 +29,23 @@ package org.rhq.enterprise.gui.coregui.client;
  */
 public class View {
     private ViewId id;
-    private ViewRenderer descendantViewRender;
+    private ViewRenderer descendantViewRenderer;
     private Breadcrumb breadcrumb;
+    private View parent;
 
     public View(ViewId id) {
         this(id, null, null);
     }
 
-    public View(ViewId id, ViewRenderer descendantViewRender) {
-        this(id, descendantViewRender, null);
+    public View(ViewId id, ViewRenderer descendantViewRenderer) {
+        this(id, descendantViewRenderer, null);
     }
 
     public View(ViewId id, Breadcrumb breadcrumb) {
         this(id, null, breadcrumb);
     }
 
-    public View(ViewId id, ViewRenderer descendantViewRender, Breadcrumb breadcrumb) {
+    public View(ViewId id, ViewRenderer descendantViewRenderer, Breadcrumb breadcrumb) {
         if (id == null) {
             throw new IllegalArgumentException("Id is null.");
         }
@@ -57,7 +58,7 @@ public class View {
         } else {
             this.breadcrumb = new Breadcrumb(id.getName());
         }
-        this.descendantViewRender = descendantViewRender;
+        this.descendantViewRenderer = descendantViewRenderer;
     }
 
     /**
@@ -79,7 +80,13 @@ public class View {
      *         descendant views
      */
     public ViewRenderer getDescendantViewRenderer() {
-        return this.descendantViewRender;
+        if (this.descendantViewRenderer != null) {
+            return this.descendantViewRenderer;
+        } else if (this.parent != null) {
+            return this.parent.getDescendantViewRenderer();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -93,11 +100,20 @@ public class View {
         return this.breadcrumb;
     }
 
+    public View getParent() {
+        return this.parent;
+    }
+
+    public void setParent(View parent) {
+        this.parent = parent;
+    }
+
     @Override
     public String toString() {
         return "View[" +
                 "id=" + id +
-                ", descendantViewRender=" + this.descendantViewRender +
+                ", descendantViewRenderer=" +
+                ((this.descendantViewRenderer != null) ? this.descendantViewRenderer.getClass().getName() : null) +
                 ", breadcrumb=" + this.breadcrumb +
                 ']';
     }

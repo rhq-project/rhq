@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -125,9 +126,7 @@ public class CoreGUI implements EntryPoint {
         });
     }
 
-
     private void buildCoreUI() {
-
         RootCanvas rootCanvas = new RootCanvas();
         this.currentView = this.rootView = new View(new ViewId("", null), rootCanvas);
 
@@ -166,23 +165,42 @@ public class CoreGUI implements EntryPoint {
                 System.out.println("History request: " + path);
 
                 List<String> viewIdNames = path.equals("") ? Collections.<String>emptyList() : Arrays.asList(path.split("\\/"));
+                String currentPath = CoreGUI.this.currentView.getId().getPath();
+                List<String> currentViewIdNames = currentPath.equals("") ? Collections.<String>emptyList() : Arrays.asList(currentPath.split("\\/"));
 
+                int commonBasePathSize = 0;
+                for (int i = 0; i < viewIdNames.size() && i < currentViewIdNames.size(); i++) {
+                    String name = viewIdNames.get(i);
+                    String currentName = currentViewIdNames.get(i);
+                    if (name.equals(currentName)) {
+                        commonBasePathSize++;
+                    } else {
+                        break;
+                    }
+                }
+                int startIndex;
                 View parentView;
-                if (path.startsWith(CoreGUI.this.currentView.getId().getPath())) {
-                    // The requested path is a descendant path of the current view, so skip rendering of components of
-                    // the path corresponding to the current view. For example, if the current view is Resource/10001
-                    // and Resource/10001/Summary/Overview is requested, call renderView() only on for the Summary and
-                    // Overview components of the path.
+                if (commonBasePathSize > 0) {
+                    // The requested path shares a common base path with the current view, so skip rendering of
+                    // views corresponding to this common base path. For example, if the current view is
+                    // Resource/10001/Summary/Overview and Resource/10001/Monitor/Graphs is requested, call renderView()
+                    // only on for the Monitor and Graphs components of the path.
+                    startIndex = commonBasePathSize;
+                    int subViewsToRenderPathSize = viewIdNames.size() - commonBasePathSize;
                     parentView = CoreGUI.this.currentView;
+                    for (int i = 0; i < subViewsToRenderPathSize; i++) {
+                        parentView = parentView.getParent();
+                    }
                 } else {
                     // Otherwise, start at the root view (i.e. call renderView() for every component in the path).
+                    startIndex = 0;
                     parentView = CoreGUI.this.rootView;
                 }
-                
+                System.out.println("Starting parent view: " + parentView);
+
                 ViewRenderer viewRenderer = parentView.getDescendantViewRenderer();
-                List<Breadcrumb> breadcrumbs = new ArrayList<Breadcrumb>(viewIdNames.size());
                 try {
-                    for (int i = 0, viewIdNamesSize = viewIdNames.size(); i < viewIdNamesSize; i++) {
+                    for (int i = startIndex, viewIdNamesSize = viewIdNames.size(); i < viewIdNamesSize; i++) {
                         String viewIdName = viewIdNames.get(i);
                         // See if the parent view provided a view renderer to use for its descendants. If not,
                         // continue using the view renderer that renderer the parent view.
@@ -192,8 +210,10 @@ public class CoreGUI implements EntryPoint {
                         }
                         ViewId viewId = new ViewId(viewIdName, parentView.getId());
                         boolean lastNode = (i == (viewIdNamesSize - 1));
-                        parentView = viewRenderer.renderView(viewId, lastNode);
-                        breadcrumbs.add(parentView.getBreadcrumb());
+                        View view = viewRenderer.renderView(viewId, lastNode);
+                        view.setParent(parentView);
+
+                        parentView = view;
                     }
                 } catch (UnknownViewException e) {
                     // Abort the for-loop, since once we hit an unknown name, we don't care about any remaining names
@@ -205,6 +225,12 @@ public class CoreGUI implements EntryPoint {
                 }
                 CoreGUI.this.currentView = parentView;
 
+                // Update the breadcrumb trail.
+                List<Breadcrumb> breadcrumbs = new LinkedList<Breadcrumb>();
+                while (parentView.getParent() != null) {
+                    breadcrumbs.add(0, parentView.getBreadcrumb());
+                    parentView = parentView.getParent();
+                }
                 System.out.println("Breadcrumbs: " + breadcrumbs);
                 breadCrumbTrailPane.setBreadcrumbs(breadcrumbs);
                 breadCrumbTrailPane.refresh();

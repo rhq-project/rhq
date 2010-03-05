@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedH
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -110,7 +111,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         operationsTab.registerSubTabs("History", "Scheduled");
 
         alertsTab = new TwoLevelTab("Alerts", "/images/icons/Alert_grey_16.png");
-        alertsTab.registerSubTabs("Alert History", "Alert Definitions");
+        alertsTab.registerSubTabs("History", "Definitions");
 
         configurationTab = new TwoLevelTab("Configuration", "/images/icons/Configure_grey_16.png");
         configurationTab.registerSubTabs("Current", "History");
@@ -165,6 +166,8 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         configurationTab.updateSubTab("Current", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId()));
         configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
 
+        alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
+        
         topTabSet.setSelectedTab(selectedTab);
 
         updateTabStatus();

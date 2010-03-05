@@ -55,7 +55,6 @@ public abstract class RPCDataSource<T> extends DataSource {
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
-
     }
 
     @Override

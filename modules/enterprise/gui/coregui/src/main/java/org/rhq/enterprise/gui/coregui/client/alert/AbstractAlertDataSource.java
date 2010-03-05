@@ -40,8 +40,10 @@ import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -49,57 +51,60 @@ import java.util.Set;
  *
  * @author Ian Springer
  */
-public class AlertDataSource extends RPCDataSource<Alert> {
+public abstract class AbstractAlertDataSource extends RPCDataSource<Alert> {
     private static final String NAME = "Alert";
     private static final DateTimeFormat DATE_TIME_FORMAT = DateTimeFormat.getMediumDateTimeFormat();
 
-    private static AlertDataSource INSTANCE;
-
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
-    public static AlertDataSource getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new AlertDataSource();            
-        }
-        return INSTANCE;
-    }
-
-    protected AlertDataSource() {
+    protected AbstractAlertDataSource() {
         super(NAME);
 
         setCanMultiSort(true);
 
+        List<DataSourceField> fields = createFields();
+        for (DataSourceField field : fields) {
+            addField(field);
+        }
+    }
+
+    protected List<DataSourceField> createFields() {
+        List<DataSourceField> fields = new ArrayList<DataSourceField>();
+
         DataSourceField idField = new DataSourceIntegerField("id", "Id");
         idField.setPrimaryKey(true);
         idField.setHidden(true);
-
-        // TODO: Replace 'Resource Id' column with 'Resource Name' and 'Resource Lineage' columns.
-        DataSourceField resourceIdField = new DataSourceIntegerField(AlertCriteria.SORT_FIELD_RESOURCE_ID, "Resource Id");
+        fields.add(idField);
 
         DataSourceTextField nameField = new DataSourceTextField(AlertCriteria.SORT_FIELD_NAME, "Name", 100);
+        fields.add(nameField);
 
         DataSourceTextField conditionTextField = new DataSourceTextField("conditionText", "Condition Text");
         conditionTextField.setCanSortClientOnly(true);
+        fields.add(conditionTextField);
 
         DataSourceTextField conditionValueField = new DataSourceTextField("conditionValue", "Condition Value");
         conditionValueField.setCanSortClientOnly(true);
+        fields.add(conditionValueField);
 
         DataSourceTextField recoveryInfoField = new DataSourceTextField("recoveryInfo", "Recovery Info");
         recoveryInfoField.setCanSortClientOnly(true);
+        fields.add(recoveryInfoField);
 
         // TODO: Will using DataSourceEnumField here allow us to do
         //       record.setAttribute("priority", alert.getAlertDefinition().getPriority()), rather than
         //       record.setAttribute("priority", alert.getAlertDefinition().getPriority().name()) in
         //       createRecord() below?
         DataSourceTextField priorityField = new DataSourceTextField(AlertCriteria.SORT_FIELD_PRIORITY, "Priority", 15);
+        fields.add(priorityField);
 
         DataSourceTextField ctimeField = new DataSourceTextField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
+        fields.add(ctimeField);
 
-        setFields(idField, resourceIdField, nameField, conditionTextField, conditionValueField, recoveryInfoField,
-                priorityField, ctimeField);
+        return fields;
     }
 
-    void deleteAlerts(final AlertsView alertsView) {
+    void deleteAlerts(final AbstractAlertsView alertsView) {
         ListGrid listGrid = alertsView.getListGrid();
         ListGridRecord[] records = listGrid.getSelection();
 
@@ -126,13 +131,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     protected void executeFetch(final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
 
-        AlertCriteria criteria = new AlertCriteria();
-        criteria.fetchAlertDefinition(true);
-        criteria.fetchRecoveryAlertDefinition(true);
-        // TODO: Uncomment the below once the bad performance of it has been fixed.
-        //criteria.fetchConditionLogs(true);
-
-        criteria.setPageControl(getPageControl(request));
+        AlertCriteria criteria = getCriteria(request);
 
         this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
             public void onFailure(Throwable caught) {
@@ -152,6 +151,17 @@ public class AlertDataSource extends RPCDataSource<Alert> {
                 processResponse(request.getRequestId(), response);
             }
         });
+    }
+
+    protected AlertCriteria getCriteria(DSRequest request) {
+        AlertCriteria criteria = new AlertCriteria();
+        criteria.fetchAlertDefinition(true);
+        criteria.fetchRecoveryAlertDefinition(true);
+        // TODO: Uncomment the below once the bad performance of it has been fixed.
+        //criteria.fetchConditionLogs(true);
+
+        criteria.setPageControl(getPageControl(request));
+        return criteria;
     }
 
     @Override

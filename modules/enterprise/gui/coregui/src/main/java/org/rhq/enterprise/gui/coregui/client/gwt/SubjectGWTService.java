@@ -98,7 +98,6 @@ public interface SubjectGWTService extends RemoteService {
      */
     Subject updateSubject(Subject subjectToModify);
 
-    PageList<Subject> findSubjectsByCriteria(
-            SubjectCriteria criteria);
+    PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria);
 
 }

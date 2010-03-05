@@ -31,7 +31,7 @@ import org.jboss.seam.annotations.faces.Converter;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.core.server.MeasurementParser;
 
 @Converter
 @Scope(ScopeType.APPLICATION)
@@ -40,7 +40,7 @@ public class MetricPercentConverter implements javax.faces.convert.Converter {
 
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
         try {
-            MeasurementNumericValueAndUnits percentage = MeasurementConverter.parse(value, MeasurementUnits.PERCENTAGE);
+            MeasurementNumericValueAndUnits percentage = MeasurementParser.parse(value, MeasurementUnits.PERCENTAGE);
 
             return percentage.getValue();
         } catch (MeasurementConversionException e) {

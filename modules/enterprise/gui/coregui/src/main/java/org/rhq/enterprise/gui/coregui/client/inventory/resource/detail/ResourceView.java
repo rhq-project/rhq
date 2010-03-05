@@ -87,11 +87,10 @@ public class ResourceView extends HLayout implements ViewRenderer {
 
     }
 
-    public void setSelectedResource(final int resourceId, final ViewId viewId) {
+    public void setSelectedResource(final int resourceId, final View view) {
         Resource resource = this.treeView.getResource(resourceId);
         if (resource != null) {
-            setSelectedResource(resource);
-            CoreGUI.updateBreadCrumbDisplayName(viewId, resource.getName());
+            setSelectedResource(resource, view);
         } else {
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterId(resourceId);
@@ -109,12 +108,17 @@ public class ResourceView extends HLayout implements ViewRenderer {
                         onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
                     } else {
                         Resource resource = result.get(0);
-                        setSelectedResource(resource);
-                        CoreGUI.updateBreadCrumbDisplayName(viewId, resource.getName());
+                        setSelectedResource(resource, view);
                     }
                 }
             });
         }
+    }
+
+    private void setSelectedResource(Resource resource, View view) {
+        view.getBreadcrumb().setDisplayName(resource.getName());
+        CoreGUI.refreshBreadCrumbTrail();
+        setSelectedResource(resource);
     }
 
     public void setSelectedResource(Resource resource) {
@@ -142,15 +146,16 @@ public class ResourceView extends HLayout implements ViewRenderer {
             // not a valid Resource id - nothing for us to do
             throw new UnknownViewException("Invalid Resource id [" + viewId + "]");
         }
-        if (this.selectedResource == null || this.selectedResource.getId() != resourceId) {
-            setSelectedResource(resourceId, viewId);
-        }
+
         // Use "..." as temporary display name for breadcrumb. If the Resource is fetched successfully, the display name
         // will be updated to be the Resource's name.
         Breadcrumb breadcrumb = new Breadcrumb(viewId.getName(), "...");
 
-//        detailView.renderView(viewId, lastNode);
+        View view = new View(viewId, detailView, breadcrumb);
+        if (this.selectedResource == null || this.selectedResource.getId() != resourceId) {
+            setSelectedResource(resourceId, view);
+        }
 
-        return new View(viewId, detailView, breadcrumb);
+        return view;
     }
 }

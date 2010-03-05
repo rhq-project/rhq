@@ -267,10 +267,6 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
             }
         }
 
-        if (crumb != null) {
-            return new View(viewId, crumb);
-        } else {
-            return new View(viewId);
-        }
+        return new View(viewId, crumb);
     }
 }

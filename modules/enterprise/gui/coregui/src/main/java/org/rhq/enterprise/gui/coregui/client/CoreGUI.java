@@ -270,19 +270,8 @@ public class CoreGUI implements EntryPoint {
         History.newItem(path);
     }
 
-    public static void updateBreadCrumbDisplayName(ViewId viewId, String displayName) {
-        int index = -1;
-        for (ViewId current = viewId.getParent(); current != null; current = current.getParent()) {
-            index++;
-        }
-        List<Breadcrumb> breadcrumbs = breadCrumbTrailPane.getBreadcrumbs();
-        if (index < breadcrumbs.size()) {
-            Breadcrumb breadcrumb = breadcrumbs.get(index);
-            if (breadcrumb.getName().equals(viewId.getName())) {
-                breadcrumbs.set(index, new Breadcrumb(breadcrumb.getName(), displayName));
-                breadCrumbTrailPane.refresh();
-            }
-        }
+    public static void refreshBreadCrumbTrail() {
+        breadCrumbTrailPane.refresh();
     }
 
     private class RootCanvas extends VLayout implements ViewRenderer {

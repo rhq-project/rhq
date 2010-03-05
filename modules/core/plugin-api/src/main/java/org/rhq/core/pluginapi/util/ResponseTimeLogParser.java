@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pluginapi.util;
 
 import java.io.BufferedReader;
@@ -86,53 +86,62 @@ public class ResponseTimeLogParser {
      */
     public synchronized void parseLog(CallTimeData callTimeData) throws IOException {
         log.debug("Parsing response-time log file " + this.logFile + "...");
-        BufferedReader in;
+        BufferedReader in = null;
+
         try {
             in = new BufferedReader(new FileReader(this.logFile));
+
+            in.skip(this.startingOffset);
+
+            String currentLine;
+            while ((currentLine = in.readLine()) != null) {
+                LogEntry logEntry;
+                try {
+                    logEntry = parseLine(currentLine);
+                } catch (Exception e) {
+                    log.debug("Problem parsing line [" + currentLine + "] - cause: " + e);
+                    continue;
+                }
+
+                String url = logEntry.getUrl();
+
+                // The URL should always begin with a slash. If it doesn't, log an error and skip the entry,
+                // so we don't end up with bogus data in the DB.
+                if (url.charAt(0) != '/') {
+                    String truncatedUrl = url.substring(0, Math.min(url.length(), 120));
+                    if (url.length() > 120)
+                        truncatedUrl += "...";
+                    log.error("URL ('" + truncatedUrl
+                        + "') parsed from response-time log file does not begin with '/'. " + "Line being parsed is ["
+                        + currentLine + "].");
+                    continue;
+                }
+
+                if (isExcluded(url)) {
+                    continue;
+                }
+
+                // Only collect stats for successful (2xx or 3xx) requests...
+                if ((logEntry.getStatusCode() != null)
+                    && ((logEntry.getStatusCode() < 200) || (logEntry.getStatusCode() >= 400))) {
+                    continue;
+                }
+
+                String transformedUrl = applyTransforms(url);
+                callTimeData.addCallData(transformedUrl, new Date(logEntry.getStartTime()), logEntry.getDuration());
+            }
         } catch (FileNotFoundException e) {
             log.warn("Response-time log file '" + this.logFile + "' does not exist.");
             return;
+        } finally {
+            if (null != in) {
+                try {
+                    in.close();
+                } catch (Exception e) {
+                    log.error("Unable to close response-time log file.", e);
+                }
+            }
         }
-
-        in.skip(this.startingOffset);
-        String currentLine;
-        while ((currentLine = in.readLine()) != null) {
-            LogEntry logEntry;
-            try {
-                logEntry = parseLine(currentLine);
-            } catch (Exception e) {
-                log.debug("Problem parsing line [" + currentLine + "] - cause: " + e);
-                continue;
-            }
-
-            String url = logEntry.getUrl();
-
-            // The URL should always begin with a slash. If it doesn't, log an error and skip the entry,
-            // so we don't end up with bogus data in the DB.
-            if (url.charAt(0) != '/') {
-                String truncatedUrl = url.substring(0, Math.min(url.length(), 120));
-                if (url.length() > 120)
-                    truncatedUrl += "...";
-                log.error("URL ('" + truncatedUrl + "') parsed from response-time log file does not begin with '/'. "
-                    + "Line being parsed is [" + currentLine + "].");
-                continue;
-            }
-
-            if (isExcluded(url)) {
-                continue;
-            }
-
-            // Only collect stats for successful (2xx or 3xx) requests...
-            if ((logEntry.getStatusCode() != null)
-                && ((logEntry.getStatusCode() < 200) || (logEntry.getStatusCode() >= 400))) {
-                continue;
-            }
-
-            String transformedUrl = applyTransforms(url);
-            callTimeData.addCallData(transformedUrl, new Date(logEntry.getStartTime()), logEntry.getDuration());
-        }
-
-        in.close();
 
         /*
          * After we're done parsing the file, truncate it. This is kosher, assuming we own any file being parsed by this
@@ -209,12 +218,14 @@ public class ResponseTimeLogParser {
     }
 
     private void truncateLog(File logFile) throws IOException {
-        log.debug("Truncating response-time log file '" + logFile + "'...");
+        log.debug("Truncating response-time log file: '" + logFile + "'...");
+        RandomAccessFile randomAccessFile = null;
+
         try {
             String mode = "rws";
-            RandomAccessFile randomAccessFile = new RandomAccessFile(logFile, mode);
+            randomAccessFile = new RandomAccessFile(logFile, mode);
+            log.debug("Truncating response-time log file: setting length to 0.");
             randomAccessFile.setLength(0);
-            randomAccessFile.close();
         } catch (SecurityException e) {
             /* User doesn't have permission to change the length, so
              * ignore this exception.
@@ -225,6 +236,15 @@ public class ResponseTimeLogParser {
              * Could be a permission error.  Log it.
              */
             log.error("Unable to truncate response-time log file.", e);
+        } finally {
+            if (null != randomAccessFile) {
+                try {
+                    log.debug("Truncating response-time log file: closing file.");
+                    randomAccessFile.close();
+                } catch (Exception e) {
+                    log.error("Unable to close response-time log file.", e);
+                }
+            }
         }
     }
 
@@ -257,10 +277,8 @@ public class ResponseTimeLogParser {
     }
 
     public class LogEntry {
-        public LogEntry(@NotNull
-        String url, long startTime, long duration, @Nullable
-        Integer statusCode, @Nullable
-        String ipAddress) {
+        public LogEntry(@NotNull String url, long startTime, long duration, @Nullable Integer statusCode,
+            @Nullable String ipAddress) {
             this.url = url;
             this.startTime = startTime;
             this.duration = duration;

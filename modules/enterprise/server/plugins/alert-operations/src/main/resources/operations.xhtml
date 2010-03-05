@@ -59,7 +59,7 @@
         <h:messages />
         <rich:panel rendered="#{not empty operationsBean.operationId}">
             <br/>
-            Parameters for <h:outputText value=" #{operationsBean.operationId}"/>
+            Parameters for operation '<h:outputText value=" #{operationsBean.operationName}"/>':
             <p/>
             <h:selectOneMenu id="tokenModeMenu" value="#{operationsBean.tokenMode}">
                 <f:selectItem itemValue="literal" itemLabel="Literal"/>

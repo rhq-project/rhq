@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.plugin.pc.alert;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
@@ -32,6 +33,7 @@ public class CustomAlertSenderBackingBean {
 
     /** Configuration from the per alert definition parameters */
     protected Configuration alertParameters;
+    protected Subject webUser;
 
     public Configuration getAlertParameters() {
         return alertParameters;
@@ -40,6 +42,21 @@ public class CustomAlertSenderBackingBean {
     public void setAlertParameters(Configuration alertParameters) {
         this.alertParameters = alertParameters;
     }
+
+    public Subject getWebUser() {
+        return webUser;
+    }
+
+    public void setWebUser(Subject webUser) {
+        this.webUser = webUser;
+    }
+
+    /**
+     * This method is called after constructing the bean and injecting the
+     * #alertParameters
+     */
+    public void internalInit() {}
+
     /**
      * This method is called when the alert notification that uses this backing bean
      * is removed, so that the backing bean can do some cleanup work

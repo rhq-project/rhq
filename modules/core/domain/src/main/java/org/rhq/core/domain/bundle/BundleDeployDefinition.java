@@ -83,7 +83,7 @@ public class BundleDeployDefinition implements Serializable {
     private Long mtime = System.currentTimeMillis();
 
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, optional = true)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private Configuration configuration;
 
     @Column(name = "ENFORCE_POLICY", nullable = false)
@@ -105,6 +105,12 @@ public class BundleDeployDefinition implements Serializable {
 
     public BundleDeployDefinition() {
         // for JPA use
+    }
+
+    public BundleDeployDefinition(BundleVersion bundleVersion, String name) {
+        this.bundleVersion = bundleVersion;
+        this.name = name;
+        this.enforcePolicy = false;
     }
 
     public int getId() {
@@ -195,6 +201,15 @@ public class BundleDeployDefinition implements Serializable {
 
     public List<BundleDeployment> getDeployments() {
         return deployments;
+    }
+
+    public void addDeployment(BundleDeployment bundleDeployment) {
+        this.deployments.add(bundleDeployment);
+        bundleDeployment.setBundleDeployDefinition(this);
+    }
+
+    public void setDeployments(List<BundleDeployment> deployments) {
+        this.deployments = deployments;
     }
 
     @Override

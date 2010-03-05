@@ -27,7 +27,7 @@
         </c:otherwise>
     </c:choose>
 
-    <ui:composition template="/rhq/layout/main.xhtml">
+    <ui:decorate template="/rhq/layout/main.xhtml">
         <ui:param name="pageTitle" value="#{title}"/>
 
 
@@ -272,5 +272,5 @@
             </rich:modalPanel>
 
         </ui:define>
-    </ui:composition>
+    </ui:decorate>
 </html>

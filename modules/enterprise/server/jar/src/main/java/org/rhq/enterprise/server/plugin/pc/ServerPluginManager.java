@@ -486,7 +486,6 @@ public class ServerPluginManager {
      *
      * The new object will be loaded in the plugin's specific classloader.
      *
-     * @param pluginName the name of the plugin whose main component is to be retrieved
      * @param environment the environment in which the plugin will execute
      *
      * @return a new object loaded in the proper plugin classloader that can initialize/shutdown the plugin,

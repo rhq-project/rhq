@@ -288,6 +288,12 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
                 Configuration config2 = config.deepCopy(true);
 
                 bean.setAlertParameters(config2);
+                try {
+                    bean.internalInit();
+                }
+                catch (Throwable t ) {
+                    LOG.error("getBackinBean, calling backingBean.internalInit() resulted in " + t.getMessage());
+                }
             }
         }
         return bean;

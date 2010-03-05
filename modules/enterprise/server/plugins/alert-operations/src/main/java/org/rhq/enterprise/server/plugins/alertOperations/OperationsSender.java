@@ -34,11 +34,13 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -75,12 +77,14 @@ public class OperationsSender extends AlertSender {
         String opName = null;
 
         OperationManagerLocal opMgr = LookupUtil.getOperationManager();
-        Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO get real subject
+        Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO get real subject?
 
         List<OperationDefinition> opdefs = opMgr.findSupportedResourceOperations(subject,resourceId,false);
-        for (OperationDefinition opdef : opdefs ) {
-            if (opdef.getId() == opId) {
-                opName = opdef.getName();
+        OperationDefinition opDef = null;
+        for (OperationDefinition tmp : opdefs ) {
+            if (tmp.getId() == opId) {
+                opName = tmp.getName();
+                opDef = tmp;
                 break;
             }
         }
@@ -107,26 +111,37 @@ public class OperationsSender extends AlertSender {
          * If we have parameters and the user wants tokens to be interpreted, then loop
          * over the parameters and do token replacement.
          */
-        if (parameters!=null && tokenMode.equals(INTERPRETED)) {
-            Map<String,PropertySimple> propsMap = parameters.getSimpleProperties();
-            if (!propsMap.isEmpty()) {
-                TokenReplacer tr = new TokenReplacer(alert);
-                for (PropertySimple prop  : propsMap.values()) {
-                    String tmp = prop.getStringValue();
-                    tmp = tr.replaceTokens(tmp);
-                    prop.setStringValue(tmp);
+        Configuration theParameters = null;
+        try {
+            if (parameters!=null && tokenMode.equals(INTERPRETED)) {
+                // We must not pass the original Config object, as this would mean
+                // our tokens get wiped out.
+                theParameters = parameters.deepCopy(false);
+                Map<String,PropertySimple> propsMap = theParameters.getSimpleProperties();
+                if (!propsMap.isEmpty()) {
+                    ResourceManagerLocal resMgr = LookupUtil.getResourceManager();
+                    Resource targetResource = resMgr.getResource(subject,resourceId);
+                    AlertTokenReplacer tr = new AlertTokenReplacer(alert, opDef, targetResource);
+                    for (PropertySimple prop  : propsMap.values()) {
+                        String tmp = prop.getStringValue();
+                        tmp = tr.replaceTokens(tmp);
+                        prop.setStringValue(tmp);
+                    }
                 }
             }
+            else {
+                theParameters = parameters;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();  // TODO: Customise this generated block
         }
 
-
-
         /*
-         * Now fire off the operation with no delay and no repetition.
-         */
+        * Now fire off the operation with no delay and no repetition.
+        */
         ResourceOperationSchedule sched;
         try {
-            sched = opMgr.scheduleResourceOperation(subject, resourceId, opName, 0, 0, 0, 0, parameters,
+            sched = opMgr.scheduleResourceOperation(subject, resourceId, opName, 0, 0, 0, 0, theParameters,
                     "Alert operation for " + alert.getAlertDefinition().getName());
         } catch (ScheduleException e) {
             return new SenderResult(ResultState.FAILURE, "Scheduling of operation " + opName + " on resource " + resourceId + " failed: " + e.getMessage());

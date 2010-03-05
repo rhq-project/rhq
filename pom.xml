@@ -554,10 +554,10 @@
             <phase>generate-resources</phase>
             <configuration>
               <tasks>
-                <tstamp>          
+                <tstamp>
                   <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT"/>
                 </tstamp>
-                <mkdir dir="target"/>                
+                <mkdir dir="target"/>
                 <echo file="target/build-time.properties" level="error">buildTime = ${buildTime}</echo>
               </tasks>
             </configuration>
@@ -569,7 +569,7 @@
             <inherited>false</inherited>
             <goals>
               <goal>run</goal>
-            </goals>          
+            </goals>
             <configuration>
               <tasks>
                 <echo level="debug">buildTime = ${buildTime}</echo>
@@ -585,23 +585,24 @@
             <artifactId>exec-maven-plugin</artifactId>
             <executions>
                 <execution>
+                    <id>generate-build-number-properties</id>
                     <phase>generate-resources</phase>
                     <goals>
                         <goal>exec</goal>
-                    </goals>                    
+                    </goals>
+                    <configuration>
+                        <executable>git</executable>
+                        <arguments>
+                            <argument>log</argument>
+                            <argument>--pretty=format:buildNumber = %h</argument>
+                            <argument>-n1</argument>
+                        </arguments>
+                        <outputFile>${project.build.directory}/build-number.properties</outputFile>
+                    </configuration>
                 </execution>
             </executions>
-            <configuration>
-                <executable>git</executable>
-                <arguments>
-                    <argument>log</argument>
-                    <argument>--pretty=format:buildNumber = %h</argument>
-                    <argument>-n1</argument>
-                </arguments>
-                <outputFile>${project.build.directory}/build-number.properties</outputFile>
-            </configuration>
         </plugin>
-        
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
@@ -620,7 +621,7 @@
           </execution>
         </executions>
       </plugin>
-        
+
       <!-- Ensure all code compiles and runs on Java 5 or later. -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -852,7 +853,7 @@
             <property>
                <name>rhq.m2.repo.url.oracle</name>
             </property>
-         </activation>        
+         </activation>
 
         <dependencies>
             <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.

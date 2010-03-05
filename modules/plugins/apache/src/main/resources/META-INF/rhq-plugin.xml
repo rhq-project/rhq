@@ -707,7 +707,7 @@
                 &UseCanonicalName;
                 &UseCanonicalPhysicalPort;
             </resource-configuration>
-           <service name="IfModule Parameters" discovery="ApacheIfModuleDirectoryDiscoveryComponent" class="ApacheIfModuleDirectoryComponent" createDeletePolicy="both">
+           <service name="IfModule Parameters" discovery="ApacheIfModuleDirectoryDiscoveryComponent" class="ApacheIfModuleDirectoryComponent">
               <resource-configuration>
                 &IfModulePosition;
                 &Order;

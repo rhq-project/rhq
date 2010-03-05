@@ -34,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pluginapi.bundle.BundleFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
@@ -126,9 +127,11 @@ public class PluginValidator {
                 success = success && validateResourceComponentClass(metadataManager, resourceType, pluginEnvironment);
 
                 // if the optional discovery class was specified, make sure it can be loaded by the plugin classloader
-                success = success && validateResourceDiscoveryComponentClass(metadataManager, resourceType, pluginEnvironment);
+                success = success
+                    && validateResourceDiscoveryComponentClass(metadataManager, resourceType, pluginEnvironment);
 
-                success = success && validatePluginLifecycleListenerClass(metadataManager, resourceType, pluginEnvironment);
+                success = success
+                    && validatePluginLifecycleListenerClass(metadataManager, resourceType, pluginEnvironment);
             }
         } finally {
             manager.shutdown();
@@ -138,8 +141,7 @@ public class PluginValidator {
     }
 
     private static boolean validateResourceComponentClass(PluginMetadataManager metadataManager,
-                                                          ResourceType resourceType,
-                                                          PluginEnvironment pluginEnvironment) {
+        ResourceType resourceType, PluginEnvironment pluginEnvironment) {
         boolean success = true;
         String componentClass = metadataManager.getComponentClass(resourceType);
         if (componentClass == null) {
@@ -148,41 +150,50 @@ public class PluginValidator {
                 + resourceType.getPlugin() + "]");
         } else {
             try {
-                Class componentClazz = Class.forName(componentClass, false, pluginEnvironment
-                    .getPluginClassLoader());
+                Class componentClazz = Class.forName(componentClass, false, pluginEnvironment.getPluginClassLoader());
                 if (!ResourceComponent.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type ["
-                        + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                        + "] does not implement " + ResourceComponent.class);
+                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                        + "] from plugin [" + resourceType.getPlugin() + "] does not implement "
+                        + ResourceComponent.class);
                 }
                 if (!resourceType.getMetricDefinitions().isEmpty()
                     && !MeasurementFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type ["
-                        + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                        + "] does not support measurement collection.");
+                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                        + "] from plugin [" + resourceType.getPlugin()
+                        + "] does not support the measurement collection facet but defines metrics.");
                 }
                 if (!resourceType.getOperationDefinitions().isEmpty()
                     && !OperationFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type ["
-                        + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                        + "] does not support operations.");
+                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                        + "] from plugin [" + resourceType.getPlugin()
+                        + "] does not support the operations facet but defines operations.");
                 }
-                if (!resourceType.getPackageTypes().isEmpty()
-                    && !ContentFacet.class.isAssignableFrom(componentClazz)) {
+                if (resourceType.getBundleType() != null && !BundleFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type ["
-                        + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                        + "] does not support content management.");
+                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                        + "] from plugin [" + resourceType.getPlugin()
+                        + "] does not support the bundle facet but defines a bundle type.");
+                }
+                if (!resourceType.getPackageTypes().isEmpty() && !ContentFacet.class.isAssignableFrom(componentClazz)) {
+                    // this might be OK - there is a package type implicit if a bundle type is also defined
+                    // if there is one package type, and there is a bundle type, they should have the same name
+                    if (!(resourceType.getBundleType() != null && resourceType.getPackageTypes().size() == 1 && resourceType
+                        .getBundleType().getName().equals(resourceType.getPackageTypes().iterator().next().getName()))) {
+                        success = false;
+                        LOG.error("Component class [" + componentClass + "] for resource type ["
+                            + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
+                            + "] does not support the content management facet but defines package types.");
+                    }
                 }
                 if (resourceType.getResourceConfigurationDefinition() != null
                     && !ConfigurationFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type ["
-                        + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                        + "] does not support configuration.");
+                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                        + "] from plugin [" + resourceType.getPlugin()
+                        + "] does not support the configuration facet but defines resource configuration.");
                 }
                 boolean hasCreatableChild = false;
                 for (ResourceType childResourceType : resourceType.getChildResourceTypes()) {
@@ -192,14 +203,16 @@ public class PluginValidator {
                     }
                 }
                 if (hasCreatableChild && !CreateChildResourceFacet.class.isAssignableFrom(componentClazz)) {
-                    LOG.error("Component class [" + componentClass + "] for resource type ["
-                        + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                        + "] does not support creation of child resources.");
+                    success = false;
+                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                        + "] from plugin [" + resourceType.getPlugin()
+                        + "] does not support the child creation facet but has metadata saying it can.");
                 }
                 if (resourceType.isDeletable() && !DeleteResourceFacet.class.isAssignableFrom(componentClazz)) {
-                    LOG.error("Component class [" + componentClass + "] for resource type ["
-                        + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                        + "] does not support deletion.");
+                    success = false;
+                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                        + "] from plugin [" + resourceType.getPlugin()
+                        + "] does not support delete resource facet but has metadata saying it can delete children.");
                 }
             } catch (Exception e) {
                 success = false;
@@ -211,24 +224,21 @@ public class PluginValidator {
     }
 
     private static boolean validateResourceDiscoveryComponentClass(PluginMetadataManager metadataManager,
-                                                                   ResourceType resourceType,
-                                                                   PluginEnvironment pluginEnvironment) {
+        ResourceType resourceType, PluginEnvironment pluginEnvironment) {
         boolean success = true;
         String discoveryClass = metadataManager.getDiscoveryClass(resourceType);
         if (discoveryClass != null) {
             try {
-                Class discoveryClazz = Class.forName(discoveryClass, false, pluginEnvironment
-                    .getPluginClassLoader());
+                Class discoveryClazz = Class.forName(discoveryClass, false, pluginEnvironment.getPluginClassLoader());
                 if (!ResourceDiscoveryComponent.class.isAssignableFrom(discoveryClazz)) {
                     success = false;
-                    LOG.error("Discovery class [" + discoveryClass + "] for resource type ["
-                        + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                        + "] does not implement " + ResourceDiscoveryComponent.class);
+                    LOG.error("Discovery class [" + discoveryClass + "] for resource type [" + resourceType.getName()
+                        + "] from plugin [" + resourceType.getPlugin() + "] does not implement "
+                        + ResourceDiscoveryComponent.class);
                 }
                 if (resourceType.isSupportsManualAdd() && !ManualAddFacet.class.isAssignableFrom(discoveryClazz)) {
-                    LOG.warn("Discovery class [" + discoveryClass + "] for resource type ["
-                        + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                        + "] does not implement " + ManualAddFacet.class
+                    LOG.warn("Discovery class [" + discoveryClass + "] for resource type [" + resourceType.getName()
+                        + "] from plugin [" + resourceType.getPlugin() + "] does not implement " + ManualAddFacet.class
                         + " - implementing manual-add in discoverResources() is deprecated.");
                 }
             } catch (Exception e) {
@@ -241,8 +251,7 @@ public class PluginValidator {
     }
 
     private static boolean validatePluginLifecycleListenerClass(PluginMetadataManager metadataManager,
-                                                                ResourceType resourceType,
-                                                                PluginEnvironment pluginEnvironment) {
+        ResourceType resourceType, PluginEnvironment pluginEnvironment) {
         boolean success = true;
         String overseerClass = metadataManager.getPluginLifecycleListenerClass(resourceType.getPlugin());
         if (overseerClass != null) {
@@ -251,8 +260,7 @@ public class PluginValidator {
                 if (!PluginLifecycleListener.class.isAssignableFrom(overseerClazz)) {
                     success = false;
                     LOG.error("Plugin Lifecycle Listener class [" + overseerClass + "] for plugin ["
-                        + resourceType.getPlugin() + "] does not implement "
-                        + PluginLifecycleListener.class);
+                        + resourceType.getPlugin() + "] does not implement " + PluginLifecycleListener.class);
                 }
             } catch (Exception e) {
                 success = false;

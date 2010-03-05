@@ -42,6 +42,12 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-filetemplate-bundle-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- 3rd Party Deps -->
 
         <!-- TODO: This is a fix for the Javac bug requiring annotations to be
@@ -71,9 +77,35 @@
                 <configuration>
                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                     <!--
-                    <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
+                        <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
                     -->
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-rhq-plugins</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+
+                                <artifactItem>
+                                    <groupId>org.rhq</groupId>
+                                    <artifactId>rhq-filetemplate-bundle-common</artifactId>
+                                    <version>${project.version}</version>
+                                </artifactItem>
+
+                            </artifactItems>
+                            <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
@@ -141,7 +173,8 @@
                                                 <include name="META-INF/**" />
                                             </patternset>
                                         </unjar>
-                                        <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
+                                        <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
+                                            update="true">
                                         </jar>
                                     </tasks>
                                 </configuration>

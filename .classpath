@@ -4,6 +4,8 @@
 	<classpathentry kind="src" path="modules/common/filetemplate-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/filetemplate-bundle/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/base-perspective-jar/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/gui/coregui/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/gui/coregui/target/generated-sources/gwt"/>
 	<classpathentry kind="src" path="modules/plugins/nss/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/main/java"/>
@@ -239,5 +241,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/fedorahosted/cobbler/cobbler4j/0.1/cobbler4j-0.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-user/2.0.0/gwt-user-2.0.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-dev/2.0.0/gwt-dev-2.0.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/smartgwt/smartgwt/2.1/smartgwt-2.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/ca/nanometrics/gflot/1.0.0/gflot-1.0.0.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

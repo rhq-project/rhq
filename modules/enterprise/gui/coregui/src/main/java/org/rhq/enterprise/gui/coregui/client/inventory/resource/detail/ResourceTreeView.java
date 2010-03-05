@@ -307,7 +307,11 @@ public class ResourceTreeView extends VLayout {
         TreeNode node = null;
         if (treeGrid != null && treeGrid.getTree() != null
                 && (node = treeGrid.getTree().findById(String.valueOf(selectedResource.getId()))) != null) {
+
+            TreeNode[] parents = treeGrid.getTree().getParents(node);
+            treeGrid.getTree().openFolders(parents);
             treeGrid.getTree().openFolder(node);
+
             treeGrid.deselectAllRecords();
             treeGrid.selectRecord(node);
         } else {
@@ -390,6 +394,17 @@ public class ResourceTreeView extends VLayout {
                         for (TreeNode n : ResourceTreeDatasource.build(result)) {
                             treeGrid.getDataSource().addData(n);
                         }
+
+                        TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResource.getId()));
+                        if (selectedNode != null) {
+                            treeGrid.deselectAllRecords();
+                            treeGrid.selectRecord(selectedNode);
+
+                            TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
+                            treeGrid.getTree().openFolders(parents);
+                            treeGrid.getTree().openFolder(selectedNode);
+                        }
+                        
                     }
 
 

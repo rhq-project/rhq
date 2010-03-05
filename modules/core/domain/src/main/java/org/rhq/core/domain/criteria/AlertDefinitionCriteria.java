@@ -62,8 +62,6 @@ public class AlertDefinitionCriteria extends Criteria {
     private PageOrdering sortPriority;
 
     public AlertDefinitionCriteria() {
-        super(AlertDefinition.class);
-
         filterOverrides.put("alertTemplateParentId", "parentId = ?");
         filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");
         filterOverrides.put("alertTemplateResourceTypeName", "resourceType.name like ?");

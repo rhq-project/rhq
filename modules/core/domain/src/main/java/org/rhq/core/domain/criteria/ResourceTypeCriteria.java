@@ -73,8 +73,6 @@ public class ResourceTypeCriteria extends Criteria {
     private PageOrdering sortPluginName; // needs overrides
 
     public ResourceTypeCriteria() {
-        super(ResourceType.class);
-
         filterOverrides.put("pluginName", "plugin like ?");
         filterOverrides.put("ids", "id in ( ? )");
 

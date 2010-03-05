@@ -52,7 +52,7 @@ public class ResourceGroupDefinitionCriteria extends Criteria {
 
 
     public ResourceGroupDefinitionCriteria() {
-        super(GroupDefinition.class);
+
     }
 
     @Override

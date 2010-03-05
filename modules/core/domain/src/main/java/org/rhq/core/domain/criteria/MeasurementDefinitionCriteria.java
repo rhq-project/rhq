@@ -67,8 +67,6 @@ public class MeasurementDefinitionCriteria extends Criteria {
     private PageOrdering sortDefaultInterval;
 
     public MeasurementDefinitionCriteria() {
-        super(MeasurementDefinition.class);
-
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
 

@@ -35,8 +35,6 @@ public class PackageVersionCriteria extends Criteria {
     private PageOrdering sortDisplayName;
 
     public PackageVersionCriteria() {
-        super(PackageVersion.class);
-
         filterOverrides.put("repoId", "id IN " //
             + "( SELECT cpv.packageVersion.id" //
             + "    FROM pv.repoPackageVersions cpv " //

@@ -91,8 +91,6 @@ public class ResourceCriteria extends Criteria {
     private PageOrdering sortCurrentAvailability; // needs overrides
 
     public ResourceCriteria() {
-        super(Resource.class);
-
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceCategory", "resourceType.category = ?");

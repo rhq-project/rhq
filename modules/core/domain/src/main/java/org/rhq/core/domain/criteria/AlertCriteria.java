@@ -76,7 +76,6 @@ public class AlertCriteria extends Criteria {
     private PageOrdering sortResourceId; // requires sort override
 
     public AlertCriteria() {
-        super(Alert.class);
 
         filterOverrides.put("triggeredOperationName", "triggeredOperation like ?");
         filterOverrides.put("startTime", "ctime >= ?");

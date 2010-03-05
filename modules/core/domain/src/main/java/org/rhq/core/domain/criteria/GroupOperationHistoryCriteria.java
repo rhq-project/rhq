@@ -40,9 +40,12 @@ public class GroupOperationHistoryCriteria extends OperationHistoryCriteria {
     private List<Integer> filterResourceGroupIds; // requires override
 
     public GroupOperationHistoryCriteria() {
-        super(GroupOperationHistory.class);
-
         filterOverrides.put("resourceGroupIds", "group.id IN ( ? )");
+    }
+
+    @Override
+    public Class getPersistentClass() {
+        return GroupOperationHistory.class;
     }
 
     public void addFilterResourceGroupIds(List<Integer> filterResourceGroupIds) {

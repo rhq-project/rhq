@@ -58,12 +58,6 @@ public abstract class OperationHistoryCriteria extends Criteria {
     private PageOrdering sortOperationName; // requires override
 
     public OperationHistoryCriteria() {
-        super(OperationHistory.class);
-        init();
-    }
-
-    protected OperationHistoryCriteria(Class<? extends OperationHistory> clazz) {
-        super(clazz);
         init();
     }
 
@@ -79,9 +73,9 @@ public abstract class OperationHistoryCriteria extends Criteria {
         filterOverrides.put("endTime", "modifiedTime <= ?");
 
         filterOverrides.put("resourceIds", "id IN " //
-            + " ( SELECT roh.id " //
-            + "     FROM ResourceOperationHistory roh " //
-            + "    WHERE roh.resource.id IN ( ? ) ) ");
+                + " ( SELECT roh.id " //
+                + "     FROM ResourceOperationHistory roh " //
+                + "    WHERE roh.resource.id IN ( ? ) ) ");
 
         sortOverrides.put("startTime", "startedTime");
         sortOverrides.put("endTime", "modifiedTime");

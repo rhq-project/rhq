@@ -44,12 +44,15 @@ public class BundleDeploymentCriteria extends Criteria {
     private boolean fetchHistory;
 
     public BundleDeploymentCriteria() {
-        super(BundleDeployment.class);
-
         filterOverrides.put("resourceId", "resource.id = ?");
         filterOverrides.put("resourceName", "resource.name like ?");
         filterOverrides.put("bundleDeployDefinitionId", "parentResource.id = ?");
         filterOverrides.put("bundleDeployDefinitionName", "parentResource.name like ?");
+    }
+
+    @Override
+    public Class getPersistentClass() {
+        return BundleDeployment.class;
     }
 
     public void addFilterId(Integer filterId) {
@@ -78,6 +81,7 @@ public class BundleDeploymentCriteria extends Criteria {
 
     /**
      * Requires MANAGE_INVENTORY
+     *
      * @param fetchResource
      */
     public void fetchResource(boolean fetchResource) {
@@ -88,7 +92,9 @@ public class BundleDeploymentCriteria extends Criteria {
         this.fetchHistory = fetchHistory;
     }
 
-    /** subclasses should override as necessary */
+    /**
+     * subclasses should override as necessary
+     */
     public boolean isInventoryManagerRequired() {
         return (this.fetchResource);
     }

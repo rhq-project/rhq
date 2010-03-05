@@ -42,10 +42,13 @@ public class BundleCriteria extends Criteria {
     private boolean fetchRepo;
 
     public BundleCriteria() {
-        super(Bundle.class);
-
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
         filterOverrides.put("bundleTypeName", "bundleType.name like ?");
+    }
+
+    @Override
+    public Class getPersistentClass() {
+        return Bundle.class;
     }
 
     public void addFilterId(Integer filterId) {

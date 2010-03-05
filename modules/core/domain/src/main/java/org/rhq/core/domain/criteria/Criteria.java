@@ -42,12 +42,10 @@ import java.util.Map;
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Criteria implements Serializable {
     public enum Type {
-        FILTER, FETCH, SORT
+        FILTER, FETCH, SORT;
     }
 
     private static final long serialVersionUID = 1L;
-
-    private Class<?> persistentClass;
 
     private Integer pageNumber;
     private Integer pageSize;
@@ -67,10 +65,6 @@ public abstract class Criteria implements Serializable {
     //added no args constructor for bean and JAXB requirement
     @SuppressWarnings("unused")
     public Criteria() {
-    }
-
-    public Criteria(Class<?> persistentClass) {
-        this.persistentClass = persistentClass;
 
         this.filterOverrides = new HashMap<String, String>();
         this.sortOverrides = new HashMap<String, String>();
@@ -84,9 +78,7 @@ public abstract class Criteria implements Serializable {
         setPaging(0, 200);
     }
 
-    public Class<?> getPersistentClass() {
-        return persistentClass;
-    }
+    public abstract Class getPersistentClass();
 
     public Integer getPageNumber() {
         return pageNumber;

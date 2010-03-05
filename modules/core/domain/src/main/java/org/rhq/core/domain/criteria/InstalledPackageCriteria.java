@@ -25,8 +25,6 @@ public class InstalledPackageCriteria extends Criteria {
     private PageOrdering sortInstallationDate;
 
     public InstalledPackageCriteria() {
-        super(InstalledPackage.class);
-
         filterOverrides.put("installationTimeMinimum", "installationDate >= ?");
         filterOverrides.put("installationTimeMaximum", "installationDate <= ?");
         filterOverrides.put("packageVersionId", "packageVersion.id = ? ");

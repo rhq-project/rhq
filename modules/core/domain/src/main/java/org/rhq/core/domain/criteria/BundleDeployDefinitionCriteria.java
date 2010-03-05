@@ -44,7 +44,11 @@ public class BundleDeployDefinitionCriteria extends Criteria {
     private boolean fetchDeployments;
 
     public BundleDeployDefinitionCriteria() {
-        super(BundleDeployDefinition.class);
+    }
+
+    @Override
+    public Class getPersistentClass() {
+        return BundleDeployDefinitionCriteria.class;
     }
 
     public void addFilterId(Integer filterId) {

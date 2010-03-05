@@ -59,7 +59,6 @@ public class SubjectCriteria extends Criteria {
     private PageOrdering sortDepartment;
 
     public SubjectCriteria() {
-        super(Subject.class);
     }
 
     @Override

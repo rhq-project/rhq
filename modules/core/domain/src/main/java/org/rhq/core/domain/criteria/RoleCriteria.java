@@ -49,10 +49,7 @@ public class RoleCriteria extends Criteria {
     private PageOrdering sortName;
 
     public RoleCriteria() {
-        super(Role.class);
-
         filterOverrides.put("subjectId", "id in (select sr.id from Role sr JOIN sr.subjects s where s.id = :id)");
-
     }
 
     @Override

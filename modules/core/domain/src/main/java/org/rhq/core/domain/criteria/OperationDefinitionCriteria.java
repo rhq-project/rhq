@@ -56,8 +56,6 @@ public class OperationDefinitionCriteria extends Criteria {
     private PageOrdering sortName;
 
     public OperationDefinitionCriteria() {
-        super(OperationDefinition.class);
-
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
         filterOverrides.put("pluginName", "resourceType.plugin like ?");

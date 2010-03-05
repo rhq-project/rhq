@@ -55,8 +55,6 @@ public class RepoCriteria extends Criteria {
     private PageOrdering sortName;
 
     public RepoCriteria() {
-        super(Repo.class);
-
         filterOverrides.put("resourceIds", "resourceRepos.resource.id IN ( ? )");
         filterOverrides.put("contentSourceIds",
             "id IN (SELECT innerRepo FROM Repo innerRepo " +

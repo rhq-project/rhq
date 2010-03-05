@@ -62,8 +62,6 @@ public class ResourceGroupCriteria extends Criteria {
     private PageOrdering sortResourceTypeName; // requires overrides
 
     public ResourceGroupCriteria() {
-        super(ResourceGroup.class);
-
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
         filterOverrides.put("pluginName", "resourceType.plugin like ?");

@@ -27,7 +27,6 @@ import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewRenderer;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
-import org.rhq.enterprise.gui.coregui.client.components.SubTabLayout;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
@@ -40,14 +39,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 import com.google.gwt.user.client.History;
-import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Side;
-import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
-import com.smartgwt.client.widgets.tab.TabSet;
-import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
-import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
 import java.util.EnumSet;
 
@@ -220,15 +214,12 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        // TODO: Implement this method.
-
         String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
-
-
 //        System.out.println("TAB: " + currentView.getPath() + tabPath);
 
         if (resource != null) {
-            History.newItem("Resource/" + resource.getId() + tabPath, false);
+            String path = "Resource/" + resource.getId() + tabPath;
+            History.newItem(path);
         }
     }
 

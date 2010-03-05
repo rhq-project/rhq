@@ -39,6 +39,7 @@ import java.util.List;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class CoreGUI implements EntryPoint {
 
@@ -56,6 +57,8 @@ public class CoreGUI implements EntryPoint {
     private static Canvas content;
 
     private View rootView;
+
+    public View currentView;
 
     public void onModuleLoad() {
 
@@ -126,8 +129,7 @@ public class CoreGUI implements EntryPoint {
     private void buildCoreUI() {
 
         RootCanvas rootCanvas = new RootCanvas();
-        this.rootView = new View(new ViewId("", null), rootCanvas);
-
+        this.currentView = this.rootView = new View(new ViewId("", null), rootCanvas);
 
 //        HTMLPane menuPane = new HTMLPane();
 //        menuPane.setWidth100();
@@ -135,9 +137,7 @@ public class CoreGUI implements EntryPoint {
 //        menuPane.setContentsType(ContentsType.PAGE);
 //        menuPane.setContentsURL("/rhq/common/menu/menu.xhtml");
 //        menuPane.setZIndex(400000);
-//
 //        layout.addMember(menuPane);
-
 
         MenuBarView menuBarView = new MenuBarView();
         menuBarView.setWidth("100%");
@@ -145,38 +145,40 @@ public class CoreGUI implements EntryPoint {
 //        menuCanvas.setTop(0);
 //        menuCanvas.setWidth100();
 //        menuCanvas.draw();
-
         rootCanvas.addMember(menuBarView);
 
-
         breadCrumbTrailPane = new BreadcrumbTrailPane();
-
         rootCanvas.addMember(breadCrumbTrailPane);
 
-
         DOM.setInnerHTML(RootPanel.get("Loading-Panel").getElement(), "");
-
 
         Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
         canvas.setWidth100();
         canvas.setHeight100();
-
         rootCanvas.addMember(canvas);
-
-
-//        canvas.addChild(new AdministrationView()) ; //DemoCanvas());
-
 
         rootCanvas.draw();
 
         History.addValueChangeHandler(new ValueChangeHandler<String>() {
+
             public void onValueChange(ValueChangeEvent<String> historyChangeEvent) {
                 String path = historyChangeEvent.getValue();
                 System.out.println("History request: " + path);
 
                 List<String> viewIdNames = path.equals("") ? Collections.<String>emptyList() : Arrays.asList(path.split("\\/"));
 
-                View parentView = CoreGUI.this.rootView;
+                View parentView;
+                if (path.startsWith(CoreGUI.this.currentView.getId().getPath())) {
+                    // The requested path is a descendant path of the current view, so skip rendering of components of
+                    // the path corresponding to the current view. For example, if the current view is Resource/10001
+                    // and Resource/10001/Summary/Overview is requested, call renderView() only on for the Summary and
+                    // Overview components of the path.
+                    parentView = CoreGUI.this.currentView;
+                } else {
+                    // Otherwise, start at the root view (i.e. call renderView() for every component in the path).
+                    parentView = CoreGUI.this.rootView;
+                }
+                
                 ViewRenderer viewRenderer = parentView.getDescendantViewRenderer();
                 List<Breadcrumb> breadcrumbs = new ArrayList<Breadcrumb>(viewIdNames.size());
                 try {
@@ -201,6 +203,7 @@ public class CoreGUI implements EntryPoint {
                     // TODO: Should we add a new token to the History to point to the valid location
                     //       we ended up at?
                 }
+                CoreGUI.this.currentView = parentView;
 
                 System.out.println("Breadcrumbs: " + breadcrumbs);
                 breadCrumbTrailPane.setBreadcrumbs(breadcrumbs);

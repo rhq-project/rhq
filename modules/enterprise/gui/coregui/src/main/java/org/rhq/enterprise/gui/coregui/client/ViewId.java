@@ -30,7 +30,14 @@ public class ViewId {
     private String name;
     private ViewId parent;
     private String path;
-    
+
+    /**
+     * Create a view id with the specified base name and parent. The name must not contain any slashes. The parent
+     * should not be null, unless this is the root view id.
+     *
+     * @param name the base name of the view represented by this id
+     * @param parent the id of the view represented by this id's parent view
+     */
     public ViewId(String name, ViewId parent) {
         if (name == null) {
             throw new IllegalArgumentException("Name is null.");
@@ -64,25 +71,6 @@ public class ViewId {
             this.path = buffer.toString();
         }
         return this.path;
-    }
-
-    /**
-     *
-     * @param viewId the id of some View that is an ancestor of the View represented by this id
-     *               (i.e. the following must be true: this.getPath().startsWith(viewId.getPath())
-     * @return the path relative to the specified ancestral view id
-     */
-    public String getPathRelativeTo(ViewId viewId) {
-        if (viewId == null) {
-            throw new IllegalArgumentException("ViewId is null.");
-        }
-        if (!getPath().startsWith(viewId.getPath())) {
-            throw new IllegalArgumentException("ViewId [" + viewId + "] is not an ancestor of this ViewId [" + this + "]");
-        }
-        if (viewId.getName().equals(ViewId.ROOT_VIEW_ID.getName())) {
-            return getPath();
-        }
-        return getPath().substring(viewId.getPath().length() + 1);
     }
 
     @Override

@@ -43,8 +43,10 @@ import java.util.ArrayList;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class Table extends VLayout {
+    private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ANY;
 
     private HTMLFlow title;
     private ListGrid listGrid;
@@ -52,6 +54,9 @@ public class Table extends VLayout {
     private Label tableInfo;
     private String[] excludedFieldNames;
 
+    /**
+     * Specifies how many rows must be selected in order for a {@link TableAction} button to be enabled.
+     */
     public enum SelectionEnablement {
         /**
          * One or more rows are selected.
@@ -119,7 +124,6 @@ public class Table extends VLayout {
 
         this.excludedFieldNames = excludedFieldNames;
     }
-
 
     @Override
     protected void onDraw() {
@@ -200,10 +204,13 @@ public class Table extends VLayout {
     }
 
     public void addTableAction(String title, TableAction tableAction) {
-        this.addTableAction(title, SelectionEnablement.ANY, null, tableAction);
+        this.addTableAction(title, null, null, tableAction);
     }
 
     public void addTableAction(String title, SelectionEnablement enablement, String confirmation, TableAction tableAction) {
+        if (enablement == null) {
+            enablement = DEFAULT_SELECTION_ENABLEMENT;
+        }
         TableActionInfo info = new TableActionInfo(title, enablement, tableAction);
         info.confirmMessage = confirmation;
         tableActions.add(info);
@@ -212,13 +219,14 @@ public class Table extends VLayout {
     private void refreshTableInfo() {
         int count = this.listGrid.getSelection().length;
         for (TableActionInfo tableAction : tableActions) {
-            if (count == 0) {
-                tableAction.actionButton.setDisabled(true);
-            } else if (count == 1) {
-                tableAction.actionButton.setDisabled(tableAction.enablement == SelectionEnablement.MULTIPLE);
-            } else if (count > 1) {
-                tableAction.actionButton.setDisabled(tableAction.enablement == SelectionEnablement.SINGLE);
+            boolean enabled;
+            switch (tableAction.enablement) {
+                case ANY: enabled = (count >= 1); break;
+                case SINGLE: enabled = (count == 1); break;
+                case MULTIPLE: enabled = (count > 1); break;
+                default: throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
             }
+            tableAction.actionButton.setDisabled(!enabled);            
         }
         this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
     }
@@ -233,7 +241,6 @@ public class Table extends VLayout {
         TableAction action;
         String confirmMessage;
         IButton actionButton;
-
 
         protected TableActionInfo(String title, SelectionEnablement enablement, TableAction action) {
             this.title = title;

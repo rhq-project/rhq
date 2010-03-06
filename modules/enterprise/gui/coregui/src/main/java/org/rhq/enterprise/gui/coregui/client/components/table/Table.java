@@ -145,23 +145,13 @@ public class Table extends VLayout {
         // Manages enable/disable buttons for the grid
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                int count = listGrid.getSelection().length;
-                for (TableActionInfo tableAction : tableActions) {
-                    if (count == 0) {
-                        tableAction.actionButton.setDisabled(true);
-                    } else if (count == 1) {
-                        tableAction.actionButton.setDisabled(tableAction.enablement == SelectionEnablement.MULTIPLE);
-                    } else if (count > 1) {
-                        tableAction.actionButton.setDisabled(tableAction.enablement == SelectionEnablement.SINGLE);
-                    }
-                }
-                tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
+                refreshTableInfo();
             }
         });
 
         listGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + listGrid.getSelection().length + " selected)");
+                refreshTableInfo();
             }
         });
     }
@@ -191,6 +181,20 @@ public class Table extends VLayout {
         tableActions.add(info);
     }
 
+    private void refreshTableInfo() {
+        int count = this.listGrid.getSelection().length;
+        for (TableActionInfo tableAction : tableActions) {
+            if (count == 0) {
+                tableAction.actionButton.setDisabled(true);
+            } else if (count == 1) {
+                tableAction.actionButton.setDisabled(tableAction.enablement == SelectionEnablement.MULTIPLE);
+            } else if (count > 1) {
+                tableAction.actionButton.setDisabled(tableAction.enablement == SelectionEnablement.SINGLE);
+            }
+        }
+        this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
+    }
+
 
     // -------------- Inner utility class -------------
 
@@ -209,5 +213,4 @@ public class Table extends VLayout {
             this.action = action;
         }
     }
-
 }

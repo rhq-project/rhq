@@ -46,7 +46,7 @@ public abstract class AbstractAlertsView extends VLayout {
         new SortSpecifier(AlertCriteria.SORT_FIELD_NAME, SortDirection.ASCENDING)
     };
 
-    private static final String DELETE_CONFIRM_MESSAGE = "Are you sure you want to delete the selected alerts?";
+    private static final String DELETE_CONFIRM_MESSAGE = "Are you sure you want to delete the selected alert(s)?";
 
     private ListGrid listGrid;
     private AbstractAlertDataSource dataSource;
@@ -65,12 +65,11 @@ public abstract class AbstractAlertsView extends VLayout {
         table.setHeight("50%");
         this.listGrid = table.getListGrid();
         this.dataSource = createDataSource();
-        table.setDataSource(dataSource);
+        table.setDataSource(this.dataSource);
 
         table.addTableAction("Delete", Table.SelectionEnablement.ANY, DELETE_CONFIRM_MESSAGE, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 AbstractAlertsView.this.dataSource.deleteAlerts(AbstractAlertsView.this);
-
             }
         });
 
@@ -108,5 +107,10 @@ public abstract class AbstractAlertsView extends VLayout {
 
     ListGrid getListGrid() {
         return this.listGrid;
+    }
+
+    public void refresh() {
+        this.listGrid.invalidateCache();
+        this.listGrid.markForRedraw();
     }
 }

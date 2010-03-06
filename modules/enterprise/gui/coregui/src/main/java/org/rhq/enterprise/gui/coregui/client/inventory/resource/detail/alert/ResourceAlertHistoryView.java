@@ -22,8 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert;
 
-import com.smartgwt.client.data.DataSource;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.coregui.client.alert.AbstractAlertDataSource;
 import org.rhq.enterprise.gui.coregui.client.alert.AbstractAlertsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
@@ -45,7 +45,7 @@ public class ResourceAlertHistoryView extends AbstractAlertsView
     }
 
     @Override
-    protected DataSource createDataSource() {
+    protected AbstractAlertDataSource createDataSource() {
         return new ResourceAlertDataSource(this.resourceId);
     }
 

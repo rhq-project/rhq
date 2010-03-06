@@ -105,7 +105,7 @@ public abstract class AbstractAlertDataSource extends RPCDataSource<Alert> {
     }
 
     void deleteAlerts(final AbstractAlertsView alertsView) {
-        ListGrid listGrid = alertsView.getListGrid();
+        final ListGrid listGrid = alertsView.getListGrid();
         ListGridRecord[] records = listGrid.getSelection();
 
         final Integer[] alertIds = new Integer[records.length];
@@ -118,7 +118,8 @@ public abstract class AbstractAlertDataSource extends RPCDataSource<Alert> {
         this.alertService.deleteResourceAlerts(alertIds, new AsyncCallback<Void>() {
             public void onSuccess(Void blah) {
                 System.out.println("Deleted Alerts with id's: " + Arrays.toString(alertIds) + ".");
-                alertsView.reloadData();
+                listGrid.invalidateCache();
+                listGrid.redraw();
             }
 
             public void onFailure(Throwable caught) {

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
+import com.smartgwt.client.data.SortSpecifier;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 import com.smartgwt.client.data.Criteria;
@@ -50,21 +51,25 @@ public class Table extends VLayout {
     private ToolStrip footer;
     private Label tableInfo;
 
-
-
     public enum SelectionEnablement {
         ANY, SINGLE, MULTIPLE
     };
 
-
     private ArrayList<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
 
-
     public Table(String tableTitle) {
-        this(tableTitle,null);
+        this(tableTitle, null, null);
     }
 
     public Table(String tableTitle, Criteria criteria) {
+        this(tableTitle, criteria, null);
+    }
+
+    public Table(String tableTitle, SortSpecifier[] sortSpecifiers) {
+        this(tableTitle, null, sortSpecifiers);
+    }
+
+    public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
         super();
 
         setWidth100();
@@ -83,12 +88,14 @@ public class Table extends VLayout {
         if (criteria != null) {
             listGrid.setInitialCriteria(criteria);
         }
+        if (sortSpecifiers != null) {
+            listGrid.setInitialSort(sortSpecifiers);
+        }
         listGrid.setWidth100();
         listGrid.setHeight100();
         listGrid.setAutoFetchData(true);
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
-
 
         // Footer
         footer = new ToolStrip();
@@ -108,18 +115,17 @@ public class Table extends VLayout {
         addMember(listGrid);
         addMember(footer);
 
-
         tableInfo.setWrap(false);
 
         for (final TableActionInfo tableAction : tableActions) {
             IButton button = new IButton(tableAction.title);
-            button.setDisabled(tableAction.enablement != SelectionEnablement.ANY);
+            button.setDisabled(true);
             button.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (tableAction.confirmMessage != null) {
                         SC.ask(tableAction.confirmMessage, new BooleanCallback() {
-                            public void execute(Boolean aBoolean) {
-                                if (aBoolean) {
+                            public void execute(Boolean confirmed) {
+                                if (confirmed) {
                                     tableAction.action.executeAction(listGrid.getSelection());
                                 }
                             }
@@ -142,9 +148,9 @@ public class Table extends VLayout {
                 int count = listGrid.getSelection().length;
                 for (TableActionInfo tableAction : tableActions) {
                     if (count == 0) {
-                        tableAction.actionButton.setDisabled(tableAction.enablement != SelectionEnablement.ANY);
+                        tableAction.actionButton.setDisabled(true);
                     } else if (count == 1) {
-                        tableAction.actionButton.setDisabled(false);
+                        tableAction.actionButton.setDisabled(tableAction.enablement == SelectionEnablement.MULTIPLE);
                     } else if (count > 1) {
                         tableAction.actionButton.setDisabled(tableAction.enablement == SelectionEnablement.SINGLE);
                     }

@@ -38,14 +38,14 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 public abstract class RPCDataSource<T> extends DataSource {
 
     public RPCDataSource() {
-        setClientOnly(false);
-        setDataProtocol(DSProtocol.CLIENTCUSTOM);
-        setDataFormat(DSDataFormat.CUSTOM);
+        this(null);
     }
 
     public RPCDataSource(String name) {
-        System.out.println("Trying to build DS: " + name);
-        setID(name);
+        if (name != null) {
+            System.out.println("Trying to build DS: " + name);
+            setID(name);
+        }
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
@@ -111,8 +111,6 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
 
-
-
     public ListGridRecord[] buildRecords(PageList<T> list) {
         if (list == null) {
             return null;
@@ -129,9 +127,9 @@ public abstract class RPCDataSource<T> extends DataSource {
 
     /**
      * Extensions should implement this method to retrieve data. Paging solutions should use
-     * @see getPageControl(). All implementations should call processResponse whether they
-     * fail or succeed. Data should be set on the request via setData. Implementations can use
-     * buildRecords to get the list of records.
+     * {@link #getPageControl(com.smartgwt.client.data.DSRequest)}. All implementations should call processResponse()
+     * whether they fail or succeed. Data should be set on the request via setData. Implementations can use
+     * buildRecords() to get the list of records.
      *
      * @param request
      * @param response

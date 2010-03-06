@@ -22,35 +22,30 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert;
 
+import com.smartgwt.client.data.Criteria;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.coregui.client.alert.AbstractAlertDataSource;
-import org.rhq.enterprise.gui.coregui.client.alert.AbstractAlertsView;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
 /**
  * @author Ian Springer
  */
-public class ResourceAlertHistoryView extends AbstractAlertsView
-        implements ResourceSelectListener {
-    private int resourceId;
+public class ResourceAlertHistoryView extends AlertsView
+        implements ResourceSelectListener {    
+    private static final String[] EXCLUDED_FIELD_NAMES = new String[] { AlertCriteria.SORT_FIELD_RESOURCE_ID };
 
     public ResourceAlertHistoryView(int resourceId) {
-        super();
-        this.resourceId = resourceId;
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
-    }
-
-    @Override
-    protected AbstractAlertDataSource createDataSource() {
-        return new ResourceAlertDataSource(this.resourceId);
+        super(createCriteria(resourceId), EXCLUDED_FIELD_NAMES);
     }
 
     public void onResourceSelected(Resource resource) {
-        this.resourceId = resource.getId();        
-        markForRedraw();
+        refresh(createCriteria(resource.getId()));
+    }
+
+    private static Criteria createCriteria(int resourceId) {
+        Criteria criteria = new Criteria();
+        criteria.addCriteria(AlertCriteria.SORT_FIELD_RESOURCE_ID, resourceId);
+        return criteria;
     }
 }

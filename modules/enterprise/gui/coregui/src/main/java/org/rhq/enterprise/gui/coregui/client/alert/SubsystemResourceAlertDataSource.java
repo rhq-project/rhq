@@ -29,7 +29,7 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 /**
  * @author Ian Springer
  */
-public class SubsystemResourceAlertDataSource extends AbstractAlertDataSource {
+public class SubsystemResourceAlertDataSource extends AlertDataSource {
     @Override
     protected void onInit() {
         super.onInit();

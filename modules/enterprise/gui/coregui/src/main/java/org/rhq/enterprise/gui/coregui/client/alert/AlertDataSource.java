@@ -22,6 +22,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -51,14 +53,13 @@ import java.util.Set;
  *
  * @author Ian Springer
  */
-public abstract class AbstractAlertDataSource extends RPCDataSource<Alert> {
-    private static final String NAME = "Alert";
+public class AlertDataSource extends RPCDataSource<Alert> {
     private static final DateTimeFormat DATE_TIME_FORMAT = DateTimeFormat.getMediumDateTimeFormat();
 
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
-    protected AbstractAlertDataSource() {
-        super(NAME);
+    protected AlertDataSource() {
+        super();
 
         setCanMultiSort(true);
 
@@ -104,7 +105,7 @@ public abstract class AbstractAlertDataSource extends RPCDataSource<Alert> {
         return fields;
     }
 
-    void deleteAlerts(final AbstractAlertsView alertsView) {
+    void deleteAlerts(final AlertsView alertsView) {
         ListGrid listGrid = alertsView.getListGrid();
         ListGridRecord[] records = listGrid.getSelection();
 
@@ -160,6 +161,19 @@ public abstract class AbstractAlertDataSource extends RPCDataSource<Alert> {
         // TODO: Uncomment the below once the bad performance of it has been fixed.
         //criteria.fetchConditionLogs(true);
 
+        Criteria requestCriteria = request.getCriteria();
+        if (requestCriteria != null) {
+            Map values = requestCriteria.getValues();
+            for (Object key : values.keySet()) {
+                String fieldName = (String) key;
+                if (fieldName.equals(AlertCriteria.SORT_FIELD_RESOURCE_ID)) {
+                    Integer resourceId = (Integer) values.get(fieldName);
+                    criteria.addFilterResourceIds(resourceId);
+                }
+                // TODO: Add support for other fields we need to filter by (e.g. resourceGroupId).
+            }
+        }
+
         criteria.setPageControl(getPageControl(request));
         return criteria;
     }
@@ -210,5 +224,4 @@ public abstract class AbstractAlertDataSource extends RPCDataSource<Alert> {
         ListGridRecord record = new ListGridRecord(data);
         Window.alert(String.valueOf(record.getAttributeAsInt("id")));
     }
-
 }

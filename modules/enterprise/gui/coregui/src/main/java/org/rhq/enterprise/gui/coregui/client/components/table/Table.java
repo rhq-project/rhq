@@ -50,26 +50,38 @@ public class Table extends VLayout {
     private ListGrid listGrid;
     private ToolStrip footer;
     private Label tableInfo;
+    private String[] excludedFieldNames;
 
     public enum SelectionEnablement {
-        ANY, SINGLE, MULTIPLE
+        /**
+         * One or more rows are selected.
+         */
+        ANY,
+        /**
+         * Exactly one row is selected.
+         */
+        SINGLE,
+        /**
+         * Two or more rows are selected.
+         */
+        MULTIPLE
     };
 
     private ArrayList<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
 
     public Table(String tableTitle) {
-        this(tableTitle, null, null);
+        this(tableTitle, null, null, null);
     }
 
     public Table(String tableTitle, Criteria criteria) {
-        this(tableTitle, criteria, null);
+        this(tableTitle, criteria, null, null);
     }
 
     public Table(String tableTitle, SortSpecifier[] sortSpecifiers) {
-        this(tableTitle, null, sortSpecifiers);
+        this(tableTitle, null, sortSpecifiers, null);
     }
 
-    public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
+    public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
         super();
 
         setWidth100();
@@ -104,12 +116,23 @@ public class Table extends VLayout {
         footer.setMembersMargin(15);
 
         tableInfo = new Label("Total: " + listGrid.getTotalRows());
+
+        this.excludedFieldNames = excludedFieldNames;
     }
 
 
     @Override
     protected void onDraw() {
         super.onDraw();
+
+        // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
+        //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
+        //       the underlying datasource).
+        if (this.excludedFieldNames != null) {
+            for (String excludedFieldName : excludedFieldNames) {
+                this.listGrid.hideField(excludedFieldName);
+            }
+        }
 
         addMember(title);
         addMember(listGrid);
@@ -141,7 +164,6 @@ public class Table extends VLayout {
         footer.addMember(new LayoutSpacer());
         footer.addMember(tableInfo);
 
-
         // Manages enable/disable buttons for the grid
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
@@ -156,6 +178,11 @@ public class Table extends VLayout {
         });
     }
 
+    public void refresh(Criteria criteria) {
+        this.listGrid.setCriteria(criteria);
+        this.listGrid.markForRedraw();
+    }
+
     public void setTableTitle(String title) {
         this.title.setContents(title);
     }
@@ -164,16 +191,17 @@ public class Table extends VLayout {
         listGrid.setDataSource(dataSource);
     }
 
+    public RPCDataSource getDataSource() {
+        return (RPCDataSource) listGrid.getDataSource();
+    }
 
     public ListGrid getListGrid() {
         return listGrid;
     }
 
-
     public void addTableAction(String title, TableAction tableAction) {
         this.addTableAction(title, SelectionEnablement.ANY, null, tableAction);
     }
-
 
     public void addTableAction(String title, SelectionEnablement enablement, String confirmation, TableAction tableAction) {
         TableActionInfo info = new TableActionInfo(title, enablement, tableAction);

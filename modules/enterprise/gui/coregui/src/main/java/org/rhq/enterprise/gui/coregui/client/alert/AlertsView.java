@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -38,19 +39,23 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
  *
  * @author Ian Springer
  */
-public abstract class AbstractAlertsView extends VLayout {
-    private static final String TABLE_TITLE = "Alerts";
+public class AlertsView extends VLayout {
+    private static final String TITLE = "Alerts";
 
-    private static final SortSpecifier[] INITIAL_SORT_SPECIFIERS = new SortSpecifier[] {
+    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {
         new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME, SortDirection.DESCENDING),
         new SortSpecifier(AlertCriteria.SORT_FIELD_NAME, SortDirection.ASCENDING)
     };
 
     private static final String DELETE_CONFIRM_MESSAGE = "Are you sure you want to delete the selected alert(s)?";
 
-    private ListGrid listGrid;
-    private AbstractAlertDataSource dataSource;
+    private Table table;
+    private AlertDataSource dataSource;
     private HTMLFlow detailsContent;
+
+    public AlertsView(Criteria criteria, String[] excludedFieldNames) {
+        this.table = new Table(TITLE, criteria, SORT_SPECIFIERS, excludedFieldNames);
+    }
 
     @Override
     protected void onInit() {
@@ -61,21 +66,21 @@ public abstract class AbstractAlertsView extends VLayout {
         setMembersMargin(20);
 
         // Add the list table as the top half of the view.
-        Table table = new Table(TABLE_TITLE, INITIAL_SORT_SPECIFIERS);
-        table.setHeight("50%");
-        this.listGrid = table.getListGrid();
-        this.dataSource = createDataSource();
-        table.setDataSource(this.dataSource);
+        //Criteria criteria = new Criteria(AlertCriteria.);
+        this.table.setHeight("50%");
+        ListGrid listGrid = this.table.getListGrid();
+        this.dataSource = new AlertDataSource();
+        this.table.setDataSource(this.dataSource);
 
-        table.addTableAction("Delete", Table.SelectionEnablement.ANY, DELETE_CONFIRM_MESSAGE, new TableAction() {
+        this.table.addTableAction("Delete", Table.SelectionEnablement.ANY, DELETE_CONFIRM_MESSAGE, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                AbstractAlertsView.this.dataSource.deleteAlerts(AbstractAlertsView.this);
+                AlertsView.this.dataSource.deleteAlerts(AlertsView.this);
             }
         });
 
-        this.listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent event) {
-                ListGridRecord[] selectedRecords = listGrid.getSelection();
+                ListGridRecord[] selectedRecords =  AlertsView.this.table.getListGrid().getSelection();
                 String contents;
                 if (selectedRecords.length == 1) {
                     ListGridRecord record = selectedRecords[0];
@@ -87,11 +92,11 @@ public abstract class AbstractAlertsView extends VLayout {
                 } else {
                     contents = "Select a single alert above to display its details here.";
                 }
-                detailsContent.setContents(contents);
+                AlertsView.this.detailsContent.setContents(contents);
             }
         });
 
-        addMember(table);
+        addMember(this.table);
 
         // Add the details panel as the bottom half of the view.
         HLayout detailsPane = new HLayout();
@@ -103,14 +108,22 @@ public abstract class AbstractAlertsView extends VLayout {
         addMember(detailsPane);
     }
 
-    protected abstract AbstractAlertDataSource createDataSource();
+    protected Criteria getCriteria() {
+        return null;
+    }
 
     ListGrid getListGrid() {
-        return this.listGrid;
+        return this.table.getListGrid();
     }
 
     public void refresh() {
-        this.listGrid.invalidateCache();
-        this.listGrid.markForRedraw();
+        this.table.getListGrid().invalidateCache();
+        //this.table.getListGrid().markForRedraw();
     }
+
+    public void refresh(Criteria criteria) {
+        this.table.refresh(criteria);
+        //this.table.getListGrid().markForRedraw();
+    }
+
 }

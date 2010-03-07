@@ -385,11 +385,8 @@ public class ResourceTreeView extends VLayout {
                             treeGrid.markForRedraw();
                         }
 
-
-//                    treeGrid.fegetTree().openFolder(rootData[0]);
-
-
                     } else {
+
                         initialSelect = false;
                         for (TreeNode n : ResourceTreeDatasource.build(result)) {
                             treeGrid.getDataSource().addData(n);

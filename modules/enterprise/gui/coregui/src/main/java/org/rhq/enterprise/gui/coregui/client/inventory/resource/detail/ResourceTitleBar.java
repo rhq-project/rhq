@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 
@@ -25,6 +26,7 @@ import com.smartgwt.client.types.SelectionType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.ImgButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -38,7 +40,9 @@ public class ResourceTitleBar extends HLayout {
 
     Resource resource;
     ImgButton favoriteButton;
-    HTMLFlow title = new HTMLFlow();
+    HTMLFlow title;
+    Img availabilityImage;
+
     boolean favorite;
 
     public static final String FAV_ICON = "Favorite_24_Selected.png";
@@ -48,12 +52,15 @@ public class ResourceTitleBar extends HLayout {
     public ResourceTitleBar() {
         super();
         setWidth100();
-        setHeight(60);
+        setHeight(30);
     }
 
     @Override
     protected void onInit() {
         super.onInit();
+
+        title = new HTMLFlow();
+        title.setWidth("*");
 
         favoriteButton = new ImgButton();
         favoriteButton.setSrc(NOT_FAV_ICON);
@@ -75,9 +82,12 @@ public class ResourceTitleBar extends HLayout {
             }
         });
 
+        availabilityImage = new Img("resources/availability_grey_24.png",24,24);
+
 
         addMember(title);
         addMember(favoriteButton);
+        addMember(availabilityImage);
     }
 
     public void setResource(Resource resource) {
@@ -87,6 +97,9 @@ public class ResourceTitleBar extends HLayout {
 
         favorite = CoreGUI.getUserPreferences().getFavoriteResources().contains(resource.getId());
 
+        availabilityImage.setSrc("resources/availability_" +
+                (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red") +
+                "_24.png");
         markForRedraw();
     }
 

@@ -57,13 +57,20 @@ public class AlertsView extends VLayout {
         this.table = new Table(TITLE, criteria, SORT_SPECIFIERS, excludedFieldNames);
     }
 
+
     @Override
     protected void onInit() {
         super.onInit();
-
         setWidth100();
         setHeight100();
         setMembersMargin(20);
+
+    }
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
 
         // Add the list table as the top half of the view.
         //Criteria criteria = new Criteria(AlertCriteria.);

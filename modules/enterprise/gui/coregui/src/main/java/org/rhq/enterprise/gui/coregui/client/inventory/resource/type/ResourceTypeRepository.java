@@ -83,7 +83,6 @@ public class ResourceTypeRepository {
             return;
         }
 
-        System.out.println("Getting types from cache");
         long start = System.currentTimeMillis();
 
         HashSet<Integer> types = new HashSet<Integer>();
@@ -99,7 +98,7 @@ public class ResourceTypeRepository {
             }
         });
 
-        System.out.println("Loaded types from cache in " + (System.currentTimeMillis() - start));
+//        System.out.println("Loaded types from cache in " + (System.currentTimeMillis() - start));
 
     }
 

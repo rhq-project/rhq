@@ -100,12 +100,6 @@ public class ResourceTreeView extends VLayout {
 
         contextMenu = new Menu();
         MenuItem item = new MenuItem("Expand node");
-        item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-            public void onClick(MenuItemClickEvent event) {
-                TreeGrid treeGrid = (TreeGrid) event.getTarget();
-                System.out.println("You right clicked: " + treeGrid.getSelectedRecord());
-            }
-        });
 
         /* Do menu support datasources? GH: Seemingly they'll only load once when done this way
         contextMenu.setDataSource(new DataSource() {
@@ -340,15 +334,14 @@ public class ResourceTreeView extends VLayout {
                                 if (!initialSelect) {
 
                                     TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResource.getId()));
-                                    System.out.println("Trying to preopen: " + selectedNode);
+//                                    System.out.println("Trying to preopen: " + selectedNode);
                                     if (selectedNode != null) {
-                                        System.out.println("Preopen node!!!");
                                         TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
                                         treeGrid.getTree().openFolders(parents);
                                         treeGrid.getTree().openFolder(selectedNode);
 
                                         for (TreeNode p : parents) {
-                                            System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
+//                                            System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
                                         }
 
                                         treeGrid.selectRecord(selectedNode);
@@ -369,9 +362,9 @@ public class ResourceTreeView extends VLayout {
 
 
                         TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResource.getId()));
-                        System.out.println("Trying to preopen: " + selectedNode);
+//                        System.out.println("Trying to preopen: " + selectedNode);
                         if (selectedNode != null) {
-                            System.out.println("Preopen node!!!");
+//                            System.out.println("Preopen node!!!");
                             TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
                             treeGrid.getTree().openFolders(parents);
                             treeGrid.getTree().openFolder(selectedNode);

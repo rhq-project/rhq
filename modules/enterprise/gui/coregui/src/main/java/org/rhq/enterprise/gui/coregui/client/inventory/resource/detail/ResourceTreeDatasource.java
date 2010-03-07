@@ -163,8 +163,6 @@ public class ResourceTreeDatasource extends DataSource {
             }
 
             public void onSuccess(PageList<Resource> result) {
-                System.out.println("Got resources in: " + (System.currentTimeMillis() - start));
-
                 processIncomingData(result, response, requestId);
             }
         });

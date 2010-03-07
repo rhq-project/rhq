@@ -32,6 +32,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import java.util.ArrayList;
@@ -45,14 +46,14 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
 
 
     private Resource resource;
-
+    private Label loadingLabel = new Label("Loading...");
 
     public GraphListView() {
     }
 
     public GraphListView(Resource resource) {
         this.resource = resource;
-        setOverflow(Overflow.SCROLL);
+        setOverflow(Overflow.AUTO);
     }
 
 
@@ -63,6 +64,9 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
         for (Canvas c : getMembers()) {
             c.destroy();
         }
+
+        addMember(loadingLabel);
+
         if (resource != null) {
             buildGraphs();
         }
@@ -93,22 +97,28 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
                         GWTServiceLookup.getMeasurementDataService().findDataForResource(
                                 resource.getId(),
                                 measDefIdArray,
-                                System.currentTimeMillis() - (1000L*60*60*8),
+                                System.currentTimeMillis() - (1000L * 60 * 60 * 8),
                                 System.currentTimeMillis(),
                                 60,
                                 new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                     public void onFailure(Throwable caught) {
                                         SC.say("Failed data load");
+                                        loadingLabel.setContents("failed to load graphs");
                                     }
 
                                     public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                        int i = 0;
-                                        for (List<MeasurementDataNumericHighLowComposite> data : result) {
-                                            buildGraph(measurementDefinitions.get(i++), data);
+                                        if (result.isEmpty()) {
+                                            loadingLabel.setContents("No graphs available");
+                                        } else {
+                                            loadingLabel.hide();
+                                            int i = 0;
+                                            for (List<MeasurementDataNumericHighLowComposite> data : result) {
+                                                buildGraph(measurementDefinitions.get(i++), data);
+                                            }
                                         }
                                     }
                                 }
-                                );
+                        );
 
                     }
                 }
@@ -118,7 +128,7 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
     private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
         SmallGraphView graph = new SmallGraphView(def, data);
         graph.setWidth("80%");
-        graph.setHeight(250);
+        graph.setHeight(220);
 
         addMember(graph);
 
@@ -126,8 +136,6 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
 
     public void onResourceSelected(Resource resource) {
         this.resource = resource;
-
-
 
 
         buildGraphs();

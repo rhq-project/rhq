@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
+
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
@@ -81,13 +83,36 @@ public class GWTServiceLookup {
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
         @Override
+        protected void doSetRequestData(RequestBuilder rb, String data) {
+            super.doSetRequestData(rb, data); // TODO: Implement this method.
+        }
+
+        @Override
         protected void doFinish(RequestBuilder rb) {
             super.doFinish(rb);
+
+            // TODO Don't use the expensive determineName except in dev mode
+            rb.setCallback(new MonitoringRequestCallback(determineName(), rb.getCallback()));
 
             String sid = Cookies.getCookie(SESSION_NAME);
             if (sid != null) {
                 rb.setHeader(SESSION_NAME, sid);
             }
+        }
+
+        public String determineName() {
+            Exception e = new Exception();
+
+            StackTraceElement[] stack = e.getStackTrace();
+            // Skip the first two stack elements to get to the proxy calling
+            for (int i = 2; i < stack.length; i++) {
+                StackTraceElement ste = stack[i];
+                // e.g. "org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService_Proxy.findResourcesByCriteria(ResourceGWTService_Proxy.java:36)"
+                if (ste.getClassName().startsWith("org.rhq.enterprise.gui.coregui.client.gwt")) {
+                    return ste.getClassName().substring(ste.getClassName().lastIndexOf(".") + 1) + "." + ste.getMethodName();
+                }
+            }
+            return "unknown";
         }
     }
 

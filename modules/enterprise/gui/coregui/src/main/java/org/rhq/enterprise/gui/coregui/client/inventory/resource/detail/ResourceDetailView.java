@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectLi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 import com.google.gwt.user.client.History;
@@ -162,6 +163,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
         inventoryTab.updateSubTab("Connection Settings", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
 
+        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource.getId()));
 
         configurationTab.updateSubTab("Current", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId()));
         configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));

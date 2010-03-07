@@ -42,5 +42,6 @@
     <servlet path="/ResourceTypeGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceTypeGWTServiceImpl"/>
     <servlet path="/MeasurementDataGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl"/>
     <servlet path="/AlertGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl"/>
+    <servlet path="/OperationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.OperationGWTServiceImpl"/>
 
 </module>

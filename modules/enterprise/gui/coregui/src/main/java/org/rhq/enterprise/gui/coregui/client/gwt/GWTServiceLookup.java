@@ -68,6 +68,11 @@ public class GWTServiceLookup {
         return secure(AlertGWTServiceAsync.Util.getInstance());
     }
 
+    public static OperationGWTServiceAsync getOperationService() {
+        return secure(OperationGWTServiceAsync.Util.getInstance());
+    }
+    
+
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget)) return null;
 
@@ -79,6 +84,7 @@ public class GWTServiceLookup {
     public static void registerSession(String sessionId) {
         Cookies.setCookie(SESSION_NAME, sessionId);
     }
+
 
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 

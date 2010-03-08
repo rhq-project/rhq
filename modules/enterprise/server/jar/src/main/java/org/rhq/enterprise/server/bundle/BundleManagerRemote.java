@@ -26,6 +26,7 @@ import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
+import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
@@ -71,19 +72,20 @@ public interface BundleManagerRemote {
 
     PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria);
 
-
     /**
-     * Immediately deploy the bundle as described in the provided deploy definition to the specified resources.
+     * Deploy the bundle as described in the provided deploy definition to the specified resource.
      * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
-     * returned BundleDeployments can be used to track the history of the deployment. 
+     * returned BundleDeployment can be used to track the history of the deployment.
+     * 
+     *  TODO: Add the scheduling capability, currently it's Immediate. 
      * 
      * @param subject must be InventoryManager
      * @param bundleDeployDefinitionId the BundleDeployDefinition being used to guide the deployments
-     * @param resourceIds the target resources (must exist), typically platforms, for the deployments
-     * @return a List of BundleDeployments, one for each requested resource. 
+     * @param resourceId the target resource (must exist), typically platforms, for the deployments
+     * @return the BundleScheduleResponse created to track the deployment. 
      * @throws Exception
      */
-    List<BundleDeployment> deployBundle(Subject subject, int bundleDeployDefinitionId, int[] resourceIds)
+    BundleScheduleResponse scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
         throws Exception;
 
     void addBundleDeploymentHistoryByBundleDeployment(BundleDeploymentHistory history) throws IllegalArgumentException;

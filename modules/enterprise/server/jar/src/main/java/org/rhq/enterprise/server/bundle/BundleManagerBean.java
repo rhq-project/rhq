@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.bundle;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -29,6 +28,8 @@ import java.util.UUID;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -36,6 +37,9 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
+import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
+import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -63,11 +67,13 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -87,7 +93,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     private EntityManager entityManager;
 
     @EJB
+    private AgentManagerLocal agentManager;
+
+    @EJB
     private AuthorizationManagerLocal authorizationManager;
+
+    @EJB
+    private BundleManagerLocal bundleManager;
 
     @EJB
     private ContentManagerLocal contentManager;
@@ -331,35 +343,51 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public List<BundleDeployment> deployBundle(Subject subject, int bundleDeployDefinitionId, int[] resourceIds)
+    public BundleScheduleResponse scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
         throws Exception {
-
-        if (null == resourceIds || 0 == resourceIds.length) {
-            throw new IllegalArgumentException("Invalid resourceIds: " + resourceIds);
-        }
 
         BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
         if (null == deployDef) {
             throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
         }
-        Resource[] resources = new Resource[resourceIds.length];
-        for (int i = 0; (i < resourceIds.length); ++i) {
-            resources[i] = (Resource) entityManager.find(Resource.class, resourceIds[i]);
-            if (null == resources[i]) {
-                throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resources[i]);
-            }
+        Resource resource = (Resource) entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
         }
 
-        List<BundleDeployment> result = new ArrayList<BundleDeployment>(resourceIds.length);
-        // create a BundleDeploy record for each deployment
-        for (Resource resource : resources) {
-            BundleDeployment deployment = new BundleDeployment(deployDef, resource);
-            deployDef.addDeployment(deployment);
-            result.add(deployment);
-            entityManager.persist(deployment);
+        BundleDeployment deployment = bundleManager.createBundleDeployment(subject, bundleDeployDefinitionId,
+            resourceId);
+
+        AgentClient agentClient = agentManager.getAgentClient(resourceId);
+        BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
+        BundleScheduleRequest request = new BundleScheduleRequest(deployDef);
+        BundleScheduleResponse response = bundleAgentService.schedule(request);
+        if (null != response) {
+            response.setBundleDeployment(deployment);
         }
 
-        return result;
+        return response;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleDeployment createBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
+        throws Exception {
+
+        BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
+        if (null == deployDef) {
+            throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
+        }
+        Resource resource = (Resource) entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
+        }
+
+        BundleDeployment deployment = new BundleDeployment(deployDef, resource);
+        deployDef.addDeployment(deployment);
+        entityManager.persist(deployment);
+
+        return deployment;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

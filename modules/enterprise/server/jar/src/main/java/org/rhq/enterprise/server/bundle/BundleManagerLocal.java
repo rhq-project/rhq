@@ -26,7 +26,7 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -129,6 +129,13 @@ public interface BundleManagerLocal extends BundleManagerRemote {
         throws Exception;
 
     /**
+     * This is typically not called directly, typically deployBundle() is called externally. This executes
+     * in a New Transaction and supports deployBundle. 
+     */
+    BundleDeployment createBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
+        throws Exception;
+
+    /**
      * Determine the files required for a BundleVersion and return all of the filenames or optionally, just those
      * that lack BundleFiles for the BundleVersion.  The recipe may be parsed as part of this call.
      *   
@@ -141,7 +148,6 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      */
     Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)
         throws Exception;
-
 
     //
     // Methods shared with remote have been removed

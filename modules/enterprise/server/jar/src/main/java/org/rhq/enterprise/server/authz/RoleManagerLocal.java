@@ -219,4 +219,5 @@ public interface RoleManagerLocal {
 
     PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria);
 
+    void assignRolesToLdapSubject(int subjectId, List<String> ldapGroupNames);
 }

@@ -72,18 +72,14 @@ public class LdapGroupManager {
         return ldapSet;
     }
 
-    public Set<Map<String, String>> findAvailableGroupsFor(String userName) {
+    public Set<String> findAvailableGroupsFor(String userName) {
         SystemManagerLocal manager = LookupUtil.getSystemManager();
         manager.getSystemConfiguration();
-        Set<Map<String, String>> ldapSet = new HashSet<Map<String, String>>();
-        String[] names = { "bar", "foo" };
+        Set<String> ldapSet = new HashSet<String>();
+        String[] names = { "foo" };
 
         for (String name : names) {
-            Map<String, String> group = new HashMap<String, String>();
-            group.put("id", name);
-            group.put("name", name);
-            group.put("description", name);
-            ldapSet.add(group);
+            ldapSet.add(name);
         }
         return ldapSet;
     }

@@ -174,6 +174,14 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void addRolesToSubject(Subject subject, int subjectId, int[] roleIds) {
+        addRolesToSubject(subject, subjectId, roleIds, false);
+    }
+
+    /**
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addRolesToSubject(Subject, int, int[])
+     */
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void addRolesToSubject(Subject subject, int subjectId, int[] roleIds, boolean isLdap) {
         if (roleIds != null) {
             Subject subjectToModify = subjectManager.getSubjectById(subjectId); // attach it
             if (subjectToModify == null) {
@@ -194,10 +202,11 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                         + "], but role was not found");
                 }
                 role.addSubject(subjectToModify);
+                if (isLdap) {
+                    role.addLdapSubject(subjectToModify);
+                }
             }
         }
-
-        return;
     }
 
     /**
@@ -496,6 +505,23 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             }
             purgeQuery.setParameter("ids", ids);
             purgeQuery.executeUpdate();
+        }
+    }
+
+    private List<Role> findRolesByLdapGroupNames(List<String> ldapGroupNames) {
+        Query query = entityManager.createNamedQuery(LdapGroup.FIND_BY_ROLES_GROUP_NAMES);
+        query.setParameter("names", ldapGroupNames);
+        return (List<Role>) query.getResultList();
+    }
+
+    public void assignRolesToLdapSubject(int subjectId, List<String> ldapGroupNames) {
+        Subject sub = entityManager.find(Subject.class, subjectId);
+        List<Role> roles = findRolesByLdapGroupNames(ldapGroupNames);
+        sub.getRoles().clear();
+        sub.getLdapRoles().clear();
+        for (Role role : roles) {
+            sub.addRole(role);
+            sub.addLdapRole(role);
         }
     }
 

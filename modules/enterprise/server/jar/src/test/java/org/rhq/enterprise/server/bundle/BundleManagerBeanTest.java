@@ -468,7 +468,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
         history.setBundleDeployment(bundleDeployment);
 
-        bundleManager.addBundleDeploymentHistoryByBundleDeployment(history);
+        bundleManager.addBundleDeploymentHistoryByBundleDeployment(overlord, history);
 
         BundleDeploymentHistoryCriteria criteria = new BundleDeploymentHistoryCriteria();
         List<BundleDeploymentHistory> histories = bundleManager.findBundleDeploymentHistoryByCriteria(overlord,

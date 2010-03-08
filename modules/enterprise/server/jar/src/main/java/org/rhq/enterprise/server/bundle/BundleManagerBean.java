@@ -110,6 +110,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
 
+    // TODO: I don't think this is adequate, need to link to the deployment
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void addBundleDeploymentHistoryByBundleDeployment(Subject subject, BundleDeploymentHistory history)
+        throws Exception {
+
+        entityManager.persist(history);
+    }
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Bundle createBundle(Subject subject, String name, int bundleTypeId) {
         if (null == name || "".equals(name.trim())) {
@@ -467,6 +475,17 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return queryRunner.execute();
     }
 
+    // TODO: I don't think this criteria search is necessary
+    public List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(Subject subject,
+        BundleDeploymentHistoryCriteria criteria) {
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        CriteriaQueryRunner<BundleDeploymentHistory> queryRunner = new CriteriaQueryRunner<BundleDeploymentHistory>(
+            criteria, generator, entityManager);
+        return queryRunner.execute();
+    }
+
     public PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
@@ -491,24 +510,21 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return queryRunner.execute();
     }
 
-    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria) {
-        // TODO Auto-generated method stub
-        return null;
+    // TODO This is not adequate!!!  
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteBundle(Subject subject, int bundleId) throws Exception {
+        Bundle bundle = this.entityManager.find(Bundle.class, bundleId);
+        this.entityManager.remove(bundle);
     }
 
-    public void deleteBundles(Subject subject, int[] bundleIds) {
-        for (int bundleId : bundleIds) {
-            Bundle bundle = this.entityManager.find(Bundle.class, bundleId);
-            this.entityManager.remove(bundle);
-        }
-    }
-
+    /*
     public void deleteBundleVersions(Subject subject, int[] bundleVersionIds) {
         for (int bundleVersionId : bundleVersionIds) {
             BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
             this.entityManager.remove(bundleVersion);
         }
     }
+    */
 
     public BundleType createMockBundleType(Subject subject) {
 
@@ -553,18 +569,4 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundle;
     }
 
-    public List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(Subject subject,
-        BundleDeploymentHistoryCriteria criteria) {
-
-        Query q = entityManager.createNamedQuery(BundleDeploymentHistory.QUERY_FIND_ALL);
-        List<BundleDeploymentHistory> histories = (List<BundleDeploymentHistory>) q.getResultList();
-        return histories;
-    }
-
-    public void addBundleDeploymentHistoryByBundleDeployment(BundleDeploymentHistory history)
-        throws IllegalArgumentException {
-
-        entityManager.persist(history);
-
-    }
 }

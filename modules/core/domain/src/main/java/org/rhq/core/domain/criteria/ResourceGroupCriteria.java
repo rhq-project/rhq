@@ -62,7 +62,7 @@ public class ResourceGroupCriteria extends Criteria {
     private PageOrdering sortResourceTypeName; // requires overrides
 
     public ResourceGroupCriteria() {
-        super(ResourceGroup.class);
+        super();
 
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
@@ -79,6 +79,10 @@ public class ResourceGroupCriteria extends Criteria {
             + "         WHERE res.id IN ( ? ) )");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
+    }
+
+    public Class<ResourceGroup> getPersistentClass() {
+        return ResourceGroup.class;
     }
 
     public void addFilterId(Integer filterId) {

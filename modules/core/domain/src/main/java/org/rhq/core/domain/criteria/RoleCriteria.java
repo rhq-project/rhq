@@ -48,7 +48,11 @@ public class RoleCriteria extends Criteria {
     private PageOrdering sortName;
 
     public RoleCriteria() {
-        super(Role.class);
+        super();
+    }
+
+    public Class<Role> getPersistentClass() {
+        return Role.class;
     }
 
     public Integer getFilterId() {

@@ -18,12 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
-
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
+
+import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
 
 /**
  * This lookup service retrieves each RPC service and sets a
@@ -71,10 +71,14 @@ public class GWTServiceLookup {
     public static OperationGWTServiceAsync getOperationService() {
         return secure(OperationGWTServiceAsync.Util.getInstance());
     }
-    
+
+    public static BundleGWTServiceAsync getBundleService() {
+        return secure(BundleGWTServiceAsync.Util.getInstance());
+    }
 
     private static <T> T secure(Object sdt) {
-        if (!(sdt instanceof ServiceDefTarget)) return null;
+        if (!(sdt instanceof ServiceDefTarget))
+            return null;
 
         ((ServiceDefTarget) sdt).setRpcRequestBuilder(new SessionRpcRequestBuilder());
 
@@ -84,7 +88,6 @@ public class GWTServiceLookup {
     public static void registerSession(String sessionId) {
         Cookies.setCookie(SESSION_NAME, sessionId);
     }
-
 
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
@@ -115,7 +118,8 @@ public class GWTServiceLookup {
                 StackTraceElement ste = stack[i];
                 // e.g. "org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService_Proxy.findResourcesByCriteria(ResourceGWTService_Proxy.java:36)"
                 if (ste.getClassName().startsWith("org.rhq.enterprise.gui.coregui.client.gwt")) {
-                    return ste.getClassName().substring(ste.getClassName().lastIndexOf(".") + 1) + "." + ste.getMethodName();
+                    return ste.getClassName().substring(ste.getClassName().lastIndexOf(".") + 1) + "."
+                        + ste.getMethodName();
                 }
             }
             return "unknown";

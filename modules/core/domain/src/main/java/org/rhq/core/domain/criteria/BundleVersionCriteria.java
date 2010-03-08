@@ -46,9 +46,13 @@ public class BundleVersionCriteria extends Criteria {
     private boolean fetchConfigurationDefinition;
 
     public BundleVersionCriteria() {
-        super(BundleVersion.class);
+        super();
 
         filterOverrides.put("bundleName", "bundle.name like ?");
+    }
+
+    public Class<BundleVersion> getPersistentClass() {
+        return BundleVersion.class;
     }
 
     public void addFilterId(Integer filterId) {

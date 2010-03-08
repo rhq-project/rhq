@@ -28,8 +28,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
@@ -56,7 +56,7 @@ public class OperationDefinitionCriteria extends Criteria {
     private PageOrdering sortName;
 
     public OperationDefinitionCriteria() {
-        super(OperationDefinition.class);
+        super();
 
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
@@ -71,6 +71,10 @@ public class OperationDefinitionCriteria extends Criteria {
             + "     FROM ResourceGroup group " //
             + "     JOIN group.resourceType type " //
             + "    WHERE group.id = ? ) ");
+    }
+
+    public Class<OperationDefinition> getPersistentClass() {
+        return OperationDefinition.class;
     }
 
     public void addFilterId(Integer filterId) {

@@ -34,7 +34,7 @@ import java.util.Set;
 public class ObjectFilter {
 
 
-    public static <T extends Collection> T filterFieldsInCollection(T collection, Set<String> goodFields) {
+    public static <T extends Collection<?>> T filterFieldsInCollection(T collection, Set<String> goodFields) {
         long sizeOfBefore = sizeOf(collection);
         for (Object object : collection) {
             filterFields(object, goodFields);

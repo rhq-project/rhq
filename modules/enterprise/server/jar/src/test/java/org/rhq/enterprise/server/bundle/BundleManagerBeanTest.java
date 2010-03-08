@@ -20,6 +20,7 @@
 package org.rhq.enterprise.server.bundle;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -28,14 +29,19 @@ import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
 import org.hibernate.LazyInitializationException;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentAction;
+import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -46,7 +52,9 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -54,7 +62,9 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.resource.metadata.test.UpdateSubsytemTestBase;
+import org.rhq.enterprise.server.test.TestAgentClient;
+import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -62,7 +72,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @SuppressWarnings( { "unchecked", "unused" })
 @Test
-public class BundleManagerBeanTest extends AbstractEJB3Test {
+public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
     private static final boolean TESTS_ENABLED = true;
 
@@ -70,9 +80,25 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private BundleManagerLocal bundleManager;
     private ResourceManagerLocal resourceManager;
+    private static final boolean ENABLED = true;
+    private static final boolean DISABLED = false;
+
     private TestBundleServerPluginService ps;
     private MasterServerPluginContainer pc;
     private Subject overlord;
+    TestServerCommunicationsService agentServiceContainer;
+
+    @Override
+    @BeforeClass
+    public void beforeClass() {
+        agentServiceContainer = prepareForTestAgents();
+        agentServiceContainer.bundleService = new TestAgentClient(null, new TestServerCommunicationsService());
+    }
+
+    @AfterClass
+    public void afterClass() throws Exception {
+        unprepareForTestAgents();
+    }
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
@@ -107,8 +133,13 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
             // clean up any tests that don't already clean up after themselves
 
+            q = em.createQuery("SELECT bdh FROM BundleDeploymentHistory bdh ");//WHERE bdh.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(BundleDeploymentHistory.class, ((BundleDeploymentHistory) removeMe).getId()));
+            }
+
             // remove bundleversions which cascade remove bundlefiles and bundledeploydefs  
-            // removal of bundledeploydefs cascade remove bundledeployments
             q = em.createQuery("SELECT bv FROM BundleVersion bv WHERE bv.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
@@ -179,6 +210,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(PackageType.class, ((PackageType) removeMe).getId()));
+            }
+            // remove Agents left over from test resources            
+            q = em.createQuery("SELECT a FROM Agent a WHERE a.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(Agent.class, ((Agent) removeMe).getId()));
             }
 
             getTransactionManager().commit();
@@ -273,12 +310,11 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         BundleDeployDefinition bdd1 = createDeployDefinition("one", bv1, config);
         assertNotNull(bdd1);
         Resource platformResource = createTestResource();
-        List<BundleDeployment> bds = bundleManager.deployBundle(overlord, bdd1.getId(), new int[] { platformResource
-            .getId() });
-        assertNotNull(bds);
-        assertEquals(1, bds.size());
-        assertEquals(bdd1.getId(), bds.get(0).getBundleDeployDefinition().getId());
-        assertEquals(platformResource.getId(), bds.get(0).getResource().getId());
+        BundleScheduleResponse bsr = bundleManager.scheduleBundleDeployment(overlord, bdd1.getId(), platformResource
+            .getId());
+        assertNotNull(bsr);
+        assertEquals(bdd1.getId(), bsr.getBundleDeployment().getBundleDeployDefinition().getId());
+        assertEquals(platformResource.getId(), bsr.getBundleDeployment().getResource().getId());
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -397,6 +433,60 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertTrue(bv.getBundleDeployDefinitions().isEmpty());
     }
 
+    @Test(enabled = DISABLED)
+    public void testInsertAndRetrieve() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
+    public void testFindByPlatformId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
+    public void testFindByBundleId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
+    public void testFindByBundleDeploymentId() throws Exception {
+        assertNotNull(null);
+    }
+
+    @Test(enabled = DISABLED)
+    public void testFindHistoryByCriteria() throws Exception {
+
+        Long auditTime = new Date().getTime();
+        BundleDeploymentAction auditAction = BundleDeploymentAction.DEPLOYMENT_START;
+        String auditMessage = "This is my message";
+
+        BundleDeployment bundleDeployment = createDeployment();
+        BundleDeploymentHistory history = new BundleDeploymentHistory(bundleDeployment, overlord.getName(), auditTime,
+            auditAction, auditMessage);
+
+        Bundle bundle = createBundle("deleteThisBundle");
+
+        history.setBundleDeployment(bundleDeployment);
+
+        bundleManager.addBundleDeploymentHistoryByBundleDeployment(overlord, history);
+
+        BundleDeploymentHistoryCriteria criteria = new BundleDeploymentHistoryCriteria();
+        List<BundleDeploymentHistory> histories = bundleManager.findBundleDeploymentHistoryByCriteria(overlord,
+            criteria);
+
+        assertNotNull(histories);
+        assertTrue(histories.size() > 0);
+
+    }
+
+    private BundleDeployment createDeployment() {
+        Resource resource = new Resource();
+
+        BundleDeployDefinition def = new BundleDeployDefinition();
+
+        return new BundleDeployment(def, resource);
+    }
+
     private BundleType createBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-type-" + name;
         ResourceType rt = createResourceType(name);
@@ -484,10 +574,14 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
                 "test", ResourceCategory.PLATFORM, null);
 
             em.persist(resourceType);
+
+            Agent agent = new Agent(TEST_PREFIX + "-testagent", "testaddress", 1, "", "testtoken");
+            em.persist(agent);
             em.flush();
 
             resource = new Resource("reskey" + System.currentTimeMillis(), TEST_PREFIX + "-resname", resourceType);
             resource.setInventoryStatus(InventoryStatus.COMMITTED);
+            resource.setAgent(agent);
             em.persist(resource);
 
             getTransactionManager().commit();

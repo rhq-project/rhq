@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Set;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
+import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
+import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
@@ -59,9 +62,9 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 
-public class TestAgentClient implements AgentClient, ContentAgentService, ResourceFactoryAgentService,
-    ConfigurationAgentService, DiscoveryAgentService, MeasurementAgentService, OperationAgentService,
-    SupportAgentService {
+public class TestAgentClient implements AgentClient, BundleAgentService, ContentAgentService,
+    ResourceFactoryAgentService, ConfigurationAgentService, DiscoveryAgentService, MeasurementAgentService,
+    OperationAgentService, SupportAgentService {
     private final Agent agent;
     private final TestServerCommunicationsService commService;
 
@@ -72,6 +75,10 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
 
     public Agent getAgent() {
         return this.agent;
+    }
+
+    public BundleAgentService getBundleAgentService() {
+        return (commService.bundleService != null) ? commService.bundleService : this;
     }
 
     public ContentAgentService getContentAgentService() {
@@ -256,7 +263,11 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
     }
 
     public Configuration validate(Configuration configuration, int resourceId, boolean isStructured)
-            throws PluginContainerException {
+        throws PluginContainerException {
         return null;
+    }
+
+    public BundleScheduleResponse schedule(BundleScheduleRequest request) {
+        return new BundleScheduleResponse();
     }
 }

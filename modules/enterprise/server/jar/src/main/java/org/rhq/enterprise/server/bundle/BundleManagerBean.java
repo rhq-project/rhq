@@ -20,8 +20,6 @@ package org.rhq.enterprise.server.bundle;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -30,6 +28,8 @@ import java.util.UUID;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -37,12 +37,16 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
+import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
+import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -56,17 +60,19 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -86,7 +92,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     private EntityManager entityManager;
 
     @EJB
+    private AgentManagerLocal agentManager;
+
+    @EJB
     private AuthorizationManagerLocal authorizationManager;
+
+    @EJB
+    private BundleManagerLocal bundleManager;
 
     @EJB
     private ContentManagerLocal contentManager;
@@ -96,6 +108,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
+
+    // TODO: I don't think this is adequate, need to link to the deployment
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void addBundleDeploymentHistoryByBundleDeployment(Subject subject, BundleDeploymentHistory history)
+        throws Exception {
+
+        entityManager.persist(history);
+    }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Bundle createBundle(Subject subject, String name, int bundleTypeId) {
@@ -330,35 +350,51 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public List<BundleDeployment> deployBundle(Subject subject, int bundleDeployDefinitionId, int[] resourceIds)
+    public BundleScheduleResponse scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
         throws Exception {
-
-        if (null == resourceIds || 0 == resourceIds.length) {
-            throw new IllegalArgumentException("Invalid resourceIds: " + Arrays.toString(resourceIds));
-        }
 
         BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
         if (null == deployDef) {
             throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
         }
-        Resource[] resources = new Resource[resourceIds.length];
-        for (int i = 0; (i < resourceIds.length); ++i) {
-            resources[i] = entityManager.find(Resource.class, resourceIds[i]);
-            if (null == resources[i]) {
-                throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resources[i]);
-            }
+        Resource resource = (Resource) entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
         }
 
-        List<BundleDeployment> result = new ArrayList<BundleDeployment>(resourceIds.length);
-        // create a BundleDeploy record for each deployment
-        for (Resource resource : resources) {
-            BundleDeployment deployment = new BundleDeployment(deployDef, resource);
-            deployDef.addDeployment(deployment);
-            result.add(deployment);
-            entityManager.persist(deployment);
+        BundleDeployment deployment = bundleManager.createBundleDeployment(subject, bundleDeployDefinitionId,
+            resourceId);
+
+        AgentClient agentClient = agentManager.getAgentClient(resourceId);
+        BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
+        BundleScheduleRequest request = new BundleScheduleRequest(deployDef);
+        BundleScheduleResponse response = bundleAgentService.schedule(request);
+        if (null != response) {
+            response.setBundleDeployment(deployment);
         }
 
-        return result;
+        return response;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleDeployment createBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
+        throws Exception {
+
+        BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
+        if (null == deployDef) {
+            throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
+        }
+        Resource resource = (Resource) entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
+        }
+
+        BundleDeployment deployment = new BundleDeployment(deployDef, resource);
+        deployDef.addDeployment(deployment);
+        entityManager.persist(deployment);
+
+        return deployment;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -438,6 +474,17 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return queryRunner.execute();
     }
 
+    // TODO: I don't think this criteria search is necessary
+    public List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(Subject subject,
+        BundleDeploymentHistoryCriteria criteria) {
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        CriteriaQueryRunner<BundleDeploymentHistory> queryRunner = new CriteriaQueryRunner<BundleDeploymentHistory>(
+            criteria, generator, entityManager);
+        return queryRunner.execute();
+    }
+
     public PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
@@ -447,39 +494,27 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
-        Query totalCountQuery = PersistenceUtility.createCountQuery(entityManager, Bundle.QUERY_FIND_ALL);
-        long totalCount = (Long) totalCountQuery.getSingleResult();
-        if (totalCount == 0) {
-            List<BundleType> bundleTypes = getAllBundleTypes(subject);
-            for (int i = 0; i < 50; i++) {
-                createMockBundle(subject, bundleTypes);
-            }
-        }
-
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
         return queryRunner.execute();
     }
 
-    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria) {
-        // TODO Auto-generated method stub
-        return null;
+    // TODO This is not adequate!!!  
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteBundle(Subject subject, int bundleId) throws Exception {
+        Bundle bundle = this.entityManager.find(Bundle.class, bundleId);
+        this.entityManager.remove(bundle);
     }
 
-    public void deleteBundles(Subject subject, int[] bundleIds) {
-        for (int bundleId : bundleIds) {
-            Bundle bundle = this.entityManager.find(Bundle.class, bundleId);
-            this.entityManager.remove(bundle);
-        }
-    }
-
+    /*
     public void deleteBundleVersions(Subject subject, int[] bundleVersionIds) {
         for (int bundleVersionId : bundleVersionIds) {
             BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
             this.entityManager.remove(bundleVersion);
         }
     }
+    */
 
     public BundleType createMockBundleType(Subject subject) {
 
@@ -523,4 +558,5 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         bundle = entityManager.merge(bundle);
         return bundle;
     }
+
 }

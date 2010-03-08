@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.agentclient.impl;
 
+import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
@@ -123,6 +124,10 @@ public class AgentClientImpl implements AgentClient {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public BundleAgentService getBundleAgentService() {
+        return clientRemotePojoFactory.getRemotePojo(BundleAgentService.class);
     }
 
     public ContentAgentService getContentAgentService() {

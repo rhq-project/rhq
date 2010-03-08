@@ -25,6 +25,7 @@ package org.rhq.core.clientapi.agent.bundle;
 
 import java.io.Serializable;
 
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
@@ -34,6 +35,7 @@ public class BundleScheduleResponse implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String errorMessage;
+    private BundleDeployment bundleDeployment;
 
     public BundleScheduleResponse() {
     }
@@ -52,6 +54,14 @@ public class BundleScheduleResponse implements Serializable {
 
     public void setErrorMessage(Throwable t) {
         this.errorMessage = ThrowableUtil.getAllMessages(t);
+    }
+
+    public BundleDeployment getBundleDeployment() {
+        return bundleDeployment;
+    }
+
+    public void setBundleDeployment(BundleDeployment bundleDeployment) {
+        this.bundleDeployment = bundleDeployment;
     }
 
     @Override

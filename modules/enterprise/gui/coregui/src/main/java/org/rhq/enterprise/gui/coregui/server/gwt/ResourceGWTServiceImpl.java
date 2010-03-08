@@ -18,31 +18,18 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.util.HibernateDetachUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -120,7 +107,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                 resource.setAgent(null);
             }
 
-            ObjectFilter.filterFields(result, importantFieldsSet);
+            ObjectFilter.filterFieldsInCollection(result, importantFieldsSet);
 
             return SerialUtility.prepare(result, "ResourceService.findResourceByCriteria");
         } catch (Exception e) {

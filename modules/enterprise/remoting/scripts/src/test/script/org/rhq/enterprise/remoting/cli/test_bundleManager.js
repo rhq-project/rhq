@@ -28,6 +28,8 @@
 
 var TestsEnabled = true;
 
+var bundleName "testScriptBundle"
+
 // note, super-user, will not test any security constraints
 var subject = rhq.login('rhqadmin', 'rhqadmin');
 
@@ -39,4 +41,37 @@ function testDeployment() {
    if ( !TestsEnabled ) {
       return;
    }
+   
+   var c = new BundleCriteria();
+   c.addFilterName( bundleName );
+   var bundles = BundleManager.findBundlesViaCriteria( c );
+   if ( null != bundles && bundles.size > 0 ) {
+      print( "\n Deleting existing testScriptBundle in order to test a fresh deploy...")
+      BundleManager.deleteBundle( bundles.get(0).getId() );      
+   }
+   
+   var testBundle = createBundle( bundleName, getBundleType() );
+   BundleVersion bv1 = createBundleVersion(bundleName, null, getBundleType());
+   Configuration config = new Configuration();
+   config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
+   BundleDeployDefinition bdd1 = createDeployDefinition("one", bv1, config);
+   assertNotNull(bdd1);
+   Resource platformResource = createTestResource();
+   BundleScheduleResponse bsr = bundleManager.scheduleBundleDeployment(overlord, bdd1.getId(), platformResource
+       .getId());
+   assertNotNull(bsr);
+   assertEquals(bdd1.getId(), bsr.getBundleDeployment().getBundleDeployDefinition().getId());
+   assertEquals(platformResource.getId(), bsr.getBundleDeployment().getResource().getId());
+
+}
+
+function getBundleType() {
+ 
+   var types = BundleManager.getAllBundleTypes();
+   for ( int i=0; ( i < types.size()); ++i ) {
+      if ( types.get(i).getName().toUppercase().contains("TEMPLATE") ) {
+         return types.get(i).getId();
+   }
+   
+   print( "\n Could not find template bundle type, is the plugin loaded?");
 }

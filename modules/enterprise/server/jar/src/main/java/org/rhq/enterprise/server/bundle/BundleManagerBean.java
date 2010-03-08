@@ -65,7 +65,6 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -495,15 +494,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
-        Query totalCountQuery = PersistenceUtility.createCountQuery(entityManager, Bundle.QUERY_FIND_ALL);
-        long totalCount = (Long) totalCountQuery.getSingleResult();
-        if (totalCount == 0) {
-            List<BundleType> bundleTypes = getAllBundleTypes(subject);
-            for (int i = 0; i < 50; i++) {
-                createMockBundle(subject, bundleTypes);
-            }
-        }
-
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);

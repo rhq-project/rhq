@@ -81,8 +81,7 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
 
         log.trace("getting pending groups for role [" + roleId + ")");
         String name = "foo";
-        Set<Map<String, String>> allGroups = LdapGroupManager.getInstance().findAvailableGroupsByRole(whoami,
-            role.getId());
+        Set<Map<String, String>> allGroups = LdapGroupManager.getInstance().findAvailableGroups();
         RoleManagerLocal roleManager = LookupUtil.getRoleManager();
 
         PageList<LdapGroup> assignedList = roleManager.findLdapGroupsByRole(role.getId(), PageControl

@@ -35,7 +35,6 @@ import javax.naming.ldap.InitialLdapContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -57,7 +56,23 @@ public class LdapGroupManager {
         return INSTANCE;
     }
 
-    public Set<Map<String, String>> findAvailableGroupsByRole(Subject subject, int roleId) {
+    public Set<Map<String, String>> findAvailableGroups() {
+        SystemManagerLocal manager = LookupUtil.getSystemManager();
+        manager.getSystemConfiguration();
+        Set<Map<String, String>> ldapSet = new HashSet<Map<String, String>>();
+        String[] names = { "bar", "foo" };
+
+        for (String name : names) {
+            Map<String, String> group = new HashMap<String, String>();
+            group.put("id", name);
+            group.put("name", name);
+            group.put("description", name);
+            ldapSet.add(group);
+        }
+        return ldapSet;
+    }
+
+    public Set<Map<String, String>> findAvailableGroupsFor(String userName) {
         SystemManagerLocal manager = LookupUtil.getSystemManager();
         manager.getSystemConfiguration();
         Set<Map<String, String>> ldapSet = new HashSet<Map<String, String>>();

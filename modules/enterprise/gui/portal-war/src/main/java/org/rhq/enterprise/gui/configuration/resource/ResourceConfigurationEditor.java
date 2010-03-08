@@ -72,6 +72,7 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
     @Override
     protected void changeToRawTab() throws ResourceNotFoundException, ConfigurationValidationException {
         translateToRaw();
+        clearErrors();
         validateRaw();
     }
 
@@ -103,6 +104,7 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
     @Override
     protected void changeToStructuredTab() throws ResourceNotFoundException, ConfigurationValidationException {
         translateToStructured();
+        clearErrors();
         validateStructured();
     }
 

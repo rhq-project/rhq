@@ -132,6 +132,9 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
       return
     }
 
+
+
+
     def rawPropertiesConfig = loadRawPropertiesConfiguration(rawConfiguration)
     def propertyNames = getPropertyNames(rawConfiguration)
 
@@ -154,13 +157,18 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
   }
 
   void validateRawConfiguration(RawConfiguration rawConfig) {
-    def failValidation = resourceContext.pluginConfiguration.getSimple("failRawValidation")
-    if (failValidation != null && failValidation.booleanValue) {
-      def fileNames = resourceContext.pluginConfiguration.getSimple("filesToFailValidation").stringValue.split()
-      def match = fileNames.find { rawConfig.path.endsWith(it) }
+    def properties = loadRawPropertiesConfiguration(rawConfig)
 
-      if (match) {
-        throw new RuntimeException("Raw validation failed for ${rawConfig.path}");
+    if (rawConfig.path == rawConfig3.absolutePath) {
+      def rhqServer = properties.getString('rhq.server.hostname')
+      try {
+        def address = InetAddress.getByName(rhqServer)
+        if (!address.isReachable(500)) {
+          throw new RuntimeException("Raw validation failed for ${rawConfig.path}. Unable to reach host $rhqServer")
+        }
+      }
+      catch (UnknownHostException e) {
+        throw new RuntimeException("Raw validation failed for ${rawConfig.path} - Unable to obtain address for $rhqServer", e)
       }
     }
   }

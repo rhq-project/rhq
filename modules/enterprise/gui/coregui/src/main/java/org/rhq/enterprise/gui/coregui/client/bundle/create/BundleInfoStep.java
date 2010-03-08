@@ -16,20 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.wizard;
+package org.rhq.enterprise.gui.coregui.client.bundle.create;
+
+import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Label;
 
 /**
  * @author Greg Hinkle
  */
-public interface WizardStep {
+public class BundleInfoStep implements WizardStep {
 
+    public Canvas getCanvas() {
+        return new Label("Todo: implement me");
+    }
 
-    Canvas getCanvas();
+    public boolean valid() {
+        return false;  // TODO: Implement this method.
+    }
 
-    boolean valid();
-
-    String getName();
+    public String getName() {
+        return "Provide Bundle Information";
+    }
 
 }

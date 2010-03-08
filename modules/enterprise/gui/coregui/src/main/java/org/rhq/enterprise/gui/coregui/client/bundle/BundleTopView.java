@@ -16,20 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.wizard;
+package org.rhq.enterprise.gui.coregui.client.bundle;
 
-import com.smartgwt.client.widgets.Canvas;
+import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreationWizard;
+
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.HLayout;
 
 /**
  * @author Greg Hinkle
  */
-public interface WizardStep {
+public class BundleTopView extends HLayout {
 
 
-    Canvas getCanvas();
+    @Override
+    protected void onDraw() {
+        super.onDraw();
 
-    boolean valid();
 
-    String getName();
+        IButton addButton = new IButton("New Bundle");
+        addButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                new BundleCreationWizard().startBundleCreateWizard();
+            }
+        });
 
+        addMember(addButton);
+    }
 }

@@ -2,6 +2,7 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
@@ -252,6 +253,8 @@ public class CoreGUI implements EntryPoint {
             canvas = new ResourceView();
         } else if (breadcrumbName.equals("Dashboard")) {
             canvas = new DashboardView();
+        } else if (breadcrumbName.equals("Bundles")) {
+            canvas = new BundleTopView();
         } else {
             canvas = null;
         }

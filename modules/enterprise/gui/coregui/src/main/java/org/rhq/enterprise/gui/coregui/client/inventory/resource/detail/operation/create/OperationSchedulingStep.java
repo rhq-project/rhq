@@ -38,7 +38,7 @@ import com.smartgwt.client.widgets.form.fields.TimeItem;
  */
 public class OperationSchedulingStep implements WizardStep {
 
-    DynamicForm form;
+    private DynamicForm form;
 
     public Canvas getCanvas() {
 
@@ -137,8 +137,5 @@ public class OperationSchedulingStep implements WizardStep {
     public String getName() {
         return "Schedule";
     }
-
-    public void setWizard(Wizard wizard) {
-        // TODO: Implement this method.
-    }
+    
 }

@@ -34,11 +34,9 @@ import com.smartgwt.client.widgets.HTMLFlow;
  */
 public class OperationParametersStep implements WizardStep {
 
-    private Wizard wizard;
-
     private OperationDefinition definition;
 
-private ConfigurationEditor configurationEditor;
+    private ConfigurationEditor configurationEditor;
 
     public OperationParametersStep(OperationDefinition operationDefinition) {
         super();
@@ -66,9 +64,6 @@ private ConfigurationEditor configurationEditor;
         return "Operation Parameters";
     }
 
-    public void setWizard(Wizard wizard) {
-        this.wizard = wizard;
-    }
 
     public Configuration getParameterConfiguration() {
         return configurationEditor.getConfiguration();

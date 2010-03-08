@@ -142,6 +142,10 @@ public class WizardView extends VLayout {
         currentStep = stepIndex;
         stepLabel.setContents("Step " + (stepIndex + 1) + " of " + wizard.getSteps().size());
 
+        WizardStep step = wizard.getSteps().get(currentStep);
+
+        stepTitleLabel.setContents(step.getName());
+
         previousButton.setDisabled(stepIndex == 0);
         boolean last = (stepIndex == (wizard.getSteps().size() - 1));
         nextButton.setDisabled(last);

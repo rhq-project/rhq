@@ -240,6 +240,7 @@ public class Subject implements Externalizable {
 
     private void init() {
         roles = new HashSet<Role>();
+        ldapRoles = new HashSet<Role>();
     }
 
     /**
@@ -376,8 +377,15 @@ public class Subject implements Externalizable {
         this.roles = roles;
     }
 
-    public void addRole(Role role) {
+    public void addRole(Role role, boolean isLdap) {
         getRoles().add(role);
+        if (isLdap) {
+            getLdapRoles().add(role);
+        }
+    }
+
+    public void addRole(Role role) {
+        addRole(role, false);
     }
 
     public void removeRole(Role role) {

@@ -457,6 +457,12 @@ public interface ParamConstants {
 
     /**
      * a value for a standard request paramater mode.<br>
+     * signify adding ldap groups for a role.
+     */
+    public static final String MODE_ADD_LDAP_GROUPS = "addLdapGroups";
+
+    /**
+     * a value for a standard request paramater mode.<br>
      * signify displaying a list of items
      */
     public static final String MODE_ADD = "add";

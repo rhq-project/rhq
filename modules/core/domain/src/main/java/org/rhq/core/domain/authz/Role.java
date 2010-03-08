@@ -37,6 +37,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -46,6 +47,7 @@ import org.hibernate.annotations.CollectionOfElements;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.group.LdapGroup;
 
 /**
  * A role has zero or more {@link org.rhq.core.domain.resource.group.ResourceGroup}s assigned to it. You can assign a
@@ -109,6 +111,9 @@ public class Role implements Serializable {
 
     @ManyToMany(mappedBy = "ldapRoles")
     private java.util.Set<Subject> ldapSubjects = new HashSet<Subject>();
+
+    @OneToMany(mappedBy = "role", cascade = javax.persistence.CascadeType.ALL)
+    private Set<LdapGroup> ldapGroups = new HashSet<LdapGroup>();
 
     @ManyToMany(mappedBy = "roles")
     private java.util.Set<org.rhq.core.domain.resource.group.ResourceGroup> resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
@@ -179,6 +184,26 @@ public class Role implements Serializable {
 
     public boolean removePermission(Permission permission) {
         return this.permissions.remove(permission);
+    }
+
+    public Set<LdapGroup> getLdapGroups() {
+        if (ldapGroups == null) {
+            ldapGroups = new HashSet<LdapGroup>();
+        }
+        return this.ldapGroups;
+    }
+
+    public void setLdapGroups(Set<LdapGroup> groups) {
+        this.ldapGroups = groups;
+    }
+
+    public void addLdapGroup(LdapGroup ldapGroup) {
+        ldapGroup.setRole(this);
+        this.ldapGroups.add(ldapGroup);
+    }
+
+    public boolean removeLdapGroup(LdapGroup ldapGroup) {
+        return this.ldapGroups.remove(ldapGroup);
     }
 
     public java.util.Set<Subject> getSubjects() {

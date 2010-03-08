@@ -568,7 +568,7 @@ public class SystemConfigForm extends BaseValidatorForm {
     public void setLdapSearchFilter(String s) {
         ldapSearchFilter = s;
     }
-    
+
     public String getLdapGroupFilter() {
         return ldapGroupFilter;
     }
@@ -578,7 +578,7 @@ public class SystemConfigForm extends BaseValidatorForm {
     }
 
     public String getLdapGroupMember() {
-        return ldapGroupFilter;
+        return ldapGroupMember;
     }
 
     public void setLdapGroupMember(String s) {
@@ -608,7 +608,6 @@ public class SystemConfigForm extends BaseValidatorForm {
     public void setReindex(boolean reindex) {
         this.reindex = reindex;
     }
-
 
     /* (non-Javadoc)
      * @see org.apache.struts.action.ActionForm#validate(org.apache.struts.action.ActionMapping,

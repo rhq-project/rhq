@@ -27,16 +27,16 @@
         </constraint>
     </table>
 
-    <table name="RHQ_ROLE_LDAP_GROUP_MAP">
+    <table name="RHQ_ROLE_LDAP_GROUP">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
         <column name="ROLE_ID" required="true" type="INTEGER" references="RHQ_ROLE"/>
-        <column name="LDAP_GROUP_NAME" required="true" type="VARCHAR2"/>
+        <column name="LDAP_GROUP_NAME" size="128" required="true" type="VARCHAR2"/>
 
-        <constraint name="RHQ_ROLE_LDAP_GROUP_MAP_KEY">
-            <primaryKey>
-                <field ref="ROLE_ID"/>
-                <field ref="LDAP_GROUP_NAME"/>
-            </primaryKey>
-        </constraint>
+        <index name="RHQ_ROLE_LDAP_GROUP_IDX" unique="true">
+            <field ref="ROLE_ID"/>
+            <field ref="LDAP_GROUP_NAME"/>
+        </index>
     </table>
 
     <table name="RHQ_PERMISSION">

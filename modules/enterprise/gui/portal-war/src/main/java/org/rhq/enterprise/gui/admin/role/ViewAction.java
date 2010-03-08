@@ -35,6 +35,7 @@ import org.apache.struts.tiles.ComponentContext;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.AuthzConstants;
 import org.rhq.core.domain.util.PageControl;
@@ -69,8 +70,10 @@ public class ViewAction extends WorkflowPrepareAction {
         Subject whoami = RequestUtils.getSubject(request);
         PageControl pcu = WebUtility.getPageControl(request, "u");
         PageControl pcg = WebUtility.getPageControl(request, "g");
+        PageControl pcldap = WebUtility.getPageControl(request, "l");
         log.trace("user page control: " + pcu);
         log.trace("group page control: " + pcg);
+        log.trace("ldap group page control: " + pcldap);
 
         RoleManagerLocal roleManager = LookupUtil.getRoleManager();
         ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
@@ -99,6 +102,14 @@ public class ViewAction extends WorkflowPrepareAction {
             request.setAttribute(Constants.NUM_RESGRPS_ATTR, new Integer(0));
         } else {
             request.setAttribute(Constants.NUM_RESGRPS_ATTR, new Integer(groups.getTotalSize()));
+        }
+
+        PageList<LdapGroup> ldapGroups = roleManager.findLdapGroupsByRole(roleId, pcldap);
+        request.setAttribute(Constants.ROLE_LDAPGRPS_ATTR, ldapGroups);
+        if (ldapGroups == null) {
+            request.setAttribute(Constants.NUM_LDAPGRPS_ATTR, new Integer(0));
+        } else {
+            request.setAttribute(Constants.NUM_LDAPGRPS_ATTR, new Integer(ldapGroups.getTotalSize()));
         }
 
         // create and initialize the remove users form

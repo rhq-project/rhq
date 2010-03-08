@@ -141,6 +141,7 @@
                         <h:outputText value="Alert Dampening"/>
                     </f:facet>
 
+                    <a4j:region>
                         <h:selectOneMenu value="#{alertDefinition.alertDampening.category}">
                             <f:selectItems value="#{alertConditionUIBean.dampeningCategories}" />
                             <a4j:support event="onchange" reRender="dampeningOptions" status="dampeningLoadStatus"  />
@@ -231,6 +232,7 @@
                             </f:facet>
                         </a4j:status>
 
+                    </a4j:region>
                 </rich:panel>
 
                 <ui:insert name="actionButton">
@@ -245,6 +247,8 @@
             <rich:modalPanel id="categoryModalPanel" moveable="false" autosized="true" width="400">
 
                 <rich:panel id="categoryOptionsPanel">
+                    <a4j:region>
+
                     <h:panelGrid columns="1" cellpadding="5" width="%100">
                         <h:form id="categoryForm">
                             <h:selectOneMenu value="#{alertConditionsUIBean.currentCondition.category}">
@@ -448,6 +452,7 @@
 
                     </h:panelGrid>
 
+                    </a4j:region>
                 </rich:panel>
             </rich:modalPanel>
 

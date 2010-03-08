@@ -46,7 +46,7 @@ import java.util.ArrayList;
  * @author Ian Springer
  */
 public class Table extends VLayout {
-    private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ANY;
+    private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
 
     private HTMLFlow title;
     private ListGrid listGrid;
@@ -58,17 +58,13 @@ public class Table extends VLayout {
      * Specifies how many rows must be selected in order for a {@link TableAction} button to be enabled.
      */
     public enum SelectionEnablement {
-        /**
-         * One or more rows are selected.
-         */
+        /** Enabled no matter how many rows are selected (zero or more) */
+        ALWAYS,
+        /** One or more rows are selected. */
         ANY,
-        /**
-         * Exactly one row is selected.
-         */
+        /** Exactly one row is selected. */
         SINGLE,
-        /**
-         * Two or more rows are selected.
-         */
+        /** Two or more rows are selected. */
         MULTIPLE
     };
 
@@ -221,6 +217,7 @@ public class Table extends VLayout {
         for (TableActionInfo tableAction : tableActions) {
             boolean enabled;
             switch (tableAction.enablement) {
+                case ALWAYS: enabled = true; break;
                 case ANY: enabled = (count >= 1); break;
                 case SINGLE: enabled = (count == 1); break;
                 case MULTIPLE: enabled = (count > 1); break;

@@ -39,8 +39,7 @@ public class BundleDeploymentHistoryCriteria extends Criteria {
     public Integer filterBundleDeploymentId;
     public Integer filterBundleDeploymentDefinitionId;
 
-    @Override
-    public Class getPersistentClass() {
+    public Class<BundleDeploymentHistory> getPersistentClass() {
         return BundleDeploymentHistory.class;
     }
 

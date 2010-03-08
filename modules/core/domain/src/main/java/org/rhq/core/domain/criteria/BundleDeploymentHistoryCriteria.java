@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.domain.criteria;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -31,7 +30,6 @@ import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleDeploymentHistoryCriteria extends Criteria {
-
     private static final long serialVersionUID = 747793536546442610L;
 
     //No reason to make these private.  The setters are necessary to work with bean-api mechanisms
@@ -41,9 +39,9 @@ public class BundleDeploymentHistoryCriteria extends Criteria {
     public Integer filterBundleDeploymentId;
     public Integer filterBundleDeploymentDefinitionId;
 
-    public BundleDeploymentHistoryCriteria() {
-        super(BundleDeploymentHistory.class);
-
+    @Override
+    public Class getPersistentClass() {
+        return BundleDeploymentHistory.class;
     }
 
     public void setFilterId(Integer filterId) {
@@ -65,5 +63,4 @@ public class BundleDeploymentHistoryCriteria extends Criteria {
     public void setFilterBundleDeploymentDefinitionId(Integer filterBundleDeploymentDefinitionId) {
         this.filterBundleDeploymentDefinitionId = filterBundleDeploymentDefinitionId;
     }
-
 }

@@ -25,6 +25,7 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -242,8 +243,14 @@ public class ResourceTreeView extends VLayout {
         // Operations Menu
         MenuItem operations = new MenuItem("Operations");
         Menu opSubMenu = new Menu();
-        for (OperationDefinition operationDefinition : node.getResourceType().getOperationDefinitions()) {
-            opSubMenu.addItem(new MenuItem(operationDefinition.getDisplayName()));
+        for (final OperationDefinition operationDefinition : node.getResourceType().getOperationDefinitions()) {
+            MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
+            operationItem.addClickHandler(new ClickHandler() {
+                public void onClick(MenuItemClickEvent event) {
+                    new OperationCreateWizard(selectedResource, operationDefinition).startOperationWizard();
+                }
+            });
+            opSubMenu.addItem(operationItem);
             // todo action
         }
         operations.setEnabled(!node.getResourceType().getOperationDefinitions().isEmpty());

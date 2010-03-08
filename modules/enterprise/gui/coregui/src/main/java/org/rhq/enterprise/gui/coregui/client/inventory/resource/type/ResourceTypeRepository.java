@@ -121,10 +121,11 @@ public class ResourceTypeRepository {
 
         final HashMap<Integer, ResourceType> cachedTypes = new HashMap<Integer, ResourceType>();
 
+
+        ArrayList<Integer> typesNeeded = new ArrayList<Integer>();
         if (resourceTypeIds == null) {
             //preload all
         } else {
-            ArrayList<Integer> typesNeeded = new ArrayList<Integer>();
 
             for (Integer typeId : resourceTypeIds) {
                 if (!typeCache.containsKey(typeId) || (metadataTypes != null && !typeCacheLevel.get(typeId).containsAll(metadataTypes))) {
@@ -170,6 +171,8 @@ public class ResourceTypeRepository {
         }
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
+
+        System.out.println("Loading " + typesNeeded.size() + " types: " + metadataTypes.toString());
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {

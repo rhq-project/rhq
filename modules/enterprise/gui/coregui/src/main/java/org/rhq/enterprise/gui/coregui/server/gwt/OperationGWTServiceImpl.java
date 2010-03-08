@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
-import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTService;
@@ -45,5 +44,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         return SerialUtility.prepare(operationManager.findGroupOperationHistoriesByCriteria(getSessionSubject(), criteria),
                 "OperationService.findGroupOperationHistoriesByCriteria");
     }
+
+
 
 }

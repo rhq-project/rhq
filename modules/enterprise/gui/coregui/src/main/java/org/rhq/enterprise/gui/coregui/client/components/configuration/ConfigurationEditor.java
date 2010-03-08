@@ -52,6 +52,7 @@ import com.smartgwt.client.types.TreeModelType;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
@@ -136,6 +137,8 @@ public class ConfigurationEditor extends VLayout {
     private ConfigType configType;
     private IButton saveButton;
 
+
+
     public static enum ConfigType {
         plugin, resource
     }
@@ -157,10 +160,20 @@ public class ConfigurationEditor extends VLayout {
         setOverflow(Overflow.AUTO);
     }
 
+    public ConfigurationEditor(ConfigurationDefinition definition, Configuration configuration) {
+        this.configuration = configuration;
+        this.definition = definition;
+    }
+
+
+    public Configuration getConfiguration() {
+        return configuration;
+    }
 
     public void showError(Throwable failure) {
         addMember(new Label(failure.getMessage()));
     }
+
     public void showError(String message) {
         addMember(new Label(message));
     }
@@ -168,62 +181,66 @@ public class ConfigurationEditor extends VLayout {
     @Override
     protected void onDraw() {
         super.onDraw();
-        System.out.println("onInit");
 
         addMember(loadingLabel);
         this.redraw();
 
         final long start = System.currentTimeMillis();
 
-        if (configType == ConfigType.resource) {
-            configurationService.getResourceConfiguration( resourceId, new AsyncCallback<Configuration>() {
-                public void onFailure(Throwable caught) {
-                    showError(caught);
-                }
+        if (definition == null || configuration == null) {
 
-                public void onSuccess(Configuration result) {
-                    configuration = result;
-                    System.out.println("Config retreived in: " + (System.currentTimeMillis() - start));
-                    reload();
-                }
-            });
-
-            ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId},
-                    EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-                    new ResourceTypeRepository.TypesLoadedCallback() {
-                public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
-                    System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
-                    definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
-                    if (definition == null) {
-                        loadingLabel.hide();
-                        showError("No configuration supported for this resource");
+            if (configType == ConfigType.resource) {
+                configurationService.getResourceConfiguration(resourceId, new AsyncCallback<Configuration>() {
+                    public void onFailure(Throwable caught) {
+                        showError(caught);
                     }
-                    reload();
-                }
-            });
 
-        } else if (configType == ConfigType.plugin) {
-            configurationService.getPluginConfiguration(resourceId, new AsyncCallback<Configuration>() {
-                public void onFailure(Throwable caught) {
-                    showError(caught);
-                }
+                    public void onSuccess(Configuration result) {
+                        configuration = result;
+                        System.out.println("Config retreived in: " + (System.currentTimeMillis() - start));
+                        reload();
+                    }
+                });
 
-                public void onSuccess(Configuration result) {
-                    configuration = result;
-                    reload();
-                }
-            });
+                ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId},
+                        EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                        new ResourceTypeRepository.TypesLoadedCallback() {
+                            public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                                System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                                definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
+                                if (definition == null) {
+                                    loadingLabel.hide();
+                                    showError("No configuration supported for this resource");
+                                }
+                                reload();
+                            }
+                        });
 
-            ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId}, EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition), new ResourceTypeRepository.TypesLoadedCallback() {
-                public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
-                    System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
-                    definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
-                    if (definition == null) {
-                        showError("No configuration supported for this resource");
-                    }                    
-                    reload();
-                }
-            });
+            } else if (configType == ConfigType.plugin) {
+                configurationService.getPluginConfiguration(resourceId, new AsyncCallback<Configuration>() {
+                    public void onFailure(Throwable caught) {
+                        showError(caught);
+                    }
+
+                    public void onSuccess(Configuration result) {
+                        configuration = result;
+                        reload();
+                    }
+                });
+
+                ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId}, EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition), new ResourceTypeRepository.TypesLoadedCallback() {
+                    public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                        System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                        definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
+                        if (definition == null) {
+                            showError("No configuration supported for this resource");
+                        }
+                        reload();
+                    }
+                });
+            }
+        } else {
+            reload();
         }
     }
 
@@ -254,11 +271,14 @@ public class ConfigurationEditor extends VLayout {
             tabSet.addTab(tab);
         }
 
-        removeMember(loadingLabel);
+
+        for (Canvas c : getChildren()) {
+            c.destroy();
+        }
 
         addMember(tabSet);
 
-        this.redraw();
+        this.markForRedraw();
     }
 
     protected HLayout buildRawPane() {

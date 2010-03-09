@@ -28,7 +28,7 @@
 
 var TestsEnabled = true;
 
-var bundleName "testScriptBundle"
+var bundleName = 'testScriptBundle';
 
 // note, super-user, will not test any security constraints
 var subject = rhq.login('rhqadmin', 'rhqadmin');
@@ -42,35 +42,53 @@ function testDeployment() {
       return;
    }
    
-   var c = new BundleCriteria();
-   c.addFilterName( bundleName );
-   var bundles = BundleManager.findBundlesViaCriteria( c );
-   if ( null != bundles && bundles.size > 0 ) {
+   // delete the test bundle if it exists
+   var bc = new BundleCriteria();
+   bc.addFilterName( bundleName );
+   var bundles = BundleManager.findBundlesByCriteria( bc );
+   if ( null != bundles && bundles.size() > 0 ) {
       print( "\n Deleting existing testScriptBundle in order to test a fresh deploy...")
       BundleManager.deleteBundle( bundles.get(0).getId() );      
    }
-   
-   var testBundle = createBundle( bundleName, getBundleType() );
-   BundleVersion bv1 = createBundleVersion(bundleName, null, getBundleType());
-   Configuration config = new Configuration();
-   config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
-   BundleDeployDefinition bdd1 = createDeployDefinition("one", bv1, config);
-   assertNotNull(bdd1);
-   Resource platformResource = createTestResource();
-   BundleScheduleResponse bsr = bundleManager.scheduleBundleDeployment(overlord, bdd1.getId(), platformResource
-       .getId());
-   assertNotNull(bsr);
-   assertEquals(bdd1.getId(), bsr.getBundleDeployment().getBundleDeployDefinition().getId());
-   assertEquals(platformResource.getId(), bsr.getBundleDeployment().getResource().getId());
 
+   // create the test bundle
+   var testBundle = BundleManager.createBundle( bundleName, getBundleType() );
+   
+   // define the recipe for bundleVersion 1.0 
+   var recipe = "file -s testBundle.war -d <%bundleTest.deployHome%>/testBundle.war"
+      
+   // create bundleVersion 1.0
+   var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, null, recipe);
+
+   // add the single bundleFile, the test war file
+   var fileBytes = scriptUtil.getFileBytes("./src/test/resources/testBundle.war"); 
+   var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "testBundle.war",
+         "1.0", null, fileBytes, false);
+
+   // create the config, setting the required properties from the recipe
+   var config = new Configuration();   
+   var property = new PropertySimple("bundleTest.deployHome", "C:/temp");
+   config.put( property );
+
+   // create a deploy def using the above config
+   var testDeployDef = BundleManager.createBundleDeployDefinition(testBundleVersion.getId(), "Windows Deployment", "Windows Deployment of testBundle WAR", config, false, -1, false);
+
+   // Find a target platform
+   var rc = new ResourceCriteria();
+   rc.addFilterResourceTypeName("win");
+   var winPlatforms = ResourceManager.findResourcesByCriteria(rc);
+   var platformId = winPlatforms.get(0).getId();
+   
+   var bundleScheduleResponse = BundleManager.scheduleBundleDeployment(testDeployDef.getId(), platformId);
 }
 
 function getBundleType() {
  
    var types = BundleManager.getAllBundleTypes();
-   for ( int i=0; ( i < types.size()); ++i ) {
-      if ( types.get(i).getName().toUppercase().contains("TEMPLATE") ) {
+   for (i=0; ( i < types.size()); ++i ) {
+      if ( types.get(i).getName().equals( "File Template Bundle" )) {
          return types.get(i).getId();
+      }
    }
    
    print( "\n Could not find template bundle type, is the plugin loaded?");

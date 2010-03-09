@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.authz;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -509,6 +510,9 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     private List<Role> findRolesByLdapGroupNames(List<String> ldapGroupNames) {
+        if (ldapGroupNames.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
         Query query = entityManager.createNamedQuery(LdapGroup.FIND_BY_ROLES_GROUP_NAMES);
         query.setParameter("names", ldapGroupNames);
         return (List<Role>) query.getResultList();

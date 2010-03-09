@@ -19,7 +19,6 @@
 
 package org.rhq.enterprise.server.resource.group;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,6 +27,8 @@ import java.util.Set;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
@@ -58,121 +59,39 @@ public class LdapGroupManager {
 
     public Set<Map<String, String>> findAvailableGroups() {
         SystemManagerLocal manager = LookupUtil.getSystemManager();
-        manager.getSystemConfiguration();
-        Set<Map<String, String>> ldapSet = new HashSet<Map<String, String>>();
-        String[] names = { "bar", "foo" };
 
-        for (String name : names) {
-            Map<String, String> group = new HashMap<String, String>();
-            group.put("id", name);
-            group.put("name", name);
-            group.put("description", name);
-            ldapSet.add(group);
-        }
-        return ldapSet;
+        Properties options = manager.getSystemConfiguration();
+        String groupFilter = (String) options.get(RHQConstants.LDAPGroupFilter);
+        String filter = String.format("(%s)", groupFilter);
+
+        return buildGroup(options, filter);
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {
         SystemManagerLocal manager = LookupUtil.getSystemManager();
-        manager.getSystemConfiguration();
-        Set<String> ldapSet = new HashSet<String>();
-        String[] names = { "foo" };
 
-        for (String name : names) {
-            ldapSet.add(name);
+        Properties options = manager.getSystemConfiguration();
+        String groupFilter = (String) options.get(RHQConstants.LDAPGroupFilter);
+        String groupMember = (String) options.get(RHQConstants.LDAPGroupMember);
+        String userDN = getUserDN(options, userName);
+        String filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, userDN);
+
+        Set<Map<String, String>> matched = buildGroup(options, filter);
+
+        Set<String> ldapSet = new HashSet<String>();
+        for (Map<String, String> match : matched) {
+            ldapSet.add(match.get("id"));
         }
         return ldapSet;
     }
 
-    /*
-     * 
-    {BindDN=uid=shaggy,ou=People, dc=rhndev, dc=redhat, dc=com, 
-    java.naming.factory.initial=com.sun.jndi.ldap.LdapCtxFactory, jboss.security.security_domain=JON, 
-    LoginProperty=uid, BaseDN=dc=rhndev,dc=redhat,dc=com, java.naming.provider.url=ldap://fjs-0-16.rhndev.redhat.com, 
-    java.naming.security.protocol=, BindPW=dog8code}
-     */
-    protected boolean test() throws Exception {
-
-        // Load our LDAP specific properties
-        Properties env = null;// getProperties();
-
-        // Load the BaseDN
-        String baseDN = "dc=rhndev,dc=redhat,dc=com";
-
-        // Load the LoginProperty
-        String loginProperty = "uid";
-
-        // Load any search filter
-
-        // Find the user that is calling us
-        String userName = "sdoo";
-
-        // Load any information we may need to bind
-        String bindDN = "uid=shaggy,ou=People, dc=rhndev, dc=redhat, dc=com";
-        String bindPW = "dog8code";
-
-        if (bindDN != null) {
-            env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
-            env.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
-            env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
-        }
-        InitialLdapContext ctx = new InitialLdapContext(env, null);
-        SearchControls searchControls = getSearchControls();
-
-        // Add the search filter if specified.  This only allows for a single search filter.. i.e. foo=bar.
-        String filter;
-        /*            if ((searchFilter != null) && (searchFilter.length() != 0)) {
-                    filter = "(&(" + loginProperty + "=" + userName + ")" + "(" + searchFilter + "))";
-                } else {
-                    filter = "(" + loginProperty + "=" + userName + ")";
-                }
-                */
-        //filter = "(" + loginProperty + "=" + userName + ")";
-        filter = "(&(objectclass=groupOfUniqueNames)(uniqueMember=uid=" + userName
-            + ",ou=People, dc=rhndev, dc=redhat, dc=com))";
-
-        // Loop through each configured base DN.  It may be useful
-        // in the future to allow for a filter to be configured for
-        // each BaseDN, but for now the filter will apply to all.
-        String[] baseDNs = baseDN.split(BASEDN_DELIMITER);
-        log.info(Arrays.asList(baseDNs));
-        for (int x = 0; x < baseDNs.length; x++) {
-            NamingEnumeration answer = ctx.search(baseDNs[x], filter, searchControls);
-            log.info(answer.hasMore());
-            while (answer.hasMore()) {
-                // We use the first match
-                SearchResult si = (SearchResult) answer.next();
-                log.info(si);
-
-                /*                    
-                                // Construct the UserDN
-                                String userDN = si.getName() + "," + baseDNs[x];
-                                print (userDN);
-                                ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, userDN);
-                                ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, "dog8code");
-                                ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-                                ctx.reconnect(null);*/
-            }
-
-        }
-
-        // If we try all the BaseDN's and have not found a match, return false
-        return false;
-    }
-
-    /**
-     * @see org.jboss.security.auth.spi.UsernamePasswordLoginModule#validatePassword(java.lang.String,java.lang.String)
-     */
-    protected void buildGroup(Properties options, String userName) {
+    private String getUserDN(Properties options, String userName) {
         // Load our LDAP specific properties
         Properties env = getProperties(options);
 
         // Load the BaseDN
+        // Load the BaseDN
         String baseDN = (String) options.get(RHQConstants.LDAPBaseDN);
-        if (baseDN == null) {
-            // If the BaseDN is not specified, log an error and refuse the login attempt
-            log.info("BaseDN is not set, refusing login");
-        }
 
         // Load the LoginProperty
         String loginProperty = (String) options.get(RHQConstants.LDAPLoginProperty);
@@ -180,13 +99,12 @@ public class LdapGroupManager {
             // Use the default
             loginProperty = "cn";
         }
-
-        String groupFilter = (String) options.get("groupFilter");
-        String groupMember = (String) options.get("groupMember");
-
         // Load any information we may need to bind
-        String bindDN = (String) options.get("BindDN");
-        String bindPW = (String) options.get("BindPW");
+        String bindDN = (String) options.get(RHQConstants.LDAPBindDN);
+        String bindPW = (String) options.get(RHQConstants.LDAPBindPW);
+
+        // Load any search filter
+        String searchFilter = (String) options.get(RHQConstants.LDAPFilter);
         if (bindDN != null) {
             env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
             env.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
@@ -196,16 +114,16 @@ public class LdapGroupManager {
         try {
             InitialLdapContext ctx = new InitialLdapContext(env, null);
             SearchControls searchControls = getSearchControls();
-            String filter = "(&(objectclass=groupOfUniqueNames)(uniqueMember=uid=" + userName
-                + ",ou=People, dc=rhndev, dc=redhat, dc=com))";
-            // Load any search filter
-            String searchFilter = (String) options.get("Filter");
+
             // Add the search filter if specified.  This only allows for a single search filter.. i.e. foo=bar.
+            String filter;
             if ((searchFilter != null) && (searchFilter.length() != 0)) {
                 filter = "(&(" + loginProperty + "=" + userName + ")" + "(" + searchFilter + "))";
             } else {
                 filter = "(" + loginProperty + "=" + userName + ")";
             }
+
+            log.debug("Using LDAP filter=" + filter);
 
             // Loop through each configured base DN.  It may be useful
             // in the future to allow for a filter to be configured for
@@ -215,7 +133,6 @@ public class LdapGroupManager {
                 NamingEnumeration answer = ctx.search(baseDNs[x], filter, searchControls);
                 if (!answer.hasMore()) {
                     log.debug("User " + userName + " not found for BaseDN " + baseDNs[x]);
-
                     // Nothing found for this DN, move to the next one if we have one.
                     continue;
                 }
@@ -223,11 +140,76 @@ public class LdapGroupManager {
                 // We use the first match
                 SearchResult si = (SearchResult) answer.next();
 
+                // Construct the UserDN
+                String userDN = si.getName() + "," + baseDNs[x];
+                return userDN;
             }
 
-        } catch (Exception e) {
-            log.info("Failed to validate password: " + e.getMessage());
+            // If we try all the BaseDN's and have not found a match, return false
+            return "";
+        } catch (NamingException e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * @throws NamingException 
+     * @see org.jboss.security.auth.spi.UsernamePasswordLoginModule#validatePassword(java.lang.String,java.lang.String)
+     */
+    protected Set<Map<String, String>> buildGroup(Properties options, String filter) {
+        Set<Map<String, String>> ret = new HashSet<Map<String, String>>();
+        // Load our LDAP specific properties
+        Properties env = getProperties(options);
+
+        // Load the BaseDN
+        String baseDN = (String) options.get(RHQConstants.LDAPBaseDN);
+
+        // Load the LoginProperty
+        String loginProperty = (String) options.get(RHQConstants.LDAPLoginProperty);
+        if (loginProperty == null) {
+            // Use the default
+            loginProperty = "cn";
+        }
+        // Load any information we may need to bind
+        String bindDN = (String) options.get(RHQConstants.LDAPBindDN);
+        String bindPW = (String) options.get(RHQConstants.LDAPBindPW);
+        if (bindDN != null) {
+            env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
+            env.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
+            env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
+        }
+        try {
+            InitialLdapContext ctx = new InitialLdapContext(env, null);
+            SearchControls searchControls = getSearchControls();
+            /*String filter = "(&(objectclass=groupOfUniqueNames)(uniqueMember=uid=" + userName
+                + ",ou=People, dc=rhndev, dc=redhat, dc=com))";*/
+
+            // Loop through each configured base DN.  It may be useful
+            // in the future to allow for a filter to be configured for
+            // each BaseDN, but for now the filter will apply to all.
+            String[] baseDNs = baseDN.split(BASEDN_DELIMITER);
+
+            for (int x = 0; x < baseDNs.length; x++) {
+                NamingEnumeration answer = ctx.search(baseDNs[x], filter, searchControls);
+                while (answer.hasMore()) {
+                    // We use the first match
+                    SearchResult si = (SearchResult) answer.next();
+                    Map<String, String> entry = new HashMap<String, String>();
+                    String name = (String) si.getAttributes().get("cn").get();
+                    Attribute desc = si.getAttributes().get("description");
+                    String description = desc != null ? (String) desc.get() : "";
+                    entry.put("id", name);
+                    entry.put("name", name);
+                    entry.put("description", description);
+                    ret.add(entry);
+                }
+            }
+        } catch (NamingException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException(e);
+        }
+
+        return ret;
     }
 
     /**
@@ -240,13 +222,11 @@ public class LdapGroupManager {
     private Properties getProperties(Properties options) {
         Properties env = new Properties(options);
         // Set our default factory name if one is not given
-        String factoryName = env.getProperty(Context.INITIAL_CONTEXT_FACTORY);
-        if (factoryName == null) {
-            env.setProperty(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        }
+        String factoryName = env.getProperty(RHQConstants.LDAPFactory);
+        env.setProperty(Context.INITIAL_CONTEXT_FACTORY, factoryName);
 
         // Setup SSL if requested
-        String protocol = env.getProperty(Context.SECURITY_PROTOCOL);
+        String protocol = env.getProperty(RHQConstants.LDAPProtocol);
         if ((protocol != null) && protocol.equals("ssl")) {
             String ldapSocketFactory = env.getProperty("java.naming.ldap.factory.socket");
             if (ldapSocketFactory == null) {
@@ -256,7 +236,7 @@ public class LdapGroupManager {
         }
 
         // Set the LDAP url
-        String providerUrl = env.getProperty(Context.PROVIDER_URL);
+        String providerUrl = env.getProperty(RHQConstants.LDAPUrl);
         if (providerUrl == null) {
             providerUrl = "ldap://localhost:" + (((protocol != null) && protocol.equals("ssl")) ? "636" : "389");
         }

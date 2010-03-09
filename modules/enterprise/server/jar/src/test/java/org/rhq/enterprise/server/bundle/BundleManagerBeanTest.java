@@ -35,7 +35,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
@@ -310,11 +309,10 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         BundleDeployDefinition bdd1 = createDeployDefinition("one", bv1, config);
         assertNotNull(bdd1);
         Resource platformResource = createTestResource();
-        BundleScheduleResponse bsr = bundleManager.scheduleBundleDeployment(overlord, bdd1.getId(), platformResource
-            .getId());
-        assertNotNull(bsr);
-        assertEquals(bdd1.getId(), bsr.getBundleDeployment().getBundleDeployDefinition().getId());
-        assertEquals(platformResource.getId(), bsr.getBundleDeployment().getResource().getId());
+        BundleDeployment bd = bundleManager.scheduleBundleDeployment(overlord, bdd1.getId(), platformResource.getId());
+        assertNotNull(bd);
+        assertEquals(bdd1.getId(), bd.getBundleDeployDefinition().getId());
+        assertEquals(platformResource.getId(), bd.getResource().getId());
     }
 
     @Test(enabled = TESTS_ENABLED)

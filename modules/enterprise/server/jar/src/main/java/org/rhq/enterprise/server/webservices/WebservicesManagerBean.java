@@ -22,6 +22,7 @@
   */
 package org.rhq.enterprise.server.webservices;
 
+import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,13 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -66,6 +74,12 @@ import org.rhq.core.domain.content.transfer.EntitlementCertificate;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
+import org.rhq.core.domain.criteria.BundleFileCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
@@ -110,6 +124,7 @@ import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
 import org.rhq.enterprise.server.content.AdvisoryException;
@@ -171,8 +186,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
     private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
     private AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
+    private BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
     private CallTimeDataManagerLocal callTimeDataManager = LookupUtil.getCallTimeDataManager();
-    private RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
     //removed as it is problematic for WS clients having XMLAny for Object.
@@ -187,6 +202,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private MeasurementProblemManagerLocal measurementProblemManager = LookupUtil.getMeasurementProblemManager();
     private MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
+    private RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
     private ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal resourceGroupManager = LookupUtil.getResourceGroupManager();
@@ -312,6 +328,92 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //AVAILABILITYMANAGER: END ----------------------------------
+
+    //BUNDLEMANAGER: BEGIN ------------------------------------------
+
+    public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
+        Architecture architecture, InputStream fileStream, boolean pinToPackage) throws Exception {
+        return bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture, fileStream,
+            pinToPackage);
+    }
+
+    public BundleFile addBundleFileViaByteArray(Subject subject, int bundleVersionId, String name, String version,
+        Architecture architecture, byte[] fileBytes, boolean pinToPackage) throws Exception {
+        return bundleManager.addBundleFileViaByteArray(subject, bundleVersionId, name, version, architecture,
+            fileBytes, pinToPackage);
+    }
+
+    public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
+        int packageVersionId, boolean pinToPackage) throws Exception {
+        return bundleManager.addBundleFileViaPackageVersion(subject, bundleVersionId, name, packageVersionId,
+            pinToPackage);
+    }
+
+    public Bundle createBundle(Subject subject, String name, int bundleTypeId) throws Exception {
+        return bundleManager.createBundle(subject, name, bundleTypeId);
+    }
+
+    public BundleDeployDefinition createBundleDeployDefinition(Subject subject, int bundleVersionId, String name,
+        String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
+        boolean pinToBundle) throws Exception {
+        return bundleManager.createBundleDeployDefinition(subject, bundleVersionId, name, description, configuration,
+            enforcePolicy, enforcementInterval, pinToBundle);
+    }
+
+    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String bundleVersion,
+        String recipe) throws Exception {
+        return bundleManager.createBundleVersion(subject, bundleId, name, bundleVersion, recipe);
+    }
+
+    public void deleteBundle(Subject subject, int bundleId) throws Exception {
+        bundleManager.deleteBundle(subject, bundleId);
+    }
+
+    public void deleteBundleVersion(Subject subject, int bundleVersionId) throws Exception {
+        bundleManager.deleteBundleVersion(subject, bundleVersionId);
+    }
+
+    public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
+        BundleDeployDefinitionCriteria criteria) {
+        return bundleManager.findBundleDeployDefinitionsByCriteria(subject, criteria);
+    }
+
+    public List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(Subject subject,
+        BundleDeploymentHistoryCriteria criteria) {
+        return bundleManager.findBundleDeploymentHistoryByCriteria(subject, criteria);
+    }
+
+    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
+        return bundleManager.findBundleDeploymentsByCriteria(subject, criteria);
+    }
+
+    public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
+        return bundleManager.findBundlesByCriteria(subject, criteria);
+    }
+
+    public PageList<BundleFile> findBundleFilesByCriteria(Subject subject, BundleFileCriteria criteria) {
+        return bundleManager.findBundleFilesByCriteria(subject, criteria);
+    }
+
+    public PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria) {
+        return bundleManager.findBundleVersionsByCriteria(subject, criteria);
+    }
+
+    public List<BundleType> getAllBundleTypes(Subject subject) {
+        return bundleManager.getAllBundleTypes(subject);
+    }
+
+    public Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)
+        throws Exception {
+        return bundleManager.getBundleVersionFilenames(subject, bundleVersionId, withoutBundleFileOnly);
+    }
+
+    public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
+        throws Exception {
+        return bundleManager.scheduleBundleDeployment(subject, bundleDeployDefinitionId, resourceId);
+    }
+
+    //BUNDLEMANAGER: END ----------------------------------
 
     //CALLTIMEDATAMANAGER: BEGIN ----------------------------------
     public PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,

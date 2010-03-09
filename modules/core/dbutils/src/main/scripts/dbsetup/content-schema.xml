@@ -499,6 +499,7 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="BUNDLE_TYPE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_TYPE"/>
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>        
     </table>
 
     <!-- BUNDLE_VERSION represents an actual piece of content that needs to be installed somewhere -->

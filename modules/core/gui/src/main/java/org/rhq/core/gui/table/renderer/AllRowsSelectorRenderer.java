@@ -18,7 +18,6 @@
  */
 package org.rhq.core.gui.table.renderer;
 
-import com.sun.faces.util.MessageUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.gui.table.component.AllRowsSelectorComponent;
@@ -56,6 +55,8 @@ public class AllRowsSelectorRenderer extends AbstractRenderer {
             allRowsSelector.setRendered(false);
             return;
         }
+
+        // TODO: Do not render if the data model's row count is 0.
 
         ResponseWriter writer = context.getResponseWriter();
         writer.startElement("input", component);

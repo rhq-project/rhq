@@ -288,6 +288,12 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
                 Configuration config2 = config.deepCopy(true);
 
                 bean.setAlertParameters(config2);
+                try {
+                    bean.internalInit();
+                }
+                catch (Throwable t ) {
+                    LOG.error("getBackingBean, calling backingBean.internalInit() resulted in " + t.getMessage());
+                }
             }
         }
         return bean;
@@ -305,7 +311,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
         if (definition==null) {
-            LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
+            LOG.error("Did not find definition for id [" + alertDefinitionId+ "]");
             return null;
         }
 
@@ -334,7 +340,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     public List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId) {
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
         if (definition==null) {
-            LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
+            LOG.error("Did not find definition for id [" + alertDefinitionId+ "]");
             return new ArrayList<AlertNotification>();
         }
 

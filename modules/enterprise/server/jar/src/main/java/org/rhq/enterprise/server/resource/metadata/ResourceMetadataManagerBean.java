@@ -54,6 +54,7 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -587,8 +588,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 existingType.setSubCategory(existingSubCat);
             }
 
-            existingType.setBundleType(resourceType.getBundleType());
-
             existingType = entityManager.merge(existingType);
             entityManager.flush();
         } catch (NoResultException nre) {
@@ -921,6 +920,21 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
      * @param existingType old resource type with existing package definitions
      */
     private void updateContentDefinitions(ResourceType newType, ResourceType existingType) {
+
+        // set the bundle type if one is defined
+        BundleType newBundleType = newType.getBundleType();
+        if (newBundleType != null) {
+            BundleType existingBundleType = existingType.getBundleType();
+            newBundleType.setResourceType(existingType);
+            if (existingBundleType != null) {
+                newBundleType.setId(existingBundleType.getId());
+                newBundleType = entityManager.merge(newBundleType);
+            }
+            existingType.setBundleType(newBundleType);
+        } else {
+            existingType.setBundleType(null);
+        }
+
         // Easy case: If there are no package definitions in the new type, null out any in the existing and return
         if ((newType.getPackageTypes() == null) || (newType.getPackageTypes().size() == 0)) {
             existingType.setPackageTypes(null);

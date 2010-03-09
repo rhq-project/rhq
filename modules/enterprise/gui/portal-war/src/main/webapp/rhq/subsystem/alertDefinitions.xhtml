@@ -189,7 +189,7 @@
                      <f:param name="ad" value="#{item.original.alertDefinition.parentId}"/>
                      <h:outputText value="View Template" />
                   </h:outputLink>
-                  
+
                   <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.original.alertDefinition.groupAlertDefinition}">
                      <f:param name="mode" value="viewRoles"/>
                      <f:param name="groupId" value="#{item.original.alertDefinition.groupAlertDefinition.resourceGroup.id}"/>
@@ -197,8 +197,8 @@
                      <f:param name="ad" value="#{item.original.alertDefinition.groupAlertDefinition.id}"/>
                      <h:outputText value="View Group Definition" />
                   </h:outputLink>
-                  
-                  <h:outputText value="N/A" 
+
+                  <h:outputText value="N/A"
                                 rendered="#{item.original.alertDefinition.parentId eq 0 and empty item.original.alertDefinition.groupAlertDefinition}" />
                </rich:column>
 
@@ -207,6 +207,12 @@
                      <rich:column colspan="9" width="100%">
                         <onc:selectCommandButton action="#{SubsystemAlertDefinitionUIBean.deleteSelected}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.superuser}" />
+                        <onc:selectCommandButton action="#{SubsystemAlertDefinitionUIBean.disableSelected}"
+                                                 value="DISABLE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.superuser}" />
+                        <onc:selectCommandButton action="#{SubsystemAlertDefinitionUIBean.enableSelected}"
+                                                 value="ENABLE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.superuser}" />
 
                         <ui:param name="paginationDataTableName" value="alertDefinitionDataTable"/>

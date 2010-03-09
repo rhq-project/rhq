@@ -44,4 +44,9 @@ public class BundleServerPluginContainer extends AbstractTypeServerPluginContain
     protected ServerPluginManager createPluginManager() {
         return new BundleServerPluginManager(this);
     }
+
+    public BundleServerPluginManager getBundleServerPluginManager() {
+        return (BundleServerPluginManager) getPluginManager();
+    }
+
 }

@@ -293,8 +293,8 @@
          placement="after" />
    </menu-item>
    <menu-item
-      name="administration.download"
-      displayName="Download"
+      name="administration.downloads"
+      displayName="Downloads"
       iconUrl="/images/icons/Save_16.png"
       url="/rhq/admin/downloads.xhtml">
       <position
@@ -306,7 +306,7 @@
       displayName="License"
       url="/admin/license/LicenseAdmin.do?mode=view">
       <position
-         name="administration.download"
+         name="administration.downloads"
          placement="after" />
       <activators>
          <global-permission

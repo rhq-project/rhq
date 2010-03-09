@@ -40,7 +40,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class GroupDefinitionExpressionBuilderLibraryUIBean {
 
     private enum PropertyType {
-        RESOURCE("Resource"), RESOURCE_TYPE("Resource Type"), TRAIT("Traits"), // resource.trait[<property_name>]
+        RESOURCE("Resource"), //
+        RESOURCE_TYPE("Resource Type"), //
+        RESOURCE_CATEGORY("Resource Category"), //
+        TRAIT("Traits"), // resource.trait[<property_name>]
         PLUGIN_CONFIGURATION("Plugin Configuration"), // resource.pluginConfiguration[<property_name>]
         RESOURCE_CONFIGURATION("Resource Configuration"); // resource.resourceConfiguration[<property_name>]
 
@@ -312,7 +315,8 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
 
     public boolean isTypeSelectionDisabled() {
         this.typeSelectionDisabled = PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE
-            || (isGroupby() && PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE_TYPE);
+            || (isGroupby() && PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE_TYPE)
+            || PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE_CATEGORY;
         return typeSelectionDisabled;
     }
 
@@ -349,7 +353,8 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
             processPluginChange(requestParamPlugin);
         }
 
-        this.typeSelectionDisabled = PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE;
+        this.typeSelectionDisabled = PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE
+            || PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE_CATEGORY;
 
         /*
          * the other process methods have already reset / updated the other drop-downs as necessary,
@@ -493,6 +498,9 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         case RESOURCE_TYPE:
             buf.append("type.plugin");
             break;
+        case RESOURCE_CATEGORY:
+            buf.append("type.category");
+            break;
         case TRAIT:
             buf.append("trait[" + this.selectedProperty + "]");
             break;
@@ -524,6 +532,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
 
             switch (PropertyType.getFromDisplayName(this.selectedPropertyType)) {
             case RESOURCE:
+            case RESOURCE_CATEGORY:
                 buf.append(this.enteredValue);
                 break;
             case RESOURCE_TYPE:

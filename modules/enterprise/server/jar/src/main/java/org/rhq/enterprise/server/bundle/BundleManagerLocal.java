@@ -148,6 +148,20 @@ public interface BundleManagerLocal {
     Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)
         throws Exception;
 
+    /**
+     * Immediately deploy the bundle as described in the provided deploy definition to the specified resources.
+     * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
+     * returned BundleDeployments can be used to track the history of the deployment. 
+     * 
+     * @param subject must be InventoryManager
+     * @param bundleDeployDefinitionId the BundleDeployDefinition being used to guide the deployments
+     * @param resourceIds the target resources (must exist), typically platforms, for the deployments
+     * @return a List of BundleDeployments, one for each requested resource. 
+     * @throws Exception
+     */
+    List<BundleDeployment> deployBundle(Subject subject, int bundleDeployDefinitionId, int[] resourceIds)
+        throws Exception;
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The remaining methods are shared with the Remote Interface.

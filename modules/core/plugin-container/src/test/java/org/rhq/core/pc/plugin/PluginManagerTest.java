@@ -23,76 +23,65 @@
 
 package org.rhq.core.pc.plugin;
 
-import static org.testng.Assert.*;
-
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeClass;
-import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
+import org.apache.commons.io.FileUtils;
 import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
+import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pluginapi.plugin.PluginContext;
-import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
+import java.io.File;
 import java.net.URL;
-import java.net.MalformedURLException;
-import java.util.Collection;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.io.File;
+import java.util.List;
+import java.util.Map;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 public class PluginManagerTest {
 
-    static final String VERSION = System.getProperty("rhq.version");
-    static final String PLATFORM_PLUGIN = "org/rhq/rhq-platform-plugin/" + VERSION + "/rhq-platform-plugin-" + VERSION + ".jar";
+    static final String PLUGIN_A = "plugin-A.jar";
 
-    static final String HOSTS_PLUGIN = "org/rhq/rhq-hosts-plugin/" + VERSION + "/rhq-hosts-plugin-" + VERSION + ".jar";
+    static final String PLUGIN_B = "plugin-B-depends-on-A.jar";
 
-    static final String AUGEAS_PLUGIN = "org/rhq/rhq-augeas-plugin/" + VERSION + "/rhq-augeas-plugin-" + VERSION + ".jar";
+    static final String PLUGIN_C = "plugin-C-depends-on-B.jar";
 
-    static final String JMX_PLUGIN = "org/rhq/rhq-jmx-plugin/" + VERSION + "/rhq-jmx-plugin-" + VERSION + ".jar";
+    PluginDescriptor descriptorA;
 
-    String m2RepoDir;
+    PluginDescriptor descriptorB;
 
-    PluginDescriptor platformDescriptor;
-
-    PluginDescriptor hostsDescriptor;
-
-    PluginDescriptor augeasDescriptor;
-
-    PluginDescriptor jmxDescriptor;
+    PluginDescriptor descriptorC;
 
     @BeforeClass
     public void initClass() throws Exception {
-        setM2RepoDir();
         verifyPluginsExist();
         initPluginDescriptors();
     }
 
-    void setM2RepoDir() {
-        String userHomeDir = System.getProperty("user.home");
-        m2RepoDir = System.getProperty("m2.repo", userHomeDir + "/.m2/repository");
-    }
-
     void verifyPluginsExist() {
-        assertPluginJarFileExists(PLATFORM_PLUGIN);
-        assertPluginJarFileExists(HOSTS_PLUGIN);
-        assertPluginJarFileExists(AUGEAS_PLUGIN);
+        assertPluginJarFileExists(PLUGIN_A);
+        assertPluginJarFileExists(PLUGIN_B);
+        assertPluginJarFileExists(PLUGIN_C);
     }
 
     void initPluginDescriptors() throws Exception {
-        platformDescriptor = loadPluginDescriptor(getPlatformPluginURL());
-        augeasDescriptor = loadPluginDescriptor(getAugeasPluginURL());
-        hostsDescriptor = loadPluginDescriptor(getHostsPluginURL());
-        jmxDescriptor = loadPluginDescriptor(getJMXPluginURL());
+        descriptorA = loadPluginDescriptor(getClass().getResource(PLUGIN_A));
+        descriptorB = loadPluginDescriptor(getClass().getResource(PLUGIN_B));
+        descriptorC = loadPluginDescriptor(getClass().getResource(PLUGIN_C));
     }
 
     void assertPluginJarFileExists(String pluginPath) {
-        File pluginJarFile = new File(m2RepoDir, pluginPath);
+        URL pluginURL = getClass().getResource(pluginPath);
+        File pluginJarFile = FileUtils.toFile(pluginURL);
+
         assertTrue(pluginJarFile.exists(), pluginJarFile.getAbsolutePath() + " does not exist and is needed for " +
                 "tests in " + PluginManagerTest.class.getName());
     }
@@ -138,66 +127,14 @@ public class PluginManagerTest {
         verifyPluginsShutdownInCorrectOrder(pluginLifecycleListenerMgr);
     }
 
-    @Test
-    public void pluginManagerShouldReturnAmpsVersionOfLoadedPluginWhenInEmbeddedMode() throws Exception {
-        PluginContainerConfiguration configuration = new PluginContainerConfiguration();
-        configuration.setPluginFinder(new PluginFinder() {
-            public Collection<URL> findPlugins() {
-                List<URL> pluginURLs = new ArrayList<URL>();
-                pluginURLs.add(getJMXPluginURL());
-
-                return pluginURLs;
-            }
-        });
-
-        PluginManager pluginMgr = new PluginManager();
-        pluginMgr.setConfiguration(configuration);
-        pluginMgr.initialize();
-
-        String expectedAmpsVersion = jmxDescriptor.getAmpsVersion();
-        String actualAmpsVersion = pluginMgr.getAmpsVersion(jmxDescriptor.getName());
-
-        assertEquals(actualAmpsVersion, expectedAmpsVersion, "Failed to find ampsVersion in embedded mode for '" +
-                jmxDescriptor.getName() + "' plugin");
-    }
-
-//    @Test
-//    public void pluginManagerShouldReturnAmpsVersionOfLoadedPluginWhenInEnterpriseMode() throws Exception {
-//        Plugin plugin = new Plugin();
-//        plugin.setName(jmxDescriptor.getName());
-//        plugin.setAmpsVersion("2.1");
-//
-//        PluginContainerConfiguration configuration = new PluginContainerConfiguration();
-//        configuration.setInsideAgent(true);
-//        configuration.getPluginsOnServer().add(plugin);
-//        configuration.setPluginFinder(new PluginFinder() {
-//            public Collection<URL> findPlugins() {
-//                List<URL> pluginURLs = new ArrayList<URL>();
-//                pluginURLs.add(getJMXPluginURL());
-//
-//                return pluginURLs;
-//            }
-//        });
-//
-//        PluginManager pluginMgr = new PluginManager();
-//        pluginMgr.setConfiguration(configuration);
-//        pluginMgr.initialize();
-//
-//        String expectedAmpsVersion = plugin.getAmpsVersion();
-//        String actualAmpsVersion = pluginMgr.getAmpsVersion(jmxDescriptor.getName());
-//
-//        assertEquals(actualAmpsVersion, expectedAmpsVersion, "Failed to find ampsVersion in embedded mode for '" +
-//                jmxDescriptor.getName() + "' plugin");
-//    }
-
     private PluginContainerConfiguration createConfiguration() {
         PluginContainerConfiguration configuration = new PluginContainerConfiguration();
         configuration.setPluginFinder(new PluginFinder() {
             public Collection<URL> findPlugins() {
                 List<URL> pluginURLs = new ArrayList<URL>();
-                pluginURLs.add(getPlatformPluginURL());
-                pluginURLs.add(getHostsPluginURL());
-                pluginURLs.add(getAugeasPluginURL());
+                pluginURLs.add(getClass().getResource(PLUGIN_A));
+                pluginURLs.add(getClass().getResource(PLUGIN_B));
+                pluginURLs.add(getClass().getResource(PLUGIN_C));
 
                 return pluginURLs;
             }
@@ -206,9 +143,9 @@ public class PluginManagerTest {
     }
 
     void verifyThatPluginsAreLoaded(PluginManager pluginMgr) throws Exception {
-        assertPluginLoaded(platformDescriptor, pluginMgr);
-        assertPluginLoaded(hostsDescriptor, pluginMgr);
-        assertPluginLoaded(augeasDescriptor, pluginMgr);
+        assertPluginLoaded(descriptorA, pluginMgr);
+        assertPluginLoaded(descriptorB, pluginMgr);
+        assertPluginLoaded(descriptorC, pluginMgr);
     }
 
     void assertPluginLoaded(PluginDescriptor pluginDescriptor, PluginManager pluginMgr) throws Exception {
@@ -218,85 +155,55 @@ public class PluginManagerTest {
     }
 
     void verifyPluginsLoadedInCorrectOrder(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
-        assertPlatformPluginLoadedFirst(pluginLifecycleListenerMgr);
-        assertAugeasPluginLoadedSecond(pluginLifecycleListenerMgr);
-        assertHostsPluginLoadedThird(pluginLifecycleListenerMgr);
+        assertPluginALoadedFirst(pluginLifecycleListenerMgr);
+        assertPluginBLoadedSecond(pluginLifecycleListenerMgr);
+        assertPluginCLoadedThird(pluginLifecycleListenerMgr);
     }
 
-    void assertPlatformPluginLoadedFirst(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
-        int initOrder = pluginLifecycleListenerMgr.lifecycleTracker.getInitializationOrder(platformDescriptor.getName());
+    void assertPluginALoadedFirst(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
+        int initOrder = pluginLifecycleListenerMgr.lifecycleTracker.getInitializationOrder(descriptorA.getName());
 
-        assertEquals(initOrder, 0, "Expected " + platformDescriptor.getName() + " to be initialized first.");
+        assertEquals(initOrder, 0, "Expected " + descriptorA.getName() + " to be initialized first.");
     }
 
-    void assertAugeasPluginLoadedSecond(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
-        int initOrder = pluginLifecycleListenerMgr.lifecycleTracker.getInitializationOrder(augeasDescriptor.getName());
+    void assertPluginBLoadedSecond(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
+        int initOrder = pluginLifecycleListenerMgr.lifecycleTracker.getInitializationOrder(descriptorB.getName());
 
-        assertEquals(initOrder, 1, "Expected " + augeasDescriptor.getName() + " to be initialized second.");
+        assertEquals(initOrder, 1, "Expected " + descriptorB.getName() + " to be initialized second.");
     }
 
-    void assertHostsPluginLoadedThird(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
-        int initOrder = pluginLifecycleListenerMgr.lifecycleTracker.getInitializationOrder(hostsDescriptor.getName());
+    void assertPluginCLoadedThird(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
+        int initOrder = pluginLifecycleListenerMgr.lifecycleTracker.getInitializationOrder(descriptorC.getName());
 
-        assertEquals(initOrder, 2, "Expected " + hostsDescriptor.getName() + " to be initialized third.");
+        assertEquals(initOrder, 2, "Expected " + descriptorC.getName() + " to be initialized third.");
     }
 
     void verifyPluginsShutdownInCorrectOrder(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
-        assertHostsPluginShutdownFirst(pluginLifecycleListenerMgr);
-        assertAugeasPluginShutdownSecond(pluginLifecycleListenerMgr);
-        assertPlatformPluginShutdownThird(pluginLifecycleListenerMgr);
+        assertPluginCShutdownFirst(pluginLifecycleListenerMgr);
+        assertPluginBShutdownSecond(pluginLifecycleListenerMgr);
+        assertPluginAShutdownThird(pluginLifecycleListenerMgr);
     }
 
-    void assertHostsPluginShutdownFirst(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
-        int shutdownOrder = pluginLifecycleListenerMgr.lifecycleTracker.getShutdownOrder(hostsDescriptor.getName());
+    void assertPluginCShutdownFirst(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
+        int shutdownOrder = pluginLifecycleListenerMgr.lifecycleTracker.getShutdownOrder(descriptorC.getName());
 
-        assertEquals(shutdownOrder, 0, "Expected " + hostsDescriptor.getName() + " to be shutdown first.");
+        assertEquals(shutdownOrder, 0, "Expected " + descriptorC.getName() + " to be shutdown first.");
     }
 
-    void assertAugeasPluginShutdownSecond(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
-        int shutdownOrder = pluginLifecycleListenerMgr.lifecycleTracker.getShutdownOrder(augeasDescriptor.getName());
+    void assertPluginBShutdownSecond(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
+        int shutdownOrder = pluginLifecycleListenerMgr.lifecycleTracker.getShutdownOrder(descriptorB.getName());
 
-        assertEquals(shutdownOrder, 1, "Expected " + augeasDescriptor.getName() + " to be shutdown second.");
+        assertEquals(shutdownOrder, 1, "Expected " + descriptorB.getName() + " to be shutdown second.");
     }
 
-    void assertPlatformPluginShutdownThird(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
-        int shutdownOrder = pluginLifecycleListenerMgr.lifecycleTracker.getShutdownOrder(platformDescriptor.getName());
+    void assertPluginAShutdownThird(FakePluginLifecycleListenerManager pluginLifecycleListenerMgr) throws Exception {
+        int shutdownOrder = pluginLifecycleListenerMgr.lifecycleTracker.getShutdownOrder(descriptorA.getName());
 
-        assertEquals(shutdownOrder, 2, "Expected " + platformDescriptor.getName() + " to be shutdown third.");
+        assertEquals(shutdownOrder, 2, "Expected " + descriptorA.getName() + " to be shutdown third.");
     }
 
     PluginDescriptor loadPluginDescriptor(URL pluginURL) throws PluginContainerException {
         return AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginURL);
-    }
-
-    String getPluginName(URL pluginURL) throws Exception {
-        PluginDescriptor descriptor = loadPluginDescriptor(pluginURL);
-        return descriptor.getName();
-    }
-
-    URL getPlatformPluginURL() {
-        return toURL(new File(m2RepoDir, PLATFORM_PLUGIN));
-    }
-
-    URL getHostsPluginURL() {
-        return toURL(new File(m2RepoDir, HOSTS_PLUGIN));
-    }
-
-    URL getAugeasPluginURL() {
-        return toURL(new File(m2RepoDir, AUGEAS_PLUGIN));
-    }
-
-    URL getJMXPluginURL() {
-        return toURL(new File(m2RepoDir, JMX_PLUGIN));
-    }
-
-    URL toURL(File file) {
-        try {
-            return file.toURI().toURL();
-        }
-        catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     static class FakePluginLifecycleListenerManager implements PluginLifecycleListenerManager {
@@ -327,6 +234,10 @@ public class PluginManagerTest {
         }
     }
 
+    /**
+     * This is helper class that is used to track the order of start up and shutdown for the plugins used by these
+     * tests.
+     */
     static class PluginLifecycleTracker {
         private List<String> initializedPlugins = new LinkedList<String>();
 

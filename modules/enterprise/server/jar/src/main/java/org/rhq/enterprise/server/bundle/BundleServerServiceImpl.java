@@ -29,12 +29,15 @@ import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.bundle.BundleStatusUpdate;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.BundleFile;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.criteria.BundleFileCriteria;
+import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.util.exception.WrappedRemotingException;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.util.HibernateDetachUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
 
 /**
  * Server-side implementation of the <code>BundleServerService</code>. This implmentation simply forwards
@@ -52,15 +55,21 @@ public class BundleServerServiceImpl implements BundleServerService {
     public List<PackageVersion> getAllBundleVersionPackageVersions(int bundleVersionId) {
         try {
             BundleManagerLocal bm = LookupUtil.getBundleManager();
-            BundleVersionCriteria c = new BundleVersionCriteria();
+            ContentManagerLocal cm = LookupUtil.getContentManager();
             Subject subject = LookupUtil.getSubjectManager().getOverlord();
-            c.addFilterId(bundleVersionId);
-            c.fetchBundleFiles(true);
-            List<BundleVersion> bundleVersions = bm.findBundleVersionsByCriteria(subject, c);
-            List<BundleFile> bundleFiles = bundleVersions.get(0).getBundleFiles();
+            BundleFileCriteria bfc = new BundleFileCriteria();
+            PackageVersionCriteria pvc = new PackageVersionCriteria();
+
+            bfc.addFilterBundleVersionId(bundleVersionId);
+            bfc.fetchPackageVersion(true);
+            List<BundleFile> bundleFiles = bm.findBundleFilesByCriteria(subject, bfc);
             List<PackageVersion> packageVersions = new ArrayList<PackageVersion>(bundleFiles.size());
+            PackageVersion packageVersion = null;
             for (BundleFile bundleFile : bundleFiles) {
-                packageVersions.add(bundleFile.getPackageVersion());
+                pvc.addFilterId(bundleFile.getPackageVersion().getId());
+                packageVersion = cm.findPackageVersionsByCriteria(subject, pvc).get(0);
+                HibernateDetachUtility.nullOutUninitializedFields(packageVersion, SerializationType.SERIALIZATION);
+                packageVersions.add(packageVersion);
             }
             return packageVersions;
         } catch (Exception e) {

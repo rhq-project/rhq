@@ -8,6 +8,7 @@ import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
+import org.rhq.enterprise.server.bundle.BundleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.AdvisoryManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
@@ -41,6 +42,7 @@ public interface WebservicesRemote extends //
     AlertManagerRemote, //
     AlertDefinitionManagerRemote, //
     AvailabilityManagerRemote,//
+    BundleManagerRemote,//
     CallTimeDataManagerRemote,//
     RepoManagerRemote,//
     EntitlementStuffManagerRemote, //

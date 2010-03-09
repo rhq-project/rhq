@@ -18,23 +18,40 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+
+import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 /**
  * @author Greg Hinkle
  */
 public class BundleInfoStep implements WizardStep {
 
+    private DynamicForm form;
+
     public Canvas getCanvas() {
-        return new Label("Todo: implement me");
+        if (form == null) {
+            form = new DynamicForm();
+            form.setWidth100();
+            form.setNumCols(2);
+            form.setColWidths("50%", "*");
+
+            final TextItem nameTextItem = new TextItem("name", "Name");
+            final TextItem versionTextItem = new TextItem("version", "Initial Version");
+            versionTextItem.setValue("1.0");
+            final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", "Description");
+            form.setItems(nameTextItem, versionTextItem, descriptionTextAreaItem);
+        }
+        return form;
     }
 
     public boolean valid() {
-        return false;  // TODO: Implement this method.
+        FormItem nameField = form.getField("name");
+        return true;
     }
 
     public String getName() {

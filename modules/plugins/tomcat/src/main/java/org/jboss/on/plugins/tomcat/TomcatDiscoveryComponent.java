@@ -24,6 +24,8 @@
 package org.jboss.on.plugins.tomcat;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -33,17 +35,15 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jboss.on.plugins.tomcat.helper.TomcatConfig;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.ManualAddFacet;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
@@ -189,15 +189,18 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
             version = determineVersion(catalinaHome, catalinaBase, systemInfo);
             if (tomcatConfig.getAddress() != null) {
                address = tomcatConfig.getAddress();
-            }
+            }else
+                address = hostname;
             if (tomcatConfig.getPort() != null) {
                port = tomcatConfig.getPort();
             }
         }
 
-        String productName = PRODUCT_NAME;
         String productDescription = PRODUCT_DESCRIPTION + ((hostname == null) ? "" : (" (" + hostname + ")"));
-        String resourceName = productName + " (" + ((address == null) ? "" : (address + ":")) + port + ")";
+        String resourceName=null;
+        
+    
+        resourceName = address + (port == null ? "" : ":" + port);
         String resourceKey = catalinaBase;
         populatePluginConfiguration(pluginConfig, catalinaHome, catalinaBase, null);
 

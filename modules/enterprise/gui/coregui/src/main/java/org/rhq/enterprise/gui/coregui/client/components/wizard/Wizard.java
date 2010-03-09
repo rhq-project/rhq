@@ -18,17 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.ImgButton;
-
-import java.util.Arrays;
 import java.util.List;
+
+import com.smartgwt.client.widgets.IButton;
 
 /**
  * @author Greg Hinkle
  */
 public interface Wizard {
 
+    String getWindowTitle();
 
     String getTitle();
 
@@ -37,4 +36,5 @@ public interface Wizard {
     List<WizardStep> getSteps();
 
     List<IButton> getCustomButtons(int step);
+
 }

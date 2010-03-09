@@ -18,15 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
-
-import com.smartgwt.client.widgets.IButton;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.smartgwt.client.widgets.IButton;
+
+import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 
 /**
  * @author Greg Hinkle
@@ -48,12 +48,16 @@ public class BundleCreationWizard implements Wizard {
 
     }
 
+    public String getWindowTitle() {
+        return "Bundle Creation Wizard";
+    }
+
     public String getTitle() {
         return "Create Bundle";
     }
 
     public String getSubtitle() {
-        return null;
+        return "";
     }
 
     public List<WizardStep> getSteps() {
@@ -63,7 +67,6 @@ public class BundleCreationWizard implements Wizard {
     public List<IButton> getCustomButtons(int step) {
         return Collections.emptyList();
     }
-
 
     public void startBundleCreateWizard() {
         view = new WizardView(this);

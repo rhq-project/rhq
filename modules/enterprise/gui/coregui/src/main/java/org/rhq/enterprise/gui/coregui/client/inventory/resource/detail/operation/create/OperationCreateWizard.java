@@ -18,6 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
@@ -26,16 +35,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
-
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.ImgButton;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -67,7 +66,6 @@ public class OperationCreateWizard implements Wizard {
         steps.add(parametersStep);
         steps.add(schedulingStep);
 
-
         executeNowButton = new IButton("Execute Immediately");
         executeNowButton.setAutoFit(true);
         executeNowButton.addClickHandler(new ClickHandler() {
@@ -83,9 +81,12 @@ public class OperationCreateWizard implements Wizard {
             }
         });
 
-
         view = new WizardView(this);
         view.displayDialog();
+    }
+
+    public String getWindowTitle() {
+        return "Operation Wizard";
     }
 
     public String getTitle() {
@@ -102,12 +103,12 @@ public class OperationCreateWizard implements Wizard {
 
     public List<IButton> getCustomButtons(int step) {
         switch (step) {
-            case 0:
-                return Arrays.asList(executeNowButton);
-            case 1:
-                return Arrays.asList(executeButton);
-            default:
-                return Collections.emptyList();
+        case 0:
+            return Arrays.asList(executeNowButton);
+        case 1:
+            return Arrays.asList(executeButton);
+        default:
+            return Collections.emptyList();
         }
     }
 
@@ -117,10 +118,6 @@ public class OperationCreateWizard implements Wizard {
         OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
 
         Configuration parameters = parametersStep.getParameterConfiguration();
-
-
-
-
 
         view.closeDialog();
     }

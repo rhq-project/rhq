@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
+import java.util.ArrayList;
+
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
@@ -32,8 +34,6 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
-import java.util.ArrayList;
-
 /**
  * @author Greg Hinkle
  */
@@ -42,7 +42,6 @@ public class WizardView extends VLayout {
     private Window wizardWindow;
     private Wizard wizard;
     private int currentStep;
-
 
     HLayout titleBar;
     HTMLFlow titleLabel;
@@ -68,11 +67,11 @@ public class WizardView extends VLayout {
     protected void onDraw() {
         super.onDraw();
 
-
         titleBar = new HLayout(30);
         titleBar.setHeight(50);
         titleBar.setBackgroundColor("#F0F0F0");
-        titleLabel = new HTMLFlow("<span class=\"HeaderLabel\">" + wizard.getTitle() + "</span><br/>" + wizard.getSubtitle());
+        titleLabel = new HTMLFlow("<span class=\"HeaderLabel\">" + wizard.getTitle() + "</span><br/>"
+            + wizard.getSubtitle());
         titleLabel.setWidth("*");
 
         stepLabel = new Label();
@@ -81,7 +80,6 @@ public class WizardView extends VLayout {
         titleBar.addMember(stepLabel);
 
         addMember(titleBar);
-
 
         stepTitleLabel = new Label();
         stepTitleLabel.setWidth100();
@@ -95,7 +93,6 @@ public class WizardView extends VLayout {
         contentLayout.setWidth100();
 
         addMember(contentLayout);
-
 
         buttonBar = new ToolStrip();
         buttonBar.setPadding(5);
@@ -134,9 +131,7 @@ public class WizardView extends VLayout {
         buttonBar.addMember(previousButton);
         buttonBar.addMember(nextButton);
 
-
     }
-
 
     public void setStep(int stepIndex) {
         currentStep = stepIndex;
@@ -170,7 +165,7 @@ public class WizardView extends VLayout {
 
     public void displayDialog() {
         wizardWindow = new Window();
-        wizardWindow.setTitle("Operation Wizard");
+        wizardWindow.setTitle(wizard.getWindowTitle());
         wizardWindow.setWidth(800);
         wizardWindow.setHeight(600);
         wizardWindow.setIsModal(true);

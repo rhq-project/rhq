@@ -28,7 +28,6 @@ import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
-import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
@@ -43,6 +42,7 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
+import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.system.ServerVersion;
@@ -170,15 +170,24 @@ public interface BundleManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleId") int bundleId) throws Exception;
 
+    /**
+     * Remove everything associated with the BundleVersion with the exception of files laid down by related deployments.
+     * Deployed files are left as is on the deployment platforms but the bundle mechanism will no longer track
+     * the deployment.
+     *    
+     * @param subject
+     * @param bundleVersionId
+     * @throws Exception if any part of the removal fails. 
+     */
+    @WebMethod
+    void deleteBundleVersion( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleVersionId") int bundleVersionId) throws Exception;
+
     @WebMethod
     PageList<Bundle> findBundlesByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") BundleCriteria criteria);
-
-    @WebMethod
-    PageList<BundleVersion> findBundleVersionsByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") BundleVersionCriteria criteria);
 
     @WebMethod
     PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria( //
@@ -187,7 +196,8 @@ public interface BundleManagerRemote {
 
     @WebMethod
     PageList<BundleDeployment> findBundleDeploymentsByCriteria( //
-        @WebParam(name = "subject") Subject subject, BundleDeploymentCriteria criteria);
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "BundleDeploymentCriteria") BundleDeploymentCriteria criteria);
 
     @WebMethod
     // TODO is this necessary? Or do you just search for deployments and optionally fetch the history? 
@@ -195,6 +205,16 @@ public interface BundleManagerRemote {
         //
         @WebParam(name = "subject") Subject subject,
         @WebParam(name = "criteria") BundleDeploymentHistoryCriteria criteria);
+
+    @WebMethod
+    PageList<BundleFile> findBundleFilesByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") BundleFileCriteria criteria);
+
+    @WebMethod
+    PageList<BundleVersion> findBundleVersionsByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") BundleVersionCriteria criteria);
 
     @WebMethod
     List<BundleType> getAllBundleTypes( //
@@ -226,11 +246,11 @@ public interface BundleManagerRemote {
      * @param subject must be InventoryManager
      * @param bundleDeployDefinitionId the BundleDeployDefinition being used to guide the deployments
      * @param resourceId the target resource (must exist), typically platforms, for the deployments
-     * @return the BundleScheduleResponse created to track the deployment. 
+     * @return the BundleDeployment created to track the deployment. 
      * @throws Exception
      */
     @WebMethod
-    BundleScheduleResponse scheduleBundleDeployment( //
+    BundleDeployment scheduleBundleDeployment( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleDeployDefinitionId") int bundleDeployDefinitionId, //
         @WebParam(name = "resourceId") int resourceId) throws Exception;

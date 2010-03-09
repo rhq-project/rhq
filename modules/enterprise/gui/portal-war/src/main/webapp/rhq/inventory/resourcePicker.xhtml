@@ -15,13 +15,14 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<ui:composition template="/rhq/inventory/layout/main.xhtml">
+<ui:composition template="/rhq/inventory/layout/main-picker.xhtml">
 
 
    <ui:param name="pageTitle" value="Pick a Resource"/>
    <ui:param name="selectedTabName" value="Resources.all" />
-   <ui:param name="resourceTabOnly" value="true"/>
    <ui:define name="content">
+
+       <ui:remove>TODO remove top level menu ?</ui:remove>
 
       <a4j:keepAlive beanName="BrowseResourcesUIBean"/>
 

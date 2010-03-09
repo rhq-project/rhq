@@ -39,6 +39,7 @@
 
     <scm.branch>trunk</scm.branch>
     <scm.module.path />
+    <findbugs.version>2.3</findbugs.version>
 
     <doUpdate>false</doUpdate>
 
@@ -522,10 +523,17 @@
            <artifactId>properties-maven-plugin</artifactId>
            <version>1.0-alpha-2</version>
          </plugin>
+           <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>findbugs-maven-plugin</artifactId>
+               <version>${findbugs.version}</version>
+           </plugin>
        </plugins>
      </pluginManagement>
 
     <plugins>
+
+
 
       <!-- Set the 'maven.version' property to the version of Maven being used,
            so we can include the Maven version in the MANIFEST.MF files of all
@@ -1000,4 +1008,13 @@
 
   </profiles>
 
+   <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>2.3</version>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>

@@ -25,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +37,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import javax.persistence.FlushModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -45,9 +45,9 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.hibernate.lob.BlobImpl;
+import org.hibernate.lob.SerializableBlob;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
@@ -791,10 +791,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + "] does not have permission to obtain package content for installed package id ["
                 + installedPackageId + "] for resource ID [" + resourceId + "]");
         }
-
+        try {
         InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
         PackageBits bits = installedPackage.getPackageVersion().getPackageBits();
-        if (bits == null || bits.getBits() == null) {
+        if (bits == null || bits.getBits().length()==0) {
             long start = System.currentTimeMillis();
             retrieveBitsFromResource(user, resourceId, installedPackageId);
 
@@ -813,9 +813,16 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId
                     + " and package: " + installedPackageId + " before timeout.");
             }
+            
         }
 
-        return bits.getBits();
+        return bits.getBits().getBytes(1, (int) bits.getBits().length());
+}catch(Exception e){
+    throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId
+            + " and package: " + installedPackageId + " before timeout.");
+            
+        }
+        
     }
 
     public List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
@@ -870,7 +877,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return persistedRequest;
     }
 
-    @TransactionTimeout(45 * 60)
+     @TransactionTimeout(45 * 60)
+     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completeRetrievePackageBitsRequest(ContentServiceResponse response, InputStream bitStream) {
         log.info("Completing retrieve package bits response: " + response);
 
@@ -896,6 +904,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 log.debug("Saving content for response: " + response);
 
                 PackageBits packageBits = new PackageBits();
+               // packageBits.setBits(new SerializableBlob(new BlobImpl(new byte[0])));
                 entityManager.persist(packageBits);
 
                 packageVersion.setPackageBits(packageBits);
@@ -918,13 +927,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
                 try {
                     // fallback to JDBC so we can stream the data to the blob column
-                    conn = dataSource.getConnection();
-                    ps = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET BITS = ? WHERE ID = ?");
-                    ps.setBinaryStream(1, bitStream, (int) length.longValue());
-                    ps.setInt(2, packageBits.getId());
-                    if (ps.executeUpdate() != 1) {
-                        throw new SQLException("Did not stream the package bits to the DB for [" + packageVersion + "]");
-                    }
+                    //conn = dataSource.getConnection();
+                    PackageBits bits = entityManager.find(PackageBits.class, packageBits.getId());                 
+                    SerializableBlob blb = new SerializableBlob(new BlobImpl(bitStream,(int)length.longValue()));
+                    bits.setBits(blb);
+                    entityManager.merge(bits);
+                    
                 } finally {
 
                     if (ps != null) {
@@ -1222,8 +1230,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         PackageBits bits = new PackageBits();
-        bits.setBits(packageBits);
-
+        try {
+            bits.setBits(new SerializableBlob(new BlobImpl(packageBits)));
+        }catch(Exception e){
+            log.error("Error savinf the package.",e);
+        }
         newPackageVersion.setPackageBits(bits);
 
         newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);

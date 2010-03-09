@@ -110,4 +110,11 @@ attribute (see DatabaseType.getName/getVendor javadocs).
       <map db="h2"          type="TIMESTAMP" />
       <map db="sqlserver"   type="TIMESTAMP" />
    </typemap>
+   <typemap type="LARGEOBJECT">
+      <map db="java"        type="BLOB" />
+      <map db="postgresql"  type="OID" />
+      <map db="oracle"      type="BLOB" />
+      <map db="h2"          type="BLOB" />
+      <map db="sqlserver"   type="IMAGE" />
+   </typemap>
 </typemaps>

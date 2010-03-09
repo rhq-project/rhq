@@ -138,7 +138,7 @@
 
     <table name="RHQ_PACKAGE_BITS">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="BITS" type="BLOB" required="false"/>
+        <column name="BITS" type="LARGEOBJECT" required="false"/>
     </table>
 
     <table name="RHQ_PACKAGE_VERSION">

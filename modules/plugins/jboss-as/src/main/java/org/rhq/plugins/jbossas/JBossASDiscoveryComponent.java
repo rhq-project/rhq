@@ -422,23 +422,14 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
 
     public String formatServerName(String baseName, String bindingAddress, String jnpPort, String configName,
         JBossInstallationInfo installInfo) {
-        baseName = baseName + " " + installInfo.getProductType().NAME + " " + installInfo.getVersion() + " "
-            + configName;
-
-        if ((bindingAddress != null) && bindingAddress.equals(LOCALHOST)) {
-            bindingAddress = null;
-        }
-
+       
         String details = null;
         if ((bindingAddress != null) && (jnpPort != null && !jnpPort.equals(CHANGE_ME))) {
             details = bindingAddress + ":" + jnpPort;
-        } else if ((bindingAddress == null) && (jnpPort != null && !jnpPort.equals(CHANGE_ME))) {
-            details = jnpPort;
-        } else if (bindingAddress != null) {
-            details = bindingAddress;
-        }
+        } else 
+              details = bindingAddress;
 
-        return baseName + ((details != null) ? (" (" + details + ")") : "");
+        return details;
     }
 
     private static String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {

@@ -23,6 +23,8 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
@@ -32,6 +34,11 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 public class BundleInfoStep implements WizardStep {
 
     private DynamicForm form;
+    private final BundleCreationWizard wizard;
+
+    public BundleInfoStep(BundleCreationWizard bundleCreationWizard) {
+        this.wizard = bundleCreationWizard;
+    }
 
     public Canvas getCanvas() {
         if (form == null) {
@@ -41,6 +48,12 @@ public class BundleInfoStep implements WizardStep {
             form.setColWidths("50%", "*");
 
             final TextItem nameTextItem = new TextItem("name", "Name");
+            nameTextItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    wizard.setSubtitle(event.getValue().toString());
+                }
+            });
+
             final TextItem versionTextItem = new TextItem("version", "Initial Version");
             versionTextItem.setValue("1.0");
             final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", "Description");

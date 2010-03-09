@@ -34,6 +34,11 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 public class BundleUploadRecipeStep implements WizardStep {
 
     private DynamicForm form;
+    private final BundleCreationWizard wizard;
+
+    public BundleUploadRecipeStep(BundleCreationWizard bundleCreationWizard) {
+        this.wizard = bundleCreationWizard;
+    }
 
     public Canvas getCanvas() {
         if (form == null) {
@@ -42,27 +47,37 @@ public class BundleUploadRecipeStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
+            final String uploadRecipeString = "Upload Recipe";
+            final String writeRecipeString = "Write Recipe";
+
             final RadioGroupItem radioGroupItem = new RadioGroupItem("reciperadio");
             radioGroupItem.setTitle("");
-            radioGroupItem.setValueMap("Upload Recipe", "Write Recipe");
+            radioGroupItem.setValueMap(uploadRecipeString, writeRecipeString);
+            radioGroupItem.setRedrawOnChange(true);
 
             final TextItem recipeFileUploadItem = new TextItem("recipefile", "Recipe File");
             recipeFileUploadItem.setVisible(false);
-
-            final TextAreaItem recipeTextAreaItem = new TextAreaItem("recipetext", "Recipe Text");
-            recipeTextAreaItem.setVisible(false);
-
             recipeFileUploadItem.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem item, Object value, DynamicForm form) {
-                    System.out.println("!!!!!!!!!!!!!!" + form.getValues());
-                    return (((RadioGroupItem) form.getValue("reciperadio")).getValue().equals("recipefile"));
+                    String radioSelect = form.getValueAsString("reciperadio");
+                    if (radioSelect != null) {
+                        return radioSelect.equals(uploadRecipeString);
+                    } else {
+                        return false;
+                    }
                 }
             });
 
+            final TextAreaItem recipeTextAreaItem = new TextAreaItem("recipetext", "Recipe Text");
+            recipeTextAreaItem.setVisible(false);
             recipeTextAreaItem.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem item, Object value, DynamicForm form) {
-                    System.out.println("!!!!!!!!!!!!!!" + form.getValues());
-                    return (((RadioGroupItem) form.getValue("reciperadio")).getValue().equals("recipetext"));
+                    String radioSelect = form.getValueAsString("reciperadio");
+                    if (radioSelect != null) {
+                        return radioSelect.equals(writeRecipeString);
+                    } else {
+                        return false;
+                    }
                 }
             });
 

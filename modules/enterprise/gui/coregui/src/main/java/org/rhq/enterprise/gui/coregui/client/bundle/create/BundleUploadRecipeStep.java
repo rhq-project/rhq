@@ -18,22 +18,76 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.FormItemIfFunction;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
+import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+
+import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 /**
  * @author Greg Hinkle
  */
 public class BundleUploadRecipeStep implements WizardStep {
 
+    private DynamicForm form;
+    private final BundleCreationWizard wizard;
+
+    public BundleUploadRecipeStep(BundleCreationWizard bundleCreationWizard) {
+        this.wizard = bundleCreationWizard;
+    }
+
     public Canvas getCanvas() {
-        return new Label("Todo: implement me");
+        if (form == null) {
+            form = new DynamicForm();
+            form.setWidth100();
+            form.setNumCols(2);
+            form.setColWidths("50%", "*");
+
+            final String uploadRecipeString = "Upload Recipe";
+            final String writeRecipeString = "Write Recipe";
+
+            final RadioGroupItem radioGroupItem = new RadioGroupItem("reciperadio");
+            radioGroupItem.setTitle("");
+            radioGroupItem.setValueMap(uploadRecipeString, writeRecipeString);
+            radioGroupItem.setRedrawOnChange(true);
+
+            final TextItem recipeFileUploadItem = new TextItem("recipefile", "Recipe File");
+            recipeFileUploadItem.setVisible(false);
+            recipeFileUploadItem.setShowIfCondition(new FormItemIfFunction() {
+                public boolean execute(FormItem item, Object value, DynamicForm form) {
+                    String radioSelect = form.getValueAsString("reciperadio");
+                    if (radioSelect != null) {
+                        return radioSelect.equals(uploadRecipeString);
+                    } else {
+                        return false;
+                    }
+                }
+            });
+
+            final TextAreaItem recipeTextAreaItem = new TextAreaItem("recipetext", "Recipe Text");
+            recipeTextAreaItem.setVisible(false);
+            recipeTextAreaItem.setShowIfCondition(new FormItemIfFunction() {
+                public boolean execute(FormItem item, Object value, DynamicForm form) {
+                    String radioSelect = form.getValueAsString("reciperadio");
+                    if (radioSelect != null) {
+                        return radioSelect.equals(writeRecipeString);
+                    } else {
+                        return false;
+                    }
+                }
+            });
+
+            form.setItems(radioGroupItem, recipeFileUploadItem, recipeTextAreaItem);
+        }
+        return form;
     }
 
     public boolean valid() {
-        return false;  // TODO: Implement this method.
+        return false; // TODO: Implement this method.
     }
 
     public String getName() {

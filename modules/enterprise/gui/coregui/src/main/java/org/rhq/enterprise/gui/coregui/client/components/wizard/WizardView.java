@@ -70,8 +70,8 @@ public class WizardView extends VLayout {
         titleBar = new HLayout(30);
         titleBar.setHeight(50);
         titleBar.setBackgroundColor("#F0F0F0");
-        titleLabel = new HTMLFlow("<span class=\"HeaderLabel\">" + wizard.getTitle() + "</span><br/>"
-            + wizard.getSubtitle());
+        titleLabel = new HTMLFlow();
+        refreshTitleLabelContents();
         titleLabel.setWidth("*");
 
         stepLabel = new Label();
@@ -104,6 +104,15 @@ public class WizardView extends VLayout {
         addMember(buttonBar);
 
         setStep(0);
+    }
+
+    /**
+     * You can call this if you ever change the wizard's title or subtitle and you want to see it
+     * reflected in the wizard UI.
+     */
+    public void refreshTitleLabelContents() {
+        this.titleLabel.setContents("<span class=\"HeaderLabel\">" + wizard.getTitle() + "</span><br/>"
+            + wizard.getSubtitle());
     }
 
     private void setupButtons() {

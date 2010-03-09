@@ -34,17 +34,17 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 public class BundleCreationWizard implements Wizard {
 
     private ArrayList<WizardStep> steps;
-
     private WizardView view;
+    private String subtitle = "";
 
     public BundleCreationWizard() {
 
         steps = new ArrayList<WizardStep>();
 
-        steps.add(new BundleInfoStep());
-        steps.add(new BundleUploadRecipeStep());
-        steps.add(new BundleUploadDataStep());
-        steps.add(new BundleVerificationStep());
+        steps.add(new BundleInfoStep(this));
+        steps.add(new BundleUploadRecipeStep(this));
+        steps.add(new BundleUploadDataStep(this));
+        steps.add(new BundleVerificationStep(this));
 
     }
 
@@ -57,7 +57,12 @@ public class BundleCreationWizard implements Wizard {
     }
 
     public String getSubtitle() {
-        return "";
+        return subtitle;
+    }
+
+    public void setSubtitle(String subtitle) {
+        this.subtitle = subtitle;
+        this.view.refreshTitleLabelContents();
     }
 
     public List<WizardStep> getSteps() {

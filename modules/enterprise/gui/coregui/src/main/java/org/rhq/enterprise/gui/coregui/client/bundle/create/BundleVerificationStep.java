@@ -18,22 +18,28 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
+
+import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 /**
  * @author Greg Hinkle
  */
 public class BundleVerificationStep implements WizardStep {
 
+    private final BundleCreationWizard wizard;
+
+    public BundleVerificationStep(BundleCreationWizard bundleCreationWizard) {
+        this.wizard = bundleCreationWizard;
+    }
+
     public Canvas getCanvas() {
         return new Label("Todo: implement me");
     }
 
     public boolean valid() {
-        return false;  // TODO: Implement this method.
+        return false; // TODO: Implement this method.
     }
 
     public String getName() {

@@ -70,6 +70,8 @@ public abstract class Criteria implements Serializable {
 
     private Class<?> persistentClass;
 
+    private String searchExpression;
+
     //added no args constructor for bean and JAXB requirement
     @SuppressWarnings("unused")
     private Criteria() {
@@ -231,6 +233,14 @@ public abstract class Criteria implements Serializable {
 
     public boolean isStrict() {
         return this.strict;
+    }
+
+    public void setSearchExpression(String searchExpression) {
+        this.searchExpression = searchExpression;
+    }
+
+    public String getSearchExpression() {
+        return this.searchExpression;
     }
 
     /** subclasses should override as necessary */

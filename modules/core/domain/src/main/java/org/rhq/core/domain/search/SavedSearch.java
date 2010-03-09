@@ -64,7 +64,7 @@ public class SavedSearch {
 
     @Column(name = "CONTEXT", nullable = false)
     @Enumerated(EnumType.STRING)
-    private SearchContext context;
+    private SearchSubsystem context;
 
     @Column(name = "NAME")
     private String name;
@@ -97,7 +97,7 @@ public class SavedSearch {
         // no-arg ctor for Hibernate
     }
 
-    public SavedSearch(SearchContext context, String name, String pattern, Subject subject) {
+    public SavedSearch(SearchSubsystem context, String name, String pattern, Subject subject) {
         // call setters to go through parameter validation
         setContext(context);
         setPattern(pattern);
@@ -119,11 +119,11 @@ public class SavedSearch {
         this.id = id;
     }
 
-    public SearchContext getContext() {
+    public SearchSubsystem getContext() {
         return context;
     }
 
-    private void setContext(SearchContext context) {
+    private void setContext(SearchSubsystem context) {
         if (context == null) {
             throw new IllegalArgumentException("All saved searches must be bound to a SearchContext");
         }

@@ -4,42 +4,24 @@ context = value
 context == value
 context != value
 context !== value
-context is null
-context is not null
-context in [value]
-context in [value1, value2]
-context in [value1, value2, value3]
-context not in [value]
-context not in [value1, value2]
-context not in [value1, value2, value3]
+context = null
+context != null
 
 # simple term, all operators, quoted value
 context = 'quoted value'
 context == 'quoted value'
 context != 'quoted value'
 context !== 'quoted value'
-context is null
-context is not null
-context in ['quoted value1']
-context in ['quoted value1', 'quoted value2']
-context in ['quoted value1', 'quoted value2', 'quoted value3']
-context not in ['quoted value1']
-context not in ['quoted value1', 'quoted value2']
-context not in ['quoted value1', 'quoted value2', 'quoted value3']
+context = null
+context != null
 
 # parameterized term, all operators
 context[param] = value
 context[param] == value
 context[param] != value
 context[param] !== value
-context[param] is null
-context[param] is not null
-context[param] in [value]
-context[param] in [value1, value2]
-context[param] in [value1, value2, value3]
-context[param] not in [value]
-context[param] not in [value1, value2]
-context[param] not in [value1, value2, value3]
+context[param] = null
+context[param] != null
 
 # deeply nested parenthetical simple terms
 ((context = value))
@@ -52,28 +34,16 @@ context[param] not in [value1, value2, value3]
 (context == value)
 (context != value)
 (context !== value)
-(context is null)
-(context is not null)
-(context in [value])
-(context in [value1, value2])
-(context in [value1, value2, value3])
-(context not in [value])
-(context not in [value1, value2])
-(context not in [value1, value2, value3])
+(context = null)
+(context != null)
 
 # parameterized parenthetical term, all operators
 (context[param] = value)
 (context[param] == value)
 (context[param] != value)
 (context[param] !== value)
-(context[param] is null)
-(context[param] is not null)
-(context[param] in [value])
-(context[param] in [value1, value2])
-(context[param] in [value1, value2, value3])
-(context[param] not in [value])
-(context[param] not in [value1, value2])
-(context[param] not in [value1, value2, value3])
+(context[param] = null)
+(context[param] != null)
 
 
 # single-pair parenthetical combinations
@@ -84,11 +54,12 @@ context = value1 or (context = value2)
 (context = value1) or (context = value2)
 
 # single-pair parenthetical combinations
-# simple expression, 'and' boolean operator
-context = value and context = value
-(context = value) and context = value
-context = value and (context = value)
-(context = value) and (context = value)
+# simple expression, '|' boolean operator (meaning 'or')
+context = value1 | context = value2
+(context = value1) | context = value2
+context = value1 | (context = value2)
+(context = value1) | (context = value2)
+
 
 # single-pair parenthetical combinations
 # simple expression, no boolean operator (implies 'and' semantics)
@@ -108,13 +79,13 @@ context = value (context = value)
 context = value1 or ((context = value2))
 
 # double-pair parenthetical combinations
-# simple expression, 'and' boolean operator
-((context = value1 and context = value2))
-((context = value1) and context = value2)
-((context = value1)) and context = value2
-(context = value1) and (context = value2)
-(context = value1 and (context = value2))
-context = value1 and ((context = value2))
+# simple expression, '|' boolean operator (meaning 'or')
+((context = value1 | context = value2))
+((context = value1) | context = value2)
+((context = value1)) | context = value2
+(context = value1) | (context = value2)
+(context = value1 | (context = value2))
+context = value1 | ((context = value2))
 
 # double-pair parenthetical combinations
 # simple expression, no boolean operator (implies 'and' semantics)

@@ -21,12 +21,9 @@
   <head>
       <base target="_top"/>
 
-      <script type="text/javascript">
-          SimileAjax_urlPrefix = "/js/timeline/ajax/api/";
-      </script> 
-      <script src="/js/timeline/ajax/api/simile-ajax-api.js" type="text/javascript"></script>
-      <script src="/js/timeline/api/timeline-api.js" type="text/javascript"></script>
-      <script src="/js/timeline/examples/examples.js" type="text/javascript"></script>
+      <script src="/js/timeline/timeline_ajax/simile-ajax-api.js?bundle=true" type="text/javascript"></script>
+      <script src="/js/timeline/timeline_js/timeline-api.js?bundle=true" type="text/javascript"></script>
+
       <title>Simple jsp page</title>
 
       <style type="text/css">
@@ -80,13 +77,13 @@
 <input type="checkbox" name="content" checked="checked" onchange="onLoad()" id="contentField"/>
     <label for="contentField"><img src="/images/icons/Content_grey_16.png"/> Content Changes</label>
 </form>
+
 <script type="text/javascript">
 
 var tl;
 
 function onLoad() {
     
-
     var begin = <%= begin%>;
     var end = <%= end%>;
 
@@ -98,7 +95,7 @@ function onLoad() {
 
   var eventSource = new Timeline.DefaultEventSource();
 
-   var theme = Timeline.ClassicTheme.create();
+  var theme = Timeline.ClassicTheme.create();
     theme.event.bubble.width = 650;
     theme.event.bubble.height = 320;
     theme.event.label.width = 200;

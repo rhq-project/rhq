@@ -12,9 +12,9 @@
     <title>Operations sender</title>
 </head>
 <body>
-<h:panelGrid columns="2" style="vertical-align:top" >
-    <h:panelGroup style="width:40%" >
-        <rich:panel>
+<h:panelGrid columns="2" style="vertical-align:top;width:100%" >
+    <h:panelGroup>
+        <rich:panel style="vertical-align:top;width:30%" header="Select a resource">
             <h:outputText value="Select mode"/>
             <br/>
             <h:form id="selectResourceForm">
@@ -26,8 +26,7 @@
             <h:outputText value="Target resource "/>
             <a href="#"
                onclick="window.open('/rhq/inventory/resourcePicker.xhtml?formId=customContentForm:selectResourceForm&amp;fieldId=resourceId', 'Pick a resource','width=800;height=500;scrollbars=yes,toolbar=no,resizable=yes,left=100,top=100'); return false;"
-               class="buttonmed"
-               alt="Resource Picker">Pick</a>
+               class="buttonmed">Pick</a>
             <br/>
             <h:inputText id="resourceId" title="Target Resource" value="#{operationsBean.resId}"/>
             <p/>
@@ -41,8 +40,9 @@
         </rich:panel>
     </h:panelGroup>
 
-    <h:panelGroup style="width:60%; vertical-align:top;" >
-        <rich:panel rendered="#{not empty operationsBean.operationIds}">
+
+    <h:panelGroup style="vertical-align:top;" >
+        <rich:panel rendered="#{not empty operationsBean.operationIds}" style="vertical-align:top;width=70%" header="Select the operation">
 
             Operations for:  <h:outputText value=" #{operationsBean.resourceName}"/>
             <br/>
@@ -63,7 +63,7 @@
 <p/>
     <h:panelGroup style="width:100%">
         <h:messages />
-        <rich:panel rendered="#{not empty operationsBean.operationId}">
+        <rich:panel rendered="#{not empty operationsBean.operationId}" header="Pass parameters to the operation">
             <br/>
             Parameters for operation '<h:outputText value=" #{operationsBean.operationName}"/>':
             <p/>

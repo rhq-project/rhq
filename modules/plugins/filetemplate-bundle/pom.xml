@@ -32,6 +32,11 @@
          <version>${project.version}</version>
       </dependency>
 
+      <dependency>
+         <groupId>gnu-getopt</groupId>
+         <artifactId>getopt</artifactId>
+      </dependency>
+
    </dependencies>
 
    <build>
@@ -54,6 +59,11 @@
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-filetemplate-bundle-common</artifactId>
                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>gnu-getopt</groupId>
+                           <artifactId>getopt</artifactId>
                         </artifactItem>
 
                      </artifactItems>

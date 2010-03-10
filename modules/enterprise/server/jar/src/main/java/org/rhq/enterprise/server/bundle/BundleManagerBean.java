@@ -22,9 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -66,6 +64,7 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.NumberUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -238,7 +237,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleType bundleType = bundle.getBundleType();
         BundleServerPluginFacet bp = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
             .getBundleServerPluginFacet(bundleType.getName());
-        RecipeParseResults results = bp.parseRecipe(recipe);
+        RecipeParseResults results;
+
+        try {
+            results = bp.parseRecipe(recipe);
+        } catch (Exception e) {
+            // ensure that we throw a runtime exception to force a rollback
+            throw new RuntimeException("Failed to parse recipe", e);
+        }
 
         // ensure we have a version
         version = getVersion(version, bundle);
@@ -264,18 +270,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // note - this is the same algo used by ResourceClientProxy in updatebackingContent (for a resource)
         String oldVersion = (null == currentBundleVersion) ? null : currentBundleVersion.getVersion();
-        String newVersion = "1.0";
-        if (oldVersion != null && oldVersion.length() != 0) {
-            String[] parts = oldVersion.split("[^a-zA-Z0-9]");
-            String lastPart = parts[parts.length - 1];
-            try {
-                int lastNumber = Integer.parseInt(lastPart);
-                newVersion = oldVersion.substring(0, oldVersion.length() - lastPart.length()) + (lastNumber + 1);
-            } catch (NumberFormatException nfe) {
-                newVersion = oldVersion + ".1";
-            }
-        }
-
+        String newVersion = NumberUtil.autoIncrementVersion(oldVersion);
         return newVersion;
     }
 
@@ -585,48 +580,4 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // the deployments.
         this.entityManager.remove(bundleVersion);
     }
-
-    public BundleType createMockBundleType(Subject subject) {
-
-        try {
-            ResourceType linuxPlatformResourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin("Linux",
-                "Platforms");
-            return createBundleType(subject, UUID.randomUUID().toString(), linuxPlatformResourceType.getId());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public Bundle createMockBundle(Subject subject, List<BundleType> bundleTypes) throws Exception {
-        Random random = new Random();
-        BundleType bundleType;
-        if (bundleTypes.isEmpty()) {
-            bundleType = createMockBundleType(subject);
-        } else {
-            int randomIndex = random.nextInt(bundleTypes.size());
-            bundleType = bundleTypes.get(randomIndex);
-        }
-
-        Bundle bundle = createBundle(subject, UUID.randomUUID().toString(), bundleType.getId());
-
-        // Add 1 to 5 bundle versions.
-        int bundleVersionCount = random.nextInt(5) + 1;
-        for (int i = 0; i < bundleVersionCount; i++) {
-            String bundleVersionName = UUID.randomUUID().toString();
-            final String RECIPE = "repo rhel-x86_64-5\n" //
-                + "package foo-1.25.rpm\n" //
-                + "package bar-1.25.rpm\n" //
-                + "script foo.bash -c some parameter\n" //
-                + "deploy jboss.tar %{jboss.home.directory}\n" //                
-                + "realize %{jboss.home.directory}/server/default/setting.xml\n" //                
-                + "file example.setting /etc/some/setting.ini\n" + "service example restart\n";
-            BundleVersion bundleVersion = new BundleVersion(bundleVersionName, String.valueOf(i + 1), null, RECIPE);
-            bundle.addBundleVersion(bundleVersion);
-        }
-
-        bundle = entityManager.merge(bundle);
-        return bundle;
-    }
-
 }

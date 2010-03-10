@@ -365,6 +365,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.createBundleVersion(subject, bundleId, name, bundleVersion, recipe);
     }
 
+    public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, int bundleTypeId,
+        String name, String bundleVersion, String recipe) throws Exception {
+        return bundleManager.createBundleAndBundleVersion(subject, bundleName, bundleTypeId, name, bundleVersion,
+            recipe);
+    }
+
     public void deleteBundle(Subject subject, int bundleId) throws Exception {
         bundleManager.deleteBundle(subject, bundleId);
     }

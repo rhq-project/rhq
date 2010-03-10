@@ -18,8 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
@@ -35,7 +37,15 @@ public class BundleUploadDataStep implements WizardStep {
     }
 
     public Canvas getCanvas() {
-        return new Label("Todo: implement me");
+        HLayout hlayout = new HLayout();
+        hlayout.setWidth100();
+        hlayout.setHeight100();
+
+        Img loaderImage = new Img("/images/ajax-loader.gif");
+        loaderImage.setAlign(Alignment.CENTER);
+        hlayout.addChild(loaderImage);
+
+        return hlayout;
     }
 
     public boolean valid() {
@@ -43,7 +53,7 @@ public class BundleUploadDataStep implements WizardStep {
     }
 
     public String getName() {
-        return "Upload Bundle Binary Information";
+        return "Upload Bundle Files";
     }
 
 }

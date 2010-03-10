@@ -18,10 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.layout.HLayout;
 
+import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * @author Greg Hinkle
@@ -30,12 +36,37 @@ public class BundleVerificationStep implements WizardStep {
 
     private final BundleCreationWizard wizard;
 
+    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+
     public BundleVerificationStep(BundleCreationWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 
     public Canvas getCanvas() {
-        return new Label("Todo: implement me");
+        HLayout hlayout = new HLayout();
+        hlayout.setWidth100();
+        hlayout.setHeight100();
+
+        final Img verifyingImage = new Img("/images/status-bar.gif");
+        verifyingImage.setWidth100();
+        verifyingImage.setHeight(15);
+
+        hlayout.addChild(verifyingImage);
+
+        bundleServer.createBundleAndBundleVersion(this.wizard.getBundleName(), this.wizard.getBundleType().getId(),
+            this.wizard.getBundleName(), this.wizard.getBundleVersionString(), this.wizard.getRecipe(),
+            new AsyncCallback<BundleVersion>() {
+                public void onSuccess(BundleVersion result) {
+                    verifyingImage.setSrc("/images/status_complete.gif");
+                    wizard.setBundleVersion(result);
+                }
+
+                public void onFailure(Throwable caught) {
+                    verifyingImage.setSrc("/images/status_error.gif");
+                    CoreGUI.getErrorHandler().handleError("Failed to create bundle: " + caught.getMessage(), caught);
+                }
+            });
+        return hlayout;
     }
 
     public boolean valid() {
@@ -43,7 +74,7 @@ public class BundleVerificationStep implements WizardStep {
     }
 
     public String getName() {
-        return "Verify Bundle Information";
+        return "Verify Recipe";
     }
 
 }

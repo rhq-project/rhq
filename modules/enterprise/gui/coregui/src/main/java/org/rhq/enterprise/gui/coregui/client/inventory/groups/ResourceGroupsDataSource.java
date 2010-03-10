@@ -18,14 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -34,6 +26,15 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle
@@ -53,7 +54,6 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         return INSTANCE;
     }
 
-
     private ResourceGroupsDataSource() {
         super("ResourceGroups");
 
@@ -70,8 +70,8 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         DataSourceTextField pluginNameDataField = new DataSourceTextField("pluginName", "Plugin");
         DataSourceTextField categoryDataField = new DataSourceTextField("category", "Category");
 
-
-        setFields(idDataField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField, categoryDataField);
+        setFields(idDataField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField,
+            categoryDataField);
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
@@ -81,6 +81,15 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         criteria.setPageControl(getPageControl(request));
         criteria.addFilterName(query);
 
+        if (request.getCriteria().getValues().get("category") != null) {
+            criteria.addFilterGroupCategory(GroupCategory.valueOf(((String) request.getCriteria().getValues().get(
+                "category")).toUpperCase()));
+        }
+
+        if (request.getCriteria().getValues().get("downMemberCount") != null) {
+            criteria.addFilterDownMemberCount(Integer.parseInt((String) request.getCriteria().getValues().get(
+                "downMemberCount")));
+        }
 
         groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
             public void onFailure(Throwable caught) {
@@ -93,7 +102,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
                 System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
 
                 response.setData(buildRecords(result));
-                response.setTotalRows(result.getTotalSize());    // for paging to work we have to specify size of full result set
+                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }
         });
@@ -101,7 +110,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
     @Override
     public ResourceGroup copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override

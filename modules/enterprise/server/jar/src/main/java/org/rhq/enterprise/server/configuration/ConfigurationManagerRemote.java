@@ -29,7 +29,6 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.jetbrains.annotations.Nullable;
 
-import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
@@ -182,13 +181,9 @@ public interface ConfigurationManagerRemote {
         throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     @WebMethod
-    ResourceConfigurationUpdate updateStructuredOrRawConfiguration(
-        @WebParam Subject subject,
-        @WebParam int resourceId,
-        @WebParam
-        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration,
-        @WebParam boolean fromStructured)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException, PluginContainerException;
+    ResourceConfigurationUpdate updateStructuredOrRawConfiguration(@WebParam Subject subject, @WebParam int resourceId,
+        @WebParam @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration,
+        @WebParam boolean fromStructured) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for

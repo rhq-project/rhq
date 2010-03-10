@@ -1,16 +1,9 @@
 package org.rhq.enterprise.gui.coregui.client;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
-import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourcesView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
-import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
-import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -33,11 +26,17 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
+import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
+import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 /**
  * @author Greg Hinkle
@@ -82,7 +81,8 @@ public class CoreGUI implements EntryPoint {
             }
         });
 
-        RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/j_security_check.do?j_username=rhqadmin&j_password=rhqadmin");
+        RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
+            "/j_security_check.do?j_username=rhqadmin&j_password=rhqadmin");
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(Request request, Response response) {
@@ -95,7 +95,7 @@ public class CoreGUI implements EntryPoint {
             });
             b.send();
         } catch (RequestException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
 
         SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
@@ -131,20 +131,20 @@ public class CoreGUI implements EntryPoint {
         RootCanvas rootCanvas = new RootCanvas();
         this.currentView = this.rootView = new View(new ViewId("", null), rootCanvas);
 
-//        HTMLPane menuPane = new HTMLPane();
-//        menuPane.setWidth100();
-//        menuPane.setHeight(26);
-//        menuPane.setContentsType(ContentsType.PAGE);
-//        menuPane.setContentsURL("/rhq/common/menu/menu.xhtml");
-//        menuPane.setZIndex(400000);
-//        layout.addMember(menuPane);
+        //        HTMLPane menuPane = new HTMLPane();
+        //        menuPane.setWidth100();
+        //        menuPane.setHeight(26);
+        //        menuPane.setContentsType(ContentsType.PAGE);
+        //        menuPane.setContentsURL("/rhq/common/menu/menu.xhtml");
+        //        menuPane.setZIndex(400000);
+        //        layout.addMember(menuPane);
 
         MenuBarView menuBarView = new MenuBarView();
         menuBarView.setWidth("100%");
-//        WidgetCanvas menuCanvas = new WidgetCanvas(menuBarView);
-//        menuCanvas.setTop(0);
-//        menuCanvas.setWidth100();
-//        menuCanvas.draw();
+        //        WidgetCanvas menuCanvas = new WidgetCanvas(menuBarView);
+        //        menuCanvas.setTop(0);
+        //        menuCanvas.setWidth100();
+        //        menuCanvas.draw();
         rootCanvas.addMember(menuBarView);
 
         breadCrumbTrailPane = new BreadcrumbTrailPane();
@@ -165,9 +165,11 @@ public class CoreGUI implements EntryPoint {
                 String path = historyChangeEvent.getValue();
                 System.out.println("History request: " + path);
 
-                List<String> viewIdNames = path.equals("") ? Collections.<String>emptyList() : Arrays.asList(path.split("\\/"));
+                List<String> viewIdNames = path.equals("") ? Collections.<String> emptyList() : Arrays.asList(path
+                    .split("\\/"));
                 String currentPath = CoreGUI.this.currentView.getId().getPath();
-                List<String> currentViewIdNames = currentPath.equals("") ? Collections.<String>emptyList() : Arrays.asList(currentPath.split("\\/"));
+                List<String> currentViewIdNames = currentPath.equals("") ? Collections.<String> emptyList() : Arrays
+                    .asList(currentPath.split("\\/"));
 
                 int commonBasePathSize = 0;
                 for (int i = 0; i < viewIdNames.size() && i < currentViewIdNames.size(); i++) {
@@ -247,8 +249,8 @@ public class CoreGUI implements EntryPoint {
             canvas = new AdministrationView();
         } else if (breadcrumbName.equals("Demo")) {
             canvas = new DemoCanvas();
-        } else if (breadcrumbName.equals("Resources")) {
-            canvas = new ResourcesView();
+        } else if (breadcrumbName.equals("Inventory")) {
+            canvas = new InventoryView();
         } else if (breadcrumbName.equals("Resource")) {
             canvas = new ResourceView();
         } else if (breadcrumbName.equals("Dashboard")) {
@@ -260,7 +262,6 @@ public class CoreGUI implements EntryPoint {
         }
         return canvas;
     }
-
 
     // -------------------- Static application utilities ----------------------
 
@@ -281,8 +282,8 @@ public class CoreGUI implements EntryPoint {
 
         // TODO this breaks because of reattach rules, bizarely even in queries. gonna switch out to non-subject include apis
         // Create a minimized session object for validation on requests
-//        Subject s = new Subject(subject.getName(),subject.getFactive(), subject.getFsystem());
-//        s.setSessionId(subject.getSessionId());
+        //        Subject s = new Subject(subject.getName(),subject.getFactive(), subject.getFsystem());
+        //        s.setSessionId(subject.getSessionId());
         CoreGUI.sessionSubject = subject;
     }
 
@@ -295,7 +296,7 @@ public class CoreGUI implements EntryPoint {
             content = newContent;
             contentCanvas.addChild(newContent);
         }
-        contentCanvas.draw();
+        contentCanvas.markForRedraw();
     }
 
     public static void goTo(String path) {
@@ -327,12 +328,10 @@ public class CoreGUI implements EntryPoint {
                 currentCanvas = canvas;
                 setContent(canvas);
             }
-            ViewRenderer descendantViewRender = (currentCanvas instanceof ViewRenderer) ?
-                    (ViewRenderer) currentCanvas : null;
+            ViewRenderer descendantViewRender = (currentCanvas instanceof ViewRenderer) ? (ViewRenderer) currentCanvas
+                : null;
 
             return new View(viewId, descendantViewRender);
         }
     }
 }
-
-

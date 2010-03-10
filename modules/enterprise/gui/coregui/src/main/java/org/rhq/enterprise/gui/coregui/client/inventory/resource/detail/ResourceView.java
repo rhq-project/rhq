@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewRenderer;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourcesView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
@@ -99,7 +99,7 @@ public class ResourceView extends HLayout implements ViewRenderer {
                 public void onFailure(Throwable caught) {
                     SC.say("Failed to load Resource with id " + resourceId + ": " + caught);
                     // TODO: Display this error in a red box at top of page instead?
-                    CoreGUI.goTo(ResourcesView.VIEW_PATH);
+                    CoreGUI.goTo(InventoryView.VIEW_PATH);
                 }
 
                 public void onSuccess(PageList<Resource> result) {
@@ -131,7 +131,7 @@ public class ResourceView extends HLayout implements ViewRenderer {
         if (contentCanvas.getChildren().length > 0)
             contentCanvas.getChildren()[0].destroy();
         contentCanvas.addChild(newContent);
-        contentCanvas.draw();
+        contentCanvas.markForRedraw();
     }
 
     public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {

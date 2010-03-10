@@ -18,15 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -41,10 +36,15 @@ import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
  * This doesn't extend RPCDataSource because it is tree oriented and
@@ -53,13 +53,11 @@ import java.util.List;
  */
 public class ResourceTreeDatasource extends DataSource {
 
-
     private boolean initialized = false;
     int rootId;
     List<Resource> initialData;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-
 
     public ResourceTreeDatasource(List<Resource> initialData) {
         setClientOnly(false);
@@ -84,20 +82,18 @@ public class ResourceTreeDatasource extends DataSource {
 
         DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
         parentIdField.setForeignKey("id");
-//        parentIdField.setRootValue(rootId);
+        //        parentIdField.setRootValue(rootId);
 
-//        DataSourceTextField parentKeyField = new DataSourceTextField("parentKey", "Parent KEY");
-//        parentKeyField.setForeignKey("id");
-//        parentKeyField.setRootValue(rootId);
+        //        DataSourceTextField parentKeyField = new DataSourceTextField("parentKey", "Parent KEY");
+        //        parentKeyField.setForeignKey("id");
+        //        parentKeyField.setRootValue(rootId);
 
-
-//        nameDataField.setType(FieldType.);
+        //        nameDataField.setType(FieldType.);
 
         setDropExtraFields(false);
 
         setFields(idDataField, nameDataField, descriptionDataField, availabilityDataField);
     }
-
 
     @Override
     protected Object transformRequest(DSRequest request) {
@@ -107,21 +103,21 @@ public class ResourceTreeDatasource extends DataSource {
         // Asume success
         response.setStatus(0);
         switch (request.getOperationType()) {
-            case ADD:
-                //executeAdd(lstRec, true);
-                break;
-            case FETCH:
-                executeFetch(requestId, request, response);
-                break;
-            case REMOVE:
-                //executeRemove(lstRec);
-                break;
-            case UPDATE:
-                //executeAdd(lstRec, false);
-                break;
+        case ADD:
+            //executeAdd(lstRec, true);
+            break;
+        case FETCH:
+            executeFetch(requestId, request, response);
+            break;
+        case REMOVE:
+            //executeRemove(lstRec);
+            break;
+        case UPDATE:
+            //executeAdd(lstRec, false);
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
 
         return request.getData();
@@ -130,16 +126,15 @@ public class ResourceTreeDatasource extends DataSource {
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
 
-
         String p = request.getCriteria().getAttribute("parentId");
-//        System.out.println("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
+        //        System.out.println("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
 
         ResourceCriteria criteria = new ResourceCriteria();
 
         if (p == null) {
             System.out.println("DataSourceTree: Loading initial data");
 
-//            criteria.addFilterId(rootId);
+            //            criteria.addFilterId(rootId);
 
             processIncomingData(initialData, response, requestId);
             return;
@@ -152,7 +147,6 @@ public class ResourceTreeDatasource extends DataSource {
 
         // The server is already eager fetch resource type
         // * criteria.fetchResourceType(true);
-
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
@@ -168,20 +162,18 @@ public class ResourceTreeDatasource extends DataSource {
         });
     }
 
-
     private void processIncomingData(List<Resource> result, final DSResponse response, final String requestId) {
 
         ResourceTypeRepository.Cache.getInstance().loadResourceTypes(result,
-                EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children),
-                new ResourceTypeRepository.ResourceTypeLoadedCallback() {
-                    public void onResourceTypeLoaded(List<Resource> result) {
-                        response.setData(build(result));
-                        processResponse(requestId, response);
+            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children),
+            new ResourceTypeRepository.ResourceTypeLoadedCallback() {
+                public void onResourceTypeLoaded(List<Resource> result) {
+                    response.setData(build(result));
+                    processResponse(requestId, response);
 
-                    }
-                });
+                }
+            });
     }
-
 
     /**
      * Construct a set of TreeNodes from a list of resources
@@ -200,27 +192,25 @@ public class ResourceTreeDatasource extends DataSource {
         return introduceTypeFolders(records);
     }
 
-
     private static TreeNode[] introduceTypeFolders(ResourceTreeNode[] nodes) {
         ArrayList<TreeNode> built = new ArrayList<TreeNode>();
         HashMap<ResourceType, TypeTreeNode> types = new HashMap<ResourceType, TypeTreeNode>();
 
-
         for (ResourceTreeNode node : nodes) {
             built.add(node);
 
-            if (!types.containsKey(node.getResourceType()) && node.getResourceType().getCategory() != ResourceCategory.PLATFORM) {
-                TypeTreeNode typeNode = new TypeTreeNode(String.valueOf(node.getResource().getParentResource().getId()), node.getResourceType().getName());
+            if (!types.containsKey(node.getResourceType())
+                && node.getResourceType().getCategory() != ResourceCategory.PLATFORM) {
+                TypeTreeNode typeNode = new TypeTreeNode(
+                    String.valueOf(node.getResource().getParentResource().getId()), node.getResourceType().getName());
                 built.add(typeNode);
                 types.put(node.getResourceType(), typeNode);
             }
         }
 
-
         return built.toArray(new TreeNode[built.size()]);
 
     }
-
 
     private static boolean sameTypes(ResourceTreeNode[] nodes) {
         ResourceType first = nodes[0].getResourceType();
@@ -232,9 +222,7 @@ public class ResourceTreeDatasource extends DataSource {
         return true;
     }
 
-
     public static class TypeTreeNode extends TreeNode {
-
 
         private TypeTreeNode(String parentId, String type) {
             setID(parentId + "_" + type);
@@ -242,12 +230,11 @@ public class ResourceTreeDatasource extends DataSource {
 
             setAttribute("id", parentId + "_" + type);
             setAttribute("parentId", parentId);
-//            setAttribute("parentKey", parentId);
+            //            setAttribute("parentKey", parentId);
             setAttribute("name", type);
         }
 
     }
-
 
     public static class ResourceTreeNode extends TreeNode {
 
@@ -257,9 +244,10 @@ public class ResourceTreeDatasource extends DataSource {
             this.resource = resource;
 
             String id = String.valueOf(resource.getId());
-            String parentId = resource.getParentResource() == null ? null : (resource.getParentResource().getId() + "_" + resource.getResourceType().getName());
+            String parentId = resource.getParentResource() == null ? null
+                : (resource.getParentResource().getId() + "_" + resource.getResourceType().getName());
 
-//            System.out.println(id + " / " + parentId);
+            //            System.out.println(id + " / " + parentId);
 
             setID(id);
             setParentID(parentId);
@@ -267,17 +255,17 @@ public class ResourceTreeDatasource extends DataSource {
             setAttribute("id", id);
             setAttribute("parentId", parentId);
 
-//            setAttribute("parentKey", resource.getParentResource() == null ? 0 : (resource.getParentResource().getId() + resource.getResourceType().getName()));
+            //            setAttribute("parentKey", resource.getParentResource() == null ? 0 : (resource.getParentResource().getId() + resource.getResourceType().getName()));
 
             setAttribute("name", resource.getName());
             setAttribute("description", resource.getDescription());
-            setAttribute("currentAvailability",
-                    resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP
-                            ? "/images/icons/availability_green_16.png"
-                            : "/images/icons/availability_red_16.png");
+            setAttribute(
+                "currentAvailability",
+                resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "/images/icons/availability_green_16.png"
+                    : "/images/icons/availability_red_16.png");
 
-            setIsFolder((resource.getResourceType().getChildResourceTypes() != null &&
-                    !resource.getResourceType().getChildResourceTypes().isEmpty()));
+            setIsFolder((resource.getResourceType().getChildResourceTypes() != null && !resource.getResourceType()
+                .getChildResourceTypes().isEmpty()));
         }
 
         public Resource getResource() {
@@ -291,7 +279,6 @@ public class ResourceTreeDatasource extends DataSource {
         public ResourceType getResourceType() {
             return resource.getResourceType();
         }
-
 
         public String getParentId() {
             return getAttribute("parentId");

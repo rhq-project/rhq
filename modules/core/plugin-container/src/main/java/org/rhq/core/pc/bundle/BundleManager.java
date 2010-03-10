@@ -92,6 +92,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     }
 
     public long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception {
+        outputStream = remoteOutputStream(outputStream);
         long size = getBundleServerService().downloadPackageBits(packageVersion, outputStream);
         return size;
     }

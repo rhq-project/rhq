@@ -84,6 +84,11 @@ public class AlertsView extends VLayout {
                 AlertsView.this.dataSource.deleteAlerts(AlertsView.this);
             }
         });
+        this.table.addTableAction("Acknowledge", Table.SelectionEnablement.ANY, null, new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                AlertsView.this.dataSource.acknowledgeAlerts(AlertsView.this);
+            }
+        });
 
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent event) {
@@ -108,7 +113,7 @@ public class AlertsView extends VLayout {
         // Add the details panel as the bottom half of the view.
         HLayout detailsPane = new HLayout();
         detailsPane.setWidth100();
-        detailsPane.setHeight("50%");        
+        detailsPane.setHeight("50%");
         this.detailsContent = new HTMLFlow("Select a single alert above to display its details here.");
         this.detailsContent.setWidth100();
         detailsPane.addMember(this.detailsContent);

@@ -18,8 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import java.util.ArrayList;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
@@ -36,7 +35,8 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import java.util.ArrayList;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
 /**
  * @author Greg Hinkle
@@ -71,9 +71,7 @@ public class ResourceSearchView extends VLayout {
         searchPanel.setWrapItemTitles(false);
         searchPanel.setFields(searchBox);
 
-
         addMember(searchPanel);
-
 
         final ResourceDatasource datasource = new ResourceDatasource();
         table = new Table("Resources", criteria);
@@ -82,7 +80,6 @@ public class ResourceSearchView extends VLayout {
         table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
         table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
         table.getListGrid().setResizeFieldsInRealTime(true);
-
 
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
@@ -93,30 +90,24 @@ public class ResourceSearchView extends VLayout {
             }
         });
 
-
         ListGridField descriptionField = new ListGridField("description", "Description");
         ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
         ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
         ListGridField categoryField = new ListGridField("category", "Category", 60);
 
-
         ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
         availabilityField.setAlign(Alignment.CENTER);
-        table.getListGrid().setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
+        table.getListGrid().setFields(idField, nameField, descriptionField, typeNameField, pluginNameField,
+            categoryField, availabilityField);
 
-
-
-         table.addTableAction("Uninventory",
-                Table.SelectionEnablement.MULTIPLE,
-                "Are you sure you want to delete # resources?",
-                new TableAction() {
-                    public void executeAction(ListGridRecord[] selection) {
-                        table.getListGrid().removeSelectedData();
-                    }
-                });
+        table.addTableAction("Uninventory", Table.SelectionEnablement.MULTIPLE,
+            "Are you sure you want to delete # resources?", new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    table.getListGrid().removeSelectedData();
+                }
+            });
 
         addMember(table);
-
 
         searchBox.addKeyPressHandler(new KeyPressHandler() {
             public void onKeyPress(KeyPressEvent event) {
@@ -128,7 +119,7 @@ public class ResourceSearchView extends VLayout {
                         c = new Criteria();
                     }
 
-                    c.addCriteria("name",(String) searchBox.getValue());
+                    c.addCriteria("name", (String) searchBox.getValue());
 
                     long start = System.currentTimeMillis();
                     table.getListGrid().fetchData(c);
@@ -138,20 +129,14 @@ public class ResourceSearchView extends VLayout {
         });
     }
 
-
     public void addResourceSelectedListener(ResourceSelectListener listener) {
         selectListeners.add(listener);
     }
 
-
     // -------- Static Utility loaders ------------
 
-
     public static ResourceSearchView getChildrenOf(int resourceId) {
-        return new ResourceSearchView(new Criteria("parentId",String.valueOf(resourceId)));
+        return new ResourceSearchView(new Criteria("parentId", String.valueOf(resourceId)));
     }
-
-
-
 
 }

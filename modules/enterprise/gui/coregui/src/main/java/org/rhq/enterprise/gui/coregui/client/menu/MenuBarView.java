@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.menu;
 
+import java.util.LinkedHashMap;
+
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -26,9 +28,8 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuBar;
-import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
 
-import java.util.LinkedHashMap;
+import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
 
 /**
  * @author Greg Hinkle
@@ -45,37 +46,36 @@ public class MenuBarView extends HLayout {
         setHeight(30);
         setAlign(VerticalAlignment.BOTTOM);
         setAlign(Alignment.LEFT);
-/*
-        menuBar = new MenuBar();
-        menuBar.setBackgroundColor("gray");
-        
+        /*
+                menuBar = new MenuBar();
+                menuBar.setBackgroundColor("gray");
+                
 
-        Menu icon = new Menu();
-        icon.setTitle("iManage");
-        icon.addItem(new MenuItem("Dashboard"));
-        menuBar.addMenus(new Menu[]{icon},0);
+                Menu icon = new Menu();
+                icon.setTitle("iManage");
+                icon.addItem(new MenuItem("Dashboard"));
+                menuBar.addMenus(new Menu[]{icon},0);
 
-        Menu overview = new Menu();
-        overview.setTitle("Applications");
-        overview.addItem(new MenuItem("Content Configuration"));
-        overview.addItem(new MenuItem("Monitoring"));
-        overview.addItem(new MenuItem("Administration"));
-        menuBar.addMenus(new Menu[]{overview},1);
+                Menu overview = new Menu();
+                overview.setTitle("Applications");
+                overview.addItem(new MenuItem("Content Configuration"));
+                overview.addItem(new MenuItem("Monitoring"));
+                overview.addItem(new MenuItem("Administration"));
+                menuBar.addMenus(new Menu[]{overview},1);
 
-        Menu views = new Menu();
-        views.setTitle("Views");
-        views.addItem(new MenuItem("Problems"));
-        views.addItem(new MenuItem("Configuration Changes"));
-        views.addItem(new MenuItem("Content Changes"));
-        views.addItem(new MenuItem("Recent Administration"));
-        menuBar.addMenus(new Menu[]{views},2);
+                Menu views = new Menu();
+                views.setTitle("Views");
+                views.addItem(new MenuItem("Problems"));
+                views.addItem(new MenuItem("Configuration Changes"));
+                views.addItem(new MenuItem("Content Changes"));
+                views.addItem(new MenuItem("Recent Administration"));
+                menuBar.addMenus(new Menu[]{views},2);
 
-        menuBar.setWidth100();
+                menuBar.setWidth100();
 
-        addChild(menuBar);
-        setWidth100();*/
+                addChild(menuBar);
+                setWidth100();*/
     }
-
 
     @Override
     protected void onInit() {
@@ -94,8 +94,6 @@ public class MenuBarView extends HLayout {
 
         VLayout right = new VLayout();
 
-
-
         HLayout links = new HLayout(25);
 
         Hyperlink dashboardLink = new Hyperlink("Dashboard", "Dashboard");
@@ -107,7 +105,7 @@ public class MenuBarView extends HLayout {
         demoLink.setStylePrimaryName("TopSectionLink");
         links.addMember(demoLink);
 
-        Hyperlink resourcesLink = new Hyperlink("Resources", "Resources");
+        Hyperlink resourcesLink = new Hyperlink("Inventory", "Inventory");
         resourcesLink.setStylePrimaryName("TopSectionLink");
         links.addMember(resourcesLink);
 
@@ -119,10 +117,8 @@ public class MenuBarView extends HLayout {
         adminLink.setStylePrimaryName("TopSectionLink");
         links.addMember(adminLink);
 
-
         right.addMember(links);
         right.addMember(new SearchBarPane());
-
 
         addMember(right);
     }

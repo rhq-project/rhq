@@ -18,11 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
-
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -36,12 +32,17 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
+
 /**
  * @author Greg Hinkle
  */
-public class ResourcesView extends HLayout {
+public class InventoryView extends HLayout {
 
-    public static final String VIEW_PATH = "Resources";
+    public static final String VIEW_PATH = "Inventory";
 
     private SectionStack sectionStack;
     private Canvas contentCanvas;
@@ -72,7 +73,6 @@ public class ResourcesView extends HLayout {
         setContent(buildResourceSearchView());
     }
 
-
     private ResourceSearchView buildResourceSearchView() {
         ResourceSearchView searchView = new ResourceSearchView();
         searchView.addResourceSelectedListener(new ResourceSelectListener() {
@@ -84,64 +84,65 @@ public class ResourcesView extends HLayout {
         return searchView;
     }
 
-
     private SectionStackSection buildResourcesSection() {
-        final SectionStackSection section = new SectionStackSection("Resources");
+        final SectionStackSection section = new SectionStackSection("Inventory");
         section.setExpanded(true);
+
+        final TreeNode allResources = new TreeNode("All Resources");
+        final TreeNode onlyPlatforms = new TreeNode("Platforms");
+        final TreeNode onlyServers = new TreeNode("Servers");
+        final TreeNode onlyServices = new TreeNode("Services");
+        final TreeNode inventory = new TreeNode("Inventory", allResources, onlyPlatforms, onlyServers, onlyServices);
+
+        final TreeNode downServers = new TreeNode("Down Servers");
+        final TreeNode savedSearches = new TreeNode("Saved Searches", downServers);
 
         TreeGrid treeGrid = new TreeGrid();
         treeGrid.setShowHeader(false);
-
         Tree tree = new Tree();
-        final TreeNode savedSearches = new TreeNode("Saved Searches", new TreeNode("Down JBossAS (4)"));
-        final TreeNode manageRolesNode = new TreeNode("Global Saved Searches");
-        tree.setRoot(new TreeNode("security",
-                savedSearches,
-                manageRolesNode));
-
+        tree.setRoot(new TreeNode("security", inventory, savedSearches));
         treeGrid.setData(tree);
-
-
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getRecord() == savedSearches) {
+                if (selectionEvent.getRecord() == allResources) {
                     setContent(new ResourceSearchView());
-                } else if (selectionEvent.getRecord() == manageRolesNode) {
-                    setContent(new ResourceSearchView());
+                } else if (selectionEvent.getRecord() == onlyPlatforms) {
+                    setContent(new ResourceSearchView(new Criteria("category", "platform")));
+                } else if (selectionEvent.getRecord() == onlyServers) {
+                    setContent(new ResourceSearchView(new Criteria("category", "server")));
+                } else if (selectionEvent.getRecord() == onlyServices) {
+                    setContent(new ResourceSearchView(new Criteria("category", "service")));
+                } else if (selectionEvent.getRecord() == downServers) {
+                    setContent(new ResourceSearchView(new Criteria("availability", "down")));
                 }
+
             }
         });
 
-
         section.addItem(treeGrid);
-
 
         return section;
     }
 
-
     private SectionStackSection buildGroupsSection() {
-        final SectionStackSection section = new SectionStackSection("Resource Groups");
+        final SectionStackSection section = new SectionStackSection("Groups");
         section.setExpanded(true);
+
+        final TreeNode allGroups = new TreeNode("All Groups");
+        final TreeNode onlyCompatible = new TreeNode("Compatible");
+        final TreeNode onlyMixed = new TreeNode("Mixed");
+        final TreeNode groupGroupDefinitions = new TreeNode("Group Definitions");
+        final TreeNode inventory = new TreeNode("Inventory", allGroups, onlyCompatible, onlyMixed,
+            groupGroupDefinitions);
+
+        final TreeNode problemGroups = new TreeNode("Problem Groups");
+        final TreeNode savedSearches = new TreeNode("Saved Searches", problemGroups);
 
         TreeGrid treeGrid = new TreeGrid();
         treeGrid.setShowHeader(false);
-
         Tree tree = new Tree();
-        final TreeNode groupsNode = new TreeNode("Groups");
-        final TreeNode groupDefinitions = new TreeNode("DynaGroups");
-        final TreeNode manageAffinityGroupsNode = new TreeNode("Special Groups");
-        final TreeNode managePartitionEventsNode = new TreeNode("Greg's Groups");
-
-        tree.setRoot(new TreeNode("clustering",
-                groupsNode,
-                groupDefinitions,
-                manageAffinityGroupsNode,
-                managePartitionEventsNode));
-
+        tree.setRoot(new TreeNode("clustering", inventory, savedSearches));
         treeGrid.setData(tree);
-
-
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 HTMLPane pane = new HTMLPane();
@@ -150,19 +151,17 @@ public class ResourcesView extends HLayout {
                 pane.setHeight100();
 
                 String url = null;
-                if (selectionEvent.getRecord() == groupsNode) {
+                if (selectionEvent.getRecord() == allGroups) {
                     setContent(new ResourceGroupListView());
-                    return;
-                } else if (selectionEvent.getRecord() == groupDefinitions) {
+                } else if (selectionEvent.getRecord() == onlyCompatible) {
+                    setContent(new ResourceGroupListView(new Criteria("category", "compatible")));
+                } else if (selectionEvent.getRecord() == onlyMixed) {
+                    setContent(new ResourceGroupListView(new Criteria("category", "mixed")));
+                } else if (selectionEvent.getRecord() == groupGroupDefinitions) {
                     setContent(new GroupDefinitionListView());
-                    return;
-                } else if (selectionEvent.getRecord() == manageAffinityGroupsNode) {
-                    url = "/rhq/ha/listAffinityGroups.xhtml";
-                } else if (selectionEvent.getRecord() == managePartitionEventsNode) {
-                    url = "/rhq/ha/listPartitionEvents.xhtml";
+                } else if (selectionEvent.getRecord() == problemGroups) {
+                    setContent(new ResourceGroupListView(new Criteria("availability", "down")));
                 }
-                pane.setContentsURL(url + "?nomenu=true");
-                setContent(pane);
 
             }
         });

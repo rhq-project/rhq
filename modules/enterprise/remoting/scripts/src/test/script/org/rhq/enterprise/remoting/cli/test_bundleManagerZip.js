@@ -28,7 +28,7 @@
 
 var TestsEnabled = true;
 
-var bundleName = 'testScriptBundle';
+var bundleName = 'testScriptBundleZip';
 
 // note, super-user, will not test any security constraints
 var subject = rhq.login('rhqadmin', 'rhqadmin');
@@ -55,23 +55,29 @@ function testDeployment() {
    var testBundle = BundleManager.createBundle( bundleName, getBundleType() );
    
    // define the recipe for bundleVersion 1.0 
-   var recipe = "file -s testBundle.war -d <%bundleTest.deployHome%>/testBundle.war"
-      
+   var recipe = "deploy -f dummy.zip -d <%dummy.deployHome%>\n"
+              + "realize -f <%dummy.deployHome%>/dummy/README.txt\n"
+              + "realize -f <%dummy.deployHome%>/dummy/subdirectory/file.txt";
+
    // create bundleVersion 1.0
    var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, null, recipe);
 
    // add the single bundleFile, the test war file
-   var fileBytes = scriptUtil.getFileBytes("./src/test/resources/testBundle.war"); 
-   var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "testBundle.war",
+   var fileBytes = scriptUtil.getFileBytes("./src/test/resources/dummy.zip"); 
+   var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "dummy.zip",
          "1.0", null, fileBytes, false);
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
-   var property = new PropertySimple("bundleTest.deployHome", "/tmp/bundle-test");
+   var property = new PropertySimple("dummy.deployHome", "/tmp/bundle-test");
    config.put( property );
+   var property2 = new PropertySimple("dummy.name", "NAME REPLACED HERE!!!");
+   config.put( property2 );
+   var property3 = new PropertySimple("dummy.description", "FLOPPY!!!");
+   config.put( property3 );
 
    // create a deploy def using the above config
-   var testDeployDef = BundleManager.createBundleDeployDefinition(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", config, false, -1, false);
+   var testDeployDef = BundleManager.createBundleDeployDefinition(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", config, false, -1, false);
 
    // Find a target platform
    var rc = new ResourceCriteria();

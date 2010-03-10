@@ -15,13 +15,7 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<ui:composition template="/rhq/resource/layout/main.xhtml">
-
-<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Metric Schedules"/>
-<ui:param name="selectedTabName" value="Monitor.Schedules"/>
-
-<ui:define name="content">
-
+<body>
     <h:outputText rendered="#{not ResourceUIBean.permissions.measure}" value="You don't have the measure permission for this resource and therefore can not change metric schedules"/>
 
 
@@ -171,9 +165,5 @@
 
          </rich:panel>
       </h:form>
-
-</ui:define>
-
-</ui:composition>
-
+</body>
 </html>

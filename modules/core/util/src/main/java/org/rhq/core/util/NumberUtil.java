@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.util;
 
 import java.text.NumberFormat;
@@ -70,6 +70,27 @@ public final class NumberUtil {
      */
     public static String percentageAsString(double input) {
         return _format(input, NumberFormat.getPercentInstance());
+    }
+
+    /**
+     * Given an old version string, this attempts to auto-generate a new incremented version.
+     * 
+     * @param oldVersion the version to increment
+     * @return the auto-incremented version
+     */
+    public static String autoIncrementVersion(String oldVersion) {
+        String newVersion = "1.0";
+        if (oldVersion != null && oldVersion.length() != 0) {
+            String[] parts = oldVersion.split("[^a-zA-Z0-9]");
+            String lastPart = parts[parts.length - 1];
+            try {
+                int lastNumber = Integer.parseInt(lastPart);
+                newVersion = oldVersion.substring(0, oldVersion.length() - lastPart.length()) + (lastNumber + 1);
+            } catch (NumberFormatException nfe) {
+                newVersion = oldVersion + ".1";
+            }
+        }
+        return newVersion;
     }
 
     //------------------------------------------------------------------

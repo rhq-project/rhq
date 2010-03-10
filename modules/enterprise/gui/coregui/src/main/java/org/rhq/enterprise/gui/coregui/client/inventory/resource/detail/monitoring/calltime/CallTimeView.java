@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -86,16 +87,11 @@ public class CallTimeView extends Layout {
                                                             scheduleId = s.getId();
 
                                                             setup();
+                                                            return;
                                                         }
-
-
                                                     }
-
-
                                                 }
-
-
-
+                                                setupNone();
                                             }
                                         }
                                         );
@@ -113,6 +109,9 @@ public class CallTimeView extends Layout {
 
     }
 
+    public void setupNone() {
+        addMember(new Label("No calltime data available for this resource"));
+    }
 
     public void setup() {
 

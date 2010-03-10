@@ -23,7 +23,6 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -66,6 +65,7 @@ public class BundleInfoStep implements WizardStep {
                     }
                     wizard.setSubtitle(value.toString());
                     wizard.setBundleName(value.toString());
+                    enableNextButtonWhenAppropriate();
                 }
             });
 
@@ -79,6 +79,7 @@ public class BundleInfoStep implements WizardStep {
                         value = "";
                     }
                     wizard.setBundleVersionString(value.toString());
+                    enableNextButtonWhenAppropriate();
                 }
             });
 
@@ -90,6 +91,7 @@ public class BundleInfoStep implements WizardStep {
                         value = "";
                     }
                     wizard.setBundleDescription(value.toString());
+                    enableNextButtonWhenAppropriate();
                 }
             });
 
@@ -100,6 +102,7 @@ public class BundleInfoStep implements WizardStep {
             bundleServer.getBundleTypes(new AsyncCallback<List<BundleType>>() {
                 public void onSuccess(List<BundleType> result) {
                     wizard.setBundleType(result.get(0));
+                    enableNextButtonWhenAppropriate();
                 }
 
                 public void onFailure(Throwable caught) {
@@ -111,7 +114,6 @@ public class BundleInfoStep implements WizardStep {
     }
 
     public boolean nextPage() {
-        FormItem nameField = form.getField("name");
         return form.validate();
     }
 
@@ -119,4 +121,20 @@ public class BundleInfoStep implements WizardStep {
         return "Provide Bundle Information";
     }
 
+    public boolean isNextEnabled() {
+        return isNotEmpty(this.wizard.getBundleName()) && isNotEmpty(this.wizard.getBundleVersionString())
+            && this.wizard.getBundleType() != null;
+    }
+
+    public boolean isPreviousEnabled() {
+        return false;
+    }
+
+    private void enableNextButtonWhenAppropriate() {
+        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
+    }
+
+    private boolean isNotEmpty(String s) {
+        return (s != null && s.trim().length() > 0);
+    }
 }

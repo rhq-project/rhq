@@ -117,18 +117,21 @@ public class WizardView extends VLayout {
 
     private void setupButtons() {
         cancelButton = new IButton("Cancel");
+        cancelButton.setDisabled(false);
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 wizardWindow.destroy();
             }
         });
         previousButton = new IButton("Previous");
+        previousButton.setDisabled(true);
         previousButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 setStep(currentStep - 1);
             }
         });
         nextButton = new IButton("Next");
+        nextButton.setDisabled(true);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 
@@ -154,9 +157,18 @@ public class WizardView extends VLayout {
 
         stepTitleLabel.setContents(step.getName());
 
-        previousButton.setDisabled(stepIndex == 0);
+        if (stepIndex == 0) {
+            previousButton.setDisabled(true);
+        } else {
+            previousButton.setDisabled(step.isNextEnabled());
+        }
+
         boolean last = (stepIndex == (wizard.getSteps().size() - 1));
-        nextButton.setDisabled(last);
+        if (last) {
+            nextButton.setDisabled(true);
+        } else {
+            nextButton.setDisabled(step.isPreviousEnabled());
+        }
 
         for (IButton button : customButtons) {
             buttonBar.removeMember(button);
@@ -198,5 +210,21 @@ public class WizardView extends VLayout {
 
     public void closeDialog() {
         wizardWindow.destroy();
+    }
+
+    public IButton getCancelButton() {
+        return cancelButton;
+    }
+
+    public IButton getPreviousButton() {
+        return previousButton;
+    }
+
+    public IButton getNextButton() {
+        return nextButton;
+    }
+
+    public ArrayList<IButton> getCustomButtons() {
+        return customButtons;
     }
 }

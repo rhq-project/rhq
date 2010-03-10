@@ -56,4 +56,19 @@ public class BundleUploadDataStep implements WizardStep {
         return "Upload Bundle Files";
     }
 
+    public boolean isNextEnabled() {
+        return true;
+    }
+
+    public boolean isPreviousEnabled() {
+        return false;
+    }
+
+    private void enableNextButtonWhenAppropriate() {
+        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
+    }
+
+    private void enablePreviousButtonWhenAppropriate() {
+        this.wizard.getView().getPreviousButton().setDisabled(!isPreviousEnabled());
+    }
 }

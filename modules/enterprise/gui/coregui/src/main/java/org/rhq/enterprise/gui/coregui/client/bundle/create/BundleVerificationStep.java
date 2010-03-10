@@ -59,11 +59,14 @@ public class BundleVerificationStep implements WizardStep {
                 public void onSuccess(BundleVersion result) {
                     verifyingImage.setSrc("/images/status_complete.gif");
                     wizard.setBundleVersion(result);
+                    enableNextButtonWhenAppropriate();
                 }
 
                 public void onFailure(Throwable caught) {
                     verifyingImage.setSrc("/images/status_error.gif");
                     CoreGUI.getErrorHandler().handleError("Failed to create bundle: " + caught.getMessage(), caught);
+                    wizard.setBundleVersion(null);
+                    enableNextButtonWhenAppropriate();
                 }
             });
         return hlayout;
@@ -77,4 +80,15 @@ public class BundleVerificationStep implements WizardStep {
         return "Verify Recipe";
     }
 
+    public boolean isNextEnabled() {
+        return this.wizard.getBundleVersion() != null;
+    }
+
+    public boolean isPreviousEnabled() {
+        return true;
+    }
+
+    private void enableNextButtonWhenAppropriate() {
+        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
+    }
 }

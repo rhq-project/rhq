@@ -18,16 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create;
 
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
-
 
 /**
  * @author Greg Hinkle
@@ -47,7 +45,9 @@ public class OperationParametersStep implements WizardStep {
         if (definition.getParametersConfigurationDefinition() != null) {
             if (configurationEditor == null) {
                 ConfigurationDefinition configurationDefinition = definition.getParametersConfigurationDefinition();
-                Configuration defaultConfiguration = configurationDefinition.getDefaultTemplate() != null ? configurationDefinition.getDefaultTemplate().createConfiguration() : new Configuration();
+                Configuration defaultConfiguration = configurationDefinition.getDefaultTemplate() != null ? configurationDefinition
+                    .getDefaultTemplate().createConfiguration()
+                    : new Configuration();
                 configurationEditor = new ConfigurationEditor(configurationDefinition, defaultConfiguration);
             }
             return configurationEditor;
@@ -57,15 +57,22 @@ public class OperationParametersStep implements WizardStep {
     }
 
     public boolean nextPage() {
-        return true;  // TODO: Implement this method.
+        return true; // TODO: Implement this method.
     }
 
     public String getName() {
         return "Operation Parameters";
     }
 
-
     public Configuration getParameterConfiguration() {
         return configurationEditor.getConfiguration();
+    }
+
+    public boolean isNextEnabled() {
+        return true;
+    }
+
+    public boolean isPreviousEnabled() {
+        return true;
     }
 }

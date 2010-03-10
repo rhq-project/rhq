@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import java.util.Date;
 
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.TimeFormatter;
@@ -34,9 +34,8 @@ import com.smartgwt.client.widgets.form.fields.IntegerItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.TimeItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
-import com.smartgwt.client.widgets.form.validator.DateRangeValidator;
 
-import java.util.Date;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 /**
  * @author Greg Hinkle
@@ -62,9 +61,6 @@ public class OperationSchedulingStep implements WizardStep {
             start.setRedrawOnChange(true);
             start.setValue("Immediately");
 
-
-
-
             HeaderItem scheduleHeader = new HeaderItem("scheduleHeader");
             scheduleHeader.setValue("Schedule");
             scheduleHeader.setShowIfCondition(new FormItemIfFunction() {
@@ -72,8 +68,6 @@ public class OperationSchedulingStep implements WizardStep {
                     return !"Immediately".equals(form.getValueAsString("start"));
                 }
             });
-
-
 
             RadioGroupItem recurr = new RadioGroupItem("recurr", "Recurrence");
             recurr.setValueMap("Once", "Daily", "Weekly", "Monthly");
@@ -85,39 +79,33 @@ public class OperationSchedulingStep implements WizardStep {
                 }
             });
 
-
-
-
-
             CanvasItem onceItem = new CanvasItem("once", "Run At");
             onceItem.setShowTitle(false);
             onceItem.setCanvas(getOnceForm());
             onceItem.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            "Once".equals(form.getValueAsString("recurr"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && "Once".equals(form.getValueAsString("recurr"));
                 }
             });
-
 
             CanvasItem dailyItem = new CanvasItem("daily", "Days");
             dailyItem.setShowTitle(false);
             dailyItem.setCanvas(getDailyForm());
             dailyItem.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            "Daily".equals(form.getValueAsString("recurr"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && "Daily".equals(form.getValueAsString("recurr"));
                 }
             });
-
 
             CanvasItem weeklyItem = new CanvasItem("weekly", "Weekly");
             weeklyItem.setShowTitle(false);
             weeklyItem.setCanvas(getWeeklyForm());
             weeklyItem.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            "Weekly".equals(form.getValueAsString("recurr"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && "Weekly".equals(form.getValueAsString("recurr"));
                 }
             });
 
@@ -126,20 +114,17 @@ public class OperationSchedulingStep implements WizardStep {
             monthlyItem.setCanvas(getMonthlyForm());
             monthlyItem.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            "Monthly".equals(form.getValueAsString("recurr"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && "Monthly".equals(form.getValueAsString("recurr"));
                 }
             });
-
-
-
 
             HeaderItem rangeHeader = new HeaderItem("timePeriod");
             rangeHeader.setValue("Time Period");
             rangeHeader.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            !"Once".equals(form.getValueAsString("recurr"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && !"Once".equals(form.getValueAsString("recurr"));
                 }
             });
 
@@ -148,18 +133,16 @@ public class OperationSchedulingStep implements WizardStep {
             startDate.setStartDate(new Date());
             startDate.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            !"Once".equals(form.getValueAsString("recurr"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && !"Once".equals(form.getValueAsString("recurr"));
                 }
             });
-
-
 
             final RadioGroupItem end = new RadioGroupItem("endType", "Recurrence End");
             end.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            !"Once".equals(form.getValueAsString("recurr"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && !"Once".equals(form.getValueAsString("recurr"));
                 }
             });
             end.setStartRow(true);
@@ -172,24 +155,23 @@ public class OperationSchedulingStep implements WizardStep {
             endDate.setStartDate(new Date());
             endDate.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            !"Once".equals(form.getValueAsString("recurr")) &&
-                            !"Never".equals(form.getValueAsString("endType"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && !"Once".equals(form.getValueAsString("recurr"))
+                        && !"Never".equals(form.getValueAsString("endType"));
                 }
             });
             endDate.setValidators(new CustomValidator() {
                 @Override
                 protected boolean condition(Object o) {
-                    return (((Date)form.getValue("startDate")).before((Date)o));
+                    return (((Date) form.getValue("startDate")).before((Date) o));
                 }
             });
 
-
-            form.setItems(start, scheduleHeader, recurr, onceItem, dailyItem, weeklyItem, monthlyItem, rangeHeader, startDate, end, endDate);
+            form.setItems(start, scheduleHeader, recurr, onceItem, dailyItem, weeklyItem, monthlyItem, rangeHeader,
+                startDate, end, endDate);
         }
         return form;
     }
-
 
     private DynamicForm getOnceForm() {
         DynamicForm form = new DynamicForm();
@@ -205,7 +187,6 @@ public class OperationSchedulingStep implements WizardStep {
         return form;
     }
 
-
     private DynamicForm getWeeklyForm() {
         DynamicForm form = new DynamicForm();
         form.setWrapItemTitles(false);
@@ -214,7 +195,7 @@ public class OperationSchedulingStep implements WizardStep {
         timeOfDay.setDisplayFormat(TimeFormatter.TOSHORTPADDEDTIME);
         timeOfDay.setUseMask(true);
 
-        String[] days = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+        String[] days = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
         FormItem[] items = new FormItem[8];
         items[0] = timeOfDay;
         int i = 1;
@@ -230,7 +211,6 @@ public class OperationSchedulingStep implements WizardStep {
     private DynamicForm getDailyForm() {
         DynamicForm form = new DynamicForm();
         form.setWrapItemTitles(false);
-
 
         TimeItem timeOfDay = new TimeItem("timeOfDay", "Time Of Day");
         timeOfDay.setDisplayFormat(TimeFormatter.TOSHORTPADDEDTIME);
@@ -255,13 +235,19 @@ public class OperationSchedulingStep implements WizardStep {
         return form;
     }
 
-
     public boolean nextPage() {
-        return true;  // TODO: Implement this method.
+        return true; // TODO: Implement this method.
     }
 
     public String getName() {
         return "Schedule";
     }
 
+    public boolean isNextEnabled() {
+        return true;
+    }
+
+    public boolean isPreviousEnabled() {
+        return true;
+    }
 }

@@ -88,6 +88,10 @@ public class BundleCreationWizard implements Wizard {
         view.displayDialog();
     }
 
+    public WizardView getView() {
+        return view;
+    }
+
     public BundleType getBundleType() {
         return bundleType;
     }

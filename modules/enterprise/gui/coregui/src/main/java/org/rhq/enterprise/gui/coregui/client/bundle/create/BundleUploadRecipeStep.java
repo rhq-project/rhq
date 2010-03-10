@@ -74,7 +74,7 @@ public class BundleUploadRecipeStep implements WizardStep {
                 }
             });
 
-            final TextAreaItem recipe = new TextAreaItem("recipe", "Recipe");
+            final TextAreaItem recipe = new TextAreaItem("recipe");
             recipe.setShowTitle(false);
             recipe.setRequired(true);
             recipe.setWidth("*");
@@ -86,6 +86,7 @@ public class BundleUploadRecipeStep implements WizardStep {
                         value = "";
                     }
                     wizard.setRecipe(value.toString());
+                    enableNextButtonWhenAppropriate();
                 }
             });
 
@@ -95,6 +96,7 @@ public class BundleUploadRecipeStep implements WizardStep {
                     recipe.setValue(event.getResults());
                     form.showItem("showUpload");
                     form.hideItem("upload");
+                    enableNextButtonWhenAppropriate();
                 }
             });
 
@@ -112,4 +114,15 @@ public class BundleUploadRecipeStep implements WizardStep {
         return "Provide Bundle Recipe";
     }
 
+    public boolean isNextEnabled() {
+        return this.wizard.getRecipe() != null && this.wizard.getRecipe().trim().length() > 0;
+    }
+
+    public boolean isPreviousEnabled() {
+        return true;
+    }
+
+    private void enableNextButtonWhenAppropriate() {
+        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
+    }
 }

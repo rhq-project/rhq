@@ -160,14 +160,14 @@ public class WizardView extends VLayout {
         if (stepIndex == 0) {
             previousButton.setDisabled(true);
         } else {
-            previousButton.setDisabled(step.isNextEnabled());
+            previousButton.setDisabled(!step.isPreviousEnabled());
         }
 
         boolean last = (stepIndex == (wizard.getSteps().size() - 1));
         if (last) {
             nextButton.setDisabled(true);
         } else {
-            nextButton.setDisabled(step.isPreviousEnabled());
+            nextButton.setDisabled(!step.isNextEnabled());
         }
 
         for (IButton button : customButtons) {

@@ -131,7 +131,11 @@ public class WizardView extends VLayout {
         nextButton = new IButton("Next");
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                setStep(currentStep + 1);
+
+                WizardStep step = wizard.getSteps().get(currentStep);
+                if (step.nextPage()) {
+                    setStep(currentStep + 1);
+                }
             }
         });
 

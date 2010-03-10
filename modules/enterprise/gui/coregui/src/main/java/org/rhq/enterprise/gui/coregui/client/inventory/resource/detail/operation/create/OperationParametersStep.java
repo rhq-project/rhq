@@ -56,8 +56,8 @@ public class OperationParametersStep implements WizardStep {
         }
     }
 
-    public boolean valid() {
-        return false;  // TODO: Implement this method.
+    public boolean nextPage() {
+        return true;  // TODO: Implement this method.
     }
 
     public String getName() {

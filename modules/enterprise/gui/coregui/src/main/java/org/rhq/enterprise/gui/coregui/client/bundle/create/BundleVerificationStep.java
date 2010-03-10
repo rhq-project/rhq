@@ -38,7 +38,7 @@ public class BundleVerificationStep implements WizardStep {
         return new Label("Todo: implement me");
     }
 
-    public boolean valid() {
+    public boolean nextPage() {
         return false; // TODO: Implement this method.
     }
 

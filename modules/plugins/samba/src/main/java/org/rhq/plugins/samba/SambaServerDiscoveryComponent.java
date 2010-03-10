@@ -18,15 +18,65 @@
  */
 package org.rhq.plugins.samba;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
-
-import java.util.Set;
 
 public class SambaServerDiscoveryComponent extends AugeasConfigurationDiscoveryComponent {
 
-    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
-        return super.discoverResources(resourceDiscoveryContext);
+    private static final Pattern netBiosNamePattern = Pattern.compile("[\\s]*netbios[\\s]*name[\\s]*=[\\s]*(.*)[\\s]*");
+    
+    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {        
+        Set<DiscoveredResourceDetails> resources = super.discoverResources(resourceDiscoveryContext);
+        for (DiscoveredResourceDetails detail : resources){
+            Configuration config = detail.getPluginConfiguration();
+            PropertySimple property = (PropertySimple) config.get(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+            String configFilePath = property.getStringValue();
+            String resourceName;
+            
+            try {
+              resourceName = findNetBiosName(configFilePath);
+            }catch(Exception e){
+              resourceName = resourceDiscoveryContext.getSystemInformation().getHostname();    
+            }
+            detail.setResourceName(resourceName);
+        }
+        return resources;
+    }
+    
+    private String findNetBiosName(String includeFile) throws Exception{       
+        try {
+            File file = new File(includeFile);
+            if (file.exists()) {
+                FileInputStream fstream = new FileInputStream(file);
+                BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+                String strLine;
+                while ((strLine = br.readLine()) != null) {
+                    Matcher m = netBiosNamePattern.matcher(strLine);
+                    if (m.matches()) {
+                        String glob = m.group(1);
+
+                       return glob;
+                    }                   
+                }
+                br.close();
+            }
+           }
+          catch (Exception e) {
+            throw new Exception("NetBios name was not found in configuration file "+ includeFile + " cause:",e);
+        }
+          throw new Exception("NetBios name was not found in configuration file "+ includeFile);
     }
 }

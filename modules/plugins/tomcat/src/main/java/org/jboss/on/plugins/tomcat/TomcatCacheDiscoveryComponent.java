@@ -59,8 +59,6 @@ public class TomcatCacheDiscoveryComponent extends MBeanResourceDiscoveryCompone
             pluginConfiguration.put(new PropertySimple(TomcatCacheComponent.PROPERTY_HOST, host));
             pluginConfiguration.put(new PropertySimple(TomcatCacheComponent.PROPERTY_PATH, path));
             String resourceName = detail.getResourceName();
-            resourceName = resourceName.replace("{host}", host);
-            resourceName = resourceName.replace("{path}", path);
             detail.setResourceName(resourceName);
         }
         return resources;

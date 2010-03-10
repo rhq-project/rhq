@@ -26,9 +26,11 @@ import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -36,6 +38,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ResourceGroupSummaryUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ResourceGroupSummaryUIBean";
 
+    private static final IntExtractor<ResourceWithAvailability> RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceWithAvailability>() {       
+        public int extract(ResourceWithAvailability object) {
+            return object.getResource().getId();
+        }
+    };
+    
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
@@ -46,15 +54,15 @@ public class ResourceGroupSummaryUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    protected class ListResourceGroupMembersDataModel extends PagedListDataModel<ResourceWithAvailability> {
+    protected class ListResourceGroupMembersDataModel extends ResourceNameDisambiguatingPagedListDataModel<ResourceWithAvailability> {
         private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
         public ListResourceGroupMembersDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
         @Override
-        public PageList<ResourceWithAvailability> fetchPage(PageControl pageControl) {
+        public PageList<ResourceWithAvailability> fetchDataForPage(PageControl pageControl) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
 
@@ -63,6 +71,10 @@ public class ResourceGroupSummaryUIBean extends PagedDataTableUIBean {
                         resourceGroup, pageControl);
 
             return results;
+        }
+        
+        protected IntExtractor<ResourceWithAvailability> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRACTOR;
         }
     }
 

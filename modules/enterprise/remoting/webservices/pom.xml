@@ -79,7 +79,20 @@
          <version>${testng.version}</version>
          <classifier>jdk15</classifier>
       </dependency>
+      
+      <dependency>
+         <groupId>hibernate</groupId>
+         <artifactId>hibernate3</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>compile</scope> <!-- by JBossAS -->
+      </dependency>
 
+      <dependency>
+         <groupId>hibernate-annotations</groupId>
+         <artifactId>hibernate-annotations</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>compile</scope> <!-- by JBossAS -->
+      </dependency>
    </dependencies>
 
    <build>

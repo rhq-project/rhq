@@ -180,22 +180,17 @@ groupId - the group id of the Group being accessed
                     </f:facet>
 
                     <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                        <f:param name="id" value="#{resourceWithAvailability.resource.id}"/>
-                        <h:outputText value="#{resourceWithAvailability.resource.name}"/>
+                        <f:param name="id" value="#{resourceWithAvailability.original.resource.id}"/>
+                        <h:outputText value="#{resourceWithAvailability.original.resource.name}"/>
                     </h:outputLink>
                 </rich:column>
 
                 <rich:column>
                     <f:facet name="header">
-                        <onc:sortableColumnHeader sort="parent.name">
-                            <h:outputText styleClass="headerText" value="Parent"/>
-                        </onc:sortableColumnHeader>
+                        <h:outputText styleClass="headerText" value="Parent"/>
                     </f:facet>
 
-                    <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                        <f:param name="id" value="#{resourceWithAvailability.parent.id}"/>
-                        <h:outputText value="#{resourceWithAvailability.parent.name}"/>
-                    </h:outputLink>
+                    <onc:resourcePartialLineage parents="#{resourceWithAvailability.parents}"/>
                 </rich:column>
 
 
@@ -207,11 +202,11 @@ groupId - the group id of the Group being accessed
                     </f:facet>
 
                     <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up"
-                                    rendered="#{resourceWithAvailability.availability == 'UP'}"/>
+                                    rendered="#{resourceWithAvailability.original.availability == 'UP'}"/>
                     <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down"
-                                    rendered="#{resourceWithAvailability.availability == 'DOWN'}"/>
+                                    rendered="#{resourceWithAvailability.original.availability == 'DOWN'}"/>
                     <h:graphicImage value="/images/icons/availability_grey_16.png" alt="Unknown" title="Unknown"
-                                    rendered="#{resourceWithAvailability.availability == null}"/>
+                                    rendered="#{resourceWithAvailability.original.availability == null}"/>
                 </rich:column>
 
                 <f:facet name="footer">

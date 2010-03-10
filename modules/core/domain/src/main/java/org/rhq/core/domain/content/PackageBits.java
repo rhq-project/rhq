@@ -24,15 +24,21 @@ package org.rhq.core.domain.content;
 
 import java.io.Serializable;
 
+import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlTransient;
+
+import org.hibernate.lob.SerializableBlob;
 
 /**
  * Contains the actual package contents ("the bits") for a particular {@link PackageVersion}.
@@ -68,8 +74,11 @@ public class PackageBits implements Serializable {
     @Id
     private int id;
 
+    @Lob
+    @Basic(fetch=FetchType.LAZY)
     @Column(name = "BITS", nullable = true)
-    private byte[] bits;
+    @XmlTransient
+    private SerializableBlob bits;
 
     public PackageBits() {
         // for JPA use
@@ -89,11 +98,12 @@ public class PackageBits implements Serializable {
      * When <code>null</code> is returned, it is assumed that who ever needs the content can know where to find it based
      * on the {@link PackageVersion} details.
      */
-    public byte[] getBits() {
+    @XmlTransient
+    public SerializableBlob getBits() {
         return bits;
     }
 
-    public void setBits(byte[] bits) {
+    public void setBits(SerializableBlob bits) {
         this.bits = bits;
     }
 }

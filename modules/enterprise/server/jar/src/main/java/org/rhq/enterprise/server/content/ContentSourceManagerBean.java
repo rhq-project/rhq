@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -43,6 +44,8 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
+import javax.persistence.FlushModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -50,10 +53,10 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.hibernate.lob.BlobImpl;
+import org.hibernate.lob.SerializableBlob;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.util.StringPropertyReplacer;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Advisory;
@@ -785,7 +788,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     @TransactionTimeout(45 * 60)
     public PackageBits downloadPackageBits(Subject subject, PackageVersionContentSource pvcs) {
         PackageVersionContentSourcePK pk = pvcs.getPackageVersionContentSourcePK();
@@ -827,6 +830,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             try {
                 packageBits = new PackageBits();
+             //   packageBits.setBits(new SerializableBlob(new BlobImpl(new byte[0])));
                 entityManager.persist(packageBits);
 
                 PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
@@ -835,14 +839,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 entityManager.flush(); // push the new package bits row to the DB
 
                 if (pk.getContentSource().getDownloadMode() == DownloadMode.DATABASE) {
-                    // fallback to JDBC so we can stream the data to the blob column
-                    conn = dataSource.getConnection();
-                    ps = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET BITS = ? WHERE ID = ?");
-                    ps.setBinaryStream(1, bitsStream, pv.getFileSize().intValue());
-                    ps.setInt(2, packageBits.getId());
-                    if (ps.executeUpdate() != 1) {
-                        throw new Exception("Did not download the package bits to the DB for [" + pv + "]");
-                    }
+                    
+                    PackageBits bits = entityManager.find(PackageBits.class, packageBits.getId());
+                    SerializableBlob blb = new SerializableBlob(new BlobImpl(bitsStream,(int)pv.getFileSize().intValue()));
+                    bits.setBits(blb);
+                   
+                    entityManager.merge(bits);
+                    entityManager.flush();   
+                    bitsStream = null; 
+                   
                 } else {
                     // store content to local file system
                     File outputFile = getPackageBitsLocalFileAndCreateParentDir(pv.getId(), pv.getFileName());
@@ -1876,18 +1881,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 bitsStream = adapterMgr.loadPackageBits(contentSourceId, pvcs.getLocation());
             } else {
                 if (composite.isPackageBitsInDatabase()) {
-                    // this is  DownloadMode.DATABASE - put the bits in the database
-                    conn = dataSource.getConnection();
-                    ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ?");
+                    // this is  DownloadMode.DATABASE - put the bits in the database                                     
 
-                    ps.setInt(1, composite.getPackageBitsId());
-                    results = ps.executeQuery();
-                    results.next();
-                    bitsStream = results.getBinaryStream(1);
-                    if (bitsStream == null) {
-                        throw new RuntimeException("Got null for package bits stream from DB for [" + packageDetailsKey
-                            + "]");
-                    }
+                    PackageBits bits = entityManager.find(PackageBits.class, composite.getPackageBitsId());
+                    bitsStream = bits.getBits().getBinaryStream();
+                    
                 } else {
                     // this is  DownloadMode.FILESYSTEM - put the bits on the filesystem
                     File bitsFile = getPackageBitsLocalFileAndCreateParentDir(composite.getPackageVersionId(),
@@ -1913,7 +1911,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 long length = (endByte - startByte) + 1;
                 bytesRetrieved = StreamUtil.copy(bis, outputStream, startByte, length);
             }
-
+           
             // close our stream but leave the output stream open
             try {
                 bitsStream.close();

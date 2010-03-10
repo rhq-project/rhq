@@ -339,7 +339,7 @@
                   <c:simple-property name="schema" displayName="Scheme" type="string" description="The scheme of the protocol used by this connector (e.g. jk, ajp, http, https)." default="http"/>
                </c:group>
                <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-                  <c:simple-property name="nameTemplate" default="Tomcat Connector ({port})"/>
+                  <c:simple-property name="nameTemplate" default="{port}"/>
                   <c:simple-property name="descriptionTemplate" default="A Tomcat connector"/>
                </c:group>
             </plugin-configuration>
@@ -407,7 +407,7 @@
             <c:simple-property name="objectName" readOnly="true"
                                default="jboss.jca:name=%name%,service=DataSourceBinding"/>
              <!--DataSourceBinding or ManagedConnectionPool-->
-            <c:simple-property name="nameTemplate" default="{name} Datasource"/>
+            <c:simple-property name="nameTemplate" default="{name}"/>
             <c:simple-property name="descriptionTemplate" default="A JCA Datasource"/>
             <c:simple-property name="name" type="string" description="The name of this datasource"/>
          </plugin-configuration>
@@ -550,7 +550,7 @@
             <plugin-configuration>
                <c:simple-property name="objectName" readOnly="true"
                                   default="jboss.jca:name=%name%,service=ConnectionFactoryBinding"/>
-               <c:simple-property name="nameTemplate" default="{name} Connection Factory"/>
+               <c:simple-property name="nameTemplate" default="{name}"/>
                <c:simple-property name="descriptionTemplate" default="A JCA Connection Factory"/>
                <c:simple-property name="name" type="string" description="The name of this Connection Factory"/>
             </plugin-configuration>
@@ -927,7 +927,7 @@
              <plugin-configuration>
                 <c:simple-property name="objectName" readOnly="true"
                                    default="jboss.mq.destination:service=Queue,name=%name%"/>
-                <c:simple-property name="nameTemplate" default="{name} JMS Queue"/>
+                <c:simple-property name="nameTemplate" default="{name}"/>
                 <c:simple-property name="descriptionTemplate" default="A JMS Queue in JBossMQ"/>
                 <c:simple-property name="name" type="string" description="The name of this queue"/>
              </plugin-configuration>
@@ -1116,7 +1116,7 @@
              <plugin-configuration>
                 <c:simple-property name="objectName" readOnly="true"
                                   default="jboss.mq.destination:service=Topic,name=%name%"/>
-                <c:simple-property name="nameTemplate" default="{name} JMS Topic"/>
+                <c:simple-property name="nameTemplate" default="{name}"/>
                 <c:simple-property name="descriptionTemplate" default="A JMS Topic in JBossMQ"/>
                 <c:simple-property name="name" type="string" description="The name of this topic"/>
              </plugin-configuration>
@@ -1490,7 +1490,7 @@
             <plugin-configuration>
                <c:simple-property name="objectName" readOnly="true"
                                   default="jboss.messaging.destination:service=Queue,name=%name%|jboss.esb.*:service=Queue,name=%name%"/>
-               <c:simple-property name="nameTemplate" default="{name} JMS Queue"/>
+               <c:simple-property name="nameTemplate" default="{name}"/>
                <c:simple-property name="descriptionTemplate" default="A JMS Queue in JBossMessaging"/>
                <c:simple-property name="name" type="string" description="The name of this queue"/>
             </plugin-configuration>
@@ -1695,7 +1695,7 @@
             <plugin-configuration>
                <c:simple-property name="objectName" readOnly="true"
                                  default="jboss.messaging.destination:service=Topic,name=%name%|jboss.esb.*:service=Topic,name=%name%"/>
-               <c:simple-property name="nameTemplate" default="{name} JMS Topic"/>
+               <c:simple-property name="nameTemplate" default="{name}"/>
                <c:simple-property name="descriptionTemplate" default="A JMS Topic in JBossMessaging"/>
                <c:simple-property name="name" type="string" description="The name of this topic"/>
             </plugin-configuration>

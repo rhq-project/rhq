@@ -92,7 +92,7 @@ public class OracleDiscoveryComponent implements ResourceDiscoveryComponent, Man
         Configuration pluginConfig, String version, @Nullable
         ProcessInfo processInfo) {
         String key = pluginConfig.getSimpleValue("sid", "XE");
-        String name = "Oracle (" + key + ")";
+        String name = key;
         String description = "Oracle " + version + " (" + key + ")";
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description,
             pluginConfig, processInfo);

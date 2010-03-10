@@ -103,7 +103,7 @@ public class ProcessingRecipeContext extends RecipeContext {
     public void addRealizedFile(String file) {
         super.addRealizedFile(file);
 
-        File trueFile = new File(this.baseWorkingDirectory, file);
+        File trueFile = new File(file);
         RecipeParser parser = getParser();
         File realizedTmpFile = null;
         FileWriter realizedTmpFileWriter = null;
@@ -252,6 +252,7 @@ public class ProcessingRecipeContext extends RecipeContext {
         } else if (filepath.endsWith(".zip")) {
             exe = "unzip";
             args = new ArrayList<String>();
+            args.add("-o");
             args.add(filepath);
             args.add("-d");
             args.add(directory);

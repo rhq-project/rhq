@@ -19,13 +19,17 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.FormItemIfFunction;
-import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.HiddenItem;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
+import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackForm;
+import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
+import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
+import org.rhq.enterprise.gui.coregui.client.components.upload.TextFileRetrieverForm;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 /**
@@ -33,61 +37,70 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
  */
 public class BundleUploadRecipeStep implements WizardStep {
 
-    private DynamicForm form;
+    private DynamicCallbackForm form;
     private final BundleCreationWizard wizard;
 
     public BundleUploadRecipeStep(BundleCreationWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
-
     public Canvas getCanvas() {
+
         if (form == null) {
-            form = new DynamicForm();
+
+
+            form = new DynamicCallbackForm("test");
             form.setWidth100();
-            form.setNumCols(2);
-            form.setColWidths("50%", "*");
+            form.setNumCols(1);
+//            form.setColWidths("25%","75%");
+            HiddenItem idField = new HiddenItem("id");
+            idField.setValue(1);
 
-            final String uploadRecipeString = "Upload Recipe";
-            final String writeRecipeString = "Write Recipe";
 
-            final RadioGroupItem radioGroupItem = new RadioGroupItem("reciperadio");
-            radioGroupItem.setTitle("");
-            radioGroupItem.setValueMap(uploadRecipeString, writeRecipeString);
-            radioGroupItem.setRedrawOnChange(true);
+            final LinkItem showUpload = new LinkItem("showUpload");
+            showUpload.setValue("Upload a file");
+            showUpload.setShowTitle(false);
 
-            final TextItem recipeFileUploadItem = new TextItem("recipefile", "Recipe File");
-            recipeFileUploadItem.setVisible(false);
-            recipeFileUploadItem.setShowIfCondition(new FormItemIfFunction() {
-                public boolean execute(FormItem item, Object value, DynamicForm form) {
-                    String radioSelect = form.getValueAsString("reciperadio");
-                    if (radioSelect != null) {
-                        return radioSelect.equals(uploadRecipeString);
-                    } else {
-                        return false;
-                    }
+
+            final CanvasItem upload = new CanvasItem("upload");
+            upload.setShowTitle(false);
+            TextFileRetrieverForm textFileRetrieverForm = new TextFileRetrieverForm();
+            upload.setCanvas(textFileRetrieverForm);
+
+
+
+            showUpload.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    form.hideItem("showUpload");
+                    form.showItem("upload");
                 }
             });
 
-            final TextAreaItem recipeTextAreaItem = new TextAreaItem("recipetext", "Recipe Text");
-            recipeTextAreaItem.setVisible(false);
-            recipeTextAreaItem.setShowIfCondition(new FormItemIfFunction() {
-                public boolean execute(FormItem item, Object value, DynamicForm form) {
-                    String radioSelect = form.getValueAsString("reciperadio");
-                    if (radioSelect != null) {
-                        return radioSelect.equals(writeRecipeString);
-                    } else {
-                        return false;
-                    }
+
+            final TextAreaItem recipe = new TextAreaItem("recipe","Recipe");
+            recipe.setShowTitle(false);
+
+            recipe.setWidth("*");
+            recipe.setHeight("*");
+
+
+            textFileRetrieverForm.addFormHandler(new DynamicFormHandler() {
+                public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                    recipe.setValue(event.getResults());
+                    form.showItem("showUpload");
+                    form.hideItem("upload");
                 }
             });
 
-            form.setItems(radioGroupItem, recipeFileUploadItem, recipeTextAreaItem);
+            form.setItems(idField,showUpload,upload, recipe);
+
+            form.hideItem("upload");
+
         }
         return form;
     }
 
     public boolean valid() {
-        return false; // TODO: Implement this method.
+        return false;  // TODO: Implement this method.
     }
 
     public String getName() {

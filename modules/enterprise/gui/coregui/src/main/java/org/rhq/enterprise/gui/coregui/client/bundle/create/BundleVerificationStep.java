@@ -19,9 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Label;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -37,43 +39,52 @@ public class BundleVerificationStep implements WizardStep {
     private final BundleCreationWizard wizard;
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+    private DynamicForm form;
 
     public BundleVerificationStep(BundleCreationWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 
     public Canvas getCanvas() {
-        HLayout hlayout = new HLayout();
-        hlayout.setWidth100();
-        hlayout.setHeight100();
+        form = new DynamicForm();
+
+        VLayout layout = new VLayout();
+        layout.setWidth100();
+        layout.setHeight100();
 
         final Img verifyingImage = new Img("/images/status-bar.gif");
-        verifyingImage.setWidth100();
+        verifyingImage.setWidth(50);
         verifyingImage.setHeight(15);
 
-        hlayout.addChild(verifyingImage);
+        final Label verifiedMessage = new Label("Verifying...!");
+        layout.addMember(verifyingImage);
+        layout.addMember(verifiedMessage);
 
         bundleServer.createBundleAndBundleVersion(this.wizard.getBundleName(), this.wizard.getBundleType().getId(),
             this.wizard.getBundleName(), this.wizard.getBundleVersionString(), this.wizard.getRecipe(),
             new AsyncCallback<BundleVersion>() {
                 public void onSuccess(BundleVersion result) {
                     verifyingImage.setSrc("/images/status_complete.gif");
+                    verifiedMessage.setText("Verified!");
                     wizard.setBundleVersion(result);
                     enableNextButtonWhenAppropriate();
                 }
 
                 public void onFailure(Throwable caught) {
                     verifyingImage.setSrc("/images/status_error.gif");
+                    verifiedMessage.setText("Failed!");
                     CoreGUI.getErrorHandler().handleError("Failed to create bundle: " + caught.getMessage(), caught);
                     wizard.setBundleVersion(null);
                     enableNextButtonWhenAppropriate();
                 }
             });
-        return hlayout;
+
+        form.addChild(layout);
+        return form;
     }
 
     public boolean nextPage() {
-        return false; // TODO: Implement this method.
+        return this.wizard.getBundleVersion() != null;
     }
 
     public String getName() {

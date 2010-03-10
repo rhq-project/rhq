@@ -14,7 +14,7 @@
 <body>
 <h:panelGrid columns="2" style="vertical-align:top;width:100%" >
     <h:panelGroup>
-        <rich:panel style="vertical-align:top;width:30%" header="Select a resource">
+        <rich:panel style="vertical-align:top" header="Select a resource">
             <h:outputText value="Select mode"/>
             <br/>
             <h:form id="selectResourceForm">
@@ -42,7 +42,7 @@
 
 
     <h:panelGroup style="vertical-align:top;" >
-        <rich:panel rendered="#{not empty operationsBean.operationIds}" style="vertical-align:top;width=70%" header="Select the operation">
+        <rich:panel rendered="#{not empty operationsBean.operationIds}" style="vertical-align:top" header="Select the operation">
 
             Operations for:  <h:outputText value=" #{operationsBean.resourceName}"/>
             <br/>

@@ -76,6 +76,7 @@ public class BundleUploadRecipeStep implements WizardStep {
 
             final TextAreaItem recipe = new TextAreaItem("recipe", "Recipe");
             recipe.setShowTitle(false);
+            recipe.setRequired(true);
             recipe.setWidth("*");
             recipe.setHeight("*");
             recipe.addChangedHandler(new ChangedHandler() {
@@ -103,8 +104,8 @@ public class BundleUploadRecipeStep implements WizardStep {
         return form;
     }
 
-    public boolean valid() {
-        return false; // TODO: Implement this method.
+    public boolean nextPage() {
+        return form.validate();
     }
 
     public String getName() {

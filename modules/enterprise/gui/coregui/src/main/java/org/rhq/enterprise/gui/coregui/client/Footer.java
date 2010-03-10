@@ -18,19 +18,53 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
+import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
+
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
 
 /**
  * @author Greg Hinkle
  */
-public class Footer extends HLayout {
+public class Footer extends ToolStrip {
+
+    MessageCenterView recentMessage;
 
     public Footer() {
         super();
-
-        setHeight(100);
-        setBackgroundColor("gray");
-
-
+        setHeight(30);
+        setAlign(VerticalAlignment.CENTER);
+//        setPadding(5);
+        setWidth100();
+        setMembersMargin(15);
     }
+
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
+        addMember(new Label("Welcome to RHQ"));
+        addMember(new ToolStripSeparator());
+
+        recentMessage = new MessageCenterView();
+        recentMessage.setWidth("*");
+
+        addMember(recentMessage);
+
+        addMember(new ToolStripSeparator());
+
+        addMember(new Img("/images/icons/Alert_red_16.png",16,16));
+        addMember(new Label("15 recent alerts"));
+    }
+
+
+
+
+
+
+
 }

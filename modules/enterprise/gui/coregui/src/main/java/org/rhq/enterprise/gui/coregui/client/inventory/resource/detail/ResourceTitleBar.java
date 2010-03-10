@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import com.smartgwt.client.types.SelectionType;
 import com.smartgwt.client.widgets.Canvas;
@@ -39,7 +40,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 public class ResourceTitleBar extends HLayout {
 
     Resource resource;
-    ImgButton favoriteButton;
+    Img favoriteButton;
     HTMLFlow title;
     Img availabilityImage;
 
@@ -62,32 +63,25 @@ public class ResourceTitleBar extends HLayout {
         title = new HTMLFlow();
         title.setWidth("*");
 
-        favoriteButton = new ImgButton();
-        favoriteButton.setSrc(NOT_FAV_ICON);
-        favoriteButton.setShowHover(false);
-        favoriteButton.setShowDownIcon(false);
-        favoriteButton.setShowRollOverIcon(false);
-        favoriteButton.setShowFocusedIcon(false);
+        availabilityImage = new Img("resources/availability_grey_24.png",24,24);
 
-        favoriteButton.setActionType(SelectionType.CHECKBOX);
-        favoriteButton.setWidth(24);
-        favoriteButton.setHeight(24);
+
+        favoriteButton = new Img(NOT_FAV_ICON,24, 24);
+        favoriteButton.setTooltip("Click to add or remove this resource as a favorite.");
 
         favoriteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 favorite = !favorite;
-
-//                favoriteButton.setIcon(favorite ? FAV_ICON : NOT_FAV_ICON);
-
+                favoriteButton.setSrc(favorite ? FAV_ICON : NOT_FAV_ICON);
+                CoreGUI.getMessageCenter().notify(new Message((favorite ? "Added " : "Removed ") + " resource " + resource.getName() + " as a favorite.", Message.Severity.Info));
             }
         });
 
-        availabilityImage = new Img("resources/availability_grey_24.png",24,24);
 
 
         addMember(title);
-        addMember(favoriteButton);
         addMember(availabilityImage);
+        addMember(favoriteButton);
     }
 
     public void setResource(Resource resource) {
@@ -96,6 +90,7 @@ public class ResourceTitleBar extends HLayout {
         title.setContents("<h2>" + resource.getName() + "</h2>");
 
         favorite = CoreGUI.getUserPreferences().getFavoriteResources().contains(resource.getId());
+        favoriteButton.setSrc(favorite ? FAV_ICON : NOT_FAV_ICON);
 
         availabilityImage.setSrc("resources/availability_" +
                 (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red") +

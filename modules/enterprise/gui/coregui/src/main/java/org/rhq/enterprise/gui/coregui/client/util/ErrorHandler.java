@@ -23,6 +23,9 @@ import com.smartgwt.client.util.SC;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+
 /**
  * @author Greg Hinkle
  */
@@ -34,8 +37,9 @@ public class ErrorHandler {
 
     public void handleError(String message, Throwable t) {
 
-        // TODO: This is just a placeholder implementation
-        SC.say(message);
+//        SC.say(message);
+
+        CoreGUI.getMessageCenter().notify(new Message(message, null, Message.Severity.Error));
 
         t.printStackTrace();
         errors.add(message);

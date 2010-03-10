@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 
 import com.smartgwt.client.types.Alignment;
@@ -47,40 +48,19 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
  */
 public class GroupDefinitionListView extends VLayout {
 
-    private ListGrid listGrid;
-
 
     public GroupDefinitionListView() {
 
         setWidth100();
         setHeight100();
 
-//        DynamicForm searchPanel = new DynamicForm();
-//        final TextItem searchBox = new TextItem("query", "Search Resources");
-//        searchBox.setValue("");
-//        searchPanel.setWrapItemTitles(false);
-//        searchPanel.setFields(searchBox);
-//
-//
-//        addMember(searchPanel);
-
-
         final GroupDefinitionDataSource datasource = new GroupDefinitionDataSource();
 
-        VLayout gridHolder = new VLayout();
+        Table table = new Table("Group Definitions");
+        table.setDataSource(datasource);
 
-        listGrid = new ListGrid();
-        listGrid.setWidth100();
-        listGrid.setHeight100();
-        listGrid.setDataSource(datasource);
-        listGrid.setAutoFetchData(true);
-        listGrid.setAlternateRecordStyles(true);
-//        listGrid.setAutoFitData(Autofit.HORIZONTAL);
-//        listGrid.setCriteria(new Criteria("name", searchPanel.getValueAsString("query")));
-
-        listGrid.setSelectionType(SelectionStyle.SIMPLE);
-        listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
-        listGrid.setResizeFieldsInRealTime(true);
+        table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
+        table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
 
         ListGridField idField = new ListGridField("id", "Id", 55);
@@ -104,70 +84,10 @@ public class GroupDefinitionListView extends VLayout {
 //        listGrid.setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
 
 
-        gridHolder.addMember(listGrid);
-
-        ToolStrip toolStrip = new ToolStrip();
-        toolStrip.setMembersMargin(15);
-
-        final IButton removeButton = new IButton("Remove");
-        removeButton.setDisabled(true);
-        removeButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " resources?",
-                        new BooleanCallback() {
-                            public void execute(Boolean aBoolean) {
-
-                            }
-                        }
-                );
-            }
-        });
 
 
+        addMember(table);
 
-
-        final Label tableInfo = new Label("Total: " + listGrid.getTotalRows());
-        tableInfo.setWrap(false);
-
-        toolStrip.addMember(removeButton);
-        toolStrip.addMember(new LayoutSpacer());
-        toolStrip.addMember(tableInfo);
-
-        gridHolder.addMember(toolStrip);
-
-
-        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                int selectedCount = ((ListGrid)selectionEvent.getSource()).getSelection().length;
-                tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
-                removeButton.setDisabled(selectedCount == 0);
-            }
-        });
-
-
-
-        addMember(gridHolder);
-
-
-        listGrid.addDataArrivedHandler(new DataArrivedHandler() {
-            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                int selectedCount = ((ListGrid)dataArrivedEvent.getSource()).getSelection().length;
-                tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
-            }
-        });
-
-    /*
-            searchBox.addKeyPressHandler(new KeyPressHandler() {
-                public void onKeyPress(KeyPressEvent event) {
-                    if (event.getCharacterValue() == KeyCodes.KEY_ENTER) {
-                        datasource.setQuery((String) searchBox.getValue());
-                        Criteria c = new Criteria("name", (String) searchBox.getValue());
-                        long start = System.currentTimeMillis();
-                        listGrid.fetchData(c);
-                        System.out.println("Loaded in: " + (System.currentTimeMillis() - start));
-                    }
-                }
-            });*/
     }
 
 }

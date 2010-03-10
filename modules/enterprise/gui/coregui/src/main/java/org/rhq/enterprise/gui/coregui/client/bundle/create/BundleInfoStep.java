@@ -57,6 +57,7 @@ public class BundleInfoStep implements WizardStep {
             form.setColWidths("50%", "*");
 
             final TextItem nameTextItem = new TextItem("name", "Name");
+            nameTextItem.setRequired(true);
             nameTextItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     Object value = event.getValue();
@@ -109,10 +110,9 @@ public class BundleInfoStep implements WizardStep {
         return form;
     }
 
-    public boolean valid() {
-        // TODO make sure I have a bundle type
+    public boolean nextPage() {
         FormItem nameField = form.getField("name");
-        return true;
+        return form.validate();
     }
 
     public String getName() {

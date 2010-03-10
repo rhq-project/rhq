@@ -48,8 +48,8 @@ public class BundleUploadDataStep implements WizardStep {
         return hlayout;
     }
 
-    public boolean valid() {
-        return false; // TODO: Implement this method.
+    public boolean nextPage() {
+        return true; // TODO: Implement this method.
     }
 
     public String getName() {

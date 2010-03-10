@@ -100,7 +100,7 @@ public class ResourceSearchView extends VLayout {
         table.getListGrid().setFields(idField, nameField, descriptionField, typeNameField, pluginNameField,
             categoryField, availabilityField);
 
-        table.addTableAction("Uninventory", Table.SelectionEnablement.MULTIPLE,
+        table.addTableAction("Uninventory", Table.SelectionEnablement.ANY,
             "Are you sure you want to delete # resources?", new TableAction() {
                 public void executeAction(ListGridRecord[] selection) {
                     table.getListGrid().removeSelectedData();

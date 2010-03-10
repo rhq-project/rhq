@@ -20,9 +20,12 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import java.util.EnumSet;
 
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -118,10 +121,17 @@ public class CallTimeView extends Layout {
         table.setDataSource(new CallTimeDataSource());
         table.getListGrid().setUseAllDataSourceFields(true);
 
+        final NumberFormat format = NumberFormat.getFormat("0");
+
         ListGridField callDestination = new ListGridField("callDestination", "Call Destination");
         ListGridField count = new ListGridField("count", 70);
         ListGridField minimum = new ListGridField("minimum", 70);
         ListGridField average = new ListGridField("average", 70);
+        average.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return format.format(((Number)o).doubleValue());
+            }
+        });
         ListGridField maximum = new ListGridField("maximum", 70);
         ListGridField total = new ListGridField("total",70);
 

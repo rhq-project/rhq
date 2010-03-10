@@ -69,7 +69,7 @@ public class BundleVerificationStep implements WizardStep {
         return hlayout;
     }
 
-    public boolean valid() {
+    public boolean nextPage() {
         return false; // TODO: Implement this method.
     }
 

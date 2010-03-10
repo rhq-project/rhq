@@ -59,10 +59,11 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
         DataSourceTextField createdTimeField = new DataSourceTextField("createdTime", "Created Time");
         DataSourceTextField lastCalculationTimeField = new DataSourceTextField("lastCalculationTime", "Last Calculation Time");
         DataSourceTextField nextCalculationTimeField = new DataSourceTextField("nextCalculationTime", "Next Calculation Time");
-        DataSourceTextField managedResourceGroupsField = new DataSourceTextField("managedResourceGroups", "Managed Resource Groups");
+//        DataSourceTextField managedResourceGroupsField = new DataSourceTextField("managedResourceGroups", "Managed Resource Groups");
 
 
-        setFields(idDataField, nameField, descriptionField, expressionField, recalculationIntervalField, modifiedTimeField, createdTimeField, lastCalculationTimeField, nextCalculationTimeField, managedResourceGroupsField);
+        setFields(idDataField, nameField, descriptionField, expressionField, recalculationIntervalField,
+                modifiedTimeField, createdTimeField, lastCalculationTimeField, nextCalculationTimeField);
 
     }
 
@@ -105,7 +106,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
         record.setAttribute("createdTime", from.getCreatedTime());
         record.setAttribute("lastCalculationTime", from.getLastCalculationTime());
         record.setAttribute("nextCalculationTime", from.getNextCalculationTime());
-        record.setAttribute("managedResourceGroups", from.getManagedResourceGroups());
+//        record.setAttribute("managedResourceGroups", from.getManagedResourceGroups());
 
         return record;
     }

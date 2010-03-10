@@ -398,7 +398,7 @@
         <repository>
             <id>smartgwt</id>
             <name>SmartGWT</name>
-            <url>http://www.smartclient.com/maven2</url>
+            <url>http://www.smartclient.com/maven2/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -413,10 +413,13 @@
             </snapshots>
         </repository>
 
+        <!--
         <repository>
-            <id>gflot-repository</id>
+            <id>gflot</id>
+            <name>GFlot</name>
             <url>http://codemonkey.dumontierlab.com/maven/repo/</url>
         </repository>
+        -->
     </repositories>
 
 </project>

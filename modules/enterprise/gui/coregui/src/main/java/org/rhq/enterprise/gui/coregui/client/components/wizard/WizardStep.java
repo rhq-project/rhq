@@ -28,7 +28,7 @@ public interface WizardStep {
 
     Canvas getCanvas();
 
-    boolean valid();
+    boolean nextPage();
 
     String getName();
 

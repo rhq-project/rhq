@@ -145,13 +145,33 @@ public interface BundleManagerRemote {
     /**
      * @param subject must be InventoryManager
      * @param bundleId the bundle for which this will be the next version
-     * @param name not null or empty
+     * @param name name of the bundle version
      * @param bundleVersion optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
      * @return the persisted BundleVersion (id is assigned)
      */
     BundleVersion createBundleVersion( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleId") int bundleId, //
+        @WebParam(name = "name") String name, //
+        @WebParam(name = "bundleVersion") String bundleVersion, //
+        @WebParam(name = "recipe") String recipe) throws Exception;
+
+    /**
+     * Convienence method that combines {@link #createBundle(Subject, String, int)} and {@link #createBundleVersion(Subject, int, String, String, String)}.
+     * This will first check to see if a bundle with the given type/name exists - if it doesn't, it will be created. If it does, it will be reused.
+     * This will then create the bundle version that will be associated with the bundle that was created or found.
+     * 
+     * @param subject must be InventoryManager
+     * @param bundleName name of the bundle to use (if not found, it will be created) 
+     * @param bundleTypeId the bundle type for the new bundle (if it is created) for which this will be the first version
+     * @param name name of the bundle version 
+     * @param bundleVersion optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
+     * @return the persisted BundleVersion (id is assigned)
+     */
+    BundleVersion createBundleAndBundleVersion( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleName") String bundleName, //
+        @WebParam(name = "bundleTypeId") int bundleTypeId, //
         @WebParam(name = "name") String name, //
         @WebParam(name = "bundleVersion") String bundleVersion, //
         @WebParam(name = "recipe") String recipe) throws Exception;

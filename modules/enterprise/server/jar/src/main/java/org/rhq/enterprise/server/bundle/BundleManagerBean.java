@@ -202,6 +202,27 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, int bundleTypeId,
+        String name, String bundleVersion, String recipe) throws Exception {
+
+        // first see if the bundle exists or not; if not, create one
+        BundleCriteria criteria = new BundleCriteria();
+        criteria.addFilterBundleTypeId(Integer.valueOf(bundleTypeId));
+        criteria.addFilterName(bundleName);
+        PageList<Bundle> bundles = findBundlesByCriteria(subject, criteria);
+        Bundle bundle;
+        if (bundles.getTotalSize() == 0) {
+            bundle = createBundle(subject, bundleName, bundleTypeId);
+        } else {
+            bundle = bundles.get(0);
+        }
+
+        // now create the bundle version with the bundle we either found or created
+        BundleVersion bv = createBundleVersion(subject, bundle.getId(), name, bundleVersion, recipe);
+        return bv;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String version, String recipe)
         throws Exception {
         if (null == name || "".equals(name.trim())) {

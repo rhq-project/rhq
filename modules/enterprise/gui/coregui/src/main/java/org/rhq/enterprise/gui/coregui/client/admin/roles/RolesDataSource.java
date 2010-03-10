@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
@@ -129,6 +130,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
             }
 
             public void onSuccess(Role result) {
+                CoreGUI.getMessageCenter().notify(new Message("Role ["+ result.getName() + "] added", Message.Severity.Info));
                 ListGridRecord record = new ListGridRecord();
                 response.setData(new Record[] {copyValues(result)});
                 processResponse(request.getRequestId(),response);
@@ -148,6 +150,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
             }
 
             public void onSuccess(Role result) {
+                CoreGUI.getMessageCenter().notify(new Message("Role ["+ result.getName() + "] updated", Message.Severity.Info));
                 System.out.println("Role Updated");
                 response.setData(new Record[] {copyValues(result)});
                 processResponse(request.getRequestId(),response);
@@ -159,7 +162,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
     protected void executeRemove(final DSRequest request, final DSResponse response) {
         JavaScriptObject data = request.getData();
         final ListGridRecord rec = new ListGridRecord(data);
-        Role newRole = copyValues(rec);
+        final Role newRole = copyValues(rec);
 
         roleService.removeRoles(new Integer[]{newRole.getId()}, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
@@ -167,6 +170,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
             }
 
             public void onSuccess(Void result) {
+                CoreGUI.getMessageCenter().notify(new Message("Role ["+ newRole.getName() + "] removed", Message.Severity.Info));
                 System.out.println("Role deleted");
                 response.setData(new Record[]{rec});
                 processResponse(request.getRequestId(), response);

@@ -37,9 +37,11 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,12 +128,13 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         this.alertService.deleteResourceAlerts(alertIds, new AsyncCallback<Void>() {
             public void onSuccess(Void blah) {
+                CoreGUI.getMessageCenter().notify(new Message("Deleted ["+ alertIds.length + "] alerts", Message.Severity.Info));
                 System.out.println("Deleted Alerts with id's: " + Arrays.toString(alertIds) + ".");
                 alertsView.refresh();
             }
 
             public void onFailure(Throwable caught) {
-                Window.alert("Failed to delete Alerts with id's: " + Arrays.toString(alertIds) + " - cause: " + caught);
+                CoreGUI.getErrorHandler().handleError("Failed to delete Alerts with id's: " + Arrays.toString(alertIds), caught);
                 System.err.println("Failed to delete Alerts with id's " + Arrays.toString(alertIds) + " - cause: " + caught);
             }
         });
@@ -254,6 +257,8 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         this.alertService.acknowledgeResourceAlerts(alertIds, new AsyncCallback<Void>() {
             public void onSuccess(Void blah) {
+                CoreGUI.getMessageCenter().notify(new Message("Acknowledged ["+ alertIds.length + "] alerts", Message.Severity.Info));
+
                 System.out.println("Acknowledged Alerts with id's: " + Arrays.toString(alertIds) + ".");
                 alertsView.refresh();
             }

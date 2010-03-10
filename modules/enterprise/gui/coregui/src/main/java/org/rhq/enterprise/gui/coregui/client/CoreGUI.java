@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 /**
@@ -54,6 +55,8 @@ public class CoreGUI implements EntryPoint {
     private static ErrorHandler errorHandler = new ErrorHandler();
 
     private static BreadcrumbTrailPane breadCrumbTrailPane;
+
+    private static MessageCenter messageCenter;
 
     private static Canvas content;
 
@@ -76,8 +79,7 @@ public class CoreGUI implements EntryPoint {
 
         GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
             public void onUncaughtException(Throwable e) {
-                SC.say("Globally uncaught exception... " + e.getMessage());
-                e.printStackTrace();
+                getErrorHandler().handleError("Globally uncaught exception", e);
             }
         });
 
@@ -97,6 +99,8 @@ public class CoreGUI implements EntryPoint {
         } catch (RequestException e) {
             e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
+
+        messageCenter = new MessageCenter();
 
         SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
 
@@ -156,6 +160,8 @@ public class CoreGUI implements EntryPoint {
         canvas.setWidth100();
         canvas.setHeight100();
         rootCanvas.addMember(canvas);
+
+        rootCanvas.addMember(new Footer());
 
         rootCanvas.draw();
 
@@ -265,6 +271,11 @@ public class CoreGUI implements EntryPoint {
 
     // -------------------- Static application utilities ----------------------
 
+    public static MessageCenter getMessageCenter() {
+        return messageCenter;
+    }
+
+
     public static ErrorHandler getErrorHandler() {
         return errorHandler;
     }
@@ -276,6 +287,8 @@ public class CoreGUI implements EntryPoint {
     public static UserPreferences getUserPreferences() {
         return userPreferences;
     }
+
+
 
     public static void setSessionSubject(Subject subject) {
         GWTServiceLookup.registerSession(String.valueOf(subject.getSessionId()));

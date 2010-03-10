@@ -160,7 +160,10 @@ public class Table extends VLayout {
             button.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (tableAction.confirmMessage != null) {
-                        SC.ask(tableAction.confirmMessage, new BooleanCallback() {
+
+                        String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid.getSelection().length));
+
+                        SC.ask(message, new BooleanCallback() {
                             public void execute(Boolean confirmed) {
                                 if (confirmed) {
                                     tableAction.action.executeAction(listGrid.getSelection());
@@ -176,6 +179,15 @@ public class Table extends VLayout {
             footer.addMember(button);
         }
         footer.addMember(new LayoutSpacer());
+
+        IButton refreshButton = new IButton("Refresh");
+        refreshButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                listGrid.invalidateCache();
+            }
+        });
+        footer.addMember(refreshButton);
+
         footer.addMember(tableInfo);
 
         // Manages enable/disable buttons for the grid
@@ -190,8 +202,6 @@ public class Table extends VLayout {
                 refreshTableInfo();
                 fieldSizes.clear();
                 totalWidth = 0;
-
-
             }
         });
 

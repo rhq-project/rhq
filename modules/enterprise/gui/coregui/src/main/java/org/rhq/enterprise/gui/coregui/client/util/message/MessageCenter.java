@@ -16,34 +16,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util;
-
-import com.smartgwt.client.util.SC;
+package org.rhq.enterprise.gui.coregui.client.util.message;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import java.util.LinkedList;
 
 /**
  * @author Greg Hinkle
  */
-public class ErrorHandler {
+public class MessageCenter {
 
+    private LinkedList<Message> messages = new LinkedList<Message>();
 
-    private ArrayList<String> errors = new ArrayList<String>();
+    private ArrayList<MessageListener> listeners = new ArrayList<MessageListener>();
 
-
-    public void handleError(String message, Throwable t) {
-
-//        SC.say(message);
-
-        CoreGUI.getMessageCenter().notify(new Message(message, null, Message.Severity.Error));
-
-        t.printStackTrace();
-        errors.add(message);
-
+    public void notify(Message message) {
+        this.messages.add(message);
+        for (MessageListener listener : listeners) {
+            listener.onMessage(message);
+        }
     }
 
+    public void addMessageListener(MessageListener listener) {
+        this.listeners.add(listener);
+    }
+
+    public LinkedList<Message> getMessages() {
+        return messages;
+    }
+
+    public interface MessageListener {
+        void onMessage(Message message);
+    }
 }

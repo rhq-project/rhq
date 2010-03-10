@@ -16,34 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util;
+package org.rhq.enterprise.gui.coregui.client.util.message;
 
-import com.smartgwt.client.util.SC;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import java.util.Date;
 
 /**
  * @author Greg Hinkle
  */
-public class ErrorHandler {
+public class Message {
 
+    protected String title;
+    protected String detail;
+    protected Date fired = new Date();
+    protected Severity severity;
 
-    private ArrayList<String> errors = new ArrayList<String>();
+    public enum Severity { Info, Warning, Error };
 
-
-    public void handleError(String message, Throwable t) {
-
-//        SC.say(message);
-
-        CoreGUI.getMessageCenter().notify(new Message(message, null, Message.Severity.Error));
-
-        t.printStackTrace();
-        errors.add(message);
-
+    public Message(String title, Severity severity) {
+        this.title = title;
+        this.severity = severity;
     }
+
+    public Message(String title, String detail, Severity severity) {
+        this.title = title;
+        this.detail = detail;
+        this.severity = severity;
+    }
+
+
 
 }

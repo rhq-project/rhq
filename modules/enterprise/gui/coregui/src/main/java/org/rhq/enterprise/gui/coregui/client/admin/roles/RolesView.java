@@ -63,7 +63,7 @@ public class RolesView extends VLayout {
 
 
         table.addTableAction("Remove",
-                Table.SelectionEnablement.MULTIPLE,
+                Table.SelectionEnablement.ANY,
                 "Are you sure you want to delete # roles?",
                 new TableAction() {
                     public void executeAction(ListGridRecord[] selection) {

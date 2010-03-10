@@ -81,7 +81,7 @@ public class ResourceGroupListView extends VLayout {
         table.getListGrid().setFields(idField, nameField, descriptionField, typeNameField, pluginNameField,
             categoryField, availabilityField);
 
-        table.addTableAction("Delete Groups", Table.SelectionEnablement.MULTIPLE,
+        table.addTableAction("Delete Groups", Table.SelectionEnablement.ANY,
             "Are you sure you want to delete # groups?", new TableAction() {
                 public void executeAction(ListGridRecord[] selection) {
                     // TODO: Implement this method.

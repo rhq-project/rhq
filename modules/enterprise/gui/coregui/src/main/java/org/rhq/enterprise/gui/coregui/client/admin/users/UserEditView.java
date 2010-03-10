@@ -153,7 +153,7 @@ public class UserEditView extends VLayout {
 
     public void editNew() {
         form.getDataSource().getField("username").setCanEdit(true);
-
+        subject = new Subject();
         ListGridRecord r = dataSource.copyValues(subject);
         editRecord(r);
         form.setSaveOperationType(DSOperationType.ADD);

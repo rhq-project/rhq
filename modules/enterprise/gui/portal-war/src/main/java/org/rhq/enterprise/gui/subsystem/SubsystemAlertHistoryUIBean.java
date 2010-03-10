@@ -67,12 +67,12 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
     private SelectItem[] categoryFilterItems;
 
     private static final IntExtractor<AlertHistoryComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<AlertHistoryComposite>() {
-        
+
         public int extract(AlertHistoryComposite object) {
             return object.getAlert().getAlertDefinition().getResource().getId();
         }
     };
-    
+
     public SubsystemAlertHistoryUIBean() {
         datePattern = EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getDateTimeDisplayPreferences()
             .getDateTimeFormatTrigger();
@@ -163,7 +163,7 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
 
         try {
             Integer[] selectedItems = getSelectedItems();
-            int num = alertManager.acknowledgeAlerts(subject,resource.getId(), selectedItems);
+            int num = alertManager.acknowledgeAlerts(subject, selectedItems);
             if (num==-1)
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,"No Alerts passed to ack");
             else
@@ -243,7 +243,7 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
         protected IntExtractor<AlertHistoryComposite> getResourceIdExtractor() {
             return RESOURCE_ID_EXTRACTOR;
         }
-        
+
         private void getDataFromRequest() {
             SubsystemAlertHistoryUIBean outer = SubsystemAlertHistoryUIBean.this;
             outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");

@@ -296,7 +296,7 @@ public class CoreGUI implements EntryPoint {
             content = newContent;
             contentCanvas.addChild(newContent);
         }
-        contentCanvas.draw();
+        contentCanvas.markForRedraw();
     }
 
     public static void goTo(String path) {

@@ -177,6 +177,6 @@ public class InventoryView extends HLayout {
         newContent.setWidth100();
         newContent.setHeight100();
         contentCanvas.addChild(newContent);
-        contentCanvas.draw();
+        contentCanvas.markForRedraw();
     }
 }

@@ -131,7 +131,7 @@ public class ResourceView extends HLayout implements ViewRenderer {
         if (contentCanvas.getChildren().length > 0)
             contentCanvas.getChildren()[0].destroy();
         contentCanvas.addChild(newContent);
-        contentCanvas.draw();
+        contentCanvas.markForRedraw();
     }
 
     public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {

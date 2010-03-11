@@ -150,15 +150,16 @@ public interface SubjectManagerLocal {
     void deleteUsers(Subject subject, int[] subjectIds);
 
     /**
-     * Determines if the given session ID is valid and it is associated with the given user.
+     * Determines if the given session ID is valid and it is associated with the given username and user ID.
      *
      * @param  session
      * @param  username
+     * @param  userid
      *
      * @return <code>true</code> if the session ID indentifies a valid session; <code>false</code> if it is invalid or
      *         has timed out
      */
-    boolean isValidSessionId(int session, String username);
+    boolean isValidSessionId(int session, String username, int userid);
 
     /**
      * This returns a list of subjects that are available to be assigned to a given role but not yet assigned to that

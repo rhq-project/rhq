@@ -24,9 +24,8 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.plugin.SummaryCounts;
+import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTService;
-import org.rhq.enterprise.server.resource.InventorySummary;
 import org.rhq.enterprise.server.resource.ResourceBossLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -37,17 +36,12 @@ public class ResourceBossGWTServiceImpl extends AbstractGWTServiceImpl implement
 
     private ResourceBossLocal resourceBoss = LookupUtil.getResourceBoss();
 
-    public SummaryCounts getInventorySummaryForLoggedInUser() {
+    public InventorySummary getInventorySummaryForLoggedInUser() {
         Subject subject = getSessionSubject();
         return getInventorySummary(subject);
     }
 
-    public SummaryCounts getInventorySummary(Subject user) {
-        InventorySummary inventorySummary = resourceBoss.getInventorySummary(user);
-        SummaryCounts counts = new SummaryCounts();
-        counts.setPlatformCount(inventorySummary.getPlatformCount());
-        counts.setServerCount(inventorySummary.getServerCount());
-
-        return counts;
+    public InventorySummary getInventorySummary(Subject user) {
+        return resourceBoss.getInventorySummary(user);
     }
 }

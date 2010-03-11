@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.resource;
 
 import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.InventorySummary;
 
 /**
  * The boss for "high-level" operations involving {@link org.rhq.core.domain.resource.Resource}s and/or

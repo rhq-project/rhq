@@ -26,7 +26,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.summary;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Grid;
 import com.smartgwt.client.widgets.layout.VLayout;
-import org.rhq.core.domain.plugin.SummaryCounts;
+import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
@@ -36,19 +36,19 @@ public class SummaryCountsView extends VLayout {
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
     public SummaryCountsView() {
-        resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<SummaryCounts>() {
+        resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<InventorySummary>() {
             public void onFailure(Throwable throwable) {
                 CoreGUI.getErrorHandler().handleError("Failed to retrieve inventory summary", throwable);                    
             }
 
-            public void onSuccess(SummaryCounts summary) {
+            public void onSuccess(InventorySummary summary) {
                 Grid grid = new Grid(4, 2);
 
                 grid.setText(0, 0, "Platform Total");
-                grid.setText(0, 1, summary.getPlatformCount().toString());
+                grid.setText(0, 1, Integer.toString(summary.getPlatformCount()));
 
                 grid.setText(1, 0, "Server Total");
-                grid.setText(1, 1, summary.getServerCount().toString());
+                grid.setText(1, 1, Integer.toString(summary.getServerCount()));
 
                 addMember(grid);
             }

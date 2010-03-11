@@ -119,7 +119,7 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
 
         form.setItems(title,severity,date,detail, okButton );
 
-        Window window = new Window();
+        final Window window = new Window();
         window.setTitle(message.title);
         window.setWidth(600);
         window.setHeight(400);
@@ -130,6 +130,11 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
         window.addItem(form);
         window.show();
         okButton.focusInItem();
+        okButton .addClickHandler( new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
+                window.destroy();
+            }
+        });
     }
 
     public void onMessage(final Message message) {

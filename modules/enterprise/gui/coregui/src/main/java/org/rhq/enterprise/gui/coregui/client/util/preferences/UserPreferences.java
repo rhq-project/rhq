@@ -45,6 +45,9 @@ public class UserPreferences {
     private Configuration userConfiguration;
     private SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
 
+    private ArrayList<UserPreferenceChangeListener> changeListeners = new ArrayList<UserPreferenceChangeListener>();
+
+
     public UserPreferences(Subject subject) {
         this.subject = subject;        
         this.userConfiguration = subject.getUserConfiguration();
@@ -78,13 +81,24 @@ public class UserPreferences {
 
     protected void setPreference(String name, String value, AsyncCallback<Subject> callback) {
         PropertySimple prop = this.userConfiguration.getSimple(name);
+        String oldValue = null;
         if (prop == null) {
             this.userConfiguration.put(new PropertySimple(name, value));
         } else {
+            oldValue = prop.getStringValue();
             prop.setStringValue(value);
         }
         this.subjectService.updateSubject(this.subject, callback);
+
+
+        UserPreferenceChangeEvent event = new UserPreferenceChangeEvent(name, value, oldValue);
+        for (UserPreferenceChangeListener listener : changeListeners) {
+            listener.onPreferrenceChange(event);
+        }
     }
+
+
+
 
     protected List<String> getPreferenceAsList(String key) {
         String pref = null;
@@ -113,5 +127,10 @@ public class UserPreferences {
         } catch (Exception e) {
             return new HashSet<Integer>();
         }
+    }
+
+
+    public void addChangeListener(UserPreferenceChangeListener listener) {
+        changeListeners.add(listener);
     }
 }

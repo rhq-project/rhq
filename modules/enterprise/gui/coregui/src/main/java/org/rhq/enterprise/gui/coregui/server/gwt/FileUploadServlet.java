@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -30,74 +31,110 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Heiko W. Rupp
  */
 public class FileUploadServlet extends HttpServlet {
-
-//    private final Log log = LogFactory.getLog(MigrationServlet.class);
+    private static final long serialVersionUID = 1L;
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         PrintWriter writer;
+
         if (ServletFileUpload.isMultipartContent(req)) {
 
-            ServletFileUpload servletFileUpload = new ServletFileUpload(new DiskFileItemFactory());
-            List<FileItem> fileItemsList = null;
+            DiskFileItemFactory fileItemFactory = new DiskFileItemFactory();
+            //fileItemFactory.setSizeThreshold(0);
+
+            ServletFileUpload servletFileUpload = new ServletFileUpload(fileItemFactory);
+
+            List<FileItem> fileItemsList;
             try {
                 fileItemsList = (List<FileItem>) servletFileUpload.parseRequest(req);
             } catch (FileUploadException e) {
-
                 writer = resp.getWriter();
-                writer.write("<strong>File upload failed: </strong><br/>");
-                for (StackTraceElement elem : e.getStackTrace())
-                    writer.write(elem.toString() + "br/>");
+                writer.write("<html><head></head><body><strong>File upload failed:</strong><br/>\n");
+                for (StackTraceElement elem : e.getStackTrace()) {
+                    writer.write(elem.toString() + "<br/>\n");
+                }
+                writer.write("</body></html>");
                 writer.flush();
                 return;
             }
 
-            List<FileItem> files = new ArrayList<FileItem>();
+            List<FileItem> actualFiles = new ArrayList<FileItem>();
             boolean retrieve = false;
+            Subject authenticatedSubject = null;
 
             for (FileItem fileItem : fileItemsList) {
                 if (fileItem.isFormField()) {
                     if ("retrieve".equals(fileItem.getFieldName())) {
                         retrieve = true;
+                    } else if ("sessionid".equals(fileItem.getFieldName())) {
+                        int sessionid = Integer.parseInt(fileItem.getString());
+                        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+                        try {
+                            authenticatedSubject = subjectManager.getSubjectBySessionId(sessionid);
+                        } catch (Exception e) {
+                            throw new ServletException("Cannot authenticate request", e);
+                        }
                     }
-                    /* The file item contains a simple name-value pair of a form field */
-                    // TODO flag as error ?
+                    fileItem.delete();
                 } else {
-                    /* The file item contains an uploaded file */
-
-                    files.add(fileItem);
-
-                    System.out.println("Got the file: " + fileItem);
-
-
+                    // file item contains an actual uploaded file
+                    actualFiles.add(fileItem);
+                    log("file was uploaded: " + fileItem.getName());
                 }
             }
 
+            if (authenticatedSubject == null) {
+                for (FileItem fileItem : actualFiles) {
+                    fileItem.delete();
+                }
+                throw new ServletException("Cannot process unauthenticated request");
+            }
 
-            if (retrieve && files.size() == 1) {
+            if (retrieve && actualFiles.size() == 1) {
+                // sending in "retrieve" form element with a single file means the client just wants the content echoed back
+                FileItem fileItem = actualFiles.get(0);
+
                 writer = resp.getWriter();
-
-                // TODO
-//                InputStream s = files.get(0).getInputStream();
-//                IOUtils.copy(s,writer);
                 writer.write("<html>");
-                writer.write(new String(files.get(0).get()));
+                writer.write(new String(fileItem.get()));
                 writer.write("</html>");
                 writer.flush();
 
+                fileItem.delete();
             } else {
                 writer = resp.getWriter();
-                writer.write("<strong>File received</strong><p/>");
+                writer.println("<html>");
+                for (FileItem fileItem : actualFiles) {
+                    String absolutePath;
+                    if (fileItem.isInMemory()) {
+                        // force it to disk
+                        File tmpFile = File.createTempFile("" + fileItem.getName(), null);
+                        try {
+                            fileItem.write(tmpFile);
+                        } catch (Exception e) {
+                            throw new ServletException("Failed to persist uploaded file to disk", e);
+                        }
+                        absolutePath = tmpFile.getAbsolutePath();
+                    } else {
+                        absolutePath = ((DiskFileItem) fileItem).getStoreLocation().getAbsolutePath();
+                    }
+                    writer.println(absolutePath);
+                }
+                writer.println("</html>");
                 writer.flush();
-
             }
 
         }

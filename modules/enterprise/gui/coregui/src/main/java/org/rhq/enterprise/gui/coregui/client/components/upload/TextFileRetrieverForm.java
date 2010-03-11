@@ -29,6 +29,8 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+
 /**
  * @author Greg Hinkle
  */
@@ -39,7 +41,6 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
         setNumCols(8);
         setEncoding(Encoding.MULTIPART);
         setAction(GWT.getModuleBaseURL() + "/FileUploadServlet");
-
     }
 
     @Override
@@ -48,6 +49,9 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
 
         HiddenItem retrieveField = new HiddenItem("retrieve");
         retrieveField.setValue(true);
+
+        HiddenItem sessionIdField = new HiddenItem("sessionid");
+        sessionIdField.setValue(CoreGUI.getSessionSubject().getSessionId().intValue());
 
         final UploadItem textFile = new UploadItem("textFile", "Upload File");
         textFile.setEndRow(false);
@@ -76,7 +80,7 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
         uploadButton.setIcons(loadingIcon);
         uploadButton.setShowIcons(false);
 
-        setItems(retrieveField, textFile, uploadButton);
+        setItems(retrieveField, sessionIdField, textFile, uploadButton);
 
     }
 }

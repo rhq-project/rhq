@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
+import org.rhq.enterprise.gui.coregui.client.inventory.summary.SummaryCountsView;
 
 /**
  * @author Greg Hinkle
@@ -135,12 +136,16 @@ public class DashboardView extends VLayout {
 //                label.setBackgroundColor(colors[Random.nextInt(colors.length - 1)]);
 //                newPortlet.addItem(label);
 
-                if (Random.nextBoolean()) {
+                int nextInt = Random.nextInt() % 3;
+
+                if (nextInt == 0) {
                     ResourceSearchView item = new ResourceSearchView();
                     newPortlet.addItem(item);
 
+                } else if (nextInt == 1) {
+                    newPortlet.addItem(new RolesView());
                 } else {
-                    newPortlet.addItem(new RolesView());    
+                    newPortlet.addItem(new SummaryCountsView());
                 }
                 newPortlet.setHeight(350);
 

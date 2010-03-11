@@ -1,0 +1,259 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<head>
+    <link rel="stylesheet" href="/css/win.css" type="text/css"/>
+</head>
+<body>
+      <!-- CURRENT REPOS -->
+      <h:form id="currentRepoForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+
+         <rich:panel styleClass="BlockContent">
+            <f:facet name="header"><h:outputText value="Current Resource Subscriptions"/></f:facet>
+             <a4j:keepAlive beanName="ResourceReposUIBean"/>
+
+            <ui:param name="resourceReposDataModel" value="#{ResourceReposUIBean.dataModel}"/>
+            <rich:dataTable id="resourceReposDataTable"
+                            rows="#{PageControl.ResourceReposList.pageSize}"
+                            value="#{resourceReposDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 25%, 40%, 5%, 15%, 15%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ResourceReposList" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedResourceRepos" />
+                  </f:facet>
+
+                  <onc:select name="selectedResourceRepos" value="#{item.repo.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="/rhq/content/repo.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="id" value="#{item.repo.id}"/>
+                     <h:outputText value="#{item.repo.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.repo.description}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="COUNT(pv)">
+                        <h:outputText styleClass="headerText" value="Package Count" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageVersionCount}" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.creationDate">
+                        <h:outputText styleClass="headerText" value="Created" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.repo.creationDate}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.lastModifiedDate">
+                        <h:outputText styleClass="headerText" value="Last Modified" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.repo.lastModifiedDate}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6" width="100%">
+                        <onc:selectCommandButton action="#{ResourceReposUIBean.deleteSelectedResourceRepos}"
+                                                 value="REMOVE SUBSCRIPTIONS"
+                                                 target="selectedResourceRepos"
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="${GlobalPermissionsUIBean.inventory}"/>
+
+                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                           <ui:param name="paginationDataTableName" value="resourceReposDataTable"/>
+                           <ui:param name="paginationDataModel" value="#{resourceReposDataModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.ResourceReposList}"/>
+                        </ui:include>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+      </rich:panel>
+      </h:form>
+
+
+      <!--  AVAILABLE REPOS -->
+      <h:form id="availableRepoForm"
+              rendered="${GlobalPermissionsUIBean.inventory}">
+         <input type="hidden" name="id" value="${param.id}"/>
+         <rich:panel styleClass="BlockContent">
+            <f:facet name="header"><h:outputText value="Available Repositories"/></f:facet>
+
+             <a4j:keepAlive beanName="AvailableResourceReposUIBean"/>
+
+            <ui:param name="availableResourceReposDataModel" value="#{AvailableResourceReposUIBean.dataModel}"/>
+            <rich:dataTable id="availableResourceReposDataTable"
+                            rows="#{PageControl.AvailableResourceReposList.pageSize}"
+                            value="#{availableResourceReposDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 25%, 40%, 5%, 15%, 15%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="AvailableResourceReposList" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedAvailableResourceRepos" />
+                  </f:facet>
+
+                  <onc:select name="selectedAvailableResourceRepos" value="#{item.repo.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="/rhq/content/repo.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="id" value="#{item.repo.id}"/>
+                     <h:outputText value="#{item.repo.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.repo.description}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="COUNT(pv)">
+                        <h:outputText styleClass="headerText" value="Package Count" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageVersionCount}" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.creationDate">
+                        <h:outputText styleClass="headerText" value="Created" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.repo.creationDate}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.lastModifiedDate">
+                        <h:outputText styleClass="headerText" value="Last Modified" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.repo.lastModifiedDate}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6" width="100%">
+                        <onc:selectCommandButton action="#{AvailableResourceReposUIBean.subscribeSelectedResourceRepos}"
+                                                 value="ADD SUBSCRIPTIONS"
+                                                 target="selectedAvailableResourceRepos"
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="${GlobalPermissionsUIBean.inventory}"/>
+
+                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                           <ui:param name="paginationDataTableName" value="availableResourceReposDataTable"/>
+                           <ui:param name="paginationDataModel" value="#{availableResourceReposDataModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.AvailableResourceReposList}"/>
+                        </ui:include>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+      </rich:panel>
+
+      <ui:remove><!-- The package mode isn't returning enough data to differentiate it from the new subtab, so
+                      disabling it for now until we decide if this is needed. --></ui:remove>
+      <!--
+      <p align="center">
+         <h:outputLink value="/rhq/resource/content/subscription_packages.xhtml">
+            <f:param name="id" value="${param.id}"/>
+            <h:outputText value="Switch To Package Mode" />
+         </h:outputLink>
+      </p>
+      -->
+
+      </h:form>
+
+</body>
+
+</html>

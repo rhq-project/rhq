@@ -18,12 +18,20 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import com.smartgwt.client.types.Alignment;
+import java.util.Map;
+
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Label;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * @author Greg Hinkle
@@ -31,21 +39,38 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 public class BundleUploadDataStep implements WizardStep {
 
     private final BundleCreationWizard wizard;
+    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+    private DynamicForm form;
+    private Map<String, Boolean> allFilesStatus;
 
     public BundleUploadDataStep(BundleCreationWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 
     public Canvas getCanvas() {
-        HLayout hlayout = new HLayout();
-        hlayout.setWidth100();
-        hlayout.setHeight100();
+        form = new DynamicForm();
 
-        Img loaderImage = new Img("/images/ajax-loader.gif");
-        loaderImage.setAlign(Alignment.CENTER);
-        hlayout.addChild(loaderImage);
+        final HLayout layout = new HLayout();
+        layout.setWidth100();
+        layout.setHeight100();
 
-        return hlayout;
+        bundleServer.getAllBundleVersionFilenames(this.wizard.getBundleVersion().getId(),
+            new AsyncCallback<Map<String, Boolean>>() {
+
+                public void onSuccess(Map<String, Boolean> result) {
+                    allFilesStatus = result;
+                    prepareForm(layout);
+                    enableNextButtonWhenAppropriate();
+                }
+
+                public void onFailure(Throwable caught) {
+                    allFilesStatus = null;
+                    CoreGUI.getErrorHandler().handleError("Cannot obtain bundle file information from server", caught);
+                }
+            });
+
+        form.addChild(layout);
+        return form;
     }
 
     public boolean nextPage() {
@@ -57,7 +82,7 @@ public class BundleUploadDataStep implements WizardStep {
     }
 
     public boolean isNextEnabled() {
-        return true;
+        return this.allFilesStatus != null; // TODO && when all files are available
     }
 
     public boolean isPreviousEnabled() {
@@ -68,7 +93,22 @@ public class BundleUploadDataStep implements WizardStep {
         this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
     }
 
-    private void enablePreviousButtonWhenAppropriate() {
-        this.wizard.getView().getPreviousButton().setDisabled(!isPreviousEnabled());
+    private void prepareForm(HLayout layout) {
+        for (Map.Entry<String, Boolean> entry : this.allFilesStatus.entrySet()) {
+            VLayout vlayout = new VLayout();
+            layout.addChild(vlayout);
+
+            Label label = new Label(entry.getKey());
+            vlayout.addMember(label);
+
+            if (entry.getValue()) {
+                Img img = new Img("/images/status_complete.gif", 50, 15);
+                vlayout.addMember(img);
+            } else {
+                // TODO I really want a file upload component here
+                Img img = new Img("/images/status_error.gif", 50, 15);
+                vlayout.addMember(img);
+            }
+        }
     }
 }

@@ -414,6 +414,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.getBundleVersionFilenames(subject, bundleVersionId, withoutBundleFileOnly);
     }
 
+    public Map<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception {
+        return bundleManager.getAllBundleVersionFilenames(subject, bundleVersionId);
+    }
+
     public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
         throws Exception {
         return bundleManager.scheduleBundleDeployment(subject, bundleDeployDefinitionId, resourceId);

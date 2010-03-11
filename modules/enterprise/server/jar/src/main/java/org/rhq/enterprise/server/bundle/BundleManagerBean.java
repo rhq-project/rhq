@@ -299,6 +299,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         Bundle bundle = bundleVersion.getBundle();
         PackageType packageType = getBundleTypePackageType(bundle.getBundleType());
         architecture = (null == architecture) ? contentManager.getNoArchitecture() : architecture;
+        if (architecture.getId() == 0) {
+            Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
+            q.setParameter("name", architecture.getName());
+            architecture = (Architecture) q.getSingleResult();
+        }
         PackageVersion packageVersion = contentManager.createPackageVersion(name, packageType.getId(), version,
             architecture.getId(), fileStream);
 

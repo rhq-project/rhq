@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -30,11 +31,13 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -118,6 +121,31 @@ public class OperationCreateWizard implements Wizard {
         OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
 
         Configuration parameters = parametersStep.getParameterConfiguration();
+        final ExecutionSchedule schedule = schedulingStep.getExecutionSchedule();
+
+        GWTServiceLookup.getOperationService().scheduleResourceOperation(
+                resource.getId(),
+        operationDefinition.getName(),
+                parameters,
+                schedule,
+                " testing ",
+                0,
+                new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        // TODO: Implement this method.
+                        CoreGUI.getErrorHandler().handleError("Failed to schedule operation execution",caught);
+                    }
+
+                    public void onSuccess(Void result) {
+
+                        String message = "Schedule operation [" + operationDefinition.getName()
+                                + "]  on resource [" + resource.getId() + "] with cron string [" + schedule.getCronString() + "]";
+
+                        CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Info));
+                    }
+                }
+        );
+
 
         view.closeDialog();
     }

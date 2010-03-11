@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
@@ -82,6 +83,7 @@ import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.SortNormalizer;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -136,7 +138,6 @@ public class ConfigurationEditor extends VLayout {
     private int resourceTypeId;
     private ConfigType configType;
     private IButton saveButton;
-
 
 
     public static enum ConfigType {
@@ -531,6 +532,15 @@ public class ConfigurationEditor extends VLayout {
         for (PropertyDefinition subDef : definitions) {
             if (subDef.isSummary()) {
                 ListGridField field = new ListGridField(subDef.getName(), subDef.getDisplayName());
+
+                PropertyDefinitionSimple defSimple = (PropertyDefinitionSimple) subDef;
+                if (defSimple.getType() == PropertySimpleType.INTEGER) {
+                    field.setType(ListGridFieldType.INTEGER);
+                } else if (defSimple.getType() == PropertySimpleType.FLOAT) {
+                    field.setType(ListGridFieldType.FLOAT);
+                }
+
+
                 fieldsList.add(field);
             }
         }
@@ -541,6 +551,13 @@ public class ConfigurationEditor extends VLayout {
             for (PropertyDefinition subDef : definitions) {
                 ListGridField field = new ListGridField(subDef.getName(), subDef.getDisplayName());
                 fieldsList.add(field);
+                PropertyDefinitionSimple defSimple = (PropertyDefinitionSimple) subDef;
+                if (defSimple.getType() == PropertySimpleType.INTEGER) {
+                    field.setType(ListGridFieldType.FLOAT);
+                } else if (defSimple.getType() == PropertySimpleType.FLOAT) {
+                    field.setType(ListGridFieldType.FLOAT);
+                }
+
             }
         }
 
@@ -625,7 +642,7 @@ public class ConfigurationEditor extends VLayout {
     }
 
     private ListGridRecord[] buildSummaryRecords(PropertyList propertyList, ArrayList<PropertyDefinition> definitions) {
-        ListGridRecord[] rows = new ListGridRecord[propertyList.getList().size()];
+        ListGridRecord[] rows = new ListGridRecord[propertyList == null ? 0 : propertyList.getList().size()];
         int i = 0;
         for (Property row : propertyList.getList()) {
             PropertyMap rowMap = (PropertyMap) row;
@@ -641,8 +658,33 @@ public class ConfigurationEditor extends VLayout {
         for (PropertyDefinition subDef : definitions) {
             PropertyDefinitionSimple subDefSimple = (PropertyDefinitionSimple) subDef;
             PropertySimple propertySimple = ((PropertySimple) rowMap.get(subDefSimple.getName()));
-            record.setAttribute(subDefSimple.getName(), propertySimple != null ? propertySimple.getStringValue() : null);
-            //((PropertySimple) rowMap.get(subDefSimple.getName())).getStringValue());
+
+            if (propertySimple.getStringValue() != null) {
+                record.setAttribute(subDefSimple.getName(), propertySimple.getStringValue());
+                /*
+                switch (((PropertyDefinitionSimple) subDef).getType()) {
+                    case BOOLEAN:
+                        record.setAttribute(subDefSimple.getName(), propertySimple.getBooleanValue());
+                        break;
+                    case INTEGER:
+                        record.setAttribute(subDefSimple.getName(), propertySimple.getLongValue());
+                        break;
+                    case LONG:
+                        record.setAttribute(subDefSimple.getName(), propertySimple.getLongValue());
+                        break;
+                    case FLOAT:
+                        record.setAttribute(subDefSimple.getName(), propertySimple.getDoubleValue());
+                        break;
+                    case DOUBLE:
+                        record.setAttribute(subDefSimple.getName(), propertySimple.getDoubleValue());
+                        break;
+                    default:
+                        record.setAttribute(subDefSimple.getName(), propertySimple.getStringValue());
+                        break;
+                }*/
+            } else {
+
+            }
         }
         record.setAttribute("_RHQ_PROPERTY", rowMap);
         return record;

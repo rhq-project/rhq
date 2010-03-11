@@ -23,18 +23,29 @@ import java.util.LinkedList;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.AnimationCallback;
+import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
 
 /**
  * @author Greg Hinkle
@@ -61,8 +72,16 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
                 } else {
                     MenuItem[] items = new MenuItem[messages.size()];
                     int i = 0;
-                    for (Message message : messages) {
-                        items[i++] = new MenuItem(message.title, getSeverityIcon(message.severity));
+                    for (final Message message : messages) {
+                        MenuItem messageItem = new MenuItem(message.title, getSeverityIcon(message.severity));
+
+                        items[i++] = messageItem;
+
+                        messageItem.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                            public void onClick(MenuItemClickEvent event) {
+                                showDetails(message);
+                            }
+                        });
                     }
                     recentEventsMenu.setItems(items);
                 }
@@ -74,7 +93,46 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
         addMember(new LayoutSpacer());
     }
 
-    public void onMessage(Message message) {
+    private void showDetails(Message message) {
+        DynamicForm form = new DynamicForm();
+        form.setWrapItemTitles(false);
+
+        StaticTextItem title = new StaticTextItem("title","Title");
+        title.setValue(message.title);
+
+        StaticTextItem severity = new StaticTextItem("severity","Severity");
+        FormItemIcon severityIcon = new FormItemIcon();
+        severityIcon.setSrc(getSeverityIcon(message.severity));
+        severity.setIcons(severityIcon);
+        severity.setValue(message.severity.name());
+
+        StaticTextItem date = new StaticTextItem("time","Time");
+        date.setValue(message.fired);
+
+        StaticTextItem detail = new StaticTextItem("detail","Detail");
+        detail.setTitleOrientation(TitleOrientation.TOP);
+        detail.setValue(message.detail);
+
+        ButtonItem okButton = new ButtonItem("Ok","Ok");
+        okButton.setColSpan(2);
+        okButton.setAlign(Alignment.CENTER);
+
+        form.setItems(title,severity,date,detail, okButton );
+
+        Window window = new Window();
+        window.setTitle(message.title);
+        window.setWidth(600);
+        window.setHeight(400);
+        window.setIsModal(true);
+        window.setShowModalMask(true);
+        window.setCanDragResize(true);
+        window.centerInPage();
+        window.addItem(form);
+        window.show();
+        okButton.focusInItem();
+    }
+
+    public void onMessage(final Message message) {
         final Label label = new Label(message.title);
         label.setMargin(5);
         label.setAutoFit(true);
@@ -87,6 +145,11 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
 
         label.setTooltip(message.detail);
 
+        label.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                showDetails(message);
+            }
+        });
 
         addMember(label,1);
         redraw();

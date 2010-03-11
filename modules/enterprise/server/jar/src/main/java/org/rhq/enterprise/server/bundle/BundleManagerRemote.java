@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.bundle;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Remote;
@@ -255,6 +256,20 @@ public interface BundleManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionId") int bundleVersionId, //
         @WebParam(name = "withoutBundleFileOnly") boolean withoutBundleFileOnly) throws Exception;
+
+    /**
+     * Similar to {@link #getBundleVersionFilenames(Subject, int, boolean)}, this will determine the files required for a BundleVersion and return
+     * all of the filenames, with the values of the map being true if they already exist or false if they lack BundleFile representation
+     * in the BundleVersion.
+     *   
+     * @param subject must be InventoryManager
+     * @param bundleVersionId the BundleVersion being queried
+     * @return map keyed on filenames whose value indicates if a bundle file exists for the file or not
+     * @throws Exception
+     */
+    Map<String, Boolean> getAllBundleVersionFilenames( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleVersionId") int bundleVersionId) throws Exception;
 
     /**
      * Deploy the bundle as described in the provided deploy definition to the specified resource.

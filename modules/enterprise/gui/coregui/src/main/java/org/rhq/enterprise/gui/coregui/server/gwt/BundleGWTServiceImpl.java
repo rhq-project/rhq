@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.HashMap;
 import java.util.List;
 
 import org.rhq.core.domain.bundle.Bundle;
@@ -82,6 +83,16 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
         return SerialUtility.prepare(results, "createBundleAndBundleVersion");
+    }
+
+    public HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception {
+        HashMap<String, Boolean> results = new HashMap<String, Boolean>();
+        try {
+            results.putAll(bundleManager.getAllBundleVersionFilenames(getSessionSubject(), bundleVersionId));
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+        return SerialUtility.prepare(results, "getAllBundleVersionFilenames");
     }
 
 }

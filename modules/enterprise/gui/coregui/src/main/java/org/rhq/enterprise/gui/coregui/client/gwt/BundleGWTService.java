@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.HashMap;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.RemoteService;
@@ -39,4 +40,6 @@ public interface BundleGWTService extends RemoteService {
 
     BundleVersion createBundleAndBundleVersion(String bundleName, int bundleTypeId, String name, String version,
         String recipe) throws Exception;
+
+    HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception;
 }

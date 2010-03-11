@@ -20,8 +20,10 @@ package org.rhq.enterprise.server.bundle;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -472,6 +474,40 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                     result.add(filename);
                 }
             }
+        }
+
+        return result;
+
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public Map<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception {
+
+        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
+        if (null == bundleVersion) {
+            throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
+        }
+
+        // parse the recipe (validation occurs here) and get the config def and list of files
+        BundleType bundleType = bundleVersion.getBundle().getBundleType();
+        BundleServerPluginFacet bp = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
+            .getBundleServerPluginFacet(bundleType.getName());
+        RecipeParseResults parseResults = bp.parseRecipe(bundleVersion.getRecipe());
+
+        Set<String> filenames = parseResults.getBundleFileNames();
+        Map<String, Boolean> result = new HashMap<String, Boolean>(filenames.size());
+
+        List<BundleFile> bundleFiles = bundleVersion.getBundleFiles();
+        for (String filename : filenames) {
+            boolean found = false;
+            for (BundleFile bundleFile : bundleFiles) {
+                String name = bundleFile.getPackageVersion().getGeneralPackage().getName();
+                if (name.equals(filename)) {
+                    found = true;
+                    break;
+                }
+            }
+            result.put(filename, found);
         }
 
         return result;

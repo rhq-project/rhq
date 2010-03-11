@@ -51,11 +51,9 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
+import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
 import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
-import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -73,10 +71,12 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -1213,6 +1213,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
 
+        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
         // Write the content into the newly created package version. This may eventually move, but for now we'll just
         // use the byte array in the package version to store the bits.
         byte[] packageBits;

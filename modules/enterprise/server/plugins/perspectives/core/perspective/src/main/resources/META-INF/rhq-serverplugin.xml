@@ -95,7 +95,7 @@
    <menu-item
        name="overview.gwtGui"
        displayName="GWT GUI"
-       url="/coregui/CoreGUI.html#Resources">
+       url="/coregui/CoreGUI.html#Inventory">
        <position
           name="overview.dashboard"
           placement="after" />
@@ -103,7 +103,7 @@
    <menu-item
        name="overview.gwtGuiDevMode"
        displayName="GWT GUI - Dev Mode"
-       url="/coregui/CoreGUI.html?gwt.codesvr=127.0.0.1:9997#Resources">
+       url="/coregui/CoreGUI.html?gwt.codesvr=127.0.0.1:9997#Inventory">
        <position
           name="overview.gwtGui"
           placement="after" />

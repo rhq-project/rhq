@@ -165,7 +165,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#g(Subject,String)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#getSubjectByName(String)
      */
     public Subject getSubjectByName(String username) {
         Subject subject;
@@ -227,7 +227,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#getSubjectById(org.rhq.core.domain.auth.Subject, int)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#getSubjectById(int)
      */
     public Subject getSubjectById(int id) {
         Subject subject = entityManager.find(Subject.class, id);
@@ -291,10 +291,13 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 throw new LoginException("User account has been disabled.");
             }
 
+            // fetch the roles
+            subject.getRoles().size();
+
             // let's see if this user was already logged in with a valid session
             try {
-                int session_id = sessionManager.getSessionIdFromUsername(username);
-                subject.setSessionId(session_id);
+                int sessionId = sessionManager.getSessionIdFromUsername(username);
+                subject.setSessionId(sessionId);
                 return subject;
             } catch (SessionException se) {
                 // nope, no session; continue on so we can create the session

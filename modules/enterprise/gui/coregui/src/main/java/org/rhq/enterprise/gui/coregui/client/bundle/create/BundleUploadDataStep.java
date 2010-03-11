@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.upload.BundleFileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -106,9 +107,9 @@ public class BundleUploadDataStep implements WizardStep {
                 Img img = new Img("/images/status_complete.gif", 50, 15);
                 vlayout.addMember(img);
             } else {
-                // TODO I really want a file upload component here
-                Img img = new Img("/images/status_error.gif", 50, 15);
-                vlayout.addMember(img);
+                BundleFileUploadForm uploadForm = new BundleFileUploadForm(this.wizard.getBundleVersion(), entry
+                    .getKey());
+                vlayout.addMember(uploadForm);
             }
         }
     }

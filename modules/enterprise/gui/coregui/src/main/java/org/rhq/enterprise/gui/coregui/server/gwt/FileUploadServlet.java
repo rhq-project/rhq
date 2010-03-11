@@ -64,13 +64,7 @@ public class FileUploadServlet extends HttpServlet {
             try {
                 fileItemsList = (List<FileItem>) servletFileUpload.parseRequest(req);
             } catch (FileUploadException e) {
-                PrintWriter writer = resp.getWriter();
-                writer.write("<html><head></head><body><strong>File upload failed:</strong><br/>\n");
-                for (StackTraceElement elem : e.getStackTrace()) {
-                    writer.write(elem.toString() + "<br/>\n");
-                }
-                writer.write("</body></html>");
-                writer.flush();
+                writeExceptionResponse(resp, "File upload failed", e);
                 return;
             }
 
@@ -134,6 +128,16 @@ public class FileUploadServlet extends HttpServlet {
                 processUploadedFiles(authenticatedSubject, allUploadedFiles, formFields, req, resp);
             }
         }
+    }
+
+    protected void writeExceptionResponse(HttpServletResponse resp, String msg, Exception e) throws IOException {
+        PrintWriter writer = resp.getWriter();
+        writer.write("<html><head></head><body><strong>" + msg + "</strong><br/>\n");
+        for (StackTraceElement elem : e.getStackTrace()) {
+            writer.write(elem.toString() + "<br/>\n");
+        }
+        writer.write("</body></html>");
+        writer.flush();
     }
 
     /**

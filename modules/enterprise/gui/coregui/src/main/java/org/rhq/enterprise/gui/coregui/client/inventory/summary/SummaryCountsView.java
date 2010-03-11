@@ -23,6 +23,7 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.summary;
 
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
@@ -37,6 +38,7 @@ import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,6 +98,12 @@ public class SummaryCountsView extends VLayout {
         final LinkItem item = new LinkItem(name);
         item.setTitle(label);
         item.setValue(value);
+        item.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                // TODO Figure out to where the click events should be navigating
+                History.newItem(InventoryView.VIEW_PATH);
+            }
+        });
 
         return item;
     }

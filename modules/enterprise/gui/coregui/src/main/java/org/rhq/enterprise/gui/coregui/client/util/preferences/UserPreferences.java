@@ -18,51 +18,75 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.preferences;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class UserPreferences {
-
+    private static final String PREF_LIST_DELIM = "|";
+    private static final String PREF_LIST_DELIM_REGEX = "\\|";
 
     private Subject subject;
-
     private Configuration userConfiguration;
-
-
-    protected static final String PREF_ITEM_DELIM = "|";
-
-    public static final String PREF_DASH_FAVORITE_RESOURCES = ".dashContent.resourcehealth.resources";
-
+    private SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
 
     public UserPreferences(Subject subject) {
-        this.subject = subject;
+        this.subject = subject;        
         this.userConfiguration = subject.getUserConfiguration();
     }
 
-    
-
-
-
-
-
-    public List<Integer> getFavoriteResources() {
-        return getPreferenceAsIntegerList(PREF_DASH_FAVORITE_RESOURCES,PREF_ITEM_DELIM);
+    public Set<Integer> getFavoriteResources() {
+        return getPreferenceAsIntegerSet(UserPreferenceNames.RESOURCE_HEALTH_RESOURCES);
     }
 
-
+    public void setFavoriteResources(Set<Integer> resourceIds, AsyncCallback<Subject> callback) {
+        setPreference(UserPreferenceNames.RESOURCE_HEALTH_RESOURCES, resourceIds, callback);
+    }
 
     protected String getPreference(String name) {
         return userConfiguration.getSimpleValue(name, null);
     }
 
-    protected List<String> getPreferenceAsList(String key, String delimiter) {
+    protected void setPreference(String name, Collection value, AsyncCallback<Subject> callback) {
+        StringBuilder buffer = new StringBuilder();
+        boolean first = true;
+        for (Object item : value) {
+            if (first) {
+                first = false;
+            } else {
+                buffer.append(PREF_LIST_DELIM);
+            }
+            buffer.append(item);
+        }
+        setPreference(name, buffer.toString(), callback);
+    }
+
+    protected void setPreference(String name, String value, AsyncCallback<Subject> callback) {
+        PropertySimple prop = this.userConfiguration.getSimple(name);
+        if (prop == null) {
+            this.userConfiguration.put(new PropertySimple(name, value));
+        } else {
+            prop.setStringValue(value);
+        }
+        this.subjectService.updateSubject(this.subject, callback);
+    }
+
+    protected List<String> getPreferenceAsList(String key) {
         String pref = null;
         try {
             pref = getPreference(key);
@@ -70,26 +94,24 @@ public class UserPreferences {
 //            log.debug("A user preference named '" + key + "' does not exist.");
         }
 
-        return (pref != null) ? Arrays.asList(pref.split(delimiter)) : new ArrayList<String>();
+        return (pref != null) ? Arrays.asList(pref.split(PREF_LIST_DELIM_REGEX)) : new ArrayList<String>();
     }
 
-    protected List<Integer> getPreferenceAsIntegerList(String key, String delimiter) {
+    protected Set<Integer> getPreferenceAsIntegerSet(String key) {
         try {
-            List<String> value = getPreferenceAsList(key, delimiter);
-
-            List<Integer> result = new ArrayList<Integer>(value.size());
-            for (int i = 0; i < value.size(); i++) {
-                String trimmed = value.get(i).trim();
+            List<String> value = getPreferenceAsList(key);
+            // Use a TreeSet, so the Resource id's are sorted.
+            Set<Integer> result = new TreeSet<Integer>();
+            for (String aValue : value) {
+                String trimmed = aValue.trim();
                 if (trimmed.length() > 0) {
-                    result.add(Integer.valueOf(trimmed));
+                    Integer intValue = Integer.valueOf(trimmed);
+                    result.add(intValue);
                 }
             }
-
             return result;
         } catch (Exception e) {
-            return new ArrayList<Integer>();
+            return new HashSet<Integer>();
         }
     }
-
-
 }

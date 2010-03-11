@@ -13,6 +13,9 @@
       xmlns:onf="http://jboss.org/on/function"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+<head>
+    <link rel="stylesheet" href="/css/win.css" type="text/css"/>
+</head>
 
 <body>
     <rich:panel styleClass="BlockContent">
@@ -32,7 +35,7 @@
                 <f:facet name="header">
                     <h:outputText value="Name"/>
                 </f:facet>
-                <h:outputLink value="/rhq/resource/monitor/traits.xhtml">
+                <h:outputLink value="/rhq/resource/monitor/traits-plain.xhtml">
                     <f:param name="traitDefinitionId" value="#{metric.definitionId}"/>
                     <f:param name="id" value="#{ResourceUIBean.id}"/>
                     <h:outputText value="#{metric.label}"/>

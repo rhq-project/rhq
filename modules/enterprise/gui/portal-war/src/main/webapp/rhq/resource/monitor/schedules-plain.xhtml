@@ -14,6 +14,9 @@
       xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+<head>
+    <link rel="stylesheet" href="/css/win.css" type="text/css"/>
+</head>
 
 <body>
     <h:outputText rendered="#{not ResourceUIBean.permissions.measure}" value="You don't have the measure permission for this resource and therefore can not change metric schedules"/>

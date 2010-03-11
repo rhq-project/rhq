@@ -23,17 +23,29 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.summary;
 
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Grid;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SummaryCountsView extends VLayout {
 
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
+
+    private DynamicForm form;
 
     public SummaryCountsView() {
         resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<InventorySummary>() {
@@ -42,17 +54,49 @@ public class SummaryCountsView extends VLayout {
             }
 
             public void onSuccess(InventorySummary summary) {
-                Grid grid = new Grid(4, 2);
+                form = new DynamicForm();
+                List<FormItem> formItems = new ArrayList<FormItem>();
 
-                grid.setText(0, 0, "Platform Total");
-                grid.setText(0, 1, Integer.toString(summary.getPlatformCount()));
+                StaticTextItem platformTotal = createSummaryRow("platformTotal", "Platform Total",
+                    summary.getPlatformCount());
+                formItems.add(platformTotal);
 
-                grid.setText(1, 0, "Server Total");
-                grid.setText(1, 1, Integer.toString(summary.getServerCount()));
+                StaticTextItem serverTotal = createSummaryRow("serverTotal", "Server Total", summary.getServerCount());
+                formItems.add(serverTotal);
 
-                addMember(grid);
+                StaticTextItem serviceTotal = createSummaryRow("serviceTotal", "Service Total",
+                    summary.getServiceCount());
+                formItems.add(serviceTotal);
+
+                StaticTextItem compatibleGroupTotal = createSummaryRow("compatibleGroupTotal", "Compatible Group Total",
+                    summary.getCompatibleGroupCount());
+                formItems.add(compatibleGroupTotal);
+
+                StaticTextItem mixedGroupTotal = createSummaryRow("mixedGroupTotal", "Mixed Group Total",
+                    summary.getMixedGroupCount());
+                formItems.add(mixedGroupTotal);
+
+                StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal", "Group Definition Total",
+                    summary.getGroupDefinitionCount());
+                formItems.add(groupDefinitionTotal);
+
+                StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal",
+                    "Average Metrics per Minute", summary.getScheduledMeasurementsPerMinute());
+                formItems.add(avergeMetricsTotal);
+
+                form.setItems(formItems.toArray(new FormItem[formItems.size()]));
+                form.setWrapItemTitles(false);
+                form.setCellSpacing(15);
+                addMember(form);
             }
         });
     }
 
+    private StaticTextItem createSummaryRow(String name, String label, int value) {
+        final LinkItem item = new LinkItem(name);
+        item.setTitle(label);
+        item.setValue(value);
+
+        return item;
+    }
 }

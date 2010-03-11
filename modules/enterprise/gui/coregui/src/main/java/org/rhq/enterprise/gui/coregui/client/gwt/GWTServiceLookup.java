@@ -76,6 +76,10 @@ public class GWTServiceLookup {
         return secure(BundleGWTServiceAsync.Util.getInstance());
     }
 
+    public static ResourceBossGWTServiceAsync getResourceBossService() {
+        return secure(ResourceBossGWTServiceAsync.Util.getInstance());
+    }
+
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget))
             return null;

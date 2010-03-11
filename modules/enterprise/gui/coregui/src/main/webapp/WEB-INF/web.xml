@@ -49,6 +49,11 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleGWTServiceImpl</servlet-class>
     </servlet>
 
+    <servlet>
+      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl</servlet-class>
+    </servlet>
+
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RoleGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/RoleGWTService</url-pattern>
@@ -88,5 +93,9 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/BundleGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceBossGWTService</url-pattern>
     </servlet-mapping>
 </web-app>

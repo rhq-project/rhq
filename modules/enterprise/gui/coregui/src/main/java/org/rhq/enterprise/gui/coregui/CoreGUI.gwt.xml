@@ -23,6 +23,17 @@
         <when-type-assignable class="org.rhq.core.domain.util.Recordizable"/>
     </generate-with>-->
 
+
+    <replace-with class="at.bestsolution.gwt.util.impl.DynamicCallbackFormImpl">
+		<when-type-is class="at.bestsolution.gwt.util.impl.DynamicCallbackFormImpl"/>
+	</replace-with>
+
+	<replace-with class="at.bestsolution.gwt.util.impl.DynamicCallbackFormImplIE6">
+		<when-type-is class="at.bestsolution.gwt.util.impl.DynamicCallbackFormImpl"/>
+		<when-property-is name="user.agent" value="ie6"/>
+	</replace-with>
+
+
     <!-- limit builds to your preferred browser -->
 
     <!-- Safari -->

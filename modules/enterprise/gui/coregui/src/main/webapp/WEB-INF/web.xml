@@ -49,6 +49,12 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleGWTServiceImpl</servlet-class>
     </servlet>
 
+
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI FileUploadServlet</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.FileUploadServlet</servlet-class>
+    </servlet>
+
     <servlet>
       <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
       <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl</servlet-class>
@@ -95,7 +101,13 @@
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/BundleGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI FileUploadServlet</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/FileUploadServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceBossGWTService</url-pattern>
     </servlet-mapping>
+
 </web-app>

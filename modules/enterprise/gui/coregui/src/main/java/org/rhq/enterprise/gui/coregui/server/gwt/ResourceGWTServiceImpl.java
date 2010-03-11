@@ -80,7 +80,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 //                    "installedPackages               \n" +
 //                    "installedPackageHistory         \n" +
 //                    "resourceRepos                   \n" +
-//                    "schedules                       \n" +
+                    "schedules",
 //                    "availability                    \n" +
             "currentAvailability"
 //                    "resourceErrors                  \n" +

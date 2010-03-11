@@ -24,6 +24,8 @@ import java.util.List;
 
 import com.smartgwt.client.widgets.IButton;
 
+import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
@@ -34,17 +36,25 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 public class BundleCreationWizard implements Wizard {
 
     private ArrayList<WizardStep> steps;
-
     private WizardView view;
+    private String subtitle = "";
+
+    // the things we build up in the wizard
+    private BundleType bundleType;
+    private String bundleName;
+    private String bundleVersionString;
+    private String bundleDescription;
+    private String recipe;
+    private BundleVersion bundleVersion;
 
     public BundleCreationWizard() {
 
         steps = new ArrayList<WizardStep>();
 
-        steps.add(new BundleInfoStep());
-        steps.add(new BundleUploadRecipeStep());
-        steps.add(new BundleUploadDataStep());
-        steps.add(new BundleVerificationStep());
+        steps.add(new BundleInfoStep(this));
+        steps.add(new BundleUploadRecipeStep(this));
+        steps.add(new BundleVerificationStep(this));
+        steps.add(new BundleUploadDataStep(this));
 
     }
 
@@ -57,7 +67,12 @@ public class BundleCreationWizard implements Wizard {
     }
 
     public String getSubtitle() {
-        return "";
+        return subtitle;
+    }
+
+    public void setSubtitle(String subtitle) {
+        this.subtitle = subtitle;
+        this.view.refreshTitleLabelContents();
     }
 
     public List<WizardStep> getSteps() {
@@ -71,5 +86,57 @@ public class BundleCreationWizard implements Wizard {
     public void startBundleCreateWizard() {
         view = new WizardView(this);
         view.displayDialog();
+    }
+
+    public WizardView getView() {
+        return view;
+    }
+
+    public BundleType getBundleType() {
+        return bundleType;
+    }
+
+    public void setBundleType(BundleType bundleType) {
+        this.bundleType = bundleType;
+    }
+
+    public String getBundleName() {
+        return bundleName;
+    }
+
+    public void setBundleName(String bundleName) {
+        this.bundleName = bundleName;
+    }
+
+    public String getBundleVersionString() {
+        return bundleVersionString;
+    }
+
+    public void setBundleVersionString(String bundleVersionString) {
+        this.bundleVersionString = bundleVersionString;
+    }
+
+    public String getBundleDescription() {
+        return bundleDescription;
+    }
+
+    public void setBundleDescription(String desc) {
+        this.bundleDescription = desc;
+    }
+
+    public String getRecipe() {
+        return recipe;
+    }
+
+    public void setRecipe(String recipe) {
+        this.recipe = recipe;
+    }
+
+    public BundleVersion getBundleVersion() {
+        return bundleVersion;
+    }
+
+    public void setBundleVersion(BundleVersion bv) {
+        this.bundleVersion = bv;
     }
 }

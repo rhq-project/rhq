@@ -18,8 +18,25 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
-public interface BundleGWTService extends RemoteService {
+import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.util.PageList;
 
+public interface BundleGWTService extends RemoteService {
+    List<BundleType> getBundleTypes();
+
+    PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception;
+
+    Bundle createBundle(String name, int bundleTypeId) throws Exception;
+
+    BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
+
+    BundleVersion createBundleAndBundleVersion(String bundleName, int bundleTypeId, String name, String version,
+        String recipe) throws Exception;
 }

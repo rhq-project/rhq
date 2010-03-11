@@ -108,7 +108,7 @@ public class RecipeParser {
 
         RecipeCommand recipeCommand = this.recipeCommands.get(commandName);
         if (recipeCommand == null) {
-            throw new Exception("Unknown command in recipe: " + commandName);
+            throw new Exception("Unknown command in recipe [" + commandName + "]");
         }
 
         Set<String> replacementVars = getReplacementVariables(line);

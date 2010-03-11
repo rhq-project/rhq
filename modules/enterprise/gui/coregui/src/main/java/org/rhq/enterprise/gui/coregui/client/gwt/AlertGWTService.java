@@ -27,6 +27,7 @@ import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Ian Springer
+ * @author Heiko W. Rupp
  */
 public interface AlertGWTService extends RemoteService {
     /**
@@ -47,4 +48,11 @@ public interface AlertGWTService extends RemoteService {
      * @param alertIds the id's of the Resource alerts to be deleted
      */
     void deleteResourceAlerts(Integer[] alertIds);
+
+    /**
+     * Acknowledge the Resource alerts with the specified ids if the current uer has permission to do so.
+     *
+     * @param alertIds the ids of the Resource alerts to be acknowledged
+     */
+    void acknowledgeResourceAlerts(Integer[] alertIds);
 }

@@ -37,9 +37,11 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,6 +104,14 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         DataSourceTextField ctimeField = new DataSourceTextField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
         fields.add(ctimeField);
 
+        DataSourceTextField ackTimeField = new DataSourceTextField("ack_time", "Ack time");
+        ackTimeField.setCanSortClientOnly(true);
+        fields.add(ackTimeField);
+
+        DataSourceTextField ackByField = new DataSourceTextField("ack_by", "Ack by");
+        ackByField.setCanSortClientOnly(true);
+        fields.add(ackByField);
+
         return fields;
     }
 
@@ -118,12 +128,13 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         this.alertService.deleteResourceAlerts(alertIds, new AsyncCallback<Void>() {
             public void onSuccess(Void blah) {
+                CoreGUI.getMessageCenter().notify(new Message("Deleted ["+ alertIds.length + "] alerts", Message.Severity.Info));
                 System.out.println("Deleted Alerts with id's: " + Arrays.toString(alertIds) + ".");
-                alertsView.refresh();                
+                alertsView.refresh();
             }
 
             public void onFailure(Throwable caught) {
-                Window.alert("Failed to delete Alerts with id's: " + Arrays.toString(alertIds) + " - cause: " + caught);
+                CoreGUI.getErrorHandler().handleError("Failed to delete Alerts with id's: " + Arrays.toString(alertIds), caught);
                 System.err.println("Failed to delete Alerts with id's " + Arrays.toString(alertIds) + " - cause: " + caught);
             }
         });
@@ -191,6 +202,14 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         record.setAttribute("name", from.getAlertDefinition().getName());
         record.setAttribute("priority", from.getAlertDefinition().getPriority().name());
         record.setAttribute("ctime", DATE_TIME_FORMAT.format(new Date(from.getCtime())));
+        if (from.getAckTime() >0)
+            record.setAttribute("ack_time",DATE_TIME_FORMAT.format(new Date(from.getAckTime())));
+        else
+            record.setAttribute("ack_time","");
+        if (from.getAckBy()!=null)
+            record.setAttribute("ack_by",from.getAckBy().getName());
+        else
+            record.setAttribute("ack_by","");
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;
@@ -223,5 +242,31 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         JavaScriptObject data = request.getData ();
         ListGridRecord record = new ListGridRecord(data);
         Window.alert(String.valueOf(record.getAttributeAsInt("id")));
+    }
+
+    public void acknowledgeAlerts(final AlertsView alertsView) {
+        ListGrid listGrid = alertsView.getListGrid();
+        ListGridRecord[] records = listGrid.getSelection();
+
+        final Integer[] alertIds = new Integer[records.length];
+        for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
+            ListGridRecord record = records[i];
+            Integer alertId = record.getAttributeAsInt("id");
+            alertIds[i] = alertId;
+        }
+
+        this.alertService.acknowledgeResourceAlerts(alertIds, new AsyncCallback<Void>() {
+            public void onSuccess(Void blah) {
+                CoreGUI.getMessageCenter().notify(new Message("Acknowledged ["+ alertIds.length + "] alerts", Message.Severity.Info));
+
+                System.out.println("Acknowledged Alerts with id's: " + Arrays.toString(alertIds) + ".");
+                alertsView.refresh();
+            }
+
+            public void onFailure(Throwable caught) {
+                Window.alert("Failed to acknowledge Alerts with id's: " + Arrays.toString(alertIds) + " - cause: " + caught);
+                System.err.println("Failed to acknowledge Alerts with id's " + Arrays.toString(alertIds) + " - cause: " + caught);
+            }
+        });
     }
 }

@@ -18,6 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.List;
+
+import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
@@ -28,8 +37,51 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
     private BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
 
-    // TODO: this just illustrates how we are to prepare the results for the GWT client on the other end
-    public Object foo() {
-        return SerialUtility.prepare(null, null);
+    public List<BundleType> getBundleTypes() {
+        List<BundleType> bundleTypes = bundleManager.getAllBundleTypes(getSessionSubject());
+        return SerialUtility.prepare(bundleTypes, "getBundleTypes");
     }
+
+    public PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) {
+        PageList<Bundle> results = bundleManager.findBundlesByCriteria(getSessionSubject(), criteria);
+        return SerialUtility.prepare(results, "findBundlesByCriteria");
+    }
+
+    public PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) {
+        PageList<BundleVersion> results = bundleManager.findBundleVersionsByCriteria(getSessionSubject(), criteria);
+        return SerialUtility.prepare(results, "findBundleVersionsByCriteria");
+    }
+
+    public Bundle createBundle(String name, int bundleTypeId) throws Exception {
+        Bundle results;
+        try {
+            results = bundleManager.createBundle(getSessionSubject(), name, bundleTypeId);
+        } catch (Exception e) {
+            throw new Exception(ThrowableUtil.getAllMessages(e));
+        }
+        return SerialUtility.prepare(results, "createBundle");
+    }
+
+    public BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception {
+        BundleVersion results;
+        try {
+            results = bundleManager.createBundleVersion(getSessionSubject(), bundleId, name, version, recipe);
+        } catch (Exception e) {
+            throw new Exception(ThrowableUtil.getAllMessages(e));
+        }
+        return SerialUtility.prepare(results, "createBundleVersion");
+    }
+
+    public BundleVersion createBundleAndBundleVersion(String bundleName, int bundleTypeId, String name, String version,
+        String recipe) throws Exception {
+        BundleVersion results;
+        try {
+            results = bundleManager.createBundleAndBundleVersion(getSessionSubject(), bundleName, bundleTypeId, name,
+                version, recipe);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+        return SerialUtility.prepare(results, "createBundleAndBundleVersion");
+    }
+
 }

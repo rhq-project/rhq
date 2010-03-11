@@ -1,0 +1,168 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+   xmlns:h="http://java.sun.com/jsf/html"
+   xmlns:f="http://java.sun.com/jsf/core"
+   xmlns:ui="http://java.sun.com/jsf/facelets"
+   xmlns:c="http://java.sun.com/jstl/core"
+   xmlns:onc="http://jboss.org/on/component"
+   xmlns:onf="http://jboss.org/on/function"
+   xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+   xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition>
+
+   <rich:panel styleClass="BlockContent">
+
+      <f:facet name="header" styleClass="BlockTitle">
+         <a name="Numeric Metrics" />
+                Numeric Metrics
+            </f:facet>
+
+      <h:form id="metricsTableForm">
+         <!--  On submit make sure these are provided for the context of any new instance of the UI beans -->
+         <c:if test="#{MetricsTableUIBean.context.resourceId != -1}">
+            <input type="hidden" name="id"
+               value="#{MetricsTableUIBean.context.resourceId}" />
+         </c:if>
+         <c:if test="#{MetricsTableUIBean.context.groupId != -1}">
+            <input type="hidden" name="groupId"
+               value="#{MetricsTableUIBean.context.groupId}" />
+         </c:if>
+         <c:if
+            test="#{MetricsTableUIBean.context.parentResourceId != -1}">
+            <input type="hidden" name="parent"
+               value="#{MetricsTableUIBean.context.parentResourceId}" />
+         </c:if>
+         <c:if test="#{MetricsTableUIBean.context.resourceTypeId != -1}">
+            <input type="hidden" name="type"
+               value="#{MetricsTableUIBean.context.resourceTypeId}" />
+         </c:if>
+
+
+         <rich:dataTable value="#{MetricsTableUIBean.metricSummaries}"
+                         width="100%" 
+                         var="metric" 
+                         columnsWidth="1%"
+                         onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                         onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+            <rich:column
+               rendered="#{MetricsTableUIBean.context.category == 'Resource'}">
+               <f:facet name="header">
+                  <onc:allSelect target="selectedMetrics" />
+               </f:facet>
+
+               <onc:select name="selectedMetrics"
+                  value="#{metric.definitionId}" />
+            </rich:column>
+
+            <rich:column
+               rendered="#{MetricsTableUIBean.context.category != 'Resource'}">
+               <f:facet name="header">
+                  <h:outputText value="Group Members Reporting" />
+               </f:facet>
+               <h:outputText value="#{metric.numberCollecting}" />
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText value="Name" />
+               </f:facet>
+               
+               <c:if test="#{MetricsTableUIBean.context.category == 'Resource'}">
+                  <h:outputText value="#{metric.label}" />
+               </c:if>
+               
+               <c:if test="#{MetricsTableUIBean.context.category == 'ResourceGroup'}">
+                  <h:outputLink value="/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&amp;groupId=#{MetricsTableUIBean.context.groupId}&amp;m=#{metric.definitionId}">
+                     <h:outputText value="#{metric.label}" />
+                  </h:outputLink>
+               </c:if>
+
+               <c:if test="#{MetricsTableUIBean.context.category == 'AutoGroup'}">
+                  <h:outputLink value="/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&amp;parent=#{MetricsTableUIBean.context.parentResourceId}&amp;type=#{MetricsTableUIBean.context.resourceTypeId}&amp;m=#{metric.definitionId}">
+                     <h:outputText value="#{metric.label}" />
+                  </h:outputLink>
+               </c:if>
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText value="Alerts" />
+               </f:facet>
+               <h:outputText value="#{metric.alertCount}" />
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText value="Min" />
+               </f:facet>
+               <h:outputText value="#{metric.minMetric.valueFmt}" />
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText value="Max" />
+               </f:facet>
+               <h:outputText value="#{metric.maxMetric.valueFmt}" />
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText value="Average" />
+               </f:facet>
+               <h:outputText value="#{metric.avgMetric.valueFmt}" />
+            </rich:column>
+
+            <rich:column
+               rendered="#{MetricsTableUIBean.context.category == 'Resource'}">
+               <f:facet name="header">
+                  <h:outputText value="Last" />
+               </f:facet>
+               <h:outputText value="#{metric.lastMetric.valueFmt}" />
+            </rich:column>
+
+            <f:facet name="footer">
+               <rich:columnGroup
+                  rendered="#{MetricsTableUIBean.context.category == 'Resource'}">
+                  <rich:column colspan="8" width="100%">
+
+                     <onc:selectCommandButton
+                        action="#{MetricsTableChartUIBean.chartSelected}"
+                        value="CHART SELECTED METRICS"
+                        target="selectedMetrics"
+                        styleClass="on-pager-button buttonsmall" />
+
+                  </rich:column>
+               </rich:columnGroup>
+            </f:facet>
+
+         </rich:dataTable>
+         
+         <table>
+             <tr>
+                 <td><onc:metric optionList="m,h,d" /></td>
+                 <td>
+                     <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
+                                    action="#{MetricComponentUtilityUIBean.update}" >
+                         <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                     </h:commandLink>
+                     <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
+                                    action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
+                         <h:outputText value="Switch to Simple Mode" />
+                     </h:commandLink>
+                 </td>
+             </tr>
+         </table>
+      </h:form>
+
+   </rich:panel>
+
+</ui:composition>
+
+</html>

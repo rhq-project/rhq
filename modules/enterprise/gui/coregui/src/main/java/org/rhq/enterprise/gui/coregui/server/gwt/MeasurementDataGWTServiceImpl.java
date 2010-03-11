@@ -22,9 +22,13 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -37,6 +41,7 @@ import java.util.Set;
 public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implements MeasurementDataGWTService {
 
     private MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+    private CallTimeDataManagerLocal callTimeDataManager = LookupUtil.getCallTimeDataManager();
 
     public List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType) {
         return SerialUtility.prepare(
@@ -57,5 +62,11 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
                 dataManager.findDataForResource(
                         getSessionSubject(), resourceId, definitionIds, beginTime, endTime, numPoints),
                 "MeasurementDataService.findDataForResource");
+    }
+
+    public PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end, PageControl pageControl) {
+        return SerialUtility.prepare(
+                callTimeDataManager.findCallTimeDataForResource(getSessionSubject(), scheduleId, start, end, pageControl),
+                "MeasurementDataService.findCallTimeDataForResource");
     }
 }

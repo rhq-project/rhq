@@ -70,8 +70,8 @@ public class WizardView extends VLayout {
         titleBar = new HLayout(30);
         titleBar.setHeight(50);
         titleBar.setBackgroundColor("#F0F0F0");
-        titleLabel = new HTMLFlow("<span class=\"HeaderLabel\">" + wizard.getTitle() + "</span><br/>"
-            + wizard.getSubtitle());
+        titleLabel = new HTMLFlow();
+        refreshTitleLabelContents();
         titleLabel.setWidth("*");
 
         stepLabel = new Label();
@@ -106,23 +106,39 @@ public class WizardView extends VLayout {
         setStep(0);
     }
 
+    /**
+     * You can call this if you ever change the wizard's title or subtitle and you want to see it
+     * reflected in the wizard UI.
+     */
+    public void refreshTitleLabelContents() {
+        this.titleLabel.setContents("<span class=\"HeaderLabel\">" + wizard.getTitle() + "</span><br/>"
+            + wizard.getSubtitle());
+    }
+
     private void setupButtons() {
         cancelButton = new IButton("Cancel");
+        cancelButton.setDisabled(false);
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 wizardWindow.destroy();
             }
         });
         previousButton = new IButton("Previous");
+        previousButton.setDisabled(true);
         previousButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 setStep(currentStep - 1);
             }
         });
         nextButton = new IButton("Next");
+        nextButton.setDisabled(true);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                setStep(currentStep + 1);
+
+                WizardStep step = wizard.getSteps().get(currentStep);
+                if (step.nextPage()) {
+                    setStep(currentStep + 1);
+                }
             }
         });
 
@@ -141,9 +157,18 @@ public class WizardView extends VLayout {
 
         stepTitleLabel.setContents(step.getName());
 
-        previousButton.setDisabled(stepIndex == 0);
+        if (stepIndex == 0) {
+            previousButton.setDisabled(true);
+        } else {
+            previousButton.setDisabled(!step.isPreviousEnabled());
+        }
+
         boolean last = (stepIndex == (wizard.getSteps().size() - 1));
-        nextButton.setDisabled(last);
+        if (last) {
+            nextButton.setDisabled(true);
+        } else {
+            nextButton.setDisabled(!step.isNextEnabled());
+        }
 
         for (IButton button : customButtons) {
             buttonBar.removeMember(button);
@@ -185,5 +210,21 @@ public class WizardView extends VLayout {
 
     public void closeDialog() {
         wizardWindow.destroy();
+    }
+
+    public IButton getCancelButton() {
+        return cancelButton;
+    }
+
+    public IButton getPreviousButton() {
+        return previousButton;
+    }
+
+    public IButton getNextButton() {
+        return nextButton;
+    }
+
+    public ArrayList<IButton> getCustomButtons() {
+        return customButtons;
     }
 }

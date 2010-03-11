@@ -25,11 +25,13 @@ import com.smartgwt.client.widgets.Canvas;
  */
 public interface WizardStep {
 
-
     Canvas getCanvas();
 
-    boolean valid();
+    boolean nextPage();
 
     String getName();
 
+    boolean isPreviousEnabled();
+
+    boolean isNextEnabled();
 }

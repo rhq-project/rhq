@@ -63,7 +63,7 @@ public class ProcessingRecipeContextTest {
         File testDir = getTestDir("testrealize");
         File file = writeFile("a b c\nhello<% var %>world\na b c\n", testDir, "config.txt");
 
-        addRecipeCommand("realize --file=" + file.getName());
+        addRecipeCommand("realize --file=" + file.getPath());
 
         ProcessingRecipeContext context = createRecipeContext(testDir);
         context.addReplacementVariableValue("var", "BOO");
@@ -71,7 +71,7 @@ public class ProcessingRecipeContextTest {
 
         Set<String> files = context.getRealizedFiles();
         assert files.size() == 1 : files;
-        assert files.contains(file.getName()) : files;
+        assert files.contains(file.getPath()) : files;
 
         String realizedContent = readFile(file);
         assert realizedContent.equals("a b c\nhelloBOOworld\na b c\n") : realizedContent;

@@ -70,15 +70,15 @@ public class UsersView extends VLayout {
         toolStrip.setMembersMargin(15);
 
         table.addTableAction("Remove",
-                Table.SelectionEnablement.MULTIPLE,
-                "Are you sure you want to delete # roles?",
+                Table.SelectionEnablement.ANY,
+                "Are you sure you want to delete # users?",
                 new TableAction() {
                     public void executeAction(ListGridRecord[] selection) {
                         table.getListGrid().removeSelectedData();
                     }
                 });
 
-        table.addTableAction("Add Role",
+        table.addTableAction("Add User",
                 new TableAction() {
                     public void executeAction(ListGridRecord[] selection) {
                         createUser();

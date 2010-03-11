@@ -24,6 +24,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 
@@ -176,8 +177,8 @@ public class ResourceTypeRepository {
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                // TODO: Implement this method.
                 caught.printStackTrace();
+                CoreGUI.getErrorHandler().handleError("Failed to load resource type metadata",caught);
             }
 
             public void onSuccess(PageList<ResourceType> result) {

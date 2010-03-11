@@ -83,7 +83,7 @@ public class Bundle implements Serializable {
     private BundleType bundleType;
 
     @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false)
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     private Repo repo;
 
     @OneToMany(mappedBy = "bundle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

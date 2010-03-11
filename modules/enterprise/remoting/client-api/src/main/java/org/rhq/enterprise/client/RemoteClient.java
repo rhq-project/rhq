@@ -405,6 +405,10 @@ public class RemoteClient {
         return RemoteClientProxy.getProcessor(this, Manager.RoleManager);
     }
 
+    public SavedSearchManagerRemote getSavedSearchManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.SavedSearchManager);
+    }
+
     public SubjectManagerRemote getSubjectManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.SubjectManager);
     }

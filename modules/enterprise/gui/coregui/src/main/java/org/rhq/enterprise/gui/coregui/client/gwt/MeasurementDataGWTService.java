@@ -22,7 +22,10 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
@@ -45,4 +48,5 @@ public interface MeasurementDataGWTService extends RemoteService {
         int[] definitionIds, long beginTime, long endTime, int numPoints);
 
 
+    PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end, PageControl pageControl);
 }

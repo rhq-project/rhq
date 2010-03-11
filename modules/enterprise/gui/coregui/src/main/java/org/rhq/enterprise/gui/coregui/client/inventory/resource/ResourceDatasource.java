@@ -18,14 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -37,6 +29,15 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+
 /**
  * @author Greg Hinkle
  */
@@ -46,12 +47,11 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
-
     public ResourceDatasource() {
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
-        
+
         DataSourceTextField nameDataField = new DataSourceTextField("name", "Name", 200);
         nameDataField.setCanEdit(false);
 
@@ -66,7 +66,8 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
         availabilityDataField.setCanEdit(false);
 
-        setFields(idDataField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField, categoryDataField, availabilityDataField);
+        setFields(idDataField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField,
+            categoryDataField, availabilityDataField);
     }
 
     public String getQuery() {
@@ -77,7 +78,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         this.query = query;
     }
 
-
     public void executeFetch(final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
 
@@ -85,11 +85,22 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         criteria.setPageControl(getPageControl(request));
 
         if (request.getCriteria().getValues().get("parentId") != null) {
-            criteria.addFilterParentResourceId(Integer.parseInt((String) request.getCriteria().getValues().get("parentId")));
+            criteria.addFilterParentResourceId(Integer.parseInt((String) request.getCriteria().getValues().get(
+                "parentId")));
         }
 
         if (request.getCriteria().getValues().get("name") != null) {
             criteria.addFilterName((String) request.getCriteria().getValues().get("name"));
+        }
+
+        if (request.getCriteria().getValues().get("category") != null) {
+            criteria.addFilterResourceCategory(ResourceCategory.valueOf(((String) request.getCriteria().getValues()
+                .get("category")).toUpperCase()));
+        }
+
+        if (request.getCriteria().getValues().get("availability") != null) {
+            criteria.addFilterCurrentAvailability(AvailabilityType.valueOf(((String) request.getCriteria().getValues()
+                .get("availability")).toUpperCase()));
         }
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
@@ -106,7 +117,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
                 ListGridRecord[] records = buildRecords(result);
                 response.setData(records);
-                response.setTotalRows(result.getTotalSize());	// for paging to work we have to specify size of full result set
+                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }
         });
@@ -114,24 +125,25 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     @Override
     public Resource copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override
     public ListGridRecord copyValues(Resource from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute("resource",from);
-        record.setAttribute("id",from.getId());
-        record.setAttribute("name",from.getName());
-        record.setAttribute("description",from.getDescription());
-        record.setAttribute("typeName",from.getResourceType().getName());
-        record.setAttribute("pluginName",from.getResourceType().getPlugin());
-        record.setAttribute("category",from.getResourceType().getCategory().getDisplayName());
+        record.setAttribute("resource", from);
+        record.setAttribute("id", from.getId());
+        record.setAttribute("name", from.getName());
+        record.setAttribute("description", from.getDescription());
+        record.setAttribute("typeName", from.getResourceType().getName());
+        record.setAttribute("pluginName", from.getResourceType().getPlugin());
+        record.setAttribute("category", from.getResourceType().getCategory().getDisplayName());
 
-        record.setAttribute("currentAvailability",
-                from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP
-                ? "/images/icons/availability_green_16.png"
-                : "/images/icons/availability_red_16.png");
+        record
+            .setAttribute(
+                "currentAvailability",
+                from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "/images/icons/availability_green_16.png"
+                    : "/images/icons/availability_red_16.png");
 
         return record;
     }

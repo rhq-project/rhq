@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -167,6 +168,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
             }
 
             public void onSuccess(Subject result) {
+                CoreGUI.getMessageCenter().notify(new Message("User added", Message.Severity.Info));
                 response.setData(new Record[]{copyValues(result)});
                 processResponse(request.getRequestId(), response);
             }
@@ -194,7 +196,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                         }
 
                         public void onSuccess(Void nothing) {
-                            System.out.println("Subject Updated");
+                            CoreGUI.getMessageCenter().notify(new Message("User updated and password changed", Message.Severity.Info));
                             response.setData(new Record[]{copyValues(result)});
                             processResponse(request.getRequestId(), response);
 
@@ -202,6 +204,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                     });
                 } else {
                     System.out.println("Subject Updated");
+                    CoreGUI.getMessageCenter().notify(new Message("User [" + result.getName() + "] updated", Message.Severity.Info));
                     response.setData(new Record[]{copyValues(result)});
                     processResponse(request.getRequestId(), response);
                 }
@@ -213,7 +216,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     protected void executeRemove(final DSRequest request, final DSResponse response) {
         JavaScriptObject data = request.getData();
         final ListGridRecord rec = new ListGridRecord(data);
-        Subject subjectToDelete = copyValues(rec);
+        final Subject subjectToDelete = copyValues(rec);
 
         subjectService.deleteSubjects(new int[]{subjectToDelete.getId()}, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
@@ -221,7 +224,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
             }
 
             public void onSuccess(Void result) {
-                System.out.println("Subject deleted");
+                CoreGUI.getMessageCenter().notify(new Message("User [" + subjectToDelete.getName() + "] removed", Message.Severity.Info));
                 response.setData(new Record[]{rec});
                 processResponse(request.getRequestId(), response);
             }

@@ -51,6 +51,9 @@ public class RecipeContext {
     private final List<Command> commands;
 
     public RecipeContext(String recipe) {
+        if (recipe == null) {
+            throw new IllegalArgumentException("recipe == null");
+        }
         this.recipe = recipe;
         this.deployFiles = new HashMap<String, String>();
         this.files = new HashMap<String, String>();

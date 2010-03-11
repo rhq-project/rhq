@@ -22,9 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -61,10 +59,12 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
+import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.NumberUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -77,6 +77,8 @@ import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.HibernateDetachUtility;
+import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
 
 /**
  * Manages the creation and usage of bundles.
@@ -118,7 +120,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Bundle createBundle(Subject subject, String name, int bundleTypeId) {
+    public Bundle createBundle(Subject subject, String name, int bundleTypeId) throws Exception {
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleName: " + name);
         }
@@ -130,10 +132,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         Bundle bundle = new Bundle(name, bundleType);
 
-        // add the implicit bundle repo
+        // create and add the required Repo. the Repo is a detached object ehich helps in its eventual
+        // removal.
         Repo repo = new Repo(name);
         repo.setCandidate(false);
         repo.setSyncSchedule(null);
+        repo = repoManager.createRepo(subject, repo);
         bundle.setRepo(repo);
 
         log.info("Creating bundle: " + bundle);
@@ -197,6 +201,27 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, int bundleTypeId,
+        String name, String bundleVersion, String recipe) throws Exception {
+
+        // first see if the bundle exists or not; if not, create one
+        BundleCriteria criteria = new BundleCriteria();
+        criteria.addFilterBundleTypeId(Integer.valueOf(bundleTypeId));
+        criteria.addFilterName(bundleName);
+        PageList<Bundle> bundles = findBundlesByCriteria(subject, criteria);
+        Bundle bundle;
+        if (bundles.getTotalSize() == 0) {
+            bundle = createBundle(subject, bundleName, bundleTypeId);
+        } else {
+            bundle = bundles.get(0);
+        }
+
+        // now create the bundle version with the bundle we either found or created
+        BundleVersion bv = createBundleVersion(subject, bundle.getId(), name, bundleVersion, recipe);
+        return bv;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String version, String recipe)
         throws Exception {
         if (null == name || "".equals(name.trim())) {
@@ -212,7 +237,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleType bundleType = bundle.getBundleType();
         BundleServerPluginFacet bp = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
             .getBundleServerPluginFacet(bundleType.getName());
-        RecipeParseResults results = bp.parseRecipe(recipe);
+        RecipeParseResults results;
+
+        try {
+            results = bp.parseRecipe(recipe);
+        } catch (Exception e) {
+            // ensure that we throw a runtime exception to force a rollback
+            throw new RuntimeException("Failed to parse recipe", e);
+        }
 
         // ensure we have a version
         version = getVersion(version, bundle);
@@ -238,18 +270,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // note - this is the same algo used by ResourceClientProxy in updatebackingContent (for a resource)
         String oldVersion = (null == currentBundleVersion) ? null : currentBundleVersion.getVersion();
-        String newVersion = "1.0";
-        if (oldVersion != null && oldVersion.length() != 0) {
-            String[] parts = oldVersion.split("[^a-zA-Z0-9]");
-            String lastPart = parts[parts.length - 1];
-            try {
-                int lastNumber = Integer.parseInt(lastPart);
-                newVersion = oldVersion.substring(0, oldVersion.length() - lastPart.length()) + (lastNumber + 1);
-            } catch (NumberFormatException nfe) {
-                newVersion = oldVersion + ".1";
-            }
-        }
-
+        String newVersion = NumberUtil.autoIncrementVersion(oldVersion);
         return newVersion;
     }
 
@@ -278,6 +299,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         architecture = (null == architecture) ? contentManager.getNoArchitecture() : architecture;
         PackageVersion packageVersion = contentManager.createPackageVersion(name, packageType.getId(), version,
             architecture.getId(), fileStream);
+
+        // set the PackageVersion's filename to the bundleFile name, it's left null by default
+        packageVersion.setFileName(name);
+        entityManager.merge(packageVersion);
 
         // Create the mapping between the Bundle's Repo and the BundleFile's PackageVersion
         Repo repo = bundle.getRepo();
@@ -350,7 +375,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleScheduleResponse scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
+    public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
         throws Exception {
 
         BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
@@ -362,18 +387,34 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
         }
 
+        // requires_new trans
         BundleDeployment deployment = bundleManager.createBundleDeployment(subject, bundleDeployDefinitionId,
             resourceId);
 
         AgentClient agentClient = agentManager.getAgentClient(resourceId);
         BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
+        // make sure the deployDef contains the info required by the schedule service
+        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, deployDef.getBundleVersion().getId());
+        Configuration config = entityManager.find(Configuration.class, deployDef.getConfiguration().getId());
+        Bundle bundle = entityManager.find(Bundle.class, bundleVersion.getBundle().getId());
+        BundleType bundleType = entityManager.find(BundleType.class, bundle.getBundleType().getId());
+        ResourceType resourceType = entityManager.find(ResourceType.class, bundleType.getResourceType().getId());
+        bundleType.setResourceType(resourceType);
+        bundle.setBundleType(bundleType);
+        bundleVersion.setBundle(bundle);
+        deployDef.setBundleVersion(bundleVersion);
+        deployDef.setConfiguration(config);
+        // now scrub the hibernate entity to make it a pojo suitable for sending to the client
+        HibernateDetachUtility.nullOutUninitializedFields(deployDef, SerializationType.SERIALIZATION);
         BundleScheduleRequest request = new BundleScheduleRequest(deployDef);
         BundleScheduleResponse response = bundleAgentService.schedule(request);
-        if (null != response) {
-            response.setBundleDeployment(deployment);
-        }
 
-        return response;
+        // we don't want to commit the scrubbed entities so clear the changes
+        this.entityManager.clear();
+
+        // TODO: Generate History based on the response
+
+        return deployment;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -493,6 +534,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return queryRunner.execute();
     }
 
+    public PageList<BundleFile> findBundleFilesByCriteria(Subject subject, BundleFileCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        CriteriaQueryRunner<BundleFile> queryRunner = new CriteriaQueryRunner<BundleFile>(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
+    }
+
     public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
@@ -504,59 +553,31 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deleteBundle(Subject subject, int bundleId) throws Exception {
         Bundle bundle = this.entityManager.find(Bundle.class, bundleId);
+        if (null == bundle) {
+            return;
+        }
+
+        for (BundleVersion bv : bundle.getBundleVersions()) {
+            bundleManager.deleteBundleVersion(subject, bv.getId());
+        }
+
+        // we need to whack the Repo once the Bundle no longe refers to it
+        Repo bundleRepo = bundle.getRepo();
+
         this.entityManager.remove(bundle);
+        this.entityManager.flush();
+
+        repoManager.deleteRepo(subject, bundleRepo.getId());
     }
 
-    /*
-    public void deleteBundleVersions(Subject subject, int[] bundleVersionIds) {
-        for (int bundleVersionId : bundleVersionIds) {
-            BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
-            this.entityManager.remove(bundleVersion);
+    public void deleteBundleVersion(Subject subject, int bundleVersionId) {
+        BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
+        if (null == bundleVersion) {
+            return;
         }
+
+        // remove the bundle version, this will cascade remove the deploy defs which will cascade remove
+        // the deployments.
+        this.entityManager.remove(bundleVersion);
     }
-    */
-
-    public BundleType createMockBundleType(Subject subject) {
-
-        try {
-            ResourceType linuxPlatformResourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin("Linux",
-                "Platforms");
-            return createBundleType(subject, UUID.randomUUID().toString(), linuxPlatformResourceType.getId());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public Bundle createMockBundle(Subject subject, List<BundleType> bundleTypes) {
-        Random random = new Random();
-        BundleType bundleType;
-        if (bundleTypes.isEmpty()) {
-            bundleType = createMockBundleType(subject);
-        } else {
-            int randomIndex = random.nextInt(bundleTypes.size());
-            bundleType = bundleTypes.get(randomIndex);
-        }
-
-        Bundle bundle = createBundle(subject, UUID.randomUUID().toString(), bundleType.getId());
-
-        // Add 1 to 5 bundle versions.
-        int bundleVersionCount = random.nextInt(5) + 1;
-        for (int i = 0; i < bundleVersionCount; i++) {
-            String bundleVersionName = UUID.randomUUID().toString();
-            final String RECIPE = "repo rhel-x86_64-5\n" //
-                + "package foo-1.25.rpm\n" //
-                + "package bar-1.25.rpm\n" //
-                + "script foo.bash -c some parameter\n" //
-                + "deploy jboss.tar %{jboss.home.directory}\n" //                
-                + "realize %{jboss.home.directory}/server/default/setting.xml\n" //                
-                + "file example.setting /etc/some/setting.ini\n" + "service example restart\n";
-            BundleVersion bundleVersion = new BundleVersion(bundleVersionName, String.valueOf(i + 1), null, RECIPE);
-            bundle.addBundleVersion(bundleVersion);
-        }
-
-        bundle = entityManager.merge(bundle);
-        return bundle;
-    }
-
 }

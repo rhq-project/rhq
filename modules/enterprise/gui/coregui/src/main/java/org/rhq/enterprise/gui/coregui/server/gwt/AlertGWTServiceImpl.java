@@ -40,4 +40,8 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
     public void deleteResourceAlerts(Integer[] alertIds) {
         this.alertManager.deleteResourceAlerts(getSessionSubject(), alertIds);
     }
+
+    public void acknowledgeResourceAlerts(Integer[] alertIds) {
+        this.alertManager.acknowledgeAlerts(getSessionSubject(), alertIds);
+    }
 }

@@ -85,6 +85,30 @@
         </dependency>
 
 
+
+
+        <!-- for file uploads -->
+      <dependency>
+         <groupId>commons-fileupload</groupId>
+         <artifactId>commons-fileupload</artifactId>
+         <version>1.2</version>
+      </dependency>
+
+        <dependency>
+           <groupId>commons-io</groupId>
+           <artifactId>commons-io</artifactId>
+           <version>1.3.1</version>
+        </dependency>
+
+        <dependency>
+           <groupId>commons-logging</groupId>
+           <artifactId>commons-logging</artifactId>
+           <version>1.0.4</version>
+           <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+
+
         <!-- Internal Deps -->
 
         <dependency>
@@ -374,7 +398,7 @@
         <repository>
             <id>smartgwt</id>
             <name>SmartGWT</name>
-            <url>http://www.smartclient.com/maven2</url>
+            <url>http://www.smartclient.com/maven2/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -389,10 +413,13 @@
             </snapshots>
         </repository>
 
+        <!--
         <repository>
-            <id>gflot-repository</id>
+            <id>gflot</id>
+            <name>GFlot</name>
             <url>http://codemonkey.dumontierlab.com/maven/repo/</url>
         </repository>
+        -->
     </repositories>
 
 </project>

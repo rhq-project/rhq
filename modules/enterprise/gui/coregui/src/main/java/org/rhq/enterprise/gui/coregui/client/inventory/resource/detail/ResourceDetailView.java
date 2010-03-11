@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectLi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.calltime.CallTimeView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
@@ -103,7 +104,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         summaryTab.registerSubTabs("Overview", "Timeline");
 
         monitoringTab = new TwoLevelTab("Monitoring", "/images/icons/Monitor_grey_16.png");
-        monitoringTab.registerSubTabs("Graphs", "Tables", "Traits", "Availability", "Schedules");
+        monitoringTab.registerSubTabs("Graphs", "Tables", "Traits", "Availability", "Schedules", "Call Time");
 
         inventoryTab = new TwoLevelTab("Inventory", "/images/icons/Inventory_grey_16.png");
         inventoryTab.registerSubTabs("Children", "Connection Settings");
@@ -154,10 +155,12 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
 
 
         monitoringTab.updateSubTab("Graphs", new GraphListView(resource)); // new FullHTMLPane("/rhq/common/monitor/graphs.xhtml?id=" + resource.getId()));
-        monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables.xhtml?id=" + resource.getId()));
-        monitoringTab.updateSubTab("Traits", new FullHTMLPane("/rhq/resource/monitor/traits.xhtml?id=" + resource.getId()));
-        monitoringTab.updateSubTab("Availability", new FullHTMLPane("/rhq/resource/monitor/availabilityHistory.xhtml?id=" + resource.getId()));
-        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules.xhtml?id=" + resource.getId()));
+        monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()));
+        monitoringTab.updateSubTab("Traits", new FullHTMLPane("/rhq/resource/monitor/traits-plain.xhtml?id=" + resource.getId()));
+        monitoringTab.updateSubTab("Availability", new FullHTMLPane("/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()));
+        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
+        monitoringTab.updateSubTab("Call Time", new CallTimeView(resource));
+
 
 
         inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));

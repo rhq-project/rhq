@@ -18,26 +18,57 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.layout.HLayout;
+
+import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 /**
  * @author Greg Hinkle
  */
 public class BundleUploadDataStep implements WizardStep {
 
-    public Canvas getCanvas() {
-        return new Label("Todo: implement me");
+    private final BundleCreationWizard wizard;
+
+    public BundleUploadDataStep(BundleCreationWizard bundleCreationWizard) {
+        this.wizard = bundleCreationWizard;
     }
 
-    public boolean valid() {
-        return false;  // TODO: Implement this method.
+    public Canvas getCanvas() {
+        HLayout hlayout = new HLayout();
+        hlayout.setWidth100();
+        hlayout.setHeight100();
+
+        Img loaderImage = new Img("/images/ajax-loader.gif");
+        loaderImage.setAlign(Alignment.CENTER);
+        hlayout.addChild(loaderImage);
+
+        return hlayout;
+    }
+
+    public boolean nextPage() {
+        return true; // TODO: Implement this method.
     }
 
     public String getName() {
-        return "Upload Bundle Binary Information";
+        return "Upload Bundle Files";
     }
 
+    public boolean isNextEnabled() {
+        return true;
+    }
+
+    public boolean isPreviousEnabled() {
+        return false;
+    }
+
+    private void enableNextButtonWhenAppropriate() {
+        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
+    }
+
+    private void enablePreviousButtonWhenAppropriate() {
+        this.wizard.getView().getPreviousButton().setDisabled(!isPreviousEnabled());
+    }
 }

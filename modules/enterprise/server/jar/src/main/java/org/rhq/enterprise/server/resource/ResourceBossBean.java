@@ -23,6 +23,7 @@ import javax.ejb.Stateless;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;

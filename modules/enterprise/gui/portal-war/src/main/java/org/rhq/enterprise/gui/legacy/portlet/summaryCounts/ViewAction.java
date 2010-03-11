@@ -33,7 +33,7 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-import org.rhq.enterprise.server.resource.InventorySummary;
+import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.server.resource.ResourceBossLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

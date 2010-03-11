@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -55,9 +56,9 @@ public class BundleUploadDataStep implements WizardStep {
         layout.setHeight100();
 
         bundleServer.getAllBundleVersionFilenames(this.wizard.getBundleVersion().getId(),
-            new AsyncCallback<Map<String, Boolean>>() {
+            new AsyncCallback<HashMap<String, Boolean>>() {
 
-                public void onSuccess(Map<String, Boolean> result) {
+                public void onSuccess(HashMap<String, Boolean> result) {
                     allFilesStatus = result;
                     prepareForm(layout);
                     enableNextButtonWhenAppropriate();

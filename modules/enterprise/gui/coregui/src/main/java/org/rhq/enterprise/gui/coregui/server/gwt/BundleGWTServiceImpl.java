@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
@@ -85,10 +85,10 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         return SerialUtility.prepare(results, "createBundleAndBundleVersion");
     }
 
-    public Map<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception {
-        Map<String, Boolean> results;
+    public HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception {
+        HashMap<String, Boolean> results = new HashMap<String, Boolean>();
         try {
-            results = bundleManager.getAllBundleVersionFilenames(getSessionSubject(), bundleVersionId);
+            results.putAll(bundleManager.getAllBundleVersionFilenames(getSessionSubject(), bundleVersionId));
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

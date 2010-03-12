@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.bundle;
 
+import java.util.Map;
+
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
@@ -65,4 +67,8 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      */
     BundleDeployment createBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
         throws Exception;
+
+    // added here because the same method in @Remote was commented out to bypass a WSProvide issue
+    Map<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception;
+
 }

@@ -474,7 +474,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
     private Bundle createBundle(String name, BundleType bt) throws Exception {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
-        Bundle b = bundleManager.createBundle(overlord, fullName, bt.getId());
+        Bundle b = bundleManager.createBundle(overlord, fullName, fullName + "-desc", bt.getId());
 
         assert b.getId() > 0;
         assert b.getName().endsWith(fullName);
@@ -484,7 +484,8 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     private BundleVersion createBundleVersion(String name, String version, Bundle bundle) throws Exception {
         final String fullName = TEST_PREFIX + "-bundleversion-" + version + "-" + name;
         final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d <% test.path %>";
-        BundleVersion bv = bundleManager.createBundleVersion(overlord, bundle.getId(), fullName, version, recipe);
+        BundleVersion bv = bundleManager.createBundleVersion(overlord, bundle.getId(), fullName, fullName + "-desc",
+            version, recipe);
 
         assert bv.getId() > 0;
         assert bv.getName().endsWith(fullName);

@@ -123,7 +123,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Bundle createBundle(Subject subject, String name, int bundleTypeId) throws Exception {
+    public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleName: " + name);
         }
@@ -134,6 +134,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         Bundle bundle = new Bundle(name, bundleType);
+        bundle.setDescription(description);
 
         // create and add the required Repo. the Repo is a detached object ehich helps in its eventual
         // removal.
@@ -204,8 +205,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String version, String recipe)
-        throws Exception {
+    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
+        String version, String recipe) throws Exception {
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleVersionName: " + name);
         }
@@ -225,6 +226,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         version = getVersion(version, bundle);
 
         BundleVersion bundleVersion = new BundleVersion(name, version, bundle, recipe);
+        bundleVersion.setDescription(description);
         bundleVersion.setConfigurationDefinition(results.getConfigDef());
 
         entityManager.persist(bundleVersion);

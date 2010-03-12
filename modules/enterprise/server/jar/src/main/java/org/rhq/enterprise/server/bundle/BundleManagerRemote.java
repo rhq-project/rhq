@@ -108,12 +108,14 @@ public interface BundleManagerRemote {
     /**
      * @param subject must be InventoryManager
      * @param name not null or empty 
+     * @param description optional long description of the bundle 
      * @param bundleTypeId valid bundleType
      * @return the persisted Bundle (id is assigned)
      */
     Bundle createBundle( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "name") String name, //
+        @WebParam(name = "description") String description, //        
         @WebParam(name = "bundleTypeId") int bundleTypeId) throws Exception;
 
     /**
@@ -144,14 +146,16 @@ public interface BundleManagerRemote {
      * @param subject must be InventoryManager
      * @param bundleId the bundle for which this will be the next version
      * @param name not null or empty
-     * @param bundleVersion optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
+     * @param description optional long description of the bundle version 
+     * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
      * @return the persisted BundleVersion (id is assigned)
      */
     BundleVersion createBundleVersion( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleId") int bundleId, //
         @WebParam(name = "name") String name, //
-        @WebParam(name = "bundleVersion") String bundleVersion, //
+        @WebParam(name = "description") String description, //                
+        @WebParam(name = "version") String version, //
         @WebParam(name = "recipe") String recipe) throws Exception;
 
     /**

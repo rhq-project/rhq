@@ -347,8 +347,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
             pinToPackage);
     }
 
-    public Bundle createBundle(Subject subject, String name, int bundleTypeId) throws Exception {
-        return bundleManager.createBundle(subject, name, bundleTypeId);
+    public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
+        return bundleManager.createBundle(subject, name, description, bundleTypeId);
     }
 
     public BundleDeployDefinition createBundleDeployDefinition(Subject subject, int bundleVersionId, String name,
@@ -358,9 +358,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
             enforcePolicy, enforcementInterval, pinToBundle);
     }
 
-    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String bundleVersion,
-        String recipe) throws Exception {
-        return bundleManager.createBundleVersion(subject, bundleId, name, bundleVersion, recipe);
+    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
+        String version, String recipe) throws Exception {
+        return bundleManager.createBundleVersion(subject, bundleId, name, description, version, recipe);
     }
 
     public void deleteBundle(Subject subject, int bundleId) throws Exception {

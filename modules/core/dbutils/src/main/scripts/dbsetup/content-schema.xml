@@ -498,6 +498,7 @@
     <table name="RHQ_BUNDLE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>        
         <column name="BUNDLE_TYPE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_TYPE"/>
         <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>        
     </table>
@@ -506,6 +507,7 @@
     <table name="RHQ_BUNDLE_VERSION">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
         <column name="VERSION" size="500" type="VARCHAR2" required="true"/>
         <column name="ACTION" type="CLOB" required="true"/>
         <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF" />

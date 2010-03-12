@@ -29,6 +29,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -106,7 +107,7 @@ public class ResourceTreeDatasource extends DataSource {
         response.setStatus(0);
         switch (request.getOperationType()) {
             case ADD:
-                //executeAdd(lstRec, true);
+                //executeAdd(request, response);
                 break;
             case FETCH:
                 executeFetch(requestId, request, response);
@@ -124,6 +125,7 @@ public class ResourceTreeDatasource extends DataSource {
 
         return request.getData();
     }
+
 
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();

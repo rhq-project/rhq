@@ -31,6 +31,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 /**
@@ -53,6 +54,10 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
 
         DataSourceTextField statusField = new DataSourceTextField("status");
         addField(statusField);
+
+        DataSourceTextField startedField = new DataSourceTextField("startedTime");
+        startedField.setType(FieldType.DATETIME);
+        addField(startedField);
     }
 
     @Override
@@ -69,7 +74,7 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
         operationService.findResourceOperationHistoriesByCriteria(
                 criteria, new AsyncCallback<PageList<ResourceOperationHistory>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failure loading operation histories",caught);
+                        CoreGUI.getErrorHandler().handleError("Failure loading operation histories", caught);
                     }
 
                     public void onSuccess(PageList<ResourceOperationHistory> result) {
@@ -88,18 +93,19 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
     @Override
     public ListGridRecord copyValues(ResourceOperationHistory from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute("id",from.getId());
-        record.setAttribute("createdTime",from.getCreatedTime());
-        record.setAttribute("startedTime",from.getStartedTime());
-        record.setAttribute("duration",from.getDuration());
-        record.setAttribute("resource",from.getResource());
-        record.setAttribute("subject",from.getSubjectName());
-        record.setAttribute("operationDefinition",from.getOperationDefinition());
-        record.setAttribute("operationName",from.getOperationDefinition().getDisplayName());
-        record.setAttribute("errorMessage",from.getErrorMessage());
-        record.setAttribute("status",from.getStatus().getDisplayName());
-        record.setAttribute("parameters",from.getParameters());
+        record.setAttribute("id", from.getId());
+        record.setAttribute("createdTime", from.getCreatedTime());
+        record.setAttribute("startedTime", from.getStartedTime());
+        record.setAttribute("duration", from.getDuration());
+        record.setAttribute("resource", from.getResource());
+        record.setAttribute("subject", from.getSubjectName());
+        record.setAttribute("operationDefinition", from.getOperationDefinition());
+        record.setAttribute("operationName", from.getOperationDefinition().getDisplayName());
+        record.setAttribute("errorMessage", from.getErrorMessage());
+        record.setAttribute("status", from.getStatus().getDisplayName());
+        record.setAttribute("parameters", from.getParameters());
 
+        record.setAttribute("entity",from);
         return record;
     }
 }

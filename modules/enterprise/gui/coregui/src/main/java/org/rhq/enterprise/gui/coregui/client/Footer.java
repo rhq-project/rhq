@@ -24,6 +24,7 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
 
+import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
 
 /**
@@ -56,6 +57,8 @@ public class Footer extends ToolStrip {
         addMember(recentMessage);
 
         addMember(new ToolStripSeparator());
+
+        addMember(new FavoritesButton());
 
         addMember(new Img("/images/icons/Alert_red_16.png",16,16));
         addMember(new Label("15 recent alerts"));

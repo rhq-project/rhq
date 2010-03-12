@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.bundle;
 
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Remote;
@@ -267,9 +266,11 @@ public interface BundleManagerRemote {
      * @return map keyed on filenames whose value indicates if a bundle file exists for the file or not
      * @throws Exception
      */
+    /* comment back in when someone writes an adapter to support Map un/marshalling
     Map<String, Boolean> getAllBundleVersionFilenames( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionId") int bundleVersionId) throws Exception;
+     */
 
     /**
      * Deploy the bundle as described in the provided deploy definition to the specified resource.

@@ -30,6 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
@@ -94,11 +95,12 @@ public class ResourceView extends HLayout implements ViewRenderer {
         } else {
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterId(resourceId);
-            criteria.fetchParentResource(true);
+            //criteria.fetchParentResource(true);
             resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
                 public void onFailure(Throwable caught) {
-                    SC.say("Failed to load Resource with id " + resourceId + ": " + caught);
-                    // TODO: Display this error in a red box at top of page instead?
+                    CoreGUI.getMessageCenter().notify(new Message("Resource with id [" + resourceId +
+                            "] does not exist or is not accessible.", Message.Severity.Warning));
+
                     CoreGUI.goTo(InventoryView.VIEW_PATH);
                 }
 

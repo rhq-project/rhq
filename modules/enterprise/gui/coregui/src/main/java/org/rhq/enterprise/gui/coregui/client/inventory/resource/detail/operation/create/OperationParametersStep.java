@@ -65,7 +65,7 @@ public class OperationParametersStep implements WizardStep {
     }
 
     public Configuration getParameterConfiguration() {
-        return configurationEditor.getConfiguration();
+        return configurationEditor != null ? configurationEditor.getConfiguration() : null;
     }
 
     public boolean isNextEnabled() {

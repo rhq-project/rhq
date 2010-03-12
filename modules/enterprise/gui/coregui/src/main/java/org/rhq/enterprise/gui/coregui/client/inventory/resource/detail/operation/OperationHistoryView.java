@@ -18,9 +18,18 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation;
 
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail.OperationDetailsView;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 /**
@@ -56,6 +65,34 @@ public class OperationHistoryView extends VLayout {
         }
 
         table.setDataSource(new OperationHistoryDataSource());
+
+
+        table.addTableAction("Details", Table.SelectionEnablement.SINGLE,null, new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                ResourceOperationHistory history = (ResourceOperationHistory) selection[0].getAttributeAsObject("entity");
+
+                ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+
+                criteria.addFilterId(history.getId());
+
+                criteria.fetchOperationDefinition(true);
+                criteria.fetchParameters(true);
+                criteria.fetchResults(true);
+
+                GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(
+                        criteria, new AsyncCallback<PageList<ResourceOperationHistory>>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failure loading operation history", caught);
+                            }
+
+                            public void onSuccess(PageList<ResourceOperationHistory> result) {
+                                ResourceOperationHistory item = result.get(0);
+                                OperationDetailsView.displayDetailsDialog(item);
+                            }
+                        }
+                );
+            }
+        });
 
 
         addMember(table);

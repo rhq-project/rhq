@@ -18,14 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import com.google.gwt.user.client.rpc.RemoteService;
+
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
-
-import com.google.gwt.user.client.rpc.RemoteService;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.ExecutionSchedule;
 
 /**
  * @author Greg Hinkle
@@ -37,5 +38,8 @@ public interface OperationGWTService extends RemoteService {
 
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria);
 
+    void scheduleResourceOperation(
+            int resourceId, String operationName, Configuration parameters, ExecutionSchedule schedule, String description, int timeout)
+            throws RuntimeException;
 
 }

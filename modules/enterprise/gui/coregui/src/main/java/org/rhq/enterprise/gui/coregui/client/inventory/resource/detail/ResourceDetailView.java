@@ -121,6 +121,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         eventsTab = new TwoLevelTab("Events", "/images/icons/Events_grey_16.png");
 
         contentTab = new TwoLevelTab("Content", "/images/icons/Content_grey_16.png");
+        contentTab.registerSubTabs("Deployed","New","Subscriptions","History");
 
         topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab, eventsTab, contentTab);
 
@@ -172,7 +173,14 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
 
         alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
-        
+
+
+        contentTab.updateSubTab("Deployed",new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()));
+        contentTab.updateSubTab("New",new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
+        contentTab.updateSubTab("Subscriptions",new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()));
+        contentTab.updateSubTab("History",new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
+
+
         topTabSet.setSelectedTab(selectedTab);
 
         updateTabStatus();

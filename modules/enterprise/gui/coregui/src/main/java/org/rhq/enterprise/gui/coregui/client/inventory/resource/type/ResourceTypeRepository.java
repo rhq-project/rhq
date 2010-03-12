@@ -48,7 +48,8 @@ public class ResourceTypeRepository {
     private static ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
     public enum MetadataType {
-        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition
+        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition,
+        subCategory, parentTypes, processScans, productVersions
     }
 
 
@@ -167,6 +168,18 @@ public class ResourceTypeRepository {
                     case resourceConfigurationDefinition:
                         criteria.fetchResourceConfigurationDefinition(true);
                         break;
+                    case subCategory:
+                        criteria.fetchSubCategory(true);
+                        break;
+                    case parentTypes:
+                        criteria.fetchParentResourceTypes(true);
+                        break;
+                    case processScans:
+                        criteria.fetchProcessScans(true);
+                        break;
+                    case productVersions:
+                        criteria.fetchProductVersions(true);
+                        break;
                 }
             }
         }
@@ -177,7 +190,6 @@ public class ResourceTypeRepository {
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                caught.printStackTrace();
                 CoreGUI.getErrorHandler().handleError("Failed to load resource type metadata",caught);
             }
 

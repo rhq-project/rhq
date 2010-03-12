@@ -20,7 +20,6 @@
 package org.rhq.enterprise.server.bundle;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +38,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
@@ -51,7 +49,6 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -449,32 +446,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     @Test(enabled = DISABLED)
     public void testFindByBundleDeploymentId() throws Exception {
         assertNotNull(null);
-    }
-
-    @Test(enabled = DISABLED)
-    public void testFindHistoryByCriteria() throws Exception {
-
-        Long auditTime = new Date().getTime();
-        BundleDeploymentAction auditAction = BundleDeploymentAction.DEPLOYMENT_START;
-        String auditMessage = "This is my message";
-
-        BundleDeployment bundleDeployment = createDeployment();
-        BundleDeploymentHistory history = new BundleDeploymentHistory(bundleDeployment, overlord.getName(), auditTime,
-            auditAction, auditMessage);
-
-        Bundle bundle = createBundle("deleteThisBundle");
-
-        history.setBundleDeployment(bundleDeployment);
-
-        bundleManager.addBundleDeploymentHistoryByBundleDeployment(overlord, history);
-
-        BundleDeploymentHistoryCriteria criteria = new BundleDeploymentHistoryCriteria();
-        List<BundleDeploymentHistory> histories = bundleManager.findBundleDeploymentHistoryByCriteria(overlord,
-            criteria);
-
-        assertNotNull(histories);
-        assertTrue(histories.size() > 0);
-
     }
 
     private BundleDeployment createDeployment() {

@@ -32,7 +32,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -41,7 +40,6 @@ import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -198,13 +196,6 @@ public interface BundleManagerRemote {
     PageList<BundleDeployment> findBundleDeploymentsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "BundleDeploymentCriteria") BundleDeploymentCriteria criteria);
-
-    @WebMethod
-    // TODO is this necessary? Or do you just search for deployments and optionally fetch the history? 
-    List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(
-        //
-        @WebParam(name = "subject") Subject subject,
-        @WebParam(name = "criteria") BundleDeploymentHistoryCriteria criteria);
 
     @WebMethod
     PageList<BundleFile> findBundleFilesByCriteria( //

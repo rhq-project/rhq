@@ -126,8 +126,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
-                Window.alert("Failed to load " + caught.getMessage());
-                System.err.println("Failed to fetch Resource Data");
+                CoreGUI.getErrorHandler().handleError("Failed to fetch users data", caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }

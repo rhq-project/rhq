@@ -95,8 +95,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
-                Window.alert("Failed to load " + caught.getMessage());
-                System.err.println("Failed to fetch Resource Data");
+                CoreGUI.getErrorHandler().handleError("Failed to fetch Roles Data", caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }

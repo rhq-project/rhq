@@ -132,7 +132,6 @@ public class OperationCreateWizard implements Wizard {
                 0,
                 new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        // TODO: Implement this method.
                         CoreGUI.getErrorHandler().handleError("Failed to schedule operation execution",caught);
                     }
 

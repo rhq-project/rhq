@@ -147,8 +147,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
             public void onFailure(Throwable caught) {
-                Window.alert("Failed to fetch Alerts - cause: " + caught);
-                System.err.println("Failed to fetch Alerts - cause: " + caught);
+                CoreGUI.getErrorHandler().handleError("Failed to fetch alerts data", caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -264,7 +263,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             }
 
             public void onFailure(Throwable caught) {
-                Window.alert("Failed to acknowledge Alerts with id's: " + Arrays.toString(alertIds) + " - cause: " + caught);
+                CoreGUI.getErrorHandler().handleError("Failed to acknowledge Alerts with id's: " + Arrays.toString(alertIds), caught);
                 System.err.println("Failed to acknowledge Alerts with id's " + Arrays.toString(alertIds) + " - cause: " + caught);
             }
         });

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.SmallGraphView;
 
@@ -138,15 +139,16 @@ public class DashboardView extends VLayout {
 
                 int nextInt = Random.nextInt() % 3;
 
-                if (nextInt == 0) {
-                    ResourceSearchView item = new ResourceSearchView();
-                    newPortlet.addItem(item);
-
-                } else if (nextInt == 1) {
-                    newPortlet.addItem(new RolesView());
-                } else {
-                    newPortlet.addItem(new SummaryCountsView());
-                }
+//                if (nextInt == 0) {
+//                    ResourceSearchView item = new ResourceSearchView();
+//                    newPortlet.addItem(item);
+//
+//                } else if (nextInt == 1) {
+//                    newPortlet.addItem(new RolesView());
+//                } else {
+//                    newPortlet.addItem(new SummaryCountsView());
+//                }
+                newPortlet.addItem(new RecentlyAddedView());
                 newPortlet.setHeight(350);
 
                 newPortlet.setVisible(false);

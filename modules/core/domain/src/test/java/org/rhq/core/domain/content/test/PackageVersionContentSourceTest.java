@@ -1,37 +1,39 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.content.test;
 
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
+import org.hibernate.lob.BlobImpl;
+import org.hibernate.lob.SerializableBlob;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.RepoContentSource;
-import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Package;
@@ -40,6 +42,9 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.PackageVersionContentSourcePK;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoContentSource;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.resource.Resource;
@@ -247,7 +252,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             pvConfig.put(new PropertySimple("pvConfig1", "pvConfig1Value"));
             pv.setExtraProperties(pvConfig);
 
-            bits.setBits("testDeleteOrphanedPV".getBytes());
+            bits.setBits(new SerializableBlob(new BlobImpl("testDeleteOrphanedPV".getBytes())));
             pv.setPackageBits(bits); // this will cascade on persist
 
             em.persist(rt);
@@ -282,7 +287,10 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             em.close();
             assert findBits != null : "The bits did not cascade-persist for some reason";
             assert findBits.getId() > 0 : "The package bits did not cascade-persist for some reason!";
-            assert new String(bits.getBits()).equals(new String(findBits.getBits()));
+            SerializableBlob blob = bits.getBits();
+            SerializableBlob blob2 = findBits.getBits();
+            assert new String(blob.getBytes(1, (int) blob.length())).equals(new String(blob2.getBytes(1, (int) blob2
+                .length())));
 
             em = getEntityManager();
             q = em.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS);

@@ -19,33 +19,21 @@
 package org.rhq.enterprise.server.content.test;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.AfterMethod;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.lob.BlobImpl;
+import org.hibernate.lob.SerializableBlob;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.PackageCategory;
-import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.ResourceRepo;
-import org.rhq.core.domain.content.RepoPackageVersion;
-import org.rhq.core.domain.content.ProductVersionPackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
-import org.rhq.core.domain.content.composite.PackageVersionComposite;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ProductVersion;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -127,7 +115,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
             // now lets store some bits in the DB
             final String DATA = "testPackageBits data";
-            packageBits.setBits(DATA.getBytes());
+            packageBits.setBits(new SerializableBlob(new BlobImpl(DATA.getBytes())));
             em.merge(packageBits);
             em.flush();
 
@@ -142,7 +130,8 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             // let's make sure the data really is in the DB
             packageBits = em.find(PackageBits.class, packageBits.getId());
             assert packageBits != null;
-            assert DATA.equals(new String(packageBits.getBits()));
+            SerializableBlob blob = packageBits.getBits();
+            assert DATA.equals(new String(blob.getBytes(1, (int) blob.length())));
 
             ////////////////////////////////////////////////////
             // create another package version and test with that
@@ -197,7 +186,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
             // now lets store some bits in the DB
             final String DATA2 = "testPackageBits more data";
-            packageBits2.setBits(DATA2.getBytes());
+            packageBits2.setBits(new SerializableBlob(new BlobImpl(DATA2.getBytes())));
             em.merge(packageBits2);
             em.flush();
 
@@ -220,7 +209,8 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             // let's make sure the data really is in the DB
             packageBits2 = em.find(PackageBits.class, packageBits2.getId());
             assert packageBits2 != null;
-            assert DATA2.equals(new String(packageBits2.getBits()));
+            blob = packageBits2.getBits();
+            assert DATA2.equals(new String(blob.getBytes(1, (int) blob.length())));
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;

@@ -65,8 +65,7 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent {
         try {
             AgentManagementMBean mbean = getAgentManagementMBean();
 
-            String agentName = mbean.getAgentConfiguration().getProperty(AgentConfigurationConstants.NAME);
-            String name = agentName + " RHQ Agent";
+            String name = "RHQ Agent";
             String key = name; // our key IS our name - its unique since there is only one per platform
             String version = mbean.getVersion();
             String description = "RHQ Management Agent";

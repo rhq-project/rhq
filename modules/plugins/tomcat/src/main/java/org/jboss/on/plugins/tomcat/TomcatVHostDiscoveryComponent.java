@@ -38,15 +38,15 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Heiko W. Rupp
  */
 public class TomcatVHostDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatServerComponent> {
-
-    static Pattern pattern = Pattern.compile(".*host=([\\w.]+).*");
+    
+   static Pattern pattern = Pattern.compile(".*host=([\\w.]+).*");
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatServerComponent> discoveryContext) {
 
         Set<DiscoveredResourceDetails> resources = super.discoverResources(discoveryContext);
 
-        for (DiscoveredResourceDetails detail : resources) {
+       for (DiscoveredResourceDetails detail : resources) {
             String name = detail.getResourceName();
             Matcher m = pattern.matcher(name);
             if (m.matches()) {

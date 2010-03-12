@@ -70,8 +70,10 @@ public enum Token {
 
     // only for testing
     TEST_ECHO(TokenClass.TEST,"echo", "Echo the input"),
-    TEST_FIX(TokenClass.TEST,"fix", "Return a fixed string");
+    TEST_FIX(TokenClass.TEST,"fix", "Return a fixed string"),
+    TEST_CAMEL(TokenClass.TEST,"camelCase","Test matching of camels")
 
+    ;
 
     private TokenClass tc;
     private String name;

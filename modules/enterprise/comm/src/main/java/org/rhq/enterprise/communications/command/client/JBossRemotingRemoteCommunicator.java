@@ -566,7 +566,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
             WriteLock writeLock = m_needToCallInitializeCallbackLock.writeLock();
             boolean locked;
             try {
-                locked = writeLock.tryLock(m_initializeCallbackLockAcquisitionTimeoutMins, TimeUnit.MINUTES);
+                locked = writeLock.tryLock(m_initializeCallbackLockAcquisitionTimeoutMins * 60, TimeUnit.SECONDS);
             } catch (InterruptedException ie) {
                 locked = false;
             }

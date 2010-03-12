@@ -1,9 +1,9 @@
 package org.rhq.enterprise.gui.inventory.browse;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.faces.application.FacesMessage;
+import javax.faces.component.html.HtmlInputText;
 import javax.faces.model.DataModel;
 
 import org.apache.commons.logging.Log;
@@ -13,6 +13,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -23,6 +24,9 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.search.execution.SearchAssistManager;
+import org.rhq.enterprise.server.search.execution.SearchSuggestion;
+import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class BrowseResourcesUIBean extends PagedDataTableUIBean {
@@ -31,6 +35,7 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "BrowseResourcesUIBean";
 
     private String filter;
+    private HtmlInputText filterInput;
     private ResourceCategory category;
 
     private static final IntExtractor<ResourceComposite> RESOURCE_ID_EXTRATOR = new IntExtractor<ResourceComposite>() {
@@ -86,10 +91,10 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
 
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.setPageControl(pc);
-            if (filter != null && !filter.equals("")) {
-                criteria.addFilterName(filter);
-            }
             criteria.addFilterResourceCategory(category);
+            if (filter != null && !filter.trim().equals("")) {
+                criteria.setSearchExpression(filter);
+            }
             criteria.fetchParentResource(true);
 
             PageList<ResourceComposite> results;
@@ -122,29 +127,25 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
         return FacesContextUtility.getRequest().getParameterValues("selectedItems");
     }
 
-    public class Suggestion {
-        String label;
-        String value;
+    SearchAssistManager searchAssist = new SearchAssistManager(SearchSubsystem.Resource);
 
-        public Suggestion(String label, String value) {
-            this.label = label;
-            this.value = value;
-        }
+    public List<SearchSuggestion> autocomplete(Object suggest) {
+        String currentInputText = (String) suggest;
 
-        public String getLabel() {
-            return label;
-        }
-
-        public String getValue() {
-            return value;
-        }
+        // assume caret at the end of the input
+        long id = HibernatePerformanceMonitor.get().start();
+        List<SearchSuggestion> suggestions = searchAssist.getAdvancedSuggestions(currentInputText, currentInputText
+            .length());
+        HibernatePerformanceMonitor.get().stop(id, "ResourceSuggestions");
+        return suggestions;
     }
 
-    public List<Suggestion> autocomplete(Object suggest) {
-        String currentInputText = (String) suggest;
-        List<Suggestion> results = new ArrayList<Suggestion>();
-        // offer suggestions based on currentInputText
-        return results;
+    public HtmlInputText getFilterInput() {
+        return filterInput;
+    }
+
+    public void setFilterInput(HtmlInputText filterInput) {
+        this.filterInput = filterInput;
     }
 
 }

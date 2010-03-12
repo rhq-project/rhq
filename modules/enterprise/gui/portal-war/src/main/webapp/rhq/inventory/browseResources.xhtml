@@ -36,24 +36,26 @@
             <p/>
             <h:panelGroup>
                <h:outputLabel for="filter" value="Search: " />
-               <h:inputText id="filter" value="#{BrowseResourcesUIBean.filter}"
+               <h:inputText id="filter"
+                            binding="#{BrowseResourcesUIBean.filterInput}"
+                            value="#{BrowseResourcesUIBean.filter}"
                             onkeypress="return ignoreEnterKey(event);"
                             style="width: 600px;" />
                <rich:suggestionbox id="suggest" for="filter" 
-                                   tokens=",[]"
                                    width="600" height="400"
                                    border="1" cellpadding="1" cellspacing="1"
                                    minChars="0"
                                    first="0" rows="10"
-                                   frequency="0.1"
+                                   frequency="0"
                                    var="suggestItem" 
                                    fetchValue="#{suggestItem.value}"
+                                   selfRendered="true"
                                    suggestionAction="#{BrowseResourcesUIBean.autocomplete}" 
                                    nothingLabel="Start typing for simple text matches" 
                                    usingSuggestObjects="true"
                                    eventsQueue="resourceSearchSuggestions"
                                    ignoreDupResponses="true"
-                                   rendered="false"> <!-- disable until auto-completer is added -->
+                                   rendered="true"> <!-- disable until auto-completer is added -->
                    <h:column>
                       <h:outputText value="#{suggestItem.label}" />
                    </h:column>
@@ -61,6 +63,7 @@
                <rich:spacer/>
                <a4j:commandButton value="GO" 
                                   reRender="browseResourcesDataTable, browseResourcesDataTableScroller"
+                                  status="commonStatus"
                                   actionListener="#{BrowseResourcesUIBean.clearDataModel}"
                                   styleClass="buttonmed">
                    <s:defaultAction/>

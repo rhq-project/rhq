@@ -21,6 +21,8 @@ package org.rhq.plugins.grub;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -38,8 +40,9 @@ public class GrubDiscoveryComponent implements ResourceDiscoveryComponent {
         File grubFile = new File("/etc/grub.conf");
 
         if (grubFile.exists()) {
+            ResourceType resourceType = resourceDiscoveryContext.getResourceType();
             DiscoveredResourceDetails resource =
-                new DiscoveredResourceDetails(resourceDiscoveryContext.getResourceType(), "grub", "GRUB Boot Loader",
+                new DiscoveredResourceDetails(resourceType, "grub", resourceType.getName(),
                     "1.0", "GRUB configuration on the machine.", null, null);
 
             details.add(resource);

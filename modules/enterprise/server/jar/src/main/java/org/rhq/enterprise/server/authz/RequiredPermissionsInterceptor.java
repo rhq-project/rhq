@@ -22,10 +22,13 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -92,7 +95,7 @@ public class RequiredPermissionsInterceptor {
                     SubjectManagerLocal subject_manager = LookupUtil.getSubjectManager();
 
                     // isValidSessionId will also update the session's last-access-time
-                    if (!subject_manager.isValidSessionId(subject.getSessionId(), subject.getName())) {
+                    if (!subject_manager.isValidSessionId(subject.getSessionId(), subject.getName(), subject.getId())) {
                         // if this happens, it is possible someone is trying to spoof an authenticated user!
                         throw buildPermissionException("The session ID for user [" + subject.getName()
                             + "] is invalid!", invocation_context);

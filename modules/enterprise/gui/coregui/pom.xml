@@ -40,6 +40,35 @@
 
     <dependencies>
 
+        <!-- ============= Internal Deps ============= -->
+
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <!-- by rhq.ear (as ejb-jar) -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-enterprise-server</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <!-- by rhq.ear (as ejb-jar) -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-util</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <!-- by rhq.ear -->
+        </dependency>
+
+
+        <!-- =============== 3rd Party Deps =============== -->
+        
         <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-servlet</artifactId>
@@ -73,7 +102,7 @@
         </dependency>
         -->
 
-        <!-- The graphing library -->
+        <!-- the GWT graphing library -->
         <dependency>
             <groupId>ca.nanometrics</groupId>
             <artifactId>gflot</artifactId>
@@ -108,35 +137,6 @@
             <scope>provided</scope>
             <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
         </dependency>
-
-
-        <!-- Internal Deps -->
-
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-            <!-- by rhq.ear (as ejb-jar) -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-enterprise-server</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-            <!-- by rhq.ear (as ejb-jar) -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-util</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-            <!-- by rhq.ear -->
-        </dependency>
-
-        <!-- 3rd Party Deps -->
 
         <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
         <dependency>

@@ -84,18 +84,26 @@ public class Table extends VLayout {
     private ArrayList<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
 
     public Table(String tableTitle) {
-        this(tableTitle, null, null, null);
+        this(tableTitle, null, null, null, true);
     }
 
     public Table(String tableTitle, Criteria criteria) {
-        this(tableTitle, criteria, null, null);
+        this(tableTitle, criteria, null, null, true);
     }
 
     public Table(String tableTitle, SortSpecifier[] sortSpecifiers) {
-        this(tableTitle, null, sortSpecifiers, null);
+        this(tableTitle, null, sortSpecifiers, null, true);
+    }
+
+    public Table(String tableTitle, boolean autoFetchData) {
+        this(tableTitle, null, null, null, autoFetchData);
     }
 
     public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
+        this(tableTitle,criteria,sortSpecifiers,excludedFieldNames,true);
+    }
+    public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames,
+                 boolean autoFetchData) {
         super();
 
         setWidth100();
@@ -119,7 +127,7 @@ public class Table extends VLayout {
         }
         listGrid.setWidth100();
         listGrid.setHeight100();
-        listGrid.setAutoFetchData(true);
+        listGrid.setAutoFetchData(autoFetchData);
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);

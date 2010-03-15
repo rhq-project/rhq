@@ -22,6 +22,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -34,6 +35,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.util.PageList;
@@ -235,6 +237,22 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         String recoveryInfo = AlertFormatUtility.getAlertRecoveryInfo(from);
         record.setAttribute("recoveryInfo", recoveryInfo);
+
+        // Alert notification logs
+        DataClass[] notifications = new DataClass[from.getAlertNotificationLogs().size()];
+        int i = 0;
+        for(AlertNotificationLog log : from.getAlertNotificationLogs()) {
+            DataClass dc = new DataClass();
+            dc.setAttribute("sender",log.getSender());
+            dc.setAttribute("status",log.getResultState());
+            dc.setAttribute("message",log.getMessage());
+            dc.setAttribute("allEmails",log.getAllEmails());
+            dc.setAttribute("badEmails",log.getBadEmails());
+
+            notifications[i++] = dc;
+
+        }
+        record.setAttribute("notificationLogs",notifications);
         return record;
     }
 

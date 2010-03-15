@@ -18,16 +18,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
+
+import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -52,6 +62,9 @@ public class AlertsView extends VLayout {
     private Table table;
     private AlertDataSource dataSource;
     private HTMLFlow detailsContent;
+    private DynamicForm detailsTable;
+    private VerticalPanel vpanel;
+    private static final String SENDER = "sender";
 
     public AlertsView(Criteria criteria, String[] excludedFieldNames) {
         this.table = new Table(TITLE, criteria, SORT_SPECIFIERS, excludedFieldNames);
@@ -99,10 +112,17 @@ public class AlertsView extends VLayout {
                     String name = record.getAttribute("name");
                     String id = record.getAttribute("id");
                     // TODO: Finish this.
-                    contents = "Details for alert '" + name + "' with id " + id + "...<h2>TODO</h2>";
+                    contents = "Details for alert '" + name + "' with id " + id ;
+                    detailsTable = getDetailsTableForAlertId(id);
+                    vpanel.clear();
+                    vpanel.add(detailsTable);
+                    vpanel.add(getNotificationsForAlertId(record.getAttributeAsRecordArray("notificationLogs")));
+//                    vpanel.redraw();
+
 
                 } else {
                     contents = "Select a single alert above to display its details here.";
+                    detailsTable = new DynamicForm(); // empty ?
                 }
                 AlertsView.this.detailsContent.setContents(contents);
             }
@@ -111,13 +131,61 @@ public class AlertsView extends VLayout {
         addMember(this.table);
 
         // Add the details panel as the bottom half of the view.
-        HLayout detailsPane = new HLayout();
-        detailsPane.setWidth100();
-        detailsPane.setHeight("50%");
+        vpanel = new VerticalPanel();
+        vpanel.setHeight("50%");
+        vpanel.setTitle("Details for alert");
         this.detailsContent = new HTMLFlow("Select a single alert above to display its details here.");
         this.detailsContent.setWidth100();
-        detailsPane.addMember(this.detailsContent);
-        addMember(detailsPane);
+        vpanel.add(detailsContent);
+
+        detailsTable = new DynamicForm(); // empty?
+        vpanel.add(detailsTable);
+        addMember(vpanel);
+
+    }
+
+    private DynamicForm getDetailsTableForAlertId(String id) {
+
+        DynamicForm form = new DynamicForm();
+        form.setNumCols(4);
+        form.setWrapItemTitles(false);
+        form.setLeft("10%");
+        form.setWidth("80%");
+
+        final TextItem nameTextItem = new TextItem("name", "Name");
+        nameTextItem.setRequired(true);
+        nameTextItem.setValue("Hello World");
+
+        final TextItem idTextItem = new TextItem("id", "Id");
+        idTextItem.setRequired(true);
+        idTextItem.setValue(id);
+        form.setItems(nameTextItem,idTextItem);
+
+        return form;
+    }
+
+    private Table getNotificationsForAlertId(DataClass[] input) {
+
+        Table notifTable = new Table("Notifications",false);
+        notifTable.setWidth100();
+        ListGrid grid = notifTable.getListGrid();
+        grid.setData((Record[]) input);
+
+
+        ListGridField sender = new ListGridField(SENDER,"Sender");
+        sender.setWidth("10%");
+        ListGridField status = new ListGridField("status","Result");
+        status.setWidth("10%");
+        ListGridField message = new ListGridField("message","Message");
+        message.setWidth("30%");
+        ListGridField allEmails = new ListGridField("allEmails","All Emails");
+        allEmails.setWidth("25%");
+        ListGridField badEmails = new ListGridField("badEmails","Bad Emails");
+        badEmails.setWidth("25%");
+
+        grid.setFields(sender,status,message,allEmails,badEmails);
+
+        return notifTable;
     }
 
     protected Criteria getCriteria() {

@@ -59,7 +59,7 @@ public class BundleFileUploadServlet extends FileUploadServlet {
                 fileStream, pinToPackage);
             successMsg = "success [" + bundleFile.getId() + "]";
         } catch (Exception e) {
-            writeExceptionResponse(response, "Failed to upload bundle file", e);
+            writeExceptionResponse(response, "Failed to upload bundle file", e); // clients will look for this string!
             return;
         }
 

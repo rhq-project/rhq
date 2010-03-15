@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -131,11 +132,12 @@ public class FileUploadServlet extends HttpServlet {
     }
 
     protected void writeExceptionResponse(HttpServletResponse resp, String msg, Exception e) throws IOException {
+        resp.setStatus(500);
         PrintWriter writer = resp.getWriter();
         writer.write("<html><head></head><body><strong>" + msg + "</strong><br/>\n");
-        for (StackTraceElement elem : e.getStackTrace()) {
-            writer.write(elem.toString() + "<br/>\n");
-        }
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        writer.write(sw.toString().replace("\n", "<br/>\n"));
         writer.write("</body></html>");
         writer.flush();
     }

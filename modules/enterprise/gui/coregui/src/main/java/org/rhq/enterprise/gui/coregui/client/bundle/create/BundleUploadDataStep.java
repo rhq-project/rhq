@@ -24,7 +24,10 @@ import java.util.Map;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
+import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -35,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmit
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -66,6 +70,7 @@ public class BundleUploadDataStep implements WizardStep {
 
                 public void onFailure(Throwable caught) {
                     allFilesStatus = null;
+                    enableNextButtonWhenAppropriate();
                     CoreGUI.getErrorHandler().handleError("Cannot obtain bundle file information from server", caught);
                 }
             });
@@ -93,7 +98,7 @@ public class BundleUploadDataStep implements WizardStep {
     }
 
     public boolean isPreviousEnabled() {
-        return false;
+        return true;
     }
 
     private void enableNextButtonWhenAppropriate() {
@@ -106,19 +111,37 @@ public class BundleUploadDataStep implements WizardStep {
             layout.addMember(formLayout);
 
             String fileToBeUploaded = entry.getKey();
+            Boolean isAlreadyUploaded = entry.getValue();
 
-            if (entry.getValue()) {
-                Img img = new Img("/images/status_complete.gif", 50, 15);
+            if (isAlreadyUploaded) {
+                Label nameLabel = new Label(fileToBeUploaded + ": ");
+                formLayout.addMember(nameLabel);
+                Img img = new Img("/images/icons/availability_green_16.png", 16, 16);
                 formLayout.addMember(img);
             } else {
                 final BundleFileUploadForm uploadForm = new BundleFileUploadForm(this.wizard.getBundleVersion(),
                     fileToBeUploaded);
                 uploadForm.addFormHandler(new DynamicFormHandler() {
                     public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
-                        uploadForm.retrievalStatus(true);
-                        form.showItem("showUpload");
-                        form.hideItem("upload");
-                        allFilesStatus.put(uploadForm.getName(), Boolean.TRUE);
+                        String results = event.getResults();
+                        if (!results.contains("Failed to upload bundle file")) {
+                            uploadForm.retrievalStatus(true);
+                            allFilesStatus.put(uploadForm.getName(), Boolean.TRUE);
+                        } else {
+                            uploadForm.retrievalStatus(false);
+                            allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Failed to upload bundle file", results, Message.Severity.Error));
+                        }
+                        enableNextButtonWhenAppropriate();
+                    }
+                });
+                uploadForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
+                    public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                        uploadForm.retrievalStatus(false);
+                        allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Failed to upload file", null, Message.Severity.Error));
                         enableNextButtonWhenAppropriate();
                     }
                 });

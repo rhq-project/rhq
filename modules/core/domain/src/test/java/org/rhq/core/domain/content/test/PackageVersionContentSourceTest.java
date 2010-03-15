@@ -27,8 +27,6 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.hibernate.lob.BlobImpl;
-import org.hibernate.lob.SerializableBlob;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -252,7 +250,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             pvConfig.put(new PropertySimple("pvConfig1", "pvConfig1Value"));
             pv.setExtraProperties(pvConfig);
 
-            bits.setBits(new SerializableBlob(new BlobImpl("testDeleteOrphanedPV".getBytes())));
+            bits.setBits("testDeleteOrphanedPV".getBytes());
             pv.setPackageBits(bits); // this will cascade on persist
 
             em.persist(rt);
@@ -287,10 +285,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             em.close();
             assert findBits != null : "The bits did not cascade-persist for some reason";
             assert findBits.getId() > 0 : "The package bits did not cascade-persist for some reason!";
-            SerializableBlob blob = bits.getBits();
-            SerializableBlob blob2 = findBits.getBits();
-            assert new String(blob.getBytes(1, (int) blob.length())).equals(new String(blob2.getBytes(1, (int) blob2
-                .length())));
+            assert new String(bits.getBits()).equals(new String(findBits.getBits()));
 
             em = getEntityManager();
             q = em.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS);

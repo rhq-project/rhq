@@ -22,8 +22,6 @@ import javax.persistence.EntityManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.lob.BlobImpl;
-import org.hibernate.lob.SerializableBlob;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -115,7 +113,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
             // now lets store some bits in the DB
             final String DATA = "testPackageBits data";
-            packageBits.setBits(new SerializableBlob(new BlobImpl(DATA.getBytes())));
+            packageBits.setBits(DATA.getBytes());
             em.merge(packageBits);
             em.flush();
 
@@ -130,8 +128,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             // let's make sure the data really is in the DB
             packageBits = em.find(PackageBits.class, packageBits.getId());
             assert packageBits != null;
-            SerializableBlob blob = packageBits.getBits();
-            assert DATA.equals(new String(blob.getBytes(1, (int) blob.length())));
+            assert DATA.equals(new String(packageBits.getBits()));
 
             ////////////////////////////////////////////////////
             // create another package version and test with that
@@ -186,7 +183,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
             // now lets store some bits in the DB
             final String DATA2 = "testPackageBits more data";
-            packageBits2.setBits(new SerializableBlob(new BlobImpl(DATA2.getBytes())));
+            packageBits2.setBits(DATA2.getBytes());
             em.merge(packageBits2);
             em.flush();
 
@@ -209,8 +206,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             // let's make sure the data really is in the DB
             packageBits2 = em.find(PackageBits.class, packageBits2.getId());
             assert packageBits2 != null;
-            blob = packageBits2.getBits();
-            assert DATA2.equals(new String(blob.getBytes(1, (int) blob.length())));
+            assert DATA2.equals(new String(packageBits2.getBits()));
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;

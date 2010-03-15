@@ -19,14 +19,16 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 
 import ca.nanometrics.gflot.client.Axis;
 import ca.nanometrics.gflot.client.DataPoint;
 import ca.nanometrics.gflot.client.PlotItem;
 import ca.nanometrics.gflot.client.PlotModel;
+import ca.nanometrics.gflot.client.PlotModelStrategy;
 import ca.nanometrics.gflot.client.PlotPosition;
 import ca.nanometrics.gflot.client.SeriesHandler;
+import ca.nanometrics.gflot.client.SeriesType;
 import ca.nanometrics.gflot.client.SimplePlot;
 import ca.nanometrics.gflot.client.event.PlotHoverListener;
 import ca.nanometrics.gflot.client.jsni.Plot;
@@ -37,33 +39,38 @@ import ca.nanometrics.gflot.client.options.PlotOptions;
 import ca.nanometrics.gflot.client.options.PointsSeriesOptions;
 import ca.nanometrics.gflot.client.options.TickFormatter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.WidgetCanvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.MouseOutEvent;
 import com.smartgwt.client.widgets.events.MouseOutHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 
 /**
  * @author Greg Hinkle
  */
-public class SmallGraphView extends VLayout {
+public class LiveGraphView extends VLayout {
 
     private static final String INSTRUCTIONS = "Point your mouse to a data point on the chart";
-
-    private static final String[] MONTH_NAMES = {"jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"};
 
     private final Label selectedPointLabel = new Label(INSTRUCTIONS);
     private final Label positionLabel = new Label();
@@ -72,22 +79,21 @@ public class SmallGraphView extends VLayout {
 
     private int resourceId;
     private MeasurementDefinition definition;
-    private List<MeasurementDataNumericHighLowComposite> data;
 
+    private SimplePlot plot;
+    private Timer dataLoader;
+    private long min, max;
 
-    public SmallGraphView() {
+    public LiveGraphView() {
         super();
     }
 
-    public SmallGraphView(int resourceId, MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
+    public LiveGraphView(int resourceId, MeasurementDefinition def) {
         super();
         this.resourceId = resourceId;
         this.definition = def;
-        this.data = data;
-//        setHeight(250);
         setHeight100();
         setWidth100();
-//        setPadding(10);
     }
 
     public String getName() {
@@ -136,16 +142,12 @@ public class SmallGraphView extends VLayout {
 
 
         // create a series
-        if (definition != null && data != null) {
-            loadData(model, plotOptions);
-        } else {
-            loadFakeData(model, plotOptions);
-        }
+        loadData(model, plotOptions);
 
         // create the plot
-        SimplePlot plot = new SimplePlot(model, plotOptions);
+        plot = new SimplePlot(model, plotOptions);
         plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight() - 20));
-//                "80%","80%");
+
 
 
         // add hover listener
@@ -179,6 +181,7 @@ public class SmallGraphView extends VLayout {
             }
         });
 
+
         hoverLabel.setOpacity(80);
         hoverLabel.setWrap(false);
         hoverLabel.setHeight(25);
@@ -192,27 +195,14 @@ public class SmallGraphView extends VLayout {
 
         if (definition != null) {
 
-            HLayout titleLayout = new HLayout();
-            titleLayout.setWidth100();
-
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    displayAsDialog();
+//                    displayAsDialog();
                 }
             });
-            titleLayout.addMember(title);
 
-            HTMLPane liveGraphLink = new HTMLPane();
-            liveGraphLink.setContents("<a>Live Graph</a>");
-            liveGraphLink.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    LiveGraphView.displayAsDialog(resourceId,definition);
-                }
-            });
-            titleLayout.addMember(liveGraphLink);
-
-            addMember(titleLayout);
+            addMember(title);
         }
 
         addMember(new WidgetCanvas(plot));
@@ -220,7 +210,7 @@ public class SmallGraphView extends VLayout {
 
     private String getHover(PlotItem item) {
         if (definition != null) {
-            com.google.gwt.i18n.client.DateTimeFormat df = DateTimeFormat.getMediumDateTimeFormat();
+            DateTimeFormat df = DateTimeFormat.getMediumDateTimeFormat();
             return definition.getDisplayName() + ": " + MeasurementConverterClient.format(item.getDataPoint().getY(), definition.getUnits(), true)
                     + "<br/>" + df.format(new Date((long) item.getDataPoint().getX()));
         } else {
@@ -228,12 +218,40 @@ public class SmallGraphView extends VLayout {
         }
     }
 
-    private void loadData(PlotModel model, PlotOptions plotOptions) {
-        SeriesHandler handler = model.addSeries(definition.getDisplayName(), "#007f00");
+    private void loadData(final PlotModel model, final PlotOptions plotOptions) {
+        final SeriesHandler handler = model.addSeries(definition.getDisplayName(), "#007f00");
 
-        for (MeasurementDataNumericHighLowComposite d : data) {
-            handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
-        }
+        model.setStrategy(PlotModelStrategy.slidingWindowStrategy(60));
+        final MeasurementDataGWTServiceAsync dataService = GWTServiceLookup.getMeasurementDataService();
+
+        dataLoader = new Timer() {
+            @Override
+            public void run() {
+                dataService.findLiveData(resourceId, new int[]{definition.getId()}, new AsyncCallback<Set<MeasurementData>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load live data", caught);
+                    }
+
+                    public void onSuccess(Set<MeasurementData> result) {
+                        MeasurementDataNumeric d = (MeasurementDataNumeric) result.iterator().next();
+
+                        handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
+                        plot.redraw();
+
+                        if (d.getTimestamp()> max) {
+                            max = System.currentTimeMillis();
+                            min = max - (1000L * 60);
+
+//                            plotOptions.setXAxisOptions(new AxisOptions().setMinimum(min).setMaximum(max));
+                        }
+
+                    }
+                });
+            }
+        };
+
+        dataLoader.scheduleRepeating(1000);
+
 
         plotOptions.setYAxisOptions(new AxisOptions().setTicks(5).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double v, Axis axis) {
@@ -241,47 +259,24 @@ public class SmallGraphView extends VLayout {
             }
         }));
 
-        long max = System.currentTimeMillis();
-        long min = max - (1000L * 60 * 60 * 8);
 
-        plotOptions.setXAxisOptions(new AxisOptions().setTicks(8).setMinimum(min).setMaximum(max).setTickFormatter(new TickFormatter() {
+         min = System.currentTimeMillis();
+        max = System.currentTimeMillis() + (1000L * 60);
+
+
+        plotOptions.setXAxisOptions(new AxisOptions().setTicks(8).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double tickValue, Axis axis) {
-                com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat.getShortDateTimeFormat();
+                DateTimeFormat dateFormat = DateTimeFormat.getMediumTimeFormat();
                 return dateFormat.format(new Date((long) tickValue));
-//                return String.valueOf(new Date((long) tickValue));
-//                return MONTH_NAMES[(int) (tickValue - 1)];
             }
         }));
 
     }
 
-    private void loadFakeData(PlotModel model, PlotOptions plotOptions) {
-        SeriesHandler handler = model.addSeries("Ottawa's Month Temperatures", "#007f00");
 
-        // add data
-        handler.add(new DataPoint(1, -10.5));
-        handler.add(new DataPoint(2, -8.6));
-        handler.add(new DataPoint(3, -2.4));
-        handler.add(new DataPoint(4, 6));
-        handler.add(new DataPoint(5, 13.6));
-        handler.add(new DataPoint(6, 18.4));
-        handler.add(new DataPoint(7, 21));
-        handler.add(new DataPoint(8, 19.7));
-        handler.add(new DataPoint(9, 14.7));
-        handler.add(new DataPoint(10, 8.2));
-        handler.add(new DataPoint(11, 1.5));
-        handler.add(new DataPoint(12, -6.6));
-
-        plotOptions.setXAxisOptions(new AxisOptions().setTicks(12).setTickFormatter(new TickFormatter() {
-            public String formatTickValue(double tickValue, Axis axis) {
-                return MONTH_NAMES[(int) (tickValue - 1)];
-            }
-        }));
-    }
-
-    private void displayAsDialog() {
-        SmallGraphView graph = new SmallGraphView(resourceId, definition, data);
-        Window graphPopup = new Window();
+    public static void displayAsDialog(int resourceId, MeasurementDefinition def) {
+        final LiveGraphView graph = new LiveGraphView(resourceId, def);
+        final Window graphPopup = new Window();
         graphPopup.setTitle("Detailed Graph");
         graphPopup.setWidth(800);
         graphPopup.setHeight(400);
@@ -291,12 +286,24 @@ public class SmallGraphView extends VLayout {
         graphPopup.centerInPage();
         graphPopup.addItem(graph);
         graphPopup.show();
+
+        graphPopup.addCloseClickHandler(new CloseClickHandler() {
+            public void onCloseClick(CloseClientEvent closeClientEvent) {
+                graph.stop();
+                graphPopup.destroy();
+            }
+        });
     }
 
+    protected void stop() {
+        dataLoader.cancel();
+        hoverLabel.destroy();
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        dataLoader.cancel();
         hoverLabel.destroy();
     }
 }

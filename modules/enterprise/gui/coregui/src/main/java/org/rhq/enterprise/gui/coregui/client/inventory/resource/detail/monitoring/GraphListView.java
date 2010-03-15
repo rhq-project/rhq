@@ -127,7 +127,7 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
     }
 
     private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
-        SmallGraphView graph = new SmallGraphView(def, data);
+        SmallGraphView graph = new SmallGraphView(resource.getId(), def, data);
         graph.setWidth("80%");
         graph.setHeight(220);
 

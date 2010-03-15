@@ -45,12 +45,16 @@ public class BundleDeploymentCriteria extends Criteria {
     private boolean fetchHistory;
 
     public BundleDeploymentCriteria() {
-        super(BundleDeployment.class);
+        super();
 
         filterOverrides.put("resourceId", "resource.id = ?");
         filterOverrides.put("resourceName", "resource.name like ?");
         filterOverrides.put("bundleDeployDefinitionId", "parentResource.id = ?");
         filterOverrides.put("bundleDeployDefinitionName", "parentResource.name like ?");
+    }
+
+    public Class<BundleDeployment> getPersistentClass() {
+        return BundleDeployment.class;
     }
 
     public void addFilterId(Integer filterId) {

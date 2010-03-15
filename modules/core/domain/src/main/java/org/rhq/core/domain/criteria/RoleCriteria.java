@@ -48,54 +48,50 @@ public class RoleCriteria extends Criteria {
     private PageOrdering sortName;
 
     public RoleCriteria() {
-        super(Role.class);
+        super();
     }
 
-    public Integer getFilterId() {
-        return this.filterId;
+    public Class<Role> getPersistentClass() {
+        return Role.class;
     }
 
-    public void setFilterId(Integer filterId) {
+    public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }
 
-    public void setFilterName(String filterName) {
+    public void addFilterName(String filterName) {
         this.filterName = filterName;
     }
 
-    public void setFilterDescription(String filterDescription) {
+    public void addFilterDescription(String filterDescription) {
         this.filterDescription = filterDescription;
-    }
-
-    public boolean getFetchSubjects() {
-        return this.fetchSubjects;
     }
 
     /**
      * Requires MANAGE_SECURITY
      * @param fetchSubjects
      */
-    public void setFetchSubjects(boolean fetchSubjects) {
+    public void fetchSubjects(boolean fetchSubjects) {
         this.fetchSubjects = fetchSubjects;
     }
 
     /**
      * Requires MANAGE_SECURITY
-     * @param fetchSubjects
+     * @param fetchResourceGroups
      */
-    public void setFetchResourceGroups(boolean fetchResourceGroups) {
+    public void fetchResourceGroups(boolean fetchResourceGroups) {
         this.fetchResourceGroups = fetchResourceGroups;
     }
 
-    public void setFetchPermissions(boolean fetchPermissions) {
+    public void fetchPermissions(boolean fetchPermissions) {
         this.fetchPermissions = fetchPermissions;
     }
 
-    public void setFetchRoleNotifications(boolean fetchRoleNotifications) {
+    public void fetchRoleNotifications(boolean fetchRoleNotifications) {
         this.fetchRoleNotifications = fetchRoleNotifications;
     }
 
-    public void setSortName(PageOrdering sortName) {
+    public void addSortName(PageOrdering sortName) {
         addSortField("name");
         this.sortName = sortName;
     }
@@ -105,4 +101,82 @@ public class RoleCriteria extends Criteria {
         return (this.fetchSubjects || this.fetchResourceGroups);
     }
 
+    /**
+     * @Deprecated use addFilterId
+     */
+    @Deprecated
+    public void setFilterId(Integer filterId) {
+        this.filterId = filterId;
+    }
+
+    /**
+     * @Deprecated use addFilterName
+     */
+    @Deprecated
+    public void setFilterName(String filterName) {
+        this.filterName = filterName;
+    }
+
+    /**
+     * @Deprecated use addFilterDescription
+     */
+    @Deprecated
+    public void setFilterDescription(String filterDescription) {
+        this.filterDescription = filterDescription;
+    }
+
+    @Deprecated
+    public Integer getFilterId() {
+        return this.filterId;
+    }
+
+    @Deprecated
+    public boolean getFetchSubjects() {
+        return this.fetchSubjects;
+    }
+
+    /**
+     * Requires MANAGE_SECURITY
+     * @param fetchSubjects
+     * @Deprecated use fetchSubjects
+     */
+    @Deprecated
+    public void setFetchSubjects(boolean fetchSubjects) {
+        this.fetchSubjects = fetchSubjects;
+    }
+
+    /**
+     * Requires MANAGE_SECURITY
+     * @param fetchSubjects
+     * @Deprecated use fetchResourceGroups
+     */
+    @Deprecated
+    public void setFetchResourceGroups(boolean fetchResourceGroups) {
+        this.fetchResourceGroups = fetchResourceGroups;
+    }
+
+    /**
+     * @Deprecated use fetchPermissions
+     */
+    @Deprecated
+    public void setFetchPermissions(boolean fetchPermissions) {
+        this.fetchPermissions = fetchPermissions;
+    }
+
+    /**
+     * @Deprecated use fetchRoleNotifications
+     */
+    @Deprecated
+    public void setFetchRoleNotifications(boolean fetchRoleNotifications) {
+        this.fetchRoleNotifications = fetchRoleNotifications;
+    }
+
+    /**
+     * @Deprecated use addSortName
+     */
+    @Deprecated
+    public void setSortName(PageOrdering sortName) {
+        addSortField("name");
+        this.sortName = sortName;
+    }
 }

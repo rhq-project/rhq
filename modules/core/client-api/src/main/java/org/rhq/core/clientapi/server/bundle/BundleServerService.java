@@ -29,6 +29,7 @@ import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
+import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.content.PackageVersion;
 
 /**
@@ -40,7 +41,7 @@ import org.rhq.core.domain.content.PackageVersion;
 public interface BundleServerService {
 
     @Asynchronous(guaranteedDelivery = true)
-    void updateStatus(BundleStatusUpdate update);
+    void addDeploymentHistory(int bundleDeploymentId, BundleDeploymentHistory history);
 
     List<PackageVersion> getAllBundleVersionPackageVersions(int bundleVersionId);
 

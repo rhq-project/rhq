@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.agentclient;
 
+import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
@@ -65,6 +66,8 @@ public interface AgentClient {
      *         the agent for some reason
      */
     boolean ping(long timeoutMillis);
+
+    BundleAgentService getBundleAgentService();
 
     ContentAgentService getContentAgentService();
 

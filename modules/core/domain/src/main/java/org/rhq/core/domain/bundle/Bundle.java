@@ -78,12 +78,15 @@ public class Bundle implements Serializable {
     @Column(name = "NAME", nullable = false)
     private String name;
 
+    @Column(name = "DESCRIPTION", nullable = true)
+    private String description;
+
     @JoinColumn(name = "BUNDLE_TYPE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.EAGER)
     private BundleType bundleType;
 
     @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false)
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     private Repo repo;
 
     @OneToMany(mappedBy = "bundle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -117,6 +120,14 @@ public class Bundle implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public BundleType getBundleType() {

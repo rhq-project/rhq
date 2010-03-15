@@ -51,6 +51,12 @@
          <groupId>jboss</groupId>
          <artifactId>jboss-j2ee</artifactId>
       </dependency>
+      
+    <dependency>
+      <groupId>oswego-concurrent</groupId>
+      <artifactId>concurrent</artifactId>
+    </dependency>
+      
    </dependencies>
 
    <build>

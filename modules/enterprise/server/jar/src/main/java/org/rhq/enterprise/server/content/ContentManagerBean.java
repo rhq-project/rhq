@@ -37,7 +37,6 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
 import javax.persistence.FlushModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -45,9 +44,9 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.lob.BlobImpl;
-import org.hibernate.lob.SerializableBlob;
+
 import org.jboss.annotation.ejb.TransactionTimeout;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
@@ -792,37 +791,37 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + installedPackageId + "] for resource ID [" + resourceId + "]");
         }
         try {
-        InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
-        PackageBits bits = installedPackage.getPackageVersion().getPackageBits();
-        if (bits == null || bits.getBits().length()==0) {
-            long start = System.currentTimeMillis();
-            retrieveBitsFromResource(user, resourceId, installedPackageId);
+            InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
+            PackageBits bits = installedPackage.getPackageVersion().getPackageBits();
+            if (bits == null || bits.getBits().length == 0) {
+                long start = System.currentTimeMillis();
+                retrieveBitsFromResource(user, resourceId, installedPackageId);
 
-            bits = installedPackage.getPackageVersion().getPackageBits();
-            while ((bits == null || bits.getBits() == null) && (System.currentTimeMillis() - start < 30000)) {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                }
-                entityManager.clear();
-                installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
                 bits = installedPackage.getPackageVersion().getPackageBits();
+                while ((bits == null || bits.getBits() == null) && (System.currentTimeMillis() - start < 30000)) {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                    }
+                    entityManager.clear();
+                    installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
+                    bits = installedPackage.getPackageVersion().getPackageBits();
+                }
+
+                if (bits == null) {
+                    throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId
+                        + " and package: " + installedPackageId + " before timeout.");
+                }
+
             }
 
-            if (bits == null) {
-                throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId
-                    + " and package: " + installedPackageId + " before timeout.");
-            }
-            
+            return bits.getBits();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId + " and package: "
+                + installedPackageId + " before timeout.");
+
         }
 
-        return bits.getBits().getBytes(1, (int) bits.getBits().length());
-}catch(Exception e){
-    throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId
-            + " and package: " + installedPackageId + " before timeout.");
-            
-        }
-        
     }
 
     public List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
@@ -877,8 +876,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return persistedRequest;
     }
 
-     @TransactionTimeout(45 * 60)
-     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(45 * 60)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completeRetrievePackageBitsRequest(ContentServiceResponse response, InputStream bitStream) {
         log.info("Completing retrieve package bits response: " + response);
 
@@ -904,7 +903,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 log.debug("Saving content for response: " + response);
 
                 PackageBits packageBits = new PackageBits();
-               // packageBits.setBits(new SerializableBlob(new BlobImpl(new byte[0])));
                 entityManager.persist(packageBits);
 
                 packageVersion.setPackageBits(packageBits);
@@ -926,13 +924,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 PreparedStatement ps = null;
 
                 try {
-                    // fallback to JDBC so we can stream the data to the blob column
-                    //conn = dataSource.getConnection();
-                    PackageBits bits = entityManager.find(PackageBits.class, packageBits.getId());                 
-                    SerializableBlob blb = new SerializableBlob(new BlobImpl(bitStream,(int)length.longValue()));
-                    bits.setBits(blb);
+                    PackageBits bits = entityManager.find(PackageBits.class, packageBits.getId());
+                    bits.setBits(StreamUtil.slurp(bitStream));
                     entityManager.merge(bits);
-                    
+
                 } finally {
 
                     if (ps != null) {
@@ -1231,9 +1226,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         PackageBits bits = new PackageBits();
         try {
-            bits.setBits(new SerializableBlob(new BlobImpl(packageBits)));
-        }catch(Exception e){
-            log.error("Error savinf the package.",e);
+            bits.setBits(packageBits);
+        } catch (Exception e) {
+            log.error("Error savinf the package.", e);
         }
         newPackageVersion.setPackageBits(bits);
 

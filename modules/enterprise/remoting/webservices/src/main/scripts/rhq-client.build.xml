@@ -16,8 +16,8 @@
    <property name="AlertManager" value="org.rhq.enterprise.server.alert.AlertManagerBean" />
    <property name="AlertDefinitionManager" value="org.rhq.enterprise.server.alert.AlertDefinitionManagerBean" />
    <property name="AvailabilityManager" value="org.rhq.enterprise.server.measurement.AvailabilityManagerBean" />
+   <property name="BundleManager" value="org.rhq.enterprise.server.bunde.BundleManagerBean" />
    <property name="CallTimeDataManager" value="org.rhq.enterprise.server.measurement.CallTimeDataManagerBean" />
-   <property name="RepoManager" value="org.rhq.enterprise.server.content.RepoManagerBean" />
    <property name="ConfigurationManager" value="org.rhq.enterprise.server.configuration.ConfigurationManagerBean" />
    <property name="ContentManager" value="org.rhq.enterprise.server.content.ContentManagerBean" />
    <property name="DataAccessManager" value="org.rhq.enterprise.server.report.DataAccessManagerBean" />
@@ -29,6 +29,7 @@
    <property name="MeasurementProblemManager" value="org.rhq.enterprise.server.measurement.MeasurementProblemManagerBean" />
    <property name="MeasurementScheduleManager" value="org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean" />
    <property name="OperationManager" value="org.rhq.enterprise.server.operation.OperationManagerBean" />
+   <property name="RepoManager" value="org.rhq.enterprise.server.content.RepoManagerBean" />
    <property name="ResourceGroupManager" value="org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean" />
    <property name="ResourceManager" value="org.rhq.enterprise.server.resource.ResourceManagerBean" />
    <property name="RoleManager" value="org.rhq.enterprise.server.authz.RoleManagerBean" />

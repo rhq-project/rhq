@@ -46,6 +46,8 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginManager;
+import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginManager;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -81,6 +83,7 @@ public class TestBundleServerPluginService extends ServerPluginService implement
             ArrayList<AbstractTypeServerPluginContainer> pcs = new ArrayList<AbstractTypeServerPluginContainer>(1);
             bundlePC = new TestBundleServerPluginContainer(this);
             pcs.add(bundlePC);
+            pcs.add(new TestContentServerPluginContainer(this));
             return pcs;
         }
 
@@ -115,6 +118,18 @@ public class TestBundleServerPluginService extends ServerPluginService implement
         @Override
         protected ServerPluginManager createPluginManager() {
             TestBundlePluginManager pm = new TestBundlePluginManager(this);
+            return pm;
+        }
+    }
+
+    public class TestContentServerPluginContainer extends ContentServerPluginContainer {
+        public TestContentServerPluginContainer(MasterServerPluginContainer master) {
+            super(master);
+        }
+
+        @Override
+        protected ServerPluginManager createPluginManager() {
+            ContentServerPluginManager pm = new ContentServerPluginManager(this);
             return pm;
         }
     }

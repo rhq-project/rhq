@@ -3206,6 +3206,11 @@
                </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.78.2">
+               <schema-addColumn   table="RHQ_BUNDLE" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
+               <schema-addColumn   table="RHQ_BUNDLE_VERSION" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />               
+            </schemaSpec>
+
             <schemaSpec version="2.79">
                 <schema-directSQL>
                     <statement desc="Normalizing resource group descriptions">

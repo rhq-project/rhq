@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleFile;
 
 /**
  * @author Jay Shaughnessy
@@ -31,52 +31,56 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class BundleDeployDefinitionCriteria extends Criteria {
+public class BundleFileCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
-    private String filterName;
-    private String filterDescription;
+    private Integer filterBundleVersionId; // needs override
+    private Integer filterPackageId; // needs override
+    private Integer filterPackageVersionId; // needs override    
 
-    private boolean fetchBundle;
     private boolean fetchBundleVersion;
-    private boolean fetchConfiguration;
-    private boolean fetchDeployments;
+    private boolean fetchPackageVersion;
+    private boolean fetchPackage;
 
-    public BundleDeployDefinitionCriteria() {
+    public BundleFileCriteria() {
         super();
+
+        filterOverrides.put("bundleVersionId", "bundleVersion.id = ?");
+        filterOverrides.put("packageId", "generalPackage.id = ?");
+        filterOverrides.put("packageVersionId", "packageVersion.id = ?");
     }
 
-    public Class<BundleDeployDefinition> getPersistentClass() {
-        return BundleDeployDefinition.class;
+    @Override
+    public Class<BundleFile> getPersistentClass() {
+        return BundleFile.class;
     }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }
 
-    public void addFilterName(String filterName) {
-        this.filterName = filterName;
+    public void addFilterBundleVersionId(Integer filterBundleVersionId) {
+        this.filterBundleVersionId = filterBundleVersionId;
     }
 
-    public void addFilterDescription(String filterDescription) {
-        this.filterDescription = filterDescription;
+    public void addFilterPackageId(Integer filterPackageId) {
+        this.filterPackageId = filterPackageId;
     }
 
-    public void fetchBundle(boolean fetchBundle) {
-        this.fetchBundle = fetchBundle;
+    public void addFilterPackageVersionId(Integer filterPackageVersionId) {
+        this.filterPackageVersionId = filterPackageVersionId;
     }
 
     public void fetchBundleVersion(boolean fetchBundleVersion) {
         this.fetchBundleVersion = fetchBundleVersion;
     }
 
-    public void fetchConfiguration(boolean fetchConfiguration) {
-        this.fetchConfiguration = fetchConfiguration;
+    public void fetchPackage(boolean fetchPackage) {
+        this.fetchPackage = fetchPackage;
     }
 
-    public void fetchDeployments(boolean fetchDeployments) {
-        this.fetchDeployments = fetchDeployments;
+    public void fetchPackageVersion(boolean fetchPackageVersion) {
+        this.fetchPackageVersion = fetchPackageVersion;
     }
-
 }

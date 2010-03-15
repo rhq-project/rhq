@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageList;
 
@@ -55,4 +57,9 @@ public interface AlertGWTService extends RemoteService {
      * @param alertIds the ids of the Resource alerts to be acknowledged
      */
     void acknowledgeResourceAlerts(Integer[] alertIds);
+
+
+
+    PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria);
+
 }

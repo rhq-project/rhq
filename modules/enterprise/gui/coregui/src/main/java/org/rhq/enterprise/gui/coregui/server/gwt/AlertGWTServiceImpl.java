@@ -19,10 +19,13 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -31,6 +34,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements AlertGWTService {
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+    private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
 
     public PageList<Alert> findAlertsByCriteria(AlertCriteria criteria) {
         return SerialUtility.prepare(this.alertManager.findAlertsByCriteria(getSessionSubject(), criteria),
@@ -44,4 +48,13 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
     public void acknowledgeResourceAlerts(Integer[] alertIds) {
         this.alertManager.acknowledgeAlerts(getSessionSubject(), alertIds);
     }
+
+
+    public PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria) {
+        return SerialUtility.prepare(this.alertDefinitionManager.findAlertDefinitionsByCriteria(getSessionSubject(), criteria),
+                "AlertService.findAlertDefinitionsByCriteria");
+    }
+
+
+
 }

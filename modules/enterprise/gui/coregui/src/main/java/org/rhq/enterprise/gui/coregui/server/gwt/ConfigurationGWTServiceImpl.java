@@ -11,6 +11,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -37,7 +38,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
     public Configuration getResourceConfiguration(int resourceId) {
 
-        Configuration configuration = configurationManager.getResourceConfiguration(getSessionSubject(),  resourceId);
+        Configuration configuration = configurationManager.getResourceConfiguration(getSessionSubject(), resourceId);
         return SerialUtility.prepare(configuration, "ResourceConfiguration");
     }
 
@@ -56,7 +57,15 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         // TODO GH: I'd prefer a criteria based solution here
         result = configurationManager.findResourceConfigurationUpdates(getSessionSubject(), resourceId, null, null, false, pc);
 
-        return SerialUtility.prepare(result,"ConfigurationService.findResourceConfigurationUpdates");
+        return SerialUtility.prepare(result, "ConfigurationService.findResourceConfigurationUpdates");
+    }
+
+
+    public ResourceConfigurationUpdate updateResourceConfiguration(int resourceId, Configuration configuration) {
+        ResourceConfigurationUpdate update =
+                configurationManager.updateResourceConfiguration(getSessionSubject(), resourceId, configuration);
+
+        return SerialUtility.prepare(update, "ConfigurationService.updateResourceConfiguration");
     }
 
 

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -57,7 +58,9 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
         }
         sessionSubject.set(subject);
 
+        long id = HibernatePerformanceMonitor.get().start();
         super.service(req, resp);
+        HibernatePerformanceMonitor.get().stop(id, "GWT Service Request");
     }
 
 }

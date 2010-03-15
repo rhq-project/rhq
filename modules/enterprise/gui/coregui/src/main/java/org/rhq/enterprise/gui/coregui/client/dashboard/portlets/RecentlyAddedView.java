@@ -27,24 +27,30 @@ import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
+
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 public class RecentlyAddedView extends VLayout {
 
-    public RecentlyAddedView() {
+
+    @Override
+    protected void onInit() {
+        super.onInit();
         TreeGrid treeGrid = new TreeGrid();
+        treeGrid.setDataSource(new RecentlyAddedResourceDS());
+        treeGrid.setAutoFetchData(true);
         treeGrid.setTitle("Recently Added Resources");
         treeGrid.setResizeFieldsInRealTime(true);
         treeGrid.setTreeFieldTitle("Resource Name");
 
-        ListGridField resourceNameField = new ListGridField("resourceName", "Resource Name");
+        ListGridField resourceNameField = new ListGridField("name", "Resource Name");
         ListGridField timestampField = new ListGridField("timestamp", "Date//Time");
 
         treeGrid.setFields(resourceNameField, timestampField);
-        treeGrid.setDataSource(new RecentlyAddedResourceDS());
-        treeGrid.fetchData();
+
 
         addMember(treeGrid);
+
     }
 
 }

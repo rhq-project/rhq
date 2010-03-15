@@ -382,6 +382,9 @@ public class ConfigurationEditor extends VLayout {
         });
         menu.addItem(hideAllItem);
 
+        // TODO GH: Save button as saveListener() or remove the buttons from this form and have
+        // the container provide them?
+
 
         toolStrip = new ToolStrip();
         toolStrip.setBackgroundImage(null);
@@ -392,7 +395,7 @@ public class ConfigurationEditor extends VLayout {
         saveButton = new IButton("Save");
         saveButton.setAlign(Alignment.CENTER);
         saveButton.setDisabled(true);
-        toolStrip.addMember(saveButton);
+//        toolStrip.addMember(saveButton);
 
 
         IButton resetButton = new IButton("Reset");
@@ -403,7 +406,7 @@ public class ConfigurationEditor extends VLayout {
         });
 
 
-        toolStrip.addMember(resetButton);
+//        toolStrip.addMember(resetButton);
         toolStrip.addMember(new LayoutSpacer());
         toolStrip.addMember(new MenuButton("Jump to Section", menu));
 
@@ -422,9 +425,9 @@ public class ConfigurationEditor extends VLayout {
             section = new SectionStackSection("General Properties");
 
         } else {
-            section = new SectionStackSection(group.getDisplayName() +
+            section = new SectionStackSection("<div style=\"float:left; font-weight: bold;\">" + group.getDisplayName() + "</div>" +
                     (group.getDescription() != null
-                            ? ("<div style='padding-left: 30px; font-weight: normal; font-size: smaller;'>" + group.getDescription() + "</div>")
+                            ? ("<div style='padding-left: 50px; font-weight: normal; font-size: smaller; float: right;'>" + group.getDescription() + "</div>")
                             : ""));
             section.setExpanded(!group.isDefaultHidden());
         }

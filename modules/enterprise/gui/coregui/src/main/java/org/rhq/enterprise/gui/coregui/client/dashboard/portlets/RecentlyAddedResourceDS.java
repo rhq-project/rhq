@@ -23,112 +23,136 @@
 
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets;
 
-import com.smartgwt.client.data.Criteria;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
-import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.DSDataFormat;
-import com.smartgwt.client.types.FieldType;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.tree.TreeNode;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 public class RecentlyAddedResourceDS extends DataSource {
 
-    boolean fetched;
 
     public RecentlyAddedResourceDS() {
         setClientOnly(false);
+        setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
-        DataSourceField resourceNameField = new DataSourceField("resourceName", FieldType.TEXT, "Resource Name");
+
+
+        DataSourceTextField idField = new DataSourceTextField("id", "ID");
+        idField.setPrimaryKey(true);
+
+        DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
+        parentIdField.setForeignKey("id");
+
+        DataSourceTextField resourceNameField = new DataSourceTextField("name", "Resource Name");
         resourceNameField.setPrimaryKey(true);
 
-        DataSourceField timestampField = new DataSourceField("timestamp", FieldType.TEXT, "Date/Time");
+        DataSourceTextField timestampField = new DataSourceTextField("timestamp", "Date/Time");
 
-        setFields(resourceNameField, timestampField);
+        setFields(idField, parentIdField, resourceNameField, timestampField);
     }
 
     @Override
     protected Object transformRequest(DSRequest request) {
-        String requestId = request.getRequestId();
         DSResponse response = new DSResponse();
         response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
         // Asume success
         response.setStatus(0);
         switch (request.getOperationType()) {
-        case ADD:
-            //executeAdd(lstRec, true);
-            break;
-        case FETCH:
-            executeFetch(requestId, request, response);
-            break;
-        case REMOVE:
-            //executeRemove(lstRec);
-            break;
-        case UPDATE:
-            //executeAdd(lstRec, false);
-            break;
-
-        default:
-            break;
+            case FETCH:
+                executeFetch(request, response);
+                break;
+            default:
+                break;
         }
 
         return request.getData();
     }
 
-    public void executeFetch(String requestId, DSRequest request, DSResponse response) {
-        if (fetched) {
-            return;
-        }
-        PageList<RecentlyAddedResource> list = new PageList<RecentlyAddedResource>();
-        RecentlyAddedResource platform1 = new RecentlyAddedResource("Platform 1", "today");
-        RecentlyAddedResource server1 = new RecentlyAddedResource("Server 1", "today", platform1);
-        RecentlyAddedResource service1 = new RecentlyAddedResource("Service 1", "today", server1);
+    public void executeFetch(final DSRequest request, final DSResponse response) {
 
-        RecentlyAddedResource platform2 = new RecentlyAddedResource("Platform 2", "today");
-        RecentlyAddedResource server2 = new RecentlyAddedResource("Server 2", "today", platform2);
-        RecentlyAddedResource service2 = new RecentlyAddedResource("Service 2", "today", server2);
+        ResourceCriteria c = new ResourceCriteria();
 
-        list.add(platform1);
-        list.add(server1);
-        list.add(service1);
-        list.add(platform2);
-        list.add(server2);
-        list.add(service2);
+        c.addFilterResourceCategory(ResourceCategory.PLATFORM);
 
-        response.setData(buildNodes(list));
-        fetched = true;
+        // TODO GH: Enhance resourceCriteria query to support itime based filtering for
+        // "Recently imported" resources
 
-        processResponse(requestId, response);
+        GWTServiceLookup.getResourceService().findResourcesByCriteria(c, new AsyncCallback<PageList<Resource>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to load recently added resources data",caught);
+                response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
+
+            public void onSuccess(PageList<Resource> result) {
+                response.setData(buildNodes(result));
+                response.setTotalRows(result.getTotalSize());
+                processResponse(request.getRequestId(), response);
+            }
+        });
     }
 
-    private TreeNode[] buildNodes(List<RecentlyAddedResource> list) {
+    private TreeNode[] buildNodes(PageList<Resource> list) {
         TreeNode[] treeNodes = new TreeNode[list.size()];
         for (int i = 0; i < list.size(); ++i) {
-            treeNodes[i] = new RecentlyAddedTreeNode(list.get(i));
+            treeNodes[i] = new ResourceTreeNode(list.get(i));
         }
         return treeNodes;
     }
 
-    static class RecentlyAddedTreeNode extends TreeNode {
-        private RecentlyAddedResource recentlyAdded;
 
-        public RecentlyAddedTreeNode(RecentlyAddedResource recentlyAdded) {
-            this.recentlyAdded = recentlyAdded;
-            setID(recentlyAdded.getResourceName());
-            if (recentlyAdded.getParent() != null) {
-                setParentID(recentlyAdded.getParent().getResourceName());    
-            }
+    public static class ResourceTreeNode extends TreeNode {
 
-            setAttribute("resourceName", recentlyAdded.getResourceName());
-            setAttribute("timestamp", recentlyAdded.getTimestamp());
-            setIsFolder(recentlyAdded.getResourceName().startsWith("Platform"));
+        private Resource resource;
+
+        private ResourceTreeNode(Resource resource) {
+            this.resource = resource;
+
+            String id = String.valueOf(resource.getId());
+            String parentId = resource.getParentResource() == null ? null
+                    : (resource.getParentResource().getId() + "_" + resource.getResourceType().getName());
+
+            setID(id);
+            setParentID(parentId);
+
+            setAttribute("id", id);
+            setAttribute("parentId", parentId);
+            setAttribute("name", resource.getName());
+            setAttribute("timestamp", "");//String.valueOf(resource.getItime())); // Seems to be null
+            setAttribute("currentAvailability",
+                    resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP
+                            ? "/images/icons/availability_green_16.png"
+                            : "/images/icons/availability_red_16.png");
+        }
+
+        public Resource getResource() {
+            return resource;
+        }
+
+        public void setResource(Resource resource) {
+            this.resource = resource;
+        }
+
+        public ResourceType getResourceType() {
+            return resource.getResourceType();
+        }
+
+        public String getParentId() {
+            return getAttribute("parentId");
         }
     }
 }

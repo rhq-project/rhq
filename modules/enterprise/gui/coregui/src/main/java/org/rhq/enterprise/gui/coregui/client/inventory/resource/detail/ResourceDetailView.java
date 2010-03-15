@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.calltime.CallTimeView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
@@ -119,6 +120,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         configurationTab.registerSubTabs("Current", "History");
 
         eventsTab = new TwoLevelTab("Events", "/images/icons/Events_grey_16.png");
+        eventsTab.registerSubTabs("History");
 
         contentTab = new TwoLevelTab("Content", "/images/icons/Content_grey_16.png");
         contentTab.registerSubTabs("Deployed","New","Subscriptions","History");
@@ -169,11 +171,12 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
 
         operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource.getId()));
 
-        configurationTab.updateSubTab("Current", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId()));
+        configurationTab.updateSubTab("Current", new ResourceConfigurationEditView(resource));
         configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
 
         alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
 
+        eventsTab.updateSubTab("History", new FullHTMLPane("/rhq/common/events/history-plain.xhtml?id=" + resource.getId()));
 
         contentTab.updateSubTab("Deployed",new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()));
         contentTab.updateSubTab("New",new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
@@ -181,7 +184,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         contentTab.updateSubTab("History",new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
 
 
-        topTabSet.setSelectedTab(selectedTab);
+//        topTabSet.setSelectedTab(selectedTab);
 
         updateTabStatus();
 
@@ -191,37 +194,49 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
 
     private void updateTabStatus() {
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
-                EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.events, ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                EnumSet.of(ResourceTypeRepository.MetadataType.content,
+                        ResourceTypeRepository.MetadataType.operations,
+                        ResourceTypeRepository.MetadataType.events,
+                        ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
 
 
                         if (type.getOperationDefinitions() == null || type.getOperationDefinitions().isEmpty()) {
+                            if (topTabSet.getSelectedTabNumber() == 3) {
+                                topTabSet.setSelectedTab(0);
+                            }
                             topTabSet.disableTab(operationsTab);
                         } else {
                             topTabSet.enableTab(operationsTab);
                         }
 
                         if (type.getEventDefinitions() == null || type.getEventDefinitions().isEmpty()) {
+                            if (topTabSet.getSelectedTabNumber() == 6) {
+                                topTabSet.setSelectedTab(0);
+                            }
                             topTabSet.disableTab(eventsTab);
                         } else {
                             topTabSet.enableTab(eventsTab);
                         }
 
                         if (type.getPackageTypes() == null || type.getPackageTypes().isEmpty()) {
+                            if (topTabSet.getSelectedTabNumber() == 7) {
+                                topTabSet.setSelectedTab(0);
+                            }
+
                             topTabSet.disableTab(contentTab);
                         } else {
                             topTabSet.enableTab(contentTab);
                         }
 
                         if (type.getResourceConfigurationDefinition() == null) {
+                            if (topTabSet.getSelectedTabNumber() == 5) {
+                                topTabSet.setSelectedTab(0);
+                            }
                             topTabSet.disableTab(configurationTab);
                         } else {
                             topTabSet.enableTab(configurationTab);
-                        }
-
-                        if (topTabSet.getSelectedTab().getDisabled()) {
-                            topTabSet.setSelectedTab(0);
                         }
 
                     }
@@ -235,7 +250,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
 
         if (resource != null) {
             String path = "Resource/" + resource.getId() + tabPath;
-            History.newItem(path);
+            History.newItem(path, false);
         }
     }
 

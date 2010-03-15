@@ -1,5 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2009 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.gui.coregui.client.components.upload;
-
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
@@ -14,12 +31,10 @@ public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackF
     private String frameName;
     private Element synthesizedFrame;
     private DynamicCallbackFormHandlerCollection formHandlers;
-    private static DynamicCallbackFormImpl impl = GWT
-            .create(DynamicCallbackFormImpl.class);
+    private static DynamicCallbackFormImpl impl = GWT.create(DynamicCallbackFormImpl.class);
 
     public DynamicCallbackForm(String frameName) {
         super();
-        System.err.println("Hello World");
         this.frameName = frameName;
         setTarget(frameName);
         init();
@@ -28,7 +43,6 @@ public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackF
     @Override
     protected void onAttach() {
         super.onAttach();
-        System.err.println("ATTACH");
     }
 
     private void init() {
@@ -60,7 +74,7 @@ public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackF
         // most browsers.
         Element dummy = Document.get().createDivElement();
         dummy.setInnerHTML("<iframe src=\"javascript:''\" name='" + frameName
-                + "' style='position:absolute;width:0;height:0;border:0'>");
+            + "' style='position:absolute;width:0;height:0;border:0'>");
 
         synthesizedFrame = dummy.getFirstChildElement();
     }
@@ -97,8 +111,7 @@ public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackF
             // 'infinite loading' state. See issue 916.
             DeferredCommand.addCommand(new Command() {
                 public void execute() {
-                    formHandlers.fireOnComplete(DynamicCallbackForm.this, impl
-                            .getContents(synthesizedFrame));
+                    formHandlers.fireOnComplete(DynamicCallbackForm.this, impl.getContents(synthesizedFrame));
                 }
             });
         }
@@ -106,7 +119,6 @@ public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackF
 
     @Override
     public void destroy() {
-        System.err.println("Destroy");
         if (synthesizedFrame != null) {
             // Unhook the iframe's onLoad when detached.
             impl.unhookEvents(synthesizedFrame);
@@ -133,4 +145,3 @@ public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackF
     }
 
 }
-

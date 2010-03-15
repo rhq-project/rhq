@@ -98,16 +98,9 @@ public class JBossASTomcatDiscoveryComponent implements ResourceDiscoveryCompone
     }
 
     private String getResourceName(String hostName, String serverName, String version, String bindAddress) {
-        if ((bindAddress != null) && (!bindAddress.equals("") || (!bindAddress.equals("0.0.0.0")))) {
-            bindAddress = " (" + bindAddress + ")";
-        } else {
-            bindAddress = "";
-        }
-
-        return ((hostName == null) ? "" : (hostName + " ")) + " Embedded " + serverName + " Server " + version + " "
-            + bindAddress;
+        return bindAddress;
     }
-
+    
     private String getVersion(File jbossWebDir) throws IOException {
         boolean pre42 = jbossWebDir.getName().startsWith(EMBEDDED_TOMCAT_PRE42_DIR);
         String jarFileName = (pre42) ? "catalina.jar" : "jbossweb.jar";

@@ -75,7 +75,7 @@ import org.rhq.core.pluginapi.content.ContentServices;
 
 public class ContentManager extends AgentService implements ContainerService, ContentAgentService, ContentServices {
 
-    private static final int FACET_METHOD_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+    private static final int FACET_METHOD_TIMEOUT = 60 * 60 * 1000; // 60 minutes
     private final Log log = LogFactory.getLog(ContentManager.class);
 
     /**

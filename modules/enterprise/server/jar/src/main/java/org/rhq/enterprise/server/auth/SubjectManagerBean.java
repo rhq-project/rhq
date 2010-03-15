@@ -567,14 +567,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#isValidSessionId(int, String)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#isValidSessionId(int, String, int)
      */
     // we exclude the default interceptors because the required permissions interceptor calls into this
     @ExcludeDefaultInterceptors
-    public boolean isValidSessionId(int session, String username) {
+    public boolean isValidSessionId(int session, String username, int userid) {
         try {
             Subject sessionSubject = sessionManager.getSubject(session);
-            return username.equals(sessionSubject.getName());
+            return username.equals(sessionSubject.getName()) && userid == sessionSubject.getId();
         } catch (Exception e) {
             return false;
         }

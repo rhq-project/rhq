@@ -32,7 +32,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -41,7 +40,6 @@ import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -110,12 +108,14 @@ public interface BundleManagerRemote {
     /**
      * @param subject must be InventoryManager
      * @param name not null or empty 
+     * @param description optional long description of the bundle 
      * @param bundleTypeId valid bundleType
      * @return the persisted Bundle (id is assigned)
      */
     Bundle createBundle( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "name") String name, //
+        @WebParam(name = "description") String description, //        
         @WebParam(name = "bundleTypeId") int bundleTypeId) throws Exception;
 
     /**
@@ -146,14 +146,16 @@ public interface BundleManagerRemote {
      * @param subject must be InventoryManager
      * @param bundleId the bundle for which this will be the next version
      * @param name not null or empty
-     * @param bundleVersion optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
+     * @param description optional long description of the bundle version 
+     * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
      * @return the persisted BundleVersion (id is assigned)
      */
     BundleVersion createBundleVersion( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleId") int bundleId, //
         @WebParam(name = "name") String name, //
-        @WebParam(name = "bundleVersion") String bundleVersion, //
+        @WebParam(name = "description") String description, //                
+        @WebParam(name = "version") String version, //
         @WebParam(name = "recipe") String recipe) throws Exception;
 
     /**
@@ -198,13 +200,6 @@ public interface BundleManagerRemote {
     PageList<BundleDeployment> findBundleDeploymentsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "BundleDeploymentCriteria") BundleDeploymentCriteria criteria);
-
-    @WebMethod
-    // TODO is this necessary? Or do you just search for deployments and optionally fetch the history? 
-    List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(
-        //
-        @WebParam(name = "subject") Subject subject,
-        @WebParam(name = "criteria") BundleDeploymentHistoryCriteria criteria);
 
     @WebMethod
     PageList<BundleFile> findBundleFilesByCriteria( //

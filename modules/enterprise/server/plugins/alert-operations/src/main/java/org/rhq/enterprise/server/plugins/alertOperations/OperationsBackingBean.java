@@ -27,10 +27,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.Scope;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -63,23 +61,12 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     private Configuration configuration;
     private static final String ALERT_NOTIFICATIONS = "ALERT_NOTIFICATIONS";
 
+
+
+    private String operationName;
+
     public OperationsBackingBean() {
         log.info("new " + hashCode());
-    }
-
-    @Override
-    public void internalInit() {
-/*        log.info("internalInit");
-        try {
-            getResId();
-            getResourceName();
-            obtainOperationIds();
-            getOperationId();
-            lookupConfiguration();
-        }
-        catch (Throwable t) {
-            t.printStackTrace();
-        }*/
     }
 
 
@@ -107,6 +94,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
             cleanProperty(alertParameters,OperationsSender.USABLE);
             operationIds = new HashMap<String,Integer>(); // Clean out operations dropdown
             operationId = null;
+            operationName = null;
 
         }
 
@@ -122,6 +110,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
         if (operationId != null ) {
             persistProperty(alertParameters, OperationsSender.OPERATION_ID, operationId);
+            getOperationNameFromOperationIds();
             lookupConfiguration();
         }
 
@@ -130,25 +119,20 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     private void lookupConfiguration() {
 
-
         try {
-//            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO replace with real subject
 
             OperationManagerLocal opMan = LookupUtil.getOperationManager();
             obtainOperationIds();
 
 
             if (operationId!=null) {
-                OperationDefinition operationDefinition = opMan.getOperationDefinition(subject, operationId);
+                OperationDefinition operationDefinition = opMan.getOperationDefinition(webUser, operationId);
                 configurationDefinition = operationDefinition.getParametersConfigurationDefinition();
 
 
                 // call a SLSB method to get around lazy initialization of configDefs and configTemplates
                 ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
                 configuration = configurationManager.getConfigurationFromDefaultTemplate(configurationDefinition);
-    //            Configuration newConfiguration = configuration.deepCopy(false);
-                log.info("lookupConfiguration: " + configuration + ", " + configuration.hashCode() );
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -175,8 +159,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         if (resId!=null) {
             OperationManagerLocal opMan = LookupUtil.getOperationManager();
 
-            Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO replace with real subject
-            List<OperationDefinition> opDefs = opMan.findSupportedResourceOperations(subject, resId, false);
+            List<OperationDefinition> opDefs = opMan.findSupportedResourceOperations(webUser, resId, false);
             for (OperationDefinition def : opDefs) {
                 operationIds.put(def.getDisplayName(),def.getId()); // TODO add more distinctive stuff in display
             }
@@ -191,11 +174,9 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     public void setResMode(String resMode) {
         this.resMode = resMode;
-        log.info("setResMode: " + resMode);
     }
 
     public Integer getResId() {
-
         if (resId==null) {
             PropertySimple prop = alertParameters.getSimple(OperationsSender.RESOURCE_ID);
             if (prop!=null)
@@ -207,7 +188,6 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     public void setResId(Integer resId) {
         this.resId = resId;
-        log.info("Set resid " + resId);
         if (resId!=null) {
             persistProperty(alertParameters,OperationsSender.RESOURCE_ID,resId);
         }
@@ -219,8 +199,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
         if (resId!=null) {
             ResourceManagerLocal resMgr = LookupUtil.getResourceManager();
-            Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO replace with real subject
-            Resource res = resMgr.getResource(subject,resId);
+            Resource res = resMgr.getResource(webUser,resId);
 
             resourceName = res.getName() + " (" + res.getResourceType().getName() + ")";
         }
@@ -232,18 +211,38 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public Integer getOperationId() {
-
+        System.out.println("OperationsBackingBean.getOperationId, operationId=" + operationId);
         if (operationId ==null) {
             PropertySimple prop = alertParameters.getSimple(OperationsSender.OPERATION_ID);
             if (prop!=null)
                 operationId = prop.getIntegerValue();
+
         }
+
+        if(operationIds==null || operationIds.isEmpty())
+            obtainOperationIds();
+        getOperationNameFromOperationIds();
 
         return operationId;
     }
 
+    private void getOperationNameFromOperationIds() {
+        for (Map.Entry<String,Integer> ent : operationIds.entrySet()) {
+            if (ent.getValue().equals(operationId))
+                operationName=ent.getKey();
+        }
+    }
+
     public void setOperationId(Integer operationId) {
         this.operationId = operationId;
+    }
+
+    public String getOperationName() {
+        return operationName;
+    }
+
+    public void setOperationName(String operationName) {
+        this.operationName = operationName;
     }
 
     public Map<String, Integer> getOperationIds() {
@@ -258,10 +257,11 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
+
+        if (configurationDefinition==null)
+            lookupConfiguration();
+
         return configurationDefinition;
-
-
-
     }
 
     public void setConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
@@ -274,7 +274,6 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
-        log.info("setC: " + configuration);
     }
 
     public String getNullConfigurationDefinitionMessage() {
@@ -297,7 +296,6 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     public void setTokenMode(String tokenMode) {
         this.tokenMode = tokenMode;
-        log.info("token mode" + tokenMode);
 
         persistProperty(alertParameters, OperationsSender.TOKEN_MODE,tokenMode);
     }

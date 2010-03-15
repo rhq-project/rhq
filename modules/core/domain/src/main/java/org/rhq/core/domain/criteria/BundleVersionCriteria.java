@@ -35,6 +35,7 @@ public class BundleVersionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private String filterDescription;
     private String filterName;
     private String filterVersion;
     private String filterBundleName; // needs override    
@@ -57,6 +58,10 @@ public class BundleVersionCriteria extends Criteria {
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
+    }
+
+    public void addFilterDescription(String filterDescription) {
+        this.filterDescription = filterDescription;
     }
 
     public void addFilterName(String filterName) {

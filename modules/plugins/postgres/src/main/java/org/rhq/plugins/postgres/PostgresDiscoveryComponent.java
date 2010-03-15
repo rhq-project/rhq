@@ -26,14 +26,19 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.*;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.plugins.postgres.util.PostgresqlConfFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,6 +61,8 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
 
     private static final String PGDATA_ENV_VAR = "PGDATA";
     private static final String DEFAULT_RESOURCE_DESCRIPTION = "Postgres relational database server";
+    private static final String POSTGRES_DEFAULT_DATABASE_NAME = "postgres";
+    
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         Set<DiscoveredResourceDetails> servers = new LinkedHashSet<DiscoveredResourceDetails>();
@@ -140,9 +147,10 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                                                                      Configuration pluginConfiguration, @Nullable
     ProcessInfo processInfo) {
         String key = buildUrl(pluginConfiguration);
-        String db = pluginConfiguration.getSimple(DB_CONFIGURATION_PROPERTY).getStringValue();
-        String name = "Postgres [" + db + "]";
-        String version = getVersion(pluginConfiguration);
+        Connection conn = getConnection(pluginConfiguration);
+        String name = getServerResourceName(pluginConfiguration, conn);
+        String version = getVersion(pluginConfiguration, conn);
+        JDBCUtil.safeClose(conn);
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
                 DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
     }
@@ -155,11 +163,12 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         return url;
     }
 
-    protected static String getVersion(Configuration config) {
+    protected static String getVersion(Configuration config, Connection conn) {
         String version = null;
         try {
-            Connection conn = buildConnection(config);
-            version = conn.getMetaData().getDatabaseProductVersion();
+            if (conn != null) {
+                version = conn.getMetaData().getDatabaseProductVersion();
+            }
         } catch (SQLException e) {
             // TODO GH: How to put this back to the server while inventorying this resource in an unconfigured state
             log.info("Exception detecting postgres instance", e);
@@ -182,7 +191,12 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         String principal = configuration.getSimple(PRINCIPAL_CONFIGURATION_PROPERTY).getStringValue();
         String credentials = configuration.getSimple(CREDENTIALS_CONFIGURATION_PROPERTY).getStringValue();
 
-        return DriverManager.getConnection(url, principal, credentials);
+        try {
+            return DriverManager.getConnection(url, principal, credentials);
+        } catch (SQLException e) {
+            log.info("Failed to connect to the database", e);
+            return null;
+        }
     }
 
     @Nullable
@@ -238,5 +252,53 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         }
 
         return configFilePath;
+    }
+    
+    private static Connection getConnection(Configuration config) {
+        try {
+            return buildConnection(config);
+        } catch (SQLException e) {
+            log.info("Failed to connect to postgres database.", e);
+            
+            return null;
+        }
+    }
+    
+    public static List<String> getDatabases(Configuration pluginConfiguration) {
+        return getDatabaseNames(pluginConfiguration, getConnection(pluginConfiguration));
+    }
+    
+    private static List<String> getDatabaseNames(Configuration config, Connection conn) {
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            List<String> ret = new ArrayList<String>();
+            
+            statement = conn.createStatement();
+            resultSet = statement
+                .executeQuery("SELECT *, pg_database_size(datname) FROM pg_database where datistemplate = false");
+            while (resultSet.next()) {
+                String databaseName = resultSet.getString("datname");
+                ret.add(databaseName);
+            }
+            
+            return ret;
+        } catch (SQLException e) {
+            log.info("Failed to obtain the list of databases in a postgres instance", e);
+            return Collections.emptyList();
+        } finally {
+            JDBCUtil.safeClose(statement, resultSet);
+        }
+    }
+    
+    private static String getServerResourceName(Configuration config, Connection conn) {
+        List<String> schemas = getDatabaseNames(config, conn);
+        if (schemas.size() > 0 && schemas.size() < 3) {
+            String firstDatabase = schemas.get(0);
+            String secondDatabase = schemas.get(1);
+            return POSTGRES_DEFAULT_DATABASE_NAME.equals(firstDatabase) ? secondDatabase : firstDatabase;
+        } else {
+            return config.getSimpleValue(DB_CONFIGURATION_PROPERTY, POSTGRES_DEFAULT_DATABASE_NAME);
+        }
     }
 }

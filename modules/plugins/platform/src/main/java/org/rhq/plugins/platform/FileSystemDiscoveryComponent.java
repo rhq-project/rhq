@@ -63,10 +63,9 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
             }
             Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
             try {
-                String name = ((hostname == null) ? "" : (hostname + " ")) + " File System ("
-                    + fs.getFileSystem().getTypeName() + ") " + fs.getMountPoint();
+                String key = fs.getMountPoint();
                 DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                    fs.getMountPoint(), name, null, fs.getFileSystem().getDevName() + ": "
+                    key, key, null, fs.getFileSystem().getDevName() + ": "
                         + fs.getFileSystem().getDirName(), pluginConfig, null);
                 results.add(details);
             } catch (Exception e) {

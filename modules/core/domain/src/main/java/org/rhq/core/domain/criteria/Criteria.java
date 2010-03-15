@@ -68,6 +68,8 @@ public abstract class Criteria implements Serializable {
 
     private List<String> orderingFieldNames;
 
+    private String searchExpression;
+
     public Criteria() {
         filterOverrides = new HashMap<String, String>();
         sortOverrides = new HashMap<String, String>();
@@ -220,6 +222,14 @@ public abstract class Criteria implements Serializable {
 
     public boolean isStrict() {
         return this.strict;
+    }
+
+    public void setSearchExpression(String searchExpression) {
+        this.searchExpression = searchExpression;
+    }
+
+    public String getSearchExpression() {
+        return this.searchExpression;
     }
 
     /** subclasses should override as necessary */

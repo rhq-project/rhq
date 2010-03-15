@@ -118,12 +118,15 @@ public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDisco
                 cleanAddress = dirtyAddress;
             }
 
-            // Add the address to the Resource name (e.g. "Tomcat Connector (127.0.0.1:8080)").
-            String resourceName = resource.getResourceName();
-            resourceName = resourceName.replace("(", "(" + cleanAddress + ":");
-            resource.setResourceName(resourceName);
-
             String port = pluginConfiguration.getSimple(JBossASTomcatConnectorComponent.PROPERTY_PORT).getStringValue();
+            
+            // Add the address to the Resource name (e.g. "Tomcat Connector (127.0.0.1:8080)").
+           
+                String resourceName = resource.getResourceName();
+                //resourceName = resourceName.replace("(", "(" + cleanAddress + ":");
+                resource.setResourceName(resourceName);
+
+            
 
             String scheme = schemeMap.get(port);
             pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_SCHEMA, scheme));

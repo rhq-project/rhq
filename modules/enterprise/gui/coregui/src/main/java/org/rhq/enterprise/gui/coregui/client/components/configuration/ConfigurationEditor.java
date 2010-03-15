@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.components.table.PropertyGrid;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -113,6 +114,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -139,6 +141,7 @@ public class ConfigurationEditor extends VLayout {
     private ConfigType configType;
     private IButton saveButton;
 
+    private boolean readOnly = false;
 
     public static enum ConfigType {
         plugin, resource
@@ -169,6 +172,14 @@ public class ConfigurationEditor extends VLayout {
 
     public Configuration getConfiguration() {
         return configuration;
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
     }
 
     public void showError(Throwable failure) {
@@ -489,6 +500,7 @@ public class ConfigurationEditor extends VLayout {
     public void addItems(ArrayList<FormItem> fields, PropertyDefinition propertyDefinition, Property property, boolean oddRow) {
 
         StaticTextItem nameItem = new StaticTextItem();
+        nameItem.setStartRow(true);
         nameItem.setValue("<b>" + propertyDefinition.getDisplayName() + "</b>");
         nameItem.setShowTitle(false);
         nameItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
@@ -513,9 +525,48 @@ public class ConfigurationEditor extends VLayout {
                 // List of Maps is a specially supported case with summary fields as columns in a table
                 buildListOfMapsField(fields, (PropertyDefinitionMap) ((PropertyDefinitionList) propertyDefinition).getMemberDefinition(), oddRow, (PropertyList) property);
             }
-
-
+        } else if (propertyDefinition instanceof PropertyDefinitionMap) {
+            buildMapsField(fields, (PropertyDefinitionMap)propertyDefinition, (PropertyMap) property);
         }
+    }
+
+    private void buildMapsField(ArrayList<FormItem> fields, PropertyDefinitionMap propertyDefinitionMap, PropertyMap propertyMap) {
+        // create the property grid
+        PropertyGrid propertyGrid = new PropertyGrid();
+        propertyGrid.getNameField().setName("Name");
+        propertyGrid.getValuesField().setName("Value");
+
+        // create the editors
+        HashMap<String, FormItem> editorsMap = new HashMap<String, FormItem>();
+        TextItem textEditor = new TextItem();
+        editorsMap.put("simpleText", textEditor);
+
+        // set the editors and attribute name where to find the record type
+        propertyGrid.setEditorsMap("fieldType", editorsMap);
+
+
+        ListGridRecord[] records = new ListGridRecord[propertyMap.getMap().size()];
+        int i = 0;
+        for (Property property : propertyMap.getMap().values()) {
+            ListGridRecord record = new ListGridRecord();
+            record.setAttribute("Name",property.getName());
+            record.setAttribute("Value",((PropertySimple)property).getStringValue());
+            record.setAttribute("fieldType","simpleText");
+            records[i++] = record;
+        }
+        propertyGrid.setData(records);
+
+        propertyGrid.draw();
+
+        CanvasItem item = new CanvasItem();
+        item.setCanvas(propertyGrid);
+//        item.setHeight(500);
+        item.setColSpan(3);
+        item.setEndRow(true);
+        item.setShowTitle(false);
+        fields.add(item);
+
+
     }
 
     private void buildListOfMapsField(ArrayList<FormItem> fields, final PropertyDefinitionMap propertyDefinition, boolean oddRow, final PropertyList propertyList) {
@@ -581,32 +632,34 @@ public class ConfigurationEditor extends VLayout {
         fieldsList.add(editField);
 
 
-        ListGridField removeField = new ListGridField("remove", 20);
-        removeField.setType(ListGridFieldType.ICON);
+        if (!readOnly) {
+            ListGridField removeField = new ListGridField("remove", 20);
+            removeField.setType(ListGridFieldType.ICON);
 //        removeField.setIcon(Window.getImgURL("[SKIN]/actions/remove.png")); //"/images/tbb_delete.gif");
-        removeField.setCellIcon(Window.getImgURL("[SKIN]/actions/remove.png")); //"/images/tbb_delete.gif");
-        removeField.setCanEdit(false);
-        removeField.setCanFilter(true);
-        removeField.setFilterEditorType(new SpacerItem());
-        removeField.setCanGroupBy(false);
-        removeField.setCanSort(false);
-        removeField.setCanHide(false);
+            removeField.setCellIcon(Window.getImgURL("[SKIN]/actions/remove.png")); //"/images/tbb_delete.gif");
+            removeField.setCanEdit(false);
+            removeField.setCanFilter(true);
+            removeField.setFilterEditorType(new SpacerItem());
+            removeField.setCanGroupBy(false);
+            removeField.setCanSort(false);
+            removeField.setCanHide(false);
 
-        removeField.addRecordClickHandler(new RecordClickHandler() {
-            public void onRecordClick(final RecordClickEvent recordClickEvent) {
-                System.out.println("You want to delete: " + recordClickEvent.getRecordNum());
-                SC.confirm("Are you sure you want to delete this row?", new BooleanCallback() {
-                    public void execute(Boolean aBoolean) {
-                        if (aBoolean) {
-                            summaryTable.removeData(recordClickEvent.getRecord());
+            removeField.addRecordClickHandler(new RecordClickHandler() {
+                public void onRecordClick(final RecordClickEvent recordClickEvent) {
+                    System.out.println("You want to delete: " + recordClickEvent.getRecordNum());
+                    SC.confirm("Are you sure you want to delete this row?", new BooleanCallback() {
+                        public void execute(Boolean aBoolean) {
+                            if (aBoolean) {
+                                summaryTable.removeData(recordClickEvent.getRecord());
+                            }
                         }
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
 
-        editField.setEditorType(new ButtonItem("delete", "Delete"));
-        fieldsList.add(removeField);
+            editField.setEditorType(new ButtonItem("delete", "Delete"));
+            fieldsList.add(removeField);
+        }
 
 
         summaryTable.setFields(fieldsList.toArray(new ListGridField[fieldsList.size()]));
@@ -705,6 +758,7 @@ public class ConfigurationEditor extends VLayout {
 
         final CheckboxItem unsetItem = new CheckboxItem();
         unsetItem.setValue(isUnset);
+        unsetItem.setDisabled(readOnly);
         unsetItem.setShowLabel(false);
         unsetItem.setShowTitle(false);
         unsetItem.setLabelAsTitle(false);
@@ -803,7 +857,7 @@ public class ConfigurationEditor extends VLayout {
 
 
         valueItem.setShowTitle(false);
-        valueItem.setDisabled(isUnset);
+        valueItem.setDisabled(isUnset || readOnly);
         valueItem.setWidth(220);
         valueItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
 

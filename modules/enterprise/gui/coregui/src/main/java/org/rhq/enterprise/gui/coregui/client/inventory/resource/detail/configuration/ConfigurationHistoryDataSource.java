@@ -69,7 +69,7 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
-        int resourceId = Integer.parseInt((String) request.getCriteria().getValues().get("resourceId"));
+        int resourceId = (Integer) request.getCriteria().getValues().get("resourceId");
 
         configurationService.findResourceConfigurationUpdates(resourceId, new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
             public void onFailure(Throwable caught) {

@@ -64,7 +64,7 @@ public class BundleUploadRecipeStep implements WizardStep {
             final CanvasItem upload = new CanvasItem("upload");
             upload.setShowTitle(false);
 
-            TextFileRetrieverForm textFileRetrieverForm = new TextFileRetrieverForm();
+            final TextFileRetrieverForm textFileRetrieverForm = new TextFileRetrieverForm();
             upload.setCanvas(textFileRetrieverForm);
 
             showUpload.addClickHandler(new ClickHandler() {
@@ -94,6 +94,7 @@ public class BundleUploadRecipeStep implements WizardStep {
                 public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                     wizard.setRecipe(event.getResults());
                     recipe.setValue(event.getResults());
+                    textFileRetrieverForm.retrievalStatus(true);
                     form.showItem("showUpload");
                     form.hideItem("upload");
                     enableNextButtonWhenAppropriate();

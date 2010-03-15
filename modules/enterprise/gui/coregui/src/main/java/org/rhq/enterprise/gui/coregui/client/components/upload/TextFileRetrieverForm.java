@@ -30,11 +30,16 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Greg Hinkle
  */
 public class TextFileRetrieverForm extends DynamicCallbackForm {
+
+    private ButtonItem uploadButton = null;
+    private UploadItem textFile;
 
     public TextFileRetrieverForm() {
         super("textFileRetriever");
@@ -53,10 +58,13 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
         HiddenItem sessionIdField = new HiddenItem("sessionid");
         sessionIdField.setValue(CoreGUI.getSessionSubject().getSessionId().intValue());
 
-        final UploadItem textFile = new UploadItem("textFile", "Upload File");
+        setNumCols(4);
+
+        textFile = new UploadItem("textFile", "Upload File");
         textFile.setEndRow(false);
 
-        final ButtonItem uploadButton = new ButtonItem("Upload");
+        uploadButton = new ButtonItem("Upload");
+        uploadButton.setStartRow(false);
         uploadButton.setDisabled(true);
 
         textFile.addChangeHandler(new ChangeHandler() {
@@ -82,5 +90,27 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
 
         setItems(retrieveField, sessionIdField, textFile, uploadButton);
 
+    }
+
+    /**
+     * Call this when the file retrieval finished. <code>true</code> means successful,
+     * <code>false</code> means an error occurred.
+     * @param ok status
+     */
+    public void retrievalStatus(boolean ok) {
+        if (uploadButton != null) {
+            FormItemIcon loadedIcon = new FormItemIcon();
+            if (ok) {
+                loadedIcon.setSrc("/images/icons/availability_green_16.png");
+                CoreGUI.getMessageCenter().notify(new Message("Uploaded file successfully", Severity.Info));
+            } else {
+                loadedIcon.setSrc("/images/icons/availability_red_16.png");
+                CoreGUI.getMessageCenter().notify(new Message("File upload failed", Severity.Error));
+            }
+            loadedIcon.setWidth(16);
+            loadedIcon.setHeight(16);
+            uploadButton.setIcons(loadedIcon);
+            uploadButton.setShowIcons(true);
+        }
     }
 }

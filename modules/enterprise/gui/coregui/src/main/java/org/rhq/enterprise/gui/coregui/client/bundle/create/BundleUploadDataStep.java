@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Label;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -31,6 +30,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.upload.BundleFileUploadForm;
+import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
+import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -52,9 +53,7 @@ public class BundleUploadDataStep implements WizardStep {
     public Canvas getCanvas() {
         form = new DynamicForm();
 
-        final HLayout layout = new HLayout();
-        layout.setWidth100();
-        layout.setHeight100();
+        final VLayout layout = new VLayout();
 
         bundleServer.getAllBundleVersionFilenames(this.wizard.getBundleVersion().getId(),
             new AsyncCallback<HashMap<String, Boolean>>() {
@@ -84,7 +83,13 @@ public class BundleUploadDataStep implements WizardStep {
     }
 
     public boolean isNextEnabled() {
-        return this.allFilesStatus != null; // TODO && when all files are available
+        if (this.allFilesStatus == null) {
+            return false;
+        }
+        if (this.allFilesStatus.containsValue(Boolean.FALSE)) {
+            return false;
+        }
+        return true;
     }
 
     public boolean isPreviousEnabled() {
@@ -95,21 +100,30 @@ public class BundleUploadDataStep implements WizardStep {
         this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
     }
 
-    private void prepareForm(HLayout layout) {
+    private void prepareForm(VLayout layout) {
         for (Map.Entry<String, Boolean> entry : this.allFilesStatus.entrySet()) {
-            VLayout vlayout = new VLayout();
-            layout.addChild(vlayout);
+            HLayout formLayout = new HLayout();
+            layout.addMember(formLayout);
 
-            Label label = new Label(entry.getKey());
-            vlayout.addMember(label);
+            String fileToBeUploaded = entry.getKey();
 
             if (entry.getValue()) {
                 Img img = new Img("/images/status_complete.gif", 50, 15);
-                vlayout.addMember(img);
+                formLayout.addMember(img);
             } else {
-                BundleFileUploadForm uploadForm = new BundleFileUploadForm(this.wizard.getBundleVersion(), entry
-                    .getKey());
-                vlayout.addMember(uploadForm);
+                final BundleFileUploadForm uploadForm = new BundleFileUploadForm(this.wizard.getBundleVersion(),
+                    fileToBeUploaded);
+                uploadForm.addFormHandler(new DynamicFormHandler() {
+                    public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                        uploadForm.retrievalStatus(true);
+                        form.showItem("showUpload");
+                        form.hideItem("upload");
+                        allFilesStatus.put(uploadForm.getName(), Boolean.TRUE);
+                        enableNextButtonWhenAppropriate();
+                    }
+                });
+
+                formLayout.addMember(uploadForm);
             }
         }
     }

@@ -31,8 +31,13 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 public class BundleFileUploadForm extends DynamicCallbackForm {
+
+    private ButtonItem uploadButton;
+    private UploadItem bundleUploadItem;
 
     private BundleVersion bundleVersion;
     private String name;
@@ -45,6 +50,19 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         setNumCols(8);
         setEncoding(Encoding.MULTIPART);
         setAction(GWT.getModuleBaseURL() + "/BundleFileUploadServlet");
+    }
+
+    public BundleVersion getBundleVersion() {
+        return bundleVersion;
+    }
+
+    /**
+     * The name of the file that is to be uploaded to the server. The actual client file can
+     * be named whatever, but the server will use this name as the name of the bundle file.
+     * @return bundle file name
+     */
+    public String getName() {
+        return name;
     }
 
     @Override
@@ -60,10 +78,13 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         HiddenItem nameField = new HiddenItem("name");
         nameField.setValue(this.name);
 
-        final UploadItem bundleUploadItem = new UploadItem("bundleFile", "Upload File");
+        setNumCols(4);
+
+        bundleUploadItem = new UploadItem("bundleFile", name);
         bundleUploadItem.setEndRow(false);
 
-        final ButtonItem uploadButton = new ButtonItem("Upload");
+        uploadButton = new ButtonItem("Upload");
+        uploadButton.setStartRow(false);
         uploadButton.setDisabled(true);
 
         bundleUploadItem.addChangeHandler(new ChangeHandler() {
@@ -88,5 +109,27 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         uploadButton.setShowIcons(false);
 
         setItems(sessionIdField, bundleVersionIdField, nameField, bundleUploadItem, uploadButton);
+    }
+
+    /**
+     * Call this when the file retrieval finished. <code>true</code> means successful,
+     * <code>false</code> means an error occurred.
+     * @param ok status
+     */
+    public void retrievalStatus(boolean ok) {
+        if (uploadButton != null) {
+            FormItemIcon loadedIcon = new FormItemIcon();
+            if (ok) {
+                loadedIcon.setSrc("/images/icons/availability_green_16.png");
+                CoreGUI.getMessageCenter().notify(new Message("Uploaded bundle file successfully", Severity.Info));
+            } else {
+                loadedIcon.setSrc("/images/icons/availability_red_16.png");
+                CoreGUI.getMessageCenter().notify(new Message("Bundle file upload failed", Severity.Error));
+            }
+            loadedIcon.setWidth(16);
+            loadedIcon.setHeight(16);
+            uploadButton.setIcons(loadedIcon);
+            uploadButton.setShowIcons(true);
+        }
     }
 }

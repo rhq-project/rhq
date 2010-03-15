@@ -122,6 +122,10 @@ public class BundleManager extends AgentService implements BundleAgentService, B
 
             // pull down the bundle files that the plugin will need in order to process the bundle
             ResourceContainer resourceContainer = im.getResourceContainer(bundleHandlerResourceId);
+            if (null == resourceContainer.getResourceContext()) {
+                throw new Exception("No bundle plugin resource available to handle deployment for bundle type ["
+                    + bundleType + "]. Ensure it is imported into inventory.");
+            }
             File pluginTmpDir = resourceContainer.getResourceContext().getTemporaryDirectory();
             File bundleFilesDir = new File(pluginTmpDir, "" + bundleDeployDef.getBundleVersion().getId());
             Map<PackageVersion, File> downloadedFiles = downloadBundleFiles(deployment, bundleFilesDir);

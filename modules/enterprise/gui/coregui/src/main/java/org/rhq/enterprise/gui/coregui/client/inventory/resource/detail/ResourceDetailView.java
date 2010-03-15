@@ -25,6 +25,7 @@ import org.rhq.enterprise.gui.coregui.client.UnknownViewException;
 import org.rhq.enterprise.gui.coregui.client.View;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewRenderer;
+import org.rhq.enterprise.gui.coregui.client.alert.definitions.AlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
@@ -175,6 +176,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
 
         alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
+        alertsTab.updateSubTab("Definitions", AlertDefinitionsView.getResourceView(resource));
 
         eventsTab.updateSubTab("History", new FullHTMLPane("/rhq/common/events/history-plain.xhtml?id=" + resource.getId()));
 

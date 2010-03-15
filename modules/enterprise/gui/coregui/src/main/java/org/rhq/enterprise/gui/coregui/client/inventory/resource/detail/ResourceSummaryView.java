@@ -24,6 +24,7 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -88,6 +89,7 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
                 new AsyncCallback<List<MeasurementDataTrait>>() {
                     public void onFailure(Throwable caught) {
                         SC.say("Failed to load traits");
+                        CoreGUI.getErrorHandler().handleError("Failed to load traits information for resource",caught);
                     }
 
                     public void onSuccess(List<MeasurementDataTrait> result) {

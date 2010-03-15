@@ -24,6 +24,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -102,7 +103,7 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
                                 60,
                                 new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                     public void onFailure(Throwable caught) {
-                                        SC.say("Failed data load");
+                                        CoreGUI.getErrorHandler().handleError("Failed to load data for graphs",caught);
                                         loadingLabel.setContents("failed to load graphs");
                                     }
 

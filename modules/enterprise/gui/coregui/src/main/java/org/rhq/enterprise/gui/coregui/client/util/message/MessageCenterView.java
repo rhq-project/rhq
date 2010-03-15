@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.SC;
@@ -52,18 +53,26 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandle
  */
 public class MessageCenterView extends HLayout implements MessageCenter.MessageListener {
 
+    public MessageCenterView() {
+        super(5);
+        setAlign(Alignment.LEFT);
+        setAlign(VerticalAlignment.CENTER);
+        setOverflow(Overflow.CLIP_H);
+    }
 
     @Override
     protected void onDraw() {
         super.onDraw();
-        setAlign(Alignment.LEFT);
-        setAlign(VerticalAlignment.CENTER);
         CoreGUI.getMessageCenter().addMessageListener(this);
 
         final Menu recentEventsMenu = new Menu();
+
         IMenuButton recentEventsButton = new IMenuButton("Messages",recentEventsMenu);
+        recentEventsButton.setTop(5);
         recentEventsButton.setShowMenuBelow(false);
         recentEventsButton.setAutoFit(true);
+        recentEventsButton.setValign(VerticalAlignment.CENTER);
+
         recentEventsButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 LinkedList<Message> messages = CoreGUI.getMessageCenter().getMessages();
@@ -87,6 +96,7 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
                 }
             }
         });
+
 
         addMember(recentEventsButton);
 
@@ -132,7 +142,7 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
         okButton.focusInItem();
         okButton .addClickHandler( new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
-                window.destroy();
+                window.destroy();     
             }
         });
     }

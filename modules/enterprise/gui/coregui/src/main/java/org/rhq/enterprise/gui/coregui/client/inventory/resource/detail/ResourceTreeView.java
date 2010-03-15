@@ -21,11 +21,14 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -50,6 +53,7 @@ import com.smartgwt.client.widgets.tree.events.NodeContextClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -101,27 +105,6 @@ public class ResourceTreeView extends VLayout {
 
         contextMenu = new Menu();
         MenuItem item = new MenuItem("Expand node");
-
-        /* Do menu support datasources? GH: Seemingly they'll only load once when done this way
-        contextMenu.setDataSource(new DataSource() {
-            {
-                setClientOnly(false);
-                setDataProtocol(DSProtocol.CLIENTCUSTOM);
-                setDataFormat(DSDataFormat.CUSTOM);
-            }
-            protected Object transformRequest(DSRequest request) {
-                System.out.println("Looking up menu info");
-                return request;
-            }
-        });
-        */
-
-        // Should only do this once, but it opens the platform node (which is not actually the root node)
-//        treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
-//            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-//                treeGrid.getTree().openFolders(treeGrid.getTree().getChildren(treeGrid.getTree().getRoot()));
-//            }
-//        });
 
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
@@ -319,8 +302,7 @@ public class ResourceTreeView extends VLayout {
             final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
             resourceService.getResourceLineageAndSiblings(selectedResource.getId(), new AsyncCallback<List<Resource>>() {
                 public void onFailure(Throwable caught) {
-                    SC.say("Failed to lookup platform");
-                    System.out.println("Failed to lookup parent");
+                    CoreGUI.getErrorHandler().handleError("Failed to lookup platform for tree", caught);
                 }
 
                 public void onSuccess(List<Resource> result) {
@@ -388,20 +370,30 @@ public class ResourceTreeView extends VLayout {
                     } else {
 
                         initialSelect = false;
-                        for (TreeNode n : ResourceTreeDatasource.build(result)) {
-                            treeGrid.getDataSource().addData(n);
-                        }
+                        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(result,
+                                EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children, ResourceTypeRepository.MetadataType.subCategory),
+                                new ResourceTypeRepository.ResourceTypeLoadedCallback() {
+                                    public void onResourceTypeLoaded(List<Resource> result) {
 
-                        TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResource.getId()));
-                        if (selectedNode != null) {
-                            treeGrid.deselectAllRecords();
-                            treeGrid.selectRecord(selectedNode);
+                                        treeGrid.getTree().linkNodes(ResourceTreeDatasource.build(result));
 
-                            TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
-                            treeGrid.getTree().openFolders(parents);
-                            treeGrid.getTree().openFolder(selectedNode);
-                        }
-                        
+                                        TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResource.getId()));
+                                        if (selectedNode != null) {
+                                            treeGrid.deselectAllRecords();
+                                            treeGrid.selectRecord(selectedNode);
+
+                                            TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
+                                            treeGrid.getTree().openFolders(parents);
+                                            treeGrid.getTree().openFolder(selectedNode);
+                                        } else {
+                                            CoreGUI.getMessageCenter().notify(new Message("Failed to select resource [" + selectedResource.getId() + "] in tree.", Message.Severity.Warning));
+                                        }
+
+
+                                    }
+                                });
+
+
                     }
 
 

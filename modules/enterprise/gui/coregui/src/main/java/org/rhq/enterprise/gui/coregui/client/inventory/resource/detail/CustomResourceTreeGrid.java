@@ -34,22 +34,25 @@ public class CustomResourceTreeGrid extends TreeGrid {
     @Override
     protected String getIcon(Record record, boolean defaultState) {
 
-        boolean open = getTree().isOpen((TreeNode) record);
+        if (record instanceof TreeNode) {
+            boolean open = getTree().isOpen((TreeNode) record);
 
-        if (record instanceof ResourceTreeDatasource.ResourceTreeNode) {
-            Resource resource = ((ResourceTreeDatasource.ResourceTreeNode) record).getResource();
+            if (record instanceof ResourceTreeDatasource.ResourceTreeNode) {
+                Resource resource = ((ResourceTreeDatasource.ResourceTreeNode) record).getResource();
 
-            boolean up = resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP;
+                boolean up = resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP;
 
-            if (resource.getResourceType().getChildResourceTypes() == null || resource.getResourceType().getChildResourceTypes().isEmpty()) {
-                return "resources/Service_" + (up ? "up" : "down") + "_16.png";
+                if (resource.getResourceType().getChildResourceTypes() == null || resource.getResourceType().getChildResourceTypes().isEmpty()) {
+                    return "resources/Service_" + (up ? "up" : "down") + "_16.png";
 
+                } else {
+                    return "resources/folder_" + (up ? "" : "down_") + (open ? "opened" : "closed") + ".png";
+                }
             } else {
-                return "resources/folder_" + (up ? "" : "down_") + (open ? "opened" : "closed") + ".png";
+                return "resources/folder_group_" + (open ? "opened" : "closed") + ".png";
             }
-        } else {
-            return "resources/folder_group_" + (open ? "opened" : "closed") + ".png";
         }
+        return null;
     }
 
 }

@@ -190,7 +190,6 @@ public class ResourceTypeRepository {
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                caught.printStackTrace();
                 CoreGUI.getErrorHandler().handleError("Failed to load resource type metadata",caught);
             }
 

@@ -29,6 +29,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -43,6 +44,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -106,7 +108,7 @@ public class ResourceTreeDatasource extends DataSource {
         response.setStatus(0);
         switch (request.getOperationType()) {
             case ADD:
-                //executeAdd(lstRec, true);
+                //executeAdd(request, response);
                 break;
             case FETCH:
                 executeFetch(requestId, request, response);
@@ -124,6 +126,7 @@ public class ResourceTreeDatasource extends DataSource {
 
         return request.getData();
     }
+
 
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
@@ -152,8 +155,7 @@ public class ResourceTreeDatasource extends DataSource {
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
-                Window.alert("Failed to load " + caught.getMessage());
-                System.err.println("Failed to fetch resources");
+                CoreGUI.getErrorHandler().handleError("Failed to load resource data for tree", caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(requestId, response);
             }

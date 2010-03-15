@@ -36,17 +36,22 @@ public class BundleCriteria extends Criteria {
 
     private Integer filterId;
     private Integer filterBundleTypeId; // needs override
-    private String filterBundleTypeName; // needs override    
+    private String filterBundleTypeName; // needs override
+    private String filterDescription;
     private String filterName;
 
     private boolean fetchBundleVersions;
     private boolean fetchRepo;
 
     public BundleCriteria() {
-        super(Bundle.class);
+        super();
 
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
         filterOverrides.put("bundleTypeName", "bundleType.name like ?");
+    }
+
+    public Class<Bundle> getPersistentClass() {
+        return Bundle.class;
     }
 
     public void addFilterId(Integer filterId) {
@@ -59,6 +64,10 @@ public class BundleCriteria extends Criteria {
 
     public void addFilterBundleTypeName(String filterBundleTypeName) {
         this.filterName = filterBundleTypeName;
+    }
+
+    public void addFilterDescription(String filterDescription) {
+        this.filterDescription = filterDescription;
     }
 
     public void addFilterName(String filterName) {

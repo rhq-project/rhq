@@ -19,13 +19,13 @@
 package org.rhq.enterprise.server.content;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -44,8 +44,6 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
-import javax.persistence.FlushModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -53,10 +51,10 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.lob.BlobImpl;
-import org.hibernate.lob.SerializableBlob;
+
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.util.StringPropertyReplacer;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Advisory;
@@ -830,7 +828,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             try {
                 packageBits = new PackageBits();
-             //   packageBits.setBits(new SerializableBlob(new BlobImpl(new byte[0])));
                 entityManager.persist(packageBits);
 
                 PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
@@ -839,15 +836,14 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 entityManager.flush(); // push the new package bits row to the DB
 
                 if (pk.getContentSource().getDownloadMode() == DownloadMode.DATABASE) {
-                    
+
                     PackageBits bits = entityManager.find(PackageBits.class, packageBits.getId());
-                    SerializableBlob blb = new SerializableBlob(new BlobImpl(bitsStream,(int)pv.getFileSize().intValue()));
-                    bits.setBits(blb);
-                   
+                    bits.setBits(StreamUtil.slurp(bitsStream));
+
                     entityManager.merge(bits);
-                    entityManager.flush();   
-                    bitsStream = null; 
-                   
+                    entityManager.flush();
+                    bitsStream = null;
+
                 } else {
                     // store content to local file system
                     File outputFile = getPackageBitsLocalFileAndCreateParentDir(pv.getId(), pv.getFileName());
@@ -1884,8 +1880,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     // this is  DownloadMode.DATABASE - put the bits in the database                                     
 
                     PackageBits bits = entityManager.find(PackageBits.class, composite.getPackageBitsId());
-                    bitsStream = bits.getBits().getBinaryStream();
-                    
+                    bitsStream = new ByteArrayInputStream(bits.getBits());
+
                 } else {
                     // this is  DownloadMode.FILESYSTEM - put the bits on the filesystem
                     File bitsFile = getPackageBitsLocalFileAndCreateParentDir(composite.getPackageVersionId(),
@@ -1911,7 +1907,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 long length = (endByte - startByte) + 1;
                 bytesRetrieved = StreamUtil.copy(bis, outputStream, startByte, length);
             }
-           
+
             // close our stream but leave the output stream open
             try {
                 bitsStream.close();

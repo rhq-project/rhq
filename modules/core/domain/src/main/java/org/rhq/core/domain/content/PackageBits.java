@@ -38,8 +38,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.hibernate.lob.SerializableBlob;
-
 /**
  * Contains the actual package contents ("the bits") for a particular {@link PackageVersion}.
  *
@@ -75,10 +73,10 @@ public class PackageBits implements Serializable {
     private int id;
 
     @Lob
-    @Basic(fetch=FetchType.LAZY)
+    @Basic(fetch = FetchType.LAZY)
     @Column(name = "BITS", nullable = true)
     @XmlTransient
-    private SerializableBlob bits;
+    private byte[] bits;
 
     public PackageBits() {
         // for JPA use
@@ -99,11 +97,11 @@ public class PackageBits implements Serializable {
      * on the {@link PackageVersion} details.
      */
     @XmlTransient
-    public SerializableBlob getBits() {
+    public byte[] getBits() {
         return bits;
     }
 
-    public void setBits(SerializableBlob bits) {
+    public void setBits(byte[] bits) {
         this.bits = bits;
     }
 }

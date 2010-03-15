@@ -53,7 +53,7 @@ public class MeasurementScheduleCriteria extends Criteria {
     private PageOrdering sortName; // requires overrides
 
     public MeasurementScheduleCriteria() {
-        super(MeasurementSchedule.class);
+        super();
 
         filterOverrides.put("definitionIds", "definition.id IN ( ? )");
         filterOverrides.put("resourceId", "resource.id IN ( ? )");
@@ -74,6 +74,10 @@ public class MeasurementScheduleCriteria extends Criteria {
             + "   WHERE parent.id = ? )");
 
         sortOverrides.put("name", "definition.name");
+    }
+
+    public Class<MeasurementSchedule> getPersistentClass() {
+        return MeasurementSchedule.class;
     }
 
     public void addFilterId(Integer filterId) {

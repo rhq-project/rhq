@@ -34,6 +34,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -45,11 +47,15 @@ import javax.xml.bind.annotation.XmlAccessorType;
  * @author Jay Shaughnessy
  */
 @Entity
+@NamedQueries( { @NamedQuery(name = BundleDeploymentHistory.QUERY_FIND_ALL, query = "SELECT bdh FROM BundleDeploymentHistory bdh") //
+})
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOY_HIST_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_DEPLOY_HIST")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleDeploymentHistory implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_FIND_ALL = "BundleDeploymentHistory.findAll";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -68,7 +74,7 @@ public class BundleDeploymentHistory implements Serializable {
 
     @Column(name = "AUDIT_ACTION", nullable = false)
     @Enumerated(EnumType.STRING)
-    private BundleDeploymentHistory auditAction;
+    private BundleDeploymentAction auditAction;
 
     @Column(name = "AUDIT_MESSAGE", nullable = true)
     private String auditMessage;
@@ -77,18 +83,15 @@ public class BundleDeploymentHistory implements Serializable {
     protected BundleDeploymentHistory() {
     }
 
-    public BundleDeploymentHistory(BundleDeployment bundleDeployment, String subjectName, Long auditTime,
-        BundleDeploymentHistory auditAction, String auditMessage) {
+    public BundleDeploymentHistory(String subjectName, BundleDeploymentAction auditAction, String auditMessage) {
 
-        this.bundleDeployment = bundleDeployment;
         this.subjectName = subjectName;
-        this.auditTime = auditTime;
         this.auditAction = auditAction;
         this.auditMessage = auditMessage;
     }
 
     public int getId() {
-        return id;
+        return this.id;
     }
 
     public void setId(int id) {
@@ -96,7 +99,7 @@ public class BundleDeploymentHistory implements Serializable {
     }
 
     public BundleDeployment getBundleDeployment() {
-        return bundleDeployment;
+        return this.bundleDeployment;
     }
 
     public void setBundleDeployment(BundleDeployment bundleDeployment) {
@@ -112,23 +115,23 @@ public class BundleDeploymentHistory implements Serializable {
     }
 
     public Long getAuditTime() {
-        return auditTime;
+        return this.auditTime;
     }
 
     public void setAuditTime(Long auditTime) {
         this.auditTime = auditTime;
     }
 
-    public BundleDeploymentHistory getAuditAction() {
-        return auditAction;
+    public BundleDeploymentAction getAuditAction() {
+        return this.auditAction;
     }
 
-    public void setAuditAction(BundleDeploymentHistory auditAction) {
+    public void setAuditAction(BundleDeploymentAction auditAction) {
         this.auditAction = auditAction;
     }
 
     public String getAuditMessage() {
-        return auditMessage;
+        return this.auditMessage;
     }
 
     public void setAuditMessage(String auditMessage) {

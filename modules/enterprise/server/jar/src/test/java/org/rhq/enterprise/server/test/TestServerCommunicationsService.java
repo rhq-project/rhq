@@ -26,6 +26,7 @@ import java.util.Properties;
 
 import org.jboss.remoting.InvokerLocator;
 
+import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
@@ -45,6 +46,7 @@ import org.rhq.enterprise.server.core.comm.ServerConfiguration;
  * define what the test services should be.
  */
 public class TestServerCommunicationsService implements TestServerCommunicationsServiceMBean {
+    public BundleAgentService bundleService;
     public ContentAgentService contentService;
     public ResourceFactoryAgentService resourceFactoryService;
     public ConfigurationAgentService configurationService;

@@ -24,8 +24,10 @@
 package org.rhq.core.clientapi.agent.bundle;
 
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.util.Date;
 
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 
 /**
  * @author John Mazzitelli
@@ -33,24 +35,30 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 public class BundleScheduleRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private BundleDeployDefinition bundleDeployDefinition;
+    private BundleDeployment bundleDeployment;
+    private long requestedDeployTime = System.currentTimeMillis();
 
-    public BundleScheduleRequest(BundleDeployDefinition bundleDef) {
-        this.bundleDeployDefinition = bundleDef;
+    public BundleScheduleRequest(BundleDeployment deployment) {
+        this.bundleDeployment = deployment;
     }
 
-    public BundleDeployDefinition getBundleDeployDefinition() {
-        return bundleDeployDefinition;
+    public BundleDeployment getBundleDeployment() {
+        return bundleDeployment;
     }
 
-    public void setBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
-        this.bundleDeployDefinition = bundleDeployDefinition;
+    /** In ms */
+    public Long getRequestedDeployTime() {
+        return requestedDeployTime;
+    }
+
+    public String getRequestedDeployTimeAsString() {
+        return DateFormat.getInstance().format(new Date(requestedDeployTime));
     }
 
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder(this.getClass() + ": ");
-        str.append(bundleDeployDefinition.toString());
+        str.append(bundleDeployment.toString());
         return str.toString();
     }
 }

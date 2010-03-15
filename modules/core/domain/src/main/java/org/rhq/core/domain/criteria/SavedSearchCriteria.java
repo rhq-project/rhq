@@ -58,12 +58,16 @@ public class SavedSearchCriteria extends Criteria {
     private PageOrdering sortGlobal;
 
     public SavedSearchCriteria() {
-        super(SavedSearch.class);
+        super();
 
         filterOverrides.put("lastComputeTimeMin", "lastComputeTime >= ?");
         filterOverrides.put("lastComputeTimeMax", "lastComputeTime <= ?");
         filterOverrides.put("resultCountMin", "resultCount >= ?");
         filterOverrides.put("resultCountMax", "resultCount <= ?");
+    }
+
+    public Class<SavedSearch> getPersistentClass() {
+        return SavedSearch.class;
     }
 
     public void addFilterId(Integer filterId) {

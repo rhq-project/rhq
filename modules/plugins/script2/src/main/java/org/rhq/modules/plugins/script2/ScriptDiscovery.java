@@ -47,7 +47,7 @@ public class ScriptDiscovery implements ResourceDiscoveryComponent,ManualAddFace
           DiscoveredResourceDetails detail =  new DiscoveredResourceDetails(
                   context.getResourceType(), // ResourceType
                   key, // resource key
-                  "Script " + lang + "::" + script, // resource name TODO get via configuration
+                  script, // resource name TODO get via configuration
                   null, // version
                   lang + "Script " + script, // Description
                   pluginConfiguration, // Configuration

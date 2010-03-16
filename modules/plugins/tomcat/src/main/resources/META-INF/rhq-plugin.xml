@@ -229,7 +229,7 @@
                   description="The virtual host" />
                <c:simple-property
                   name="nameTemplate"
-                  default="Tomcat VHost ({name})" />
+                  default="{name}" />
                <c:simple-property
                   name="descriptionTemplate"
                   default="A Tomcat virtual host" />
@@ -325,7 +325,7 @@
                      description="The name of this Web Module (WAR)" />
                   <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat WAR ({contextRoot})"
+                     default="{contextRoot}"
                      description="Resource name template" />
                   <c:simple-property
                      name="descriptionTemplate"
@@ -584,7 +584,7 @@
                         readOnly="true" />
                      <c:simple-property
                         name="nameTemplate"
-                        default="Tomcat Cache ({host}{path})" />
+                        default="Cache" />
                      <c:simple-property
                         name="descriptionTemplate"
                         default="Tomcat Web Application Cache"
@@ -650,7 +650,7 @@
                hiddenByDefault="true">
                <c:simple-property
                   name="nameTemplate"
-                  default="Tomcat Connector ({handler}-{port})" />
+                  default="{handler}-{port}" />
                <c:simple-property
                   name="descriptionTemplate"
                   default="A Tomcat connector" />
@@ -959,10 +959,10 @@
                hiddenByDefault="true">
                <c:simple-property
                   name="nameTemplate"
-                  default="Tomcat User Database" />
+                  default="User Database" />
                <c:simple-property
                   name="descriptionTemplate"
-                  default="A Tomcat User Database"
+                  default="User Database"
                   readOnly="true" />
             </c:group>
          </plugin-configuration>
@@ -998,7 +998,7 @@
                      description="ObjectName groupname value." />
                   <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat Group ({name})" />
+                     default="{name}" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="A Tomcat Group"
@@ -1053,7 +1053,7 @@
                      description="ObjectName rolename value." />
                   <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat Role ({name})" />
+                     default="{name}" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="A Tomcat Role"
@@ -1104,7 +1104,7 @@
                      description="ObjectName username value." />
                   <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat User ({name})" />
+                     default="{name}" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="A Tomcat User"

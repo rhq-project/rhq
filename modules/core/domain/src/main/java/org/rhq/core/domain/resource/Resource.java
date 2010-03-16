@@ -849,7 +849,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     public static final String QUERY_RESOURCE_VERSION_REPORT = "Resource.findResourceVersionReport";
 
     public static final int MAX_SUPPORTED_RESOURCE_HIERARCHY_DEPTH = 7;
-    
+
     private static final String NAME_CONCAT_SEPARATOR = "~!@#)))";
 
     /**
@@ -865,7 +865,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     private static String guardNullCase(String column) {
         return "(CASE WHEN " + column + " IS NULL THEN 'null' ELSE " + column + " END)";
     }
-    
+
     /**
      * We're trying to find the minimum ancestry level that provides the disambiguate paths 
      * (in terms of unique resource names) for given resources. Obviously this query only works 
@@ -893,42 +893,42 @@ public class Resource implements Comparable<Resource>, Serializable {
      * This query has to be native because Hibernate doesn't understand the 
      * COUNT(DISTINCT ...)) where ... is anything else than a path to a property in Hibernate terminology.
      */
-    public static final String NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL = ""
-        + "SELECT COUNT(r.ID) AS target_cnt, "
-        + "COUNT(DISTINCT(t.name)) AS bare_type_cnt,"
-        + "COUNT(DISTINCT(t.name || '" + NAME_CONCAT_SEPARATOR + "' || t.plugin)) AS full_type_cnt,"
-        + "COUNT(DISTINCT(r.name)) AS l1_cnt,"
-        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + ")) AS l2_cnt,"
-        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + ")) AS l3_cnt,"
-        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") + ")) AS l4_cnt,"
-        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p4.name") + ")) AS l5_cnt,"
-        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p4.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p5.name") + ")) AS l6_cnt,"
-        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + "|| "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p4.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p5.name") + " || "
-        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p6.name") + ")) AS l7_cnt "
-        + "FROM " + TABLE_NAME + " AS r "
-        + "JOIN " + ResourceType.TABLE_NAME + " AS t ON r.RESOURCE_TYPE_ID = t.ID "
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p1 ON r.PARENT_RESOURCE_ID = p1.ID "
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p2 ON p1.PARENT_RESOURCE_ID = p2.ID "
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p3 ON p2.PARENT_RESOURCE_ID = p3.ID "
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p4 ON p3.PARENT_RESOURCE_ID = p4.ID "
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p5 ON p4.PARENT_RESOURCE_ID = p5.ID "
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p6 ON p5.PARENT_RESOURCE_ID = p6.ID "
+    public static final String NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL = "" //
+        + "SELECT COUNT(r.ID) AS target_cnt, " //
+        + "COUNT(DISTINCT(t.name)) AS bare_type_cnt," //
+        + "COUNT(DISTINCT(t.name || '" + NAME_CONCAT_SEPARATOR + "' || t.plugin)) AS full_type_cnt," //
+        + "COUNT(DISTINCT(r.name)) AS l1_cnt," //
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + ")) AS l2_cnt," //
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + ")) AS l3_cnt," //
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") + ")) AS l4_cnt," //
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") // 
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p4.name") + ")) AS l5_cnt," //
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p4.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p5.name") + ")) AS l6_cnt," //
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") //
+        + "|| " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p4.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p5.name") //
+        + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p6.name") + ")) AS l7_cnt " //
+        + "FROM " + TABLE_NAME + " AS r " //
+        + "JOIN " + ResourceType.TABLE_NAME + " AS t ON r.RESOURCE_TYPE_ID = t.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p1 ON r.PARENT_RESOURCE_ID = p1.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p2 ON p1.PARENT_RESOURCE_ID = p2.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p3 ON p2.PARENT_RESOURCE_ID = p3.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p4 ON p3.PARENT_RESOURCE_ID = p4.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p5 ON p4.PARENT_RESOURCE_ID = p5.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p6 ON p5.PARENT_RESOURCE_ID = p6.ID " //
         + "WHERE r.ID IN (@@RESOURCE_IDS@@)";
-    
+
     private static final long serialVersionUID = 1L;
 
     public static final Resource ROOT = null;
@@ -1769,7 +1769,7 @@ public class Resource implements Comparable<Resource>, Serializable {
         // We make a copy of the childResources Set for two reasons: 1) to avoid calling writeObject() on the Set if it
         // happens to be a Hibernate proxy (which would only ever be true on the Server side), and 2) to reduce the
         // chances of a ConcurrentModificationException occurring in some other thread that is iterating the original Set.
-        out.writeObject(new LinkedHashSet<Resource>(childResources));
+        out.writeObject((null == childResources) ? null : new LinkedHashSet<Resource>(childResources));
 
         // Don't write plugin configs out if they are a lazy proxy
         if (pluginConfiguration != null && pluginConfiguration.getClass().getName().contains("hibernate")) {

@@ -13,7 +13,8 @@
    <server name="RHQ Agent"
            discovery="AgentDiscoveryComponent"
            class="AgentServerComponent"
-           description="Management Agent">
+           description="Management Agent"
+           singleton="true">
 
       <plugin-configuration>
          <c:group name="event" displayName="Log Tracking">

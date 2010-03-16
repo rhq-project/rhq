@@ -46,6 +46,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
@@ -60,7 +61,6 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -76,7 +76,6 @@ import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.HibernateDetachUtility;
@@ -110,19 +109,24 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @EJB
     private RepoManagerLocal repoManager;
 
-    @EJB
-    private ResourceTypeManagerLocal resourceTypeManager;
-
-    // TODO: I don't think this is adequate, need to link to the deployment
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void addBundleDeploymentHistoryByBundleDeployment(Subject subject, BundleDeploymentHistory history)
-        throws Exception {
+    public BundleDeploymentHistory addBundleDeploymentHistory(Subject subject, int bundleDeploymentId,
+        BundleDeploymentHistory history) throws Exception {
 
-        entityManager.persist(history);
+        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
+        if (null == deployment) {
+            throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
+        }
+
+        deployment.addBundleDeploymentHistory(history);
+        this.entityManager.persist(deployment);
+
+        return history;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Bundle createBundle(Subject subject, String name, int bundleTypeId) throws Exception {
+    public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleName: " + name);
         }
@@ -133,6 +137,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         Bundle bundle = new Bundle(name, bundleType);
+        bundle.setDescription(description);
 
         // create and add the required Repo. the Repo is a detached object ehich helps in its eventual
         // removal.
@@ -203,8 +208,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, int bundleTypeId,
-        String name, String bundleVersion, String recipe) throws Exception {
+    public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
+        int bundleTypeId, String bundleVersionName, String bundleVersionDescription, String version, String recipe)
+        throws Exception {
 
         // first see if the bundle exists or not; if not, create one
         BundleCriteria criteria = new BundleCriteria();
@@ -213,19 +219,20 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         PageList<Bundle> bundles = findBundlesByCriteria(subject, criteria);
         Bundle bundle;
         if (bundles.getTotalSize() == 0) {
-            bundle = createBundle(subject, bundleName, bundleTypeId);
+            bundle = createBundle(subject, bundleName, bundleDescription, bundleTypeId);
         } else {
             bundle = bundles.get(0);
         }
 
         // now create the bundle version with the bundle we either found or created
-        BundleVersion bv = createBundleVersion(subject, bundle.getId(), name, bundleVersion, recipe);
+        BundleVersion bv = createBundleVersion(subject, bundle.getId(), bundleVersionName, bundleVersionDescription,
+            version, recipe);
         return bv;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String version, String recipe)
-        throws Exception {
+    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
+        String version, String recipe) throws Exception {
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleVersionName: " + name);
         }
@@ -252,6 +259,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         version = getVersion(version, bundle);
 
         BundleVersion bundleVersion = new BundleVersion(name, version, bundle, recipe);
+        bundleVersion.setDescription(description);
         bundleVersion.setConfigurationDefinition(results.getConfigDef());
 
         entityManager.persist(bundleVersion);
@@ -394,13 +402,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
         }
 
-        // requires_new trans
-        BundleDeployment deployment = bundleManager.createBundleDeployment(subject, bundleDeployDefinitionId,
-            resourceId);
-
         AgentClient agentClient = agentManager.getAgentClient(resourceId);
         BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
-        // make sure the deployDef contains the info required by the schedule service
+
+        // The BundleDeployment record must exist in the db before the agent request because the agent may try to
+        // add History to it during immediate deployments., so create and persist it (requires a new trans).
+        BundleDeployment deployment = bundleManager.createBundleDeployment(subject, deployDef.getId(), resourceId);
+
+        // make sure the deployment contains the info required by the schedule service
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, deployDef.getBundleVersion().getId());
         Configuration config = entityManager.find(Configuration.class, deployDef.getConfiguration().getId());
         Bundle bundle = entityManager.find(Bundle.class, bundleVersion.getBundle().getId());
@@ -411,15 +420,32 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         bundleVersion.setBundle(bundle);
         deployDef.setBundleVersion(bundleVersion);
         deployDef.setConfiguration(config);
+        deployment.setBundleDeployDefinition(deployDef);
+        deployment.setResource(resource);
+
         // now scrub the hibernate entity to make it a pojo suitable for sending to the client
-        HibernateDetachUtility.nullOutUninitializedFields(deployDef, SerializationType.SERIALIZATION);
-        BundleScheduleRequest request = new BundleScheduleRequest(deployDef);
+        HibernateDetachUtility.nullOutUninitializedFields(deployment, SerializationType.SERIALIZATION);
+
+        BundleScheduleRequest request = new BundleScheduleRequest(deployment);
+
+        // add the deployment request history (in a new trans)
+        BundleDeploymentHistory history = new BundleDeploymentHistory(subject.getName(),
+            BundleDeploymentAction.DEPLOYMENT_REQUESTED, "Requested deployment time: "
+                + request.getRequestedDeployTimeAsString());
+        bundleManager.addBundleDeploymentHistory(subject, deployment.getId(), history);
+
+        // Ask the agent to schedule the request. The agent should add history as needed.
         BundleScheduleResponse response = bundleAgentService.schedule(request);
 
         // we don't want to commit the scrubbed entities so clear the changes
         this.entityManager.clear();
 
-        // TODO: Generate History based on the response
+        // Add any more history as needed
+        if (!response.isSuccess()) {
+            history = new BundleDeploymentHistory(subject.getName(), BundleDeploymentAction.DEPLOYMENT_END, "Failure: "
+                + response.getErrorMessage());
+            bundleManager.addBundleDeploymentHistory(subject, deployment.getId(), history);
+        }
 
         return deployment;
     }
@@ -439,9 +465,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         BundleDeployment deployment = new BundleDeployment(deployDef, resource);
-        deployDef.addDeployment(deployment);
-        entityManager.persist(deployment);
 
+        entityManager.persist(deployment);
         return deployment;
     }
 
@@ -553,17 +578,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
             generator, entityManager);
 
-        return queryRunner.execute();
-    }
-
-    // TODO: I don't think this criteria search is necessary
-    public List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(Subject subject,
-        BundleDeploymentHistoryCriteria criteria) {
-
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
-
-        CriteriaQueryRunner<BundleDeploymentHistory> queryRunner = new CriteriaQueryRunner<BundleDeploymentHistory>(
-            criteria, generator, entityManager);
         return queryRunner.execute();
     }
 

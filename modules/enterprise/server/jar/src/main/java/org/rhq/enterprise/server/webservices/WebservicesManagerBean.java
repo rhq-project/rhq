@@ -41,7 +41,6 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -77,7 +76,6 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
@@ -349,8 +347,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
             pinToPackage);
     }
 
-    public Bundle createBundle(Subject subject, String name, int bundleTypeId) throws Exception {
-        return bundleManager.createBundle(subject, name, bundleTypeId);
+    public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
+        return bundleManager.createBundle(subject, name, description, bundleTypeId);
     }
 
     public BundleDeployDefinition createBundleDeployDefinition(Subject subject, int bundleVersionId, String name,
@@ -360,9 +358,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
             enforcePolicy, enforcementInterval, pinToBundle);
     }
 
-    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String bundleVersion,
-        String recipe) throws Exception {
-        return bundleManager.createBundleVersion(subject, bundleId, name, bundleVersion, recipe);
+    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
+        String version, String recipe) throws Exception {
+        return bundleManager.createBundleVersion(subject, bundleId, name, description, version, recipe);
     }
 
     public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, int bundleTypeId,
@@ -382,11 +380,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
         BundleDeployDefinitionCriteria criteria) {
         return bundleManager.findBundleDeployDefinitionsByCriteria(subject, criteria);
-    }
-
-    public List<BundleDeploymentHistory> findBundleDeploymentHistoryByCriteria(Subject subject,
-        BundleDeploymentHistoryCriteria criteria) {
-        return bundleManager.findBundleDeploymentHistoryByCriteria(subject, criteria);
     }
 
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {

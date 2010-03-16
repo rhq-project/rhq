@@ -20,7 +20,6 @@
 package org.rhq.enterprise.server.bundle;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +38,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
@@ -51,7 +49,6 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentHistoryCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -451,32 +448,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(null);
     }
 
-    @Test(enabled = DISABLED)
-    public void testFindHistoryByCriteria() throws Exception {
-
-        Long auditTime = new Date().getTime();
-        BundleDeploymentAction auditAction = BundleDeploymentAction.DEPLOYMENT_START;
-        String auditMessage = "This is my message";
-
-        BundleDeployment bundleDeployment = createDeployment();
-        BundleDeploymentHistory history = new BundleDeploymentHistory(bundleDeployment, overlord.getName(), auditTime,
-            auditAction, auditMessage);
-
-        Bundle bundle = createBundle("deleteThisBundle");
-
-        history.setBundleDeployment(bundleDeployment);
-
-        bundleManager.addBundleDeploymentHistoryByBundleDeployment(overlord, history);
-
-        BundleDeploymentHistoryCriteria criteria = new BundleDeploymentHistoryCriteria();
-        List<BundleDeploymentHistory> histories = bundleManager.findBundleDeploymentHistoryByCriteria(overlord,
-            criteria);
-
-        assertNotNull(histories);
-        assertTrue(histories.size() > 0);
-
-    }
-
     private BundleDeployment createDeployment() {
         Resource resource = new Resource();
 
@@ -503,7 +474,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
     private Bundle createBundle(String name, BundleType bt) throws Exception {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
-        Bundle b = bundleManager.createBundle(overlord, fullName, bt.getId());
+        Bundle b = bundleManager.createBundle(overlord, fullName, fullName + "-desc", bt.getId());
 
         assert b.getId() > 0;
         assert b.getName().endsWith(fullName);
@@ -513,7 +484,8 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     private BundleVersion createBundleVersion(String name, String version, Bundle bundle) throws Exception {
         final String fullName = TEST_PREFIX + "-bundleversion-" + version + "-" + name;
         final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d <% test.path %>";
-        BundleVersion bv = bundleManager.createBundleVersion(overlord, bundle.getId(), fullName, version, recipe);
+        BundleVersion bv = bundleManager.createBundleVersion(overlord, bundle.getId(), fullName, fullName + "-desc",
+            version, recipe);
 
         assert bv.getId() > 0;
         assert bv.getName().endsWith(fullName);

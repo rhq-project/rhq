@@ -26,8 +26,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
-import org.rhq.core.clientapi.server.bundle.BundleStatusUpdate;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
@@ -48,8 +48,14 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
 public class BundleServerServiceImpl implements BundleServerService {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public void updateStatus(BundleStatusUpdate update) {
-        // TODO Auto-generated method stub
+    public void addDeploymentHistory(int bundleDeploymentId, BundleDeploymentHistory history) {
+        try {
+            BundleManagerLocal bm = LookupUtil.getBundleManager();
+            bm.addBundleDeploymentHistory(LookupUtil.getSubjectManager().getOverlord(), bundleDeploymentId, history);
+        } catch (Exception e) {
+            log.error("Failed to add history to deployment id: " + bundleDeploymentId, e);
+            throw new WrappedRemotingException(e);
+        }
     }
 
     public List<PackageVersion> getAllBundleVersionPackageVersions(int bundleVersionId) {

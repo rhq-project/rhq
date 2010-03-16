@@ -22,19 +22,19 @@
  */
 package org.rhq.core.domain.criteria;
 
-import org.rhq.core.client.GwtClientUtility;
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.util.PageControl;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
+import org.rhq.core.client.GwtClientUtility;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.util.PageControl;
 
 /**
  * @author Joseph Marques
@@ -62,8 +62,8 @@ public abstract class Criteria implements Serializable {
     private List<String> orderingFieldNames;
     private String alias;
 
-    //added no args constructor for bean and JAXB requirement
-    @SuppressWarnings("unused")
+    private String searchExpression;
+
     public Criteria() {
 
         this.filterOverrides = new HashMap<String, String>();
@@ -78,7 +78,7 @@ public abstract class Criteria implements Serializable {
         setPaging(0, 200);
     }
 
-    public abstract Class getPersistentClass();
+    public abstract Class<?> getPersistentClass();
 
     public Integer getPageNumber() {
         return pageNumber;
@@ -164,6 +164,14 @@ public abstract class Criteria implements Serializable {
 
     public boolean isStrict() {
         return this.strict;
+    }
+
+    public void setSearchExpression(String searchExpression) {
+        this.searchExpression = searchExpression;
+    }
+
+    public String getSearchExpression() {
+        return this.searchExpression;
     }
 
     /** subclasses should override as necessary */

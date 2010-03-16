@@ -298,16 +298,17 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // We know this is an RHQ Server. Let's add an event source for its server log file, but disable it by default.
             configureEventSourceForServerLogFile(pluginConfig);
         }
-        String name = formatServerName(baseName, bindAddress, namingPort, configName, installInfo);
+        String name = bindAddress+ (namingPort ==null?"":":"+namingPort);
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, installInfo.getVersion(),
             description, pluginConfig, processInfo);
     }
-
+    /*
     private String formatServerName(String baseName, String bindingAddress, String jnpPort, String configName,
         JBossInstallationInfo installInfo) {
-        baseName = baseName + " " + installInfo.getProductType().NAME + " " + installInfo.getVersion() + " "
+       baseName = baseName + " " + installInfo.getProductType().NAME + " " + installInfo.getVersion() + " "
             + configName;
+        
         String details = null;
         if ((bindingAddress != null) && (jnpPort != null && !jnpPort.equals(CHANGE_ME))) {
             details = bindingAddress + ":" + jnpPort;
@@ -318,8 +319,9 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         }
 
         return baseName + ((details != null) ? (" (" + details + ")") : "");
+        
     }
-
+*/
     private void configureEventSourceForServerLogFile(Configuration pluginConfig) {
         File rhqLogFile = resolvePathRelativeToHomeDir(pluginConfig, "../logs/rhq-server-log4j.log");
         if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {

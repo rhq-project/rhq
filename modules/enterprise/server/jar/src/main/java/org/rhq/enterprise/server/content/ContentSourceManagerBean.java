@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.content;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -785,7 +786,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     @TransactionTimeout(45 * 60)
     public PackageBits downloadPackageBits(Subject subject, PackageVersionContentSource pvcs) {
         PackageVersionContentSourcePK pk = pvcs.getPackageVersionContentSourcePK();
@@ -835,14 +836,14 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 entityManager.flush(); // push the new package bits row to the DB
 
                 if (pk.getContentSource().getDownloadMode() == DownloadMode.DATABASE) {
-                    // fallback to JDBC so we can stream the data to the blob column
-                    conn = dataSource.getConnection();
-                    ps = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET BITS = ? WHERE ID = ?");
-                    ps.setBinaryStream(1, bitsStream, pv.getFileSize().intValue());
-                    ps.setInt(2, packageBits.getId());
-                    if (ps.executeUpdate() != 1) {
-                        throw new Exception("Did not download the package bits to the DB for [" + pv + "]");
-                    }
+
+                    PackageBits bits = entityManager.find(PackageBits.class, packageBits.getId());
+                    bits.setBits(StreamUtil.slurp(bitsStream));
+
+                    entityManager.merge(bits);
+                    entityManager.flush();
+                    bitsStream = null;
+
                 } else {
                     // store content to local file system
                     File outputFile = getPackageBitsLocalFileAndCreateParentDir(pv.getId(), pv.getFileName());
@@ -1876,18 +1877,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 bitsStream = adapterMgr.loadPackageBits(contentSourceId, pvcs.getLocation());
             } else {
                 if (composite.isPackageBitsInDatabase()) {
-                    // this is  DownloadMode.DATABASE - put the bits in the database
-                    conn = dataSource.getConnection();
-                    ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ?");
+                    // this is  DownloadMode.DATABASE - put the bits in the database                                     
 
-                    ps.setInt(1, composite.getPackageBitsId());
-                    results = ps.executeQuery();
-                    results.next();
-                    bitsStream = results.getBinaryStream(1);
-                    if (bitsStream == null) {
-                        throw new RuntimeException("Got null for package bits stream from DB for [" + packageDetailsKey
-                            + "]");
-                    }
+                    PackageBits bits = entityManager.find(PackageBits.class, composite.getPackageBitsId());
+                    bitsStream = new ByteArrayInputStream(bits.getBits());
+
                 } else {
                     // this is  DownloadMode.FILESYSTEM - put the bits on the filesystem
                     File bitsFile = getPackageBitsLocalFileAndCreateParentDir(composite.getPackageVersionId(),

@@ -83,18 +83,15 @@ public class BundleDeploymentHistory implements Serializable {
     protected BundleDeploymentHistory() {
     }
 
-    public BundleDeploymentHistory(BundleDeployment bundleDeployment, String subjectName, Long auditTime,
-        BundleDeploymentAction auditAction, String auditMessage) {
+    public BundleDeploymentHistory(String subjectName, BundleDeploymentAction auditAction, String auditMessage) {
 
-        this.bundleDeployment = bundleDeployment;
         this.subjectName = subjectName;
-        this.auditTime = auditTime;
         this.auditAction = auditAction;
         this.auditMessage = auditMessage;
     }
 
     public int getId() {
-        return id;
+        return this.id;
     }
 
     public void setId(int id) {
@@ -102,7 +99,7 @@ public class BundleDeploymentHistory implements Serializable {
     }
 
     public BundleDeployment getBundleDeployment() {
-        return bundleDeployment;
+        return this.bundleDeployment;
     }
 
     public void setBundleDeployment(BundleDeployment bundleDeployment) {
@@ -118,7 +115,7 @@ public class BundleDeploymentHistory implements Serializable {
     }
 
     public Long getAuditTime() {
-        return auditTime;
+        return this.auditTime;
     }
 
     public void setAuditTime(Long auditTime) {
@@ -126,7 +123,7 @@ public class BundleDeploymentHistory implements Serializable {
     }
 
     public BundleDeploymentAction getAuditAction() {
-        return auditAction;
+        return this.auditAction;
     }
 
     public void setAuditAction(BundleDeploymentAction auditAction) {
@@ -134,7 +131,7 @@ public class BundleDeploymentHistory implements Serializable {
     }
 
     public String getAuditMessage() {
-        return auditMessage;
+        return this.auditMessage;
     }
 
     public void setAuditMessage(String auditMessage) {

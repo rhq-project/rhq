@@ -3206,6 +3206,11 @@
                </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.78.2">
+               <schema-addColumn   table="RHQ_BUNDLE" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
+               <schema-addColumn   table="RHQ_BUNDLE_VERSION" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />               
+            </schemaSpec>
+
             <schemaSpec version="2.79">
                 <schema-directSQL>
                     <statement desc="Normalizing resource group descriptions">
@@ -3262,6 +3267,23 @@
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
                         VALUES (2, 'Resource', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, 1)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL targetDBVendor="postgresql">
+                    <statement desc="Change bytea column to oid in postgres.">
+                        ALTER TABLE RHQ_PACKAGE_BITS ADD COLUMN NEWOID OID
+                    </statement>                            
+                    <statement desc="Change bytea column to oid in postgres.">
+                        UPDATE RHQ_PACKAGE_BITS t SET NEWOID = (
+                        SELECT oid FROM (
+                          SELECT oid, lowrite(lo_open(oid, 131072), t.bits)
+                          FROM lo_create(0) o(oid)) x)
+                    </statement>
+                    <statement desc="Change bytea column to oid in postgres.">
+                        ALTER TABLE RHQ_PACKAGE_BITS DROP COLUMN BITS
+                    </statement>
+                    <statement desc="Change bytea column to oid in postgres.">
+                        ALTER TABLE RHQ_PACKAGE_BITS RENAME COLUMN NEWOID TO BITS  
+                     </statement>
                 </schema-directSQL>
             </schemaSpec>
         </dbupgrade>

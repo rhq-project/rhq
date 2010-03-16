@@ -43,22 +43,16 @@ function testDeployment() {
    }
    
    // delete the test bundle if it exists
-   var bc = new BundleCriteria();
-   bc.addFilterName( bundleName );
-   var bundles = BundleManager.findBundlesByCriteria( bc );
-   if ( null != bundles && bundles.size() > 0 ) {
-      print( "\n Deleting existing testScriptBundle in order to test a fresh deploy...")
-      BundleManager.deleteBundle( bundles.get(0).getId() );      
-   }
+   cleanupTestBundle();
 
    // create the test bundle
-   var testBundle = BundleManager.createBundle( bundleName, getBundleType() );
+   var testBundle = BundleManager.createBundle( bundleName, bundleName, getBundleType() );
    
    // define the recipe for bundleVersion 1.0 
    var recipe = "file -s testBundle.war -d <%bundleTest.deployHome%>/testBundle.war"
       
    // create bundleVersion 1.0
-   var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, null, recipe);
+   var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, bundleName, null, recipe);
 
    // add the single bundleFile, the test war file
    var fileBytes = scriptUtil.getFileBytes("./src/test/resources/testBundle.war"); 
@@ -79,7 +73,13 @@ function testDeployment() {
    var winPlatforms = ResourceManager.findResourcesByCriteria(rc);
    var platformId = winPlatforms.get(0).getId();
    
-   var bundleScheduleResponse = BundleManager.scheduleBundleDeployment(testDeployDef.getId(), platformId);
+   var bd = BundleManager.scheduleBundleDeployment(testDeployDef.getId(), platformId);
+   Assert.assertNotNull( bd );   
+   
+   
+   // delete the test bundle if it exists (after allowing agent audit messages to complete)
+   sleep( 5000 );
+   cleanupTestBundle();
 }
 
 function getBundleType() {
@@ -93,3 +93,15 @@ function getBundleType() {
    
    print( "\n Could not find template bundle type, is the plugin loaded?");
 }
+
+function cleanupTestBundle() {
+   // delete the test bundle if it exists
+   var bc = new BundleCriteria();
+   bc.addFilterName( bundleName );
+   var bundles = BundleManager.findBundlesByCriteria( bc );
+   if ( null != bundles && bundles.size() > 0 ) {
+      print( "\n Deleting existing testScriptBundle in order to test a fresh deploy...")
+      BundleManager.deleteBundle( bundles.get(0).getId() );      
+   }
+}
+

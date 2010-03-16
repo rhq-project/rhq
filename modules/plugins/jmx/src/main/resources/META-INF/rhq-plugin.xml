@@ -311,7 +311,7 @@
 
             <plugin-configuration>
                <c:simple-property name="objectName" readOnly="true" default="java.lang:type=MemoryPool,name=%name%"/>
-               <c:simple-property name="nameTemplate" default="{name} Memory Pool"/>
+               <c:simple-property name="nameTemplate" default="{name}"/>
                <c:simple-property name="descriptionTemplate" default="The {name} memory pool for this VM."/>
                <c:simple-property name="name" type="string" description="The memory pool's name"/>
             </plugin-configuration>
@@ -354,7 +354,7 @@
 
             <plugin-configuration>
                <c:simple-property name="objectName" readOnly="true" default="java.lang:type=GarbageCollector,name=%name%"/>
-               <c:simple-property name="nameTemplate" default="{name} Garbage Collection"/>
+               <c:simple-property name="nameTemplate" default="{name}"/>
                <c:simple-property name="descriptionTemplate" default="The {name} Garbage Collector for this VM."/>
                <c:simple-property name="name" type="string" description="The garbage collector's name"/>
             </plugin-configuration>

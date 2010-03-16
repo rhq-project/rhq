@@ -43,10 +43,13 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.server.search.execution.SearchTranslationManager;
 
 /**
  * A query generator used to generate queries with specific filtering, prefetching, or sorting requirements.
@@ -63,6 +66,7 @@ public final class CriteriaQueryGenerator {
     }
 
     private Criteria criteria;
+    private String searchExpressionWhereClause;
 
     private String authorizationJoinFragment;
     private String authorizationPermsFragment;
@@ -78,8 +82,10 @@ public final class CriteriaQueryGenerator {
 
     public CriteriaQueryGenerator(Criteria criteria) {
         this.criteria = criteria;
-        this.className = criteria.getPersistentClass().getSimpleName();        
+        this.className = criteria.getPersistentClass().getSimpleName();
         this.alias = this.criteria.getAlias();
+
+        initializeJPQLFragmentFromSearchExpression();
     }
 
     public void setAuthorizationCustomConditionFragment(String fragment) {
@@ -267,6 +273,16 @@ public final class CriteriaQueryGenerator {
             results.append(this.authorizationCustomConditionFragment);
         }
 
+        if (searchExpressionWhereClause != null) {
+            if (firstCrit) {
+                firstCrit = false;
+            } else {
+                // always want to additionally filter by translated from the RHQL search expression
+                results.append(NL).append(" AND ");
+            }
+            results.append(searchExpressionWhereClause);
+        }
+
         if (countQuery == false) {
             boolean overridden = true;
             PageControl pc = criteria.getPageControlOverrides();
@@ -303,7 +319,7 @@ public final class CriteriaQueryGenerator {
         return results.toString();
     }
 
-     public List<String> getFetchFields(Criteria criteria) {
+    public List<String> getFetchFields(Criteria criteria) {
         List<String> results = new ArrayList<String>();
         for (Field fetchField : getFields(criteria, Criteria.Type.FETCH)) {
             Object fetchFieldValue = null;
@@ -320,14 +336,13 @@ public final class CriteriaQueryGenerator {
                 }
             }
         }
-//        for (String entry : results) {
-//            LOG.info("Fetch: (" + entry + ")");
-//        }
+        //        for (String entry : results) {
+        //            LOG.info("Fetch: (" + entry + ")");
+        //        }
         return results;
     }
 
-
-      private static List<Field> getFields(Criteria criteria, Criteria.Type fieldType) {
+    private static List<Field> getFields(Criteria criteria, Criteria.Type fieldType) {
         String prefix = fieldType.name().toLowerCase();
         List<Field> results = new ArrayList<Field>();
 
@@ -364,10 +379,33 @@ public final class CriteriaQueryGenerator {
                 results.put(getCleansedFieldName(filterField, 6), filterFieldValue);
             }
         }
-//        for (Map.Entry<String, Object> entries : results.entrySet()) {
-//            LOG.info("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
-//        }
+        //        for (Map.Entry<String, Object> entries : results.entrySet()) {
+        //            LOG.info("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
+        //        }
         return results;
+    }
+
+    private void initializeJPQLFragmentFromSearchExpression() {
+        String searchExpression = criteria.getSearchExpression();
+        if (searchExpression == null) {
+            return;
+        }
+
+        try {
+            Class<?> entityClass = criteria.getPersistentClass();
+            SearchTranslationManager searchManager = new SearchTranslationManager(SearchSubsystem.get(entityClass));
+            searchManager.setExpression(searchExpression);
+
+            // translate first, if there was an error we won't add the dangling 'AND' to the where clause
+            String translatedJPQL = searchManager.getJPQLWhereFragment();
+            LOG.info("Translated JPQL Fragment was: " + translatedJPQL);
+            if (translatedJPQL != null) {
+                searchExpressionWhereClause = translatedJPQL;
+            }
+        } catch (Exception e) {
+            LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
+                + ThrowableUtil.getAllMessages(e, true));
+        }
     }
 
     private boolean isPersistentBag(String fieldName) {
@@ -540,7 +578,6 @@ public final class CriteriaQueryGenerator {
         generator.getQueryString(false);
         generator.getQueryString(true);
     }
-
 
     public static PageControl getPageControl(Criteria criteria) {
         PageControl pc = null;

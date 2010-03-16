@@ -43,13 +43,16 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     // - legacy reasons
 
     /**
-     * Called internally to add history when action is taken against a deployment.
+     * Called internally to add history when action is taken against a deployment. This executes
+     * in a New Transaction and supports deployBundle and Agent requests.
      * 
      * @param subject
+     * @param bundleDeploymentId id of the deployment appending the history record
      * @param history
+     * @return the persisted history
      */
-    void addBundleDeploymentHistoryByBundleDeployment(Subject subject, BundleDeploymentHistory history)
-        throws Exception;
+    BundleDeploymentHistory addBundleDeploymentHistory(Subject subject, int bundleDeploymentId,
+        BundleDeploymentHistory history) throws Exception;
 
     /**
      * Not generally called. For use by Server Side Plugins when registering a Bundle Plugin.

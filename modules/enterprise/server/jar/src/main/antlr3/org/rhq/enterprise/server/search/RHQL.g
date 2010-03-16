@@ -57,13 +57,9 @@ tokens {
     
     OP_EQUALS;
     OP_EQUALS_STRICT;
-    OP_NULL;
-    OP_IN;
     
     OP_NOT_EQUALS;
     OP_NOT_EQUALS_STRICT;
-    OP_NOT_NULL;
-    OP_NOT_IN;
 }
 
 @header {
@@ -83,49 +79,40 @@ searchExpression
     ;
 
 conditionalExpression
-    :   conds+=conditionalFactor ( WS* ( 'or' ) WS* conds+=conditionalFactor )*     -> { $conds.size() == 1 }? ^($conds)
-                                                                                    -> ^(OR conditionalFactor+)
+    :   conds+=conditionalFactor ( WS+ ( 'or' | '|' ) WS+ conds+=conditionalFactor )* -> { $conds.size() == 1 }? ^($conds)
+                                                                                      -> ^(OR conditionalFactor+)
     ; // use rewrite predicates to eliminate superfluous 'or' node if only one child
 
 conditionalFactor 
-    :   conds+=conditionalPrimary ( WS* ( 'and' WS* )? conds+=conditionalPrimary )* -> { $conds.size() == 1 }? ^($conds)
-                                                                                    -> ^(AND conditionalPrimary+)
+    :   conds+=conditionalPrimary ( WS+ conds+=conditionalPrimary )*                  -> { $conds.size() == 1 }? ^($conds)
+                                                                                      -> ^(AND conditionalPrimary+)
     ; // use rewrite predicates to eliminate superfluous 'and' node if only one child
 
 conditionalPrimary
-    :   WS* simpleConditionalExpression WS*                                         -> simpleConditionalExpression
-    |   '(' WS* conditionalExpression WS* ')'                                       -> conditionalExpression
+    :   WS* simpleConditionalExpression                                               -> simpleConditionalExpression
+    |   '(' WS* conditionalExpression WS* ')'                                         -> conditionalExpression
     ; // avoid building nodes for parens, tree structure implies existence appropriately -- ignore captured WS
 
 simpleConditionalExpression
-    :   comparisonConditionalExpression
-    |   nullComparisonConditionalExpression
-    |   inExpression
-    ;
-
-comparisonConditionalExpression
-    :   c=context WS* op=comparisonOperator WS* ident=identifier                 -> ^($op $c ^(VALUE $ident))
-    ; // rewrite tree output so operator is always the root -- ignore captured WS
-
-nullComparisonConditionalExpression
-    :   c=context WS* op=nullOperator                                            -> ^($op $c)
-    ; // rewrite tree output so operator is always the root -- ignore captured WS
-
-inExpression
-    :   c=context WS* op=inOperator WS* '[' WS* ids+=identifier WS* ( ',' WS* ids+=identifier WS* )* ']' 
-                                                                                 -> ^($op $c ^(VALUE $ids+))
+    :   c=context WS* op=comparisonOperator WS* ident=identifier                      -> ^($op $c ^(VALUE $ident))
     ; // rewrite tree output so operator is always the root -- ignore captured WS
 
 context
-    :  ( l=lineage '.' )? p=path ( '[' ident=identifier ']' )?                   -> ^(CONTEXT ^(LINEAGE $l)? ^(PATH $p) ^(PARAM $ident)?)
+    :  ( l=lineage '.' )? p=path ( '[' ident=parameter ']' )?                         -> ^(CONTEXT ^(LINEAGE $l)? ^(PATH $p) ^(PARAM $ident)?)
     ;
 
 lineage
-    :   path ( '('! LEVEL ')'! )?
+    :   path ( '['! LEVEL ']'! )?
     ; // avoid building nodes for brackets, tree structure implies existence appropriately
 
 path
-    :   ID+
+    :   ( 'or' | ID )+
+    ; // path is any character or token...
+
+parameter
+    :   doubleQuotedValue -> ^(IDENT doubleQuotedValue)
+    |   quotedValue       -> ^(IDENT quotedValue)
+    |   boundedValue      -> ^(IDENT boundedValue)
     ;
 
 identifier
@@ -143,9 +130,13 @@ quotedValue
     :   '\''! ~('\'')* '\''!
     ; // avoid building nodes for the sinngle-quote characters
 
+boundedValue
+    :   ~( ']' | WS )*
+    ; // consume until we find a whitespace char or ']' to terminate the current phrase
+    
 openEndedvalue
-    :   ~(']' | ',' | ')' | '(' | 'or' | 'and' | WS )*
-    ; // consume until we find a char to terminate the current phrase ']' ',' ')' or begin the next '(' 'or' 'and'
+    :   ~( '(' | ')' | WS )*
+    ; // consume until we find a whitespace char to ')' terminate the current phrase, or '(' begin the next phrase
 
 comparisonOperator  
     :   '='   -> ^(OP_EQUALS)
@@ -154,26 +145,20 @@ comparisonOperator
     |   '!==' -> ^(OP_NOT_EQUALS_STRICT)
     ; // use imaginary nodes for all operators, which further removes the AST from the real lexical elements
 
-nullOperator 
-    :   'is' WS+ (negation='not' WS+)? 'null' -> { $negation == null }? ^(OP_NULL)
-                                              -> ^(OP_NOT_NULL)
-    ; // use imaginary nodes for all operators, which further removes the AST from the real lexical elements
-
-inOperator 
-    :   (negation+='not' WS+)? 'in'       -> { $negation == null }? ^(OP_IN)
-                                          -> ^(OP_NOT_IN)
-    ; // use imaginary nodes for all operators, which further removes the AST from the real lexical elements
-
 /* 
  * lexical elements 
  */ 
  
 ID
-    :   'a'..'z'
+    :   'a'..'z' | 'A'..'Z'
     ;
 
 LEVEL
-    :   '0'..'5'
+    :   '0'..'9'
+    ;
+
+SYMBOL
+    :   '!' | '@' | '#' | '$' | '%' | '^' | '&' | '*' | '-' | '_' | '+' | '|' | '?' | '/' | ',' | '<' | '>' | '`' | '~'
     ;
 
 WS

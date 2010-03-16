@@ -25,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -792,31 +791,38 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + "] does not have permission to obtain package content for installed package id ["
                 + installedPackageId + "] for resource ID [" + resourceId + "]");
         }
+        try {
+            InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
+            PackageBits bits = installedPackage.getPackageVersion().getPackageBits();
+            if (bits == null || bits.getBits().length == 0) {
+                long start = System.currentTimeMillis();
+                retrieveBitsFromResource(user, resourceId, installedPackageId);
 
-        InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
-        PackageBits bits = installedPackage.getPackageVersion().getPackageBits();
-        if (bits == null || bits.getBits() == null) {
-            long start = System.currentTimeMillis();
-            retrieveBitsFromResource(user, resourceId, installedPackageId);
-
-            bits = installedPackage.getPackageVersion().getPackageBits();
-            while ((bits == null || bits.getBits() == null) && (System.currentTimeMillis() - start < 30000)) {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                }
-                entityManager.clear();
-                installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
                 bits = installedPackage.getPackageVersion().getPackageBits();
+                while ((bits == null || bits.getBits() == null) && (System.currentTimeMillis() - start < 30000)) {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                    }
+                    entityManager.clear();
+                    installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
+                    bits = installedPackage.getPackageVersion().getPackageBits();
+                }
+
+                if (bits == null) {
+                    throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId
+                        + " and package: " + installedPackageId + " before timeout.");
+                }
+
             }
 
-            if (bits == null) {
-                throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId
-                    + " and package: " + installedPackageId + " before timeout.");
-            }
+            return bits.getBits();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId + " and package: "
+                + installedPackageId + " before timeout.");
+
         }
 
-        return bits.getBits();
     }
 
     public List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
@@ -872,6 +878,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @TransactionTimeout(45 * 60)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completeRetrievePackageBitsRequest(ContentServiceResponse response, InputStream bitStream) {
         log.info("Completing retrieve package bits response: " + response);
 
@@ -918,14 +925,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 PreparedStatement ps = null;
 
                 try {
-                    // fallback to JDBC so we can stream the data to the blob column
-                    conn = dataSource.getConnection();
-                    ps = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET BITS = ? WHERE ID = ?");
-                    ps.setBinaryStream(1, bitStream, (int) length.longValue());
-                    ps.setInt(2, packageBits.getId());
-                    if (ps.executeUpdate() != 1) {
-                        throw new SQLException("Did not stream the package bits to the DB for [" + packageVersion + "]");
-                    }
+                    PackageBits bits = entityManager.find(PackageBits.class, packageBits.getId());
+                    bits.setBits(StreamUtil.slurp(bitStream));
+                    entityManager.merge(bits);
+
                 } finally {
 
                     if (ps != null) {
@@ -1224,8 +1227,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         PackageBits bits = new PackageBits();
-        bits.setBits(packageBits);
-
+        try {
+            bits.setBits(packageBits);
+        } catch (Exception e) {
+            log.error("Error savinf the package.", e);
+        }
         newPackageVersion.setPackageBits(bits);
 
         newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);

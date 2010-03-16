@@ -45,7 +45,7 @@ public class PostgresDatabaseDiscoveryComponent implements ResourceDiscoveryComp
             while (resultSet.next()) {
                 String databaseName = resultSet.getString("datname");
                 DiscoveredResourceDetails database = new DiscoveredResourceDetails(context.getResourceType(),
-                    databaseName, databaseName + " Database", null, "The " + databaseName
+                    databaseName, databaseName, null, "The " + databaseName
                         + " Postgres Database Instance", null, null);
                 database.getPluginConfiguration().put(new PropertySimple("databaseName", databaseName));
                 databases.add(database);

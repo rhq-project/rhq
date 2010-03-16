@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
  * selected alerts.
  *
  * @author Ian Springer
+ * @author Heiko W. Rupp
  */
 public class AlertsView extends VLayout {
     private static final String TITLE = "Alerts";
@@ -112,19 +113,22 @@ public class AlertsView extends VLayout {
                     ListGridRecord record = selectedRecords[0];
                     String name = record.getAttribute("name");
                     String id = record.getAttribute("id");
-                    // TODO: Finish this.
+
+                    // Clean out existing details and provide new ones
+                    for (int i = 1 ; i <= getChildren().length ; i ++)
+                        getChildren()[1].destroy();
+
                     detailsTable = getDetailsTableForAlert(record);
-                    vpanel.clear();
-                    vpanel.setWidth(getWidthAsString());
-                    vpanel.add(detailsTable);
+                    addMember(detailsTable);
                     Table notifTable = getNotificationsForAlert(record.getAttributeAsRecordArray("notificationLogs"));
-                    notifTable.setWidth(getWidth());
-                    vpanel.add(notifTable);
+                    addMember(notifTable);
 
 
                 } else {
-                    vpanel.clear();
-                    vpanel.add(getNoAlertSelectedMessage());
+                    // Clean out existing details and show the "nothing selected message"
+                    for (int i = 1 ; i <= getChildren().length ; i ++)
+                        getChildren()[1].destroy();
+                    addMember(getNoAlertSelectedMessage());
                 }
             }
         });
@@ -132,20 +136,14 @@ public class AlertsView extends VLayout {
         addMember(this.table);
 
         // Add the details panel as the bottom half of the view.
-        vpanel = new VerticalPanel();
-        vpanel.setWidth("100%");
-        vpanel.setHeight("50%");
-        vpanel.add(getNoAlertSelectedMessage());
-
-//        detailsTable = new DynamicForm(); // empty?
-//        vpanel.add(detailsTable);
-        addMember(vpanel);
+        // Default is the "nothing selected" message
+        addMember(getNoAlertSelectedMessage());
 
     }
 
     private HTMLFlow getNoAlertSelectedMessage() {
-        HTMLFlow f = new HTMLFlow("<h2>Select a single alert above to display its details here.</h2>");
-        f.setWidth100();
+        HTMLFlow f = new HTMLFlow("<h3>Select a single alert above to display its details here.</h3>");
+        f.setHeight("50%");
         return f;
     }
 
@@ -153,7 +151,7 @@ public class AlertsView extends VLayout {
 
         DynamicForm form = new DynamicForm();
         form.setNumCols(4);
-        form.setWidth("60%");
+        form.setHeight("15%");
         form.setWrapItemTitles(false);
         form.setAlign(Alignment.LEFT);
 
@@ -198,6 +196,7 @@ public class AlertsView extends VLayout {
     private Table getNotificationsForAlert(DataClass[] input) {
 
         Table notifTable = new Table("Notifications",false);
+        notifTable.setHeight("35%");
         notifTable.setWidth100();
         ListGrid grid = notifTable.getListGrid();
         grid.setData((Record[]) input);

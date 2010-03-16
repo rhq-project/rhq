@@ -56,7 +56,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     public Bundle createBundle(String name, int bundleTypeId) throws Exception {
         Bundle results;
         try {
-            results = bundleManager.createBundle(getSessionSubject(), name, bundleTypeId);
+            results = bundleManager.createBundle(getSessionSubject(), name, null, bundleTypeId);
         } catch (Exception e) {
             throw new Exception(ThrowableUtil.getAllMessages(e));
         }
@@ -66,7 +66,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     public BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception {
         BundleVersion results;
         try {
-            results = bundleManager.createBundleVersion(getSessionSubject(), bundleId, name, version, recipe);
+            results = bundleManager.createBundleVersion(getSessionSubject(), bundleId, name, null, version, recipe);
         } catch (Exception e) {
             throw new Exception(ThrowableUtil.getAllMessages(e));
         }
@@ -77,8 +77,8 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         String recipe) throws Exception {
         BundleVersion results;
         try {
-            results = bundleManager.createBundleAndBundleVersion(getSessionSubject(), bundleName, bundleTypeId, name,
-                version, recipe);
+            results = bundleManager.createBundleAndBundleVersion(getSessionSubject(), bundleName, null, bundleTypeId,
+                name, null, version, recipe);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

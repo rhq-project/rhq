@@ -26,10 +26,12 @@ import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -37,7 +39,6 @@ import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -112,19 +113,19 @@ public class AlertsView extends VLayout {
                     String name = record.getAttribute("name");
                     String id = record.getAttribute("id");
                     // TODO: Finish this.
-                    contents = "Details for alert '" + name + "' with id " + id ;
-                    detailsTable = getDetailsTableForAlertId(id);
+                    detailsTable = getDetailsTableForAlert(record);
                     vpanel.clear();
+                    vpanel.setWidth(getWidthAsString());
                     vpanel.add(detailsTable);
-                    vpanel.add(getNotificationsForAlertId(record.getAttributeAsRecordArray("notificationLogs")));
-//                    vpanel.redraw();
+                    Table notifTable = getNotificationsForAlert(record.getAttributeAsRecordArray("notificationLogs"));
+                    notifTable.setWidth(getWidth());
+                    vpanel.add(notifTable);
 
 
                 } else {
-                    contents = "Select a single alert above to display its details here.";
-                    detailsTable = new DynamicForm(); // empty ?
+                    vpanel.clear();
+                    vpanel.add(getNoAlertSelectedMessage());
                 }
-                AlertsView.this.detailsContent.setContents(contents);
             }
         });
 
@@ -132,39 +133,69 @@ public class AlertsView extends VLayout {
 
         // Add the details panel as the bottom half of the view.
         vpanel = new VerticalPanel();
+        vpanel.setWidth("100%");
         vpanel.setHeight("50%");
-        vpanel.setTitle("Details for alert");
-        this.detailsContent = new HTMLFlow("Select a single alert above to display its details here.");
-        this.detailsContent.setWidth100();
-        vpanel.add(detailsContent);
+        vpanel.add(getNoAlertSelectedMessage());
 
-        detailsTable = new DynamicForm(); // empty?
-        vpanel.add(detailsTable);
+//        detailsTable = new DynamicForm(); // empty?
+//        vpanel.add(detailsTable);
         addMember(vpanel);
 
     }
 
-    private DynamicForm getDetailsTableForAlertId(String id) {
+    private HTMLFlow getNoAlertSelectedMessage() {
+        HTMLFlow f = new HTMLFlow("<h2>Select a single alert above to display its details here.</h2>");
+        f.setWidth100();
+        return f;
+    }
+
+    private DynamicForm getDetailsTableForAlert(Record record) {
 
         DynamicForm form = new DynamicForm();
         form.setNumCols(4);
+        form.setWidth("60%");
         form.setWrapItemTitles(false);
-        form.setLeft("10%");
-        form.setWidth("80%");
+        form.setAlign(Alignment.LEFT);
 
-        final TextItem nameTextItem = new TextItem("name", "Name");
-        nameTextItem.setRequired(true);
-        nameTextItem.setValue("Hello World");
+        List<FormItem> items = new ArrayList<FormItem>();
 
-        final TextItem idTextItem = new TextItem("id", "Id");
-        idTextItem.setRequired(true);
-        idTextItem.setValue(id);
-        form.setItems(nameTextItem,idTextItem);
+        StaticTextItem nameTextItem = new StaticTextItem("name", "Name");
+        nameTextItem.setValue(record.getAttribute("name"));
+        nameTextItem.setTooltip("Id = " + record.getAttribute("id"));
+        items.add(nameTextItem);
+
+        StaticTextItem descriptionTextItem = new StaticTextItem("description", "Description");
+        descriptionTextItem.setValue(record.getAttribute("description"));
+        items.add(descriptionTextItem);
+
+        StaticTextItem prioTextItem = new StaticTextItem("priority","Priority");
+        prioTextItem.setValue(record.getAttribute("priority"));
+        items.add(prioTextItem);
+
+        StaticTextItem createdTextItem = new StaticTextItem("ctime","Created at");
+        createdTextItem.setValue(record.getAttribute("ctime"));
+        items.add(createdTextItem);
+
+        StaticTextItem ackByItem = new StaticTextItem("ack_by","Acknowledged by");
+        if (record.getAttribute("ack_by")!=null) {
+            ackByItem.setValue(record.getAttribute("ack_by"));
+        }
+        items.add(ackByItem);
+
+        StaticTextItem ackTimeItem = new StaticTextItem("ack_time","Acknowledged at");
+        if (record.getAttribute("ack_time")!=null) {
+            ackTimeItem.setValue(record.getAttribute("ack_time"));
+        }
+        items.add(ackTimeItem);
+
+
+
+        form.setItems(items.toArray(new FormItem[items.size()]));
 
         return form;
     }
 
-    private Table getNotificationsForAlertId(DataClass[] input) {
+    private Table getNotificationsForAlert(DataClass[] input) {
 
         Table notifTable = new Table("Notifications",false);
         notifTable.setWidth100();
@@ -175,9 +206,9 @@ public class AlertsView extends VLayout {
         ListGridField sender = new ListGridField(SENDER,"Sender");
         sender.setWidth("10%");
         ListGridField status = new ListGridField("status","Result");
-        status.setWidth("10%");
+        status.setWidth("8%");
         ListGridField message = new ListGridField("message","Message");
-        message.setWidth("30%");
+        message.setWidth("32%");
         ListGridField allEmails = new ListGridField("allEmails","All Emails");
         allEmails.setWidth("25%");
         ListGridField badEmails = new ListGridField("badEmails","Bad Emails");

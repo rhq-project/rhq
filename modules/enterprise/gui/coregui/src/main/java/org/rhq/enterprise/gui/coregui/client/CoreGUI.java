@@ -19,6 +19,7 @@ import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.smartgwt.client.core.KeyIdentifier;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.KeyCallback;
 import com.smartgwt.client.util.Page;
 import com.smartgwt.client.util.SC;
@@ -133,6 +134,7 @@ public class CoreGUI implements EntryPoint {
 
     private void buildCoreUI() {
         RootCanvas rootCanvas = new RootCanvas();
+        rootCanvas.setOverflow(Overflow.HIDDEN);
         this.currentView = this.rootView = new View(new ViewId("", null), rootCanvas);
 
         //        HTMLPane menuPane = new HTMLPane();

@@ -55,6 +55,8 @@ public class ResourceCriteria extends Criteria {
     private String filterParentResourceName; // needs overrides
     private String filterAgentName; // needs overrides
     private AvailabilityType filterCurrentAvailability; // needs overrides
+    private Long filterStartItime;
+    private Long filterEndItime;
 
     private boolean fetchResourceType;
     private boolean fetchChildResources;
@@ -99,6 +101,8 @@ public class ResourceCriteria extends Criteria {
         filterOverrides.put("parentResourceName", "parentResource.name like ?");
         filterOverrides.put("agentName", "agent.name like ?");
         filterOverrides.put("currentAvailability", "currentAvailability.availabilityType = ?");
+        filterOverrides.put("startItime", "itime >= ?");
+        filterOverrides.put("endItime", "itime <= ?");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");
@@ -167,6 +171,14 @@ public class ResourceCriteria extends Criteria {
 
     public void addFilterCurrentAvailability(AvailabilityType filterCurrentAvailability) {
         this.filterCurrentAvailability = filterCurrentAvailability;
+    }
+
+    public void addFilterStartItime(long itime) {
+        filterStartItime = itime;
+    }
+
+    public void addFilterEndItime(long itime) {
+        filterEndItime = itime;
     }
 
     public void fetchResourceType(boolean fetchResourceType) {

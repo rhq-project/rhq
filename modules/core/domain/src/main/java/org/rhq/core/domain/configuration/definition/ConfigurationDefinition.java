@@ -97,7 +97,7 @@ public class ConfigurationDefinition implements Serializable {
     private Map<String, PropertyDefinition> propertyDefinitions = new LinkedHashMap<String, PropertyDefinition>();
 
     @MapKey(name = "name")
-    @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @OrderBy
     private Map<String, ConfigurationTemplate> templates = new LinkedHashMap<String, ConfigurationTemplate>();
 

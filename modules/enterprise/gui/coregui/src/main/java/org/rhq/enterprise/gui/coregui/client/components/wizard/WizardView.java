@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
+import java.util.List;
 import java.util.ArrayList;
 
 import com.smartgwt.client.widgets.Canvas;
@@ -112,7 +113,7 @@ public class WizardView extends VLayout {
      */
     public void refreshTitleLabelContents() {
         this.titleLabel.setContents("<span class=\"HeaderLabel\">" + wizard.getTitle() + "</span><br/>"
-            + wizard.getSubtitle());
+            + (wizard.getSubtitle() != null ? wizard.getSubtitle() : ""));
     }
 
     private void setupButtons() {
@@ -174,9 +175,12 @@ public class WizardView extends VLayout {
             buttonBar.removeMember(button);
         }
         customButtons.clear();
-        for (IButton button : wizard.getCustomButtons(currentStep)) {
-            buttonBar.addMember(button);
-            customButtons.add(button);
+        List<IButton> cbs = wizard.getCustomButtons(currentStep);
+        if (cbs != null) {
+            for (IButton button : cbs) {
+                buttonBar.addMember(button);
+                customButtons.add(button);
+            }
         }
 
         if (currentCanvas != null) {

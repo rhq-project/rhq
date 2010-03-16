@@ -27,6 +27,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -244,10 +245,16 @@ public class ResourceTreeView extends VLayout {
         // Create Menu
         MenuItem createChildMenu = new MenuItem("Create Child");
         Menu createChildSubMenu = new Menu();
-        for (ResourceType childType : node.getResourceType().getChildResourceTypes()) {
+        for (final ResourceType childType : node.getResourceType().getChildResourceTypes()) {
             if (childType.isCreatable()) {
-                createChildSubMenu.addItem(new MenuItem(childType.getName()));
-                //todo action
+                MenuItem createItem = new MenuItem(childType.getName());
+                createChildSubMenu.addItem(createItem);
+                createItem.addClickHandler(new ClickHandler() {
+                    public void onClick(MenuItemClickEvent event) {
+                        ResourceFactoryCreateWizard.showCreateWizard(node.getResource(), childType);
+                    }
+                });
+
             }
         }
         createChildMenu.setSubmenu(createChildSubMenu);

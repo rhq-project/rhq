@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -99,8 +99,8 @@ public class BundleInfoStep implements WizardStep {
 
             // TODO: we should get all bundle types in a drop down menu and let the user pick
             //       for now assume we always get one (the filetemplate one) and use it
-            bundleServer.getBundleTypes(new AsyncCallback<List<BundleType>>() {
-                public void onSuccess(List<BundleType> result) {
+            bundleServer.getBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
+                public void onSuccess(ArrayList<BundleType> result) {
                     wizard.setBundleType(result.get(0));
                     enableNextButtonWhenAppropriate();
                 }

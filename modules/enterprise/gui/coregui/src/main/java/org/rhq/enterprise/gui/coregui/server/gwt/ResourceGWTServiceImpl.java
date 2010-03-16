@@ -18,12 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -41,6 +45,7 @@ import java.util.Set;
 public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements ResourceGWTService {
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+    private ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
 
 
     private static String[] importantFields = {
@@ -63,7 +68,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 //                    "modifiedBy                      \n" +
 //                    "location                        \n" +
             "resourceType",
-//                    "childResources                  \n" +
+                    "childResources",
             "parentResource",
 //                    "resourceConfiguration           \n" +
 //                    "pluginConfiguration             \n" +
@@ -130,11 +135,33 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         return SerialUtility.prepare(resourceManager.getRootResourceForResource(resourceId), "ResourceService.getPlatformForResource");
     }
 
-    public RawConfiguration dummy(RawConfiguration config) {
-        System.out.println(config.getPath());
-        return config;
+
+    public List<Integer> deleteResources(int[] resourceIds) {
+        return SerialUtility.prepare(
+                resourceManager.deleteResources(getSessionSubject(), resourceIds),
+                "ResourceService.deleteResources");
     }
 
+
+    public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName, Configuration newResourceConfiguration) {
+
+        ConfigurationDefinition pluginConfigDefinition =
+                LookupUtil.getConfigurationManager().
+                        getPluginConfigurationDefinitionForResourceType(getSessionSubject(), newResourceTypeId);
+        Configuration pluginConfig = null;
+        if (pluginConfigDefinition != null) {
+            ConfigurationTemplate pluginConfigTemplate = pluginConfigDefinition.getDefaultTemplate();
+            pluginConfig = (pluginConfigTemplate != null) ? pluginConfigTemplate.createConfiguration()
+                : new Configuration();
+
+            // TODO GH: Is this still necessary now that we don't blow up on non-normalized configs
+            // ConfigurationUtility.normalizeConfiguration(pluginConfig, pluginConfigDefinition);
+        }
+
+
+        resourceFactoryManager.createResource(getSessionSubject(),
+                parentResourceId, newResourceTypeId, newResourceName, pluginConfig, newResourceConfiguration);
+    }
 
 
 }

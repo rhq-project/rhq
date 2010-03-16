@@ -23,6 +23,8 @@
 
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets;
 
+import java.util.ArrayList;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -86,7 +88,14 @@ public class RecentlyAddedResourceDS extends DataSource {
 
         ResourceCriteria c = new ResourceCriteria();
 
-        c.addFilterResourceCategory(ResourceCategory.PLATFORM);
+        String p = request.getCriteria().getAttribute("parentId");
+
+        if (p == null) {
+            c.addFilterResourceCategory(ResourceCategory.PLATFORM);
+            c.fetchChildResources(true);
+        } else {
+            c.addFilterParentResourceId(Integer.parseInt(p));
+        }
 
         // TODO GH: Enhance resourceCriteria query to support itime based filtering for
         // "Recently imported" resources
@@ -99,8 +108,17 @@ public class RecentlyAddedResourceDS extends DataSource {
             }
 
             public void onSuccess(PageList<Resource> result) {
-                response.setData(buildNodes(result));
-                response.setTotalRows(result.getTotalSize());
+                PageList<Resource> all = new PageList<Resource>();
+
+                for (Resource root : result) {
+                    all.add(root);
+                    if (root.getChildResources() != null)
+                        all.addAll(root.getChildResources());
+                }
+
+
+                response.setData(buildNodes(all));
+                response.setTotalRows(all.getTotalSize());
                 processResponse(request.getRequestId(), response);
             }
         });
@@ -124,7 +142,7 @@ public class RecentlyAddedResourceDS extends DataSource {
 
             String id = String.valueOf(resource.getId());
             String parentId = resource.getParentResource() == null ? null
-                    : (resource.getParentResource().getId() + "_" + resource.getResourceType().getName());
+                    : String.valueOf((resource.getParentResource().getId()));
 
             setID(id);
             setParentID(parentId);

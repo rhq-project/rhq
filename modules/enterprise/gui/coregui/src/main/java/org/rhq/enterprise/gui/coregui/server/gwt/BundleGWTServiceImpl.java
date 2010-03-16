@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
@@ -38,8 +38,9 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
     private BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
 
-    public List<BundleType> getBundleTypes() {
-        List<BundleType> bundleTypes = bundleManager.getAllBundleTypes(getSessionSubject());
+    public ArrayList<BundleType> getBundleTypes() {
+        ArrayList<BundleType> bundleTypes = new ArrayList<BundleType>();
+        bundleTypes.addAll(bundleManager.getAllBundleTypes(getSessionSubject()));
         return SerialUtility.prepare(bundleTypes, "getBundleTypes");
     }
 

@@ -196,6 +196,7 @@ public class SmallGraphView extends VLayout {
             titleLayout.setWidth100();
 
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
+            title.setWidth("*");
             title.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     displayAsDialog();
@@ -204,7 +205,8 @@ public class SmallGraphView extends VLayout {
             titleLayout.addMember(title);
 
             HTMLPane liveGraphLink = new HTMLPane();
-            liveGraphLink.setContents("<a>Live Graph</a>");
+            liveGraphLink.setWidth(100);
+            liveGraphLink.setContents("Live Graph");
             liveGraphLink.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     LiveGraphView.displayAsDialog(resourceId,definition);
@@ -235,7 +237,7 @@ public class SmallGraphView extends VLayout {
             handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
         }
 
-        plotOptions.setYAxisOptions(new AxisOptions().setTicks(5).setTickFormatter(new TickFormatter() {
+        plotOptions.setYAxisOptions(new AxisOptions().setTicks(5).setLabelWidth(70).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double v, Axis axis) {
                 return MeasurementConverterClient.format(v, definition.getUnits(), true);
             }

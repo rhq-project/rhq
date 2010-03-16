@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
@@ -39,5 +40,9 @@ public interface ResourceGWTService extends RemoteService {
     List<Resource> getResourceLineageAndSiblings(int resourceId);
 
     Resource getPlatformForResource(int resourceId);
+
+    List<Integer> deleteResources(int[] resourceIds);
+
+    void createResource(int parentResourceId, int newResourceTypeId, String newResourceName, Configuration newResourceConfiguration);
 
 }

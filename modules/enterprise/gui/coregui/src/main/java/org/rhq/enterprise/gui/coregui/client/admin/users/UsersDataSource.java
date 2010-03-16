@@ -78,7 +78,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         idDataField.setCanEdit(false);
 
         DataSourceTextField usernameField = new DataSourceTextField("username", "User Name", 100, true);
-        usernameField.setRequired(true);
 
         DataSourceTextField firstName = new DataSourceTextField("firstName", "First Name", 100, true);
 
@@ -153,7 +152,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     protected void executeAdd(final DSRequest request, final DSResponse response) {
         JavaScriptObject data = request.getData();
         final ListGridRecord rec = new ListGridRecord(data);
-        Subject newSubject = copyValues(rec);
+        final Subject newSubject = copyValues(rec);
 
         subjectService.createSubject(newSubject, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
@@ -166,10 +165,19 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                 processResponse(request.getRequestId(), response);
             }
 
-            public void onSuccess(Subject result) {
-                CoreGUI.getMessageCenter().notify(new Message("User added", Message.Severity.Info));
-                response.setData(new Record[]{copyValues(result)});
-                processResponse(request.getRequestId(), response);
+            public void onSuccess(final Subject result) {
+                String password = rec.getAttribute("password");
+                subjectService.createPrincipal(newSubject.getName(), password, new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Subject created, but failed to create principal",caught);
+                    }
+
+                    public void onSuccess(Void nothing) {
+                        CoreGUI.getMessageCenter().notify(new Message("Created User [" + newSubject.getName() + "]", Message.Severity.Info));
+                        response.setData(new Record[]{copyValues(result)});
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
             }
         });
 

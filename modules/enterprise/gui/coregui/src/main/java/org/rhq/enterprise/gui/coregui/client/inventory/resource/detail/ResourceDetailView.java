@@ -18,9 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UnknownViewException;
 import org.rhq.enterprise.gui.coregui.client.View;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
@@ -33,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert.ResourceAlertHistoryView;
@@ -44,11 +48,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Right panel of the resource view.
@@ -58,6 +64,8 @@ import java.util.EnumSet;
 public class ResourceDetailView extends VLayout implements ViewRenderer, ResourceSelectListener, TwoLevelTabSelectedHandler {
 
     private Resource resource;
+    private ResourcePermission permissions;
+    private ResourceType type;
 
     private SimpleCollapsiblePanel summaryPanel;
     private ResourceSummaryView summaryView;
@@ -124,7 +132,7 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         eventsTab.registerSubTabs("History");
 
         contentTab = new TwoLevelTab("Content", "/images/icons/Content_grey_16.png");
-        contentTab.registerSubTabs("Deployed","New","Subscriptions","History");
+        contentTab.registerSubTabs("Deployed", "New", "Subscriptions", "History");
 
         topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab, eventsTab, contentTab);
 
@@ -166,7 +174,6 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         monitoringTab.updateSubTab("Call Time", new CallTimeView(resource));
 
 
-
         inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
         inventoryTab.updateSubTab("Connection Settings", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
 
@@ -180,10 +187,10 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
 
         eventsTab.updateSubTab("History", new FullHTMLPane("/rhq/common/events/history-plain.xhtml?id=" + resource.getId()));
 
-        contentTab.updateSubTab("Deployed",new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()));
-        contentTab.updateSubTab("New",new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
-        contentTab.updateSubTab("Subscriptions",new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()));
-        contentTab.updateSubTab("History",new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
+        contentTab.updateSubTab("Deployed", new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()));
+        contentTab.updateSubTab("New", new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
+        contentTab.updateSubTab("Subscriptions", new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()));
+        contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
 
 
 //        topTabSet.setSelectedTab(selectedTab);
@@ -195,6 +202,9 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
 
 
     private void updateTabStatus() {
+        // Go and get the type with all needed metadata
+        // and then get the permissions for this resource
+
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
                 EnumSet.of(ResourceTypeRepository.MetadataType.content,
                         ResourceTypeRepository.MetadataType.operations,
@@ -203,48 +213,67 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
 
+                        ResourceDetailView.this.type = type;
 
-                        if (type.getOperationDefinitions() == null || type.getOperationDefinitions().isEmpty()) {
-                            if (topTabSet.getSelectedTabNumber() == 3) {
-                                topTabSet.setSelectedTab(0);
-                            }
-                            topTabSet.disableTab(operationsTab);
-                        } else {
-                            topTabSet.enableTab(operationsTab);
-                        }
+                        GWTServiceLookup.getAuthorizationService().
+                                getImplicitResourcePermissions(ResourceDetailView.this.resource.getId(),
+                                        new AsyncCallback<Set<Permission>>() {
+                                            public void onFailure(Throwable caught) {
+                                                CoreGUI.getErrorHandler().handleError("Failed to load resource permissions", caught);
+                                            }
 
-                        if (type.getEventDefinitions() == null || type.getEventDefinitions().isEmpty()) {
-                            if (topTabSet.getSelectedTabNumber() == 6) {
-                                topTabSet.setSelectedTab(0);
-                            }
-                            topTabSet.disableTab(eventsTab);
-                        } else {
-                            topTabSet.enableTab(eventsTab);
-                        }
-
-                        if (type.getPackageTypes() == null || type.getPackageTypes().isEmpty()) {
-                            if (topTabSet.getSelectedTabNumber() == 7) {
-                                topTabSet.setSelectedTab(0);
-                            }
-
-                            topTabSet.disableTab(contentTab);
-                        } else {
-                            topTabSet.enableTab(contentTab);
-                        }
-
-                        if (type.getResourceConfigurationDefinition() == null) {
-                            if (topTabSet.getSelectedTabNumber() == 5) {
-                                topTabSet.setSelectedTab(0);
-                            }
-                            topTabSet.disableTab(configurationTab);
-                        } else {
-                            topTabSet.enableTab(configurationTab);
-                        }
-
+                                            public void onSuccess(Set<Permission> result) {
+                                                ResourceDetailView.this.permissions = new ResourcePermission(result);
+                                                completeTabUpdate();
+                                            }
+                                        });
                     }
                 });
+    }
+
+
+    private void completeTabUpdate() {
+
+        if (!permissions.isMeasure()) {
+            topTabSet.disableTab(monitoringTab);
+        } else {
+            topTabSet.enableTab(monitoringTab);
+        }
+
+        if (type.getOperationDefinitions() == null || type.getOperationDefinitions().isEmpty() || !permissions.isControl()) {
+            topTabSet.disableTab(operationsTab);
+        } else {
+            topTabSet.enableTab(operationsTab);
+        }
+
+
+        if (!permissions.isAlert()) {
+            topTabSet.disableTab(alertsTab);
+        } else {
+            topTabSet.enableTab(alertsTab);
+        }
+
+        if (type.getResourceConfigurationDefinition() == null || !permissions.isConfigure()) {
+            topTabSet.disableTab(configurationTab);
+        } else {
+            topTabSet.enableTab(configurationTab);
+        }
+
+        if (type.getEventDefinitions() == null || type.getEventDefinitions().isEmpty() || !permissions.isMeasure()) {
+            topTabSet.disableTab(eventsTab);
+        } else {
+            topTabSet.enableTab(eventsTab);
+        }
+
+        if (type.getPackageTypes() == null || type.getPackageTypes().isEmpty() || !permissions.isContent()) {
+            topTabSet.disableTab(contentTab);
+        } else {
+            topTabSet.enableTab(contentTab);
+        }
+
 
     }
+
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();

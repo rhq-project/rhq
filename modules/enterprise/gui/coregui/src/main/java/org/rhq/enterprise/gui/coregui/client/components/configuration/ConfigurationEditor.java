@@ -526,7 +526,7 @@ public class ConfigurationEditor extends VLayout {
                 buildListOfMapsField(fields, (PropertyDefinitionMap) ((PropertyDefinitionList) propertyDefinition).getMemberDefinition(), oddRow, (PropertyList) property);
             }
         } else if (propertyDefinition instanceof PropertyDefinitionMap) {
-            buildMapsField(fields, (PropertyDefinitionMap)propertyDefinition, (PropertyMap) property);
+            buildMapsField(fields, (PropertyDefinitionMap) propertyDefinition, (PropertyMap) property);
         }
     }
 
@@ -545,16 +545,18 @@ public class ConfigurationEditor extends VLayout {
         propertyGrid.setEditorsMap("fieldType", editorsMap);
 
 
-        ListGridRecord[] records = new ListGridRecord[propertyMap.getMap().size()];
-        int i = 0;
-        for (Property property : propertyMap.getMap().values()) {
-            ListGridRecord record = new ListGridRecord();
-            record.setAttribute("Name",property.getName());
-            record.setAttribute("Value",((PropertySimple)property).getStringValue());
-            record.setAttribute("fieldType","simpleText");
-            records[i++] = record;
+        if (propertyMap != null) {
+            ListGridRecord[] records = new ListGridRecord[propertyMap.getMap().size()];
+            int i = 0;
+            for (Property property : propertyMap.getMap().values()) {
+                ListGridRecord record = new ListGridRecord();
+                record.setAttribute("Name", property.getName());
+                record.setAttribute("Value", ((PropertySimple) property).getStringValue());
+                record.setAttribute("fieldType", "simpleText");
+                records[i++] = record;
+            }
+            propertyGrid.setData(records);
         }
-        propertyGrid.setData(records);
 
         propertyGrid.draw();
 
@@ -753,18 +755,24 @@ public class ConfigurationEditor extends VLayout {
         FormItem valueItem = null;
 
 
-        boolean isUnset = property == null || propertySimple.getStringValue() == null;
+        boolean isUnset = (property == null || propertySimple.getStringValue() == null) && propertyDefinition.isRequired() == false;
 
-
-        final CheckboxItem unsetItem = new CheckboxItem();
-        unsetItem.setValue(isUnset);
-        unsetItem.setDisabled(readOnly);
-        unsetItem.setShowLabel(false);
-        unsetItem.setShowTitle(false);
-        unsetItem.setLabelAsTitle(false);
-        unsetItem.setColSpan(1);
-        unsetItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
-        fields.add(unsetItem);
+        CheckboxItem unsetItem = null;
+        if (!propertyDefinition.isRequired()) {
+            unsetItem = new CheckboxItem();
+            unsetItem.setValue(isUnset);
+            unsetItem.setDisabled(readOnly);
+            unsetItem.setShowLabel(false);
+            unsetItem.setShowTitle(false);
+            unsetItem.setLabelAsTitle(false);
+            unsetItem.setColSpan(1);
+            unsetItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
+            fields.add(unsetItem);
+        } else {
+            SpacerItem spacer = new SpacerItem();
+            spacer.setCellStyle(oddRow ? "OddRow" : "EvenRow");
+            fields.add(spacer);
+        }
 
 
         List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinition.getEnumeratedValues();
@@ -772,7 +780,7 @@ public class ConfigurationEditor extends VLayout {
 
             LinkedHashMap<String, String> valueOptions = new LinkedHashMap<String, String>();
             for (PropertyDefinitionEnumeration option : propertyDefinition.getEnumeratedValues()) {
-                valueOptions.put(option.getName(), option.getValue());
+                valueOptions.put(option.getValue(), option.getName());
             }
 
             if (valueOptions.size() > 5) {
@@ -824,6 +832,8 @@ public class ConfigurationEditor extends VLayout {
         }
 
 
+        valueItem.setRequired(propertyDefinition.isRequired());
+
         if (propertyDefinition.getConstraints() != null) {
             Set<Constraint> constraints = propertyDefinition.getConstraints();
             for (Constraint c : constraints) {
@@ -871,19 +881,21 @@ public class ConfigurationEditor extends VLayout {
             }
         });
 
-        unsetItem.addChangeHandler(new ChangeHandler() {
-            public void onChange(ChangeEvent changeEvent) {
-                Boolean isUnset = (Boolean) changeEvent.getValue();
-                if (isUnset) {
-                    finalValueItem.setDisabled(true);
-                    finalValueItem.setValue((String) null);
-                } else {
-                    finalValueItem.setDisabled(false);
-                    finalValueItem.focusInItem();
+        if (unsetItem != null) {
+            unsetItem.addChangeHandler(new ChangeHandler() {
+                public void onChange(ChangeEvent changeEvent) {
+                    Boolean isUnset = (Boolean) changeEvent.getValue();
+                    if (isUnset) {
+                        finalValueItem.setDisabled(true);
+                        finalValueItem.setValue((String) null);
+                    } else {
+                        finalValueItem.setDisabled(false);
+                        finalValueItem.focusInItem();
+                    }
+                    propertySimple.setValue(finalValueItem.getValue());
                 }
-                propertySimple.setValue(finalValueItem.getValue());
-            }
-        });
+            });
+        }
 
         return valueItem;
     }

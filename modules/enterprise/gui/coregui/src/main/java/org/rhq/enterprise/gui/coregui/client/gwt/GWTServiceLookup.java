@@ -80,6 +80,12 @@ public class GWTServiceLookup {
         return secure(ResourceBossGWTServiceAsync.Util.getInstance());
     }
 
+    public static AuthorizationGWTServiceAsync getAuthorizationService() {
+        return secure(AuthorizationGWTServiceAsync.Util.getInstance());
+    }
+
+
+
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget))
             return null;

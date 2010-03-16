@@ -24,6 +24,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.SmallGraphView;
 
 import com.google.gwt.user.client.Random;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -46,6 +47,10 @@ public class DashboardView extends VLayout {
              "FFFF99", "CCFFCC", "CCFFFF", "99CCFF", "CC99FF", "FFFFFF"
      };
 
+    public DashboardView() {
+        setOverflow(Overflow.AUTO);
+        setPadding(5);
+    }
 
     public void onInit() {
         setWidth100();

@@ -253,7 +253,7 @@ public class LiveGraphView extends VLayout {
         dataLoader.scheduleRepeating(1000);
 
 
-        plotOptions.setYAxisOptions(new AxisOptions().setTicks(5).setTickFormatter(new TickFormatter() {
+        plotOptions.setYAxisOptions(new AxisOptions().setLabelWidth(70).setTicks(5).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double v, Axis axis) {
                 return MeasurementConverterClient.format(v, definition.getUnits(), true);
             }

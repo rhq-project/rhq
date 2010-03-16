@@ -105,6 +105,8 @@ public class UserEditView extends VLayout {
 
         subjectRolesEditorItem = new SubjectRolesEditorItem("rolesEditor","Assigned Roles");
 
+        TextItem departmentItem = new TextItem("department");
+
 
         SubmitItem saveButton = new SubmitItem("save", "Save");
 
@@ -115,7 +117,6 @@ public class UserEditView extends VLayout {
             }
         });
 
-        TextItem departmentItem = new TextItem("department");
 
         ResetItem resetButton = new ResetItem("reset", "Reset");
 
@@ -128,7 +129,8 @@ public class UserEditView extends VLayout {
 
 
     public void editRecord(Record record) {
-        form.getDataSource().getField("username").setCanEdit(false);
+
+        form.getDataSource().getField("username").setCanEdit(record.getAttribute("id") == null);
 
         subjectRolesEditorItem.setSubject((Subject) record.getAttributeAsObject("entity"));
         subjectRolesEditorItem.setRoles((Set<Role>) record.getAttributeAsObject("roles"));

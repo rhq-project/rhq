@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
@@ -30,7 +30,7 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.util.PageList;
 
 public interface BundleGWTService extends RemoteService {
-    List<BundleType> getBundleTypes();
+    ArrayList<BundleType> getBundleTypes();
 
     PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception;
 

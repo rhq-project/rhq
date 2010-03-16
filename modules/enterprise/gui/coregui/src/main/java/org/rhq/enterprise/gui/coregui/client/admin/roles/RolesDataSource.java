@@ -18,20 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.criteria.RoleCriteria;
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -43,10 +35,17 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.RoleCriteria;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -73,10 +72,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         DataSourceTextField nameField = new DataSourceTextField("name", "Name");
 
-
         setFields(idDataField, nameField);
     }
-
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
@@ -86,12 +83,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         Integer subjectId = request.getCriteria().getAttributeAsInt("subjectId");
         if (subjectId != null) {
-            criteria.setFilterSubjectId(subjectId);
+            criteria.addFilterSubjectId(subjectId);
         }
 
-        criteria.setFetchResourceGroups(true);
-        criteria.setFetchPermissions(true);
-        criteria.setFetchSubjects(true);
+        criteria.fetchResourceGroups(true);
+        criteria.fetchPermissions(true);
+        criteria.fetchSubjects(true);
 
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
@@ -105,12 +102,11 @@ public class RolesDataSource extends RPCDataSource<Role> {
                 System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
 
                 response.setData(buildRecords(result));
-                response.setTotalRows(result.getTotalSize());    // for paging to work we have to specify size of full result set
+                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }
         });
     }
-
 
     @Override
     protected void executeAdd(final DSRequest request, final DSResponse response) {
@@ -120,19 +116,20 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         roleService.createRole(newRole, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
-                Map<String,String> errors = new HashMap<String, String>();
+                Map<String, String> errors = new HashMap<String, String>();
                 errors.put("name", "A role with name already exists.");
                 response.setErrors(errors);
-//                CoreGUI.getErrorHandler().handleError("Failed to create role",caught);
+                //                CoreGUI.getErrorHandler().handleError("Failed to create role",caught);
                 response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
                 processResponse(request.getRequestId(), response);
             }
 
             public void onSuccess(Role result) {
-                CoreGUI.getMessageCenter().notify(new Message("Role ["+ result.getName() + "] added", Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Role [" + result.getName() + "] added", Message.Severity.Info));
                 ListGridRecord record = new ListGridRecord();
-                response.setData(new Record[] {copyValues(result)});
-                processResponse(request.getRequestId(),response);
+                response.setData(new Record[] { copyValues(result) });
+                processResponse(request.getRequestId(), response);
             }
         });
 
@@ -145,14 +142,15 @@ public class RolesDataSource extends RPCDataSource<Role> {
         Role updatedRole = copyValues(record);
         roleService.updateRole(updatedRole, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to update role",caught);
+                CoreGUI.getErrorHandler().handleError("Failed to update role", caught);
             }
 
             public void onSuccess(Role result) {
-                CoreGUI.getMessageCenter().notify(new Message("Role ["+ result.getName() + "] updated", Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Role [" + result.getName() + "] updated", Message.Severity.Info));
                 System.out.println("Role Updated");
-                response.setData(new Record[] {copyValues(result)});
-                processResponse(request.getRequestId(),response);
+                response.setData(new Record[] { copyValues(result) });
+                processResponse(request.getRequestId(), response);
             }
         });
     }
@@ -163,15 +161,16 @@ public class RolesDataSource extends RPCDataSource<Role> {
         final ListGridRecord rec = new ListGridRecord(data);
         final Role newRole = copyValues(rec);
 
-        roleService.removeRoles(new Integer[]{newRole.getId()}, new AsyncCallback<Void>() {
+        roleService.removeRoles(new Integer[] { newRole.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete role",caught);
+                CoreGUI.getErrorHandler().handleError("Failed to delete role", caught);
             }
 
             public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(new Message("Role ["+ newRole.getName() + "] removed", Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Role [" + newRole.getName() + "] removed", Message.Severity.Info));
                 System.out.println("Role deleted");
-                response.setData(new Record[]{rec});
+                response.setData(new Record[] { rec });
                 processResponse(request.getRequestId(), response);
             }
         });
@@ -182,8 +181,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
         Role to = new Role();
         to.setId(from.getAttributeAsInt("id"));
         to.setName(from.getAttributeAsString("name"));
-//        to.setDate (from.getAttributeAsDate ("date"));
-//        from.getAttributeAsIntArray("resourceGroups");
+        //        to.setDate (from.getAttributeAsDate ("date"));
+        //        from.getAttributeAsIntArray("resourceGroups");
         to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject("resourceGroups"));
         to.setPermissions((Set<Permission>) from.getAttributeAsObject("permissions"));
         to.setSubjects((Set<Subject>) from.getAttributeAsObject("subjects"));
@@ -201,7 +200,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
         to.setAttribute("entity", from);
         return to;
     }
-
 
     private ListGridRecord getEditedRecord(DSRequest request) {
         // Retrieving values before edit

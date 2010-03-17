@@ -95,6 +95,13 @@ public class AlertsView extends VLayout {
         ListGrid listGrid = this.table.getListGrid();
         this.dataSource = new AlertDataSource();
         this.table.setDataSource(this.dataSource);
+        listGrid.getField("name").setWidth("10%");
+        listGrid.getField("conditionText").setWidth("30%");
+        listGrid.getField("conditionValue").setWidth("15%");
+        listGrid.getField("recoveryInfo").setWidth("20%");
+        listGrid.getField("priority").setWidth("7%");
+        listGrid.getField("ctime").setWidth("13%");
+        listGrid.getField("ack").setWidth("5%");
 
         this.table.addTableAction("Delete", Table.SelectionEnablement.ANY, DELETE_CONFIRM_MESSAGE, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
@@ -197,6 +204,10 @@ public class AlertsView extends VLayout {
             ackTimeItem.setValue(record.getAttribute("ack_time"));
         }
         items.add(ackTimeItem);
+
+        StaticTextItem recoveryItem = new StaticTextItem("recovery","Recovery Info");
+        recoveryItem.setValue(record.getAttribute("recoveryInfo"));
+        items.add(recoveryItem);
 
 
         form.setItems(items.toArray(new FormItem[items.size()]));

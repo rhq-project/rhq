@@ -27,6 +27,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -81,7 +82,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         idField.setHidden(true);
         fields.add(idField);
 
-        DataSourceTextField nameField = new DataSourceTextField(AlertCriteria.SORT_FIELD_NAME, "Name", 100);
+        DataSourceTextField nameField = new DataSourceTextField(AlertCriteria.SORT_FIELD_NAME, "Name");
         fields.add(nameField);
 
         DataSourceTextField conditionTextField = new DataSourceTextField("conditionText", "Condition Text");
@@ -106,13 +107,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         DataSourceTextField ctimeField = new DataSourceTextField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
         fields.add(ctimeField);
 
-        DataSourceTextField ackTimeField = new DataSourceTextField("ack_time", "Ack time");
-        ackTimeField.setCanSortClientOnly(true);
-        fields.add(ackTimeField);
-
-        DataSourceTextField ackByField = new DataSourceTextField("ack_by", "Ack by");
-        ackByField.setCanSortClientOnly(true);
-        fields.add(ackByField);
+        DataSourceBooleanField boolField = new DataSourceBooleanField("ack","Ack'd");
+        boolField.setCanSortClientOnly(true);
+        fields.add(boolField);
 
         return fields;
     }
@@ -204,13 +201,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         record.setAttribute("priority", from.getAlertDefinition().getPriority().name());
         record.setAttribute("ctime", DATE_TIME_FORMAT.format(new Date(from.getCtime())));
         if (from.getAckTime() >0)
-            record.setAttribute("ack_time",DATE_TIME_FORMAT.format(new Date(from.getAckTime())));
-        else
-            record.setAttribute("ack_time","");
-        if (from.getAckBy()!=null)
-            record.setAttribute("ack_by",from.getAckBy().getName());
-        else
-            record.setAttribute("ack_by","");
+            record.setAttribute("ack","true");
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;

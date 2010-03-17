@@ -2219,337 +2219,80 @@
 
             <!-- RHQ Advisory Representation -->
             <schemaSpec version="2.71">
-                <schema-directSQL>
-                    <statement>
-                        CREATE TABLE RHQ_ADVISORY_TYPE ( ID INTEGER PRIMARY KEY )
-                    </statement>
-                </schema-directSQL>
-                <schema-alterColumn table="RHQ_ADVISORY_TYPE" column="ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_TYPE" column="NAME" precision="200" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY_TYPE" column="NAME" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_TYPE" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
-                <schema-directSQL>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_TYPE ( ID, NAME, DESCRIPTION )
-                        VALUES ( 101, 'Bug Fix Advisory', 'Bug fix(RHBA) Advisory' )
-                    </statement>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_TYPE ( ID, NAME, DESCRIPTION )
-                        VALUES ( 102, 'Product Enhancement Advisory', 'Product Enhancement(RHEA) Advisory' )
-                    </statement>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_TYPE ( ID, NAME, DESCRIPTION )
-                        VALUES ( 103, 'Security Advisory', 'Security Advisory(RHSA) Advisory' )
-                    </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement>
-                        CREATE TABLE RHQ_ADVISORY_SEVERITY ( ID INTEGER PRIMARY KEY )
-                    </statement>
-                </schema-directSQL>
-                <schema-alterColumn table="RHQ_ADVISORY_SEVERITY" column="ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_SEVERITY" column="RANK" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_ADVISORY_SEVERITY" column="RANK" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_SEVERITY" column="LABEL" precision="40" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY_SEVERITY" column="LABEL" nullable="false" />
-                <schema-directSQL>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_TYPE ( ID, RANK, LABEL)
-                        VALUES ( 101, 0, 'errata.sev.label.critical' )
-                    </statement>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_TYPE ( ID, RANK, LABEL)
-                        VALUES ( 102, 1, 'errata.sev.label.important' )
-                    </statement>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_TYPE ( ID, RANK, LABEL)
-                        VALUES ( 103, 2, 'errata.sev.label.moderate' )
-                    </statement>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_TYPE ( ID, RANK, LABEL)
-                        VALUES ( 104, 3, 'errata.sev.label.low' )
-                    </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement>
-                        CREATE TABLE RHQ_ADVISORY_FILE_TYPE ( ID INTEGER PRIMARY KEY )
-                    </statement>
-                </schema-directSQL>
-                <schema-alterColumn table="RHQ_ADVISORY_FILE_TYPE" column="ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_FILE_TYPE" column="LABEL" precision="40" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY_FILE_TYPE" column="LABEL" nullable="false" />
-                <schema-directSQL>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_FILE_TYPE ( ID, LABEL)
-                        VALUES ( 101, 'RPM' )
-                    </statement>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_FILE_TYPE ( ID, LABEL)
-                        VALUES ( 102, 'SRPM' )
-                    </statement>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_FILE_TYPE ( ID, LABEL)
-                        VALUES ( 103, 'IMG')
-                    </statement>
-                    <statement>
-                        INSERT INTO
-                        RHQ_ADVISORY_FILE_TYPE ( ID, LABEL)
-                        VALUES ( 104, 'OVAL')
-                    </statement>
-                </schema-directSQL>
                 <schema-createSequence name="RHQ_ADVISORY_SEQ" initial="10001" />
                 <schema-directSQL>
-
                     <statement desc="Creating table RHQ_ADVISORY">
                         CREATE TABLE RHQ_ADVISORY ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
+               
                 <schema-alterColumn table="RHQ_ADVISORY" column="ID" nullable="false" columnType="INTEGER" />
                 <schema-addColumn table="RHQ_ADVISORY" column="ADVISORY" precision="64" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_ADVISORY" column="ADVISORY" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY" column="ADVISORY_TYPE_ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_ADVISORY" column="ADVISORY_TYPE_ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY" column="ADVISORY_NAME" precision="64" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY" column="ADVISORY_NAME" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="ADVISORY_TYPE" precision="64" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="ADVISORY_TYPE" nullable="false" />
                 <schema-addColumn table="RHQ_ADVISORY" column="ADVISORY_REL" precision="64" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY" column="ADVISORY_REL" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY" column="DESCRIPTION" precision="4000" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY" column="DESCRIPTION" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="ADVISORY_NAME" precision="64" columnType="VARCHAR2" />
+                <schema-addColumn table="RHQ_ADVISORY" column="DESCRIPTION" precision="4000" columnType="VARCHAR2" />              
                 <schema-addColumn table="RHQ_ADVISORY" column="SYNOPSIS" precision="4000" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY" column="SYNOPSIS" nullable="false" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="SYNOPSIS" nullable="false" />               
                 <schema-addColumn table="RHQ_ADVISORY" column="TOPIC" precision="4000" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY" column="TOPIC" nullable="false" />
                 <schema-addColumn table="RHQ_ADVISORY" column="SOLUTION" precision="4000" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY" column="SOLUTION" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY" column="SEVERITY_ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_ADVISORY" column="SEVERITY_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="SEVERITY" precision="64" columnType="VARCHAR2" />
                 <schema-addColumn table="RHQ_ADVISORY" column="ISSUE_DATE" columnType="LONG" />
-                <schema-alterColumn table="RHQ_ADVISORY" column="ISSUE_DATE" nullable="false" />
                 <schema-addColumn table="RHQ_ADVISORY" column="UPDATE_DATE" columnType="LONG" />
-                <schema-alterColumn table="RHQ_ADVISORY" column="UPDATE_DATE" nullable="false" />
                 <schema-addColumn table="RHQ_ADVISORY" column="CTIME" columnType="LONG" />
                 <schema-alterColumn table="RHQ_ADVISORY" column="CTIME" nullable="false" />
                 <schema-addColumn table="RHQ_ADVISORY" column="LAST_MODIFIED" columnType="LONG" />
                 <schema-alterColumn table="RHQ_ADVISORY" column="LAST_MODIFIED" nullable="false" />
+               
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql">
-                        CREATE UNIQUE INDEX RHQ_ADVISORY_NAME_UQ
-                        ON RHQ_ADVISORY ( ADVISORY_NAME )
+                    <statement>
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_NAME_UQ ON RHQ_ADVISORY ( ADVISORY_NAME )
                     </statement>
-                    <statement targetDBVendor="oracle">
-                        CREATE UNIQUE INDEX RHQ_ADVISORY_NAME_UQ
-                        ON RHQ_ADVISORY ( ADVISORY_NAME )
+                    <statement>
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_UQ ON RHQ_ADVISORY ( ADVISORY )
                     </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement targetDBVendor="postgresql">
-                        CREATE UNIQUE INDEX RHQ_ADVISORY_UQ
-                        ON RHQ_ADVISORY ( ADVISORY )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        CREATE UNIQUE INDEX RHQ_ADVISORY_UQ
-                        ON RHQ_ADVISORY ( ADVISORY )
+                    <statement>
+                        CREATE INDEX RHQ_ADVISORY_UDATE_IDX ON RHQ_ADVISORY (UPDATE_DATE )
                     </statement>
                 </schema-directSQL>
 
-                <schema-directSQL>
-                    <statement targetDBVendor="postgresql">
-                        CREATE INDEX RHQ_ADVISORY_UDATE_IDX
-                        ON RHQ_ADVISORY (UPDATE_DATE )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        CREATE INDEX RHQ_ADVISORY_UDATE_IDX
-                        ON RHQ_ADVISORY (UPDATE_DATE )
-                    </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement targetDBVendor="postgresql">
-                        CREATE INDEX RHQ_ADVISORY_SYN_IDX
-                        ON RHQ_ADVISORY ( SYNOPSIS )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        CREATE INDEX RHQ_ADVISORY_SYN_IDX
-                        ON RHQ_ADVISORY ( SYNOPSIS )
-                    </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY
-                        ADD CONSTRAINT RHQ_ADV_TYPE_FKEY
-                        FOREIGN KEY ( ADVISORY_TYPE_ID )
-                        REFERENCES RHQ_ADVISORY_TYPE ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY
-                        ADD CONSTRAINT RHQ_ADV_TYPE_FKEY
-                        FOREIGN KEY ( ADVISORY_TYPE_ID )
-                        REFERENCES RHQ_ADVISORY_TYPE ( ID )
-                    </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY
-                        ADD CONSTRAINT RHQ_ADV_SEV_FKEY
-                        FOREIGN KEY ( SEVERITY_ID )
-                        REFERENCES RHQ_ADVISORY_SEVERITY ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY
-                        ADD CONSTRAINT RHQ_ADV_SEV_FKEY
-                        FOREIGN KEY ( SEVERITY_ID )
-                        REFERENCES RHQ_ADVISORY_SEVERITY ( ID )
-                    </statement>
-                </schema-directSQL>
-                <schema-createSequence name="RHQ_ADVISORY_FILE_SEQ" initial="10001" />
+               <schema-createSequence name="RHQ_ADVISORY_PACKAGE_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
-                        CREATE TABLE RHQ_ADVISORY_FILE ( ID INTEGER )
+                        CREATE TABLE RHQ_ADVISORY_PACKAGE ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_FILE" column="ADVISORY_ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="ADVISORY_ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_FILE" column="FILE_TYPE_ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="FILE_TYPE_ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_FILE" column="RELATIVE_FILENAME" precision="256" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="RELATIVE_FILENAME" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_FILE" column="MD5SUM" precision="64" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="MD5SUM" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_FILE" column="LAST_MODIFIED" columnType="LONG" />
-                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="LAST_MODIFIED" nullable="false" />
-                <schema-directSQL>
-                    <statement targetDBVendor="postgresql">
-                        CREATE UNIQUE INDEX RHQ_ADVISORY_ID_FILE_UQ
-                        ON RHQ_ADVISORY_FILE ( ADVISORY_ID, RELATIVE_FILENAME )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        CREATE UNIQUE INDEX RHQ_ADVISORY_ID_FILE_UQ
-                        ON RHQ_ADVISORY_FILE ( ADVISORY_ID, RELATIVE_FILENAME )
-                    </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_FILE
-                        ADD CONSTRAINT RHQ_ADV_FILE_FKEY
-                        FOREIGN KEY ( ADVISORY_ID)
-                        REFERENCES RHQ_ADVISORY ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_FILE
-                        ADD CONSTRAINT RHQ_ADV_FILE_FKEY
-                        FOREIGN KEY ( ADVISORY_ID)
-                        REFERENCES RHQ_ADVISORY ( ID )
-                    </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_FILE
-                        ADD CONSTRAINT RHQ_ADV_FILE_TYPE_FKEY
-                        FOREIGN KEY ( FILE_TYPE_ID )
-                        REFERENCES RHQ_ADVISORY_FILE_TYPE ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_FILE
-                        ADD CONSTRAINT RHQ_ADV_FILE_TYPE_FKEY
-                        FOREIGN KEY ( FILE_TYPE_TYPE )
-                        REFERENCES RHQ_ADVISORY_FILE_TYPE ( ID )
-                    </statement>
-                </schema-directSQL>
+                <schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_PACKAGE" column="ADVISORY_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="ADVISORY_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_PACKAGE" column="PACKAGE_VERSION_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="PACKAGE_VERSION_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_PACKAGE" column="LAST_MODIFIED" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
                     <statement>
-                        CREATE TABLE RHQ_ADVISORY_PACKAGE_MAP ( ADVISORY_ID INTEGER )
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_PACKAGE_UQ ON RHQ_ADVISORY_PACKAGE ( ADVISORY_ID, PACKAGE_VERSION_ID )
                     </statement>
-                </schema-directSQL>
-                <schema-alterColumn table="RHQ_ADVISORY_PACKAGE_MAP" column="ADVISORY_ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_PACKAGE_MAP" column="PACKAGE_ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_ADVISORY_PACKAGE_MAP" column="PACKAGE_ID" nullable="false" />
-                <schema-directSQL>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
-                        ADD CONSTRAINT RHQ_ADV_PKG_MAP_KEY
-                        PRIMARY KEY ( ADVISORY_ID, PACKAGE_ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
-                        ADD CONSTRAINT RHQ_ADV_PKG_MAP_KEY
-                        PRIMARY KEY ( ADVISORY_ID, PACKAGE_ID )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
-                        ADD FOREIGN KEY ( ADVISORY_ID )
-                        REFERENCES RHQ_ADVISORY ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
-                        ADD FOREIGN KEY ( ADVISORY_ID )
-                        REFERENCES RHQ_ADVISORY ( ID )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
-                        ADD FOREIGN KEY ( PACKAGE_ID )
-                        REFERENCES RHQ_PACKAGE ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
-                        ADD FOREIGN KEY ( PACKAGE_ID )
-                        REFERENCES RHQ_PACKAGE ( ID )
+                   <statement>
+                       ALTER TABLE RHQ_ADVISORY_PACKAGE
+                       ADD CONSTRAINT RHQ_ADVISORY_FKEY
+                       FOREIGN KEY ( ADVISORY_ID )
+                       REFERENCES RHQ_ADVISORY ( ID )
+                   </statement>
+                   <statement>
+                        ALTER TABLE RHQ_ADVISORY_PACKAGE
+                        ADD CONSTRAINT RHQ_PACKAGE_VERSION_FKEY
+                        FOREIGN KEY ( PACKAGE_VERSION_ID )
+                        REFERENCES RHQ_PACKAGE_VERSION ( ID )
                     </statement>
                 </schema-directSQL>
 
-                <schema-directSQL>
-                    <statement>
-                        CREATE TABLE RHQ_ADVISORY_FILE_PKG_MAP ( ADVISORY_ID INTEGER )
-                    </statement>
-                </schema-directSQL>
-                <schema-alterColumn table="RHQ_ADVISORY_FILE_PKG_MAP" column="ADVISORY_FILE_ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_FILE_PKG_MAP" column="PACKAGE_ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_ADVISORY_FILE_PKG_MAP" column="PACKAGE_ID" nullable="false" />
-                <schema-directSQL>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
-                        ADD CONSTRAINT RHQ_ADV_FILE_PKG_MAP_KEY
-                        PRIMARY KEY ( ADVISORY_FILE_ID, PACKAGE_ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
-                        ADD CONSTRAINT RHQ_ADV_FILE_PKG_MAP_KEY
-                        PRIMARY KEY ( ADVISORY_FILE_ID, PACKAGE_ID )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
-                        ADD FOREIGN KEY ( ADVISORY_FILE_ID )
-                        REFERENCES RHQ_ADVISORY_FILE ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
-                        ADD FOREIGN KEY ( ADVISORY_FILE_ID )
-                        REFERENCES RHQ_ADVISORY_FILE ( ID )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
-                        ADD FOREIGN KEY ( PACKAGE_ID )
-                        REFERENCES RHQ_PACKAGE ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
-                        ADD FOREIGN KEY ( PACKAGE_ID )
-                        REFERENCES RHQ_PACKAGE ( ID )
-                    </statement>
-                </schema-directSQL>
                 <schema-createSequence name="RHQ_CVE_SEQ" initial="101" />
                 <schema-directSQL>
                     <statement>
-                        CREATE TABLE RHQ_CVE ( ID INTEGER )
+                        CREATE TABLE RHQ_CVE ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_CVE" column="ID" nullable="false" />
@@ -2558,84 +2301,60 @@
 
                 <schema-directSQL>
                     <statement>
-                        CREATE TABLE RHQ_ADVISORY_CVE ( ADVISORY_ID INTEGER )
+                        CREATE TABLE RHQ_ADVISORY_CVE ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
+                <schema-alterColumn table="RHQ_ADVISORY_CVE" column="ID" nullable="false" />      
+                <schema-addColumn table="RHQ_ADVISORY_CVE" column="ADVISORY_ID" columnType="INTEGER" />               
                 <schema-alterColumn table="RHQ_ADVISORY_CVE" column="ADVISORY_ID" nullable="false" />
                 <schema-addColumn table="RHQ_ADVISORY_CVE" column="CVE_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_ADVISORY_CVE" column="CVE_ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_CVE" column="CTIME" columnType="LONG" />
-                <schema-alterColumn table="RHQ_ADVISORY_CVE" column="CTIME" nullable="false" />
                 <schema-addColumn table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" columnType="LONG" />
                 <schema-alterColumn table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_CVE
-                        ADD CONSTRAINT RHQ_ADV_CVE_MAP_KEY
-                        PRIMARY KEY ( ADVISORY_ID, CVE_ID )
+                    <statement>
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_CVE_UQ ON RHQ_ADVISORY_CVE ( ADVISORY_ID, CVE_ID )
                     </statement>
-                    <statement targetDBVendor="postgresql">
+                    <statement>
                         ALTER TABLE RHQ_ADVISORY_CVE
-                        ADD CONSTRAINT RHQ_ADV_CVE_MAP_KEY
-                        PRIMARY KEY ( ADVISORY_ID, CVE_ID )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_CVE
-                        ADD FOREIGN KEY ( ADVISORY_ID )
+                        ADD CONSTRAINT RHQ_ADVISORY_FKEY
+                        FOREIGN KEY ( ADVISORY_ID )
                         REFERENCES RHQ_ADVISORY ( ID )
                     </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_CVE
-                        ADD FOREIGN KEY ( ADVISORY_ID )
-                        REFERENCES RHQ_ADVISORY ( ID )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_CVE
-                        ADD FOREIGN KEY ( CVE_ID )
-                        REFERENCES RHQ_CVE ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_CVE
-                        ADD FOREIGN KEY ( CVE_ID )
-                        REFERENCES RHQ_CVE ( ID )
-                    </statement>
+                   <statement>
+                       ALTER TABLE RHQ_ADVISORY_CVE
+                       ADD CONSTRAINT RHQ_CVE_FKEY
+                       FOREIGN KEY ( CVE_ID )
+                       REFERENCES RHQ_CVE ( ID )
+                   </statement>                   
                 </schema-directSQL>
 
+                <schema-createSequence name="RHQ_ADVISORY_BUGLIST_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
-                        CREATE TABLE RHQ_ADVISORY_BUGLIST ( ADVISORY_ID INTEGER )
+                        CREATE TABLE RHQ_ADVISORY_BUGLIST ( ID INTEGER PRIMARY KEY)
                     </statement>
                 </schema-directSQL>
 
+                <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="ADVISORY_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="ADVISORY_ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="BUG_ID" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="BUG_ID" PRECISION="256" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="BUG_ID" nullable="false" />
-                <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="CTIME" columnType="LONG" />
-                <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="CTIME" nullable="false" />
                 <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="LAST_MODIFIED" columnType="LONG" />
                 <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_BUGLIST
-                        ADD CONSTRAINT RHQ_ADV_BUG_LIST_KEY
-                        PRIMARY KEY ( ADVISORY_ID, BUG_ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_BUGLIST
-                        ADD CONSTRAINT RHQ_ADV_BUG_LIST_KEY
-                        PRIMARY KEY ( ADVISORY_ID, BUG_ID )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ADVISORY_BUGLIST
-                        ADD FOREIGN KEY ( ADVISORY_ID )
-                        REFERENCES RHQ_ADVISORY ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_ADVISORY_BUGLIST
-                        ADD FOREIGN KEY ( ADVISORY_ID )
-                        REFERENCES RHQ_ADVISORY ( ID )
-                    </statement>
+                   <statement>
+                       CREATE UNIQUE INDEX RHQ_ADVISORY_BUGLIST_UQ ON RHQ_ADVISORY_BUGLIST ( ADVISORY_ID, BUG_ID )
+                   </statement>
+                   <statement>
+                       ALTER TABLE RHQ_ADVISORY_BUGLIST
+                       ADD CONSTRAINT RHQ_ADVISORY_FKEY
+                       FOREIGN KEY ( ADVISORY_ID )
+                       REFERENCES RHQ_ADVISORY ( ID )
+                   </statement>
                 </schema-directSQL>
+               
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_REPO_ADVISORY ( REPO_ID INTEGER )
@@ -2644,40 +2363,25 @@
                 <schema-alterColumn table="RHQ_REPO_ADVISORY" column="REPO_ID" nullable="false" />
                 <schema-addColumn table="RHQ_REPO_ADVISORY" column="ADVISORY_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_REPO_ADVISORY" column="ADVISORY_ID" nullable="false" />
-                <schema-addColumn table="RHQ_REPO_ADVISORY" column="CTIME" columnType="LONG" />
-                <schema-alterColumn table="RHQ_REPO_ADVISORY" column="CTIME" nullable="false" />
                 <schema-addColumn table="RHQ_REPO_ADVISORY" column="LAST_MODIFIED" columnType="LONG" />
                 <schema-alterColumn table="RHQ_REPO_ADVISORY" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
-                    <statement targetDBVendor="oracle">
+                    <statement>
                         ALTER TABLE RHQ_REPO_ADVISORY
                         ADD CONSTRAINT RHQ_REPO_ADV_MAP_KEY
                         PRIMARY KEY ( REPO_ID, ADVISORY_ID )
                     </statement>
-                    <statement targetDBVendor="postgresql">
+                    <statement>
                         ALTER TABLE RHQ_REPO_ADVISORY
-                        ADD CONSTRAINT RHQ_REPO_ADV_MAP_KEY
-                        PRIMARY KEY ( REPO_ID, ADVISORY_ID )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_REPO_ADVISORY
-                        ADD FOREIGN KEY ( ADVISORY_ID )
-                        REFERENCES RHQ_ADVISORY ( ID )
-                    </statement>
-                    <statement targetDBVendor="postgresql">
-                        ALTER TABLE RHQ_REPO_ADVISORY
-                        ADD FOREIGN KEY ( ADVISORY_ID )
-                        REFERENCES RHQ_ADVISORY ( ID )
-                    </statement>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_REPO_ADVISORY
-                        ADD FOREIGN KEY ( REPO_ID )
+                        ADD CONSTRAINT RHQ_REPO_FKEY
+                        FOREIGN KEY ( REPO_ID )
                         REFERENCES RHQ_REPO ( ID )
                     </statement>
-                    <statement targetDBVendor="postgresql">
+                    <statement>
                         ALTER TABLE RHQ_REPO_ADVISORY
-                        ADD FOREIGN KEY ( REPO_ID )
-                        REFERENCES RHQ_REPO ( ID )
+                        ADD CONSTRAINT RHQ_ADVISORY_FKEY
+                        FOREIGN KEY ( ADVISORY_ID )
+                        REFERENCES RHQ_ADVISORY ( ID )
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -2706,54 +2410,6 @@
                         ADD CONSTRAINT RHQ_REPO_SYNC_REPO_ID_FKEY
                         FOREIGN KEY (REPO_ID)
                         REFERENCES RHQ_REPO (ID)
-                    </statement>
-                </schema-directSQL>
-            </schemaSpec>
-
-            <schemaSpec version="2.74">
-                <schema-createSequence name="RHQ_ADVISORY_ID_SEQ" initial="10001" />
-                <schema-createSequence name="RHQ_ADVISORY_CVE_ID_SEQ" initial="10001" />
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_ADVISORY_CVE DROP CONSTRAINT RHQ_ADV_CVE_MAP_KEY
-                    </statement>
-                </schema-directSQL>
-                <schema-addColumn table="RHQ_ADVISORY_CVE" column="ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_ADVISORY_CVE" column="ID" nullable="false" />
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_ADVISORY_CVE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_CVE_SEQ')
-                    </statement>
-                </schema-directSQL>
-                <schema-createSequence name="RHQ_ADVISORY_BUGLIST_ID_SEQ" initial="10001" />
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_ADVISORY_BUGLIST DROP CONSTRAINT RHQ_ADV_BUG_LIST_KEY
-                    </statement>
-                </schema-directSQL>
-                <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="ID" nullable="false" />
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_ADVISORY_BUGLIST ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_BUG_SEQ')
-                    </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP RENAME TO RHQ_ADVISORY_PACKAGE
-                    </statement>
-                </schema-directSQL>
-                <schema-createSequence name="RHQ_ADVISORY_PACKAGE_ID_SEQ" initial="10001" />
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_ADVISORY_PACKAGE DROP CONSTRAINT RHQ_ADV_PKG_MAP_KEY
-                    </statement>
-                </schema-directSQL>
-                <schema-addColumn table="RHQ_ADVISORY_PACKAGE" column="ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="ID" nullable="false" />
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_ADVISORY_PACKAGE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_PKG_SEQ')
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -3210,6 +2866,32 @@
                <schema-addColumn   table="RHQ_BUNDLE" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
                <schema-addColumn   table="RHQ_BUNDLE_VERSION" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />               
             </schemaSpec>
+
+            <schemaSpec version="2.78.3">
+               <schema-directSQL>
+                  <statement desc="Creating RHQ_BUNDLE_TYPE unique constraint">
+                      CREATE UNIQUE INDEX RHQ_BUNDLE_TYPE_UNIQUE ON RHQ_BUNDLE_TYPE (name)
+                  </statement>
+               </schema-directSQL>
+
+               <schema-directSQL>
+                  <statement desc="Creating RHQ_BUNDLE unique constraint">
+                      CREATE UNIQUE INDEX RHQ_BUNDLE_UNIQUE ON RHQ_BUNDLE (bundle_type_id, name)
+                  </statement>
+               </schema-directSQL>
+
+               <schema-directSQL>
+                  <statement desc="Creating RHQ_BUNDLE_VERSION unique constraint">
+                      CREATE UNIQUE INDEX RHQ_BUNDLE_VERSION_UNIQUE ON RHQ_BUNDLE_VERSION (bundle_id, name, version)
+                  </statement>
+               </schema-directSQL>
+
+               <schema-directSQL>
+                  <statement desc="Creating RHQ_BUNDLE_DEPLOY_DEF unique constraint">
+                      CREATE UNIQUE INDEX RHQ_BUNDLE_DEPLOY_DEF_UNIQUE ON RHQ_BUNDLE_DEPLOY_DEF (bundle_version_id, name)
+                  </statement>
+               </schema-directSQL>               
+            </schemaSpec>              
 
             <schemaSpec version="2.79">
                 <schema-directSQL>

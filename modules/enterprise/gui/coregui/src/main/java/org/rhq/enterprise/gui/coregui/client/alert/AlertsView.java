@@ -38,6 +38,8 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.tab.Tab;
+import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -111,18 +113,12 @@ public class AlertsView extends VLayout {
                 String contents;
                 if (selectedRecords.length == 1) {
                     ListGridRecord record = selectedRecords[0];
-                    String name = record.getAttribute("name");
-                    String id = record.getAttribute("id");
 
                     // Clean out existing details and provide new ones
                     for (int i = 1 ; i <= getChildren().length ; i ++)
                         getChildren()[1].destroy();
 
-                    detailsTable = getDetailsTableForAlert(record);
-                    addMember(detailsTable);
-                    Table notifTable = getNotificationsForAlert(record.getAttributeAsRecordArray("notificationLogs"));
-                    addMember(notifTable);
-
+                    addMember(getDetailsTabSet(record));
 
                 } else {
                     // Clean out existing details and show the "nothing selected message"
@@ -139,6 +135,22 @@ public class AlertsView extends VLayout {
         // Default is the "nothing selected" message
         addMember(getNoAlertSelectedMessage());
 
+    }
+
+    private TabSet getDetailsTabSet(Record record) {
+        TabSet tabset = new TabSet();
+        Tab generalTab = new Tab("General");
+        generalTab.setPane(getDetailsTableForAlert(record));
+        Tab conditionsTab = new Tab("Conditions");
+        conditionsTab.setDisabled(true); // TODO change
+        Tab notificationsTab = new Tab("Notificatons");
+        notificationsTab.setPane(getNotificationsForAlert(record.getAttributeAsRecordArray("notificationLogs")));
+
+        tabset.addTab(generalTab);
+        tabset.addTab(conditionsTab);
+        tabset.addTab(notificationsTab);
+
+        return tabset;
     }
 
     private HTMLFlow getNoAlertSelectedMessage() {
@@ -185,7 +197,6 @@ public class AlertsView extends VLayout {
             ackTimeItem.setValue(record.getAttribute("ack_time"));
         }
         items.add(ackTimeItem);
-
 
 
         form.setItems(items.toArray(new FormItem[items.size()]));

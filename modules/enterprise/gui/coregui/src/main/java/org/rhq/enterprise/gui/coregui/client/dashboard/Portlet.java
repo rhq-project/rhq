@@ -20,15 +20,37 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import com.smartgwt.client.types.DragAppearance;
 import com.smartgwt.client.types.HeaderControls;
-import com.smartgwt.client.types.LayoutPolicy;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.HeaderControl;
 import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 
 /**
  * @author Greg Hinkle
  */
 public class Portlet extends Window {
+
+    private static final ClickHandler NO_OP_HANDLER = new ClickHandler() {
+        public void onClick(ClickEvent clickEvent) {
+        }
+    };
+
+    private ClickHandler settingsHandlerDelegate = NO_OP_HANDLER;
+
+    private ClickHandler helpHandlerDelegate = NO_OP_HANDLER;
+
+    private ClickHandler settingsHandler = new ClickHandler() {
+        public void onClick(ClickEvent clickEvent) {
+            settingsHandlerDelegate.onClick(clickEvent);
+        }
+    };
+
+    private ClickHandler helpHandler = new ClickHandler() {
+        public void onClick(ClickEvent clickEvent) {
+            helpHandlerDelegate.onClick(clickEvent);
+        }
+    };
 
     public Portlet() {
 
@@ -43,7 +65,13 @@ public class Portlet extends Window {
         setCanDrop(true);
 
         // customize the appearance and order of the controls in the window header
-        setHeaderControls(HeaderControls.MINIMIZE_BUTTON, HeaderControls.HEADER_LABEL, new HeaderControl(HeaderControl.SETTINGS), new HeaderControl(HeaderControl.HELP), HeaderControls.CLOSE_BUTTON);
+        setHeaderControls(
+            HeaderControls.MINIMIZE_BUTTON,
+            HeaderControls.HEADER_LABEL,
+            new HeaderControl(HeaderControl.SETTINGS, settingsHandler),
+            new HeaderControl(HeaderControl.HELP, helpHandler),
+            HeaderControls.CLOSE_BUTTON
+        );
 
         // show either a shadow, or translucency, when dragging a portlet
         // (could do both at the same time, but these are not visually compatible effects)
@@ -57,5 +85,13 @@ public class Portlet extends Window {
 
         setCanDragResize(true);
         setResizeFrom("B");
+    }
+
+    public void setSettingsClickHandler(ClickHandler handler) {
+        settingsHandlerDelegate = handler;
+    }
+
+    public void setHelpClickHandler(ClickHandler handler) {
+        helpHandlerDelegate = handler;
     }
 }

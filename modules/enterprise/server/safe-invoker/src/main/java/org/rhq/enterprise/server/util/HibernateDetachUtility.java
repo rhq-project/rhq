@@ -38,7 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -100,9 +99,20 @@ public class HibernateDetachUtility {
             }
 
         } else if (value instanceof Collection) {
-            for (Object val : (Collection) value) {
-                nullOutUninitializedFields(val, nulledObjects, depth + 1, serializationType);
+            Collection collection = (Collection) value;
+            Collection itemsToBeReplaced = new ArrayList();
+            Collection replacementItems = new ArrayList();
+            for (Object item : collection) {
+                Object replacementItem = replaceObject(item);
+                if (replacementItem != null) {
+                    itemsToBeReplaced.add(item);
+                    replacementItems.add(replacementItem);
+                    item = replacementItem;
+                }
+                nullOutUninitializedFields(item, nulledObjects, depth + 1, serializationType);
             }
+            collection.removeAll(itemsToBeReplaced);
+            collection.addAll(replacementItems);            
         } else if (value instanceof Map) {
             for (Object key : ((Map) value).keySet()) {
                 nullOutUninitializedFields(((Map) value).get(key), nulledObjects, depth + 1, serializationType);

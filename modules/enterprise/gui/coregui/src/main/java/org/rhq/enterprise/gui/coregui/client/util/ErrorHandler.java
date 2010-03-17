@@ -18,10 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
-import com.smartgwt.client.util.SC;
-
 import java.util.ArrayList;
-import java.util.List;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -31,19 +28,16 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class ErrorHandler {
 
-
     private ArrayList<String> errors = new ArrayList<String>();
-
 
     public void handleError(String message, Throwable t) {
 
 //        SC.say(message);
 
-        CoreGUI.getMessageCenter().notify(new Message(message, null, Message.Severity.Error));
+        CoreGUI.getMessageCenter().notify(new Message(message, t.toString(), Message.Severity.Error));
 
         t.printStackTrace();
-        errors.add(message);
-
+        this.errors.add(message);
     }
 
 }

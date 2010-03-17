@@ -42,25 +42,30 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
  * @author Greg Hinkle
  */
 public class ResourceSearchView extends VLayout {
+    private static final String DEFAULT_TITLE = "Resources";
 
     private Table table;
 
     private ArrayList<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
-    int parentResourceId;
-
     /**
-     * A resource list of all resources in the system
+     * A list of all Resources in the system.
      */
     public ResourceSearchView() {
         this(null);
     }
 
     /**
-     * Resource list filtered by a given criteria
-     * @param criteria
+     * A Resource list filtered by a given criteria.
      */
     public ResourceSearchView(Criteria criteria) {
+        this(criteria, DEFAULT_TITLE);
+    }
+
+    /**
+     * A Resource list filtered by a given criteria with the given title.
+     */
+    public ResourceSearchView(Criteria criteria, String title) {
 
         setWidth100();
         setHeight100();
@@ -74,7 +79,7 @@ public class ResourceSearchView extends VLayout {
         addMember(searchPanel);
 
         final ResourceDatasource datasource = new ResourceDatasource();
-        table = new Table("Resources", criteria);
+        table = new Table(title, criteria);
         table.setDataSource(datasource);
 
         table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
@@ -136,7 +141,6 @@ public class ResourceSearchView extends VLayout {
     // -------- Static Utility loaders ------------
 
     public static ResourceSearchView getChildrenOf(int resourceId) {
-        return new ResourceSearchView(new Criteria("parentId", String.valueOf(resourceId)));
+        return new ResourceSearchView(new Criteria("parentId", String.valueOf(resourceId)), "Child Resources");
     }
-
 }

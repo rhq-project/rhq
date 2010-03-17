@@ -32,6 +32,9 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author Joseph Marques
  */
@@ -57,6 +60,7 @@ public class ResourceCriteria extends Criteria {
     private AvailabilityType filterCurrentAvailability; // needs overrides
     private Long filterStartItime;
     private Long filterEndItime;
+    private List<Integer> filterIds; // needs overrides
 
     private boolean fetchResourceType;
     private boolean fetchChildResources;
@@ -103,6 +107,7 @@ public class ResourceCriteria extends Criteria {
         filterOverrides.put("currentAvailability", "currentAvailability.availabilityType = ?");
         filterOverrides.put("startItime", "itime >= ?");
         filterOverrides.put("endItime", "itime <= ?");
+        filterOverrides.put("ids", "id IN ( ? )");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");
@@ -180,6 +185,11 @@ public class ResourceCriteria extends Criteria {
     public void addFilterEndItime(long itime) {
         filterEndItime = itime;
     }
+
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = Arrays.asList(filterIds);
+    }
+
 
     public void fetchResourceType(boolean fetchResourceType) {
         this.fetchResourceType = fetchResourceType;

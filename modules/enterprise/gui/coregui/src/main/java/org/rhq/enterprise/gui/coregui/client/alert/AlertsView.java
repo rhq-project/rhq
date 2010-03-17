@@ -142,9 +142,9 @@ public class AlertsView extends VLayout {
         Tab generalTab = new Tab("General");
         generalTab.setPane(getDetailsTableForAlert(record));
         Tab conditionsTab = new Tab("Conditions");
-        conditionsTab.setDisabled(true); // TODO change
+        conditionsTab.setPane(getConditionsForAlert(record));
         Tab notificationsTab = new Tab("Notificatons");
-        notificationsTab.setPane(getNotificationsForAlert(record.getAttributeAsRecordArray("notificationLogs")));
+        notificationsTab.setPane(getNotificationsForAlert(record));
 
         tabset.addTab(generalTab);
         tabset.addTab(conditionsTab);
@@ -204,7 +204,9 @@ public class AlertsView extends VLayout {
         return form;
     }
 
-    private Table getNotificationsForAlert(DataClass[] input) {
+    private Table getNotificationsForAlert(Record record) {
+
+        DataClass[] input = record.getAttributeAsRecordArray("notificationLogs");
 
         Table notifTable = new Table("Notifications",false);
         notifTable.setHeight("35%");
@@ -227,6 +229,29 @@ public class AlertsView extends VLayout {
         grid.setFields(sender,status,message,allEmails,badEmails);
 
         return notifTable;
+    }
+
+    private Table getConditionsForAlert(Record record) {
+
+        DataClass[] input = record.getAttributeAsRecordArray("conditionLogs");
+        String mode = record.getAttribute("conditionExpression");
+
+
+        Table table = new Table("Conditions: match = " + mode,false);
+        table.setHeight("35%");
+        table.setWidth100();
+        ListGrid grid = table.getListGrid();
+        grid.setData((Record[]) input);
+
+        ListGridField condition = new ListGridField("text");
+        condition.setWidth("60%");
+        ListGridField value = new ListGridField("value","Value");
+
+
+        grid.setFields(condition,value);
+
+        return table;
+
     }
 
     protected Criteria getCriteria() {

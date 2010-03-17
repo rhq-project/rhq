@@ -234,12 +234,30 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         record.setAttribute("conditionText", conditionText);
         record.setAttribute("conditionValue", conditionValue);
 
+        // We also need the'raw' notification data to show in details
+        DataClass[] conditions = new DataClass[from.getConditionLogs().size()];
+        int i = 0;
+        for (AlertConditionLog log : from.getConditionLogs()) {
+            AlertCondition condition = log.getCondition();
+            DataClass dc = new DataClass();
+            dc.setAttribute("text",AlertFormatUtility.formatAlertConditionForDisplay(condition));
+            String value = log.getValue();
+            if (condition.getMeasurementDefinition() != null) {
+                value = MeasurementConverterClient.format(Double.valueOf(log.getValue()), condition
+                    .getMeasurementDefinition().getUnits(), true);
+            }
+            dc.setAttribute("value",value);
+            conditions[i++] = dc;
+        }
+        record.setAttribute("conditionLogs",conditions);
+        record.setAttribute("conditionExpression",from.getAlertDefinition().getConditionExpression());
+
         String recoveryInfo = AlertFormatUtility.getAlertRecoveryInfo(from);
         record.setAttribute("recoveryInfo", recoveryInfo);
 
         // Alert notification logs
         DataClass[] notifications = new DataClass[from.getAlertNotificationLogs().size()];
-        int i = 0;
+        i = 0;
         for(AlertNotificationLog log : from.getAlertNotificationLogs()) {
             DataClass dc = new DataClass();
             dc.setAttribute("sender",log.getSender());

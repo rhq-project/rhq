@@ -24,6 +24,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -34,6 +35,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -135,6 +137,18 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         return SerialUtility.prepare(resourceManager.getRootResourceForResource(resourceId), "ResourceService.getPlatformForResource");
     }
 
+    public List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems) {
+        List<RecentlyAddedResourceComposite> platforms = resourceManager.findRecentlyAddedPlatforms(
+            getSessionSubject(), ctime, maxItems);
+
+        for (RecentlyAddedResourceComposite platform : platforms) {
+            List<RecentlyAddedResourceComposite> servers = resourceManager.findRecentlyAddedServers(
+                getSessionSubject(), ctime, platform.getId());
+            platform.setChildren(servers);
+        }
+
+        return platforms;
+    }
 
     public List<Integer> deleteResources(int[] resourceIds) {
         return SerialUtility.prepare(

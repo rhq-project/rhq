@@ -89,10 +89,10 @@ public class Advisory implements Serializable {
     @Column(name = "UPDATE_DATE", nullable = true)
     private long update_date;
 
-    @Column(name = "CTIME", nullable = true)
+    @Column(name = "CTIME", nullable = false)
     private long ctime;
 
-    @Column(name = "LAST_MODIFIED", nullable = true)
+    @Column(name = "LAST_MODIFIED", nullable = false)
     private long lastModifiedDate;
 
     @OneToMany(mappedBy = "advisory", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -264,9 +264,15 @@ public class Advisory implements Serializable {
         return true;
     }
 
+    public long getCtime() {
+        return ctime;
+    }
+
     @PrePersist
     void onPersist() {
-        this.setLastModifiedDate(System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        this.ctime = now;
+        this.setLastModifiedDate(now);
     }
 
     @PreUpdate

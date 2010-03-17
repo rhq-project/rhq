@@ -243,7 +243,7 @@ public class AlertsView extends VLayout {
         ListGrid grid = table.getListGrid();
         grid.setData((Record[]) input);
 
-        ListGridField condition = new ListGridField("text");
+        ListGridField condition = new ListGridField("text","Matching condition");
         condition.setWidth("60%");
         ListGridField value = new ListGridField("value","Value");
 

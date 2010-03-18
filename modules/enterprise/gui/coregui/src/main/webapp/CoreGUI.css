@@ -96,13 +96,19 @@ a:hover {
 
 }
 
-.TopSectionLink {
-    font-size: 16pt;
+A.TopSectionLink {
+    font-size: 10pt;
     font-weight: bold;
     text-decoration: none;
     color: black;
 }
 
+A.TopSectionLinkSelected {
+    font-size: 10pt;
+    font-weight: bold;
+    text-decoration: none;
+    color: white;
+}
 
 .BreadCrumb {
     font-size: 10pt;

@@ -24,6 +24,7 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.menu.Menu;
@@ -41,17 +42,17 @@ public class SearchBarPane extends HLayout {
     public SearchBarPane() {
         super();
         setWidth100();
-        setHeight(45);
+        setHeight(28);
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void onDraw() {
+        super.onDraw();
 
         DynamicForm form = new DynamicForm();
-        form.setNumCols(4);
-        form.setItemLayout(FormLayoutType.ABSOLUTE);
+        form.setNumCols(6);
 //        form.setWidth100();
+
 
 
         LinkedHashMap<String, String> values = new LinkedHashMap<String, String>();
@@ -62,10 +63,11 @@ public class SearchBarPane extends HLayout {
         values.put("Users", "Users");
         values.put("Roles", "Roles");
 
-        SelectItem searchType = new SelectItem("searchType", "Search");
-        searchType.setWidth(150);
-        searchType.setValueMap(values);
 
+        SelectItem searchType = new SelectItem("searchType", "Search");
+        searchType.setWidth(120);
+        searchType.setValueMap(values);
+        searchType.setValue("Resources");
 
         TextItem query = new TextItem("query");
         query.setLeft(210);
@@ -73,11 +75,14 @@ public class SearchBarPane extends HLayout {
         query.setShowTitle(false);
 
         ButtonItem search = new ButtonItem("Search", "Search");
+        search.setStartRow(false);
+        search.setEndRow(false);
+        search.setShowTitle(false);
         search.setLeft(620);
         search.setIcon(Window.getImgURL("[SKIN]/actions/view.png"));
 
 
-        form.setItems(searchType, query, search);
+        form.setItems(searchType, query, search, new SpacerItem());
 
         addMember(form);
     }

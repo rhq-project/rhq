@@ -59,6 +59,8 @@ public class MeasurementRangeEditor extends DynamicForm {
     public MeasurementRangeEditor() {
         setNumCols(10);
         setHeight(40);
+        setWrapItemTitles(false);
+        setWidth(250);
     }
 
     @Override

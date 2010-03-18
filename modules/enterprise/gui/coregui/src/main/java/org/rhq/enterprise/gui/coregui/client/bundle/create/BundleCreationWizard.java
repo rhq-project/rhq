@@ -20,6 +20,11 @@ package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import java.util.ArrayList;
 
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 public class BundleCreationWizard extends AbstractBundleWizard {
@@ -34,5 +39,19 @@ public class BundleCreationWizard extends AbstractBundleWizard {
         steps.add(new BundleVerificationStep(this));
         steps.add(new BundleUploadDataStep(this));
         setSteps(steps);
+    }
+
+    @Override
+    public void startBundleWizard() {
+        super.startBundleWizard();
+        IButton cancelButton = getView().getCancelButton();
+        cancelButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                BundleVersion bv = getBundleVersion();
+                if (bv != null) {
+                    // the user must have created it already after verification step, delete it
+                }
+            }
+        });
     }
 }

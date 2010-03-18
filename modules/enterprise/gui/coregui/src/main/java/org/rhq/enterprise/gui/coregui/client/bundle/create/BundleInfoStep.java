@@ -34,9 +34,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
-/**
- * @author Greg Hinkle
- */
 public class BundleInfoStep implements WizardStep {
 
     private DynamicForm form;
@@ -99,14 +96,14 @@ public class BundleInfoStep implements WizardStep {
 
             // TODO: we should get all bundle types in a drop down menu and let the user pick
             //       for now assume we always get one (the filetemplate one) and use it
-            bundleServer.getBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
+            bundleServer.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
                 public void onSuccess(ArrayList<BundleType> result) {
                     wizard.setBundleType(result.get(0));
                     enableNextButtonWhenAppropriate();
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("No bundle types available: " + caught.getMessage(), caught);
+                    CoreGUI.getErrorHandler().handleError("No bundle types available", caught);
                 }
             });
         }

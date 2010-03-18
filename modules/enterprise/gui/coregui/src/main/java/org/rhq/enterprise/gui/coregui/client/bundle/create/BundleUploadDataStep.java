@@ -40,9 +40,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
-/**
- * @author Greg Hinkle
- */
 public class BundleUploadDataStep implements WizardStep {
 
     private final BundleCreationWizard wizard;

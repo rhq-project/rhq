@@ -19,10 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Label;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -30,42 +31,46 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
-/**
- * @author Greg Hinkle
- */
 public class BundleVerificationStep implements WizardStep {
 
     private final BundleCreationWizard wizard;
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-    private DynamicForm form;
+    private VLayout canvas;
 
     public BundleVerificationStep(BundleCreationWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 
     public Canvas getCanvas() {
-        form = new DynamicForm();
-
-        VLayout layout = new VLayout();
-        layout.setWidth100();
-        layout.setHeight100();
+        canvas = new VLayout();
+        canvas.setWidth100();
+        canvas.setHeight100();
+        canvas.setAlign(Alignment.CENTER);
 
         final Img verifyingImage = new Img("/images/status-bar.gif");
+        verifyingImage.setLayoutAlign(Alignment.CENTER);
         verifyingImage.setWidth(50);
         verifyingImage.setHeight(15);
 
-        final Label verifiedMessage = new Label("Verifying...!");
-        layout.addMember(verifyingImage);
-        layout.addMember(verifiedMessage);
+        final Label verifiedMessage = new Label("Verifying...");
+        verifiedMessage.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+
+        canvas.addMember(verifyingImage);
+        canvas.addMember(verifiedMessage);
 
         bundleServer.createBundleAndBundleVersion(this.wizard.getBundleName(), this.wizard.getBundleType().getId(),
-            this.wizard.getBundleName(), this.wizard.getBundleVersionString(), this.wizard.getRecipe(),
-            new AsyncCallback<BundleVersion>() {
+            this.wizard.getBundleName(), this.wizard.getBundleVersionString(), this.wizard.getBundleDescription(),
+            this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
                 public void onSuccess(BundleVersion result) {
                     verifyingImage.setSrc("/images/status_complete.gif");
                     verifiedMessage.setText("Verified!");
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Created bundle [" + result.getName() + "] version [" + result.getVersion() + "]",
+                            Severity.Info));
                     wizard.setBundleVersion(result);
                     enableNextButtonWhenAppropriate();
                 }
@@ -79,8 +84,7 @@ public class BundleVerificationStep implements WizardStep {
                 }
             });
 
-        form.addChild(layout);
-        return form;
+        return canvas;
     }
 
     public boolean nextPage() {

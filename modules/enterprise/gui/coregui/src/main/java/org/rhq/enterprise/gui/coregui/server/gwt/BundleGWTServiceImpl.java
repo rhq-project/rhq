@@ -38,7 +38,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
     private BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
 
-    public ArrayList<BundleType> getBundleTypes() {
+    public ArrayList<BundleType> getAllBundleTypes() {
         ArrayList<BundleType> bundleTypes = new ArrayList<BundleType>();
         bundleTypes.addAll(bundleManager.getAllBundleTypes(getSessionSubject()));
         return SerialUtility.prepare(bundleTypes, "getBundleTypes");
@@ -75,11 +75,12 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     public BundleVersion createBundleAndBundleVersion(String bundleName, int bundleTypeId, String name, String version,
-        String recipe) throws Exception {
+        String description, String recipe) throws Exception {
+
         BundleVersion results;
         try {
-            results = bundleManager.createBundleAndBundleVersion(getSessionSubject(), bundleName, null, bundleTypeId,
-                name, null, version, recipe);
+            results = bundleManager.createBundleAndBundleVersion(getSessionSubject(), bundleName, description,
+                bundleTypeId, name, null, version, recipe);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

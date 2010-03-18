@@ -30,7 +30,7 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.util.PageList;
 
 public interface BundleGWTService extends RemoteService {
-    ArrayList<BundleType> getBundleTypes();
+    ArrayList<BundleType> getAllBundleTypes();
 
     PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception;
 
@@ -39,7 +39,7 @@ public interface BundleGWTService extends RemoteService {
     BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
 
     BundleVersion createBundleAndBundleVersion(String bundleName, int bundleTypeId, String name, String version,
-        String recipe) throws Exception;
+        String description, String recipe) throws Exception;
 
     HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception;
 }

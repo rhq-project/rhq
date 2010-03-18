@@ -34,9 +34,6 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmit
 import org.rhq.enterprise.gui.coregui.client.components.upload.TextFileRetrieverForm;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
-/**
- * @author Greg Hinkle
- */
 public class BundleUploadRecipeStep implements WizardStep {
 
     private DynamicCallbackForm form;
@@ -47,12 +44,11 @@ public class BundleUploadRecipeStep implements WizardStep {
     }
 
     public Canvas getCanvas() {
-
         if (form == null) {
-
-            form = new DynamicCallbackForm("test");
+            form = new DynamicCallbackForm("uploadRecipeStepForm");
             form.setWidth100();
             form.setNumCols(1);
+            form.setMargin(Integer.valueOf(20));
 
             HiddenItem idField = new HiddenItem("id");
             idField.setValue(1);

@@ -25,6 +25,9 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +65,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Ian Springer
  */
+@Name(ResourceUIBean.MANAGED_BEAN_NAME)
+@Scope(ScopeType.EVENT)
 public class ResourceUIBean {
 
     protected final Log log = LogFactory.getLog(ResourceUIBean.class);

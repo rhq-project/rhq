@@ -100,7 +100,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         BundleVersion results;
         try {
             results = bundleManager.createBundleAndBundleVersion(getSessionSubject(), bundleName, description,
-                bundleTypeId, name, null, version, recipe);
+                bundleTypeId, name, description, version, recipe);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

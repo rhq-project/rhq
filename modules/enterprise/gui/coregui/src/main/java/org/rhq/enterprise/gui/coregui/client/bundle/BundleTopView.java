@@ -24,6 +24,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreationWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 
 /**
  * @author Greg Hinkle
@@ -34,13 +35,21 @@ public class BundleTopView extends HLayout {
     protected void onDraw() {
         super.onDraw();
 
-        IButton addButton = new IButton("New Bundle");
-        addButton.addClickHandler(new ClickHandler() {
+        IButton addBundleButton = new IButton("New Bundle");
+        addBundleButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 new BundleCreationWizard().startBundleWizard();
             }
         });
 
-        addMember(addButton);
+        IButton addDefinitionButton = new IButton("New Deployment");
+        addDefinitionButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                new BundleDeployWizard().startBundleWizard();
+            }
+        });
+
+        addMember(addBundleButton);
+        addMember(addDefinitionButton);
     }
 }

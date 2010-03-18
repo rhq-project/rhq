@@ -42,4 +42,6 @@ public interface BundleGWTService extends RemoteService {
         String description, String recipe) throws Exception;
 
     HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception;
+
+    void deleteBundleVersion(int bundleVersionId);
 }

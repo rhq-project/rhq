@@ -38,20 +38,40 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
     private BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
 
+    public void deleteBundleVersion(int bundleVersionId) {
+        try {
+            bundleManager.deleteBundleVersion(getSessionSubject(), bundleVersionId);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public ArrayList<BundleType> getAllBundleTypes() {
-        ArrayList<BundleType> bundleTypes = new ArrayList<BundleType>();
-        bundleTypes.addAll(bundleManager.getAllBundleTypes(getSessionSubject()));
-        return SerialUtility.prepare(bundleTypes, "getBundleTypes");
+        try {
+            ArrayList<BundleType> bundleTypes = new ArrayList<BundleType>();
+            bundleTypes.addAll(bundleManager.getAllBundleTypes(getSessionSubject()));
+            return SerialUtility.prepare(bundleTypes, "getBundleTypes");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) {
-        PageList<Bundle> results = bundleManager.findBundlesByCriteria(getSessionSubject(), criteria);
-        return SerialUtility.prepare(results, "findBundlesByCriteria");
+        try {
+            PageList<Bundle> results = bundleManager.findBundlesByCriteria(getSessionSubject(), criteria);
+            return SerialUtility.prepare(results, "findBundlesByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) {
-        PageList<BundleVersion> results = bundleManager.findBundleVersionsByCriteria(getSessionSubject(), criteria);
-        return SerialUtility.prepare(results, "findBundleVersionsByCriteria");
+        try {
+            PageList<BundleVersion> results = bundleManager.findBundleVersionsByCriteria(getSessionSubject(), criteria);
+            return SerialUtility.prepare(results, "findBundleVersionsByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public Bundle createBundle(String name, int bundleTypeId) throws Exception {

@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
+* Copyright (C) 2005-2010 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@ package org.rhq.plugins.jbossas5.helper;
 import java.util.jar.Attributes;
 
 /**
- * The product type of a JBoss application server installation - AS, EAP, or SOA.
+ * The product type of a JBoss 5.x/6.x application server installation - AS, EAP, EWP, or SOA.
  *
  * @author Jessica Sant
  * @author Ian Springer
@@ -33,6 +33,7 @@ import java.util.jar.Attributes;
 public enum JBossProductType {
     AS("JBoss AS", "JBoss Application Server", "default"), // the public offering
     EAP("JBoss EAP", "JBoss Enterprise Application Platform", "default"), // the customer offering
+    EWP("JBoss EWP", "JBoss Enterprise Web Platform", "default"), // the customer offering    
     SOA("JBoss SOA-P", "JBoss Enterprise SOA Platform", "production"); // the customer SOA platform
 
     public final String NAME;
@@ -40,6 +41,7 @@ public enum JBossProductType {
     public final String DEFAULT_CONFIG_NAME;
 
     private static final String EAP_IMPLEMENTATION_TITLE = "JBoss [EAP]";
+    private static final String EWP_IMPLEMENTATION_TITLE = "JBoss [EWP]";
     private static final String SOA_IMPLEMENTATION_TITLE = "JBoss [SOA]";
 
     JBossProductType(String name, String description, String defaultConfigName) {
@@ -49,10 +51,11 @@ public enum JBossProductType {
     }
 
     /**
-     * Determines the product type (AS, EAP or SOA) based on the Implementation-Title MANIFEST.MF attribute.
+     * Determines the product type (AS, EAP, EWP, or SOA) based on the Implementation-Title MANIFEST.MF attribute.
      *
      * @param attributes the attributes from a manifest file (typically run.jar or jboss-j2ee.jar)
-     * @return AS, EAP or SOA
+     *
+     * @return the product type (AS, EAP, EWP, or SOA)
      */
     public static JBossProductType determineJBossProductType(Attributes attributes) {
         JBossProductType result = JBossProductType.AS;
@@ -61,6 +64,8 @@ public enum JBossProductType {
         if (implementationTitle != null) {
             if (implementationTitle.equalsIgnoreCase(EAP_IMPLEMENTATION_TITLE)) {
                 result = JBossProductType.EAP;
+            } else if (implementationTitle.equalsIgnoreCase(EWP_IMPLEMENTATION_TITLE)) {
+                result = JBossProductType.EWP;
             } else if (implementationTitle.equalsIgnoreCase(SOA_IMPLEMENTATION_TITLE)) {
                 result = JBossProductType.SOA;
             }

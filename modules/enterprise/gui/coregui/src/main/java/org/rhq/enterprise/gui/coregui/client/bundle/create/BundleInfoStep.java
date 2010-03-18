@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -40,6 +41,9 @@ public class BundleInfoStep implements WizardStep {
     private final BundleCreationWizard wizard;
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+    private TextItem nameTextItem;
+    private TextItem versionTextItem;
+    private TextAreaItem descriptionTextAreaItem;
 
     public BundleInfoStep(BundleCreationWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
@@ -52,23 +56,48 @@ public class BundleInfoStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            final TextItem nameTextItem = new TextItem("name", "Name");
-            nameTextItem.setRequired(true);
-            nameTextItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
-                    }
-                    wizard.setSubtitle(value.toString());
-                    wizard.setBundleName(value.toString());
-                    enableNextButtonWhenAppropriate();
-                }
-            });
+            BundleVersion initialBundleVersion = wizard.getBundleVersion();
 
-            final TextItem versionTextItem = new TextItem("version", "Initial Version");
-            versionTextItem.setValue("1.0");
-            wizard.setBundleVersionString("1.0");
+            nameTextItem = new TextItem("name", "Name");
+            nameTextItem.setRequired(true);
+            if (initialBundleVersion == null) {
+                nameTextItem.setValue("");
+                nameTextItem.addChangedHandler(new ChangedHandler() {
+                    public void onChanged(ChangedEvent event) {
+                        Object value = event.getValue();
+                        if (value == null) {
+                            value = "";
+                        }
+                        wizard.setSubtitle(value.toString());
+                        wizard.setBundleName(value.toString());
+                        enableNextButtonWhenAppropriate();
+                    }
+                });
+            } else {
+                nameTextItem.setValue(initialBundleVersion.getName());
+                nameTextItem.setDisabled(true);
+            }
+
+            final TextItem previousVersionTextItem = new TextItem("previousVersion", "Previous Version");
+            if (initialBundleVersion == null) {
+                previousVersionTextItem.setVisible(Boolean.FALSE);
+            } else {
+                previousVersionTextItem.setValue(initialBundleVersion.getVersion());
+                previousVersionTextItem.setDisabled(true);
+            }
+
+            versionTextItem = new TextItem("version");
+            if (initialBundleVersion == null) {
+                versionTextItem.setTitle("Initial Version");
+                String versionSuggestion = "1.0";
+                versionTextItem.setValue(versionSuggestion);
+                wizard.setBundleVersionString(versionSuggestion);
+            } else {
+                versionTextItem.setTitle("New Version");
+                String versionSuggestion = autoIncrementVersion(initialBundleVersion.getVersion());
+                versionTextItem.setValue(versionSuggestion);
+                wizard.setBundleVersionString(versionSuggestion);
+            }
             versionTextItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     Object value = event.getValue();
@@ -80,7 +109,12 @@ public class BundleInfoStep implements WizardStep {
                 }
             });
 
-            final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", "Description");
+            descriptionTextAreaItem = new TextAreaItem("description", "Description");
+            if (initialBundleVersion == null) {
+                descriptionTextAreaItem.setValue("");
+            } else {
+                descriptionTextAreaItem.setValue(initialBundleVersion.getDescription());
+            }
             descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     Object value = event.getValue();
@@ -92,26 +126,38 @@ public class BundleInfoStep implements WizardStep {
                 }
             });
 
-            form.setItems(nameTextItem, versionTextItem, descriptionTextAreaItem);
+            form.setItems(nameTextItem, previousVersionTextItem, versionTextItem, descriptionTextAreaItem);
 
-            // TODO: we should get all bundle types in a drop down menu and let the user pick
-            //       for now assume we always get one (the filetemplate one) and use it
-            bundleServer.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
-                public void onSuccess(ArrayList<BundleType> result) {
-                    wizard.setBundleType(result.get(0));
-                    enableNextButtonWhenAppropriate();
-                }
+            if (wizard.getBundleType() == null) {
+                // TODO: we should get all bundle types in a drop down menu and let the user pick
+                //       for now assume we always get one (the filetemplate one) and use it
+                bundleServer.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
+                    public void onSuccess(ArrayList<BundleType> result) {
+                        wizard.setBundleType(result.get(0));
+                        enableNextButtonWhenAppropriate();
+                    }
 
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("No bundle types available", caught);
-                }
-            });
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("No bundle types available", caught);
+                    }
+                });
+            }
+
+            enableNextButtonWhenAppropriate();
+        } else {
+            if (wizard.getBundleVersion() != null) {
+                // we are traversing back to this step - don't allow changes if we've already created the bundle version
+                nameTextItem.setDisabled(Boolean.TRUE);
+                versionTextItem.setDisabled(Boolean.TRUE);
+                descriptionTextAreaItem.setDisabled(Boolean.TRUE);
+            }
         }
         return form;
     }
 
     public boolean nextPage() {
-        return form.validate();
+        boolean ok = form.validate();
+        return ok;
     }
 
     public String getName() {
@@ -133,5 +179,20 @@ public class BundleInfoStep implements WizardStep {
 
     private boolean isNotEmpty(String s) {
         return (s != null && s.trim().length() > 0);
+    }
+
+    private String autoIncrementVersion(String oldVersion) {
+        String newVersion = "1.0";
+        if (oldVersion != null && oldVersion.length() != 0) {
+            String[] parts = oldVersion.split("[^a-zA-Z0-9]");
+            String lastPart = parts[parts.length - 1];
+            try {
+                int lastNumber = Integer.parseInt(lastPart);
+                newVersion = oldVersion.substring(0, oldVersion.length() - lastPart.length()) + (lastNumber + 1);
+            } catch (NumberFormatException nfe) {
+                newVersion = oldVersion + ".1";
+            }
+        }
+        return newVersion;
     }
 }

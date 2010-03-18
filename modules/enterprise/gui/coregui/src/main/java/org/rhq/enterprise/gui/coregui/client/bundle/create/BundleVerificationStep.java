@@ -46,6 +46,11 @@ public class BundleVerificationStep implements WizardStep {
     }
 
     public Canvas getCanvas() {
+        if (canvas != null && wizard.getBundleVersion() != null) {
+            // if we've already got a persisted bundle version, don't verify it again or try to create it again
+            return canvas;
+        }
+
         canvas = new VLayout();
         canvas.setWidth100();
         canvas.setHeight100();

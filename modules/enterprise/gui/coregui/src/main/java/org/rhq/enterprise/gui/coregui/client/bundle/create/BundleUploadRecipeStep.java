@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -38,6 +37,7 @@ public class BundleUploadRecipeStep implements WizardStep {
 
     private DynamicCallbackForm form;
     private final BundleCreationWizard wizard;
+    private TextAreaItem recipe;
 
     public BundleUploadRecipeStep(BundleCreationWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
@@ -49,9 +49,6 @@ public class BundleUploadRecipeStep implements WizardStep {
             form.setWidth100();
             form.setNumCols(1);
             form.setMargin(Integer.valueOf(20));
-
-            HiddenItem idField = new HiddenItem("id");
-            idField.setValue(1);
 
             final LinkItem showUpload = new LinkItem("showUpload");
             showUpload.setValue("Click To Upload A Recipe File");
@@ -70,7 +67,7 @@ public class BundleUploadRecipeStep implements WizardStep {
                 }
             });
 
-            final TextAreaItem recipe = new TextAreaItem("recipe");
+            recipe = new TextAreaItem("recipe");
             recipe.setShowTitle(false);
             recipe.setRequired(true);
             recipe.setWidth("*");
@@ -97,8 +94,16 @@ public class BundleUploadRecipeStep implements WizardStep {
                 }
             });
 
-            form.setItems(idField, showUpload, upload, recipe);
+            form.setItems(showUpload, upload, recipe);
             form.hideItem("upload");
+        } else {
+            // we are traversing back to this step - don't allow the recipe to change if we've already created the bundle version
+            if (wizard.getBundleVersion() != null) {
+                recipe.setValue(wizard.getBundleVersion().getRecipe());
+                recipe.setDisabled(Boolean.TRUE);
+                form.hideItem("showUpload");
+                form.hideItem("upload");
+            }
         }
         return form;
     }

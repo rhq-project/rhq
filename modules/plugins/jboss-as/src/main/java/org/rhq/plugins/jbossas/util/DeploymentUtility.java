@@ -145,7 +145,7 @@ public class DeploymentUtility {
 
                 // this is the deployment descriptor file that we are currently examining;
                 // this is what will be returned if the MBean was configured in this file.
-                String file = i.eval("sdi.url").toString();
+                String file = i.eval("sdi.watch").toString();
 
                 if (file.startsWith("file:/")) {
                     file = file.substring(5);

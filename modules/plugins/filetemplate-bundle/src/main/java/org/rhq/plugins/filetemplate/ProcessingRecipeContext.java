@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.bundle.filetemplate.recipe.RecipeContext;
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.content.PackageVersion;
@@ -44,6 +47,8 @@ import org.rhq.core.util.file.FileUtil;
  * @author John Mazzitelli
  */
 public class ProcessingRecipeContext extends RecipeContext {
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private final Map<PackageVersion, File> packageVersionFiles;
     private final SystemInfo systemInfo;
@@ -73,12 +78,14 @@ public class ProcessingRecipeContext extends RecipeContext {
                 throw new RuntimeException("Failed to unbundle file [" + pe + "]: " + results);
             }
             // existingFile.delete(); WOULD WE WANT TO REMOVE THE COMPRESSED FILE?
+            log.debug("bundle deploy: unzipped [" + existingFile + "] to [" + directory + "]");
         } else {
             // not a zipped format - just move the file to the directory as-is
             File newFile = new File(directory, filename);
             if (!existingFile.renameTo(newFile)) {
                 throw new RuntimeException("Failed to move [" + existingFile + "] to [" + newFile + "]");
             }
+            log.debug("bundle deploy: renamed [" + existingFile + "] to [" + newFile + "]");
         }
     }
 
@@ -92,6 +99,8 @@ public class ProcessingRecipeContext extends RecipeContext {
         try {
             destinationFile.getParentFile().mkdirs();
             FileUtil.copyFile(sourceFile, destinationFile);
+
+            log.debug("bundle file: copied [" + sourceFile + "] to [" + destinationFile + "]");
         } catch (Exception e) {
             throw new RuntimeException("Failed to copy file [" + sourceFile + "] to [" + destinationFile + "]", e);
         }
@@ -132,6 +141,8 @@ public class ProcessingRecipeContext extends RecipeContext {
             if (!realizedTmpFile.renameTo(trueFile)) {
                 throw new RuntimeException("Failed to rename realized tmp file [" + realizedTmpFile + "]");
             }
+
+            log.debug("bundle realize file: renamed realized [" + realizedTmpFile + "] to [" + trueFile + "]");
         } catch (Exception e) {
             throw new RuntimeException("Cannot realize file [" + file + "]", e);
         } finally {
@@ -175,6 +186,8 @@ public class ProcessingRecipeContext extends RecipeContext {
         if (results.getError() != null) {
             throw new RuntimeException("Could not execute script [" + pe + "]: " + results, results.getError());
         }
+
+        log.debug("bundle script: executed script [" + pe + "]");
     }
 
     @Override
@@ -191,6 +204,8 @@ public class ProcessingRecipeContext extends RecipeContext {
         if (results.getError() != null) {
             throw new RuntimeException("Could not execute command [" + pe + "]: " + results, results.getError());
         }
+
+        log.debug("bundle command: executed command [" + pe + "]");
     }
 
     private void ensureExecutable(File scriptFile) {

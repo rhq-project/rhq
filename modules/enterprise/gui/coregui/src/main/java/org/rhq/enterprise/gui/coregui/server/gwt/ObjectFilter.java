@@ -53,7 +53,7 @@ public class ObjectFilter {
                     if (!goodFields.contains(f.getName())) {
                         // Only clearing objects, no point in clearing primitives as it
                         // doesn't save any space on the stream
-                        if (Object.class.isAssignableFrom(f.getType())) {
+                        if (!f.getType().isPrimitive()) {
 //                                System.out.println("clearing " + f.getName());
                             f.setAccessible(true);
                             f.set(object, null);

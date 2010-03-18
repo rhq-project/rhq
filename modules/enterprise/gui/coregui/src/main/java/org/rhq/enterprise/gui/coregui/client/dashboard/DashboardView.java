@@ -18,21 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
-import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.RecentlyAddedView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.SmallGraphView;
-
 import com.google.gwt.user.client.Random;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
-import org.rhq.enterprise.gui.coregui.client.inventory.summary.SummaryCountsView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.RecentlyAddedView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.SmallGraphView;
 
 /**
  * @author Greg Hinkle
@@ -77,7 +75,7 @@ public class DashboardView extends VLayout {
             portalLayout.addPortlet(portlet);
         }
 
-        VLayout vLayout = new VLayout(15);
+        final VLayout vLayout = new VLayout(15);
 
         final DynamicForm form = new DynamicForm();
         form.setAutoWidth();
@@ -153,10 +151,19 @@ public class DashboardView extends VLayout {
 //                } else {
 //                    newPortlet.addItem(new SummaryCountsView());
 //                }
+
+                ClickHandler handler = new ClickHandler() {
+                    public void onClick(ClickEvent clickEvent) {
+                        PortletSettingsWindow settingsWindow = new PortletSettingsWindow("Recently Added Resources");
+                        settingsWindow.show();
+                    }
+                };
+
                 newPortlet.addItem(new RecentlyAddedView());
                 newPortlet.setHeight(350);
-
                 newPortlet.setVisible(false);
+                newPortlet.setHelpClickHandler(handler);
+                newPortlet.setSettingsClickHandler(handler);
                 PortalColumn column = portalLayout.addPortlet(newPortlet);
 
                 // also insert a blank spacer element, which will trigger the built-in

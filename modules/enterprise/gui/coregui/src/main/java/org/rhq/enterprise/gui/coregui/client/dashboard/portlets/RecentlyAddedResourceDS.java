@@ -23,26 +23,27 @@
 
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets;
 
-import java.util.ArrayList;
-
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.tree.TreeNode;
-
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class RecentlyAddedResourceDS extends DataSource {
 
@@ -100,38 +101,87 @@ public class RecentlyAddedResourceDS extends DataSource {
         // TODO GH: Enhance resourceCriteria query to support itime based filtering for
         // "Recently imported" resources
 
-        GWTServiceLookup.getResourceService().findResourcesByCriteria(c, new AsyncCallback<PageList<Resource>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load recently added resources data",caught);
-                response.setStatus(DSResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-
-            public void onSuccess(PageList<Resource> result) {
-                PageList<Resource> all = new PageList<Resource>();
-
-                for (Resource root : result) {
-                    all.add(root);
-                    if (root.getChildResources() != null)
-                        all.addAll(root.getChildResources());
+        GWTServiceLookup.getResourceService().findRecentlyAddedResources(0, 100,
+            new AsyncCallback<List<RecentlyAddedResourceComposite>>() {
+                public void onFailure(Throwable throwable) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load recently added resources", throwable);
                 }
 
+                public void onSuccess(List<RecentlyAddedResourceComposite> recentlyAddedList) {
+                    List<RecentlyAddedResourceComposite> list = new ArrayList<RecentlyAddedResourceComposite>();
 
-                response.setData(buildNodes(all));
-                response.setTotalRows(all.getTotalSize());
-                processResponse(request.getRequestId(), response);
-            }
-        });
+                    for (RecentlyAddedResourceComposite recentlyAdded : recentlyAddedList) {
+                        list.add(recentlyAdded);
+                        list.addAll(recentlyAdded.getChildren());
+                    }
+
+                    response.setData(buildNodes(list));
+                    response.setTotalRows(list.size());
+                    processResponse(request.getRequestId(), response);
+                }
+            });
+//
+//        GWTServiceLookup.getResourceService().findResourcesByCriteria(c, new AsyncCallback<PageList<Resource>>() {
+//            public void onFailure(Throwable caught) {
+//                CoreGUI.getErrorHandler().handleError("Failed to load recently added resources data",caught);
+//                response.setStatus(DSResponse.STATUS_FAILURE);
+//                processResponse(request.getRequestId(), response);
+//            }
+//
+//            public void onSuccess(PageList<Resource> result) {
+//                PageList<Resource> all = new PageList<Resource>();
+//
+//                for (Resource root : result) {
+//                    all.add(root);
+//                    if (root.getChildResources() != null)
+//                        all.addAll(root.getChildResources());
+//                }
+//
+//
+//                response.setData(buildNodes(all));
+//                response.setTotalRows(all.getTotalSize());
+//                processResponse(request.getRequestId(), response);
+//            }
+//        });
     }
 
-    private TreeNode[] buildNodes(PageList<Resource> list) {
+//    private TreeNode[] buildNodes(PageList<Resource> list) {
+//        TreeNode[] treeNodes = new TreeNode[list.size()];
+//        for (int i = 0; i < list.size(); ++i) {
+//            treeNodes[i] = new ResourceTreeNode(list.get(i));
+//        }
+//        return treeNodes;
+//    }
+
+    private TreeNode[] buildNodes(List<RecentlyAddedResourceComposite> list) {
         TreeNode[] treeNodes = new TreeNode[list.size()];
         for (int i = 0; i < list.size(); ++i) {
-            treeNodes[i] = new ResourceTreeNode(list.get(i));
+            treeNodes[i] = new RecentlyAddedTreeNode(list.get(i));
         }
         return treeNodes;
     }
 
+    public static class RecentlyAddedTreeNode extends TreeNode {
+        private RecentlyAddedResourceComposite recentlyAdded;
+
+        private RecentlyAddedTreeNode(RecentlyAddedResourceComposite c) {
+            recentlyAdded = c;
+            Date dateAdded = new Date(recentlyAdded.getCtime());
+
+            String id = String.valueOf(recentlyAdded.getId());
+            String parentId = recentlyAdded.getParentId() == 0 ? null
+                    : String.valueOf((recentlyAdded.getParentId()));
+
+            setID(id);
+            setParentID(parentId);
+
+            setAttribute("id", id);
+            setAttribute("parentId", parentId);
+            setAttribute("name", recentlyAdded.getName());
+            setAttribute("timestamp", DateTimeFormat.getMediumDateTimeFormat().format(dateAdded));
+            setIsFolder(recentlyAdded.getParentId() == 0);
+        }
+    }
 
     public static class ResourceTreeNode extends TreeNode {
 

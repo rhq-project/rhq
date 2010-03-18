@@ -22,6 +22,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.util.PageList;
 
 import com.google.gwt.user.client.rpc.RemoteService;
@@ -38,6 +39,8 @@ public interface ResourceGWTService extends RemoteService {
     List<Resource> getResourceLineage(int resourceId);
 
     List<Resource> getResourceLineageAndSiblings(int resourceId);
+
+    List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems);
 
     Resource getPlatformForResource(int resourceId);
 

@@ -79,7 +79,7 @@ public class AdvisoryPackage implements Serializable {
     @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = false)
     private PackageVersion pkg;
 
-    @Column(name = "LAST_MODIFIED", nullable = true)
+    @Column(name = "LAST_MODIFIED", nullable = false)
     private long lastModifiedDate;
 
     protected AdvisoryPackage() {

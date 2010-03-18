@@ -188,7 +188,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "GROUP BY rt.name " //
         + "  HAVING COUNT(rt.name) > 1"), //
     @NamedQuery(name = ResourceType.QUERY_DYNAMIC_CONFIG_WITH_PLUGIN, query = "" //
-        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt" ) //
+        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt") //
 })
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
@@ -236,14 +236,14 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ? " +
         //               "ORDER BY crt2.name" +
         ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) //
-    })
+})
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Externalizable, Comparable<ResourceType> {
     private static final long serialVersionUID = 2L;
 
     public static final String TABLE_NAME = "RHQ_RESOURCE_TYPE";
-    
+
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
     public static final String QUERY_FIND_BY_NAME = "ResourceType.findByName";
@@ -379,7 +379,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private Set<ProductVersion> productVersions;
 
-    @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE }, optional = true)
+    @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private BundleType bundleType;
 
     @Transient

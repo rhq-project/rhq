@@ -18,35 +18,32 @@
  */
 package org.rhq.enterprise.client;
 
-import jline.Completor;
-import jline.ConsoleReader;
-import jline.ANSIBuffer;
-
-import javax.jws.WebParam;
-import javax.script.Bindings;
-import javax.script.ScriptContext;
 import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.MethodDescriptor;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Collections;
 
-import org.rhq.enterprise.client.utility.ReflectionUtility;
+import javax.jws.WebParam;
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+
+import jline.Completor;
+import jline.ConsoleReader;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.client.utility.ReflectionUtility;
 
 /**
  * A Contextual JavaScript interactive completor. Not perfect, but
@@ -54,6 +51,7 @@ import org.rhq.core.domain.auth.Subject;
  *
  * @author Greg Hinkle
  */
+@SuppressWarnings("unchecked")
 public class InteractiveJavascriptCompletor implements Completor {
 
     private Map<String, Object> services;
@@ -103,7 +101,6 @@ public class InteractiveJavascriptCompletor implements Completor {
 
             lastComplete = s;
 
-
             String base = s;
 
             int rootLength = 0;
@@ -113,15 +110,13 @@ public class InteractiveJavascriptCompletor implements Completor {
                 rootLength = s.length() - base.length();
             }
 
-
             String[] call = base.split("\\.");
             if (base.endsWith(".")) {
-                String[] argPadded = new String[call.length+1];
+                String[] argPadded = new String[call.length + 1];
                 System.arraycopy(call, 0, argPadded, 0, call.length);
                 argPadded[call.length] = "";
                 call = argPadded;
             }
-
 
             if (call.length == 1) {
                 Map<String, Object> matches = getContextMatches(call[0]);
@@ -144,14 +139,12 @@ public class InteractiveJavascriptCompletor implements Completor {
 
             Collections.sort(list);
 
-
             return (list.size() == 0) ? (-1) : rootLength;
         } catch (Exception e) {
             e.printStackTrace();
             return -1;
         }
     }
-
 
     /**
      * Base Object can be an object where we're looking for methods on it, or an
@@ -175,7 +168,7 @@ public class InteractiveJavascriptCompletor implements Completor {
      * @return location of relative completion
      */
     public int contextComplete(Object baseObject, String s, int i, List list) {
-        String temp = s.split("\\(",2)[0];
+        String temp = s.split("\\(", 2)[0];
         if (temp.contains(".")) {
             String[] call = temp.split("\\.", 2);
 
@@ -184,26 +177,17 @@ public class InteractiveJavascriptCompletor implements Completor {
                 next = next.substring(0, next.indexOf("("));
             }
 
-            Class baseObjectClass = null;
-            if (baseObject instanceof Class) {
-                baseObjectClass = (Class) baseObject;
-            } else {
-                baseObjectClass = baseObject.getClass();
-            }
-
-
-            Map<String, List<Object>> matches = getContextMatches(baseObjectClass, next);
+            Map<String, List<Object>> matches = getContextMatches(baseObject, next);
             if (!matches.isEmpty()) {
                 Object rootObject = matches.get(next).get(0);
                 if (rootObject instanceof PropertyDescriptor && !(baseObject instanceof Class)) {
                     try {
-                        rootObject = invoke(baseObject, ((PropertyDescriptor)rootObject).getReadMethod());
+                        rootObject = invoke(baseObject, ((PropertyDescriptor) rootObject).getReadMethod());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 } else if (rootObject instanceof Method) {
-                    rootObject =
-                            ((Method)rootObject).getReturnType();
+                    rootObject = ((Method) rootObject).getReturnType();
                 }
 
                 return call[0].length() + 1 + contextComplete(rootObject, call[1], i, list);
@@ -213,8 +197,7 @@ public class InteractiveJavascriptCompletor implements Completor {
         } else {
             String[] call = s.split("\\(", 2);
 
-            Map<String, List<Object>> matches = getContextMatches(baseObject instanceof Class ? ((Class) baseObject) : baseObject.getClass(), call[0]);
-
+            Map<String, List<Object>> matches = getContextMatches(baseObject, call[0]);
 
             if (call.length == 2 && matches.containsKey(call[0])) {
 
@@ -238,7 +221,7 @@ public class InteractiveJavascriptCompletor implements Completor {
 
                         if (key.equals(call[0]) && match instanceof Method) {
 
-                            int result = completeParameters(baseObject, call[1], i, list, (Method) match);  // x should be the same for all calls
+                            int result = completeParameters(baseObject, call[1], i, list, (Method) match); // x should be the same for all calls
                             if (result > 0) {
                                 x = result;
                             }
@@ -250,7 +233,7 @@ public class InteractiveJavascriptCompletor implements Completor {
 
             if (matches.size() == 1 && matches.containsKey(call[0])) {
                 if (matches.get(call[0]).get(0) instanceof Method) {
-                    list.add("(" + (((Method)matches.get(call[0]).get(0)).getParameterTypes().length == 0 ? ")" : ""));
+                    list.add("(" + (((Method) matches.get(call[0]).get(0)).getParameterTypes().length == 0 ? ")" : ""));
                 }
                 return call[0].length() + 1;
             }
@@ -264,10 +247,13 @@ public class InteractiveJavascriptCompletor implements Completor {
                         }
                     }
                 }
-                displaySignatures(baseObject,methods.toArray(new Method[methods.size()]));
+                displaySignatures(baseObject, methods.toArray(new Method[methods.size()]));
             } else {
                 if (matches.size() == 1 && matches.values().iterator().next().get(0) instanceof Method) {
-                    list.add(matches.keySet().iterator().next() + "(" + ((((Method)matches.values().iterator().next().get(0)).getParameterTypes().length == 0 ? ")" : "")));
+                    list.add(matches.keySet().iterator().next()
+                        + "("
+                        + ((((Method) matches.values().iterator().next().get(0)).getParameterTypes().length == 0 ? ")"
+                            : "")));
                 } else {
                     list.addAll(matches.keySet());
                 }
@@ -280,8 +266,7 @@ public class InteractiveJavascriptCompletor implements Completor {
     private void displaySignatures(Object object, Method... methods) {
         try {
             String start = this.consoleReader.getCursorBuffer().getBuffer().toString();
-            while ((this.consoleReader.getCursorBuffer().cursor > 0)
-                       && this.consoleReader.backspace()) {
+            while ((this.consoleReader.getCursorBuffer().cursor > 0) && this.consoleReader.backspace()) {
                 ;
             }
             this.consoleReader.printNewline();
@@ -289,7 +274,7 @@ public class InteractiveJavascriptCompletor implements Completor {
             String[][] signatures = new String[methods.length][];
             int i = 0;
             for (Method m : methods) {
-                signatures[i++] = getSignature(object,m).split(" ", 2);
+                signatures[i++] = getSignature(object, m).split(" ", 2);
             }
 
             int maxReturnLength = 0;
@@ -299,7 +284,7 @@ public class InteractiveJavascriptCompletor implements Completor {
             }
 
             for (String[] sig : signatures) {
-                for (i = 0; i < (maxReturnLength - sig[0].length()); i++ ) {
+                for (i = 0; i < (maxReturnLength - sig[0].length()); i++) {
                     this.consoleReader.printString(" ");
                 }
 
@@ -309,14 +294,12 @@ public class InteractiveJavascriptCompletor implements Completor {
                 this.consoleReader.printNewline();
             }
 
-            
             this.consoleReader.drawLine();
             this.consoleReader.putString(start);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
 
     /**
      * Split apart the parameters to a method call and complete the last parameter. If the last
@@ -334,7 +317,6 @@ public class InteractiveJavascriptCompletor implements Completor {
     public int completeParameters(Object baseObject, String params, int i, List list, Method method) {
 
         String[] paramList = params.split(",");
-
 
         Class[] c = method.getParameterTypes();
 
@@ -356,7 +338,6 @@ public class InteractiveJavascriptCompletor implements Completor {
             baseLength += paramList[x].length() + 1;
         }
 
-
         if (paramIndex >= c.length) {
             if (params.endsWith(")")) {
                 return -1;
@@ -368,14 +349,14 @@ public class InteractiveJavascriptCompletor implements Completor {
 
             if (baseObject instanceof Map && method.getName().equals("get") && method.getParameterTypes().length == 1) {
                 Class keyType = method.getParameterTypes()[0];
-                for (Object key : ((Map)baseObject).keySet()) {
+                for (Object key : ((Map) baseObject).keySet()) {
                     String lookupChoice = "\'" + String.valueOf(key) + "\'";
                     if (lookupChoice.startsWith(lastParam)) {
                         list.add(lookupChoice);
                     }
                 }
                 if (list.size() == 1) {
-                    list.set(0,list.get(0) + ")");
+                    list.set(0, list.get(0) + ")");
                 }
 
             } else {
@@ -395,7 +376,6 @@ public class InteractiveJavascriptCompletor implements Completor {
             return baseLength;
         }
     }
-
 
     private Map<String, Object> getContextMatches(String start) {
         Map<String, Object> found = new HashMap<String, Object>();
@@ -419,7 +399,6 @@ public class InteractiveJavascriptCompletor implements Completor {
         return found;
     }
 
-
     /**
      * Look through all available contexts to find bindings that both start with
      * the supplied start and match the typeFilter.
@@ -436,7 +415,7 @@ public class InteractiveJavascriptCompletor implements Completor {
                     if (var.startsWith(start)) {
 
                         if ((bindings.get(var) != null && typeFilter.isAssignableFrom(bindings.get(var).getClass()))
-                                || recomplete == 3) {
+                            || recomplete == 3) {
                             found.put(var, bindings.get(var));
                         }
                     }
@@ -456,10 +435,15 @@ public class InteractiveJavascriptCompletor implements Completor {
         return found;
     }
 
-
-
-    private Map<String, List<Object>> getContextMatches(Class baseObjectClass, String start) {
+    private Map<String, List<Object>> getContextMatches(Object baseObject, String start) {
         Map<String, List<Object>> found = new HashMap<String, List<Object>>();
+
+        Class baseObjectClass = null;
+        if (baseObject instanceof Class) {
+            baseObjectClass = (Class) baseObject;
+        } else {
+            baseObjectClass = baseObject.getClass();
+        }
 
         try {
             if (baseObjectClass.equals(Void.TYPE))
@@ -476,13 +460,12 @@ public class InteractiveJavascriptCompletor implements Completor {
 
             PropertyDescriptor[] descriptors = info.getPropertyDescriptors();
             for (PropertyDescriptor desc : descriptors) {
-                if (desc.getName().startsWith(start)
-                       && (!IGNORED_METHODS.contains(desc.getName()))) {
+                if (desc.getName().startsWith(start) && (!IGNORED_METHODS.contains(desc.getName()))) {
 
                     List list = found.get(desc.getName());
                     if (list == null) {
                         list = new ArrayList();
-                        found.put(desc.getName(),list);
+                        found.put(desc.getName(), list);
                     }
                     list.add(desc);
 
@@ -493,24 +476,24 @@ public class InteractiveJavascriptCompletor implements Completor {
 
             MethodDescriptor[] methods = info.getMethodDescriptors();
             for (MethodDescriptor desc : methods) {
-                if (desc.getName().startsWith(start)
-                        && !methodsCovered.contains(desc.getMethod())
-                        && !desc.getName().startsWith("_d")
-                        && !IGNORED_METHODS.contains(desc.getName())) {
+                if (desc.getName().startsWith(start) && !methodsCovered.contains(desc.getMethod())
+                    && !desc.getName().startsWith("_d") && !IGNORED_METHODS.contains(desc.getName())) {
 
-                    Class[] parameters = desc.getMethod().getParameterTypes();
-                    if (parameters.length == 0 || (!parameters[0].equals(Subject.class))) {
+                    Method m = desc.getMethod();
+                    boolean isProxy = isProxyMethod(baseObject, m);
+                    Class[] parameters = m.getParameterTypes();
+                    boolean startsWithSubject = ((parameters.length > 0) && parameters[0].equals(Subject.class));
+                    if ((isProxy && startsWithSubject) || !startsWithSubject) {
 
                         List list = found.get(desc.getName());
                         if (list == null) {
                             list = new ArrayList();
-                            found.put(desc.getName(),list);
+                            found.put(desc.getName(), list);
                         }
-                        list.add(desc.getMethod());
+                        list.add(m);
                     }
                 }
             }
-
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -518,33 +501,22 @@ public class InteractiveJavascriptCompletor implements Completor {
         return found;
     }
 
-
     private static String getSignature(Object object, Method m) {
 
         // If its our service proxy lookup the original interface that has the annotations
-        if (object instanceof Proxy) {
-            if (Proxy.getInvocationHandler(object) instanceof RemoteClientProxy) {
-                try {
-                    m = ((RemoteClientProxy)Proxy.getInvocationHandler(object)).
-                            getRemoteInterface().
-                                getDeclaredMethod(m.getName(),m.getParameterTypes());
-                } catch (NoSuchMethodException e) {
-                    Class[] params = m.getParameterTypes();
-                    Class[] newParams = new Class[params.length + 1];
-                    System.arraycopy(params, 0, newParams, 1, params.length);
-                    newParams[0] = Subject.class;
+        if (isProxyMethod(object, m)) {
+            Class[] params = m.getParameterTypes();
+            Class[] newParams = new Class[params.length + 1];
+            System.arraycopy(params, 0, newParams, 1, params.length);
+            newParams[0] = Subject.class;
 
-                    try {
-                           m = ((RemoteClientProxy)Proxy.getInvocationHandler(object)).
-                            getRemoteInterface().
-                                getDeclaredMethod(m.getName(),newParams);
-                    } catch (NoSuchMethodException nsme) {
-                        
-                    }
-                }
+            try {
+                m = ((RemoteClientProxy) Proxy.getInvocationHandler(object)).getRemoteInterface().getDeclaredMethod(
+                    m.getName(), newParams);
+            } catch (NoSuchMethodException nsme) {
+                //
             }
         }
-
 
         StringBuilder buf = new StringBuilder();
         Type[] params = m.getGenericParameterTypes();
@@ -558,8 +530,8 @@ public class InteractiveJavascriptCompletor implements Completor {
         buf.append("(");
         boolean first = true;
         for (Type type : params) {
-            if (i == 0 && type.equals(Subject.class))
-            {   i++;
+            if (i == 0 && type.equals(Subject.class)) {
+                i++;
                 continue;
             }
             if (!first) {
@@ -591,6 +563,21 @@ public class InteractiveJavascriptCompletor implements Completor {
         return buf.toString();
     }
 
+    private static boolean isProxyMethod(Object object, Method m) {
+
+        boolean result = false;
+        if (object instanceof Proxy) {
+            if (Proxy.getInvocationHandler(object) instanceof RemoteClientProxy) {
+                try {
+                    m = ((RemoteClientProxy) Proxy.getInvocationHandler(object)).getRemoteInterface()
+                        .getDeclaredMethod(m.getName(), m.getParameterTypes());
+                } catch (NoSuchMethodException e) {
+                    result = true;
+                }
+            }
+        }
+        return result;
+    }
 
     public ScriptContext getContext() {
         return context;
@@ -599,7 +586,6 @@ public class InteractiveJavascriptCompletor implements Completor {
     public void setContext(ScriptContext context) {
         this.context = context;
     }
-
 
     private static Object invoke(Object o, Method m) throws IllegalAccessException, InvocationTargetException {
         boolean access = m.isAccessible();

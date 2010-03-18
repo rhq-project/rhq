@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -73,13 +73,13 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
     private SelectItem[] categoryFilterItems;
 
     private IntExtractor<AlertDefinitionComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<AlertDefinitionComposite>() {
-        
+
         public int extract(AlertDefinitionComposite object) {
             Resource resource = object.getAlertDefinition().getResource();
             return resource == null ? 0 : resource.getId();
         }
     };
-    
+
     public SubsystemAlertDefinitionUIBean() {
         datePattern = EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getDateTimeDisplayPreferences()
             .getDateTimeFormatTrigger();
@@ -178,6 +178,84 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
         return "success";
     }
 
+    public String disableSelected() {
+        Integer[] selected = getSelectedItems();
+
+        try {
+            Subject subject = getSubject();
+
+            List<Integer> resourceDefinitions = new ArrayList<Integer>();
+            List<Integer> groupDefinitions = new ArrayList<Integer>();
+            List<Integer> typeDefinitions = new ArrayList<Integer>();
+
+            for (Integer definitionId : selected) {
+                if (alertDefinitionManager.isTemplate(definitionId)) {
+                    typeDefinitions.add(definitionId);
+                } else if (alertDefinitionManager.isGroupAlertDefinition(definitionId)) {
+                    groupDefinitions.add(definitionId);
+                } else {
+                    resourceDefinitions.add(definitionId);
+                }
+            }
+
+            // delete resources first
+            alertDefinitionManager.disableAlertDefinitions(subject, resourceDefinitions
+                .toArray(new Integer[resourceDefinitions.size()]));
+
+            // then delete templates and group alert defs, which are both tolerant of missing child definitions
+            groupAlertDefinitionManager.disableGroupAlertDefinitions(subject, groupDefinitions
+                .toArray(new Integer[groupDefinitions.size()]));
+            alertTemplateManager.removeAlertTemplates(subject, typeDefinitions.toArray(new Integer[typeDefinitions
+                .size()]));
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disable selected alert definitions.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to disable selected alert definitions.",
+                e);
+        }
+
+        return "success";
+    }
+
+    public String enableSelected() {
+        Integer[] selected = getSelectedItems();
+
+        try {
+            Subject subject = getSubject();
+
+            List<Integer> resourceDefinitions = new ArrayList<Integer>();
+            List<Integer> groupDefinitions = new ArrayList<Integer>();
+            List<Integer> typeDefinitions = new ArrayList<Integer>();
+
+            for (Integer definitionId : selected) {
+                if (alertDefinitionManager.isTemplate(definitionId)) {
+                    typeDefinitions.add(definitionId);
+                } else if (alertDefinitionManager.isGroupAlertDefinition(definitionId)) {
+                    groupDefinitions.add(definitionId);
+                } else {
+                    resourceDefinitions.add(definitionId);
+                }
+            }
+
+            // delete resources first
+            alertDefinitionManager.enableAlertDefinitions(subject, resourceDefinitions
+                .toArray(new Integer[resourceDefinitions.size()]));
+
+            // then delete templates and group alert defs, which are both tolerant of missing child definitions
+            groupAlertDefinitionManager.enableGroupAlertDefinitions(subject, groupDefinitions
+                .toArray(new Integer[groupDefinitions.size()]));
+            alertTemplateManager.removeAlertTemplates(subject, typeDefinitions.toArray(new Integer[typeDefinitions
+                .size()]));
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enable selected alert definitions.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to enable selected alert definitions.",
+                e);
+        }
+
+        return "success";
+    }
+
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
@@ -229,7 +307,7 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
         protected IntExtractor<AlertDefinitionComposite> getResourceIdExtractor() {
             return RESOURCE_ID_EXTRACTOR;
         }
-        
+
         private void getDataFromRequest() {
             SubsystemAlertDefinitionUIBean outer = SubsystemAlertDefinitionUIBean.this;
             outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");

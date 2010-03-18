@@ -20,6 +20,7 @@ package org.rhq.core.db;
 
 import java.io.InputStream;
 import java.util.Collection;
+
 import org.testng.annotations.Test;
 
 /**
@@ -52,7 +53,7 @@ public class TypeMapTest {
      */
     public void testLoadKnown() {
         Collection<TypeMap> mapping = TypeMap.loadKnownTypeMaps();
-        assert mapping.size() == 13 : "Wrong number of mappings returned: " + mapping.size();
+        assert mapping.size() == 14 : "Wrong number of mappings returned: " + mapping.size();
 
         DatabaseType oracle = new Oracle10DatabaseType();
         DatabaseType postgres = new Postgresql8DatabaseType();

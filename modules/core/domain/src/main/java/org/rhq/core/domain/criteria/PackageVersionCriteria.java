@@ -35,7 +35,7 @@ public class PackageVersionCriteria extends Criteria {
     private PageOrdering sortDisplayName;
 
     public PackageVersionCriteria() {
-        super(PackageVersion.class);
+        super();
 
         filterOverrides.put("repoId", "id IN " //
             + "( SELECT cpv.packageVersion.id" //
@@ -49,6 +49,10 @@ public class PackageVersionCriteria extends Criteria {
             + "( SELECT ip.packageVersion.id" //
             + "    FROM pv.installedPackages ip " //
             + "   WHERE ip.resource.id = ? )");
+    }
+
+    public Class<PackageVersion> getPersistentClass() {
+        return PackageVersion.class;
     }
 
     public void addFilterId(Integer filterId) {

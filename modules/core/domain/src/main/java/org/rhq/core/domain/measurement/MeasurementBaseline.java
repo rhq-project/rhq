@@ -140,7 +140,7 @@ public class MeasurementBaseline implements Serializable {
             + "            AND ( data1h.TIME_STAMP BETWEEN ? AND ? ) " // ?2=startTime, ?3=endTime
             + "       GROUP BY data1h.SCHEDULE_ID " // baselines are aggregates per schedule
             // but only calculate baselines for schedules where we have data that fills (startTime, endTime)
-            + "         HAVING data1h.SCHEDULE_ID in ( SELECT mdata.SCHEDULE_ID "
+            + "         HAVING data1h.SCHEDULE_ID in ( SELECT distinct (mdata.SCHEDULE_ID) "
             + "                                          FROM RHQ_MEASUREMENT_DATA_NUM_1H mdata  " //
             + "                                         WHERE mdata.TIME_STAMP <= ? ) " // ?4=startTime
             + "          LIMIT 100000 "; // batch at most 100K inserts at a time to shrink the xtn size
@@ -167,7 +167,7 @@ public class MeasurementBaseline implements Serializable {
             + "                     AND ROWNUM < 100001 " // batch at most 100K inserts at a time to shrink the xtn size
             + "                GROUP BY data1h.SCHEDULE_ID  " // baselines are aggregates per schedule
             // but only calculate baselines for schedules where we have data that fills (startTime, endTime)
-            + "                  HAVING data1h.SCHEDULE_ID in ( SELECT mdata.SCHEDULE_ID " //
+            + "                  HAVING data1h.SCHEDULE_ID in ( SELECT distinct (mdata.SCHEDULE_ID) " //
             + "                                                   FROM RHQ_MEASUREMENT_DATA_NUM_1H mdata "
             + "                                                  WHERE mdata.TIME_STAMP <= ? ) ) "; // ?4=startTime
 
@@ -190,7 +190,7 @@ public class MeasurementBaseline implements Serializable {
             + "            AND ( data1h.TIME_STAMP BETWEEN ? AND ? ) " // ?2=startTime, ?3=endTime
             + "       GROUP BY data1h.SCHEDULE_ID  " // baselines are aggregates per schedule
             // but only calculate baselines for schedules where we have data that fills (startTime, endTime)
-            + "         HAVING data1h.SCHEDULE_ID in ( SELECT mdata.SCHEDULE_ID " //
+            + "         HAVING data1h.SCHEDULE_ID in ( SELECT distinct (mdata.SCHEDULE_ID) " //
             + "                                          FROM RHQ_MEASUREMENT_DATA_NUM_1H mdata "
             + "                                         WHERE mdata.TIME_STAMP <= ? ) "; // ?4=startTime
     }

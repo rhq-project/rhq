@@ -49,7 +49,7 @@ public class VirtualizationInterfaceDiscoveryComponent implements ResourceDiscov
                 String path = intf.getSimple("target").getStringValue();
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                    path, path + " virtual interface", null, "Virtual network interface", null, null);
+                    path, path, null, "Virtual network interface", null, null);
                 details.add(detail);
             }
         }

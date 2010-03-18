@@ -78,7 +78,7 @@ public class IISServerDiscoveryComponent implements ResourceDiscoveryComponent {
 
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-            imagePath, discoveryContext.getSystemInformation().getHostname() + " IIS Server", version, "IIS Server on "
+            imagePath, "IIS", version, "IIS Server on "
                 + discoveryContext.getSystemInformation().getHostname(), pluginConfig, null);
 
         return Collections.singleton(details);

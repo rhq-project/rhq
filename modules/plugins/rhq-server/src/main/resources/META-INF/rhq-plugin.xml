@@ -19,7 +19,7 @@
 
       <plugin-configuration>
          <c:simple-property name="objectName" readOnly="true" default="rhq:service=AlertConditionCacheMonitor"/>
-         <c:simple-property name="nameTemplate" default="RHQ Server Alerts Engine Subsystem"/>
+         <c:simple-property name="nameTemplate" default="Alert Subsystem"/>
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Alerts Engine Subsystem."/>
       </plugin-configuration>
       
@@ -88,7 +88,7 @@
 
       <plugin-configuration>
          <c:simple-property name="objectName" readOnly="true" default="rhq:service=MeasurementMonitor"/>
-         <c:simple-property name="nameTemplate" default="RHQ Server Measurement Subsystem"/>
+         <c:simple-property name="nameTemplate" default="Measurement Subsystem"/>
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Measurement Subsystem."/>
       </plugin-configuration>
 
@@ -144,7 +144,7 @@
       
       <plugin-configuration>
          <c:simple-property name="objectName" readOnly="true" default="rhq:service=GroupDefinitionRecalculationThreadMonitor"/>
-         <c:simple-property name="nameTemplate" default="RHQ Server Group Definition / DynaGroups Subsystem"/>
+         <c:simple-property name="nameTemplate" default="Group Definition Subsystem"/>
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem."/>
       </plugin-configuration>
       
@@ -189,7 +189,7 @@
 
       <plugin-configuration>
          <c:simple-property name="objectName" readOnly="true" default="rhq:service=ServerCommunications"/>
-         <c:simple-property name="nameTemplate" default="RHQ Server Communications Subsystem"/>
+         <c:simple-property name="nameTemplate" default="Communications Subsystem"/>
          <c:simple-property name="descriptionTemplate" default="Details on communications with agents"/>
       </plugin-configuration>
 
@@ -265,7 +265,7 @@
 
       <plugin-configuration>
          <c:simple-property name="objectName" readOnly="true" default="rhq.remoting:type=RemoteApiMetrics"/>
-         <c:simple-property name="nameTemplate" default="RHQ Server Remote API Subsystem"/>
+         <c:simple-property name="nameTemplate" default="Remote API Subsystem"/>
          <c:simple-property name="descriptionTemplate" default="Details on remote API communications with external clients, including the CLI"/>
       </plugin-configuration>
 
@@ -309,7 +309,7 @@
 
       <plugin-configuration>
          <c:simple-property name="objectName" readOnly="true" default="rhq.serverplugin:service=ServerPluginService"/>
-         <c:simple-property name="nameTemplate" default="RHQ Server Plugin Subsystem"/>
+         <c:simple-property name="nameTemplate" default="Plugin Subsystem"/>
          <c:simple-property name="descriptionTemplate" default="Details on the server-side plugin container subsystem"/>
       </plugin-configuration>
 

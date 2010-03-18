@@ -138,7 +138,7 @@
 
     <table name="RHQ_PACKAGE_BITS">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="BITS" type="BLOB" required="false"/>
+        <column name="BITS" type="LARGEOBJECT" required="false"/>
     </table>
 
     <table name="RHQ_PACKAGE_VERSION">
@@ -410,8 +410,8 @@
         <column name="SEVERITY" size="64" type="VARCHAR2"  required="false"/>       
         <column name="ISSUE_DATE" type="LONG" required="false"/>
         <column name="UPDATE_DATE" type="LONG" required="false"/>
-        <column name="CTIME" type="LONG" required="false"/>
-        <column name="LAST_MODIFIED" type="LONG" required="false"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
         
         <index name="RHQ_ADVISORY_NAME_UQ" unique="true">
             <field ref="ADVISORY_NAME"/>
@@ -423,23 +423,18 @@
         
         <index name="RHQ_ADVISORY_UDATE_IDX" unique="false">
             <field ref="UPDATE_DATE"/>
-        </index>
-        
-        <index name="RHQ_ADVISORY_SYN_IDX" unique="false">
-            <field ref="SYNOPSIS"/>
-        </index>
-        
+        </index>        
     </table>
     
     <table name="RHQ_ADVISORY_PACKAGE">
-    	<column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+    	  <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
         <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
-        <column name="LAST_MODIFIED" type="LONG" required="false"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
         
         <index name="RHQ_ADVISORY_PKG_IDX" unique="true">
                 <field ref="ADVISORY_ID"/>
-                <field ref="PACKAGE_VERSIOn_ID"/>
+                <field ref="PACKAGE_VERSION_ID"/>
         </index>
     </table>
     
@@ -492,24 +487,45 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+
+        <!--  This index is for constraint, not performance -->    
+        <index name="RHQ_BUNDLE_TYPE_UNIQUE" unique="true">            
+            <field ref="NAME"/>            
+        </index>
     </table>
 
     <!-- BUNDLE is a named piece of content that can be versioned and installed somewhere -->
     <table name="RHQ_BUNDLE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>        
         <column name="BUNDLE_TYPE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_TYPE"/>
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>        
+
+        <!--  This index is for constraint, not performance -->    
+        <index name="RHQ_BUNDLE_UNIQUE" unique="true">
+            <field ref="BUNDLE_TYPE_ID"/>            
+            <field ref="NAME"/>            
+        </index>
     </table>
 
     <!-- BUNDLE_VERSION represents an actual piece of content that needs to be installed somewhere -->
     <table name="RHQ_BUNDLE_VERSION">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
         <column name="VERSION" size="500" type="VARCHAR2" required="true"/>
         <column name="ACTION" type="CLOB" required="true"/>
         <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF" />
         <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>
         <column name="DISTRIBUTION_ID" type="INTEGER" required="false" references="RHQ_DISTRIBUTION"/>
+
+        <!--  This index is for constraint, not performance -->    
+        <index name="RHQ_BUNDLE_VERSION_UNIQUE" unique="true">
+            <field ref="BUNDLE_ID"/>
+            <field ref="NAME"/>
+            <field ref="VERSION"/>            
+        </index>
     </table>
 
     <!-- Many-to-many table that links many repos to a particular bundle version -->
@@ -545,6 +561,12 @@
         <column name="ENFORCEMENT_INTERVAL" type="INTEGER" required="false"/>
         <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
         <column name="BUNDLE_ID" type="INTEGER" required="false" references="RHQ_BUNDLE"/>
+
+        <!--  This index is for constraint, not performance -->    
+        <index name="RHQ_BUNDLE_DEPLOY_DEF_UNIQUE" unique="true">
+            <field ref="BUNDLE_VERSION_ID"/>
+            <field ref="NAME"/>
+        </index>
     </table>
 
     <!-- Represents a bundle version that is deployed on a platform resource -->

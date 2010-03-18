@@ -1,0 +1,94 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-enterprise-server-policy-perspective-war</artifactId>
+  <packaging>war</packaging>
+
+  <name>RHQ Policy Perspective War</name>
+
+  <scm>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/samples/sample-perspective/app/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/samples/sample-perspective/app/</developerConnection>
+  </scm>
+
+  <dependencyManagement>
+
+    <dependencies>
+
+      <!-- This will pull in the managed dependencies from the base-perspective-war pom. -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server-base-perspective-war</artifactId>
+         <version>${project.version}</version>                  
+         <type>pom</type>
+         <scope>import</scope>
+      </dependency>
+                        
+    </dependencies>
+
+  </dependencyManagement>
+
+  <dependencies>
+
+      <!-- This is needed by the war plugin for the overlay functionality. -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server-base-perspective-war</artifactId>
+         <version>${project.version}</version>  
+         <type>war</type>                         
+      </dependency>
+
+      <!-- This is used to pull the base war's classes and dependencies into our  
+           compile classpath, since they are not pulled in by the above war dependency 
+           (see http://jira.codehaus.org/browse/MNG-1991). -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server-base-perspective-jar</artifactId>
+         <version>${project.version}</version>  
+      </dependency>
+      
+      <!-- Deps with provided scope are not transitive, so we need to specify 
+           jsf-api.jar explicitly. -->
+      <dependency>
+         <groupId>javax.faces</groupId>
+         <artifactId>jsf-api</artifactId>        
+         <scope>provided</scope>
+      </dependency>
+      
+  </dependencies>
+
+  <build>
+    <finalName>rhq-policy-perspective</finalName>
+
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-war-plugin</artifactId>
+        <configuration>          
+          <overlays>
+            <overlay>
+                <!-- empty groupId/artifactId detected as the current build.
+                     earlier overlays win over later overlays, so put ourselves first. -->
+            </overlay>
+            <overlay>
+                <groupId>org.rhq</groupId>
+                <artifactId>rhq-enterprise-server-base-perspective-war</artifactId>
+            </overlay>
+          </overlays>
+        </configuration>
+      </plugin>
+
+    </plugins>
+
+  </build>
+  
+</project>
+

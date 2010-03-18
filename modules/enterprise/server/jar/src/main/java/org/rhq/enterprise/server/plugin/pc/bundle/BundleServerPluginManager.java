@@ -18,8 +18,11 @@
  */
 package org.rhq.enterprise.server.plugin.pc.bundle;
 
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.bundle.BundlePluginDescriptorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.bundle.BundleType;
 
 /**
  * This loads in all bundle server plugins that can be found. You can obtain a loaded plugin's
@@ -37,5 +40,56 @@ public class BundleServerPluginManager extends ServerPluginManager {
     @Override
     public void initialize() throws Exception {
         super.initialize();
+    }
+
+    @Override
+    protected void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
+        if (enabled) {
+            // validate some things about this plugin that are specific for bundle functionality
+
+            BundlePluginDescriptorType descriptor = (BundlePluginDescriptorType) env.getPluginDescriptor();
+            BundleType bt = descriptor.getBundle();
+            if (bt == null || bt.getType() == null || bt.getType().length() == 0) {
+                // if the xml parser did its job, this will probably never happen, but just in case, make sure there is
+                // a non-null, valid bundle type name - we have other code that expects this to be true
+                throw new Exception("The bundle plugin [" + env.getPluginKey().getPluginName()
+                    + "] did not specify a valid bundle type in its descriptor");
+            }
+
+            ServerPluginComponent component = createServerPluginComponent(env);
+            if (!(component instanceof BundleServerPluginFacet)) {
+                throw new Exception("The bundle plugin [" + env.getPluginKey().getPluginName()
+                    + "] has an invalid component [" + component + "]. It does not implement ["
+                    + BundleServerPluginFacet.class + "]");
+            }
+        }
+
+        super.loadPlugin(env, enabled);
+    }
+
+    /**
+     * Given the {@link BundleType#getName() name of a bundle type}, this will return the stateful plugin component
+     * that manages bundles of that type.
+     * 
+     * @param bundleTypeName
+     *
+     * @return the plugin component object that will manage bundles of the named bundle type; <code>null</code> if there is no plugin
+     *         that can support the given bundle type
+     */
+    public BundleServerPluginFacet getBundleServerPluginFacet(String bundleTypeName) {
+        if (bundleTypeName == null) {
+            throw new IllegalArgumentException("bundleTypeName == null");
+        }
+
+        for (ServerPluginEnvironment env : getPluginEnvironments()) {
+            BundlePluginDescriptorType descriptor = (BundlePluginDescriptorType) env.getPluginDescriptor();
+            if (bundleTypeName.equals(descriptor.getBundle().getType())) {
+                ServerPluginComponent component = getServerPluginComponent(env.getPluginKey().getPluginName());
+                // we know this cast will work because our loadPlugin ensured that this component implements this interface
+                return (BundleServerPluginFacet) component;
+            }
+        }
+
+        return null;
     }
 }

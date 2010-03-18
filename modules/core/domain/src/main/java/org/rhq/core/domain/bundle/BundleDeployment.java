@@ -110,6 +110,10 @@ public class BundleDeployment implements Serializable {
         return resource;
     }
 
+    public void setResource(Resource resource) {
+        this.resource = resource;
+    }
+
     public Long getCtime() {
         return ctime;
     }
@@ -117,6 +121,10 @@ public class BundleDeployment implements Serializable {
     @PrePersist
     void onPersist() {
         this.ctime = System.currentTimeMillis();
+    }
+
+    public void setBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
+        this.bundleDeployDefinition = bundleDeployDefinition;
     }
 
     public List<BundleDeploymentHistory> getBundleDeploymentHistories() {

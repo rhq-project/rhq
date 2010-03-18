@@ -28,4 +28,5 @@ package org.rhq.core.pluginapi.bundle;
  * @author John Mazzitelli
  */
 public interface BundleFacet {
+    BundleDeployResult deployBundle(BundleDeployRequest request);
 }

@@ -33,6 +33,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -45,7 +46,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
  * @author Greg Hinkle
  */
 public class VirtualizationNetworkComponent implements ResourceComponent<VirtualizationHostComponent>,
-    MeasurementFacet, ConfigurationFacet, CreateChildResourceFacet {
+    MeasurementFacet, ConfigurationFacet, CreateChildResourceFacet, DeleteResourceFacet {
 
     private Log log = LogFactory.getLog(VirtualizationDomainComponent.class);
     private String networkName;
@@ -138,6 +139,10 @@ public class VirtualizationNetworkComponent implements ResourceComponent<Virtual
                 }*/
 
         return report;
+    }
+
+    public void deleteResource() throws Exception {
+        // TODO Auto-generated method stub        
     }
 
     public LibVirtConnection getConnection() throws LibvirtException {

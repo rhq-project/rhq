@@ -75,7 +75,7 @@ import org.rhq.core.pluginapi.content.ContentServices;
 
 public class ContentManager extends AgentService implements ContainerService, ContentAgentService, ContentServices {
 
-    private static final int FACET_METHOD_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+    private static final int FACET_METHOD_TIMEOUT = 60 * 60 * 1000; // 60 minutes
     private final Log log = LogFactory.getLog(ContentManager.class);
 
     /**
@@ -354,10 +354,22 @@ public class ContentManager extends AgentService implements ContainerService, Co
             discoveryInfo.getResourceId());
 
         if (resourceContainer != null) {
-            log.debug("Rescheduling [" + discoveryInfo + "]...");
-            discoveryInfo.setNextDiscovery(System.currentTimeMillis() + discoveryInfo.getInterval());
-            addToQueue(discoveryInfo);
-            log.debug("Finished rescheduling: " + discoveryInfo);
+            boolean debugEnabled = log.isDebugEnabled();
+
+            if (discoveryInfo.getInterval() > 0) {
+                if (debugEnabled) {
+                    log.debug("Rescheduling [" + discoveryInfo + "]...");
+                }
+                discoveryInfo.setNextDiscovery(System.currentTimeMillis() + discoveryInfo.getInterval());
+                addToQueue(discoveryInfo);
+                if (debugEnabled) {
+                    log.debug("Finished rescheduling: " + discoveryInfo);
+                }
+            } else {
+                if (debugEnabled) {
+                    log.debug("Will not reschedule content discovery: " + discoveryInfo);
+                }
+            }
         }
     }
 

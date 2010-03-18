@@ -42,6 +42,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
 @Test
+@SuppressWarnings("unchecked")
 public class BundleTest extends AbstractEJB3Test {
     public void testBundleVersionRepo() throws Throwable {
         getTransactionManager().begin();
@@ -50,7 +51,7 @@ public class BundleTest extends AbstractEJB3Test {
             int id;
 
             String name = "BundleTest-testBundleVersionRepo";
-            String action = "action/script/recipe is here";
+            String recipe = "action/script/recipe is here";
 
             Repo repo1 = new Repo(name + "-Repo1");
             Repo repo2 = new Repo(name + "-Repo2");
@@ -65,11 +66,14 @@ public class BundleTest extends AbstractEJB3Test {
             q.setParameter("id", repo2.getId());
             assert q.getResultList().size() == 0 : "should not have repo2 mapping in the db yet";
 
-            BundleType bundleType = new BundleType(name + "-Type", createResourceType(em));
+            BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
+
+            Repo bundleRepo = new Repo(name + "-Bundle");
+            em.persist(bundleRepo);
             Bundle bundle = new Bundle(name + "-Bundle", bundleType);
+            bundle.setRepo(bundleRepo);
             em.persist(bundle);
-            BundleVersion bundleVersion = new BundleVersion(name, "1.0.0.BETA", bundle);
-            bundleVersion.setAction(action);
+            BundleVersion bundleVersion = new BundleVersion(name, "1.0.0.BETA", bundle, recipe);
             em.persist(bundleVersion);
             id = bundleVersion.getId();
             assert id > 0;
@@ -127,17 +131,20 @@ public class BundleTest extends AbstractEJB3Test {
             int id;
 
             String name = "BundleTest-testBundleVersion";
-            String action = "action/script/recipe is here";
+            String recipe = "action/script/recipe is here";
 
-            BundleType bundleType = new BundleType(name + "-Type", createResourceType(em));
+            Repo repo1 = new Repo(name + "-Repo1");
+            em.persist(repo1);
+
+            BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
             Bundle bundle = new Bundle(name + "-Bundle", bundleType);
+            bundle.setRepo(repo1);
             em.persist(bundle);
             id = bundle.getId();
             assert id > 0;
             assert bundle.getBundleType().getId() != 0 : "bundleType should have been cascade persisted too";
 
-            BundleVersion bv = new BundleVersion(name, "1.0.0.BETA", bundle);
-            bv.setAction(action);
+            BundleVersion bv = new BundleVersion(name, "1.0.0.BETA", bundle, recipe);
             Query q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
             q.setParameter("name", bv.getName());
             assert q.getResultList().size() == 0; // not in the db yet
@@ -148,6 +155,7 @@ public class BundleTest extends AbstractEJB3Test {
 
             q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
             q.setParameter("name", bv.getName());
+            q.setParameter("name", bv.getName());
             assert q.getResultList().size() == 1;
             assert ((BundleVersion) q.getSingleResult()).getName().equals(bv.getName());
 
@@ -156,7 +164,7 @@ public class BundleTest extends AbstractEJB3Test {
             assert bvFind.getId() == bv.getId();
             assert bvFind.getName().equals(bv.getName());
             assert bvFind.getVersion().equals(bv.getVersion());
-            assert bvFind.getAction().equals(bv.getAction());
+            assert bvFind.getRecipe().equals(bv.getRecipe());
             assert bvFind.getBundle().equals(bv.getBundle());
             assert bvFind.equals(bv);
             assert bvFind.hashCode() == bv.hashCode();
@@ -181,8 +189,7 @@ public class BundleTest extends AbstractEJB3Test {
 
             // clean up - delete our test entity
             em.close();
-            getTransactionManager().commit();
-            getTransactionManager().begin();
+
             em = getEntityManager();
             q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
             q.setParameter("name", bv.getName());
@@ -191,10 +198,8 @@ public class BundleTest extends AbstractEJB3Test {
             em.remove(doomed);
             assert q.getResultList().size() == 0 : "didn't remove the entity";
             em.close();
-            getTransactionManager().commit();
 
             // make sure we didn't delete the bundle - it should not be cascade deleted
-            getTransactionManager().begin();
             em = getEntityManager();
             q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
             q.setParameter("name", bundle.getName());
@@ -208,16 +213,12 @@ public class BundleTest extends AbstractEJB3Test {
 
             deleteResourceType(em, bundleType.getResourceType());
             em.close();
-            getTransactionManager().commit();
 
-            done = true;
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
         } finally {
-            if (!done) {
-                getTransactionManager().rollback();
-            }
+            getTransactionManager().rollback();
         }
     }
 
@@ -234,13 +235,19 @@ public class BundleTest extends AbstractEJB3Test {
             q.setParameter("name", name);
             assert q.getResultList().size() == 0; // not in the db yet
 
-            BundleType bundleType = new BundleType(name + "-Type", createResourceType(em));
-            Bundle b = new Bundle(name, bundleType);
+            BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
 
+            Repo bundleRepo = new Repo(name);
+            em.persist(bundleRepo);
+
+            Bundle b = new Bundle(name, bundleType);
+            b.setRepo(bundleRepo);
             em.persist(b);
             id = b.getId();
             assert id > 0;
-            assert b.getBundleType().getId() != 0 : "bundleType should have been cascade persisted too";
+            assert b.getBundleType().getId() != 0 : "bundleType should have been persisted independently";
+            assert b.getRepo().getId() != 0 : "bundle's repo should have been cascade persisted with the bundle";
+            assert name.equals(b.getRepo().getName()) : "bundle's repo should have same name as bundle";
 
             q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
             q.setParameter("name", name);
@@ -257,8 +264,7 @@ public class BundleTest extends AbstractEJB3Test {
 
             // clean up - delete our test entity
             em.close();
-            getTransactionManager().commit();
-            getTransactionManager().begin();
+
             em = getEntityManager();
             q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
             q.setParameter("name", b.getName());
@@ -267,10 +273,8 @@ public class BundleTest extends AbstractEJB3Test {
             em.remove(doomed);
             assert q.getResultList().size() == 0 : "didn't remove the entity";
             em.close();
-            getTransactionManager().commit();
 
             // make sure we didn't delete the bundle type - it should not be cascade deleted
-            getTransactionManager().begin();
             em = getEntityManager();
             q = em.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
             q.setParameter("name", bFind.getBundleType().getName());
@@ -281,16 +285,18 @@ public class BundleTest extends AbstractEJB3Test {
 
             deleteResourceType(em, bundleType.getResourceType());
             em.close();
-            getTransactionManager().commit();
 
-            done = true;
+            // make sure we didn't cascade delete the repo, it must also be deleted manually
+            em = getEntityManager();
+            q = em.createNamedQuery(Repo.QUERY_FIND_BY_NAME);
+            q.setParameter("name", bFind.getRepo().getName());
+            assert q.getResultList().size() == 1 : "didn't clean up test repo";
+            em.close();
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
         } finally {
-            if (!done) {
-                getTransactionManager().rollback();
-            }
+            getTransactionManager().rollback();
         }
     }
 
@@ -307,9 +313,8 @@ public class BundleTest extends AbstractEJB3Test {
             q.setParameter("name", name);
             assert q.getResultList().size() == 0; // not in the db yet
 
-            BundleType bt = new BundleType(name, createResourceType(em));
+            BundleType bt = createBundleType(em, name, createResourceType(em));
 
-            em.persist(bt);
             id = bt.getId();
             assert id > 0;
 
@@ -327,8 +332,7 @@ public class BundleTest extends AbstractEJB3Test {
 
             // clean up - delete our test entity
             em.close();
-            getTransactionManager().commit();
-            getTransactionManager().begin();
+
             em = getEntityManager();
             q = em.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
             q.setParameter("name", bt.getName());
@@ -339,15 +343,11 @@ public class BundleTest extends AbstractEJB3Test {
 
             deleteResourceType(em, bt.getResourceType());
             em.close();
-            getTransactionManager().commit();
-            done = true;
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
         } finally {
-            if (!done) {
-                getTransactionManager().rollback();
-            }
+            getTransactionManager().rollback();
         }
     }
 
@@ -355,6 +355,12 @@ public class BundleTest extends AbstractEJB3Test {
         ResourceType rt = new ResourceType("BundleTest", "BundleTestPlugin", ResourceCategory.PLATFORM, null);
         em.persist(rt);
         return rt;
+    }
+
+    private BundleType createBundleType(EntityManager em, String name, ResourceType rt) throws Exception {
+        BundleType bt = new BundleType(name, rt);
+        em.persist(bt);
+        return bt;
     }
 
     private ResourceType deleteResourceType(EntityManager em, ResourceType rt) {

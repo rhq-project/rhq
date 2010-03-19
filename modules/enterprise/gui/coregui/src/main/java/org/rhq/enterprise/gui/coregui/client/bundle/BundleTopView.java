@@ -18,29 +18,42 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle;
 
+import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.SectionStack;
+import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreationWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 
 /**
  * @author Greg Hinkle
  */
 public class BundleTopView extends HLayout {
 
+
+    public BundleTopView() {
+        setWidth100();
+        setHeight100();
+    }
+
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        IButton addButton = new IButton("New Bundle");
-        addButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                new BundleCreationWizard().startBundleWizard();
-            }
-        });
+        SectionStack sectionStack = new SectionStack();
+        sectionStack.setShowResizeBar(true);
+        sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
+        sectionStack.setWidth(250);
+        sectionStack.setHeight100();
 
-        addMember(addButton);
+        sectionStack.addSection(new SectionStackSection("Bundles"));
+
+        addMember(sectionStack);
+
+        addMember(new BundlesListView());
     }
 }

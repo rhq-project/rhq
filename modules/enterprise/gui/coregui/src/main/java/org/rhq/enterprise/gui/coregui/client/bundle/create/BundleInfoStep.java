@@ -21,8 +21,12 @@ package org.rhq.enterprise.gui.coregui.client.bundle.create;
 import java.util.ArrayList;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
+import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -35,6 +39,9 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
+/**
+ * @author John Mazzitelli
+ */
 public class BundleInfoStep implements WizardStep {
 
     private DynamicForm form;
@@ -52,81 +59,55 @@ public class BundleInfoStep implements WizardStep {
     public Canvas getCanvas() {
         if (form == null) {
             form = new DynamicForm();
+            form.setPadding(20);
             form.setWidth100();
             form.setNumCols(2);
-            form.setColWidths("50%", "*");
-
-            BundleVersion initialBundleVersion = wizard.getBundleVersion();
 
             nameTextItem = new TextItem("name", "Name");
             nameTextItem.setRequired(true);
-            if (initialBundleVersion == null) {
-                nameTextItem.setValue("");
-                nameTextItem.addChangedHandler(new ChangedHandler() {
-                    public void onChanged(ChangedEvent event) {
-                        Object value = event.getValue();
-                        if (value == null) {
-                            value = "";
-                        }
-                        wizard.setSubtitle(value.toString());
-                        wizard.setBundleName(value.toString());
-                        enableNextButtonWhenAppropriate();
-                    }
-                });
-            } else {
-                nameTextItem.setValue(initialBundleVersion.getName());
-                nameTextItem.setDisabled(true);
-            }
+            nameTextItem.setTitleAlign(Alignment.LEFT);
+            nameTextItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    String value = form.getValueAsString("name");
+                    wizard.setSubtitle(value);
+                }
+            });
+
 
             final TextItem previousVersionTextItem = new TextItem("previousVersion", "Previous Version");
-            if (initialBundleVersion == null) {
-                previousVersionTextItem.setVisible(Boolean.FALSE);
-            } else {
-                previousVersionTextItem.setValue(initialBundleVersion.getVersion());
-                previousVersionTextItem.setDisabled(true);
-            }
+            previousVersionTextItem.setTitleAlign(Alignment.LEFT);
 
             versionTextItem = new TextItem("version");
-            if (initialBundleVersion == null) {
-                versionTextItem.setTitle("Initial Version");
-                String versionSuggestion = "1.0";
-                versionTextItem.setValue(versionSuggestion);
-                wizard.setBundleVersionString(versionSuggestion);
-            } else {
-                versionTextItem.setTitle("New Version");
-                String versionSuggestion = autoIncrementVersion(initialBundleVersion.getVersion());
-                versionTextItem.setValue(versionSuggestion);
-                wizard.setBundleVersionString(versionSuggestion);
-            }
-            versionTextItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
-                    }
-                    wizard.setBundleVersionString(value.toString());
-                    enableNextButtonWhenAppropriate();
-                }
-            });
+            
+            versionTextItem.setTitleAlign(Alignment.LEFT);
 
             descriptionTextAreaItem = new TextAreaItem("description", "Description");
-            if (initialBundleVersion == null) {
-                descriptionTextAreaItem.setValue("");
-            } else {
-                descriptionTextAreaItem.setValue(initialBundleVersion.getDescription());
-            }
-            descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
-                    }
-                    wizard.setBundleDescription(value.toString());
-                    enableNextButtonWhenAppropriate();
-                }
-            });
+            descriptionTextAreaItem.setTitleOrientation(TitleOrientation.TOP);
+            descriptionTextAreaItem.setColSpan(2);
+            descriptionTextAreaItem.setWidth(300);
 
             form.setItems(nameTextItem, previousVersionTextItem, versionTextItem, descriptionTextAreaItem);
+
+
+            BundleVersion initialBundleVersion = wizard.getBundleVersion();
+            if (initialBundleVersion != null) {
+                form.setValue("name", initialBundleVersion.getName());
+                nameTextItem.setDisabled(true);
+
+                form.setValue("previousVersion", initialBundleVersion.getVersion());
+                previousVersionTextItem.setDisabled(true);
+
+                versionTextItem.setTitle("New Version");
+                String versionSuggestion = autoIncrementVersion(initialBundleVersion.getVersion());
+                form.setValue("version", versionSuggestion);
+
+                form.setValue("description", initialBundleVersion.getDescription());
+
+            } else {
+                previousVersionTextItem.setVisible(Boolean.FALSE);
+                versionTextItem.setTitle("Initial Version");
+                form.setValue("version", "1.0");
+            }
 
             if (wizard.getBundleType() == null) {
                 // TODO: we should get all bundle types in a drop down menu and let the user pick
@@ -134,7 +115,6 @@ public class BundleInfoStep implements WizardStep {
                 bundleServer.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
                     public void onSuccess(ArrayList<BundleType> result) {
                         wizard.setBundleType(result.get(0));
-                        enableNextButtonWhenAppropriate();
                     }
 
                     public void onFailure(Throwable caught) {
@@ -143,7 +123,6 @@ public class BundleInfoStep implements WizardStep {
                 });
             }
 
-            enableNextButtonWhenAppropriate();
         } else {
             if (wizard.getBundleVersion() != null) {
                 // we are traversing back to this step - don't allow changes if we've already created the bundle version
@@ -152,34 +131,37 @@ public class BundleInfoStep implements WizardStep {
                 descriptionTextAreaItem.setDisabled(Boolean.TRUE);
             }
         }
+
+
+        form.addItemChangedHandler(new ItemChangedHandler() {
+            public void onItemChanged(ItemChangedEvent itemChangedEvent) {
+                enableNextButtonWhenAppropriate();
+            }
+        });
+
         return form;
     }
 
     public boolean nextPage() {
-        boolean ok = form.validate();
-        return ok;
+        if (form.validate()) {
+            wizard.setBundleName(form.getValueAsString("name"));
+            wizard.setBundleVersionString(form.getValueAsString("version"));
+            wizard.setBundleDescription(form.getValueAsString("description"));
+
+            return true;
+        }
+        return false;
     }
 
     public String getName() {
         return "Provide Bundle Information";
     }
 
-    public boolean isNextEnabled() {
-        return isNotEmpty(this.wizard.getBundleName()) && isNotEmpty(this.wizard.getBundleVersionString())
-            && this.wizard.getBundleType() != null;
-    }
-
-    public boolean isPreviousEnabled() {
-        return false;
-    }
 
     private void enableNextButtonWhenAppropriate() {
-        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
+        this.wizard.getView().getNextButton().setDisabled(!(form.validate() && this.wizard.getBundleType() != null));
     }
 
-    private boolean isNotEmpty(String s) {
-        return (s != null && s.trim().length() > 0);
-    }
 
     private String autoIncrementVersion(String oldVersion) {
         String newVersion = "1.0";

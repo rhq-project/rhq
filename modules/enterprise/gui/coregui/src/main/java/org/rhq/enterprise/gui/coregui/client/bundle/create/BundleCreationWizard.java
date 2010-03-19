@@ -42,7 +42,7 @@ public class BundleCreationWizard extends AbstractBundleWizard {
         ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
         steps.add(new BundleInfoStep(this));
         steps.add(new BundleUploadRecipeStep(this));
-        steps.add(new BundleVerificationStep(this));
+//        steps.add(new BundleVerificationStep(this));
         steps.add(new BundleUploadDataStep(this));
         setSteps(steps);
     }

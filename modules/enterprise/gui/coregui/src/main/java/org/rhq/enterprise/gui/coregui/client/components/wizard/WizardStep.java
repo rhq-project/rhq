@@ -30,8 +30,4 @@ public interface WizardStep {
     boolean nextPage();
 
     String getName();
-
-    boolean isPreviousEnabled();
-
-    boolean isNextEnabled();
 }

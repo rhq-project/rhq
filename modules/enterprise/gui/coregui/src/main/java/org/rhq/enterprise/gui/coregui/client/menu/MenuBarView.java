@@ -147,7 +147,7 @@ public class MenuBarView extends VLayout {
             }
 
 
-            headerString.append("<td style=\"vertical-align: bottom; padding:5px; padding-left: 15px; padding-right: 15px;" + bg + "\">");
+            headerString.append("<td style=\"vertical-align: bottom; padding:5px; padding-left: 15px; padding-right: 15px;" + bg + "\"onclick=\"document.location='#" + section + "'\" >");
             headerString.append("<a class=\"" + styleClass + "\" href=\"#" + section + "\">" + section + "</a>");
             headerString.append("</td>\n");
 

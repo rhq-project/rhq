@@ -46,6 +46,8 @@ public class BundleTopView extends HLayout {
         sectionStack.setHeight100();
 
         sectionStack.addSection(new SectionStackSection("Bundles"));
+        sectionStack.addSection(new SectionStackSection("Repositories"));
+        sectionStack.addSection(new SectionStackSection("Providers"));
 
         addMember(sectionStack);
 

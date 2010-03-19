@@ -122,6 +122,7 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
         StaticTextItem detail = new StaticTextItem("detail","Detail");
         detail.setTitleOrientation(TitleOrientation.TOP);
         detail.setValue(message.detail);
+        detail.setColSpan(2);
 
         ButtonItem okButton = new ButtonItem("Ok","Ok");
         okButton.setColSpan(2);

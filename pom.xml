@@ -531,9 +531,8 @@
        </plugins>
      </pluginManagement>
 
+
     <plugins>
-
-
 
       <!-- Set the 'maven.version' property to the version of Maven being used,
            so we can include the Maven version in the MANIFEST.MF files of all
@@ -614,8 +613,9 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <executions>
+        <executions>       
           <execution>
+            <id>read-build-properties</id>
             <phase>process-resources</phase>
             <goals>
               <goal>read-project-properties</goal>

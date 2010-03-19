@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.create;
+package org.rhq.enterprise.gui.coregui.client.bundle;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,8 +24,6 @@ import java.util.List;
 
 import com.smartgwt.client.widgets.IButton;
 
-import org.rhq.core.domain.bundle.BundleType;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
@@ -37,14 +35,6 @@ public abstract class AbstractBundleWizard implements Wizard {
     private String windowTitle = "";
     private String title = "";
     private String subtitle = "";
-
-    // the things we build up in the wizard
-    private BundleType bundleType;
-    private String bundleName;
-    private String bundleVersionString;
-    private String bundleDescription;
-    private String recipe;
-    private BundleVersion bundleVersion;
 
     public String getWindowTitle() {
         return windowTitle;
@@ -92,51 +82,4 @@ public abstract class AbstractBundleWizard implements Wizard {
         return view;
     }
 
-    public BundleType getBundleType() {
-        return bundleType;
-    }
-
-    public void setBundleType(BundleType bundleType) {
-        this.bundleType = bundleType;
-    }
-
-    public String getBundleName() {
-        return bundleName;
-    }
-
-    public void setBundleName(String bundleName) {
-        this.bundleName = bundleName;
-    }
-
-    public String getBundleVersionString() {
-        return bundleVersionString;
-    }
-
-    public void setBundleVersionString(String bundleVersionString) {
-        this.bundleVersionString = bundleVersionString;
-    }
-
-    public String getBundleDescription() {
-        return bundleDescription;
-    }
-
-    public void setBundleDescription(String desc) {
-        this.bundleDescription = desc;
-    }
-
-    public String getRecipe() {
-        return recipe;
-    }
-
-    public void setRecipe(String recipe) {
-        this.recipe = recipe;
-    }
-
-    public BundleVersion getBundleVersion() {
-        return bundleVersion;
-    }
-
-    public void setBundleVersion(BundleVersion bv) {
-        this.bundleVersion = bv;
-    }
 }

@@ -42,12 +42,12 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 public class BundleUploadDataStep implements WizardStep {
 
-    private final BundleCreationWizard wizard;
+    private final BundleCreateWizard wizard;
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private DynamicForm form;
     private Map<String, Boolean> allFilesStatus;
 
-    public BundleUploadDataStep(BundleCreationWizard bundleCreationWizard) {
+    public BundleUploadDataStep(BundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 

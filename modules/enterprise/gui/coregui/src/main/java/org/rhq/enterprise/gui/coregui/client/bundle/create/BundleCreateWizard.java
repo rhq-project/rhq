@@ -27,9 +27,9 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
-public class BundleCreationWizard extends AbstractBundleWizard {
+public class BundleCreateWizard extends AbstractBundleCreationWizard {
 
-    public BundleCreationWizard() {
+    public BundleCreateWizard() {
         setWindowTitle("Bundle Creation Wizard");
         setTitle("Create Bundle");
 

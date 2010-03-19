@@ -36,12 +36,12 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 public class BundleVerificationStep implements WizardStep {
 
-    private final BundleCreationWizard wizard;
+    private final BundleCreateWizard wizard;
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private VLayout canvas;
 
-    public BundleVerificationStep(BundleCreationWizard bundleCreationWizard) {
+    public BundleVerificationStep(BundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 

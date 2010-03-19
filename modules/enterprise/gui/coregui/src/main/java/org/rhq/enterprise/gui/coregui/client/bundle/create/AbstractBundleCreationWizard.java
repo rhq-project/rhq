@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
 
 public abstract class AbstractBundleCreationWizard extends AbstractBundleWizard {
 

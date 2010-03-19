@@ -37,9 +37,9 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 public class BundleUploadRecipeStep implements WizardStep {
 
     private DynamicCallbackForm form;
-    private final BundleCreationWizard wizard;
+    private final BundleCreateWizard wizard;
 
-    public BundleUploadRecipeStep(BundleCreationWizard bundleCreationWizard) {
+    public BundleUploadRecipeStep(BundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 

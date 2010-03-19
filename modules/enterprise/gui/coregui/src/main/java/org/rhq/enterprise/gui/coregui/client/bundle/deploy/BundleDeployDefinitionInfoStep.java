@@ -16,11 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.create;
+package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
-import java.util.ArrayList;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
@@ -28,21 +25,21 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
-import org.rhq.core.domain.bundle.BundleType;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
-public class BundleInfoStep implements WizardStep {
+public class BundleDeployDefinitionInfoStep implements WizardStep {
 
     private DynamicForm form;
-    private final BundleCreateWizard wizard;
+    private final BundleDeployWizard wizard;
 
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+    // private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
-    public BundleInfoStep(BundleCreateWizard bundleCreationWizard) {
-        this.wizard = bundleCreationWizard;
+    public BundleDeployDefinitionInfoStep(BundleDeployWizard bundleDeployWizard) {
+        this.wizard = bundleDeployWizard;
+    }
+
+    public String getName() {
+        return "Provide Deploy Information";
     }
 
     public Canvas getCanvas() {
@@ -61,21 +58,7 @@ public class BundleInfoStep implements WizardStep {
                         value = "";
                     }
                     wizard.setSubtitle(value.toString());
-                    wizard.setBundleName(value.toString());
-                    enableNextButtonWhenAppropriate();
-                }
-            });
-
-            final TextItem versionTextItem = new TextItem("version", "Initial Version");
-            versionTextItem.setValue("1.0");
-            wizard.setBundleVersionString("1.0");
-            versionTextItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
-                    }
-                    wizard.setBundleVersionString(value.toString());
+                    wizard.setName(value.toString());
                     enableNextButtonWhenAppropriate();
                 }
             });
@@ -87,26 +70,14 @@ public class BundleInfoStep implements WizardStep {
                     if (value == null) {
                         value = "";
                     }
-                    wizard.setBundleDescription(value.toString());
+                    wizard.setDescription(value.toString());
                     enableNextButtonWhenAppropriate();
                 }
             });
 
-            form.setItems(nameTextItem, versionTextItem, descriptionTextAreaItem);
-
-            // TODO: we should get all bundle types in a drop down menu and let the user pick
-            //       for now assume we always get one (the filetemplate one) and use it
-            bundleServer.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
-                public void onSuccess(ArrayList<BundleType> result) {
-                    wizard.setBundleType(result.get(0));
-                    enableNextButtonWhenAppropriate();
-                }
-
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("No bundle types available", caught);
-                }
-            });
+            form.setItems(nameTextItem, descriptionTextAreaItem);
         }
+
         return form;
     }
 
@@ -114,13 +85,8 @@ public class BundleInfoStep implements WizardStep {
         return form.validate();
     }
 
-    public String getName() {
-        return "Provide Bundle Information";
-    }
-
     public boolean isNextEnabled() {
-        return isNotEmpty(this.wizard.getBundleName()) && isNotEmpty(this.wizard.getBundleVersionString())
-            && this.wizard.getBundleType() != null;
+        return isNotEmpty(this.wizard.getName());
     }
 
     public boolean isPreviousEnabled() {

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
@@ -55,6 +56,8 @@ public class BundleUploadDataStep implements WizardStep {
         form = new DynamicForm();
 
         final VLayout layout = new VLayout();
+        layout.setMargin(Integer.valueOf(20));
+        layout.setAlign(Alignment.CENTER);
 
         bundleServer.getAllBundleVersionFilenames(this.wizard.getBundleVersion().getId(),
             new AsyncCallback<HashMap<String, Boolean>>() {

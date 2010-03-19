@@ -18,37 +18,42 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle;
 
+import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.SectionStack;
+import com.smartgwt.client.widgets.layout.SectionStackSection;
 
-import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreationWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 
 /**
  * @author Greg Hinkle
  */
 public class BundleTopView extends HLayout {
 
+
+    public BundleTopView() {
+        setWidth100();
+        setHeight100();
+    }
+
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        IButton addBundleButton = new IButton("New Bundle");
-        addBundleButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                new BundleDeployWizard().startBundleWizard();
-            }
-        });
+        SectionStack sectionStack = new SectionStack();
+        sectionStack.setShowResizeBar(true);
+        sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
+        sectionStack.setWidth(250);
+        sectionStack.setHeight100();
 
-        IButton addDeploymentButton = new IButton("New Deployment");
-        addDeploymentButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                new BundleDeployWizard().startBundleWizard();
-            }
-        });
+        sectionStack.addSection(new SectionStackSection("Bundles"));
 
-        addMember(addBundleButton);
-        addMember(addDeploymentButton);
+        addMember(sectionStack);
+
+        addMember(new BundlesListView());
     }
 }

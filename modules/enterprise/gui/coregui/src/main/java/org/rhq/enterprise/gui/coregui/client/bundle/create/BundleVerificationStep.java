@@ -46,6 +46,11 @@ public class BundleVerificationStep implements WizardStep {
     }
 
     public Canvas getCanvas() {
+        if (canvas != null && wizard.getBundleVersion() != null) {
+            // if we've already got a persisted bundle version, don't verify it again or try to create it again
+            return canvas;
+        }
+
         canvas = new VLayout();
         canvas.setWidth100();
         canvas.setHeight100();
@@ -62,27 +67,6 @@ public class BundleVerificationStep implements WizardStep {
         canvas.addMember(verifyingImage);
         canvas.addMember(verifiedMessage);
 
-        bundleServer.createBundleAndBundleVersion(this.wizard.getBundleName(), this.wizard.getBundleType().getId(),
-            this.wizard.getBundleName(), this.wizard.getBundleVersionString(), this.wizard.getBundleDescription(),
-            this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
-                public void onSuccess(BundleVersion result) {
-                    verifyingImage.setSrc("/images/status_complete.gif");
-                    verifiedMessage.setText("Verified!");
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("Created bundle [" + result.getName() + "] version [" + result.getVersion() + "]",
-                            Severity.Info));
-                    wizard.setBundleVersion(result);
-                    enableNextButtonWhenAppropriate();
-                }
-
-                public void onFailure(Throwable caught) {
-                    verifyingImage.setSrc("/images/status_error.gif");
-                    verifiedMessage.setText("Failed!");
-                    CoreGUI.getErrorHandler().handleError("Failed to create bundle: " + caught.getMessage(), caught);
-                    wizard.setBundleVersion(null);
-                    enableNextButtonWhenAppropriate();
-                }
-            });
 
         return canvas;
     }

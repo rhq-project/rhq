@@ -43,7 +43,7 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
     private String name;
 
     public BundleFileUploadForm(BundleVersion bundleVersion, String name) {
-        super("bundleFileUpload");
+        super(name);
         this.bundleVersion = bundleVersion;
         this.name = name;
 

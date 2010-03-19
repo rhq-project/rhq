@@ -78,6 +78,8 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
         bundleFileNames.addAll(deployFiles.keySet());
         Set<String> scriptFiles = recipeContext.getScriptFiles();
         bundleFileNames.addAll(scriptFiles);
+        Set<String> files = recipeContext.getFiles().keySet();
+        bundleFileNames.addAll(files);
 
         ConfigurationDefinition configDef = null;
         if (recipeContext.getReplacementVariables() != null) {

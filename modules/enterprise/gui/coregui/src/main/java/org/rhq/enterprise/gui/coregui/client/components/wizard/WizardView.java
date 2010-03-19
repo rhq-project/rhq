@@ -70,6 +70,7 @@ public class WizardView extends VLayout {
 
         titleBar = new HLayout(30);
         titleBar.setHeight(50);
+        titleBar.setPadding(10);
         titleBar.setBackgroundColor("#F0F0F0");
         titleLabel = new HTMLFlow();
         refreshTitleLabelContents();
@@ -85,6 +86,7 @@ public class WizardView extends VLayout {
         stepTitleLabel = new Label();
         stepTitleLabel.setWidth100();
         stepTitleLabel.setHeight(40);
+        stepTitleLabel.setPadding(20);
         stepTitleLabel.setStyleName("HeaderLabel");
 
         addMember(stepTitleLabel);
@@ -92,6 +94,7 @@ public class WizardView extends VLayout {
         contentLayout = new HLayout();
         contentLayout.setHeight("*");
         contentLayout.setWidth100();
+        contentLayout.setPadding(10);
 
         addMember(contentLayout);
 
@@ -113,7 +116,7 @@ public class WizardView extends VLayout {
      */
     public void refreshTitleLabelContents() {
         this.titleLabel.setContents("<span class=\"HeaderLabel\">" + wizard.getTitle() + "</span><br/>"
-            + (wizard.getSubtitle() != null ? wizard.getSubtitle() : ""));
+                + (wizard.getSubtitle() != null ? wizard.getSubtitle() : ""));
     }
 
     private void setupButtons() {
@@ -158,18 +161,10 @@ public class WizardView extends VLayout {
 
         stepTitleLabel.setContents(step.getName());
 
-        if (stepIndex == 0) {
-            previousButton.setDisabled(true);
-        } else {
-            previousButton.setDisabled(!step.isPreviousEnabled());
-        }
+        previousButton.setDisabled(stepIndex == 0);
 
         boolean last = (stepIndex == (wizard.getSteps().size() - 1));
-        if (last) {
-            nextButton.setDisabled(true);
-        } else {
-            nextButton.setDisabled(!step.isNextEnabled());
-        }
+        nextButton.setDisabled(last);
 
         for (IButton button : customButtons) {
             buttonBar.removeMember(button);
@@ -230,5 +225,9 @@ public class WizardView extends VLayout {
 
     public ArrayList<IButton> getCustomButtons() {
         return customButtons;
+    }
+
+    public void incrementStep() {
+        setStep(currentStep + 1);
     }
 }

@@ -22,7 +22,7 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
 
-public abstract class AbstractBundleCreationWizard extends AbstractBundleWizard {
+public abstract class AbstractBundleCreateWizard extends AbstractBundleWizard {
 
     // the things we build up in the wizard
     private BundleType bundleType;

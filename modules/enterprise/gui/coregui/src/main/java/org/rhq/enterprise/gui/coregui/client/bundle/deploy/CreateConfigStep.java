@@ -18,12 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
-import java.util.List;
-
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
 
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
@@ -31,7 +27,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 public class CreateConfigStep implements WizardStep {
 
-    private DynamicForm form;
     private final BundleDeployWizard wizard;
     // private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private ConfigurationEditor editor;
@@ -59,7 +54,8 @@ public class CreateConfigStep implements WizardStep {
     }
 
     public boolean nextPage() {
-        return form.validate();
+        wizard.setConfig(editor.getConfiguration());
+        return true;
     }
 
     public boolean isPreviousEnabled() {
@@ -67,13 +63,6 @@ public class CreateConfigStep implements WizardStep {
     }
 
     public boolean isNextEnabled() {
-        wizard.setConfig(editor.getConfiguration());
-        List<String> messages = ConfigurationUtility.validateConfiguration(wizard.getConfig(), wizard
-            .getBundleVersion().getConfigurationDefinition());
-        return messages.isEmpty();
-    }
-
-    public Configuration getConfiguration() {
-        return editor.getConfiguration();
+        return true;
     }
 }

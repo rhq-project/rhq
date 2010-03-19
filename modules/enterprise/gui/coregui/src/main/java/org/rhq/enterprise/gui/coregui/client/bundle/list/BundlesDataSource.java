@@ -42,15 +42,14 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
 
     public BundlesDataSource() {
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id","ID");
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
         idField.setPrimaryKey(true);
         addField(idField);
 
-
-        DataSourceTextField nameField = new DataSourceTextField("name","Name");
+        DataSourceTextField nameField = new DataSourceTextField("name", "Name");
         addField(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description","Description");
+        DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
         addField(descriptionField);
 
     }
@@ -63,9 +62,9 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
 
         bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load bundle data",caught);
+                CoreGUI.getErrorHandler().handleError("Failed to load bundle data", caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(),response);
+                processResponse(request.getRequestId(), response);
             }
 
             public void onSuccess(PageList<Bundle> result) {
@@ -79,18 +78,20 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
 
     @Override
     public Bundle copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override
     public ListGridRecord copyValues(Bundle from) {
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute("id",from.getId());
-        record.setAttribute("name",from.getName());
-        record.setAttribute("description",from.getDescription());
-        record.setAttribute("bundleType",from.getBundleType());
-        record.setAttribute("repos",from.getRepo());
+        record.setAttribute("id", from.getId());
+        record.setAttribute("name", from.getName());
+        record.setAttribute("description", from.getDescription());
+        record.setAttribute("bundleType", from.getBundleType());
+        record.setAttribute("repos", from.getRepo());
+
+        record.setAttribute("object", from);
 
         return record;
 

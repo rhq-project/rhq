@@ -39,17 +39,19 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 public class SelectBundleVersionStep implements WizardStep {
 
-    private DynamicForm form;
     private final BundleDeployWizard wizard;
-
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+    private DynamicForm form;
+    private PageList<BundleVersion> bundleVersions = null;
+    private SelectItem selectVersion = new SelectItem("selectVersion", "Deployment Version");
+    private LinkedHashMap<String, Object> selectVersionValues = new LinkedHashMap<String, Object>();;
 
     public SelectBundleVersionStep(BundleDeployWizard bundleDeployWizard) {
         this.wizard = bundleDeployWizard;
     }
 
     public String getName() {
-        return "Select Version of Bundle to Deploy";
+        return "Select Version 1";
     }
 
     public Canvas getCanvas() {
@@ -59,20 +61,36 @@ public class SelectBundleVersionStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            // for now, get all the bundle versions for the bundle
+            // for now, get all the bundle versions for the bundle            
+            selectVersion.setRequired(true);
+            //selectVersion.setWidth(150);
+            selectVersion.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    for (BundleVersion bundleVersion : bundleVersions) {
+                        if (bundleVersion.getVersion().equals(event.getValue())) {
+                            wizard.setBundleVersion(bundleVersion);
+                            break;
+                        }
+                    }
+                    enableNextButtonWhenAppropriate();
+                }
+            });
+
             final BundleVersionCriteria criteria = new BundleVersionCriteria();
             criteria.addFilterBundleId(wizard.getBundle().getId());
             criteria.fetchConfigurationDefinition(true);
-            final LinkedHashMap<String, BundleVersion> bundleVersions = new LinkedHashMap<String, BundleVersion>();
-
             bundleServer.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
                 public void onSuccess(PageList<BundleVersion> result) {
-                    if (result.isEmpty()) {
+                    bundleVersions = result;
+                    if (bundleVersions.isEmpty()) {
                         onFailure(new IllegalArgumentException("No bundle versions defined for bundle."));
                     }
                     for (BundleVersion bundleVersion : result) {
-                        bundleVersions.put(bundleVersion.getVersion(), bundleVersion);
+                        selectVersionValues.put(bundleVersion.getVersion(), bundleVersion.getVersion());
                     }
+                    selectVersion.setValueMap(selectVersionValues);
+                    selectVersion.redraw();
+                    form.markForRedraw();
                 }
 
                 public void onFailure(Throwable caught) {
@@ -80,18 +98,7 @@ public class SelectBundleVersionStep implements WizardStep {
                 }
             });
 
-            final SelectItem selectBundle = new SelectItem("selectBundle", "Deployment Bundle");
-            selectBundle.setRequired(true);
-            selectBundle.setWidth(150);
-            selectBundle.setValueMap(bundleVersions);
-            selectBundle.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    wizard.setBundleVersion((BundleVersion) event.getValue());
-                    enableNextButtonWhenAppropriate();
-                }
-            });
-
-            form.setItems(selectBundle);
+            form.setItems(selectVersion);
         }
 
         return form;

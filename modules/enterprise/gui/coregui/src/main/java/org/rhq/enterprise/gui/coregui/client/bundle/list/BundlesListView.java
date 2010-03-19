@@ -23,6 +23,7 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreationWizard;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -58,8 +59,27 @@ public class BundlesListView extends VLayout {
                     }
                 });
 
+        table.addTableAction("Deploy", Table.SelectionEnablement.SINGLE, null,
+                new TableAction() {
+                    public void executeAction(ListGridRecord[] selection) {
+                        // TODO: Implement this method.
+                    }
+                });
+
+        table.addTableAction("Delete", Table.SelectionEnablement.ANY, "Are you sure you want to delete # bundles?",
+                new TableAction() {
+                    public void executeAction(ListGridRecord[] selection) {
+                        // TODO: Implement this method.
+                        Bundle bundle = (Bundle) selection[0].getAttributeAsObject("entity");
+                        bundle.getId();
+                        
+                    }
+                });
 
 
         addMember(table);
+
+
+        
     }
 }

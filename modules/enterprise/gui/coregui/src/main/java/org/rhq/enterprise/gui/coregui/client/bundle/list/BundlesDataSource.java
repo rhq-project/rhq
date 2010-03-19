@@ -46,7 +46,6 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
         idField.setPrimaryKey(true);
         addField(idField);
 
-
         DataSourceTextField nameField = new DataSourceTextField("name","Name");
         addField(nameField);
 
@@ -91,6 +90,8 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
         record.setAttribute("description",from.getDescription());
         record.setAttribute("bundleType",from.getBundleType());
         record.setAttribute("repos",from.getRepo());
+
+        record.setAttribute("entity", from);
 
         return record;
 

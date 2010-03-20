@@ -96,17 +96,21 @@ a:hover {
 
 }
 
-A.TopSectionLink {
+.TopSectionLink, .topsectionlinkselected {
+    vertical-align: bottom;
+    padding:5px;
+    padding-left: 15px;
+    padding-right: 15px;
+
+    cursor: pointer;
     font-size: 10pt;
     font-weight: bold;
     text-decoration: none;
-    color: black;
+    color: #4A5D75;
 }
 
-A.TopSectionLinkSelected {
-    font-size: 10pt;
-    font-weight: bold;
-    text-decoration: none;
+.TopSectionLinkSelected {
+    background-image: url('images/header/header_bg_selected.png');
     color: white;
 }
 

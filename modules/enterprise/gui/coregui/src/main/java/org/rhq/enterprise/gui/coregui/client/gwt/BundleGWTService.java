@@ -24,24 +24,37 @@ import java.util.HashMap;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 
 public interface BundleGWTService extends RemoteService {
-    ArrayList<BundleType> getAllBundleTypes();
-
-    PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception;
 
     Bundle createBundle(String name, int bundleTypeId) throws Exception;
-
-    BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
 
     BundleVersion createBundleAndBundleVersion(String bundleName, int bundleTypeId, String name, String version,
         String description, String recipe) throws Exception;
 
-    HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception;
+    BundleDeployDefinition createBundleDeployDefinition(int bundleVersionId, String name, String description,
+        Configuration configuration, boolean enforcePolicy, int enforcementInterval, boolean pinToBundle)
+        throws Exception;
+
+    BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
 
     void deleteBundleVersion(int bundleVersionId);
+
+    PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception;
+
+    PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) throws Exception;
+
+    HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception;
+
+    ArrayList<BundleType> getAllBundleTypes();
+
+    BundleDeployment scheduleBundleDeployment(int bundleDeployDefinitionId, int resourceId) throws Exception;
 }

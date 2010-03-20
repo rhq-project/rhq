@@ -43,11 +43,11 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 public class BundleUploadRecipeStep implements WizardStep {
 
     private DynamicCallbackForm form;
-    private final AbstractBundleWizard wizard;
+    private final AbstractBundleCreateWizard wizard;
     private TextAreaItem recipe;
     private CanvasItem validatingItem;
 
-    public BundleUploadRecipeStep(AbstractBundleWizard bundleCreationWizard) {
+    public BundleUploadRecipeStep(AbstractBundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 

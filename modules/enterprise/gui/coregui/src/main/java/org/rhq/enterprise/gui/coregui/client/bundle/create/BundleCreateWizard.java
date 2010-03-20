@@ -33,9 +33,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
-public class BundleCreationWizard extends AbstractBundleWizard {
+public class BundleCreateWizard extends AbstractBundleCreateWizard {
 
-    public BundleCreationWizard() {
+    public BundleCreateWizard() {
         setWindowTitle("Bundle Creation Wizard");
         setTitle("Create Bundle");
 

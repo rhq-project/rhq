@@ -43,14 +43,14 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 public class BundleInfoStep implements WizardStep {
 
     private DynamicForm form;
-    private final AbstractBundleWizard wizard;
+    private final AbstractBundleCreateWizard wizard;
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private TextItem nameTextItem;
     private TextItem versionTextItem;
     private TextAreaItem descriptionTextAreaItem;
 
-    public BundleInfoStep(AbstractBundleWizard bundleCreationWizard) {
+    public BundleInfoStep(AbstractBundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 

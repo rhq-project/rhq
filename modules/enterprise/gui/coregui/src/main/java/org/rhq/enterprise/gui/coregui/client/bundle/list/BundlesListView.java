@@ -24,7 +24,8 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreationWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreateWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleUpdateWizard;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -49,9 +50,10 @@ public class BundlesListView extends VLayout {
         table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
         table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
-        table.addTableAction("Create New Bundle", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+        table.addTableAction("Create Bundle", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                new BundleCreationWizard().startBundleWizard();
+                new BundleCreateWizard().startBundleWizard();
+
             }
         });
 
@@ -63,23 +65,12 @@ public class BundlesListView extends VLayout {
             }
         });
 
-        table.addTableAction("Deploy", Table.SelectionEnablement.SINGLE, null, new TableAction() {
+        table.addTableAction("Deploy Selected Bundle", Table.SelectionEnablement.SINGLE, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                // TODO: Implement this method.
+                new BundleDeployWizard((Bundle) selection[0].getAttributeAsObject("object")).startBundleWizard();
             }
         });
 
-        table.addTableAction("Delete", Table.SelectionEnablement.ANY, "Are you sure you want to delete # bundles?",
-            new TableAction() {
-                public void executeAction(ListGridRecord[] selection) {
-                    // TODO: Implement this method.
-                    Bundle bundle = (Bundle) selection[0].getAttributeAsObject("entity");
-                    bundle.getId();
-
-                }
-            });
-
         addMember(table);
-
     }
 }

@@ -33,7 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
-public class BundleUpdateWizard extends AbstractBundleWizard {
+public class BundleUpdateWizard extends AbstractBundleCreateWizard {
 
     public BundleUpdateWizard(BundleVersion bv) {
         setWindowTitle("Bundle Update Wizard");

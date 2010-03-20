@@ -542,7 +542,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             // with the bundle resource type
             ResourceType resourceType = new ResourceType(TEST_PREFIX + "-platform-" + System.currentTimeMillis(),
                 "test", ResourceCategory.PLATFORM, null);
-
             em.persist(resourceType);
 
             Agent agent = new Agent(TEST_PREFIX + "-testagent", "testaddress", 1, "", "testtoken");
@@ -550,6 +549,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             em.flush();
 
             resource = new Resource("reskey" + System.currentTimeMillis(), TEST_PREFIX + "-resname", resourceType);
+            resource.setUuid("" + System.currentTimeMillis());
             resource.setInventoryStatus(InventoryStatus.COMMITTED);
             resource.setAgent(agent);
             em.persist(resource);

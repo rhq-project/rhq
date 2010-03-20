@@ -25,8 +25,6 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
-import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -45,14 +43,14 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 public class BundleInfoStep implements WizardStep {
 
     private DynamicForm form;
-    private final BundleCreationWizard wizard;
+    private final AbstractBundleWizard wizard;
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private TextItem nameTextItem;
     private TextItem versionTextItem;
     private TextAreaItem descriptionTextAreaItem;
 
-    public BundleInfoStep(BundleCreationWizard bundleCreationWizard) {
+    public BundleInfoStep(AbstractBundleWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 
@@ -68,17 +66,16 @@ public class BundleInfoStep implements WizardStep {
             nameTextItem.setTitleAlign(Alignment.LEFT);
             nameTextItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
-                    String value = form.getValueAsString("name");
+                    String value = getValueAsString(event.getValue());
                     wizard.setSubtitle(value);
                 }
             });
-
 
             final TextItem previousVersionTextItem = new TextItem("previousVersion", "Previous Version");
             previousVersionTextItem.setTitleAlign(Alignment.LEFT);
 
             versionTextItem = new TextItem("version");
-            
+            versionTextItem.setRequired(true);
             versionTextItem.setTitleAlign(Alignment.LEFT);
 
             descriptionTextAreaItem = new TextAreaItem("description", "Description");
@@ -88,25 +85,25 @@ public class BundleInfoStep implements WizardStep {
 
             form.setItems(nameTextItem, previousVersionTextItem, versionTextItem, descriptionTextAreaItem);
 
-
             BundleVersion initialBundleVersion = wizard.getBundleVersion();
             if (initialBundleVersion != null) {
-                form.setValue("name", initialBundleVersion.getName());
+                nameTextItem.setValue(initialBundleVersion.getName());
                 nameTextItem.setDisabled(true);
+                wizard.setSubtitle(initialBundleVersion.getName());
 
-                form.setValue("previousVersion", initialBundleVersion.getVersion());
+                previousVersionTextItem.setValue(initialBundleVersion.getVersion());
                 previousVersionTextItem.setDisabled(true);
 
                 versionTextItem.setTitle("New Version");
                 String versionSuggestion = autoIncrementVersion(initialBundleVersion.getVersion());
-                form.setValue("version", versionSuggestion);
+                versionTextItem.setValue(versionSuggestion);
 
-                form.setValue("description", initialBundleVersion.getDescription());
+                descriptionTextAreaItem.setValue(initialBundleVersion.getDescription());
 
             } else {
                 previousVersionTextItem.setVisible(Boolean.FALSE);
                 versionTextItem.setTitle("Initial Version");
-                form.setValue("version", "1.0");
+                versionTextItem.setValue("1.0");
             }
 
             if (wizard.getBundleType() == null) {
@@ -132,22 +129,14 @@ public class BundleInfoStep implements WizardStep {
             }
         }
 
-
-        form.addItemChangedHandler(new ItemChangedHandler() {
-            public void onItemChanged(ItemChangedEvent itemChangedEvent) {
-                enableNextButtonWhenAppropriate();
-            }
-        });
-
         return form;
     }
 
     public boolean nextPage() {
-        if (form.validate()) {
-            wizard.setBundleName(form.getValueAsString("name"));
-            wizard.setBundleVersionString(form.getValueAsString("version"));
-            wizard.setBundleDescription(form.getValueAsString("description"));
-
+        if (form.validate() && this.wizard.getBundleType() != null) {
+            wizard.setBundleName(getValueAsString(nameTextItem.getValue()));
+            wizard.setBundleVersionString(getValueAsString(versionTextItem.getValue()));
+            wizard.setBundleDescription(getValueAsString(descriptionTextAreaItem.getValue()));
             return true;
         }
         return false;
@@ -156,12 +145,6 @@ public class BundleInfoStep implements WizardStep {
     public String getName() {
         return "Provide Bundle Information";
     }
-
-
-    private void enableNextButtonWhenAppropriate() {
-        this.wizard.getView().getNextButton().setDisabled(!(form.validate() && this.wizard.getBundleType() != null));
-    }
-
 
     private String autoIncrementVersion(String oldVersion) {
         String newVersion = "1.0";
@@ -176,5 +159,9 @@ public class BundleInfoStep implements WizardStep {
             }
         }
         return newVersion;
+    }
+
+    private String getValueAsString(Object obj) {
+        return (obj != null) ? obj.toString() : "";
     }
 }

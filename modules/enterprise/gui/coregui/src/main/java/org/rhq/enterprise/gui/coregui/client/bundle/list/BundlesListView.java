@@ -25,6 +25,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreationWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleUpdateWizard;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
@@ -33,11 +34,9 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
  */
 public class BundlesListView extends VLayout {
 
-
     @Override
     protected void onDraw() {
         super.onDraw();
-
 
         Table table = new Table("Bundles");
 
@@ -49,37 +48,38 @@ public class BundlesListView extends VLayout {
 
         table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
         table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
-        
 
-        table.addTableAction("Create Bundle", Table.SelectionEnablement.ALWAYS, null,
-                new TableAction() {
-                    public void executeAction(ListGridRecord[] selection) {
-                        new BundleCreationWizard().startBundleWizard();
-                        
-                    }
-                });
+        table.addTableAction("Create New Bundle", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                new BundleCreationWizard().startBundleWizard();
+            }
+        });
 
-        table.addTableAction("Deploy", Table.SelectionEnablement.SINGLE, null,
-                new TableAction() {
-                    public void executeAction(ListGridRecord[] selection) {
-                        // TODO: Implement this method.
-                    }
-                });
+        table.addTableAction("Update Bundle", Table.SelectionEnablement.SINGLE, null, new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                Bundle bundle = (Bundle) selection[0].getAttributeAsObject("entity");
+                BundleUpdateWizard bundleUpdateWizard = new BundleUpdateWizard(null);
+                bundleUpdateWizard.startBundleWizard();
+            }
+        });
+
+        table.addTableAction("Deploy", Table.SelectionEnablement.SINGLE, null, new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                // TODO: Implement this method.
+            }
+        });
 
         table.addTableAction("Delete", Table.SelectionEnablement.ANY, "Are you sure you want to delete # bundles?",
-                new TableAction() {
-                    public void executeAction(ListGridRecord[] selection) {
-                        // TODO: Implement this method.
-                        Bundle bundle = (Bundle) selection[0].getAttributeAsObject("entity");
-                        bundle.getId();
-                        
-                    }
-                });
+            new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    // TODO: Implement this method.
+                    Bundle bundle = (Bundle) selection[0].getAttributeAsObject("entity");
+                    bundle.getId();
 
+                }
+            });
 
         addMember(table);
 
-
-        
     }
 }

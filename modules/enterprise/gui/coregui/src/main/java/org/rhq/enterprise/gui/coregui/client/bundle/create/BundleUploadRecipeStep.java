@@ -43,10 +43,11 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 public class BundleUploadRecipeStep implements WizardStep {
 
     private DynamicCallbackForm form;
-    private final BundleCreationWizard wizard;
+    private final AbstractBundleWizard wizard;
     private TextAreaItem recipe;
+    private CanvasItem validatingItem;
 
-    public BundleUploadRecipeStep(BundleCreationWizard bundleCreationWizard) {
+    public BundleUploadRecipeStep(AbstractBundleWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 
@@ -57,21 +58,21 @@ public class BundleUploadRecipeStep implements WizardStep {
             form.setMargin(Integer.valueOf(20));
             form.setShowInlineErrors(false);
 
-
             final LinkItem showUpload = new LinkItem("showUpload");
             showUpload.setValue("Click To Upload A Recipe File");
             showUpload.setShowTitle(false);
 
             final CanvasItem upload = new CanvasItem("upload");
             upload.setShowTitle(false);
+            upload.setVisible(false);
 
             final TextFileRetrieverForm textFileRetrieverForm = new TextFileRetrieverForm();
             upload.setCanvas(textFileRetrieverForm);
 
             showUpload.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    form.hideItem("showUpload");
-                    form.showItem("upload");
+                    form.hideItem(showUpload.getName());
+                    form.showItem(upload.getName());
                 }
             });
 
@@ -82,24 +83,21 @@ public class BundleUploadRecipeStep implements WizardStep {
             recipe.setWidth("*");
             recipe.setHeight(220);
 
-
             textFileRetrieverForm.addFormHandler(new DynamicFormHandler() {
                 public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                     wizard.setRecipe(event.getResults());
                     recipe.setValue(event.getResults());
                     textFileRetrieverForm.retrievalStatus(true);
-                    form.showItem("showUpload");
-                    form.hideItem("upload");
-//                    enableNextButtonWhenAppropriate();
+                    form.showItem(showUpload.getName());
+                    form.hideItem(upload.getName());
                 }
             });
 
-            CanvasItem validating = new CanvasItem("validating", "Validating");
-            validating.setCanvas(new Img("ajax-loader.gif", 16, 16));
-            validating.setVisible(false);
+            validatingItem = new CanvasItem("validating", "Validating");
+            validatingItem.setCanvas(new Img("ajax-loader.gif", 16, 16));
+            validatingItem.setVisible(false);
 
-            form.setItems(showUpload, upload, recipe, validating);
-            form.hideItem("upload");
+            form.setItems(showUpload, upload, recipe, validatingItem);
         } else {
             // we are traversing back to this step - don't allow the recipe to change if we've already created the bundle version
             if (wizard.getBundleVersion() != null) {
@@ -118,7 +116,7 @@ public class BundleUploadRecipeStep implements WizardStep {
             return true;
         } else {
             if (form.validate()) {
-                validateAndCreateRecipe();
+                validateAndCreateRecipe(); // this will move to the next step for us
             }
             return false;
         }
@@ -129,43 +127,44 @@ public class BundleUploadRecipeStep implements WizardStep {
         return "Provide Bundle Recipe";
     }
 
-
     private void validateAndCreateRecipe() {
-        form.showItem("validating");
+        form.showItem(validatingItem.getName());
+        setButtonsDisableMode(true);
 
-        wizard.setRecipe(form.getValueAsString("recipe"));
-
+        wizard.setRecipe(recipe.getValue().toString());
 
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-        bundleServer.createBundleAndBundleVersion(
-                this.wizard.getBundleName(),
-                this.wizard.getBundleType().getId(),
-                this.wizard.getBundleName(),
-                this.wizard.getBundleVersionString(),
-                this.wizard.getBundleDescription(),
-                this.wizard.getRecipe(),
-                new AsyncCallback<BundleVersion>() {
-                    public void onSuccess(BundleVersion result) {
-                        form.hideItem("validating");
+        bundleServer.createBundleAndBundleVersion(this.wizard.getBundleName(), this.wizard.getBundleType().getId(),
+            this.wizard.getBundleName(), this.wizard.getBundleVersionString(), this.wizard.getBundleDescription(),
+            this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
+                public void onSuccess(BundleVersion result) {
+                    form.hideItem(validatingItem.getName());
 
-                        CoreGUI.getMessageCenter().notify(
-                                new Message("Created bundle [" + result.getName() + "] version [" + result.getVersion() + "]",
-                                        Message.Severity.Info));
-                        wizard.setBundleVersion(result);
-                        wizard.getView().incrementStep();
-                    }
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Created bundle [" + result.getName() + "] version [" + result.getVersion() + "]",
+                            Message.Severity.Info));
+                    wizard.setBundleVersion(result);
+                    wizard.getView().incrementStep();
+                    setButtonsDisableMode(false);
+                }
 
-                    public void onFailure(Throwable caught) {
-                        form.hideItem("validating");
+                public void onFailure(Throwable caught) {
+                    form.hideItem(validatingItem.getName());
 
-                        HashMap<String, String> errors = new HashMap<String, String>();
-                        errors.put("recipe", "Invalid Recipe: " + caught.getMessage());
-                        form.setErrors(errors, true);
-                        CoreGUI.getErrorHandler().handleError("Failed to create bundle: " + caught.getMessage(), caught);
-                        wizard.setBundleVersion(null);
-//                        enableNextButtonWhenAppropriate();
-                    }
-                });
+                    HashMap<String, String> errors = new HashMap<String, String>();
+                    errors.put(recipe.getName(), "Invalid Recipe: " + caught.getMessage());
+                    form.setErrors(errors, true);
+                    CoreGUI.getErrorHandler().handleError("Failed to create bundle", caught);
+                    wizard.setBundleVersion(null);
+                    wizard.setRecipe("");
+                    setButtonsDisableMode(false);
+                }
+            });
     }
 
+    private void setButtonsDisableMode(boolean disabled) {
+        wizard.getView().getCancelButton().setDisabled(disabled);
+        wizard.getView().getNextButton().setDisabled(disabled);
+        wizard.getView().getPreviousButton().setDisabled(disabled);
+    }
 }

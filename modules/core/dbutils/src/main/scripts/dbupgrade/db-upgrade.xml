@@ -2893,6 +2893,11 @@
                </schema-directSQL>               
             </schemaSpec>              
 
+            <schemaSpec version="2.78.4">
+                <schema-addColumn   table="RHQ_BUNDLE_VERSION" column="VERSION_ORDER" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="VERSION_ORDER" nullable="FALSE" />
+            </schemaSpec>
+
             <schemaSpec version="2.79">
                 <schema-directSQL>
                     <statement desc="Normalizing resource group descriptions">

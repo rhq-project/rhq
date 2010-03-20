@@ -515,6 +515,7 @@
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
         <column name="VERSION" size="500" type="VARCHAR2" required="true"/>
+        <column name="VERSION_ORDER" type="INTEGER" required="true"/>
         <column name="ACTION" type="CLOB" required="true"/>
         <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF" />
         <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>

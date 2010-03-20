@@ -74,6 +74,7 @@ public class BundleTest extends AbstractEJB3Test {
             bundle.setRepo(bundleRepo);
             em.persist(bundle);
             BundleVersion bundleVersion = new BundleVersion(name, "1.0.0.BETA", bundle, recipe);
+            bundleVersion.setVersionOrder(0);
             em.persist(bundleVersion);
             id = bundleVersion.getId();
             assert id > 0;
@@ -124,7 +125,6 @@ public class BundleTest extends AbstractEJB3Test {
     }
 
     public void testBundleVersion() throws Throwable {
-        boolean done = false;
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {
@@ -145,6 +145,7 @@ public class BundleTest extends AbstractEJB3Test {
             assert bundle.getBundleType().getId() != 0 : "bundleType should have been cascade persisted too";
 
             BundleVersion bv = new BundleVersion(name, "1.0.0.BETA", bundle, recipe);
+            bv.setVersionOrder(777);
             Query q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
             q.setParameter("name", bv.getName());
             assert q.getResultList().size() == 0; // not in the db yet
@@ -155,7 +156,6 @@ public class BundleTest extends AbstractEJB3Test {
 
             q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
             q.setParameter("name", bv.getName());
-            q.setParameter("name", bv.getName());
             assert q.getResultList().size() == 1;
             assert ((BundleVersion) q.getSingleResult()).getName().equals(bv.getName());
 
@@ -164,6 +164,7 @@ public class BundleTest extends AbstractEJB3Test {
             assert bvFind.getId() == bv.getId();
             assert bvFind.getName().equals(bv.getName());
             assert bvFind.getVersion().equals(bv.getVersion());
+            assert bvFind.getVersionOrder() == bv.getVersionOrder();
             assert bvFind.getRecipe().equals(bv.getRecipe());
             assert bvFind.getBundle().equals(bv.getBundle());
             assert bvFind.equals(bv);
@@ -222,8 +223,116 @@ public class BundleTest extends AbstractEJB3Test {
         }
     }
 
+    public void testMultipleBundleVersions() throws Throwable {
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        try {
+            int id;
+
+            String name = "BundleTest-testMultipleBundleVersions";
+            String recipe = "action/script/recipe is here";
+
+            Repo repo1 = new Repo(name + "-Repo1");
+            em.persist(repo1);
+
+            BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
+            Bundle bundle = new Bundle(name + "-Bundle", bundleType);
+            bundle.setRepo(repo1);
+            em.persist(bundle);
+            id = bundle.getId();
+            assert id > 0;
+            assert bundle.getBundleType().getId() != 0 : "bundleType should have been cascade persisted too";
+
+            BundleVersion bv = new BundleVersion(name, "1.0", bundle, recipe);
+            bv.setVersionOrder(0);
+            Query q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
+            q.setParameter("name", name);
+            assert q.getResultList().size() == 0; // not in the db yet
+            em.persist(bv);
+            id = bv.getId();
+            assert id > 0;
+
+            BundleVersion bv2 = new BundleVersion(name, "2.0", bundle, recipe);
+            bv2.setVersionOrder(1);
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
+            q.setParameter("name", name);
+            assert q.getResultList().size() == 1;
+            em.persist(bv2);
+            id = bv2.getId();
+            assert id > 0;
+
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_LATEST_BY_NAME);
+            q.setParameter("name", name);
+            assert q.getResultList().size() == 1;
+            assert ((BundleVersion) q.getSingleResult()).getVersion().equals(bv2.getVersion());
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_VERSIONS_BY_NAME);
+            q.setParameter("name", name);
+            List<Object[]> versionsArrays = q.getResultList(); // returns in DESC sort order!
+            assert versionsArrays.size() == 2;
+            assert ((String) versionsArrays.get(0)[0]).equals(bv2.getVersion());
+            assert ((Number) versionsArrays.get(0)[1]).intValue() == bv2.getVersionOrder();
+            assert ((String) versionsArrays.get(1)[0]).equals(bv.getVersion());
+            assert ((Number) versionsArrays.get(1)[1]).intValue() == bv.getVersionOrder();
+
+            // increment all version orders, starting at order #1
+            q = em.createNamedQuery(BundleVersion.UPDATE_VERSION_ORDER);
+            q.setParameter("name", name);
+            q.setParameter("versionOrder", 1);
+            assert q.executeUpdate() == 1 : "should have auto-incremented version order in one row";
+            em.flush();
+            em.clear();
+            bv = em.find(BundleVersion.class, bv.getId());
+            assert bv.getVersionOrder() == 0 : "should not have incremented version order";
+            bv2 = em.find(BundleVersion.class, bv2.getId());
+            assert bv2.getVersionOrder() == 2 : "didn't increment version order";
+
+            BundleVersion bv3 = new BundleVersion(name, "1.5", bundle, recipe);
+            bv3.setVersionOrder(1);
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
+            q.setParameter("name", name);
+            assert q.getResultList().size() == 2;
+            em.persist(bv3);
+            id = bv3.getId();
+            assert id > 0;
+
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_LATEST_BY_NAME);
+            q.setParameter("name", name);
+            assert q.getResultList().size() == 1;
+            assert ((BundleVersion) q.getSingleResult()).getVersion().equals(bv2.getVersion());
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_VERSIONS_BY_NAME);
+            q.setParameter("name", name);
+            versionsArrays = q.getResultList(); // returns in DESC sort order!
+            assert versionsArrays.size() == 3;
+            assert ((String) versionsArrays.get(0)[0]).equals(bv2.getVersion()); // 2.0
+            assert ((Number) versionsArrays.get(0)[1]).intValue() == bv2.getVersionOrder();
+            assert ((String) versionsArrays.get(1)[0]).equals(bv3.getVersion()); // 1.5
+            assert ((Number) versionsArrays.get(1)[1]).intValue() == bv3.getVersionOrder();
+            assert ((String) versionsArrays.get(2)[0]).equals(bv.getVersion()); // 1.0
+            assert ((Number) versionsArrays.get(2)[1]).intValue() == bv.getVersionOrder();
+
+            // increment all version orders, starting at order #0 - makes sure we can update >1 rows
+            q = em.createNamedQuery(BundleVersion.UPDATE_VERSION_ORDER);
+            q.setParameter("name", name);
+            q.setParameter("versionOrder", 0);
+            assert q.executeUpdate() == 3 : "should have auto-incremented version orders";
+            em.flush();
+            em.clear();
+            bv = em.find(BundleVersion.class, bv.getId());
+            assert bv.getVersionOrder() == 1 : "didn't increment version order: " + bv.getVersionOrder();
+            bv2 = em.find(BundleVersion.class, bv2.getId());
+            assert bv2.getVersionOrder() == 3 : "didn't increment version order: " + bv2.getVersionOrder();
+            bv3 = em.find(BundleVersion.class, bv3.getId());
+            assert bv3.getVersionOrder() == 2 : "didn't increment version order: " + bv3.getVersionOrder();
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw t;
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
     public void testBundle() throws Throwable {
-        boolean done = false;
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {
@@ -301,7 +410,6 @@ public class BundleTest extends AbstractEJB3Test {
     }
 
     public void testBundleType() throws Throwable {
-        boolean done = false;
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {

@@ -243,9 +243,21 @@ public class BundleTest extends AbstractEJB3Test {
             assert id > 0;
             assert bundle.getBundleType().getId() != 0 : "bundleType should have been cascade persisted too";
 
+            // make sure these queries can return empty lists
+            Query q = em.createNamedQuery(BundleVersion.QUERY_FIND_LATEST_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundle.getId());
+            assert q.getResultList().size() == 0;
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundle.getId());
+            assert q.getResultList().size() == 0;
+            q = em.createNamedQuery(BundleVersion.UPDATE_VERSION_ORDER_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundle.getId());
+            q.setParameter("versionOrder", 0);
+            assert q.executeUpdate() == 0 : "should not have updated anything";
+
             BundleVersion bv = new BundleVersion(name, "1.0", bundle, recipe);
             bv.setVersionOrder(0);
-            Query q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
             q.setParameter("name", name);
             assert q.getResultList().size() == 0; // not in the db yet
             em.persist(bv);
@@ -261,12 +273,12 @@ public class BundleTest extends AbstractEJB3Test {
             id = bv2.getId();
             assert id > 0;
 
-            q = em.createNamedQuery(BundleVersion.QUERY_FIND_LATEST_BY_NAME);
-            q.setParameter("name", name);
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_LATEST_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundle.getId());
             assert q.getResultList().size() == 1;
             assert ((BundleVersion) q.getSingleResult()).getVersion().equals(bv2.getVersion());
-            q = em.createNamedQuery(BundleVersion.QUERY_FIND_VERSIONS_BY_NAME);
-            q.setParameter("name", name);
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundle.getId());
             List<Object[]> versionsArrays = q.getResultList(); // returns in DESC sort order!
             assert versionsArrays.size() == 2;
             assert ((String) versionsArrays.get(0)[0]).equals(bv2.getVersion());
@@ -275,8 +287,8 @@ public class BundleTest extends AbstractEJB3Test {
             assert ((Number) versionsArrays.get(1)[1]).intValue() == bv.getVersionOrder();
 
             // increment all version orders, starting at order #1
-            q = em.createNamedQuery(BundleVersion.UPDATE_VERSION_ORDER);
-            q.setParameter("name", name);
+            q = em.createNamedQuery(BundleVersion.UPDATE_VERSION_ORDER_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundle.getId());
             q.setParameter("versionOrder", 1);
             assert q.executeUpdate() == 1 : "should have auto-incremented version order in one row";
             em.flush();
@@ -295,12 +307,12 @@ public class BundleTest extends AbstractEJB3Test {
             id = bv3.getId();
             assert id > 0;
 
-            q = em.createNamedQuery(BundleVersion.QUERY_FIND_LATEST_BY_NAME);
-            q.setParameter("name", name);
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_LATEST_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundle.getId());
             assert q.getResultList().size() == 1;
             assert ((BundleVersion) q.getSingleResult()).getVersion().equals(bv2.getVersion());
-            q = em.createNamedQuery(BundleVersion.QUERY_FIND_VERSIONS_BY_NAME);
-            q.setParameter("name", name);
+            q = em.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundle.getId());
             versionsArrays = q.getResultList(); // returns in DESC sort order!
             assert versionsArrays.size() == 3;
             assert ((String) versionsArrays.get(0)[0]).equals(bv2.getVersion()); // 2.0
@@ -311,8 +323,8 @@ public class BundleTest extends AbstractEJB3Test {
             assert ((Number) versionsArrays.get(2)[1]).intValue() == bv.getVersionOrder();
 
             // increment all version orders, starting at order #0 - makes sure we can update >1 rows
-            q = em.createNamedQuery(BundleVersion.UPDATE_VERSION_ORDER);
-            q.setParameter("name", name);
+            q = em.createNamedQuery(BundleVersion.UPDATE_VERSION_ORDER_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundle.getId());
             q.setParameter("versionOrder", 0);
             assert q.executeUpdate() == 3 : "should have auto-incremented version orders";
             em.flush();

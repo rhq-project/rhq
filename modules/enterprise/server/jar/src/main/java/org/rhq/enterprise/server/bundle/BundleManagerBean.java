@@ -36,6 +36,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
@@ -257,8 +258,42 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // ensure we have a version
         version = getVersion(version, bundle);
+        ComparableVersion comparableVersion = new ComparableVersion(version);
+
+        Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
+        q.setParameter("bundleId", bundle.getId());
+        List<Object[]> list = q.getResultList();
+        int versionOrder = list.size();
+        boolean needToUpdateOrder = false;
+        // find out where in the order of versions this new version should be placed (e.g. 2.0 is after 1.0).
+        // the query returns a list of arrays - first element in array is version; second is versionOrder
+        // the query returns list in desc order - since the normal case is we are creating the latest, highest version,
+        // starting at the current highest version is the most efficient (we'll break the for loop after 1 iteration).
+        for (Object[] bv : list) {
+            ComparableVersion bvv = new ComparableVersion(bv[0].toString());
+            int comparision = comparableVersion.compareTo(bvv);
+            if (comparision == 0) {
+                throw new RuntimeException("Cannot create bundle with version [" + version + "], it already exists");
+            } else if (comparision < 0) {
+                versionOrder = ((Number) bv[1]).intValue();
+                needToUpdateOrder = true;
+            } else {
+                break; // comparision > 0, means our new version is higher than what's in the DB, because we DESC ordered, we can stop
+            }
+        }
+
+        if (needToUpdateOrder) {
+            entityManager.flush();
+            q = entityManager.createNamedQuery(BundleVersion.UPDATE_VERSION_ORDER_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundle.getId());
+            q.setParameter("versionOrder", versionOrder);
+            q.executeUpdate();
+            entityManager.flush();
+            entityManager.clear();
+        }
 
         BundleVersion bundleVersion = new BundleVersion(name, version, bundle, recipe);
+        bundleVersion.setVersionOrder(versionOrder);
         bundleVersion.setDescription(description);
         bundleVersion.setConfigurationDefinition(results.getConfigDef());
 
@@ -267,20 +302,26 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     private String getVersion(String version, Bundle bundle) {
-        if (!(null == version || "".equals(version.trim()))) {
+        if (null != version && version.trim().length() > 0) {
             return version;
         }
 
-        BundleVersion currentBundleVersion = null;
-        for (BundleVersion bundleVersion : bundle.getBundleVersions()) {
-            if ((null == currentBundleVersion) || (bundleVersion.getId() > currentBundleVersion.getId())) {
-                currentBundleVersion = bundleVersion;
+        BundleVersion latestBundleVersion = null;
+        Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_LATEST_BY_BUNDLE_ID);
+        q.setParameter("bundleId", bundle.getId());
+        List<BundleVersion> list = q.getResultList();
+        if (list.size() > 0) {
+            if (list.size() == 1) {
+                latestBundleVersion = list.get(0);
+            } else {
+                throw new RuntimeException("Bundle [" + bundle.getName() + "] (id=" + bundle.getId()
+                    + ") has more than 1 'latest' version. This should not happen - aborting");
             }
         }
 
         // note - this is the same algo used by ResourceClientProxy in updatebackingContent (for a resource)
-        String oldVersion = (null == currentBundleVersion) ? null : currentBundleVersion.getVersion();
-        String newVersion = NumberUtil.autoIncrementVersion(oldVersion);
+        String latestVersion = latestBundleVersion != null ? latestBundleVersion.getVersion() : null;
+        String newVersion = NumberUtil.autoIncrementVersion(latestVersion);
         return newVersion;
     }
 

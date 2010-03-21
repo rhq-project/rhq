@@ -259,9 +259,79 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", null, b1);
         assertNotNull(bv1);
         assertEquals("1.0", bv1.getVersion());
+        assert 0 == bv1.getVersionOrder();
         BundleVersion bv2 = createBundleVersion(b1.getName() + "-2", null, b1);
         assertNotNull(bv2);
         assertEquals("1.1", bv2.getVersion());
+        assert 1 == bv2.getVersionOrder();
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testCreateBundleVersionOrdering() throws Exception {
+        Bundle b1 = createBundle("one");
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", "1.0", b1);
+        assertNotNull(bv1);
+        assertEquals("1.0", bv1.getVersion());
+        assert 0 == bv1.getVersionOrder();
+        BundleVersion bv2 = createBundleVersion(b1.getName() + "-2", "2.0", b1);
+        assertNotNull(bv2);
+        assertEquals("2.0", bv2.getVersion());
+        assert 1 == bv2.getVersionOrder();
+        BundleVersion bv3 = createBundleVersion(b1.getName() + "-3", "1.5", b1);
+        assertNotNull(bv3);
+        assertEquals("1.5", bv3.getVersion());
+        assert 1 == bv3.getVersionOrder();
+
+        BundleVersionCriteria c = new BundleVersionCriteria();
+        PageList<BundleVersion> bvs = null;
+
+        c.addFilterId(bv1.getId()); // 1.0
+        bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
+        assertNotNull(bvs);
+        assertEquals(1, bvs.size());
+        assert bvs.get(0).getVersionOrder() == 0; // 1st is the 1.0 version
+
+        c.addFilterId(bv2.getId()); // 2.0
+        bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
+        assertNotNull(bvs);
+        assertEquals(1, bvs.size());
+        assert bvs.get(0).getVersionOrder() == 2; // 3rd is the 2.0 version
+
+        c.addFilterId(bv3.getId()); // 1.5
+        bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
+        assertNotNull(bvs);
+        assertEquals(1, bvs.size());
+        assert bvs.get(0).getVersionOrder() == 1; // 2nd is the 1.5 version
+
+        // see that we can create a really old bundle and versionOrder gets updated properly
+        BundleVersion bv4 = createBundleVersion(b1.getName() + "-4", "0.5", b1);
+        assertNotNull(bv4);
+        assertEquals("0.5", bv4.getVersion());
+
+        c.addFilterId(bv4.getId()); //0.5
+        bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
+        assertNotNull(bvs);
+        assertEquals(1, bvs.size());
+        assert bvs.get(0).getVersionOrder() == 0; // 1st is the 0.5 version
+
+        c.addFilterId(bv1.getId()); // 1.0
+        bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
+        assertNotNull(bvs);
+        assertEquals(1, bvs.size());
+        assert bvs.get(0).getVersionOrder() == 1; // 2nd is the 1.0 version
+
+        c.addFilterId(bv3.getId()); // 1.5
+        bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
+        assertNotNull(bvs);
+        assertEquals(1, bvs.size());
+        assert bvs.get(0).getVersionOrder() == 2; // 3nd is the 1.5 version
+
+        c.addFilterId(bv2.getId()); // 2.0
+        bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
+        assertNotNull(bvs);
+        assertEquals(1, bvs.size());
+        assert bvs.get(0).getVersionOrder() == 3; // 4th is the 2.0 version
     }
 
     @Test(enabled = TESTS_ENABLED)

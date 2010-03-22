@@ -42,6 +42,7 @@ import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.Package;
@@ -270,18 +271,46 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     public void testCreateBundleVersionOrdering() throws Exception {
         Bundle b1 = createBundle("one");
         assertNotNull(b1);
+
+        BundleCriteria criteria = new BundleCriteria();
+        PageList<BundleWithLatestVersionComposite> results;
+
+        // verify there are no bundle versions yet
+        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion() == null;
+        assert results.get(0).getDeploymentCount().longValue() == 0L;
+
         BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", "1.0", b1);
         assertNotNull(bv1);
         assertEquals("1.0", bv1.getVersion());
         assert 0 == bv1.getVersionOrder();
+        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion().equals("1.0");
+        assert results.get(0).getDeploymentCount().longValue() == 1L;
+
         BundleVersion bv2 = createBundleVersion(b1.getName() + "-2", "2.0", b1);
         assertNotNull(bv2);
         assertEquals("2.0", bv2.getVersion());
         assert 1 == bv2.getVersionOrder();
+        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion().equals("2.0");
+        assert results.get(0).getDeploymentCount().longValue() == 2L;
+
         BundleVersion bv3 = createBundleVersion(b1.getName() + "-3", "1.5", b1);
         assertNotNull(bv3);
         assertEquals("1.5", bv3.getVersion());
         assert 1 == bv3.getVersionOrder();
+        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion().equals("2.0");
+        assert results.get(0).getDeploymentCount().longValue() == 3L;
 
         BundleVersionCriteria c = new BundleVersionCriteria();
         PageList<BundleVersion> bvs = null;
@@ -332,6 +361,35 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bvs);
         assertEquals(1, bvs.size());
         assert bvs.get(0).getVersionOrder() == 3; // 4th is the 2.0 version
+
+        // verify our composite criteria query can return more than one item
+        Bundle b2 = createBundle("two");
+        assertNotNull(b2);
+        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        assert results.size() == 2 : results;
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion().equals("2.0");
+        assert results.get(0).getDeploymentCount().longValue() == 4L;
+        assert results.get(1).getBundleName().equals(b2.getName());
+        assert results.get(1).getBundleDescription().equals(b2.getDescription());
+        assert results.get(1).getLatestVersion() == null;
+        assert results.get(1).getDeploymentCount().longValue() == 0L;
+
+        BundleVersion b2_bv1 = createBundleVersion(b2.getName() + "-5", "9.1", b2);
+        assertNotNull(b2_bv1);
+        assertEquals("9.1", b2_bv1.getVersion());
+
+        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        assert results.size() == 2 : results;
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion().equals("2.0");
+        assert results.get(0).getDeploymentCount().longValue() == 4L;
+        assert results.get(1).getBundleName().equals(b2.getName());
+        assert results.get(1).getBundleDescription().equals(b2.getDescription());
+        assert results.get(1).getLatestVersion().equals("9.1");
+        assert results.get(1).getDeploymentCount().longValue() == 1L;
     }
 
     @Test(enabled = TESTS_ENABLED)

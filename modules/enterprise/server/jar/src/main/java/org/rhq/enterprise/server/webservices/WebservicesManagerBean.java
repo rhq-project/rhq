@@ -44,6 +44,7 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -397,6 +398,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria) {
         return bundleManager.findBundleVersionsByCriteria(subject, criteria);
+    }
+
+    public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
+        Subject subject, BundleCriteria criteria) {
+        return bundleManager.findBundlesWithLastestVersionCompositesByCriteria(subject, criteria);
     }
 
     public List<BundleType> getAllBundleTypes(Subject subject) {

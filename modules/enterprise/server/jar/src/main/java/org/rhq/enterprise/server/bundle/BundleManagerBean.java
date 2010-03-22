@@ -52,6 +52,7 @@ import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.Architecture;
@@ -643,6 +644,24 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
         return queryRunner.execute();
+    }
+
+    public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
+        Subject subject, BundleCriteria criteria) {
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        String replacementSelectList = ""
+            + " new org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite( "
+            + "   bundle.name,"
+            + "   bundle.description,"
+            + "   ( SELECT bv1.version FROM bundle.bundleVersions bv1 WHERE bv1.versionOrder = (SELECT MAX(bv2.versionOrder) FROM BundleVersion bv2 WHERE bv2.bundle.id = bundle.id) ) AS latestVersion,"
+            + "   ( SELECT COUNT(bv3) FROM bundle.bundleVersions bv3 WHERE bv3.bundle.id = bundle.id) AS deploymentCount ) ";
+        generator.alterProjection(replacementSelectList);
+
+        CriteriaQueryRunner<BundleWithLatestVersionComposite> queryRunner = new CriteriaQueryRunner<BundleWithLatestVersionComposite>(
+            criteria, generator, entityManager);
+        PageList<BundleWithLatestVersionComposite> results = queryRunner.execute();
+        return results;
     }
 
     // TODO This is not adequate!!!  

@@ -122,11 +122,10 @@ public interface AlertManagerLocal {
      * Acknowledge the alerts (that got fired) so that admins know who is working
      * on fixing the situation.
      * @param user calling user
-     * @param resourceId resource the alerts happened on
      * @param alertIds PKs of the alerts to ack
      * @return number of alerts acknowledged
      */
-    int acknowledgeAlerts(Subject user, int resourceId, Integer[] alertIds);
+    int acknowledgeAlerts(Subject user, Integer[] alertIds);
 
     /**
      * Remove the alerts with the specified id's.

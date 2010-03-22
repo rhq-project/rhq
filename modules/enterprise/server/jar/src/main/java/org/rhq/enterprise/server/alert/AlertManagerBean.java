@@ -566,14 +566,12 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      * Acknowledge the alerts (that got fired) so that admins know who is working
      * on fixing the situation.
      * @param user calling user
-     * @param resourceId resource the alerts happened on
      * @param alertIds PKs of the alerts to ack
      * @return number of alerts acknowledged
      */
-    public int acknowledgeAlerts(Subject user, int resourceId, Integer[] alertIds) {
-        if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resourceId)) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permissions to acknowledge alerts "
-                + "for resourceId=" + resourceId);
+    public int acknowledgeAlerts(Subject user, Integer[] alertIds) {
+        if (!authorizationManager.hasGlobalPermission(user, Permission.MANAGE_ALERTS)) {
+            throw new PermissionException("User [" + user.getName() + "] does not have permissions to acknowledge alerts ");
         }
 
         int i=0;
@@ -585,8 +583,11 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         for (int id : alertIds) {
             acknowledgeAlert(id,user);
             i++;
-            if (i %20 == 0)
+            if (i % 50 == 0) {
                 entityManager.flush();
+                entityManager.clear();
+            }
+
         }
         return i;
     }

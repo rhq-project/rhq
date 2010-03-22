@@ -282,7 +282,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
         assert results.get(0).getLatestVersion() == null;
-        assert results.get(0).getDeploymentCount().longValue() == 0L;
+        assert results.get(0).getVersionsCount().longValue() == 0L;
 
         BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", "1.0", b1);
         assertNotNull(bv1);
@@ -293,7 +293,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
         assert results.get(0).getLatestVersion().equals("1.0");
-        assert results.get(0).getDeploymentCount().longValue() == 1L;
+        assert results.get(0).getVersionsCount().longValue() == 1L;
 
         BundleVersion bv2 = createBundleVersion(b1.getName() + "-2", "2.0", b1);
         assertNotNull(bv2);
@@ -304,7 +304,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
         assert results.get(0).getLatestVersion().equals("2.0");
-        assert results.get(0).getDeploymentCount().longValue() == 2L;
+        assert results.get(0).getVersionsCount().longValue() == 2L;
 
         BundleVersion bv3 = createBundleVersion(b1.getName() + "-3", "1.5", b1);
         assertNotNull(bv3);
@@ -315,7 +315,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
         assert results.get(0).getLatestVersion().equals("2.0");
-        assert results.get(0).getDeploymentCount().longValue() == 3L;
+        assert results.get(0).getVersionsCount().longValue() == 3L;
 
         BundleVersionCriteria c = new BundleVersionCriteria();
         PageList<BundleVersion> bvs = null;
@@ -376,12 +376,12 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
         assert results.get(0).getLatestVersion().equals("2.0");
-        assert results.get(0).getDeploymentCount().longValue() == 4L;
+        assert results.get(0).getVersionsCount().longValue() == 4L;
         assert results.get(1).getBundleId().equals(b2.getId());
         assert results.get(1).getBundleName().equals(b2.getName());
         assert results.get(1).getBundleDescription().equals(b2.getDescription());
         assert results.get(1).getLatestVersion() == null;
-        assert results.get(1).getDeploymentCount().longValue() == 0L;
+        assert results.get(1).getVersionsCount().longValue() == 0L;
 
         BundleVersion b2_bv1 = createBundleVersion(b2.getName() + "-5", "9.1", b2);
         assertNotNull(b2_bv1);
@@ -393,12 +393,12 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
         assert results.get(0).getLatestVersion().equals("2.0");
-        assert results.get(0).getDeploymentCount().longValue() == 4L;
+        assert results.get(0).getVersionsCount().longValue() == 4L;
         assert results.get(1).getBundleId().equals(b2.getId());
         assert results.get(1).getBundleName().equals(b2.getName());
         assert results.get(1).getBundleDescription().equals(b2.getDescription());
         assert results.get(1).getLatestVersion().equals("9.1");
-        assert results.get(1).getDeploymentCount().longValue() == 1L;
+        assert results.get(1).getVersionsCount().longValue() == 1L;
 
         // test sorting of the BundleWithLastestVersionComposite
         criteria.addSortName(PageOrdering.DESC);
@@ -408,12 +408,12 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert results.get(1).getBundleName().equals(b1.getName());
         assert results.get(1).getBundleDescription().equals(b1.getDescription());
         assert results.get(1).getLatestVersion().equals("2.0");
-        assert results.get(1).getDeploymentCount().longValue() == 4L;
+        assert results.get(1).getVersionsCount().longValue() == 4L;
         assert results.get(0).getBundleId().equals(b2.getId());
         assert results.get(0).getBundleName().equals(b2.getName());
         assert results.get(0).getBundleDescription().equals(b2.getDescription());
         assert results.get(0).getLatestVersion().equals("9.1");
-        assert results.get(0).getDeploymentCount().longValue() == 1L;
+        assert results.get(0).getVersionsCount().longValue() == 1L;
 
         criteria.addSortName(PageOrdering.ASC);
         results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
@@ -422,12 +422,12 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
         assert results.get(0).getLatestVersion().equals("2.0");
-        assert results.get(0).getDeploymentCount().longValue() == 4L;
+        assert results.get(0).getVersionsCount().longValue() == 4L;
         assert results.get(1).getBundleId().equals(b2.getId());
         assert results.get(1).getBundleName().equals(b2.getName());
         assert results.get(1).getBundleDescription().equals(b2.getDescription());
         assert results.get(1).getLatestVersion().equals("9.1");
-        assert results.get(1).getDeploymentCount().longValue() == 1L;
+        assert results.get(1).getVersionsCount().longValue() == 1L;
     }
 
     @Test(enabled = TESTS_ENABLED)

@@ -31,16 +31,20 @@ public class BundleWithLatestVersionComposite implements Serializable {
     private String bundleName;
     private String bundleDescription;
     private String latestVersion;
-    private Long deploymentCount;
+    private Long versionsCount;
+
+    public BundleWithLatestVersionComposite() {
+        // GWT needs this
+    }
 
     public BundleWithLatestVersionComposite(Integer bundleId, String bundleName, String bundleDescription,
-        String latestVersion, Long deploymentCount) {
+        String latestVersion, Long versionsCount) {
 
         this.bundleId = bundleId;
         this.bundleName = bundleName;
         this.bundleDescription = bundleDescription;
         this.latestVersion = latestVersion;
-        this.deploymentCount = deploymentCount;
+        this.versionsCount = versionsCount;
     }
 
     public Integer getBundleId() {
@@ -75,12 +79,12 @@ public class BundleWithLatestVersionComposite implements Serializable {
         this.latestVersion = latestVersion;
     }
 
-    public Long getDeploymentCount() {
-        return deploymentCount;
+    public Long getVersionsCount() {
+        return versionsCount;
     }
 
-    public void setDeploymentCount(Long deploymentCount) {
-        this.deploymentCount = deploymentCount;
+    public void setVersionsCount(Long versionsCount) {
+        this.versionsCount = versionsCount;
     }
 
     public String toString() {
@@ -89,7 +93,7 @@ public class BundleWithLatestVersionComposite implements Serializable {
         builder.append(", bundleName=").append(bundleName);
         builder.append(", bundleDescription=").append(bundleDescription);
         builder.append(", latestVersion=").append(latestVersion);
-        builder.append(", deploymentCount=").append(deploymentCount);
+        builder.append(", versionsCount=").append(versionsCount);
         builder.append("]");
         return builder.toString();
     }

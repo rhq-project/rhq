@@ -18,17 +18,24 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreateWizard;
-import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleUpdateWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Greg Hinkle
@@ -39,13 +46,15 @@ public class BundlesListView extends VLayout {
     protected void onDraw() {
         super.onDraw();
 
-        Table table = new Table("Bundles");
+        final Table table = new Table("Bundles");
 
-        table.setDataSource(new BundlesDataSource());
+        table.setDataSource(new BundlesWithLatestVersionDataSource());
 
         table.getListGrid().getField("id").setWidth("60");
         table.getListGrid().getField("name").setWidth("25%");
-        table.getListGrid().getField("description").setWidth("*");
+        table.getListGrid().getField("description").setWidth("25%");
+        table.getListGrid().getField("latestVersion").setWidth("25%");
+        table.getListGrid().getField("versionsCount").setWidth("*");
 
         table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
         table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
@@ -54,6 +63,27 @@ public class BundlesListView extends VLayout {
             public void executeAction(ListGridRecord[] selection) {
                 new BundleCreateWizard().startBundleWizard();
 
+            }
+        });
+
+        table.addTableAction("Delete Bundle", Table.SelectionEnablement.ANY, "Are You Sure?", new TableAction() {
+            public void executeAction(ListGridRecord[] selections) {
+                BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) table.getDataSource();
+                for (ListGridRecord selection : selections) {
+                    BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
+                    final BundleWithLatestVersionComposite object = ds.copyValues(selection);
+                    bundleManager.deleteBundle(object.getBundleId(), new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(
+                                "Failed to delete bundle [" + object.getBundleName() + "]", caught);
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Deleted bundle [" + object.getBundleName() + "]", Severity.Info));
+                        }
+                    });
+                }
             }
         });
 

@@ -28,6 +28,7 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -46,11 +47,16 @@ public interface BundleGWTService extends RemoteService {
 
     BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
 
+    void deleteBundle(int bundleId);
+
     void deleteBundleVersion(int bundleVersionId);
 
     PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception;
 
     PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) throws Exception;
+
+    PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(BundleCriteria criteria)
+        throws Exception;
 
     HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception;
 

@@ -32,7 +32,6 @@ import java.util.Map;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.client.GwtClientUtility;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageControl;
 
@@ -203,7 +202,9 @@ public abstract class Criteria implements Serializable {
     public String getAlias() {
         if (this.alias == null) {
             // Base alias on persistent class's name: org.rhq.core.domain.ResourceType -> "resourcetype"
-            String classSimpleName = GwtClientUtility.getSimpleName(getPersistentClass());
+            // don't use getSimpleName - not available to GWT
+            String className = getPersistentClass().getName();
+            String classSimpleName = className.substring(className.lastIndexOf(".") + 1);
             this.alias = classSimpleName.toLowerCase();
         }
         return this.alias;

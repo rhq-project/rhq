@@ -22,8 +22,9 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Iterator;
+
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
+import org.rhq.core.server.MeasurementConverter;
 import org.rhq.enterprise.gui.image.data.IDataPoint;
 import org.rhq.enterprise.gui.image.data.IStackedDataPoint;
 
@@ -79,7 +80,7 @@ public class PerformanceChart extends HorizontalChart {
         String[] result = new String[m_adRangeMarks.length];
 
         for (int i = 0; i < m_adRangeMarks.length; i++) {
-            result[i] = new MeasurementNumericValueAndUnits(m_adRangeMarks[i], m_fmtUnits).toString();
+            result[i] = MeasurementConverter.format(m_adRangeMarks[i], m_fmtUnits, true);
         }
 
         return result;

@@ -35,9 +35,10 @@ public class PackageVersionCriteria extends Criteria {
     private PageOrdering sortDisplayName;
 
     public PackageVersionCriteria() {
+        String alias = getAlias();
         filterOverrides.put("repoId", "id IN " //
             + "( SELECT cpv.packageVersion.id" //
-            + "    FROM pv.repoPackageVersions cpv " //
+            + "    FROM " + alias + ".repoPackageVersions cpv " //
             + "   WHERE cpv.repo.id = ? )");
         filterOverrides.put("fileSizeMinimum", "fileSize >= ?");
         filterOverrides.put("fileSizeMaximum", "fileSize <= ?");
@@ -45,7 +46,7 @@ public class PackageVersionCriteria extends Criteria {
         filterOverrides.put("packageTypeId", "generalPackage.packageType.id = ? ");
         filterOverrides.put("resourceId", "id IN " //
             + "( SELECT ip.packageVersion.id" //
-            + "    FROM pv.installedPackages ip " //
+            + "    FROM " + alias + ".installedPackages ip " //
             + "   WHERE ip.resource.id = ? )");
     }
 

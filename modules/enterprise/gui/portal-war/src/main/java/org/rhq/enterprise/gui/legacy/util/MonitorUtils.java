@@ -101,7 +101,10 @@ public class MonitorUtils {
                     throw new IllegalStateException("Formatting metrics failed.");
                 }
                 for (int i = 0; i < keys.length; i++) {
-                    metricDisplaySummary.getMetric(keys[i]).setValueFmt(formattedValues[i].toString());
+                    MeasurementValueAndUnits valueAndUnits = formattedValues[i];
+                    String formatted = MeasurementConverter.format(((Double) valueAndUnits.getValue()), valueAndUnits
+                        .getUnits(), true);
+                    metricDisplaySummary.getMetric(keys[i]).setValueFmt(formatted);
                 }
             }
         } catch (IllegalArgumentException e) { // catch and rethrow for debug/logging only

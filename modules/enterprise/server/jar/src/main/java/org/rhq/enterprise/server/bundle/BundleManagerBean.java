@@ -652,6 +652,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         String replacementSelectList = ""
             + " new org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite( "
+            + "   bundle.id,"
             + "   bundle.name,"
             + "   bundle.description,"
             + "   ( SELECT bv1.version FROM bundle.bundleVersions bv1 WHERE bv1.versionOrder = (SELECT MAX(bv2.versionOrder) FROM BundleVersion bv2 WHERE bv2.bundle.id = bundle.id) ) AS latestVersion,"

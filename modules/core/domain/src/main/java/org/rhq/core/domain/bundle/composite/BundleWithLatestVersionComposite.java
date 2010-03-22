@@ -27,18 +27,28 @@ import java.io.Serializable;
 public class BundleWithLatestVersionComposite implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private Integer bundleId;
     private String bundleName;
     private String bundleDescription;
     private String latestVersion;
     private Long deploymentCount;
 
-    public BundleWithLatestVersionComposite(String bundleName, String bundleDescription, String latestVersion,
-        Long deploymentCount) {
+    public BundleWithLatestVersionComposite(Integer bundleId, String bundleName, String bundleDescription,
+        String latestVersion, Long deploymentCount) {
 
+        this.bundleId = bundleId;
         this.bundleName = bundleName;
         this.bundleDescription = bundleDescription;
         this.latestVersion = latestVersion;
         this.deploymentCount = deploymentCount;
+    }
+
+    public Integer getBundleId() {
+        return bundleId;
+    }
+
+    public void setBundleId(Integer bundleId) {
+        this.bundleId = bundleId;
     }
 
     public String getBundleName() {
@@ -75,7 +85,8 @@ public class BundleWithLatestVersionComposite implements Serializable {
 
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("BundleWithLatestVersionComposite [bundleName=").append(bundleName);
+        builder.append("BundleWithLatestVersionComposite [bundleId=").append(bundleId);
+        builder.append(", bundleName=").append(bundleName);
         builder.append(", bundleDescription=").append(bundleDescription);
         builder.append(", latestVersion=").append(latestVersion);
         builder.append(", deploymentCount=").append(deploymentCount);

@@ -202,7 +202,9 @@ public abstract class Criteria implements Serializable {
     public String getAlias() {
         if (this.alias == null) {
             // Base alias on persistent class's name: org.rhq.core.domain.ResourceType -> "resourcetype"
-            String classSimpleName = getPersistentClass().getSimpleName();
+            // don't use getSimpleName - not available to GWT
+            String className = getPersistentClass().getName();
+            String classSimpleName = className.substring(className.lastIndexOf(".") + 1);
             this.alias = classSimpleName.toLowerCase();
         }
         return this.alias;

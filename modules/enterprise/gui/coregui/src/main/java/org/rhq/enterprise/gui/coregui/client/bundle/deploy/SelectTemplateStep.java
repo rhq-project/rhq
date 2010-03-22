@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.smartgwt.client.widgets.Canvas;
@@ -32,17 +33,20 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 public class SelectTemplateStep implements WizardStep {
 
-    private DynamicForm form;
     private final BundleDeployWizard wizard;
+    private DynamicForm form;
 
-    //private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+    private SelectItem selectTemplateItem = null;
+    private LinkedHashMap<String, String> selectTemplateValues = new LinkedHashMap<String, String>();
+    private ConfigurationDefinition definition = null;
+    private Map<String, ConfigurationTemplate> templates = null;
 
     public SelectTemplateStep(BundleDeployWizard bundleDeployWizard) {
         this.wizard = bundleDeployWizard;
     }
 
     public String getName() {
-        return "Select a Configuration Template";
+        return "Select Configuration Template";
     }
 
     public Canvas getCanvas() {
@@ -52,23 +56,27 @@ public class SelectTemplateStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            SelectItem selectTemplate = new SelectItem("template", "Template");
-            selectTemplate.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    wizard.setTemplate((ConfigurationTemplate) event.getValue());
-                }
-            });
-
-            ConfigurationDefinition definition = wizard.getBundleVersion().getConfigurationDefinition();
-            Map<String, ConfigurationTemplate> templates = definition.getTemplates();
+            definition = wizard.getBundleVersion().getConfigurationDefinition();
+            templates = definition.getTemplates();
 
             if (templates != null && !templates.isEmpty()) {
-                selectTemplate.setValueMap(templates.keySet().toArray(new String[templates.size()]));
+                for (String templateName : templates.keySet()) {
+                    selectTemplateValues.put(templateName, templateName);
+                }
+
+                selectTemplateItem = new SelectItem("selectTemplate", "Configuration Template");
+                selectTemplateItem.setValueMap(selectTemplateValues);
+                selectTemplateItem.addChangedHandler(new ChangedHandler() {
+                    public void onChanged(ChangedEvent event) {
+                        wizard.setTemplate((ConfigurationTemplate) templates.get(event.getValue()));
+                    }
+                });
             } else {
-                selectTemplate.setDisabled(true);
+                selectTemplateItem = new SelectItem("selectTemplate", "No Configuration Templates Defined");
+                selectTemplateItem.setDisabled(true);
             }
 
-            form.setItems(selectTemplate);
+            form.setItems(selectTemplateItem);
         }
 
         this.wizard.getView().getNextButton().setDisabled(false);
@@ -80,10 +88,6 @@ public class SelectTemplateStep implements WizardStep {
     }
 
     public boolean isPreviousEnabled() {
-        return false;
-    }
-
-    public boolean isNextEnabled() {
         return true;
     }
 }

@@ -57,6 +57,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.test.UpdateSubsytemTestBase;
@@ -380,6 +381,31 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(b2_bv1);
         assertEquals("9.1", b2_bv1.getVersion());
 
+        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        assert results.size() == 2 : results;
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion().equals("2.0");
+        assert results.get(0).getDeploymentCount().longValue() == 4L;
+        assert results.get(1).getBundleName().equals(b2.getName());
+        assert results.get(1).getBundleDescription().equals(b2.getDescription());
+        assert results.get(1).getLatestVersion().equals("9.1");
+        assert results.get(1).getDeploymentCount().longValue() == 1L;
+
+        // test sorting of the BundleWithLastestVersionComposite
+        criteria.addSortName(PageOrdering.DESC);
+        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        assert results.size() == 2 : results;
+        assert results.get(1).getBundleName().equals(b1.getName());
+        assert results.get(1).getBundleDescription().equals(b1.getDescription());
+        assert results.get(1).getLatestVersion().equals("2.0");
+        assert results.get(1).getDeploymentCount().longValue() == 4L;
+        assert results.get(0).getBundleName().equals(b2.getName());
+        assert results.get(0).getBundleDescription().equals(b2.getDescription());
+        assert results.get(0).getLatestVersion().equals("9.1");
+        assert results.get(0).getDeploymentCount().longValue() == 1L;
+
+        criteria.addSortName(PageOrdering.ASC);
         results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
         assert results.size() == 2 : results;
         assert results.get(0).getBundleName().equals(b1.getName());

@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
@@ -39,19 +40,26 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 public class SelectBundleVersionStep implements WizardStep {
 
+    static private final String LATEST_VERSION = "latest";
+    static private final String SELECT_VERSION = "select";
+
     private final BundleDeployWizard wizard;
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private DynamicForm form;
+
+    private RadioGroupItem radioGroupItem = new RadioGroupItem("options", "Deploy Options");
+    private SelectItem selectVersionItem = new SelectItem("selectVersion", "Deployment Version");
+    private LinkedHashMap<String, String> radioGroupValues = new LinkedHashMap<String, String>();
+    private LinkedHashMap<String, String> selectVersionValues = new LinkedHashMap<String, String>();
     private PageList<BundleVersion> bundleVersions = null;
-    private SelectItem selectVersion = new SelectItem("selectVersion", "Deployment Version");
-    private LinkedHashMap<String, Object> selectVersionValues = new LinkedHashMap<String, Object>();;
+    private BundleVersion latestVersion;
 
     public SelectBundleVersionStep(BundleDeployWizard bundleDeployWizard) {
         this.wizard = bundleDeployWizard;
     }
 
     public String getName() {
-        return "Select Version 1";
+        return "Select Bundle Version";
     }
 
     public Canvas getCanvas() {
@@ -61,10 +69,25 @@ public class SelectBundleVersionStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            // for now, get all the bundle versions for the bundle            
-            selectVersion.setRequired(true);
-            //selectVersion.setWidth(150);
-            selectVersion.addChangedHandler(new ChangedHandler() {
+            setItemValues();
+
+            radioGroupItem.setRequired(true);
+            radioGroupItem.setDisabled(true);
+            radioGroupItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    boolean isLatestVersion = LATEST_VERSION.equals(event.getValue());
+                    if (isLatestVersion) {
+                        wizard.setBundleVersion(latestVersion);
+                    }
+                    selectVersionItem.setDisabled(isLatestVersion);
+                    selectVersionItem.setRequired(!isLatestVersion);
+                    selectVersionItem.redraw();
+                    form.markForRedraw();
+                }
+            });
+
+            selectVersionItem.setDisabled(true);
+            selectVersionItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     for (BundleVersion bundleVersion : bundleVersions) {
                         if (bundleVersion.getVersion().equals(event.getValue())) {
@@ -72,24 +95,49 @@ public class SelectBundleVersionStep implements WizardStep {
                             break;
                         }
                     }
-                    enableNextButtonWhenAppropriate();
                 }
             });
 
-            final BundleVersionCriteria criteria = new BundleVersionCriteria();
-            criteria.addFilterBundleId(wizard.getBundle().getId());
-            criteria.fetchConfigurationDefinition(true);
-            bundleServer.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+            form.setItems(radioGroupItem, selectVersionItem);
+        }
+
+        return form;
+    }
+
+    private void setItemValues() {
+        BundleVersionCriteria criteria = new BundleVersionCriteria();
+        criteria.addFilterBundleId(wizard.getBundle().getId());
+        criteria.fetchConfigurationDefinition(true);
+        bundleServer.findBundleVersionsByCriteria(criteria, //
+            new AsyncCallback<PageList<BundleVersion>>() {
+
                 public void onSuccess(PageList<BundleVersion> result) {
                     bundleVersions = result;
                     if (bundleVersions.isEmpty()) {
                         onFailure(new IllegalArgumentException("No bundle versions defined for bundle."));
                     }
+
+                    int highVersionOrder = -1;
                     for (BundleVersion bundleVersion : result) {
+                        int versionOrder = bundleVersion.getVersionOrder();
+                        if (versionOrder > highVersionOrder) {
+                            highVersionOrder = versionOrder;
+                            latestVersion = bundleVersion;
+                        }
                         selectVersionValues.put(bundleVersion.getVersion(), bundleVersion.getVersion());
                     }
-                    selectVersion.setValueMap(selectVersionValues);
-                    selectVersion.redraw();
+
+                    radioGroupValues.put(LATEST_VERSION, "Latest Version  [ " + latestVersion.getVersion() + " ]");
+                    radioGroupValues.put(SELECT_VERSION, "Select Version");
+                    radioGroupItem.setValueMap(radioGroupValues);
+                    radioGroupItem.setValue(LATEST_VERSION);
+                    wizard.setBundleVersion(latestVersion);
+                    radioGroupItem.setDisabled(false);
+                    radioGroupItem.redraw();
+
+                    selectVersionItem.setValueMap(selectVersionValues);
+                    selectVersionItem.redraw();
+
                     form.markForRedraw();
                 }
 
@@ -97,11 +145,6 @@ public class SelectBundleVersionStep implements WizardStep {
                     CoreGUI.getErrorHandler().handleError("Failed to find defined bundles.", caught);
                 }
             });
-
-            form.setItems(selectVersion);
-        }
-
-        return form;
     }
 
     public boolean nextPage() {
@@ -109,14 +152,10 @@ public class SelectBundleVersionStep implements WizardStep {
     }
 
     public boolean isNextEnabled() {
-        return (null != this.wizard.getBundle());
+        return (null != this.wizard.getBundleVersion());
     }
 
     public boolean isPreviousEnabled() {
-        return true;
-    }
-
-    private void enableNextButtonWhenAppropriate() {
-        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
+        return false;
     }
 }

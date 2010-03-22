@@ -28,7 +28,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 public class CreateConfigStep implements WizardStep {
 
     private final BundleDeployWizard wizard;
-    // private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private ConfigurationEditor editor;
 
     public CreateConfigStep(BundleDeployWizard bundleCreationWizard) {
@@ -40,12 +39,10 @@ public class CreateConfigStep implements WizardStep {
     }
 
     public Canvas getCanvas() {
-        if (editor == null) {
+        if (null == editor) {
             ConfigurationDefinition configDef = wizard.getBundleVersion().getConfigurationDefinition();
-            Configuration startingConfig = null;
-            if (null != wizard.getTemplate()) {
-                startingConfig = wizard.getTemplate().getConfiguration();
-            }
+            Configuration startingConfig = (null != wizard.getTemplate()) ? wizard.getTemplate().getConfiguration()
+                : new Configuration();
 
             editor = new ConfigurationEditor(configDef, startingConfig);
         }

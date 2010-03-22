@@ -32,19 +32,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
-    public BundleDeployWizard() {
-        List<WizardStep> steps = init();
-
-        steps.add(new SelectBundleStep(this));
-        steps.add(new SelectBundleVersionStep(this));
-        steps.add(new BundleDeployDefinitionInfoStep(this));
-        steps.add(new SelectTemplateStep(this));
-        steps.add(new CreateConfigStep(this));
-        steps.add(new DeployNowStep(this));
-        steps.add(new SelectPlatformsStep(this));
-        steps.add(new DeployStep(this));
-    }
-
     public BundleDeployWizard(Bundle bundle) {
         List<WizardStep> steps = init();
         setBundle(bundle);

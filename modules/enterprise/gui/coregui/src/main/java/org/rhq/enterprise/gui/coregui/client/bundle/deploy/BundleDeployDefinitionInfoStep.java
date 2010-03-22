@@ -59,7 +59,6 @@ public class BundleDeployDefinitionInfoStep implements WizardStep {
                     }
                     wizard.setSubtitle(value.toString());
                     wizard.setName(value.toString());
-                    enableNextButtonWhenAppropriate();
                 }
             });
 
@@ -71,7 +70,6 @@ public class BundleDeployDefinitionInfoStep implements WizardStep {
                         value = "";
                     }
                     wizard.setDescription(value.toString());
-                    enableNextButtonWhenAppropriate();
                 }
             });
 
@@ -85,19 +83,7 @@ public class BundleDeployDefinitionInfoStep implements WizardStep {
         return form.validate();
     }
 
-    public boolean isNextEnabled() {
-        return isNotEmpty(this.wizard.getName());
-    }
-
     public boolean isPreviousEnabled() {
         return false;
-    }
-
-    private void enableNextButtonWhenAppropriate() {
-        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
-    }
-
-    private boolean isNotEmpty(String s) {
-        return (s != null && s.trim().length() > 0);
     }
 }

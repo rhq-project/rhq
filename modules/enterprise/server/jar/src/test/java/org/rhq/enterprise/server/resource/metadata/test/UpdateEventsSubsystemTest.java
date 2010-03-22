@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -152,6 +153,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
             platform = getResourceType("events");
 
             testResource = new Resource("-test-", "-test resource", platform);
+            testResource.setUuid("" + new Random().nextInt());
             entityManager.persist(testResource);
             setUpAgent(entityManager, testResource);
 

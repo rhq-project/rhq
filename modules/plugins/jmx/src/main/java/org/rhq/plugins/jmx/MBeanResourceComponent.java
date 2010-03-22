@@ -65,6 +65,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * A generic JMX MBean resource component that can be used to manage a JMX MBean. The resource's plugin configuration
@@ -493,7 +494,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
                         }
                     }
                 } catch (Exception e) {
-                    property.setErrorMessageFromThrowable(e);
+                    property.setErrorMessage(ThrowableUtil.getStackAsString(e));
                     report
                         .setErrorMessage("Failed setting resource configuration - see property error messages for details");
                     log.info("Failure setting MBean Resource configuration value", e);

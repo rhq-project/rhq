@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -1058,6 +1059,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         em.persist(theResourceType);
 
         theResource = new Resource("test-platform-key", "test-platform-name", theResourceType);
+        theResource.setUuid("" + new Random().nextInt());
         theResource.setAgent(theAgent);
         em.persist(theResource);
 
@@ -1079,6 +1081,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
         newResource = new Resource("test-platform-key-" + uniqueNumber, "test-platform-name-" + uniqueNumber,
             theResourceType);
+        newResource.setUuid("" + new Random().nextInt());
         newResource.setAgent(theAgent);
         parentResource.addChildResource(newResource);
         em.persist(newResource);

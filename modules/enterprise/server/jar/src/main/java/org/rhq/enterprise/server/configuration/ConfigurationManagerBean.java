@@ -383,12 +383,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         if (liveConfig.getRawConfigurations() != null) {
             for (RawConfiguration raw : liveConfig.getRawConfigurations()) {
-                MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
+                MessageDigestGenerator sha256Generator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
                 sha256Generator.add(raw.getContents().getBytes());
                 raw.setSha256(sha256Generator.getDigestString());
             }
         }
-
 
         /*
         * NOTE: We pass the overlord, since this is a system side-effect.  here, the system

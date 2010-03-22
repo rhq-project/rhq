@@ -18,34 +18,6 @@
  */
 package org.rhq.enterprise.gui.configuration.resource;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.Out;
-import org.jetbrains.annotations.Nullable;
-
-import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
-import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
-import org.richfaces.model.UploadItem;
-
-import javax.ejb.EJBException;
-import javax.faces.application.FacesMessage;
-import javax.faces.event.ValueChangeEvent;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -55,6 +27,34 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.event.ValueChangeEvent;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
+import org.richfaces.model.UploadItem;
+
+import org.jboss.seam.annotations.Create;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
+import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 // This class is temporarily decleared in components.xml since it is declared under two names - ViewUIBean and
 // UIBean. This class is undergoing some refactoring and part of that will include declaring the @Name and @Scope
@@ -73,7 +73,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     //    @Out
     private Collection<RawConfigDirectory> rawConfigDirectories;
 
-//    @Out
+    //    @Out
     private FileUploadUIBean fileUploader = new FileUploadUIBean();
 
     private String modalEditorContents;
@@ -208,7 +208,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         Configuration mergedConfiguration = null;
         ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-        
+
         mergedConfiguration = getMergedConfiguration();
         AbstractResourceConfigurationUpdate updateRequest = this.configurationManager
             .updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(), resourceId,
@@ -357,7 +357,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             } else {
                 current = new RawConfiguration();
                 current.setPath("/dev/null");
-                current.setContents("");
+                String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString("");
+                current.setContents("", sha256);
             }
         }
         return current;
@@ -493,7 +494,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         String original = new String(getCurrent().getContents());
         if (!updated.equals(original)) {
             current = current.deepCopy(false);
-            current.setContents(updated);
+            String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(updated);
+            current.setContents(updated, sha256);
 
             markCurrentRawConfigUIBeanModified();
             getModified().put(current.getPath(), current);

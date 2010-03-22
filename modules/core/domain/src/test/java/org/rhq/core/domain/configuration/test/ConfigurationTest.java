@@ -40,12 +40,13 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 public class ConfigurationTest extends AbstractEJB3Test {
@@ -61,7 +62,8 @@ public class ConfigurationTest extends AbstractEJB3Test {
 
             Configuration c = new Configuration();
             PropertySimple p1 = new PropertySimple("first", "firstValue");
-            p1.setErrorMessageFromThrowable(new Exception("This should be a boolean value - true or false"));
+            p1.setErrorMessage(ThrowableUtil.getStackAsString(new Exception(
+                "This should be a boolean value - true or false")));
             c.put(p1);
             em.persist(c);
 
@@ -102,7 +104,8 @@ public class ConfigurationTest extends AbstractEJB3Test {
         try {
             Configuration c = new Configuration();
             PropertySimple p1 = new PropertySimple("first", "firstValue");
-            p1.setErrorMessageFromThrowable(new Exception("This should be a boolean value - true or false"));
+            p1.setErrorMessage(ThrowableUtil.getStackAsString(new Exception(
+                "This should be a boolean value - true or false")));
             c.put(p1);
             em.persist(c);
             Configuration copy = em.find(Configuration.class, c.getId());
@@ -218,8 +221,7 @@ public class ConfigurationTest extends AbstractEJB3Test {
             entityMgr.persist(config);
 
             assertTrue("Failed to cascade save to " + RawConfiguration.class.getSimpleName(), rawConfig.getId() != 0);
-        }
-        finally {
+        } finally {
             getTransactionManager().rollback();
         }
     }
@@ -244,19 +246,18 @@ public class ConfigurationTest extends AbstractEJB3Test {
             entityMgr.flush();
             entityMgr.clear();
 
-            assertNull(
-                "Failed to remove the orphaned " + RawConfiguration.class.getSimpleName() + " from the persistence context.",
-                entityMgr.find(RawConfiguration.class, rawConfiguration.getId())
-            );
-        }
-        finally {
+            assertNull("Failed to remove the orphaned " + RawConfiguration.class.getSimpleName()
+                + " from the persistence context.", entityMgr.find(RawConfiguration.class, rawConfiguration.getId()));
+        } finally {
             getTransactionManager().rollback();
         }
     }
 
     RawConfiguration createRawConfiguration() {
         RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents("contents");
+        String contents = "contents";
+        String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+        rawConfig.setContents(contents, sha256);
         rawConfig.setPath("/tmp/foo");
 
         return rawConfig;

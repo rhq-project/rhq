@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -173,6 +174,7 @@ public class SessionTestHelper {
 
         resourceName = preprocess(resourceName);
         Resource resource = new Resource(resourceName, resourceName, type);
+        resource.setUuid("" + new Random().nextInt());
 
         group.addExplicitResource(resource);
         resource.getExplicitGroups().add(group);
@@ -207,6 +209,7 @@ public class SessionTestHelper {
         resourceName = preprocess(resourceName);
         ResourceType type = new ResourceType(preprocess("testType"), "testPlugin", ResourceCategory.PLATFORM, null);
         Resource resource = new Resource(resourceName, resourceName, type);
+        resource.setUuid("" + new Random().nextInt());
 
         em.persist(type);
         em.persist(resource);

@@ -22,8 +22,7 @@
  */
 package org.rhq.core.domain.configuration;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -45,7 +44,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlTransient;
 
-import java.io.Serializable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The abstract base class for all {@link Configuration} value property types. A property is associated with a specific
@@ -247,14 +247,11 @@ public class Property implements Serializable, DeepCopyable<Property> {
      * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
      */
     public void setErrorMessageFromThrowable(Throwable t) {
-        /*  TODO: GWT
         if (t != null) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            t.printStackTrace(new PrintStream(baos));
-            setErrorMessage(baos.toString());
+            setErrorMessage(t.toString()); // TODO: would like this to be the full stack, but GWT doesn't make it easy so just set this to the throwable msg
         } else {
             setErrorMessage(null);
-        }*/
+        }
     }
 
     @Override
@@ -284,80 +281,76 @@ public class Property implements Serializable, DeepCopyable<Property> {
         return null;
     }
 
- /*   // It's not clear to me why this class implements Externalizable.  It seems to write out every field
-    // using standard serialization. Also, it's sub-classes seem to write out every field. To be safe I'm leaving
-    // it as is and also applying the new strategy logic, in case there are (future) differences between agent and
-    // remoteAPI serialization. 
-    public void writeExternal(ObjectOutput out) throws IOException {
-        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
-        out.writeChar(strategy.id());
+    /*
+       // It's not clear to me why this class implements Externalizable.  It seems to write out every field
+       // using standard serialization. Also, it's sub-classes seem to write out every field. To be safe I'm leaving
+       // it as is and also applying the new strategy logic, in case there are (future) differences between agent and
+       // remoteAPI serialization. 
+       public void writeExternal(ObjectOutput out) throws IOException {
+           ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+           out.writeChar(strategy.id());
 
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
-            writeExternalRemote(out);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
-            EntitySerializer.writeExternalRemote(this, out);
-        } else {
-            writeExternalAgent(out);
-        }
-    }
+           if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
+               writeExternalRemote(out);
+           } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
+               EntitySerializer.writeExternalRemote(this, out);
+           } else {
+               writeExternalAgent(out);
+           }
+       }
 
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        char c = in.readChar();
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
-            readExternalRemote(in);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
-            EntitySerializer.readExternalRemote(this, in);
-        } else {
-            readExternalAgent(in);
-        }
-    }
+       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+           char c = in.readChar();
+           if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
+               readExternalRemote(in);
+           } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
+               EntitySerializer.readExternalRemote(this, in);
+           } else {
+               readExternalAgent(in);
+           }
+       }
 
-    *//**
-     * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
-     *//*
     public void writeExternalAgent(ObjectOutput out) throws IOException {
-        out.writeInt(id);
-        out.writeObject(configuration);
-        out.writeUTF(name);
-        out.writeObject(parentList);
-        out.writeObject(parentMap);
-        out.writeObject(errorMessage);
+     out.writeInt(id);
+     out.writeObject(configuration);
+     out.writeUTF(name);
+     out.writeObject(parentList);
+     out.writeObject(parentMap);
+     out.writeObject(errorMessage);
     }
 
-    *//**
-     * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
-     *//*
     public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
-        id = in.readInt();
-        configuration = (Configuration) in.readObject();
-        name = in.readUTF();
-        parentList = (PropertyList) in.readObject();
-        parentMap = (PropertyMap) in.readObject();
-        errorMessage = (String) in.readObject();
+     id = in.readInt();
+     configuration = (Configuration) in.readObject();
+     name = in.readUTF();
+     parentList = (PropertyList) in.readObject();
+     parentMap = (PropertyMap) in.readObject();
+     errorMessage = (String) in.readObject();
     }
 
     // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
     public void writeExternalRemote(ObjectOutput out) throws IOException {
-        out.writeInt(id);
-        out.writeObject(configuration);
-        out.writeUTF(name);
-        out.writeObject(errorMessage);
-        out.writeObject(parentList);
-        out.writeObject(parentMap);
+     out.writeInt(id);
+     out.writeObject(configuration);
+     out.writeUTF(name);
+     out.writeObject(errorMessage);
+     out.writeObject(parentList);
+     out.writeObject(parentMap);
     }
 
     public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-        id = in.readInt();
-        configuration = (Configuration) in.readObject();
-        name = in.readUTF();
-        errorMessage = (String) in.readObject();
-        parentList = (PropertyList) in.readObject();
-        parentMap = (PropertyMap) in.readObject();
+     id = in.readInt();
+     configuration = (Configuration) in.readObject();
+     name = in.readUTF();
+     errorMessage = (String) in.readObject();
+     parentList = (PropertyList) in.readObject();
+     parentMap = (PropertyMap) in.readObject();
     }*/
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder(this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1));
+        StringBuilder str = new StringBuilder(this.getClass().getName().substring(
+            this.getClass().getName().lastIndexOf(".") + 1));
         str.append("[id=").append(getId());
         str.append(", name=").append(getName());
         appendToStringInternals(str); // ask subclasses if they have anything else to add

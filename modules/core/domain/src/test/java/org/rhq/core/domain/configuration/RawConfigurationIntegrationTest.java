@@ -23,10 +23,12 @@
 
 package org.rhq.core.domain.configuration;
 
-import org.rhq.core.domain.test.AbstractEJB3Test;
+import javax.persistence.EntityManager;
+
 import org.testng.annotations.Test;
 
-import javax.persistence.EntityManager;
+import org.rhq.core.domain.test.AbstractEJB3Test;
+import org.rhq.core.util.MessageDigestGenerator;
 
 public class RawConfigurationIntegrationTest extends AbstractEJB3Test {
 
@@ -40,7 +42,9 @@ public class RawConfigurationIntegrationTest extends AbstractEJB3Test {
 
             RawConfiguration rawConfig = new RawConfiguration();
             rawConfig.setConfiguration(config);
-            rawConfig.setContents("contents");
+            String contents = "contents";
+            String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+            rawConfig.setContents(contents, sha256);
             rawConfig.setPath("/tmp/foo.txt");
 
             entityMgr.persist(rawConfig);
@@ -48,9 +52,8 @@ public class RawConfigurationIntegrationTest extends AbstractEJB3Test {
             RawConfiguration savedRawConfig = entityMgr.find(RawConfiguration.class, rawConfig.getId());
 
             assertNotNull("Failed to find " + RawConfiguration.class.getSimpleName() + " by id.", savedRawConfig);
-        }
-        finally {
-            getTransactionManager().rollback();    
+        } finally {
+            getTransactionManager().rollback();
         }
     }
 

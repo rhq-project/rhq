@@ -23,13 +23,19 @@
 
 package org.rhq.core.domain.configuration;
 
-import static org.testng.Assert.*;
-
-import org.testng.annotations.Test;
-import org.rhq.core.server.ExternalizableStrategy;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotSame;
+import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Random;
 import java.util.Set;
+
+import org.testng.annotations.Test;
+
+import org.rhq.core.server.ExternalizableStrategy;
+import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * This class has tests for Configuration just like org.rhq.core.domain.configuration.test.ConfigurationTest. These
@@ -43,7 +49,8 @@ public class ConfigurationTest {
         Configuration original = createConfiguration();
         Configuration copy = original.deepCopy(true);
 
-        assertNotSame(copy, original, "Expected a reference to a new Configuration object, not the original object being copied");
+        assertNotSame(copy, original,
+            "Expected a reference to a new Configuration object, not the original object being copied");
     }
 
     @Test
@@ -51,7 +58,8 @@ public class ConfigurationTest {
         Configuration original = createConfiguration();
         Configuration copy = original.deepCopy(false);
 
-        assertNotSame(copy, original, "Expected a reference to a new Configuration object, not the original object being copied");
+        assertNotSame(copy, original,
+            "Expected a reference to a new Configuration object, not the original object being copied");
     }
 
     @Test
@@ -81,8 +89,10 @@ public class ConfigurationTest {
 
         Configuration copy = original.deepCopy(true);
 
-        assertNotSame(copy.getProperties(), original.getProperties(), "The properties property should not refer to the properties in the original object");
-        assertEquals(copy.getProperties(), original.getProperties(), "Failed to copy the contents of the properties collection");
+        assertNotSame(copy.getProperties(), original.getProperties(),
+            "The properties property should not refer to the properties in the original object");
+        assertEquals(copy.getProperties(), original.getProperties(),
+            "Failed to copy the contents of the properties collection");
     }
 
     @Test
@@ -92,8 +102,10 @@ public class ConfigurationTest {
 
         Configuration copy = original.deepCopy(false);
 
-        assertNotSame(copy.getProperties(), original.getProperties(), "The properties property should not refer to the properties in the original object");
-        assertEquals(copy.getProperties(), original.getProperties(), "Failed to copy the contents of the properties collection");
+        assertNotSame(copy.getProperties(), original.getProperties(),
+            "The properties property should not refer to the properties in the original object");
+        assertEquals(copy.getProperties(), original.getProperties(),
+            "Failed to copy the contents of the properties collection");
     }
 
     @Test
@@ -104,7 +116,8 @@ public class ConfigurationTest {
 
         Configuration copy = original.deepCopy(true);
 
-        assertNotSame(copy.get(propertyName), original.get(propertyName), "Expected a refernce to a new property, not the original property being copied");
+        assertNotSame(copy.get(propertyName), original.get(propertyName),
+            "Expected a refernce to a new property, not the original property being copied");
     }
 
     @Test
@@ -115,7 +128,8 @@ public class ConfigurationTest {
 
         Configuration copy = original.deepCopy(false);
 
-        assertNotSame(copy.get(propertyName), original.get(propertyName), "Expected a refernce to a new property, not the original property being copied");
+        assertNotSame(copy.get(propertyName), original.get(propertyName),
+            "Expected a refernce to a new property, not the original property being copied");
     }
 
     @Test
@@ -129,8 +143,7 @@ public class ConfigurationTest {
         assertSame(
             copy.get(propertyName).getConfiguration(),
             copy,
-            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration"
-        );
+            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration");
     }
 
     @Test
@@ -144,8 +157,7 @@ public class ConfigurationTest {
         assertSame(
             copy.get(propertyName).getConfiguration(),
             copy,
-            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration"
-        );
+            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration");
     }
 
     @Test
@@ -155,13 +167,11 @@ public class ConfigurationTest {
 
         Configuration copy = original.deepCopy(true);
 
-        assertNotSame(
-            copy.getRawConfigurations(),
-            original.getRawConfigurations(),
-            "The rawConfigurations property should not refer to the original rawConfigurations of the copied object."
-        );
+        assertNotSame(copy.getRawConfigurations(), original.getRawConfigurations(),
+            "The rawConfigurations property should not refer to the original rawConfigurations of the copied object.");
 
-        assertRawConfigurationsEquals(copy.getRawConfigurations(), original.getRawConfigurations(), "Failed to copy rawConfigurations property.");
+        assertRawConfigurationsEquals(copy.getRawConfigurations(), original.getRawConfigurations(),
+            "Failed to copy rawConfigurations property.");
     }
 
     @Test
@@ -171,17 +181,16 @@ public class ConfigurationTest {
 
         Configuration copy = original.deepCopy(false);
 
-        assertNotSame(
-            copy.getRawConfigurations(),
-            original.getRawConfigurations(),
-            "The rawConfigurations property should not refer to the original rawConfigurations of the copied object."
-        );
+        assertNotSame(copy.getRawConfigurations(), original.getRawConfigurations(),
+            "The rawConfigurations property should not refer to the original rawConfigurations of the copied object.");
 
-        assertRawConfigurationsEquals(copy.getRawConfigurations(), original.getRawConfigurations(), "Failed to copy rawConfigurations property.");
+        assertRawConfigurationsEquals(copy.getRawConfigurations(), original.getRawConfigurations(),
+            "Failed to copy rawConfigurations property.");
     }
 
     void assertRawConfigurationsEquals(Set<RawConfiguration> actual, Set<RawConfiguration> expected, String msg) {
-        assertEquals(actual.size(), expected.size(), msg + " -- The rawConfigurations set has the wrong number of elements.");
+        assertEquals(actual.size(), expected.size(), msg
+            + " -- The rawConfigurations set has the wrong number of elements.");
         for (RawConfiguration rawConfig : expected) {
             assertTrue(actual.contains(rawConfig), msg + " -- Failed to find " + rawConfig);
         }
@@ -198,8 +207,7 @@ public class ConfigurationTest {
         assertSame(
             copiedRawConfig.getConfiguration(),
             copy,
-            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration."
-        );
+            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration.");
     }
 
     @Test
@@ -213,8 +221,7 @@ public class ConfigurationTest {
         assertSame(
             copiedRawConfig.getConfiguration(),
             copy,
-            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration."
-        );
+            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration.");
     }
 
     private RawConfiguration getCopiedRawConfiguration(Configuration config) {
@@ -235,7 +242,8 @@ public class ConfigurationTest {
     public void equalsShouldBeFalseWhenArgumentIsNotAConfiguration() {
         Configuration config = new Configuration();
 
-        assertFalse(config.equals(new Object()), "equals should return false when argument is not a " + Configuration.class.getSimpleName());
+        assertFalse(config.equals(new Object()), "equals should return false when argument is not a "
+            + Configuration.class.getSimpleName());
     }
 
     @Test
@@ -262,10 +270,8 @@ public class ConfigurationTest {
         Configuration c2 = new Configuration();
         c2.put(new PropertySimple("foo", "bar"));
 
-        assertTrue(
-            c1.equals(c2) && c2.equals(c1),
-            "equals() should be true and symmetric when structured configs are equal and there are no raw configs."
-        );
+        assertTrue(c1.equals(c2) && c2.equals(c1),
+            "equals() should be true and symmetric when structured configs are equal and there are no raw configs.");
         assertEquals(c1.hashCode(), c2.hashCode());
     }
 
@@ -279,10 +285,8 @@ public class ConfigurationTest {
         Configuration c2 = new Configuration();
         c2.addRawConfiguration(createCopyOfRawConfiguration(rawConfig));
 
-        assertTrue(
-            c1.equals(c2) && c2.equals(c1),
-            "equals() should be true and symmetric when raw configs are equal and there are no structured configs."
-        );
+        assertTrue(c1.equals(c2) && c2.equals(c1),
+            "equals() should be true and symmetric when raw configs are equal and there are no structured configs.");
         assertEquals(c1.hashCode(), c2.hashCode());
     }
 
@@ -309,7 +313,8 @@ public class ConfigurationTest {
         Configuration c3 = new Configuration();
         c3.put(new PropertySimple("foo", "bar"));
 
-        assertTrue(c1.equals(c2) && c2.equals(c3), "equals() should be true when structured configs are equal and there are no raw configs.");
+        assertTrue(c1.equals(c2) && c2.equals(c3),
+            "equals() should be true when structured configs are equal and there are no raw configs.");
         assertTrue(c1.equals(c3), "equals should be transitive.");
 
         assertEquals(c1.hashCode(), c3.hashCode(), "hashCodes should be the same when equals() returns true.");
@@ -328,7 +333,8 @@ public class ConfigurationTest {
         Configuration c3 = new Configuration();
         c3.addRawConfiguration(createCopyOfRawConfiguration(rawConfig));
 
-        assertTrue(c1.equals(c2) && c2.equals(c3), "equals() should be true when raw configs are equal and there are no structured configs.");
+        assertTrue(c1.equals(c2) && c2.equals(c3),
+            "equals() should be true when raw configs are equal and there are no structured configs.");
         assertTrue(c1.equals(c3), "equals should be transitive.");
 
         assertEquals(c1.hashCode(), c3.hashCode(), "hashCodes should be the same when equals() returns true.");
@@ -420,7 +426,9 @@ public class ConfigurationTest {
 
         RawConfiguration rawConfig = new RawConfiguration();
         rawConfig.setPath(path);
-        rawConfig.setContents(new String(bytes));
+        String contents = new String(bytes);
+        String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+        rawConfig.setContents(contents, sha256);
 
         return rawConfig;
     }
@@ -428,7 +436,9 @@ public class ConfigurationTest {
     private RawConfiguration createCopyOfRawConfiguration(RawConfiguration rawConfig) {
         RawConfiguration copy = new RawConfiguration();
         copy.setPath(rawConfig.getPath());
-        copy.setContents(rawConfig.getContents());
+        String contents = rawConfig.getContents();
+        String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+        copy.setContents(contents, sha256);
         copy.setConfiguration(rawConfig.getConfiguration());
 
         return copy;
@@ -495,11 +505,8 @@ public class ConfigurationTest {
 
         assertEquals(serializedConfig.getMap(), config.getMap(), "Failed to property serialize the map property");
         for (Property property : serializedConfig.getProperties()) {
-            assertEquals(
-                property.getConfiguration(),
-                serializedConfig,
-                "Failed to update parent reference of property during serialization"
-            );
+            assertEquals(property.getConfiguration(), serializedConfig,
+                "Failed to update parent reference of property during serialization");
         }
     }
 
@@ -561,11 +568,8 @@ public class ConfigurationTest {
 
         Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
-        assertEquals(
-            serializedConfig.getVersion(),
-            config.getVersion(),
-            "Failed to properly serialize the version property"
-        );
+        assertEquals(serializedConfig.getVersion(), config.getVersion(),
+            "Failed to properly serialize the version property");
     }
 
     @Test
@@ -595,12 +599,8 @@ public class ConfigurationTest {
 
         Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
-
-        assertEquals(
-            serializedConfig.getModifiedTime(),
-            config.getModifiedTime(),
-            "Failed to properly serialize the modifiedTime property"
-        );
+        assertEquals(serializedConfig.getModifiedTime(), config.getModifiedTime(),
+            "Failed to properly serialize the modifiedTime property");
     }
 
     @Test
@@ -630,11 +630,8 @@ public class ConfigurationTest {
 
         Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
-        assertEquals(
-            serializedConfig.getCreatedTime(),
-            config.getCreatedTime(),
-            "Failed to properly serialize the createdTime property"
-        );
+        assertEquals(serializedConfig.getCreatedTime(), config.getCreatedTime(),
+            "Failed to properly serialize the createdTime property");
     }
 
     @Test
@@ -665,17 +662,11 @@ public class ConfigurationTest {
 
         Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
-        assertRawConfigurationsEquals(
-            serializedConfig.getRawConfigurations(),
-            config.getRawConfigurations(),
-            "Failed to properly serialize rawConfigurations property"
-        );
+        assertRawConfigurationsEquals(serializedConfig.getRawConfigurations(), config.getRawConfigurations(),
+            "Failed to properly serialize rawConfigurations property");
         for (RawConfiguration rawConfig : serializedConfig.getRawConfigurations()) {
-            assertEquals(
-                rawConfig.getConfiguration(),
-                serializedConfig,
-                "Failed to update parent reference of raw config during serialization"
-            );
+            assertEquals(rawConfig.getConfiguration(), serializedConfig,
+                "Failed to update parent reference of raw config during serialization");
         }
     }
 

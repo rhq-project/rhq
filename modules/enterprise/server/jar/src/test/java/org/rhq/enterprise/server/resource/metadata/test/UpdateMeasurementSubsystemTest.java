@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -185,6 +186,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
              * Create a Fake Resource and a MeasurementSchedule
              */
             Resource testResource = new Resource("-test-", "-test resource", server);
+            testResource.setUuid("" + new Random().nextInt());
             entityManager.persist(testResource);
 
             MeasurementSchedule sched = new MeasurementSchedule(definitions1.iterator().next(), testResource);
@@ -295,6 +297,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
              * Create a Fake Resource and a MeasurementSchedule
              */
             Resource testResource = new Resource("-test-", "-test resource", platform);
+            testResource.setUuid("" + new Random().nextInt());
             entityManager.persist(testResource);
 
             setUpAgent(entityManager, testResource);

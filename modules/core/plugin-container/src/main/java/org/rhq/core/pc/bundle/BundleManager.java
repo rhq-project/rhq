@@ -226,7 +226,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
 
         if (packageVersion.getMD5() != null) {
-            String realMD5 = MessageDigestGenerator.getDigestString(packageFile);
+            String realMD5 = new MessageDigestGenerator(MessageDigestGenerator.MD5).calcDigestString(packageFile);
             if (!packageVersion.getMD5().equals(realMD5)) {
                 throw new Exception("Package version [" + packageVersion + "] failed MD5 check. expected=["
                     + packageVersion.getMD5() + "], actual=[" + realMD5 + "]");
@@ -234,9 +234,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         } else if (packageVersion.getSHA256() != null) {
             FileInputStream is = new FileInputStream(packageFile);
             try {
-                MessageDigestGenerator gen = new MessageDigestGenerator("SHA256");
-                gen.add(is);
-                String realSHA256 = gen.getDigestString();
+                String realSHA256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(is);
                 if (!packageVersion.getSHA256().equals(realSHA256)) {
                     throw new Exception("Package version [" + packageVersion + "] failed SHA256 check. expected=["
                         + packageVersion.getSHA256() + "], actual=[" + realSHA256 + "]");

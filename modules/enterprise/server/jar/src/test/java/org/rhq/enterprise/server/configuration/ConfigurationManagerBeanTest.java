@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
 
 import javax.persistence.EntityManager;
 
@@ -39,6 +38,7 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -46,10 +46,8 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
@@ -59,6 +57,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -942,7 +941,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     void delete(Configuration configuration) {
         EntityManager entityMgr = getEntityManager();
         Configuration managedConfig = entityMgr.find(Configuration.class, configuration.getId());
-        entityMgr.remove(managedConfig);    
+        entityMgr.remove(managedConfig);
     }
 
     private class TestServices implements ConfigurationAgentService, DiscoveryAgentService {
@@ -989,7 +988,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                             response = new ConfigurationUpdateResponse(request.getConfigurationUpdateId(), null,
                                 ConfigurationUpdateStatus.SUCCESS, null);
                         } else {
-                            mybool.setErrorMessageFromThrowable(new IllegalArgumentException("Not a valid boolean"));
+                            mybool.setErrorMessage(ThrowableUtil.getStackAsString(new IllegalArgumentException(
+                                "Not a valid boolean")));
                             response = new ConfigurationUpdateResponse(request.getConfigurationUpdateId(), request
                                 .getConfiguration(), new NullPointerException("This simulates a failed update"));
                         }
@@ -1087,9 +1087,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         @Asynchronous(guaranteedDelivery = true)
         public void synchronizeInventory(ResourceSyncInfo syncInfo) {
         }
-	public Configuration validate(Configuration configuration, int resourceId, boolean isStructured)
+
+        public Configuration validate(Configuration configuration, int resourceId, boolean isStructured)
             throws PluginContainerException {
-	    return null;
+            return null;
         }
     }
 }

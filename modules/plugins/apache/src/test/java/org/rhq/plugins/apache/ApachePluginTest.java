@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -114,7 +115,8 @@ public class ApachePluginTest {
         }
     }
 
-    @Test(dependsOnMethods = "testServiceDiscovery")
+    @Test(dependsOnMethods = "testServiceDiscovery", enabled = false)
+    // TODO: this is not a unit test - it requires an apache server to be running with snmp enabled
     public void testMeasurementComponent() throws Exception {
         Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
         for (Resource server : platform.getChildResources()) {

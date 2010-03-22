@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -1034,6 +1035,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
                 // Create resource against which we'll merge the discovery report
                 resource1 = new Resource("parent" + System.currentTimeMillis(), "name", resourceType1);
+                resource1.setUuid("" + new Random().nextInt());
                 em.persist(resource1);
 
                 // Install packages on the resource

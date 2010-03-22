@@ -9,6 +9,7 @@ import javax.persistence.Query;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -35,6 +36,7 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
 
     private Subject overlord;
 
+    @Test
     public void testAll() {
         // TODO: jmarques - write unit tests for MeasurementViewManager
     }
@@ -61,6 +63,7 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
             resources = new ArrayList<Resource>();
             for (int i = 0; i < SIZE; i++) {
                 Resource resource = new Resource(prefix + "key " + i, prefix + "key " + i, type);
+                resource.setUuid(resource.getResourceKey());
                 resources.add(resource);
                 em.persist(resource);
             }

@@ -23,12 +23,13 @@
 
 package org.rhq.enterprise.gui.configuration.resource;
 
+import java.io.File;
+
 import org.jboss.seam.core.Events;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
-
-import javax.faces.component.NamingContainer;
-import java.io.File;
+import org.rhq.core.util.MessageDigestGenerator;
 
 public class RawConfigUIBean {
 
@@ -58,7 +59,8 @@ public class RawConfigUIBean {
     public void setContents(String contents) {
         Configuration configuration = rawConfiguration.getConfiguration();
         configuration.removeRawConfiguration(rawConfiguration);
-        rawConfiguration.setContents(contents);
+        String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+        rawConfiguration.setContents(contents, sha256);
         configuration.addRawConfiguration(rawConfiguration);
 
         fireRawConfigUpdateEvent();

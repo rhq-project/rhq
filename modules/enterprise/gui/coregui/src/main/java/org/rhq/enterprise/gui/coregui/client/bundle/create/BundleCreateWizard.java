@@ -20,18 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-
-import org.rhq.core.domain.bundle.BundleVersion;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 public class BundleCreateWizard extends AbstractBundleCreateWizard {
 
@@ -42,35 +31,7 @@ public class BundleCreateWizard extends AbstractBundleCreateWizard {
         ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
         steps.add(new BundleInfoStep(this));
         steps.add(new BundleUploadRecipeStep(this));
-//        steps.add(new BundleVerificationStep(this));
         steps.add(new BundleUploadDataStep(this));
         setSteps(steps);
-    }
-
-    @Override
-    public void startBundleWizard() {
-        super.startBundleWizard();
-        IButton cancelButton = getView().getCancelButton();
-        cancelButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                final BundleVersion bv = getBundleVersion();
-                if (bv != null) {
-                    // the user must have created it already after verification step, delete it
-                    BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-                    bundleServer.deleteBundleVersion(bv.getId(), new AsyncCallback<Void>() {
-                        public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Canceled bundle [" + bv.getName() + "] version [" + bv.getVersion() + "]",
-                                    Severity.Info));
-                        }
-
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(
-                                "Failed to fully cancel - bundle may still exist in the database", caught);
-                        }
-                    });
-                }
-            }
-        });
     }
 }

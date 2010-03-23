@@ -18,9 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
+import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 public abstract class AbstractBundleCreateWizard extends AbstractBundleWizard {
 
@@ -78,5 +85,25 @@ public abstract class AbstractBundleCreateWizard extends AbstractBundleWizard {
 
     public void setBundleVersion(BundleVersion bv) {
         this.bundleVersion = bv;
+    }
+
+    public void cancel() {
+        final BundleVersion bv = getBundleVersion();
+        if (bv != null) {
+            // the user must have created it already after verification step, delete it
+            BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+            bundleServer.deleteBundleVersion(bv.getId(), new AsyncCallback<Void>() {
+                public void onSuccess(Void result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Canceled bundle [" + bv.getName() + "] version [" + bv.getVersion() + "]",
+                            Severity.Info));
+                }
+
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        "Failed to fully cancel - bundle may still exist in the database", caught);
+                }
+            });
+        }
     }
 }

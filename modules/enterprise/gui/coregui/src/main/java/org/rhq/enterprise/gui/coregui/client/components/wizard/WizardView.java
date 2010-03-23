@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -116,7 +116,7 @@ public class WizardView extends VLayout {
      */
     public void refreshTitleLabelContents() {
         this.titleLabel.setContents("<span class=\"HeaderLabel\">" + wizard.getTitle() + "</span><br/>"
-                + (wizard.getSubtitle() != null ? wizard.getSubtitle() : ""));
+            + (wizard.getSubtitle() != null ? wizard.getSubtitle() : ""));
     }
 
     private void setupButtons() {
@@ -124,6 +124,7 @@ public class WizardView extends VLayout {
         cancelButton.setDisabled(false);
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
+                wizard.cancel();
                 wizardWindow.destroy();
             }
         });
@@ -199,6 +200,7 @@ public class WizardView extends VLayout {
         wizardWindow.centerInPage();
         wizardWindow.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(CloseClientEvent closeClientEvent) {
+                wizard.cancel();
                 wizardWindow.destroy();
             }
         });

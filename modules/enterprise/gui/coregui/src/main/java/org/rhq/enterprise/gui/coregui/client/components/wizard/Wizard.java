@@ -37,4 +37,8 @@ public interface Wizard {
 
     List<IButton> getCustomButtons(int step);
 
+    /**
+     * This is called when the cancel button or the wizard window's "X" close button is clicked. 
+     */
+    void cancel();
 }

@@ -21,10 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -81,18 +77,12 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         return steps;
     }
 
-    @Override
-    public void startBundleWizard() {
-        super.startBundleWizard();
-        IButton cancelButton = getView().getCancelButton();
-        cancelButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                BundleDeployDefinition bdd = getBundleDeployDefinition();
-                if (bdd != null && isNewDefinition()) {
-                    // the user must have created it already after verification step, delete it
-                }
-            }
-        });
+    public void cancel() {
+        BundleDeployDefinition bdd = getBundleDeployDefinition();
+        if (bdd != null && isNewDefinition()) {
+            // the user must have created it already after verification step, delete it
+            // TODO
+        }
     }
 
 }

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TemplateEngine implements Serializable{
+public class TemplateEngine implements Serializable {
     /**
      * 
      */

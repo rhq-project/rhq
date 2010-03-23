@@ -165,4 +165,8 @@ public class ResourceFactoryCreateWizard implements Wizard {
     public ResourceType getCreateType() {
         return createType;
     }
+    
+    public void cancel() {
+        // TODO: revert back to original state
+    }
 }

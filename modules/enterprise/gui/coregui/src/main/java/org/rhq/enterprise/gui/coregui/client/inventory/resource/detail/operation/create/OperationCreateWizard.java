@@ -123,29 +123,26 @@ public class OperationCreateWizard implements Wizard {
         Configuration parameters = parametersStep.getParameterConfiguration();
         final ExecutionSchedule schedule = schedulingStep.getExecutionSchedule();
 
-        GWTServiceLookup.getOperationService().scheduleResourceOperation(
-                resource.getId(),
-        operationDefinition.getName(),
-                parameters,
-                schedule,
-                " testing ",
-                0,
-                new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to schedule operation execution",caught);
-                    }
-
-                    public void onSuccess(Void result) {
-
-                        String message = "Schedule operation [" + operationDefinition.getName()
-                                + "]  on resource [" + resource.getId() + "] with cron string [" + schedule.getCronString() + "]";
-
-                        CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Info));
-                    }
+        GWTServiceLookup.getOperationService().scheduleResourceOperation(resource.getId(),
+            operationDefinition.getName(), parameters, schedule, " testing ", 0, new AsyncCallback<Void>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to schedule operation execution", caught);
                 }
-        );
 
+                public void onSuccess(Void result) {
+
+                    String message = "Schedule operation [" + operationDefinition.getName() + "]  on resource ["
+                        + resource.getId() + "] with cron string [" + schedule.getCronString() + "]";
+
+                    CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Info));
+                }
+            });
 
         view.closeDialog();
+    }
+
+    @Override
+    public void cancel() {
+        // TODO: revert back to original state
     }
 }

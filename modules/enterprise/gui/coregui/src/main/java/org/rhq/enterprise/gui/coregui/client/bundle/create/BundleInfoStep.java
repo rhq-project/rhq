@@ -19,12 +19,14 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -46,9 +48,12 @@ public class BundleInfoStep implements WizardStep {
     private final AbstractBundleCreateWizard wizard;
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+    private final HashMap<String, BundleType> knownBundleTypes = new HashMap<String, BundleType>();
+
     private TextItem nameTextItem;
     private TextItem versionTextItem;
     private TextAreaItem descriptionTextAreaItem;
+    private SelectItem bundleTypeDropDownMenu;
 
     public BundleInfoStep(AbstractBundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
@@ -60,6 +65,19 @@ public class BundleInfoStep implements WizardStep {
             form.setPadding(20);
             form.setWidth100();
             form.setNumCols(2);
+
+            bundleTypeDropDownMenu = new SelectItem("bundleTypeDropDownMenu", "Bundle Type");
+            bundleTypeDropDownMenu.setVisible(false);
+            bundleTypeDropDownMenu.setDisabled(true);
+            bundleTypeDropDownMenu.setTitleAlign(Alignment.LEFT);
+            bundleTypeDropDownMenu.setAllowEmptyValue(false);
+            bundleTypeDropDownMenu.setMultiple(false);
+            bundleTypeDropDownMenu.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    BundleType bundleType = knownBundleTypes.get(event.getValue());
+                    wizard.setBundleType(bundleType);
+                }
+            });
 
             nameTextItem = new TextItem("name", "Name");
             nameTextItem.setRequired(true);
@@ -83,7 +101,8 @@ public class BundleInfoStep implements WizardStep {
             descriptionTextAreaItem.setColSpan(2);
             descriptionTextAreaItem.setWidth(300);
 
-            form.setItems(nameTextItem, previousVersionTextItem, versionTextItem, descriptionTextAreaItem);
+            form.setItems(bundleTypeDropDownMenu, nameTextItem, previousVersionTextItem, versionTextItem,
+                descriptionTextAreaItem);
 
             BundleVersion initialBundleVersion = wizard.getBundleVersion();
             if (initialBundleVersion != null) {
@@ -107,11 +126,23 @@ public class BundleInfoStep implements WizardStep {
             }
 
             if (wizard.getBundleType() == null) {
-                // TODO: we should get all bundle types in a drop down menu and let the user pick
-                //       for now assume we always get one (the filetemplate one) and use it
                 bundleServer.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
                     public void onSuccess(ArrayList<BundleType> result) {
-                        wizard.setBundleType(result.get(0));
+                        for (BundleType bundleType : result) {
+                            knownBundleTypes.put(bundleType.getName(), bundleType);
+                            if (wizard.getBundleType() == null) {
+                                wizard.setBundleType(bundleType);
+                                bundleTypeDropDownMenu.setDefaultValue(bundleType.getName());
+                                bundleTypeDropDownMenu.setValue(bundleType.getName());
+                            }
+                        }
+                        bundleTypeDropDownMenu.setValueMap(knownBundleTypes.keySet().toArray(new String[0]));
+                        bundleTypeDropDownMenu.setDisabled(false);
+                        // don't bother showing the menu if there is only one item
+                        if (knownBundleTypes.size() > 1) {
+                            bundleTypeDropDownMenu.setVisible(true);
+                            bundleTypeDropDownMenu.show(); // in case we've already been rendered
+                        }
                     }
 
                     public void onFailure(Throwable caught) {
@@ -123,9 +154,10 @@ public class BundleInfoStep implements WizardStep {
         } else {
             if (wizard.getBundleVersion() != null) {
                 // we are traversing back to this step - don't allow changes if we've already created the bundle version
-                nameTextItem.setDisabled(Boolean.TRUE);
-                versionTextItem.setDisabled(Boolean.TRUE);
-                descriptionTextAreaItem.setDisabled(Boolean.TRUE);
+                bundleTypeDropDownMenu.setDisabled(true);
+                nameTextItem.setDisabled(true);
+                versionTextItem.setDisabled(true);
+                descriptionTextAreaItem.setDisabled(true);
             }
         }
 

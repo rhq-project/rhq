@@ -41,23 +41,27 @@ public class RecipeParserTest {
     }
 
     public void testConfigDefRecipe() throws Exception {
+        addRecipeCommand("configdef --name=my.first.property");
         addRecipeCommand("configdef -n custom.prop");
         RecipeParser parser = new RecipeParser();
         RecipeContext context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         Set<String> vars = context.getReplacementVariables();
-        assert vars.size() == 1 : vars;
+        assert vars.size() == 2 : vars;
+        assert vars.contains("my.first.property");
         assert vars.contains("custom.prop");
     }
 
     public void testRealizeRecipe() throws Exception {
         addRecipeCommand("realize --file=<%opt.dir%>/config.ini");
+        addRecipeCommand("realize -f <%opt2.dir%>/config2.ini");
         RecipeParser parser = new RecipeParser();
         RecipeContext context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         Set<String> files = context.getRealizedFiles();
-        assert files.size() == 1 : files;
+        assert files.size() == 2 : files;
         assert files.contains("<%opt.dir%>/config.ini") : files;
+        assert files.contains("<%opt2.dir%>/config2.ini") : files;
     }
 
     public void testFileRecipe() throws Exception {

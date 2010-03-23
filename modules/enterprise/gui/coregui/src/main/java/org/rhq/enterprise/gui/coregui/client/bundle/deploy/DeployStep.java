@@ -46,6 +46,10 @@ public class DeployStep implements WizardStep {
         this.wizard = bundleCreationWizard;
     }
 
+    public String getName() {
+        return "Deploy Bundle to Target Platforms";
+    }
+
     public Canvas getCanvas() {
         if (canvas == null) {
             canvas = new VLayout();
@@ -66,7 +70,7 @@ public class DeployStep implements WizardStep {
 
             if (wizard.isNewDefinition()) {
                 bundleServer.createBundleDeployDefinition(wizard.getBundleVersion().getId(), wizard.getName(), wizard
-                    .getDescription(), wizard.getConfig(), false, -1, false,
+                    .getDescription(), wizard.getConfig(), false, -1, false, //
                     new AsyncCallback<BundleDeployDefinition>() {
                         public void onSuccess(BundleDeployDefinition result) {
                             deployingImage.setSrc("/images/status_complete.gif");
@@ -75,62 +79,52 @@ public class DeployStep implements WizardStep {
                                 new Message("Created deploy definition [" + result.getName() + "] description ["
                                     + result.getDescription(), Severity.Info));
                             wizard.setBundleDeployDefinition(result);
-                            enableNextButtonWhenAppropriate();
+
+                            bundleServer.scheduleBundleDeployment(wizard.getBundleDeployDefinition().getId(), wizard
+                                .getPlatformId(), //
+                                new AsyncCallback<BundleDeployment>() {
+                                    public void onSuccess(BundleDeployment result) {
+                                        deployingImage.setSrc("/images/status_complete.gif");
+                                        deployingMessage.setText("Bundle Deployment Scheduled!");
+                                        CoreGUI.getMessageCenter().notify(
+                                            new Message("Schedule bundle deployment ["
+                                                + wizard.getBundleDeployDefinition().getName() + "] resource ["
+                                                + result.getResource() + "]", Severity.Info));
+                                        wizard.setBundleDeployment(result);
+                                    }
+
+                                    public void onFailure(Throwable caught) {
+                                        deployingImage.setSrc("/images/status_error.gif");
+                                        deployingMessage.setText("Failed to Schedule Deployment!");
+                                        CoreGUI.getErrorHandler().handleError(
+                                            "Failed to schedule deployment: " + caught.getMessage(), caught);
+                                        wizard.setBundleDeployment(null);
+                                    }
+                                });
                         }
 
                         public void onFailure(Throwable caught) {
                             deployingImage.setSrc("/images/status_error.gif");
-                            deployingMessage.setText("Failed to create deply definition!");
+                            deployingMessage.setText("Failed to create deploy definition!");
                             CoreGUI.getErrorHandler().handleError(
                                 "Failed to create deploy definition: " + caught.getMessage(), caught);
-                            enableNextButtonWhenAppropriate();
                         }
                     });
             }
-
-            bundleServer.scheduleBundleDeployment(wizard.getBundleDeployDefinition().getId(), wizard.getPlatformId(),
-                new AsyncCallback<BundleDeployment>() {
-                    public void onSuccess(BundleDeployment result) {
-                        deployingImage.setSrc("/images/status_complete.gif");
-                        deployingMessage.setText("Bundle Deployment Scheduled!");
-                        CoreGUI.getMessageCenter().notify(
-                            new Message("Schedule bundle deployment [" + wizard.getBundleDeployDefinition().getName()
-                                + "] resource [" + result.getResource() + "]", Severity.Info));
-                        wizard.setBundleDeployment(result);
-                        enableNextButtonWhenAppropriate();
-                    }
-
-                    public void onFailure(Throwable caught) {
-                        deployingImage.setSrc("/images/status_error.gif");
-                        deployingMessage.setText("Failed to Schedule Deployment!");
-                        CoreGUI.getErrorHandler().handleError("Failed to schedule deployment: " + caught.getMessage(),
-                            caught);
-                        wizard.setBundleDeployment(null);
-                        enableNextButtonWhenAppropriate();
-                    }
-                });
         }
 
         return canvas;
     }
 
-    public boolean nextPage() {
-        return this.wizard.getBundleVersion() != null;
-    }
-
-    public String getName() {
-        return "Deploy Bundle to Target Platforms";
-    }
-
     public boolean isNextEnabled() {
-        return this.wizard.getBundleDeployment() != null;
+        return false;
     }
 
     public boolean isPreviousEnabled() {
         return true;
     }
 
-    private void enableNextButtonWhenAppropriate() {
-        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
+    public boolean nextPage() {
+        return false;
     }
 }

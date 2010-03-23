@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TemplateEngine implements Serializable{
+public class TemplateEngine implements Serializable {
     /**
      * 
      */
@@ -48,6 +48,12 @@ public class TemplateEngine implements Serializable{
                 String value = tokens.get(key);
                 if (value != null) {
                     next = value;
+                } else {
+                    // fallback is to see if the replacement key represents a Java system prop
+                    value = System.getProperty(key);
+                    if (value != null) {
+                        next = value;
+                    }
                 }
             }
             //If we didn't find a replacement for the key

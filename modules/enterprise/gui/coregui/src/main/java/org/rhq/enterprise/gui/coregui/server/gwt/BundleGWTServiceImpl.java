@@ -26,6 +26,7 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -88,6 +89,14 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         return SerialUtility.prepare(results, "createBundleVersion");
     }
 
+    public void deleteBundle(int bundleId) {
+        try {
+            bundleManager.deleteBundle(getSessionSubject(), bundleId);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public void deleteBundleVersion(int bundleVersionId) {
         try {
             bundleManager.deleteBundleVersion(getSessionSubject(), bundleVersionId);
@@ -109,6 +118,17 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         try {
             PageList<BundleVersion> results = bundleManager.findBundleVersionsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundleVersionsByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
+        BundleCriteria criteria) {
+        try {
+            PageList<BundleWithLatestVersionComposite> results;
+            results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(getSessionSubject(), criteria);
+            return SerialUtility.prepare(results, "findBundlesWithLastestVersionCompositesByCriteria");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

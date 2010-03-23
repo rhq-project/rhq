@@ -35,6 +35,7 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -234,6 +235,11 @@ public interface BundleManagerRemote {
     PageList<BundleVersion> findBundleVersionsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") BundleVersionCriteria criteria);
+
+    @WebMethod
+    PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") BundleCriteria criteria);
 
     @WebMethod
     List<BundleType> getAllBundleTypes( //

@@ -23,6 +23,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Jay Shaughnessy
@@ -41,6 +42,9 @@ public class BundleCriteria extends Criteria {
 
     private boolean fetchBundleVersions;
     private boolean fetchRepo;
+
+    private PageOrdering sortName;
+    private PageOrdering sortDescription;
 
     public BundleCriteria() {
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
@@ -80,4 +84,13 @@ public class BundleCriteria extends Criteria {
         this.fetchRepo = fetchRepo;
     }
 
+    public void addSortName(PageOrdering sortName) {
+        addSortField("name");
+        this.sortName = sortName;
+    }
+
+    public void addSortDescription(PageOrdering sortDescription) {
+        addSortField("description");
+        this.sortDescription = sortDescription;
+    }
 }

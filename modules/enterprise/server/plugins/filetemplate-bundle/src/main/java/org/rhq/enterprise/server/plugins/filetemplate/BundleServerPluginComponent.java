@@ -85,8 +85,9 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
         if (recipeContext.getReplacementVariables() != null) {
             configDef = new ConfigurationDefinition("replacementVariables", null);
             for (String replacementVar : recipeContext.getReplacementVariables()) {
-                PropertyDefinitionSimple prop = new PropertyDefinitionSimple(replacementVar, null, false,
-                    PropertySimpleType.STRING);
+                PropertyDefinitionSimple prop = new PropertyDefinitionSimple(replacementVar,
+                    "Needed by bundle recipe.", false, PropertySimpleType.STRING);
+                prop.setDisplayName(replacementVar);
                 configDef.put(prop);
             }
         }

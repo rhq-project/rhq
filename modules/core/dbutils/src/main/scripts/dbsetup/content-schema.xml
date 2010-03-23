@@ -575,7 +575,9 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>    
         <column name="BUNDLE_DEPLOY_DEF_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOY_DEF" />
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE" />
-        <column name="CTIME" type="LONG" required="true"/>        
+        <column name="CTIME" type="LONG" required="true"/>
+        <!-- for group history -->
+        <column name="GROUP_ID" type="INTEGER" required="false" references="RHQ_RESOURCE_GROUP"/>                
 
         <index name="RHQ_DEPLOY_DEF_RESOURCE_IDX" unique="true">
             <field ref="BUNDLE_DEPLOY_DEF_ID"/>

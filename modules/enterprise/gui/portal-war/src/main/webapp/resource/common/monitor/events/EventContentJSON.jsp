@@ -67,9 +67,9 @@
 
             %>
 { "start" : "<%=sdf.format(new Date(installedPackage.getTimestamp()))%>",
-  "title" : "<%=installedPackage.getPackageVersion().getDisplayName() + " " + installedPackage.getPackageVersion().getDisplayVersion()%>",
+  "title" : "<%= (""+installedPackage.getPackageVersion().getDisplayName() + " " + installedPackage.getPackageVersion().getDisplayVersion()).replaceAll("[\"']","").trim()%>",
   "link" : "<%=link%>",
-  "description" : "<b>User:</b> <%= installedPackage.getContentServiceRequest() == null ? "-Detected-" : installedPackage.getContentServiceRequest().getSubjectName()%><br/> <b>Version: <%=installedPackage.getPackageVersion().getDisplayVersion()%></b> <br/><b>Status:</b> <%=installedPackage.getStatus()%>",
+  "description" : "<b>User:</b> <%= (""+installedPackage.getContentServiceRequest() == null ? "-Detected-" : installedPackage.getContentServiceRequest().getSubjectName()).replaceAll("[\"']","").trim()%><br/> <b>Version: <%= (""+installedPackage.getPackageVersion().getDisplayVersion()).replaceAll("[\"']","").trim()%></b> <br/><b>Status:</b> <%=(""+installedPackage.getStatus()).replaceAll("[\"']","").trim()%>",
   "icon" : "<%=icon%>",
   "color" : "<%=(installedPackage.getStatus() != InstalledPackageHistoryStatus.FAILED ? "#4EB84E" : "#DD5656")%>"
 }

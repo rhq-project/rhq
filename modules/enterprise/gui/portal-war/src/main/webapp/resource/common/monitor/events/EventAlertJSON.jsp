@@ -59,9 +59,9 @@
 %>
 
 { "start" : "<%=sdf.format(new Date(alert.getCtime()))%>",
-  "title" : "<%=alert.getAlertDefinition().getName()%>",
+  "title" : "<%= (""+alert.getAlertDefinition().getName()).replaceAll("[\"']","").trim()%>",
   "link" : "<%=link%>",
-  "description" : "<%=buf.toString()%>",
+  "description" : "<%= (""+buf.toString()).replaceAll("[\"']","").trim()%>",
   "icon" : "<%=icon%>",
   "color" : "<%=(alert.getAlertDefinition().getPriority() == AlertPriority.LOW ? "#4EB84E" : "#DD5656")%>"
 }

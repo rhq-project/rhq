@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.search.SavedSearch;
-import org.rhq.core.domain.search.SearchContext;
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -38,7 +38,7 @@ public class SavedSearchCriteria extends Criteria {
     public static final long serialVersionUID = 1L;
 
     private Integer filterId;
-    private SearchContext filterContext;
+    private SearchSubsystem filterContext;
     private String filterName;
     private String filterDescription;
     private String filterPattern;
@@ -58,7 +58,7 @@ public class SavedSearchCriteria extends Criteria {
     private PageOrdering sortGlobal;
 
     public SavedSearchCriteria() {
-        super(SavedSearch.class);
+        super();
 
         filterOverrides.put("lastComputeTimeMin", "lastComputeTime >= ?");
         filterOverrides.put("lastComputeTimeMax", "lastComputeTime <= ?");
@@ -66,11 +66,15 @@ public class SavedSearchCriteria extends Criteria {
         filterOverrides.put("resultCountMax", "resultCount <= ?");
     }
 
+    public Class<SavedSearch> getPersistentClass() {
+        return SavedSearch.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }
 
-    public void addFilterSearchContext(SearchContext filterContext) {
+    public void addFilterSearchContext(SearchSubsystem filterContext) {
         this.filterContext = filterContext;
     }
 

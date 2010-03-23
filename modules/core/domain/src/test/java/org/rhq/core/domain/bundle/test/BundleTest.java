@@ -67,7 +67,11 @@ public class BundleTest extends AbstractEJB3Test {
             assert q.getResultList().size() == 0 : "should not have repo2 mapping in the db yet";
 
             BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
+
+            Repo bundleRepo = new Repo(name + "-Bundle");
+            em.persist(bundleRepo);
             Bundle bundle = new Bundle(name + "-Bundle", bundleType);
+            bundle.setRepo(bundleRepo);
             em.persist(bundle);
             BundleVersion bundleVersion = new BundleVersion(name, "1.0.0.BETA", bundle, recipe);
             em.persist(bundleVersion);
@@ -129,8 +133,12 @@ public class BundleTest extends AbstractEJB3Test {
             String name = "BundleTest-testBundleVersion";
             String recipe = "action/script/recipe is here";
 
+            Repo repo1 = new Repo(name + "-Repo1");
+            em.persist(repo1);
+
             BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
             Bundle bundle = new Bundle(name + "-Bundle", bundleType);
+            bundle.setRepo(repo1);
             em.persist(bundle);
             id = bundle.getId();
             assert id > 0;
@@ -181,8 +189,7 @@ public class BundleTest extends AbstractEJB3Test {
 
             // clean up - delete our test entity
             em.close();
-            getTransactionManager().commit();
-            getTransactionManager().begin();
+
             em = getEntityManager();
             q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
             q.setParameter("name", bv.getName());
@@ -191,10 +198,8 @@ public class BundleTest extends AbstractEJB3Test {
             em.remove(doomed);
             assert q.getResultList().size() == 0 : "didn't remove the entity";
             em.close();
-            getTransactionManager().commit();
 
             // make sure we didn't delete the bundle - it should not be cascade deleted
-            getTransactionManager().begin();
             em = getEntityManager();
             q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
             q.setParameter("name", bundle.getName());
@@ -208,16 +213,12 @@ public class BundleTest extends AbstractEJB3Test {
 
             deleteResourceType(em, bundleType.getResourceType());
             em.close();
-            getTransactionManager().commit();
 
-            done = true;
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
         } finally {
-            if (!done) {
-                getTransactionManager().rollback();
-            }
+            getTransactionManager().rollback();
         }
     }
 
@@ -235,8 +236,12 @@ public class BundleTest extends AbstractEJB3Test {
             assert q.getResultList().size() == 0; // not in the db yet
 
             BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
-            Bundle b = new Bundle(name, bundleType);
 
+            Repo bundleRepo = new Repo(name);
+            em.persist(bundleRepo);
+
+            Bundle b = new Bundle(name, bundleType);
+            b.setRepo(bundleRepo);
             em.persist(b);
             id = b.getId();
             assert id > 0;
@@ -259,8 +264,7 @@ public class BundleTest extends AbstractEJB3Test {
 
             // clean up - delete our test entity
             em.close();
-            getTransactionManager().commit();
-            getTransactionManager().begin();
+
             em = getEntityManager();
             q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
             q.setParameter("name", b.getName());
@@ -269,10 +273,8 @@ public class BundleTest extends AbstractEJB3Test {
             em.remove(doomed);
             assert q.getResultList().size() == 0 : "didn't remove the entity";
             em.close();
-            getTransactionManager().commit();
 
             // make sure we didn't delete the bundle type - it should not be cascade deleted
-            getTransactionManager().begin();
             em = getEntityManager();
             q = em.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
             q.setParameter("name", bFind.getBundleType().getName());
@@ -283,25 +285,18 @@ public class BundleTest extends AbstractEJB3Test {
 
             deleteResourceType(em, bundleType.getResourceType());
             em.close();
-            getTransactionManager().commit();
 
-            // make sure we did cascade delete the repo
-            getTransactionManager().begin();
+            // make sure we didn't cascade delete the repo, it must also be deleted manually
             em = getEntityManager();
             q = em.createNamedQuery(Repo.QUERY_FIND_BY_NAME);
             q.setParameter("name", bFind.getRepo().getName());
-            assert q.getResultList().size() == 0 : "didn't clean up test repo";
+            assert q.getResultList().size() == 1 : "didn't clean up test repo";
             em.close();
-            getTransactionManager().commit();
-
-            done = true;
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
         } finally {
-            if (!done) {
-                getTransactionManager().rollback();
-            }
+            getTransactionManager().rollback();
         }
     }
 
@@ -337,8 +332,7 @@ public class BundleTest extends AbstractEJB3Test {
 
             // clean up - delete our test entity
             em.close();
-            getTransactionManager().commit();
-            getTransactionManager().begin();
+
             em = getEntityManager();
             q = em.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
             q.setParameter("name", bt.getName());
@@ -349,15 +343,11 @@ public class BundleTest extends AbstractEJB3Test {
 
             deleteResourceType(em, bt.getResourceType());
             em.close();
-            getTransactionManager().commit();
-            done = true;
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
         } finally {
-            if (!done) {
-                getTransactionManager().rollback();
-            }
+            getTransactionManager().rollback();
         }
     }
 

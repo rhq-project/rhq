@@ -306,6 +306,12 @@
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
+                           <artifactId>alert-operations</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
                            <artifactId>alert-roles</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>

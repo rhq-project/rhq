@@ -21,18 +21,22 @@ package org.rhq.enterprise.gui.inventory.resource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.gui.util.FacesContextUtility;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.resource.common.QuickFavoritesUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.gui.util.WebUtility;
 
 /**
- * A session-scoped bean for toggling the current resource in request scope
+ * A session-scoped bean for toggling the current resource in request scope.
  * 
  * @author Joseph Marques
  */
+@Name("FavoritesUIBean")
+@Scope(ScopeType.EVENT)
 public class FavoritesUIBean {
 
     protected final Log log = LogFactory.getLog(FavoritesUIBean.class);
@@ -45,6 +49,7 @@ public class FavoritesUIBean {
      * requests, particularly with the raw config editor. The raw config editor however extends the life of the
      * current ResourceUIBean beyond the current request so that the id can be accessed through ResourceUIBean. 
      */
+    @In(value = ResourceUIBean.MANAGED_BEAN_NAME, create = true)
     private ResourceUIBean resourceUIBean;
 
     public FavoritesUIBean() {
@@ -88,5 +93,4 @@ public class FavoritesUIBean {
 
         return null;
     }
-
 }

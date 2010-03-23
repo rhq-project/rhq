@@ -110,6 +110,10 @@ public class BundleDeployment implements Serializable {
         return resource;
     }
 
+    public void setResource(Resource resource) {
+        this.resource = resource;
+    }
+
     public Long getCtime() {
         return ctime;
     }

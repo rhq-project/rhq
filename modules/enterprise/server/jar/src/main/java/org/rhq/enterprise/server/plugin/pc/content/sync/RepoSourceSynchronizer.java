@@ -67,7 +67,7 @@ public class RepoSourceSynchronizer {
         }
 
         progress.append(new Date()).append(": ");
-        progress.append("Asking content provider for repositories to import...");
+        progress.append("Asking content provider for new repositories to import...\n");
 
         RepoSource repoSource = (RepoSource) provider;
 

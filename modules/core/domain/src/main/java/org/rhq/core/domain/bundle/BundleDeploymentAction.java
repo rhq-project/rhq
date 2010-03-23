@@ -29,6 +29,10 @@ package org.rhq.core.domain.bundle;
  */
 public enum BundleDeploymentAction {
 
+    DEPLOYMENT_REQUESTED, //
+    DEPLOYMENT_SCHEDULED, //
+    FILE_DOWNLOAD_START, //
+    FILE_DOWNLOAD_END, //    
     DEPLOYMENT_START, //
     DEPLOYMENT_END, //
     POLICY_CHECK_FAIL

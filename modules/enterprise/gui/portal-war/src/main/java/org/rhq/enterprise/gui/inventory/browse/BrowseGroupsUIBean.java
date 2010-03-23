@@ -17,8 +17,8 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.inventory.browse.BrowseResourcesUIBean.Suggestion;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.search.execution.SearchSuggestion;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class BrowseGroupsUIBean extends PagedDataTableUIBean {
@@ -85,10 +85,12 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
         }
     }
 
-    public List<Suggestion> autocomplete(Object suggest) {
+    public List<SearchSuggestion> autocomplete(Object suggest) {
         String currentInputText = (String) suggest;
-        List<Suggestion> results = new ArrayList<Suggestion>();
+
+        List<SearchSuggestion> suggestions = new ArrayList<SearchSuggestion>();
+
         // offer suggestions based on currentInputText
-        return results;
+        return suggestions;
     }
 }

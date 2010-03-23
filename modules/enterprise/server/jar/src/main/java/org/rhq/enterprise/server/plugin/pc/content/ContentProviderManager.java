@@ -186,7 +186,6 @@ public class ContentProviderManager {
                 results = new ContentSourceSyncResults(contentSource);
                 results.setResults(progress.toString());
                 results = contentSourceManager.persistContentSourceSyncResults(results);
-
             }
 
             if (results == null) {
@@ -202,12 +201,15 @@ public class ContentProviderManager {
                 // one sync will get an error and rollback its tx and no harm
                 // will be done.
                 log.info("Content provider [" + contentSource.getName()
-                    + "] is already currently being synchronized, this sync request will be ignored");
+                    + "] is already currently being synchronized - this sync request will be ignored.");
                 return false;
             }
 
             RepoSourceSynchronizer repoSourceSynchronizer = new RepoSourceSynchronizer(contentSource, provider);
             repoSourceSynchronizer.synchronizeCandidateRepos(progress);
+            results.setStatus(ContentSyncStatus.SUCCESS);
+            results.setResults(progress.toString());
+
         } catch (Throwable t) {
             if (results != null) {
                 // try to reload the results in case it was updated by the SLSB

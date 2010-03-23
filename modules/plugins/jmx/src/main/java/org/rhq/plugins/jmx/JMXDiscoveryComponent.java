@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
@@ -66,8 +67,8 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
 
     public static final String ADDITIONAL_CLASSPATH_ENTRIES = "additionalClassPathEntries";
 
-    /* Ignore certain processes that are managed by their own plugin. For example The Tomcat plugin will
-     * handle tomcat processes configured for JMX management.
+    /* Ignore certain processes that are managed by their own plugin. For example, the Tomcat plugin will
+     * handle Tomcat processes configured for JMX management.
      */
     private static final String[] PROCESS_FILTERS;
 
@@ -79,7 +80,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                 processFilters = env.split(",");
             }
         } catch (Throwable t) {
-            log.error("Can't determine process filters, using default. Cause: " + t);
+            log.error("Can't determine process filters; using default... Cause: " + t);
         } finally {
             PROCESS_FILTERS = processFilters;
         }
@@ -135,10 +136,11 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         //      }
 
         try {
-            List<ProcessInfo> processes = context.getSystemInformation().getProcesses("process|basename|match=^java.*");
+            List<ProcessScanResult> processes = context.getAutoDiscoveredProcesses();
 
-            for (ProcessInfo process : processes) {
-                DiscoveredResourceDetails details = discoverProcess(context, process);
+            for (ProcessScanResult process : processes) {
+                ProcessInfo processInfo = process.getProcessInfo();
+                DiscoveredResourceDetails details = discoverProcess(context, processInfo);
                 if (details != null) {
                     boolean isFiltered = false;
                     for (String filter : PROCESS_FILTERS) {
@@ -153,10 +155,11 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                 }
             }
         } catch (Exception e) {
-            if (log.isDebugEnabled())
-                log.debug("Unable to complete base jmx server discovery.", e);
-            else
-                log.warn("Unable to complete base jmx server discovery (enable DEBUG for stack): " + e);
+            if (log.isDebugEnabled()) {
+                log.debug("Unable to complete base JMX server discovery.", e);
+            } else {
+                log.warn("Unable to complete base JMX server discovery (enable DEBUG for stack): " + e);
+            }
         }
 
         return found;
@@ -228,12 +231,16 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                 String arg = process.getCommandLine()[i];
 
                 if (!arg.startsWith("-")) {
-                    if (arg.length() < 200) { // don't use it if its really long, that's an ugly resource name
+                    if (arg.length() <= 200) {
                         name = arg;
-                        break;
+                    } else {
+                        // Truncate it if it's really long for a more palatable Resource name.
+                        name = arg.substring(arg.length() - 200);
                     }
+                    break;
                 } else if (arg.equals("-cp") || arg.equals("-classpath")) {
-                    i++; // skip the next arg, its the classpath, we don't want that as the name
+                    // Skip the next arg - it's the classpath, and we don't want that as the name.
+                    i++;
                 }
             }
 

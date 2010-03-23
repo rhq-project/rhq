@@ -13,8 +13,8 @@ function main() {
     }
   }
   
-  files = resources.filesMatching(".*/dev-container/jbossas/bin/run.sh");
+  files = resources.filesMatching(".*/dev-container/jbossas/bin/run\\.sh");
   for each( file in files ) {
-	  file.eclipseObject.parent.parent.parent.setDerived(true);
+    file.eclipseObject.parent.parent.parent.setDerived(true);
   }
 }

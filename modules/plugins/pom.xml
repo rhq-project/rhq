@@ -147,6 +147,7 @@
          </activation>
 
         <modules>
+           <module>byteman</module>
            <module>iis</module>
            <module>database</module>
            <module>postgres</module>

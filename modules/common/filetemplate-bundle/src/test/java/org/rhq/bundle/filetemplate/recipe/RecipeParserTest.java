@@ -129,29 +129,51 @@ public class RecipeParserTest {
     }
 
     public void testSimpleRecipeReplaceJavaSystemPropertyReplacementVariables() throws Exception {
-        addRecipeCommand("deploy -f jboss1.tar -d <%java.io.tmpdir%>");
-        addRecipeCommand("deploy -f jboss2.tar -d <%custom.sysprop%>");
+        /*
+        java.util.Properties sysprops = System.getProperties();
+        for (Map.Entry<Object, Object> sysprop : sysprops.entrySet()) {
+            if (sysprop.getValue().toString().length() < 60) {
+                System.out.println("==>" + sysprop.getKey() + "=" + sysprop.getValue());
+            }
+        }
+        */
+
+        addRecipeCommand("deploy -f jboss1.tar -d <%rhq.system.sysprop.java.io.tmpdir%>");
+        addRecipeCommand("deploy -f jboss2.tar -d <%rhq.system.sysprop.file.separator%>");
+        //addRecipeCommand("deploy -f jboss3.tar -d <%rhq.system.sysprop.line.separator%>"); // can't test this here
+        addRecipeCommand("deploy -f jboss4.tar -d <%rhq.system.sysprop.path.separator%>");
+        addRecipeCommand("deploy -f jboss5.tar -d <%rhq.system.sysprop.java.home%>");
+        addRecipeCommand("deploy -f jboss6.tar -d <%rhq.system.sysprop.java.version%>");
+        //addRecipeCommand("deploy -f jboss7.tar -d <%rhq.system.sysprop.user.timezone%>"); // sometimes this is empty
+        //addRecipeCommand("deploy -f jboss8.tar -d <%rhq.system.sysprop.user.region%>"); // sometimes this doesn't exist
+        addRecipeCommand("deploy -f jboss9.tar -d <%rhq.system.sysprop.user.country%>");
+        addRecipeCommand("deploy -f jboss10.tar -d <%rhq.system.sysprop.user.language%>");
+        addRecipeCommand("deploy -f jboss11.tar -d <%rhq.system.sysprop.custom.sysprop%>"); // non-standard sysprop
         RecipeParser parser = new RecipeParser();
         parser.setReplaceReplacementVariables(true);
         RecipeContext context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         Map<String, String> files = context.getDeployFiles();
-        assert files.containsKey("jboss1.tar") : files;
         assert files.get("jboss1.tar").equals(System.getProperty("java.io.tmpdir")) : files;
-        assert files.containsKey("jboss2.tar") : files;
-        assert files.get("jboss2.tar").equals("<%custom.sysprop%>") : files;
+        assert files.get("jboss2.tar").equals(System.getProperty("file.separator")) : files;
+        //assert files.get("jboss3.tar").equals(System.getProperty("line.separator")) : files;
+        assert files.get("jboss4.tar").equals(System.getProperty("path.separator")) : files;
+        assert files.get("jboss5.tar").equals(System.getProperty("java.home")) : files;
+        assert files.get("jboss6.tar").equals(System.getProperty("java.version")) : files;
+        //assert files.get("jboss7.tar").equals(System.getProperty("user.timezone")) : files;
+        //assert files.get("jboss8.tar").equals(System.getProperty("user.region")) : files;
+        assert files.get("jboss9.tar").equals(System.getProperty("user.country")) : files;
+        assert files.get("jboss10.tar").equals(System.getProperty("user.language")) : files;
+        assert files.get("jboss11.tar").equals("<%rhq.system.sysprop.custom.sysprop%>") : files;
 
-        // now set our custom system property and see that it gets replaced properly
+        // now set a custom system property and see that it does NOT get replaced - we ignore custom sysprops!
         System.setProperty("custom.sysprop", "MY/CUSTOM/PROPERTY/HERE");
         parser = new RecipeParser();
         parser.setReplaceReplacementVariables(true);
         context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         files = context.getDeployFiles();
-        assert files.containsKey("jboss1.tar") : files;
-        assert files.get("jboss1.tar").equals(System.getProperty("java.io.tmpdir")) : files;
-        assert files.containsKey("jboss2.tar") : files;
-        assert files.get("jboss2.tar").equals("MY/CUSTOM/PROPERTY/HERE") : files;
+        assert files.get("jboss11.tar").equals("<%rhq.system.sysprop.custom.sysprop%>") : files;
     }
 
     public void testSimpleRecipe() throws Exception {

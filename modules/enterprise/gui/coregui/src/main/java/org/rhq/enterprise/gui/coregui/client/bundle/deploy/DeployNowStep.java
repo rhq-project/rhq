@@ -27,15 +27,14 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 public class DeployNowStep implements WizardStep {
 
-    private DynamicForm form;
-    private final BundleDeployWizard wizard;
+    static private final String DEPLOY_LATER = "later";
+    static private final String DEPLOY_NOW = "now";
 
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+    private final BundleDeployWizard wizard;
+    private DynamicForm form;
 
     public DeployNowStep(BundleDeployWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
@@ -52,16 +51,17 @@ public class DeployNowStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            LinkedHashMap<String, Boolean> values = new LinkedHashMap<String, Boolean>();
-            values.put("Deploy Now", Boolean.TRUE);
-            values.put("Save Definition and Deploy Later", Boolean.FALSE);
-            final RadioGroupItem radioGroupItem = new RadioGroupItem("options", "Deploy Options");
+            RadioGroupItem radioGroupItem = new RadioGroupItem("deployTime", "Deployment Time");
+            LinkedHashMap<String, String> radioGroupValues = new LinkedHashMap<String, String>();
+            radioGroupValues.put(DEPLOY_NOW, "Deploy Now");
+            radioGroupValues.put(DEPLOY_LATER, "Save Definition and Deploy Later");
             radioGroupItem.setRequired(true);
-            radioGroupItem.setValueMap(values);
+            radioGroupItem.setValueMap(radioGroupValues);
+            radioGroupItem.setValue(DEPLOY_NOW);
+            wizard.setDeployNow(true);
             radioGroupItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
-                    wizard.setDeployNow((Boolean) event.getValue());
-                    enableNextButtonWhenAppropriate();
+                    wizard.setDeployNow(DEPLOY_NOW.equals(event.getValue()));
                 }
             });
 
@@ -74,19 +74,7 @@ public class DeployNowStep implements WizardStep {
         return form.validate();
     }
 
-    public boolean isNextEnabled() {
-        return (null != this.wizard.getDeployNow());
-    }
-
     public boolean isPreviousEnabled() {
         return true;
-    }
-
-    private void enableNextButtonWhenAppropriate() {
-        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
-    }
-
-    private boolean isNotEmpty(String s) {
-        return (s != null && s.trim().length() > 0);
     }
 }

@@ -189,7 +189,7 @@ public class RecipeParser {
             }
 
             // If we didn't find a replacement for the key then leave the original value unchanged
-            matcher.appendReplacement(buffer, next);
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(next));
         }
         matcher.appendTail(buffer);
         return buffer.toString();

@@ -25,18 +25,18 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 public class SelectPlatformsStep implements WizardStep {
 
-    private DynamicForm form;
     private final BundleDeployWizard wizard;
-
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+    private DynamicForm form;
 
     public SelectPlatformsStep(BundleDeployWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
+    }
+
+    public String getName() {
+        return "Select Target Platforms";
     }
 
     public Canvas getCanvas() {
@@ -55,9 +55,7 @@ public class SelectPlatformsStep implements WizardStep {
                     if (value == null) {
                         value = "";
                     }
-                    wizard.setSubtitle(value.toString());
                     wizard.setPlatformId(Integer.valueOf(value.toString()));
-                    enableNextButtonWhenAppropriate();
                 }
             });
 
@@ -71,19 +69,7 @@ public class SelectPlatformsStep implements WizardStep {
         return form.validate();
     }
 
-    public String getName() {
-        return "Select Target Platforms";
-    }
-
-    public boolean isNextEnabled() {
-        return (null != this.wizard.getPlatformId());
-    }
-
     public boolean isPreviousEnabled() {
         return true;
-    }
-
-    private void enableNextButtonWhenAppropriate() {
-        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
     }
 }

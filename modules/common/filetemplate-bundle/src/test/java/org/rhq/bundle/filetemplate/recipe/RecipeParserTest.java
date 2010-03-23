@@ -40,6 +40,16 @@ public class RecipeParserTest {
         cleanRecipe();
     }
 
+    public void testConfigDefRecipe() throws Exception {
+        addRecipeCommand("configdef -n custom.prop");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        Set<String> vars = context.getReplacementVariables();
+        assert vars.size() == 1 : vars;
+        assert vars.contains("custom.prop");
+    }
+
     public void testRealizeRecipe() throws Exception {
         addRecipeCommand("realize --file=<%opt.dir%>/config.ini");
         RecipeParser parser = new RecipeParser();
@@ -112,6 +122,32 @@ public class RecipeParserTest {
         assert files.get("jboss2.tar").equals("<%unknown%>/jboss") : files;
         assert files.containsKey("jboss3.tar") : files;
         assert files.get("jboss3.tar").equals(SystemInfoFactory.createSystemInfo().getHostname() + "/jboss") : files;
+    }
+
+    public void testSimpleRecipeReplaceJavaSystemPropertyReplacementVariables() throws Exception {
+        addRecipeCommand("deploy -f jboss1.tar -d <%java.io.tmpdir%>");
+        addRecipeCommand("deploy -f jboss2.tar -d <%custom.sysprop%>");
+        RecipeParser parser = new RecipeParser();
+        parser.setReplaceReplacementVariables(true);
+        RecipeContext context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        Map<String, String> files = context.getDeployFiles();
+        assert files.containsKey("jboss1.tar") : files;
+        assert files.get("jboss1.tar").equals(System.getProperty("java.io.tmpdir")) : files;
+        assert files.containsKey("jboss2.tar") : files;
+        assert files.get("jboss2.tar").equals("<%custom.sysprop%>") : files;
+
+        // now set our custom system property and see that it gets replaced properly
+        System.setProperty("custom.sysprop", "MY/CUSTOM/PROPERTY/HERE");
+        parser = new RecipeParser();
+        parser.setReplaceReplacementVariables(true);
+        context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        files = context.getDeployFiles();
+        assert files.containsKey("jboss1.tar") : files;
+        assert files.get("jboss1.tar").equals(System.getProperty("java.io.tmpdir")) : files;
+        assert files.containsKey("jboss2.tar") : files;
+        assert files.get("jboss2.tar").equals("MY/CUSTOM/PROPERTY/HERE") : files;
     }
 
     public void testSimpleRecipe() throws Exception {

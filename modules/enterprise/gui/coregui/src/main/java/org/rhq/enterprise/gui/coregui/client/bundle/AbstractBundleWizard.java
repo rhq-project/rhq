@@ -58,7 +58,9 @@ public abstract class AbstractBundleWizard implements Wizard {
 
     public void setSubtitle(String subtitle) {
         this.subtitle = subtitle;
-        this.view.refreshTitleLabelContents();
+        if (this.view != null) {
+            this.view.refreshTitleLabelContents();
+        }
     }
 
     public List<WizardStep> getSteps() {

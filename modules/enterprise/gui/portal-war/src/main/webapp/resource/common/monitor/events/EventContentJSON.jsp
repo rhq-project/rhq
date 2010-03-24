@@ -67,9 +67,11 @@
 
             %>
 { "start" : "<%=sdf.format(new Date(installedPackage.getTimestamp()))%>",
-  "title" : "<%= (""+installedPackage.getPackageVersion().getDisplayName() + " " + installedPackage.getPackageVersion().getDisplayVersion()).replaceAll("[\"']","").trim()%>",
+  "title" : "<% out.write(
+  (installedPackage.getPackageVersion().getDisplayName()==null ? null : installedPackage.getPackageVersion().getDisplayName().replaceAll("[\"']","")) + " " +
+  (installedPackage.getPackageVersion().getDisplayVersion() ==null ? null : installedPackage.getPackageVersion().getDisplayVersion().replaceAll("[\"']","")));%>",
   "link" : "<%=link%>",
-  "description" : "<b>User:</b> <%= (""+installedPackage.getContentServiceRequest() == null ? "-Detected-" : installedPackage.getContentServiceRequest().getSubjectName()).replaceAll("[\"']","").trim()%><br/> <b>Version: <%= (""+installedPackage.getPackageVersion().getDisplayVersion()).replaceAll("[\"']","").trim()%></b> <br/><b>Status:</b> <%=(""+installedPackage.getStatus()).replaceAll("[\"']","").trim()%>",
+  "description" : "<b>User:</b> <% out.write((installedPackage.getContentServiceRequest() == null ? "-Detected- " : installedPackage.getContentServiceRequest().getSubjectName().replaceAll("[\"']","").trim())+"<br/> <b>Version: "+(installedPackage.getPackageVersion().getDisplayVersion() ==null ? null :installedPackage.getPackageVersion().getDisplayVersion().replaceAll("[\"']","").trim())+" </b> <br/><b>Status:</b> "+installedPackage.getStatus());%>",
   "icon" : "<%=icon%>",
   "color" : "<%=(installedPackage.getStatus() != InstalledPackageHistoryStatus.FAILED ? "#4EB84E" : "#DD5656")%>"
 }

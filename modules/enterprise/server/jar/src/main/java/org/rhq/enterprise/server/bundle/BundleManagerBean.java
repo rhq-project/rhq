@@ -677,7 +677,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             bundleManager.deleteBundleVersion(subject, bv.getId());
         }
 
-        // we need to whack the Repo once the Bundle no longe refers to it
+        // we need to whack the Repo once the Bundle no longer refers to it
         Repo bundleRepo = bundle.getRepo();
 
         this.entityManager.remove(bundle);
@@ -686,14 +686,26 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         repoManager.deleteRepo(subject, bundleRepo.getId());
     }
 
-    public void deleteBundleVersion(Subject subject, int bundleVersionId) {
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteBundleVersion(Subject subject, int bundleVersionId) throws Exception {
         BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
         if (null == bundleVersion) {
             return;
         }
 
-        // remove the bundle version, this will cascade remove the deploy defs which will cascade remove
-        // the deployments.
+        int bundleId = bundleVersion.getBundle().getId();
+
+        // remove the bundle version - cascade remove the deploy defs which will cascade remove the deployments.
         this.entityManager.remove(bundleVersion);
+        this.entityManager.flush();
+
+        Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
+        q.setParameter("bundleId", bundleId);
+        if (q.getResultList().size() == 0) {
+            // there are no more bundle versions left, blow away the bundle and all repo/bundle files associated with it
+            deleteBundle(subject, bundleId);
+        }
+
+        return;
     }
 }

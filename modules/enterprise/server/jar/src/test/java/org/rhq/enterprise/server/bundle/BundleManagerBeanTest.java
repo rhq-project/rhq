@@ -45,11 +45,13 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -266,6 +268,49 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bv2);
         assertEquals("1.1", bv2.getVersion());
         assert 1 == bv2.getVersionOrder();
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testDeleteBundleVersion() throws Exception {
+        Bundle b1 = createBundle("one");
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", null, b1);
+        assertNotNull(bv1);
+        assertEquals("1.0", bv1.getVersion());
+        BundleVersion bv2 = createBundleVersion(b1.getName() + "-2", null, b1);
+        assertNotNull(bv2);
+        assertEquals("1.1", bv2.getVersion());
+
+        // let's add a bundle file so we can ensure our deletion will also delete the file too
+        bundleManager.addBundleFileViaByteArray(overlord, bv2.getId(), "testfile", "1.0", new Architecture("noarch"),
+            "content".getBytes(), false);
+        BundleFileCriteria bfCriteria = new BundleFileCriteria();
+        bfCriteria.addFilterBundleVersionId(bv2.getId());
+        bfCriteria.fetchPackageVersion(true);
+        PageList<BundleFile> files = bundleManager.findBundleFilesByCriteria(overlord, bfCriteria);
+        assert files.size() == 1 : files;
+        assert files.get(0).getPackageVersion().getGeneralPackage().getName().equals("testfile") : files;
+
+        BundleVersionCriteria bvCriteria = new BundleVersionCriteria();
+        BundleCriteria bCriteria = new BundleCriteria();
+
+        // delete the first one - this deletes the BV but the bundle should remain intact
+        bundleManager.deleteBundleVersion(overlord, bv2.getId());
+        bvCriteria.addFilterId(bv2.getId());
+        PageList<BundleVersion> bvResults = bundleManager.findBundleVersionsByCriteria(overlord, bvCriteria);
+        assert bvResults.size() == 0;
+        bCriteria.addFilterId(b1.getId());
+        PageList<Bundle> bResults = bundleManager.findBundlesByCriteria(overlord, bCriteria);
+        assert bResults.size() == 1 : "Should not have deleted bundle yet, 1 version still exists";
+
+        // delete the second one - this deletes last BV thus the bundle should also get deleted
+        bundleManager.deleteBundleVersion(overlord, bv1.getId());
+        bvCriteria.addFilterId(bv1.getId());
+        bvResults = bundleManager.findBundleVersionsByCriteria(overlord, bvCriteria);
+        assert bvResults.size() == 0;
+        bCriteria.addFilterId(b1.getId());
+        bResults = bundleManager.findBundlesByCriteria(overlord, bCriteria);
+        assert bResults.size() == 0 : "Should have deleted bundle since no versions exists anymore";
     }
 
     @Test(enabled = TESTS_ENABLED)

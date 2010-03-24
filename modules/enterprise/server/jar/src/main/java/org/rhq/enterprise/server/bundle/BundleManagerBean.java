@@ -674,7 +674,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         for (BundleVersion bv : bundle.getBundleVersions()) {
-            bundleManager.deleteBundleVersion(subject, bv.getId());
+            bundleManager.deleteBundleVersion(subject, bv.getId(), false);
         }
 
         // we need to whack the Repo once the Bundle no longer refers to it
@@ -687,23 +687,28 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteBundleVersion(Subject subject, int bundleVersionId) throws Exception {
+    public void deleteBundleVersion(Subject subject, int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
         BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
         if (null == bundleVersion) {
             return;
         }
 
-        int bundleId = bundleVersion.getBundle().getId();
+        int bundleId = 0;
+        if (deleteBundleIfEmpty) {
+            bundleId = bundleVersion.getBundle().getId(); // note that we lazy load this if we never plan to delete the bundle
+        }
 
         // remove the bundle version - cascade remove the deploy defs which will cascade remove the deployments.
         this.entityManager.remove(bundleVersion);
-        this.entityManager.flush();
 
-        Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
-        q.setParameter("bundleId", bundleId);
-        if (q.getResultList().size() == 0) {
-            // there are no more bundle versions left, blow away the bundle and all repo/bundle files associated with it
-            deleteBundle(subject, bundleId);
+        if (deleteBundleIfEmpty) {
+            this.entityManager.flush();
+            Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundleId);
+            if (q.getResultList().size() == 0) {
+                // there are no more bundle versions left, blow away the bundle and all repo/bundle files associated with it
+                deleteBundle(subject, bundleId);
+            }
         }
 
         return;

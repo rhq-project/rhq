@@ -38,6 +38,8 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author John Mazzitelli
@@ -128,6 +130,13 @@ public class BundleInfoStep implements WizardStep {
             if (wizard.getBundleType() == null) {
                 bundleServer.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
                     public void onSuccess(ArrayList<BundleType> result) {
+                        if (result == null || result.size() == 0) {
+                            wizard.setBundleType(null);
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("No bundle types are supported", Severity.Error));
+                            return;
+                        }
+
                         for (BundleType bundleType : result) {
                             knownBundleTypes.put(bundleType.getName(), bundleType);
                             if (wizard.getBundleType() == null) {

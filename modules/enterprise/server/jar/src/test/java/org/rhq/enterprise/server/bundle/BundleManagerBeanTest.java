@@ -295,7 +295,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         BundleCriteria bCriteria = new BundleCriteria();
 
         // delete the first one - this deletes the BV but the bundle should remain intact
-        bundleManager.deleteBundleVersion(overlord, bv2.getId());
+        bundleManager.deleteBundleVersion(overlord, bv2.getId(), true);
         bvCriteria.addFilterId(bv2.getId());
         PageList<BundleVersion> bvResults = bundleManager.findBundleVersionsByCriteria(overlord, bvCriteria);
         assert bvResults.size() == 0;
@@ -304,7 +304,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert bResults.size() == 1 : "Should not have deleted bundle yet, 1 version still exists";
 
         // delete the second one - this deletes last BV thus the bundle should also get deleted
-        bundleManager.deleteBundleVersion(overlord, bv1.getId());
+        bundleManager.deleteBundleVersion(overlord, bv1.getId(), true);
         bvCriteria.addFilterId(bv1.getId());
         bvResults = bundleManager.findBundleVersionsByCriteria(overlord, bvCriteria);
         assert bvResults.size() == 0;

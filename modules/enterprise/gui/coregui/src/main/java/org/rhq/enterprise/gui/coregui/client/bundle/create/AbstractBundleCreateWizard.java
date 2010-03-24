@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
+import java.util.HashMap;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.bundle.BundleType;
@@ -38,6 +40,7 @@ public abstract class AbstractBundleCreateWizard extends AbstractBundleWizard {
     private String bundleDescription;
     private String recipe;
     private BundleVersion bundleVersion;
+    private HashMap<String, Boolean> allBundleFilesStatus; // bundle file names with their upload status (true=they were uploaded)
 
     public BundleType getBundleType() {
         return bundleType;
@@ -87,12 +90,20 @@ public abstract class AbstractBundleCreateWizard extends AbstractBundleWizard {
         this.bundleVersion = bv;
     }
 
+    public HashMap<String, Boolean> getAllBundleFilesStatus() {
+        return allBundleFilesStatus;
+    }
+
+    public void setAllBundleFilesStatus(HashMap<String, Boolean> allBundleFilesStatus) {
+        this.allBundleFilesStatus = allBundleFilesStatus;
+    }
+
     public void cancel() {
         final BundleVersion bv = getBundleVersion();
         if (bv != null) {
             // the user must have created it already after verification step, delete it
             BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-            bundleServer.deleteBundleVersion(bv.getId(), new AsyncCallback<Void>() {
+            bundleServer.deleteBundleVersion(bv.getId(), true, new AsyncCallback<Void>() {
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message("Canceled bundle [" + bv.getName() + "] version [" + bv.getVersion() + "]",

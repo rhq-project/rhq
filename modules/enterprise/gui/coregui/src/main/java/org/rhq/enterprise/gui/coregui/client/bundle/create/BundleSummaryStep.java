@@ -18,9 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.Label;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -50,11 +50,11 @@ public class BundleSummaryStep implements WizardStep {
         bundleTypeBox.setExtraSpace(10);
         Label bundleTypeLabel = new Label("Type:");
         bundleTypeLabel.setWidth("10%");
-        bundleTypeLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-        bundleTypeLabel.setWordWrap(false);
+        bundleTypeLabel.setAlign(Alignment.LEFT);
+        bundleTypeLabel.setWrap(false);
         Label bundleTypeValue = new Label(wizard.getBundleType().getName());
         bundleTypeValue.setWidth("90%");
-        bundleTypeValue.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        bundleTypeValue.setAlign(Alignment.LEFT);
         bundleTypeBox.addMember(bundleTypeLabel);
         bundleTypeBox.addMember(bundleTypeValue);
         top.addMember(bundleTypeBox);
@@ -64,11 +64,11 @@ public class BundleSummaryStep implements WizardStep {
         nameBox.setExtraSpace(10);
         Label nameLabel = new Label("Name:");
         nameLabel.setWidth("10%");
-        nameLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-        nameLabel.setWordWrap(false);
+        nameLabel.setAlign(Alignment.LEFT);
+        nameLabel.setWrap(false);
         Label nameValue = new Label(wizard.getBundleName());
         nameValue.setWidth("90%");
-        nameValue.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        nameValue.setAlign(Alignment.LEFT);
         nameBox.addMember(nameLabel);
         nameBox.addMember(nameValue);
         top.addMember(nameBox);
@@ -79,11 +79,11 @@ public class BundleSummaryStep implements WizardStep {
         versionBox.setExtraSpace(10);
         Label versionLabel = new Label("Version:");
         versionLabel.setWidth("10%");
-        versionLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-        versionLabel.setWordWrap(false);
+        versionLabel.setAlign(Alignment.LEFT);
+        versionLabel.setWrap(false);
         Label versionValue = new Label(wizard.getBundleVersionString());
         versionValue.setWidth("90%");
-        versionValue.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        versionValue.setAlign(Alignment.LEFT);
         versionBox.addMember(versionLabel);
         versionBox.addMember(versionValue);
         top.addMember(versionBox);
@@ -94,11 +94,11 @@ public class BundleSummaryStep implements WizardStep {
         descriptionBox.setExtraSpace(10);
         Label descriptionLabel = new Label("Description:");
         descriptionLabel.setWidth("10%");
-        descriptionLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-        descriptionLabel.setWordWrap(false);
+        descriptionLabel.setAlign(Alignment.LEFT);
+        descriptionLabel.setWrap(false);
         Label descriptionValue = new Label(wizard.getBundleDescription());
         descriptionValue.setWidth("90%");
-        descriptionValue.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        descriptionValue.setAlign(Alignment.LEFT);
         descriptionBox.addMember(descriptionLabel);
         descriptionBox.addMember(descriptionValue);
         top.addMember(descriptionBox);
@@ -109,15 +109,15 @@ public class BundleSummaryStep implements WizardStep {
         filesBox.setExtraSpace(10);
         Label filesLabel = new Label("Files:");
         filesLabel.setWidth("10%");
-        filesLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-        filesLabel.setWordWrap(false);
+        filesLabel.setAlign(Alignment.LEFT);
+        filesLabel.setWrap(false);
         VLayout filesValues = new VLayout();
         filesValues.setWidth("90%");
         filesValues.setAutoHeight();
         for (String filename : wizard.getAllBundleFilesStatus().keySet()) {
             Label fileNameValue = new Label(filename);
-            fileNameValue.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-            fileNameValue.setWordWrap(false);
+            fileNameValue.setAlign(Alignment.LEFT);
+            fileNameValue.setWrap(false);
             filesValues.addMember(fileNameValue);
         }
         filesBox.addMember(filesLabel);

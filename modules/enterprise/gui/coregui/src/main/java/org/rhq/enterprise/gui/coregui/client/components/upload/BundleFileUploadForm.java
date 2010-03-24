@@ -78,6 +78,9 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         HiddenItem nameField = new HiddenItem("name");
         nameField.setValue(this.name);
 
+        HiddenItem versionField = new HiddenItem("version");
+        versionField.setValue("1.0");
+
         setNumCols(4);
 
         bundleUploadItem = new UploadItem("bundleFile", name);
@@ -108,7 +111,7 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         uploadButton.setIcons(loadingIcon);
         uploadButton.setShowIcons(false);
 
-        setItems(sessionIdField, bundleVersionIdField, nameField, bundleUploadItem, uploadButton);
+        setItems(sessionIdField, bundleVersionIdField, nameField, versionField, bundleUploadItem, uploadButton);
     }
 
     /**

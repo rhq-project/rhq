@@ -51,7 +51,7 @@ public class ConfigurationTemplateStep implements WizardStep {
             TextItem nameItem = new TextItem("resourceName", "Resource Name");
             nameItem.setRequired(true);
 
-            SelectItem templateSelect = new SelectItem("template","Template");
+            SelectItem templateSelect = new SelectItem("template", "Template");
 
             ConfigurationDefinition definition = wizard.getConfigurationDefinition();
 
@@ -75,14 +75,6 @@ public class ConfigurationTemplateStep implements WizardStep {
 
     public String getName() {
         return "Select a Template";
-    }
-
-    public boolean isPreviousEnabled() {
-        return false;
-    }
-
-    public boolean isNextEnabled() {
-        return true;
     }
 
     public Configuration getConfiguration() {

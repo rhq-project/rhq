@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.calltime.CallTimeView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview.ResourceOverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 import com.google.gwt.user.client.History;
@@ -66,9 +67,6 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
     private Resource resource;
     private ResourcePermission permissions;
     private ResourceType type;
-
-    private SimpleCollapsiblePanel summaryPanel;
-    private ResourceSummaryView summaryView;
 
     private TwoLevelTab summaryTab;
     private TwoLevelTab monitoringTab;
@@ -97,9 +95,6 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         setWidth100();
         setHeight100();
 
-        // The header section
-        summaryView = new ResourceSummaryView();
-        summaryPanel = new SimpleCollapsiblePanel("Summary", summaryView);
 
         // The Tabs section
 
@@ -142,8 +137,6 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         titleBar = new ResourceTitleBar();
         addMember(titleBar);
 
-        addMember(summaryPanel);
-
         addMember(topTabSet);
 
 //        CoreGUI.addBreadCrumb(getPlace());
@@ -153,16 +146,13 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
 
         this.resource = resource;
 
-        this.summaryView.onResourceSelected(resource);
-
         titleBar.setResource(resource);
 
         int selectedTab = topTabSet.getSelectedTabNumber();
 
 
-        FullHTMLPane summaryPane = new FullHTMLPane("/rhq/resource/summary/overview-plain.xhtml?id=" + resource.getId());
         FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
-        summaryTab.updateSubTab("Overview", summaryPane);
+        summaryTab.updateSubTab("Overview", new ResourceOverviewView(resource));
         summaryTab.updateSubTab("Timeline", timelinePane);
 
 

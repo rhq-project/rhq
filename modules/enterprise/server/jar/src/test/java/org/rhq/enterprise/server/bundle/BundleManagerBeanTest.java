@@ -271,6 +271,35 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     }
 
     @Test(enabled = TESTS_ENABLED)
+    public void testDeleteBundle() throws Exception {
+        Bundle b1 = createBundle("one");
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", null, b1);
+        assertNotNull(bv1);
+        assertEquals("1.0", bv1.getVersion());
+        BundleVersion bv2 = createBundleVersion(b1.getName() + "-2", null, b1);
+        assertNotNull(bv2);
+        assertEquals("1.1", bv2.getVersion());
+
+        // let's add a bundle file so we can ensure our deletion will also delete the file too
+        bundleManager.addBundleFileViaByteArray(overlord, bv2.getId(), "testDeleteBundle", "1.0", new Architecture(
+            "noarch"), "content".getBytes(), false);
+        BundleFileCriteria bfCriteria = new BundleFileCriteria();
+        bfCriteria.addFilterBundleVersionId(bv2.getId());
+        bfCriteria.fetchPackageVersion(true);
+        PageList<BundleFile> files = bundleManager.findBundleFilesByCriteria(overlord, bfCriteria);
+        assert files.size() == 1 : files;
+        assert files.get(0).getPackageVersion().getGeneralPackage().getName().equals("testDeleteBundle") : files;
+
+        bundleManager.deleteBundle(overlord, b1.getId());
+
+        BundleCriteria bCriteria = new BundleCriteria();
+        bCriteria.addFilterId(b1.getId());
+        PageList<Bundle> bResults = bundleManager.findBundlesByCriteria(overlord, bCriteria);
+        assert bResults.size() == 0;
+    }
+
+    @Test(enabled = TESTS_ENABLED)
     public void testDeleteBundleVersion() throws Exception {
         Bundle b1 = createBundle("one");
         assertNotNull(b1);
@@ -282,14 +311,14 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertEquals("1.1", bv2.getVersion());
 
         // let's add a bundle file so we can ensure our deletion will also delete the file too
-        bundleManager.addBundleFileViaByteArray(overlord, bv2.getId(), "testfile", "1.0", new Architecture("noarch"),
-            "content".getBytes(), false);
+        bundleManager.addBundleFileViaByteArray(overlord, bv2.getId(), "testDeleteBundleVersion", "1.0",
+            new Architecture("noarch"), "content".getBytes(), false);
         BundleFileCriteria bfCriteria = new BundleFileCriteria();
         bfCriteria.addFilterBundleVersionId(bv2.getId());
         bfCriteria.fetchPackageVersion(true);
         PageList<BundleFile> files = bundleManager.findBundleFilesByCriteria(overlord, bfCriteria);
         assert files.size() == 1 : files;
-        assert files.get(0).getPackageVersion().getGeneralPackage().getName().equals("testfile") : files;
+        assert files.get(0).getPackageVersion().getGeneralPackage().getName().equals("testDeleteBundleVersion") : files;
 
         BundleVersionCriteria bvCriteria = new BundleVersionCriteria();
         BundleCriteria bCriteria = new BundleCriteria();

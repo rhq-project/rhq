@@ -673,7 +673,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             return;
         }
 
-        for (BundleVersion bv : bundle.getBundleVersions()) {
+        Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_BY_BUNDLE_ID);
+        q.setParameter("bundleId", bundleId);
+        List<BundleVersion> bvs = q.getResultList();
+        for (BundleVersion bv : bvs) {
             bundleManager.deleteBundleVersion(subject, bv.getId(), false);
         }
 

@@ -915,7 +915,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean internalSynchronizeContentSource(int contentSourceId) throws Exception {
         ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
-        return pc.getAdapterManager().synchronizeContentProvider(contentSourceId);
+        ContentProviderManager contentProviderManager = pc.getAdapterManager();
+        return contentProviderManager.synchronizeContentProvider(contentSourceId);
     }
 
     @SuppressWarnings("unchecked")

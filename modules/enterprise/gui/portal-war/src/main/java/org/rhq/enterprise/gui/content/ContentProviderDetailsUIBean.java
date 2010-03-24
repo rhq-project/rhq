@@ -66,34 +66,36 @@ public class ContentProviderDetailsUIBean {
     public String test() {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
 
-        try {
-            if (manager.testContentSourceConnection(contentSource.getId())) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
-                    "The test passed - the remote repository for [" + contentSource.getName() + "] is available.");
-            } else {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                    "Failed the attempt to connect to the remote repository for [" + contentSource.getName()
-                        + "] Check the configuration and make sure the remote repository is up.");
-            }
-        } catch (Exception e) {
+        if (manager.testContentSourceConnection(contentSource.getId())) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "Test passed - the remote repository for [" + contentSource.getName() + "] is available.");
+        } else {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                "Unable to make a connection to the remote repository for [" + contentSource.getName() + "]", e);
+                "Test failed - failed to connect to the remote repository for [" + contentSource.getName()
+                    + "] - check the configuration and make sure the remote repository is up and reachable.");
         }
 
         return "success";
     }
 
     public String sync() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
+        // Test the content provider connection before proceeding.
+        ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
+        if (!contentSourceManager.testContentSourceConnection(contentSource.getId())) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "Failed to connect to the remote repository for [" + contentSource.getName()
+                    + "] - check the configuration and make sure the remote repository is up and reachable.");
+            return "success";
+        }
 
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
         try {
-            manager.synchronizeAndLoadContentSource(subject, contentSource.getId());
+            contentSourceManager.synchronizeAndLoadContentSource(subject, contentSource.getId());
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing content provider ["
                 + contentSource.getName() + "] now.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                "Failed to start the sychronization process for [" + contentSource.getName() + "]", e);
+                "Failed to start the synchronization process for [" + contentSource.getName() + "]", e);
         }
 
         return "success";

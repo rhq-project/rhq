@@ -114,10 +114,8 @@
                   </f:facet>
  
 				  <a4j:region>
-				       <a4j:poll id="poll" interval="5000"
-				           reRender="statusid" />
-			           <h:outputText style="font-size:16px"
-			                value="#{item.syncStatus}" />           
+				       <a4j:poll id="poll" interval="5000" reRender="statusid" />
+			           <h:outputText styleClass="headerText" value="#{item.syncStatus}" />
 				  </a4j:region>
                </rich:column>
 

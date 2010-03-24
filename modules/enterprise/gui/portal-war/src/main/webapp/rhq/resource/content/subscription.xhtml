@@ -113,7 +113,8 @@
                   <rich:columnGroup>
                      <rich:column colspan="6" width="100%">
                         <onc:selectCommandButton action="#{ResourceReposUIBean.deleteSelectedResourceRepos}"
-                                                 value="REMOVE SUBSCRIPTIONS"
+                                                 value="UNSUBSCRIBE"
+                                                 alt="Unsubscribe"
                                                  target="selectedResourceRepos"
                                                  styleClass="on-pager-button buttonsmall"
                                                  rendered="${GlobalPermissionsUIBean.inventory}"/>
@@ -226,7 +227,8 @@
                   <rich:columnGroup>
                      <rich:column colspan="6" width="100%">
                         <onc:selectCommandButton action="#{AvailableResourceReposUIBean.subscribeSelectedResourceRepos}"
-                                                 value="ADD SUBSCRIPTIONS"
+                                                 value="SUBSCRIBE"
+                                                 alt="Subscribe"
                                                  target="selectedAvailableResourceRepos"
                                                  styleClass="on-pager-button buttonsmall"
                                                  rendered="${GlobalPermissionsUIBean.inventory}"/>

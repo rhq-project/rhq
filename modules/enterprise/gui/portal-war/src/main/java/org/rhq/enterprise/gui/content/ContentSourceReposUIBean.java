@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.content;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
+import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.util.PageControl;
@@ -94,6 +95,7 @@ public class ContentSourceReposUIBean extends PagedDataTableUIBean {
         return FacesContextUtility.getRequest().getParameterValues("selectedContentSourceRepos");
     }
 
+    @NotNull
     private int[] getIntegerArray(String[] input) {
         if (input == null) {
             return new int[0];

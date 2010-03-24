@@ -11,7 +11,8 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich">
       
 <ui:composition template="/rhq/layout/main.xhtml">
 
@@ -34,6 +35,16 @@
    
    <ui:define name="body">
 
+   <a4j:region>
+      <h:form id="pollerForm">
+         <input type="hidden" name="id" value="#{param.id}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <!-- TODO: Only update if a sync is in progress. -->
+         <a4j:poll id="poller" interval="7000" enabled="true" reRender="poller,bodyPanel"/>
+      </h:form>
+   </a4j:region>
+
    <h:messages showSummary="true"
                showDetail="true"
                infoClass="InfoBlock"
@@ -42,7 +53,9 @@
                fatalClass="FatalBlock"
                globalOnly="true"
                layout="table"
-               width="100%"/>
+               style="width: 100%"/>
+
+   <h:panelGroup id="bodyPanel" layout="block">
 
       <h:form id="contentProviderDetailsForm">
          <input type="hidden" name="id" value="${param.id}"/>
@@ -72,7 +85,7 @@
                   </td>
                </tr>
                <tr>
-                  <td align="right"><b>Sync Schedule:</b></td>
+                  <td align="right"><b>Synchronization Schedule:</b></td>
                   <td align="left">
                      <h:inputText  rendered="${mode eq 'edit'}" value="#{ContentProviderDetailsUIBean.contentSource.syncSchedule}" />
                      <h:outputText rendered="${mode ne 'edit'}" value="#{ContentProviderDetailsUIBean.contentSource.syncSchedule}" />
@@ -143,21 +156,16 @@
          </rich:panel>
          
          <rich:panel>
-            <table>
-               <tr>
-                  <td>
-                     <onc:config configurationDefinition="#{ContentProviderDetailsUIBean.contentSourceTypeConfigurationDefinition}"
-                                 configuration="#{ContentProviderDetailsUIBean.contentSource.configuration}"
-                                 readOnly="#{mode ne 'edit'}"
-                                 nullConfigurationDefinitionMessage="This content provider type does not require a configuration."
-                                 nullConfigurationMessage="Configuration is empty."
-                                 nullConfigurationStyle="InfoBlock"/>
-                  </td>
-               </tr>
-            </table>
+             <onc:config configurationDefinition="#{ContentProviderDetailsUIBean.contentSourceTypeConfigurationDefinition}"
+                         configuration="#{ContentProviderDetailsUIBean.contentSource.configuration}"
+                         readOnly="#{mode ne 'edit'}"
+                         nullConfigurationDefinitionMessage="This content provider type does not require a configuration."
+                         nullConfigurationMessage="Configuration is empty."
+                         nullConfigurationStyle="InfoBlock"/>
          </rich:panel>
          
          <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+            <ui:remove><!-- view mode buttons --></ui:remove>
             <h:commandButton rendered="${mode ne 'edit'}"
                              value="EDIT" action="#{ContentProviderDetailsUIBean.edit}"
                              alt="Edit" styleClass="buttonmed" id="editButton"/>
@@ -167,6 +175,8 @@
             <h:commandButton rendered="${mode ne 'edit'}"
                              value="SYNCHRONIZE" action="#{ContentProviderDetailsUIBean.sync}"
                              alt="Synchronize" styleClass="buttonmed" id="syncButton"/>
+
+            <ui:remove><!-- edit mode buttons --></ui:remove>
             <h:commandButton rendered="${mode eq 'edit'}"
                              value="SAVE" action="#{ContentProviderDetailsUIBean.save}"
                              alt="Save" styleClass="buttonmed" id="saveButton"/>
@@ -177,7 +187,9 @@
 
       </h:form>
 
-      <!-- REPOS LIST -->
+
+   
+      <!-- IMPORTED (NOT CANDIDATE) REPOS LIST -->
 
       <h:form id="contentProviderReposListForm">
          <input type="hidden" name="id" value="${param.id}"/>
@@ -185,7 +197,7 @@
       
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Repositories Associated With This Content Provider"/>
+               <h:outputText value="Repositories"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
@@ -193,15 +205,14 @@
             <ui:param name="contentProviderReposDataModel" value="#{ContentSourceReposUIBean.dataModel}"/>
             <rich:dataTable id="contentProviderReposDataTable"
                             rows="#{PageControl.ContentSourceReposList.pageSize}"
-                            value="contentProviderReposDataModel"
-                            var="repolitem"
+                            value="#{contentProviderReposDataModel}"
+                            var="repo"
                             width="100%"
                             columnsWidth="1%, 20%, 20%, 20%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-
 
                <f:facet name="PageControlView">
                   <onc:paginationControl id="ContentSourceReposList" />
@@ -212,7 +223,7 @@
                      <onc:allSelect target="selectedContentSourceRepos" />
                   </f:facet>
                   
-                  <onc:select name="selectedContentSourceRepos" value="#{repoitem.id}" />
+                  <onc:select name="selectedContentSourceRepos" value="#{repo.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -222,7 +233,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{repoitem.id}"/>
+                  <h:outputText value="#{repo.id}"/>
                </rich:column>
 
                <rich:column>
@@ -234,8 +245,8 @@
                
                   <h:outputLink value="repo.xhtml">
                      <f:param name="mode" value="view"/>
-                     <f:param name="id" value="#{repoitem.id}"/>
-                     <h:outputText value="#{repoitem.name}" />
+                     <f:param name="id" value="#{repo.id}"/>
+                     <h:outputText value="#{repo.name}" />
                   </h:outputLink>
                </rich:column>
                
@@ -246,7 +257,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{repoitem.creationDate}">
+                  <h:outputText value="#{repo.creationDate}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>
@@ -258,7 +269,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{repoitem.lastModifiedDate}">
+                  <h:outputText value="#{repo.lastModifiedDate}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>
@@ -270,16 +281,20 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{repoitem.description}"/>
+                  <h:outputText value="#{repo.description}"/>
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
+                        <ui:remove>
+                        <!--
                         <onc:selectCommandButton action="#{ContentSourceReposUIBean.deleteSelectedContentSourceRepos}"
-                                                 value="DISASSOCIATE SELECTED" target="selectedContentSourceRepos" styleClass="on-pager-button buttonsmall"/>
-
+                                                 value="DISASSOCIATE SELECTED" target="selectedContentSourceRepos"
+                                                 styleClass="on-pager-button buttonsmall"/>
+                        -->
+                        </ui:remove>
                         <ui:param name="paginationDataTableName" value="contentProviderReposDataTable"/>
                         <ui:param name="paginationDataModel" value="#{contentProviderReposDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ContentSourceReposList}"/>
@@ -294,8 +309,9 @@
             
          </rich:panel>
       </h:form>
-      
-      <!-- SYNCHRONIZATION RESULTS LIST -->
+
+
+      <!-- REPO IMPORT RESULTS LIST -->
 
       <h:form id="contentSourceSyncResultsListForm">
          <input type="hidden" name="id" value="${param.id}"/>
@@ -303,7 +319,7 @@
       
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Synchronization Results"/>
+               <h:outputText value="Repository Import Results"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
@@ -386,10 +402,12 @@
                      <rich:componentControl for="resultsModalPanel" attachTo="resultsLink" operation="show" event="onclick"/>
                   </h:outputLink>
                   <h:outputText rendered="#{syncitem.results eq null}" value=""/>
-                  <rich:modalPanel id="resultsModalPanel" width="350" height="300" style="overflow: auto;">
+
+                  <rich:modalPanel id="resultsModalPanel" width="640" height="480" moveable="false" resizeable="false"
+                                   style="overflow: auto;">
                      <f:facet name="header">
-                        <h:panelGroup>
-                           <h:outputText value="Results" />
+                        <h:panelGroup layout="block">
+                           Results for synchronization request with id #{syncitem.id}
                         </h:panelGroup>
                      </f:facet>
                      <f:facet name="controls">
@@ -398,7 +416,9 @@
                            <rich:componentControl for="resultsModalPanel" attachTo="resultsModelPanelHideLink" operation="hide" event="onclick"/>
                         </h:panelGroup>
                      </f:facet>
-                     <PRE><h:outputText value="#{syncitem.results}" /></PRE>
+                     <h:panelGroup layout="block">
+                        <pre>#{syncitem.results}</pre>
+                     </h:panelGroup>
                   </rich:modalPanel>
                </rich:column>
                
@@ -424,15 +444,17 @@
          
       </h:form>
 
-      <!-- REPO LIST -->
 
-      <h:form id="contentSourceRepoListForm">
+
+      <!-- CANDIDATE (NOT IMPORTED) REPOS LIST -->
+
+      <h:form id="contentSourceRepoListForm" rendered="#{ContentSourceCandidateReposUIBean.dataModel.rowCount gt 0}">
          <input type="hidden" name="id" value="${param.id}"/>
          <input type="hidden" name="mode" value="${param.mode}"/>
       
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Repositories you can synchronize from this Content Provider"/>
+               <h:outputText value="Candidate Repositories"/>
             </f:facet>
 
             <h:panelGrid columns="2" width="100%">
@@ -441,42 +463,43 @@
             <rich:dataTable id="contentSourceReposDataTable"
                             rows="#{PageControl.ContentSourceCandidateReposList.pageSize}"
                             value="#{contentSourceReposDataModel}"
-                            var="repoitem"
+                            var="repo"
                             width="100%"
-                            columnsWidth="100%"
+                            columnsWidth="1%,99%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
-
                <f:facet name="PageControlView">
                   <onc:paginationControl id="ContentSourceCandidateReposList" />
                </f:facet>
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="c.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  <h:outputText value="#{repoitem.id}"/>
-               </rich:column>
+
+                <rich:column>
+                   <f:facet name="header">
+                      <onc:allSelect target="selectedCandidateRepos" />
+                   </f:facet>
+
+                   <onc:select name="selectedCandidateRepos" value="#{repo.id}" />
+                </rich:column>
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="c.name">
                         <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  <h:outputLink value="repo.xhtml">
-                     <f:param name="mode" value="view"/>
-                     <f:param name="id" value="#{repoitem.id}"/>
-                     <h:outputText value="#{repoitem.name}" />
-                  </h:outputLink>
+
+                  <h:outputText value="#{repo.name}" />
+                  <h:outputText value="(id=#{repo.id})" rendered="#{param.debug}" />
                </rich:column>
+
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <!-- colspan 6:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
+                     <!-- colspan 7:6 for the debug 'id' column -->
+                     <rich:column colspan="2" width="100%">
+                        <onc:selectCommandButton action="#{ContentSourceCandidateReposUIBean.importSelectedRepos}"
+                                                 value="IMPORT SELECTED" target="selectedCandidateRepos" styleClass="on-pager-button buttonsmall"/>
                         <ui:param name="paginationDataTableName" value="contentSourceReposDataTable"/>
                         <ui:param name="paginationDataModel" value="#{contentSourceReposDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ContentSourceCandidateReposList}"/>
@@ -491,6 +514,8 @@
             
          </rich:panel>
       </h:form>
+
+   </h:panelGroup>
 
    </ui:define>
 

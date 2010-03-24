@@ -50,6 +50,7 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -67,6 +68,7 @@ import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.NumberUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -431,25 +433,32 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return (PackageType) packageTypeQuery.getSingleResult();
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
         throws Exception {
-
         BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
         if (null == deployDef) {
             throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
         }
+
         Resource resource = (Resource) entityManager.find(Resource.class, resourceId);
         if (null == resource) {
             throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
         }
 
+        return scheduleBundleDeployment(subject, deployDef, resource, null);
+    }
+
+    private BundleDeployment scheduleBundleDeployment(Subject subject, BundleDeployDefinition deployDef,
+        Resource resource, BundleGroupDeployment bundleGroupDeployment) throws Exception {
+
+        int resourceId = resource.getId();
         AgentClient agentClient = agentManager.getAgentClient(resourceId);
         BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
 
         // The BundleDeployment record must exist in the db before the agent request because the agent may try to
         // add History to it during immediate deployments., so create and persist it (requires a new trans).
-        BundleDeployment deployment = bundleManager.createBundleDeployment(subject, deployDef.getId(), resourceId);
+        BundleDeployment deployment = bundleManager.createBundleDeployment(subject, deployDef.getId(), resourceId,
+            bundleGroupDeployment.getId());
 
         // make sure the deployment contains the info required by the schedule service
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, deployDef.getBundleVersion().getId());
@@ -492,10 +501,44 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return deployment;
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeployDefinitionId,
+        int resourceGroupId) throws Exception {
+
+        BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
+        if (null == deployDef) {
+            throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
+        }
+        ResourceGroup resourceGroup = (ResourceGroup) entityManager.find(ResourceGroup.class, resourceGroupId);
+        if (null == resourceGroup) {
+            throw new IllegalArgumentException("Invalid resourceGroupId (ResourceGroup does not exist): "
+                + resourceGroupId);
+        }
+
+        /*
+         * we need to create and persist the group deployment entity in a new transaction before the rest of the
+         * processing of this method; if we try to create and attach the deployment children
+         * to the parent before this is persisted we'll get StaleStateExceptions
+         * from Hibernate because of our use of flush/clear (we're trying to update it before it actually exists)
+         */
+        BundleGroupDeployment bundleGroupDeployment = new BundleGroupDeployment(subject.getName(), deployDef,
+            resourceGroup);
+        bundleGroupDeployment = bundleManager.createBundleGroupDeployment(bundleGroupDeployment);
+
+        // Create and persist updates for each of the group members.
+        for (Resource resource : resourceGroup.getExplicitResources()) {
+            BundleDeployment bundleDeployment = scheduleBundleDeployment(subject, deployDef, resource,
+                bundleGroupDeployment);
+            bundleGroupDeployment.addBundleDeployment(bundleDeployment);
+        }
+
+        return bundleGroupDeployment;
+    }
+
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleDeployment createBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
-        throws Exception {
+    public BundleDeployment createBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId,
+        int bundleGroupDeploymentId) throws Exception {
 
         BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
         if (null == deployDef) {
@@ -506,10 +549,20 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
         }
 
-        BundleDeployment deployment = new BundleDeployment(deployDef, resource);
+        BundleGroupDeployment bundleGroupDeployment = (BundleGroupDeployment) entityManager.find(
+            BundleGroupDeployment.class, bundleGroupDeploymentId);
+
+        BundleDeployment deployment = new BundleDeployment(deployDef, resource, bundleGroupDeployment);
 
         entityManager.persist(deployment);
         return deployment;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public BundleGroupDeployment createBundleGroupDeployment(BundleGroupDeployment bundleGroupDeployment)
+        throws Exception {
+        entityManager.persist(bundleGroupDeployment);
+        return bundleGroupDeployment;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

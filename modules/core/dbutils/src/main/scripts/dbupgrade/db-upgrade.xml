@@ -2819,7 +2819,7 @@
                <!-- RHQ_BUNDLE_DEPLOY_HIST -->
                <schema-directSQL>
                    <statement desc="Creating table RHQ_BUNDLE_DEPLOY_HIST">
-                       CREATE TABLE RHQ_BUNDLE_DEPLOY_HIST ( ID INTEGER )
+                       CREATE TABLE RHQ_BUNDLE_DEPLOY_HIST ( ID INTEGER PRIMARY KEY )
                    </statement>
                </schema-directSQL>
                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="ID" nullable="FALSE" />
@@ -2899,7 +2899,50 @@
             </schemaSpec>
 
            <schemaSpec version="2.78.5">
-               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
+           <!-- RHQ_BUNDLE_GROUP_DEPLOY -->           
+              <schema-directSQL>
+                  <statement desc="Creating table RHQ_BUNDLE_GROUP_DEPLOY">
+                      CREATE TABLE RHQ_BUNDLE_GROUP_DEPLOY ( ID INTEGER PRIMARY KEY )
+                  </statement>
+              </schema-directSQL>
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="ID" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="GROUP_ID" columnType="INTEGER" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="GROUP_ID" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="BUNDLE_DEPLOY_DEF_ID" columnType="INTEGER" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="BUNDLE_DEPLOY_DEF_ID" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="STATUS" columnType="VARCHAR2" precision="16" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="STATUS" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="ERROR_MESSAGE" columnType="LONGVARCHAR" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="SUBJECT_NAME" columnType="VARCHAR2" precision="255" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="SUBJECT_NAME" nullable="FALSE" />              
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="CTIME" columnType="LONG" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="CTIME" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="MTIME" columnType="LONG" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="MTIME" nullable="FALSE" />              
+              <schema-directSQL>
+                  <statement desc="Creating RHQ_BUNDLE_GROUP_DEPLOY foreign key relation to RHQ_RESOURCE_GROUP">
+                      ALTER TABLE RHQ_BUNDLE_GROUP_DEPLOY
+                      ADD CONSTRAINT RHQ_RESOURCE_GROUP_FK
+                      FOREIGN KEY (GROUP_ID)
+                      REFERENCES RHQ_RESOURCE_GROUP (ID)
+                  </statement>
+                 <statement desc="Creating RHQ_BUNDLE_GROUP_DEPLOY foreign key relation to RHQ_BUNDLE_DEPLOY_DEF">
+                     ALTER TABLE RHQ_BUNDLE_GROUP_DEPLOY
+                     ADD CONSTRAINT RHQ_BUNDLE_DEPLOY_DEF_FK
+                     FOREIGN KEY (BUNDLE_DEPLOY_DEF_ID)
+                     REFERENCES RHQ_BUNDLE_DEPLOY_DEF (ID)
+                 </statement>                 
+              </schema-directSQL>
+             
+              <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="BUNDLE_GROUP_DEPLOY_ID" columnType="INTEGER" />
+              <schema-directSQL>
+                  <statement desc="Creating RHQ_BUNDLE_DEPLOY foreign key relation to RHQ_BUNDLE_GROUP_DEPLOY">
+                      ALTER TABLE RHQ_BUNDLE_DEPLOY
+                      ADD CONSTRAINT RHQ_BUNDLE_GROUP_DEPLOY_FK
+                      FOREIGN KEY (BUNDLE_GROUP_DEPLOY_ID)
+                      REFERENCES RHQ_BUNDLE_GROUP_DEPLOY (ID)
+                  </statement>
+              </schema-directSQL>              
            </schemaSpec>
 
            <schemaSpec version="2.79">

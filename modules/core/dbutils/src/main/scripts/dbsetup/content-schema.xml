@@ -576,13 +576,23 @@
         <column name="BUNDLE_DEPLOY_DEF_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOY_DEF" />
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE" />
         <column name="CTIME" type="LONG" required="true"/>
-        <!-- for group history -->
-        <column name="GROUP_ID" type="INTEGER" required="false" references="RHQ_RESOURCE_GROUP"/>                
+        <column name="BUNDLE_GROUP_DEPLOY_ID" type="INTEGER" required="false" references="RHQ_BUNDLE_GROUP_DEPLOY"/>                
 
         <index name="RHQ_DEPLOY_DEF_RESOURCE_IDX" unique="true">
             <field ref="BUNDLE_DEPLOY_DEF_ID"/>
             <field ref="RESOURCE_ID"/>
         </index>
+    </table>
+    
+    <table name="RHQ_BUNDLE_GROUP_DEPLOY">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="GROUP_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_GROUP"/>
+        <column name="BUNDLE_DEPLOY_DEF_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOY_DEF" />        
+        <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
+        <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
+        <column name="SUBJECT_NAME" type="VARCHAR2" required="true" size="255"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
     </table>
     
     <table name="RHQ_BUNDLE_DEPLOY_HIST">

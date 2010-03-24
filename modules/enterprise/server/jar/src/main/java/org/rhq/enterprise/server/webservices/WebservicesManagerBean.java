@@ -42,6 +42,7 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -425,7 +426,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.scheduleBundleDeployment(subject, bundleDeployDefinitionId, resourceId);
     }
 
-    //BUNDLEMANAGER: END ----------------------------------
+    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeployDefinitionId,
+        int resourceGroupId) throws Exception {
+        return bundleManager.scheduleBundleGroupDeployment(subject, bundleDeployDefinitionId, resourceGroupId);
+    }
+
+    //BUNDLEMANAGER: END ----------------------------------  
 
     //CALLTIMEDATAMANAGER: BEGIN ----------------------------------
     public PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,

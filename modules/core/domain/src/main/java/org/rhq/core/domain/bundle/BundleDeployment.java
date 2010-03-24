@@ -80,6 +80,10 @@ public class BundleDeployment implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private Resource resource;
 
+    @JoinColumn(name = "BUNDLE_GROUP_DEPLOY_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne
+    private BundleGroupDeployment bundleGroupDeployment;
+
     @Column(name = "CTIME")
     private Long ctime = -1L;
 
@@ -92,6 +96,13 @@ public class BundleDeployment implements Serializable {
     public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource) {
         this.bundleDeployDefinition = bundleDeploymentDef;
         this.resource = resource;
+    }
+
+    public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource,
+        BundleGroupDeployment bundleGroupDeployment) {
+        this.bundleDeployDefinition = bundleDeploymentDef;
+        this.resource = resource;
+        this.bundleGroupDeployment = bundleGroupDeployment;
     }
 
     public BundleDeployDefinition getBundleDeployDefinition() {
@@ -138,6 +149,14 @@ public class BundleDeployment implements Serializable {
     public void addBundleDeploymentHistory(BundleDeploymentHistory history) {
         history.setBundleDeployment(this);
         this.histories.add(history);
+    }
+
+    public BundleGroupDeployment getBundleGroupDeployment() {
+        return bundleGroupDeployment;
+    }
+
+    public void setBundleGroupDeployment(BundleGroupDeployment bundleGroupDeployment) {
+        this.bundleGroupDeployment = bundleGroupDeployment;
     }
 
     @Override

@@ -33,6 +33,7 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -296,4 +297,23 @@ public interface BundleManagerRemote {
         @WebParam(name = "bundleDeployDefinitionId") int bundleDeployDefinitionId, //
         @WebParam(name = "resourceId") int resourceId) throws Exception;
 
+    /**
+     * Deploy the bundle as described in the provided deploy definition to all of the resources in the
+     * specified resource group.
+     * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
+     * returned BundleGroupDeployment can be used to track the history of the deployments.
+     * 
+     *  TODO: Add the scheduling capability, currently it's Immediate. 
+     * 
+     * @param subject must be InventoryManager
+     * @param bundleDeployDefinitionId the BundleDeployDefinition being used to guide the deployments
+     * @param resourceGroupId the target resourceGroup (must exist), typically platforms, for the deployments
+     * @return the BundleGroupDeployment created to track the deployments. 
+     * @throws Exception
+     */
+    @WebMethod
+    BundleGroupDeployment scheduleBundleGroupDeployment( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleDeployDefinitionId") int bundleDeployDefinitionId, //
+        @WebParam(name = "resourceGroupId") int resourceGroupId) throws Exception;
 }

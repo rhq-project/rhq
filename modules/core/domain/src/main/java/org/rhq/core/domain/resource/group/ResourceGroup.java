@@ -55,7 +55,7 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.bundle.GroupBundleDeployment;
+import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.Resource;
@@ -407,7 +407,7 @@ public class ResourceGroup extends Group {
     @OneToMany(mappedBy = "group", cascade = { CascadeType.ALL })
     @OrderBy
     // by primary key which will also put the operation histories in chronological order
-    private List<GroupBundleDeployment> bundleDeployments = new ArrayList<GroupBundleDeployment>();
+    private List<BundleGroupDeployment> bundleDeployments = new ArrayList<BundleGroupDeployment>();
 
     @JoinColumn(name = "GROUP_DEFINITION_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
@@ -554,11 +554,11 @@ public class ResourceGroup extends Group {
         this.configurationUpdates = configurationUpdates;
     }
 
-    public List<GroupBundleDeployment> getBundleDeployments() {
+    public List<BundleGroupDeployment> getBundleDeployments() {
         return bundleDeployments;
     }
 
-    public void setBundleDeployments(List<GroupBundleDeployment> bundleDeployments) {
+    public void setBundleDeployments(List<BundleGroupDeployment> bundleDeployments) {
         this.bundleDeployments = bundleDeployments;
     }
 

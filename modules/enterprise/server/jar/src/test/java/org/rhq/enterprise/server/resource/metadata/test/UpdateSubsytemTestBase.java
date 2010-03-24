@@ -104,17 +104,21 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     @SuppressWarnings("unchecked")
     protected ResourceType getResourceType(String typeName) {
+        return getResourceType(typeName, PLUGIN_NAME);
+    }
+
+    protected ResourceType getResourceType(String typeName, String pluginName) {
         Query q1 = getEntityManager().createQuery("Select rt from ResourceType rt");
         List<ResourceType> types = q1.getResultList();
 
         Query q = getEntityManager().createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
-        q.setParameter("name", typeName).setParameter("plugin", PLUGIN_NAME);
+        q.setParameter("name", typeName).setParameter("plugin", pluginName);
         try {
             ResourceType type = (ResourceType) q.getSingleResult();
             return type;
         } catch (NoResultException nre) {
             throw new NoResultException("==== Failed to lookup ResourceType [" + typeName + "] from Plugin ["
-                + PLUGIN_NAME + "] - found: " + types);
+                + pluginName + "] - found: " + types);
         }
     }
 

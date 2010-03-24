@@ -18,12 +18,6 @@
  */
 package org.rhq.enterprise.server.resource.metadata.test;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -38,7 +32,15 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
+import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.testng.annotations.Test;
+
+import javax.persistence.EntityManager;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
 
@@ -134,6 +136,80 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
 
             // TODO check changing back
         } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
+    public void testBZ_573034() throws Exception {
+        try {
+            getTransactionManager().begin();
+            EntityManager entityMgr = getEntityManager();
+
+            // register plugin
+            String pluginName = "BZ_573034_test_plugin";
+            String version1 = "1.0";
+            String version2 = "2.0";
+
+            registerPlugin("BZ_573034_v1.xml", version1);
+
+            // create resource with plugin configuration
+            ResourceType testServerResourceType = getResourceType("TestServer", pluginName);
+
+            ConfigurationDefinition pluginConfigurationDef = testServerResourceType.getPluginConfigurationDefinition();
+            PropertyDefinition testPropertyDef = pluginConfigurationDef.getPropertyDefinitionSimple("testProperty");
+
+            assertNotNull(
+                "Expected plugin configuration definition to have a property definition for 'testProperty'",
+                testPropertyDef
+            );
+
+            Agent agent = new Agent("testAgent", "localhost", 1, "", "testoken");
+            entityMgr.persist(agent);
+            entityMgr.flush();
+
+            String resourceKey = testServerResourceType.getName() + System.currentTimeMillis();
+            Resource testResource = new Resource(resourceKey, resourceKey, testServerResourceType);
+            testResource.setAgent(agent);
+            entityMgr.persist(testResource);
+            entityMgr.flush();
+
+            testResource = entityMgr.find(Resource.class, testResource.getId());
+            int pluginConfigurationId = testResource.getPluginConfiguration().getId();
+
+            Configuration pluginConfiguration = entityMgr.find(Configuration.class, pluginConfigurationId);
+            PropertySimple testProperty = pluginConfiguration.getSimple("testProperty");
+
+            assertNull(
+                "Did not expect to find a value for 'testProperty' since a value has not been supplied for it yet",
+                testProperty
+            );
+
+            // register new version of plugin that specifies new plugin configuration property having a default value
+            registerPlugin("BZ_573034_v2.xml", version2);
+
+            // verify existing resource has its plugin configuration updated with new property having default value
+            testServerResourceType = getResourceType("TestServer", pluginName);
+
+            pluginConfigurationDef = testServerResourceType.getPluginConfigurationDefinition();
+            PropertyDefinition testPropertyWithDefaultDef =
+                pluginConfigurationDef.getPropertyDefinitionSimple("testPropertyWithDefault");
+
+            assertNotNull(
+                "Expected updated plugin configuration definition to define the property 'testPropertyWithDefault'",
+                testPropertyWithDefaultDef
+            );
+
+            pluginConfiguration = entityMgr.find(Configuration.class, pluginConfigurationId);
+            PropertySimple testPropertyWithDefault = pluginConfiguration.getSimple("testPropertyWithDefault");
+
+            assertNotNull(
+                "Expected to find the property 'testPropertyWithDefault' in the updated plugin configuration",
+                testPropertyWithDefault
+            );
+            assertEquals("Expected default value to be set", "default", testPropertyWithDefault.getStringValue());
+        }
+        finally {
             getTransactionManager().rollback();
         }
     }
@@ -353,7 +429,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
      *
      * @throws Exception
      */
-    @Test
+    @Test(enabled = false)
     public void testConstraintMinMax() throws Exception {
         getTransactionManager().begin();
         try {

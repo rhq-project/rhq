@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
 
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.TabBarControls;
@@ -50,10 +52,14 @@ public class DemoCanvas extends Canvas {
 
         //        topTabSet.setTop(50);
 
-        Tab tableTab = new Tab("Resource Search Table");
+        Tab selectorTab = new Tab("Selector");
+        Tab typeTree = new Tab("Type Tree");
         Tab treeTab = new Tab("Resource Tree");
         final Tab configTab = new Tab("Configuration Editor");
         //Tab alertHistoryTab = new Tab("Alert History");
+
+
+        selectorTab.setPane(new ResourceSelector());
 
         // Agent:  resource (10005) type (10060)
         // Raw: 10003 / 10023
@@ -61,11 +67,12 @@ public class DemoCanvas extends Canvas {
 
         //configTab.setPane(new ConfigurationEditor(10005, 10060, ConfigurationEditor.ConfigType.plugin));
         //treeTab.setPane(new ResourceTreeView(new Resource(10001)));
-        tableTab.setPane(new ResourceSearchView());
+        typeTree.setPane(new ResourceTypeTreeView());
         //alertHistoryTab.setPane(new AbstractAlertsView());
 
+        topTabSet.addTab(selectorTab);
+        topTabSet.addTab(typeTree);
         topTabSet.addTab(configTab);
-        topTabSet.addTab(tableTab);
         topTabSet.addTab(treeTab);
         //topTabSet.addTab(alertHistoryTab);
         //topTabSet.selectTab(alertHistoryTab);

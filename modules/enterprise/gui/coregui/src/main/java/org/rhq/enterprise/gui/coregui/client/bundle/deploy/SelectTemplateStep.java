@@ -86,8 +86,4 @@ public class SelectTemplateStep implements WizardStep {
     public boolean nextPage() {
         return form.validate();
     }
-
-    public boolean isPreviousEnabled() {
-        return true;
-    }
 }

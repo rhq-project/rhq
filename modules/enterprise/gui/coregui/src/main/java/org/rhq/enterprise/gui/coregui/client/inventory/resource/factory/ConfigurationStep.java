@@ -18,15 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
-import java.util.Map;
-
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
@@ -59,14 +54,6 @@ public class ConfigurationStep implements WizardStep {
 
     public String getName() {
         return "Edit Configuration";
-    }
-
-    public boolean isPreviousEnabled() {
-        return true;
-    }
-
-    public boolean isNextEnabled() {
-        return false;
     }
 
     public Configuration getConfiguration() {

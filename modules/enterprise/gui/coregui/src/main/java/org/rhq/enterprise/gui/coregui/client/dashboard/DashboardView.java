@@ -29,21 +29,25 @@ import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
+
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.SmallGraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.AutodiscoveryQueueDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.summary.SummaryCountsView;
 
 /**
  * @author Greg Hinkle
  */
 public class DashboardView extends VLayout {
 
-     private static String[] colors = new String[]{
-             "FF6600", "808000", "008000", "008080", "0000FF", "666699",
-             "FF0000", "FF9900", "99CC00", "339966", "33CCCC", "3366FF",
-             "800080", "969696", "FF00FF", "FFCC00", "FFFF00", "00FF00",
-             "00FFFF", "00CCFF", "993366", "C0C0C0", "FF99CC", "FFCC99",
-             "FFFF99", "CCFFCC", "CCFFFF", "99CCFF", "CC99FF", "FFFFFF"
-     };
+    private static String[] colors = new String[]{
+            "FF6600", "808000", "008000", "008080", "0000FF", "666699",
+            "FF0000", "FF9900", "99CC00", "339966", "33CCCC", "3366FF",
+            "800080", "969696", "FF00FF", "FFCC00", "FFFF00", "00FF00",
+            "00FFFF", "00CCFF", "993366", "C0C0C0", "FF99CC", "FFCC99",
+            "FFFF99", "CCFFCC", "CCFFFF", "99CCFF", "CC99FF", "FFFFFF"
+    };
 
     public DashboardView() {
         setOverflow(Overflow.AUTO);
@@ -55,9 +59,24 @@ public class DashboardView extends VLayout {
         setHeight100();
 
 
-        final PortalLayout portalLayout = new PortalLayout(3);
+        final PortalLayout portalLayout = new PortalLayout(2);
         portalLayout.setWidth100();
         portalLayout.setHeight100();
+
+
+        Portlet summaryPortlet = new Portlet();
+        summaryPortlet.setTitle("Inventory Summary");
+        summaryPortlet.addItem(new SummaryCountsView());
+        summaryPortlet.setHeight(300);
+        portalLayout.addPortlet(summaryPortlet);
+
+
+        Portlet adPortlet = new Portlet();
+        adPortlet.setTitle("Auto Discovery Queue");
+        adPortlet.addItem(new ResourceAutodiscoveryView(true));
+        adPortlet.setHeight(250);
+        portalLayout.addPortlet(adPortlet);
+
 
         // create portlets...
         for (int i = 1; i <= 2; i++) {
@@ -69,7 +88,7 @@ public class DashboardView extends VLayout {
             // label.setLayoutAlign(VerticalAlignment.CENTER);
             // label.setContents("Portlet contents");
             // label.setBackgroundColor(colors[Random.nextInt(colors.length - 1)]);
-            
+
             portlet.addItem(new SmallGraphView());
             portlet.setHeight(400);
             portalLayout.addPortlet(portlet);

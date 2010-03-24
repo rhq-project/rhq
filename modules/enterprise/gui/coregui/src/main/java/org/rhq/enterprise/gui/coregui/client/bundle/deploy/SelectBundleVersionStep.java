@@ -148,14 +148,6 @@ public class SelectBundleVersionStep implements WizardStep {
     }
 
     public boolean nextPage() {
-        return form.validate();
-    }
-
-    public boolean isNextEnabled() {
-        return (null != this.wizard.getBundleVersion());
-    }
-
-    public boolean isPreviousEnabled() {
-        return false;
+        return form.validate() && (null != this.wizard.getBundleVersion());
     }
 }

@@ -71,6 +71,16 @@ public interface DiscoveryBossLocal {
      */
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, PageControl pc);
 
+
+    /**
+     * Like the above method, but can find ignored, commited or both
+     * @param user
+     * @param statuses
+     * @param pc
+     * @return
+     */
+    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, EnumSet<InventoryStatus> statuses, PageControl pc);
+
     /**
      * This returns all platform resources that either have the given status themselves or one or more of their child
      * servers have that status. Use this to find those platforms that need to be shown in the auto-discovery pages

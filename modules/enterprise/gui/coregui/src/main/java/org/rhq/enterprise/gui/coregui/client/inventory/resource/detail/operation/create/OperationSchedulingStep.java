@@ -42,7 +42,7 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TimeItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 /**
@@ -66,12 +66,12 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
             form.setWidth100();
             form.setPadding(10);
             form.setNumCols(3);
-//            form.setColWidths("15%", "35%", "15%", "*");
+            //            form.setColWidths("15%", "35%", "15%", "*");
             form.setValidateOnChange(true);
 
             final RadioGroupItem start = new RadioGroupItem("start", "Start");
             start.setColSpan(3);
-            start.setValueMap(enumValueMap(ExecutionSchedule.Start.class));  // "Immediately", "Future"
+            start.setValueMap(enumValueMap(ExecutionSchedule.Start.class)); // "Immediately", "Future"
             start.setRedrawOnChange(true);
             start.setValue("Immediately");
 
@@ -84,7 +84,7 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
             });
 
             RadioGroupItem recurr = new RadioGroupItem("recurr", "Recurrence");
-            recurr.setValueMap(enumValueMap(ExecutionSchedule.Recurr.class));  // "Once", "EveryNMinutes", "Hourly", "Daily", "Weekly", "Monthly");
+            recurr.setValueMap(enumValueMap(ExecutionSchedule.Recurr.class)); // "Once", "EveryNMinutes", "Hourly", "Daily", "Weekly", "Monthly");
             recurr.setRedrawOnChange(true);
             recurr.setValue("Once");
             recurr.setShowIfCondition(new FormItemIfFunction() {
@@ -93,26 +93,23 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
                 }
             });
 
-
-
             CanvasItem onceForm = new CanvasItem("once", "Run At");
             onceForm.setShowTitle(false);
             onceForm.setCanvas(getOnceForm());
             onceForm.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            ExecutionSchedule.Recurr.Once.name().equals(form.getValueAsString("recurr"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && ExecutionSchedule.Recurr.Once.name().equals(form.getValueAsString("recurr"));
                 }
             });
-
 
             CanvasItem everyNMinuteForm = new CanvasItem("everyNMinutesForm", "NMinutes");
             everyNMinuteForm.setShowTitle(false);
             everyNMinuteForm.setCanvas(getEveryNMinutesForm());
             everyNMinuteForm.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            ExecutionSchedule.Recurr.EveryNMinutes.name().equals(form.getValueAsString("recurr"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && ExecutionSchedule.Recurr.EveryNMinutes.name().equals(form.getValueAsString("recurr"));
                 }
             });
 
@@ -121,8 +118,8 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
             hourlyForm.setCanvas(getHourlyForm());
             hourlyForm.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start")) &&
-                            ExecutionSchedule.Recurr.Hourly.name().equals(form.getValueAsString("recurr"));
+                    return !"Immediately".equals(form.getValueAsString("start"))
+                        && ExecutionSchedule.Recurr.Hourly.name().equals(form.getValueAsString("recurr"));
                 }
             });
 
@@ -135,7 +132,6 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
                         && "Daily".equals(form.getValueAsString("recurr"));
                 }
             });
-
 
             CanvasItem weeklyForm = new CanvasItem("weekly", "Weekly");
             weeklyForm.setShowTitle(false);
@@ -212,12 +208,8 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
             messageItem.setShowTitle(false);
             messageItem.setCellStyle("HeaderLabel");
 
-            form.setItems(start, scheduleHeader, recurr,
-                    onceForm, everyNMinuteForm, hourlyForm, dailyForm, weeklyForm, monthlyForm,
-                    rangeHeader, startDate, end, endDate,
-                    new SpacerItem(), messageItem);
-
-
+            form.setItems(start, scheduleHeader, recurr, onceForm, everyNMinuteForm, hourlyForm, dailyForm, weeklyForm,
+                monthlyForm, rangeHeader, startDate, end, endDate, new SpacerItem(), messageItem);
 
             form.addItemChangedHandler(this);
         }
@@ -255,7 +247,6 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
         form.setGroupTitle("Every N Minutes");
         form.addItemChangedHandler(this);
 
-
         form.setWrapItemTitles(false);
         form.setNumCols(2);
 
@@ -276,7 +267,6 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
         form.setGroupTitle("Hourly At");
         form.addItemChangedHandler(this);
 
-
         form.setWrapItemTitles(false);
         form.setNumCols(2);
 
@@ -288,7 +278,6 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
         form.setItems(minuteOfHour);
         return form;
     }
-
 
     private DynamicForm getDailyForm() {
         DynamicForm form = new DynamicForm();
@@ -308,7 +297,6 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
         return form;
     }
 
-
     private DynamicForm getWeeklyForm() {
         DynamicForm form = new DynamicForm();
         form.setValuesManager(valuesManager);
@@ -316,7 +304,6 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
         form.setIsGroup(true);
         form.setGroupTitle("Weekly On");
         form.addItemChangedHandler(this);
-
 
         form.setWrapItemTitles(false);
 
@@ -347,7 +334,6 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
         form.setGroupTitle("Monthly On");
         form.addItemChangedHandler(this);
 
-
         IntegerItem dayItem = new IntegerItem();
         dayItem.setName("dayOfMonth");
         dayItem.setTitle("Day of Month");
@@ -370,20 +356,10 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
         return "Schedule";
     }
 
-    public boolean isNextEnabled() {
-        return true;
-    }
-
-    public boolean isPreviousEnabled() {
-        return true;
-    }
-
     public void onItemChanged(ItemChangedEvent itemChangeEvent) {
-
 
         executionSchedule.setStart(ExecutionSchedule.Start.valueOf(valuesManager.getValueAsString("start")));
         executionSchedule.setRecurr(ExecutionSchedule.Recurr.valueOf(valuesManager.getValueAsString("recurr")));
-
 
         Date onceDate = (Date) valuesManager.getValues().get("onceStartDate");
         executionSchedule.setOnceDateTime(onceDate);
@@ -394,7 +370,6 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
 
         executionSchedule.setTimeOfDay((Date) valuesManager.getValues().get("timeOfDay"));
 
-
         HashSet<ExecutionSchedule.DayOfWeek> selectedDays = new HashSet<ExecutionSchedule.DayOfWeek>(); //.noneOf(ExecutionSchedule.DayOfWeek.class);
         for (ExecutionSchedule.DayOfWeek d : EnumSet.allOf(ExecutionSchedule.DayOfWeek.class)) {
             if (valuesManager.getValues().containsKey(d.name())) {
@@ -403,29 +378,24 @@ public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
         }
         executionSchedule.setDaysOfWeek(selectedDays);
 
-
-
         executionSchedule.setDayOfMonth(Integer.parseInt(valuesManager.getValueAsString("dayOfMonth")));
 
-
-
-        executionSchedule.setStartDate((Date)valuesManager.getValues().get("startDate"));
+        executionSchedule.setStartDate((Date) valuesManager.getValues().get("startDate"));
 
         if ("Never".equals(valuesManager.getValues().get("endType"))) {
             executionSchedule.setEndDate(null);
         } else {
-            executionSchedule.setEndDate((Date)valuesManager.getValues().get("endDate"));
+            executionSchedule.setEndDate((Date) valuesManager.getValues().get("endDate"));
         }
 
-        form.setValue("message",executionSchedule.getMessage());
+        form.setValue("message", executionSchedule.getMessage());
     }
 
-
-    private LinkedHashMap<String,String> enumValueMap(Class<? extends Enum> e) {
-        LinkedHashMap<String,String> map = new LinkedHashMap<String, String>();
+    private LinkedHashMap<String, String> enumValueMap(Class<? extends Enum> e) {
+        LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
         for (Object o : EnumSet.allOf(e)) {
             Enum v = (Enum) o;
-            map.put(v.name(),v.name()); // localize
+            map.put(v.name(), v.name()); // localize
         }
         return map;
     }

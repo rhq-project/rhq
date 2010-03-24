@@ -89,7 +89,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         return SerialUtility.prepare(results, "createBundleVersion");
     }
 
-    public void deleteBundle(int bundleId) {
+    public void deleteBundle(int bundleId) throws Exception {
         try {
             bundleManager.deleteBundle(getSessionSubject(), bundleId);
         } catch (Exception e) {
@@ -97,15 +97,15 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         }
     }
 
-    public void deleteBundleVersion(int bundleVersionId) {
+    public void deleteBundleVersion(int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
         try {
-            bundleManager.deleteBundleVersion(getSessionSubject(), bundleVersionId);
+            bundleManager.deleteBundleVersion(getSessionSubject(), bundleVersionId, deleteBundleIfEmpty);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 
-    public PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) {
+    public PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception {
         try {
             PageList<Bundle> results = bundleManager.findBundlesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundlesByCriteria");
@@ -114,7 +114,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         }
     }
 
-    public PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) {
+    public PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) throws Exception {
         try {
             PageList<BundleVersion> results = bundleManager.findBundleVersionsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundleVersionsByCriteria");
@@ -124,7 +124,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
-        BundleCriteria criteria) {
+        BundleCriteria criteria) throws Exception {
         try {
             PageList<BundleWithLatestVersionComposite> results;
             results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(getSessionSubject(), criteria);
@@ -134,7 +134,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         }
     }
 
-    public ArrayList<BundleType> getAllBundleTypes() {
+    public ArrayList<BundleType> getAllBundleTypes() throws Exception {
         try {
             ArrayList<BundleType> bundleTypes = new ArrayList<BundleType>();
             bundleTypes.addAll(bundleManager.getAllBundleTypes(getSessionSubject()));

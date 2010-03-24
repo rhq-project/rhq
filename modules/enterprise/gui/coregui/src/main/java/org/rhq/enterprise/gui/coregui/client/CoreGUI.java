@@ -190,7 +190,7 @@ public class CoreGUI implements EntryPoint {
                     }
                 }
                 int startIndex;
-                View parentView;
+                View parentView = null;
                 if (commonBasePathSize > 0) {
                     // The requested path shares a common base path with the current view, so skip rendering of
                     // views corresponding to this common base path. For example, if the current view is
@@ -198,7 +198,10 @@ public class CoreGUI implements EntryPoint {
                     // only on for the Monitor and Graphs components of the path.
                     startIndex = commonBasePathSize;
                     int subViewsToRenderPathSize = viewIdNames.size() - commonBasePathSize;
-                    parentView = CoreGUI.this.currentView;
+                    View view = CoreGUI.this.currentView;
+                    if (view != null) {
+                        parentView = view;
+                    }
                     for (int i = 0; i < subViewsToRenderPathSize; i++) {
                         parentView = parentView.getParent();
                     }

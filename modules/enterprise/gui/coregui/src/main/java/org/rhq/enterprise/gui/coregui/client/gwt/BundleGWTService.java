@@ -47,9 +47,9 @@ public interface BundleGWTService extends RemoteService {
 
     BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
 
-    void deleteBundle(int bundleId);
+    void deleteBundle(int bundleId) throws Exception;
 
-    void deleteBundleVersion(int bundleVersionId);
+    void deleteBundleVersion(int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception;
 
     PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception;
 
@@ -60,7 +60,7 @@ public interface BundleGWTService extends RemoteService {
 
     HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception;
 
-    ArrayList<BundleType> getAllBundleTypes();
+    ArrayList<BundleType> getAllBundleTypes() throws Exception;
 
     BundleDeployment scheduleBundleDeployment(int bundleDeployDefinitionId, int resourceId) throws Exception;
 }

@@ -204,12 +204,15 @@ public interface BundleManagerRemote {
      *    
      * @param subject
      * @param bundleVersionId
+     * @param deleteBundleIfEmpty if <code>true</code> and if this method deletes the last bundle version for its
+     *                            bundle, then that bundle entity itself will be completely purged
      * @throws Exception if any part of the removal fails. 
      */
     @WebMethod
     void deleteBundleVersion( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleVersionId") int bundleVersionId) throws Exception;
+        @WebParam(name = "bundleVersionId") int bundleVersionId, //
+        @WebParam(name = "deleteBundleIfEmpty") boolean deleteBundleIfEmpty) throws Exception;
 
     @WebMethod
     PageList<Bundle> findBundlesByCriteria( //

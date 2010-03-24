@@ -54,12 +54,4 @@ public class CreateConfigStep implements WizardStep {
         wizard.setConfig(editor.getConfiguration());
         return true;
     }
-
-    public boolean isPreviousEnabled() {
-        return true;
-    }
-
-    public boolean isNextEnabled() {
-        return true;
-    }
 }

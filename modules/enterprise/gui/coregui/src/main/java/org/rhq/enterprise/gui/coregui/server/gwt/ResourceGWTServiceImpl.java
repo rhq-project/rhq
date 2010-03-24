@@ -18,16 +18,20 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -37,8 +41,10 @@ import javax.servlet.ServletException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -48,7 +54,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
-
+    private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
 
     private static String[] importantFields = {
             "serialVersionUID",
@@ -175,6 +181,29 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
         resourceFactoryManager.createResource(getSessionSubject(),
                 parentResourceId, newResourceTypeId, newResourceName, pluginConfig, newResourceConfiguration);
+    }
+
+
+
+    public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc) {
+        return SerialUtility.prepare(
+                discoveryBoss.getQueuedPlatformsAndServers(
+                        getSessionSubject(),
+                        EnumSet.copyOf(statuses),
+                        pc),
+                "ResoruceService.getQueuedPlatformsAndServers");
+    }
+
+    public void importResources(Integer[] resourceIds) {
+        discoveryBoss.importResources(getSessionSubject(), resourceIds);
+    }
+
+    public void ignoreResources(Integer[] resourceIds) {
+        discoveryBoss.ignoreResources(getSessionSubject(), resourceIds);
+    }
+
+    public void unignoreResources(Integer[] resourceIds) {
+        discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
     }
 
 

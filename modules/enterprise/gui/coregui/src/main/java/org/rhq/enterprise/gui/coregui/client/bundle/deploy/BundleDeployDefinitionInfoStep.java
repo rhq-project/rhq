@@ -82,8 +82,4 @@ public class BundleDeployDefinitionInfoStep implements WizardStep {
     public boolean nextPage() {
         return form.validate();
     }
-
-    public boolean isPreviousEnabled() {
-        return false;
-    }
 }

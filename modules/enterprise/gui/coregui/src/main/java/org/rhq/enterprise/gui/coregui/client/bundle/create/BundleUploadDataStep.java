@@ -46,7 +46,6 @@ public class BundleUploadDataStep implements WizardStep {
     private final AbstractBundleCreateWizard wizard;
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private DynamicForm form;
-    private Map<String, Boolean> allFilesStatus;
 
     public BundleUploadDataStep(AbstractBundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
@@ -63,14 +62,12 @@ public class BundleUploadDataStep implements WizardStep {
             new AsyncCallback<HashMap<String, Boolean>>() {
 
                 public void onSuccess(HashMap<String, Boolean> result) {
-                    allFilesStatus = result;
+                    wizard.setAllBundleFilesStatus(result);
                     prepareForm(layout);
-                    enableNextButtonWhenAppropriate();
                 }
 
                 public void onFailure(Throwable caught) {
-                    allFilesStatus = null;
-                    enableNextButtonWhenAppropriate();
+                    wizard.setAllBundleFilesStatus(null);
                     CoreGUI.getErrorHandler().handleError("Cannot obtain bundle file information from server", caught);
                 }
             });
@@ -80,33 +77,33 @@ public class BundleUploadDataStep implements WizardStep {
     }
 
     public boolean nextPage() {
-        return true; // TODO: Implement this method.
+        return isFinished();
     }
 
     public String getName() {
         return "Upload Bundle Files";
     }
 
-    public boolean isNextEnabled() {
-        if (this.allFilesStatus == null) {
+    private boolean isFinished() {
+        if (wizard.getAllBundleFilesStatus() == null) {
             return false;
         }
-        if (this.allFilesStatus.containsValue(Boolean.FALSE)) {
+        if (wizard.getAllBundleFilesStatus().containsValue(Boolean.FALSE)) {
             return false;
         }
         return true;
-    }
-
-    public boolean isPreviousEnabled() {
-        return true;
-    }
-
-    private void enableNextButtonWhenAppropriate() {
-        this.wizard.getView().getNextButton().setDisabled(!isNextEnabled());
     }
 
     private void prepareForm(VLayout layout) {
-        for (Map.Entry<String, Boolean> entry : this.allFilesStatus.entrySet()) {
+        // if there are no files to upload, immediately skip this step
+        final HashMap<String, Boolean> allFilesStatus = wizard.getAllBundleFilesStatus();
+
+        if (allFilesStatus != null && allFilesStatus.size() == 0) {
+            // TODO: do something to tell the user they don't have to do anything for this step
+            return;
+        }
+
+        for (Map.Entry<String, Boolean> entry : allFilesStatus.entrySet()) {
             HLayout formLayout = new HLayout();
             layout.addMember(formLayout);
 
@@ -133,7 +130,6 @@ public class BundleUploadDataStep implements WizardStep {
                             CoreGUI.getMessageCenter().notify(
                                 new Message("Failed to upload bundle file", results, Message.Severity.Error));
                         }
-                        enableNextButtonWhenAppropriate();
                     }
                 });
                 uploadForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
@@ -142,7 +138,6 @@ public class BundleUploadDataStep implements WizardStep {
                         allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
                         CoreGUI.getMessageCenter().notify(
                             new Message("Failed to upload file", null, Message.Severity.Error));
-                        enableNextButtonWhenAppropriate();
                     }
                 });
 

@@ -63,7 +63,7 @@ public class BundlesListView extends VLayout {
         table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
         table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
-        table.addTableAction("Create New Bundle", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+        table.addTableAction("New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 new BundleCreateWizard().startBundleWizard();
 
@@ -91,7 +91,7 @@ public class BundlesListView extends VLayout {
             }
         });
 
-        table.addTableAction("Create New Version", Table.SelectionEnablement.SINGLE, null, new TableAction() {
+        table.addTableAction("New Version", Table.SelectionEnablement.SINGLE, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) table.getDataSource();
                 final BundleWithLatestVersionComposite object = ds.copyValues(selection[0]);

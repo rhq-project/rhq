@@ -116,15 +116,7 @@ public class DeployStep implements WizardStep {
         return canvas;
     }
 
-    public boolean isNextEnabled() {
-        return false;
-    }
-
-    public boolean isPreviousEnabled() {
-        return true;
-    }
-
     public boolean nextPage() {
-        return false;
+        return true;
     }
 }

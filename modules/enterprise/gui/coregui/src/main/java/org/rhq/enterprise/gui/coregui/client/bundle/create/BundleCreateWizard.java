@@ -32,6 +32,7 @@ public class BundleCreateWizard extends AbstractBundleCreateWizard {
         steps.add(new BundleInfoStep(this));
         steps.add(new BundleUploadRecipeStep(this));
         steps.add(new BundleUploadDataStep(this));
+        steps.add(new BundleSummaryStep(this));
         setSteps(steps);
     }
 }

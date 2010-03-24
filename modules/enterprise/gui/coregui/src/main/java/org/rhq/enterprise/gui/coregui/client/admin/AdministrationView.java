@@ -27,6 +27,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -112,11 +113,11 @@ public class AdministrationView extends HLayout implements ViewRenderer {
         Tree tree = new Tree();
         final TreeNode manageUsersNode = new TreeNode("Manage Users");
         final TreeNode manageRolesNode = new TreeNode("Manage Roles");
-        final TreeNode manageGroups = new TreeNode("Resource Groups");
+        final TreeNode discoveryQueue = new TreeNode("Auto Discovery Queue");
         tree.setRoot(new TreeNode("security",
                 manageUsersNode,
                 manageRolesNode,
-                manageGroups));
+                discoveryQueue));
 
         securityTreeGrid.setData(tree);
 
@@ -128,8 +129,8 @@ public class AdministrationView extends HLayout implements ViewRenderer {
                         content = new UsersView();
                     } else if (selectionEvent.getRecord() == manageRolesNode) {
                         content = new RolesView();
-                    } else if (selectionEvent.getRecord() == manageGroups) {
-                        content = new RolesView();
+                    } else if (selectionEvent.getRecord() == discoveryQueue) {
+                        content = new ResourceAutodiscoveryView();
                     } else {
                         throw new IllegalStateException("Unknown record selected: " + selectionEvent.getRecord());
                     }

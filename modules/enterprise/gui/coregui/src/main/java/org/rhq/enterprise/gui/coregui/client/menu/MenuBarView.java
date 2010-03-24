@@ -43,7 +43,7 @@ public class MenuBarView extends VLayout {
 
     private String selected = "Dashboard";
 
-    HTMLFlow linksPane;
+    private HTMLFlow linksPane;
 
     public MenuBarView() {
         super(5);
@@ -135,23 +135,21 @@ public class MenuBarView extends VLayout {
         boolean first = true;
         for (String section : SECTIONS) {
             if (first) {
-                headerString.append("<td style=\"width: 1px;\"><img src=\"http://localhost:7080/coregui/images/header/header_bg_line.png\"/></td>");
+                headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
             }
             first = false;
 
-            String bg = "";
             String styleClass = "TopSectionLink";
             if (section.equals(selected)) {
-                bg = " background-image: url('http://localhost:7080/coregui/images/header/header_bg_selected.png');";
                 styleClass += "Selected";
             }
 
 
-            headerString.append("<td style=\"vertical-align: bottom; padding:5px; padding-left: 15px; padding-right: 15px;" + bg + "\"onclick=\"document.location='#" + section + "'\" >");
-            headerString.append("<a class=\"" + styleClass + "\" href=\"#" + section + "\">" + section + "</a>");
+            headerString.append("<td class=\"" + styleClass + "\" onclick=\"document.location='#" + section + "'\" >");
+            headerString.append(section);
             headerString.append("</td>\n");
 
-            headerString.append("<td style=\"width: 1px;\"><img src=\"http://localhost:7080/coregui/images/header/header_bg_line.png\"/></td>");
+            headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
         }
 
         headerString.append("</tr></table>");

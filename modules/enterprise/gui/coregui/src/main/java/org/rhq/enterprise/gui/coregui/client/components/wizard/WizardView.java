@@ -125,24 +125,23 @@ public class WizardView extends VLayout {
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 wizard.cancel();
-                wizardWindow.destroy();
+                closeDialog();
             }
         });
         previousButton = new IButton("Previous");
         previousButton.setDisabled(true);
         previousButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                setStep(currentStep - 1);
+                decrementStep();
             }
         });
         nextButton = new IButton("Next");
-        nextButton.setDisabled(true);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 
                 WizardStep step = wizard.getSteps().get(currentStep);
                 if (step.nextPage()) {
-                    setStep(currentStep + 1);
+                    incrementStep();
                 }
             }
         });
@@ -154,18 +153,31 @@ public class WizardView extends VLayout {
 
     }
 
-    public void setStep(int stepIndex) {
+    private void setStep(int stepIndex) {
         currentStep = stepIndex;
-        stepLabel.setContents("Step " + (stepIndex + 1) + " of " + wizard.getSteps().size());
 
-        WizardStep step = wizard.getSteps().get(currentStep);
+        List<WizardStep> wizardSteps = wizard.getSteps();
+
+        // determine if we are "finished" - that is, going past our last step
+        if (currentStep >= wizardSteps.size()) {
+            closeDialog();
+            return;
+        }
+
+        stepLabel.setContents("Step " + (stepIndex + 1) + " of " + wizardSteps.size());
+
+        WizardStep step = wizardSteps.get(currentStep);
 
         stepTitleLabel.setContents(step.getName());
 
         previousButton.setDisabled(stepIndex == 0);
 
-        boolean last = (stepIndex == (wizard.getSteps().size() - 1));
-        nextButton.setDisabled(last);
+        boolean last = (stepIndex == (wizardSteps.size() - 1));
+        if (last) {
+            nextButton.setTitle("Finish");
+        } else {
+            nextButton.setTitle("Next");
+        }
 
         for (IButton button : customButtons) {
             buttonBar.removeMember(button);
@@ -182,7 +194,7 @@ public class WizardView extends VLayout {
         if (currentCanvas != null) {
             contentLayout.removeMember(currentCanvas);
         }
-        currentCanvas = wizard.getSteps().get(currentStep).getCanvas();
+        currentCanvas = wizardSteps.get(currentStep).getCanvas();
         contentLayout.addMember(currentCanvas);
 
         markForRedraw();
@@ -201,7 +213,7 @@ public class WizardView extends VLayout {
         wizardWindow.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(CloseClientEvent closeClientEvent) {
                 wizard.cancel();
-                wizardWindow.destroy();
+                closeDialog();
             }
         });
         wizardWindow.addItem(this);
@@ -231,5 +243,9 @@ public class WizardView extends VLayout {
 
     public void incrementStep() {
         setStep(currentStep + 1);
+    }
+
+    public void decrementStep() {
+        setStep(currentStep - 1);
     }
 }

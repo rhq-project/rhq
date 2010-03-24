@@ -726,11 +726,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             return;
         }
 
-        for (BundleVersion bv : bundle.getBundleVersions()) {
-            bundleManager.deleteBundleVersion(subject, bv.getId());
+        Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_BY_BUNDLE_ID);
+        q.setParameter("bundleId", bundleId);
+        List<BundleVersion> bvs = q.getResultList();
+        for (BundleVersion bv : bvs) {
+            bundleManager.deleteBundleVersion(subject, bv.getId(), false);
         }
 
-        // we need to whack the Repo once the Bundle no longe refers to it
+        // we need to whack the Repo once the Bundle no longer refers to it
         Repo bundleRepo = bundle.getRepo();
 
         this.entityManager.remove(bundle);
@@ -739,14 +742,31 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         repoManager.deleteRepo(subject, bundleRepo.getId());
     }
 
-    public void deleteBundleVersion(Subject subject, int bundleVersionId) {
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteBundleVersion(Subject subject, int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
         BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
         if (null == bundleVersion) {
             return;
         }
 
-        // remove the bundle version, this will cascade remove the deploy defs which will cascade remove
-        // the deployments.
+        int bundleId = 0;
+        if (deleteBundleIfEmpty) {
+            bundleId = bundleVersion.getBundle().getId(); // note that we lazy load this if we never plan to delete the bundle
+        }
+
+        // remove the bundle version - cascade remove the deploy defs which will cascade remove the deployments.
         this.entityManager.remove(bundleVersion);
+
+        if (deleteBundleIfEmpty) {
+            this.entityManager.flush();
+            Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
+            q.setParameter("bundleId", bundleId);
+            if (q.getResultList().size() == 0) {
+                // there are no more bundle versions left, blow away the bundle and all repo/bundle files associated with it
+                deleteBundle(subject, bundleId);
+            }
+        }
+
+        return;
     }
 }

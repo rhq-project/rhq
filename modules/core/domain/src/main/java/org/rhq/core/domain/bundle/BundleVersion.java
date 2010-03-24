@@ -70,7 +70,8 @@ import org.rhq.core.domain.content.Distribution;
         + " WHERE bv.bundle.id = :bundleId " //
         + " ORDER BY bv.versionOrder DESC "), //
     @NamedQuery(name = BundleVersion.QUERY_FIND_ALL, query = "SELECT bv FROM BundleVersion bv "), //
-    @NamedQuery(name = BundleVersion.QUERY_FIND_BY_NAME, query = "SELECT bv FROM BundleVersion bv WHERE bv.name = :name ") //
+    @NamedQuery(name = BundleVersion.QUERY_FIND_BY_NAME, query = "SELECT bv FROM BundleVersion bv WHERE bv.name = :name "), //
+    @NamedQuery(name = BundleVersion.QUERY_FIND_BY_BUNDLE_ID, query = "SELECT bv FROM BundleVersion bv WHERE bv.bundle.id = :bundleId ") //
 })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_VERSION_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_VERSION")
@@ -83,6 +84,7 @@ public class BundleVersion implements Serializable {
     public static final String QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID = "BundleVersion.findVersionsByBundleId";
     public static final String QUERY_FIND_ALL = "BundleVersion.findAll";
     public static final String QUERY_FIND_BY_NAME = "BundleVersion.findByName";
+    public static final String QUERY_FIND_BY_BUNDLE_ID = "BundleVersion.findByBundleId";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")

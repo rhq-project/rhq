@@ -27,7 +27,11 @@ public class PortalLayout extends HLayout {
     public PortalLayout(int numColumns) {
         setMembersMargin(6);
         for (int i = 0; i < numColumns; i++) {
-            addMember(new PortalColumn());
+            PortalColumn column = new PortalColumn();
+            if (i == 0) {
+                column.setWidth("30%");
+            }
+            addMember(column);
         }
     }
 

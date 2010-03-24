@@ -53,6 +53,10 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
 
+
+        DataSourceImageField iconField = new DataSourceImageField("icon");
+        iconField.setImageURLPrefix("types/");
+
         DataSourceTextField nameDataField = new DataSourceTextField("name", "Name", 200);
         nameDataField.setCanEdit(false);
 
@@ -67,7 +71,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
         availabilityDataField.setCanEdit(false);
 
-        setFields(idDataField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField,
+        setFields(idDataField, iconField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField,
             categoryDataField, availabilityDataField);
     }
 
@@ -104,6 +108,10 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
                 .get("availability")).toUpperCase()));
         }
 
+        if (request.getCriteria().getValues().get("type") != null) {
+            criteria.addFilterResourceTypeId(Integer.parseInt(((String)request.getCriteria().getValues().get("type"))));
+        }
+
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to fetch resource data", caught);
@@ -138,6 +146,9 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute("typeName", from.getResourceType().getName());
         record.setAttribute("pluginName", from.getResourceType().getPlugin());
         record.setAttribute("category", from.getResourceType().getCategory().getDisplayName());
+        record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_" +
+                (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
+
 
         record
             .setAttribute(

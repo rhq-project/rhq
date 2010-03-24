@@ -376,8 +376,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         bundleManager.deleteBundle(subject, bundleId);
     }
 
-    public void deleteBundleVersion(Subject subject, int bundleVersionId) throws Exception {
-        bundleManager.deleteBundleVersion(subject, bundleVersionId);
+    public void deleteBundleVersion(Subject subject, int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
+        bundleManager.deleteBundleVersion(subject, bundleVersionId, deleteBundleIfEmpty);
     }
 
     public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,

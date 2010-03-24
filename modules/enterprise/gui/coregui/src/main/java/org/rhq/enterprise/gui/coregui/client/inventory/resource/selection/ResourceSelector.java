@@ -66,6 +66,11 @@ public class ResourceSelector extends HLayout {
     private ListGrid availableGrid;
     private ListGrid assignedGrid;
 
+    private TransferImgButton addButton;
+    private TransferImgButton removeButton;
+    private TransferImgButton addAllButton;
+    private TransferImgButton removeAllButton;
+
     private Criteria latestCriteria;
 
     public ResourceSelector() {
@@ -82,16 +87,15 @@ public class ResourceSelector extends HLayout {
         availableFilterForm.setNumCols(6);
         final TextItem search = new TextItem("search", "Search");
 
-        IPickTreeItem typeSelectItem = new IPickTreeItem("type","Type");
+        IPickTreeItem typeSelectItem = new IPickTreeItem("type", "Type");
         typeSelectItem.setDataSource(new ResourceTypeTreeDataSource());
         typeSelectItem.setValueField("id");
         typeSelectItem.setCanSelectParentItems(true);
         typeSelectItem.setLoadDataOnDemand(false);
 
 
-
-        SelectItem categorySelect = new SelectItem("category","Category");
-        categorySelect.setValueMap("Platform","Server","Service");
+        SelectItem categorySelect = new SelectItem("category", "Category");
+        categorySelect.setValueMap("Platform", "Server", "Service");
         categorySelect.setAllowEmptyValue(true);
         availableFilterForm.setItems(search, typeSelectItem, categorySelect);
 
@@ -117,13 +121,12 @@ public class ResourceSelector extends HLayout {
         addMember(availableLayout);
 
 
-
         availableFilterForm.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent itemChangedEvent) {
                 latestCriteria = new Criteria();
-                latestCriteria.setAttribute("name",availableFilterForm.getValue("search"));
-                latestCriteria.setAttribute("type",availableFilterForm.getValue("type"));
-                latestCriteria.setAttribute("category",availableFilterForm.getValue("category"));
+                latestCriteria.setAttribute("name", availableFilterForm.getValue("search"));
+                latestCriteria.setAttribute("type", availableFilterForm.getValue("type"));
+                latestCriteria.setAttribute("category", availableFilterForm.getValue("category"));
 
                 Timer t = new Timer() {
                     @Override
@@ -140,20 +143,17 @@ public class ResourceSelector extends HLayout {
         });
 
 
-
-
-
-
         VStack moveButtonStack = new VStack(6);
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
         moveButtonStack.setWidth(40);
 
-        final TransferImgButton addButton = new TransferImgButton(TransferImgButton.RIGHT);
+        addButton = new TransferImgButton(TransferImgButton.RIGHT);
         addButton.setDisabled(true);
-        final TransferImgButton removeButton = new TransferImgButton(TransferImgButton.LEFT);
+        removeButton = new TransferImgButton(TransferImgButton.LEFT);
         removeButton.setDisabled(true);
-        TransferImgButton addAllButton = new TransferImgButton(TransferImgButton.RIGHT_ALL);
-        TransferImgButton removeAllButton = new TransferImgButton(TransferImgButton.LEFT_ALL);
+        addAllButton = new TransferImgButton(TransferImgButton.RIGHT_ALL);
+        removeAllButton = new TransferImgButton(TransferImgButton.LEFT_ALL);
+        removeAllButton.setDisabled(true);
 
         moveButtonStack.addMember(addButton);
         moveButtonStack.addMember(removeButton);
@@ -161,7 +161,6 @@ public class ResourceSelector extends HLayout {
         moveButtonStack.addMember(removeAllButton);
 
         addMember(moveButtonStack);
-
 
 
         VLayout assignedLayout = new VLayout();
@@ -181,16 +180,19 @@ public class ResourceSelector extends HLayout {
         addMember(assignedLayout);
 
 
+
         addButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 assignedGrid.transferSelectedData(availableGrid);
                 select(assignedGrid.getSelection());
+                updateButtons();
             }
         });
         removeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 deselect(assignedGrid.getSelection());
                 assignedGrid.removeSelectedData();
+                updateButtons();
             }
         });
         addAllButton.addClickHandler(new ClickHandler() {
@@ -198,6 +200,7 @@ public class ResourceSelector extends HLayout {
                 availableGrid.selectAllRecords();
                 assignedGrid.transferSelectedData(availableGrid);
                 select(availableGrid.getSelection());
+                updateButtons();
             }
         });
         removeAllButton.addClickHandler(new ClickHandler() {
@@ -205,18 +208,19 @@ public class ResourceSelector extends HLayout {
                 assignedGrid.selectAllRecords();
                 deselect(assignedGrid.getSelection());
                 assignedGrid.removeSelectedData();
+                updateButtons();
             }
         });
 
         availableGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                addButton.setDisabled(!availableGrid.anySelected());
+                updateButtons();
             }
         });
 
         assignedGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                removeButton.setDisabled(!assignedGrid.anySelected());
+                updateButtons();
             }
         });
 
@@ -235,6 +239,13 @@ public class ResourceSelector extends HLayout {
                 select(recordDropEvent.getDropRecords());
             }
         });
+    }
+
+    private void updateButtons() {
+        addButton.setDisabled(!availableGrid.anySelected() || availableGrid.getTotalRows() == 0);
+        removeButton.setDisabled(!assignedGrid.anySelected() || assignedGrid.getTotalRows() == 0);
+        addAllButton.setDisabled(availableGrid.getTotalRows() == 0);
+        removeAllButton.setDisabled(assignedGrid.getTotalRows() == 0);
     }
 
     private void select(ListGridRecord[] records) {

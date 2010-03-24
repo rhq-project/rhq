@@ -25,7 +25,11 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
+import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleUpdateWizard;
@@ -59,14 +63,14 @@ public class BundlesListView extends VLayout {
         table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
         table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
-        table.addTableAction("Create Bundle", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+        table.addTableAction("Create New Bundle", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 new BundleCreateWizard().startBundleWizard();
 
             }
         });
 
-        table.addTableAction("Delete Bundle", Table.SelectionEnablement.ANY, "Are You Sure?", new TableAction() {
+        table.addTableAction("Delete", Table.SelectionEnablement.ANY, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selections) {
                 BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) table.getDataSource();
                 for (ListGridRecord selection : selections) {
@@ -87,17 +91,58 @@ public class BundlesListView extends VLayout {
             }
         });
 
-        table.addTableAction("Update Bundle", Table.SelectionEnablement.SINGLE, null, new TableAction() {
+        table.addTableAction("Create New Version", Table.SelectionEnablement.SINGLE, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                Bundle bundle = (Bundle) selection[0].getAttributeAsObject("entity");
-                BundleUpdateWizard bundleUpdateWizard = new BundleUpdateWizard(null);
-                bundleUpdateWizard.startBundleWizard();
+                BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) table.getDataSource();
+                final BundleWithLatestVersionComposite object = ds.copyValues(selection[0]);
+                BundleVersionCriteria bvc = new BundleVersionCriteria();
+                bvc.addFilterBundleId(object.getBundleId());
+                bvc.addFilterVersion(object.getLatestVersion());
+                BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
+                bundleManager.findBundleVersionsByCriteria(bvc, new AsyncCallback<PageList<BundleVersion>>() {
+                    public void onSuccess(PageList<BundleVersion> result) {
+                        if (result == null || result.size() != 1) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Failed to get last bundle version [" + object.getLatestVersion() + "]",
+                                    Severity.Error));
+                            return;
+                        }
+
+                        BundleUpdateWizard bundleUpdateWizard = new BundleUpdateWizard(result.get(0));
+                        bundleUpdateWizard.startBundleWizard();
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            "Failed to load last bundle version [" + object.getLatestVersion() + "]", caught);
+                    }
+                });
             }
         });
 
-        table.addTableAction("Deploy Selected Bundle", Table.SelectionEnablement.SINGLE, null, new TableAction() {
+        table.addTableAction("Deploy", Table.SelectionEnablement.SINGLE, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                new BundleDeployWizard((Bundle) selection[0].getAttributeAsObject("object")).startBundleWizard();
+                BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) table.getDataSource();
+                final BundleWithLatestVersionComposite object = ds.copyValues(selection[0]);
+                BundleCriteria bc = new BundleCriteria();
+                bc.addFilterId(object.getBundleId());
+                BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
+                bundleManager.findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            "Failed to load bundle to deploy [" + object.getBundleName() + "]", caught);
+                    }
+
+                    public void onSuccess(PageList<Bundle> result) {
+                        if (result == null || result.size() != 1) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Failed to get bundle to deploy [" + object.getBundleName() + "]",
+                                    Severity.Error));
+                            return;
+                        }
+                        new BundleDeployWizard(result.get(0)).startBundleWizard();
+                    }
+                });
             }
         });
 

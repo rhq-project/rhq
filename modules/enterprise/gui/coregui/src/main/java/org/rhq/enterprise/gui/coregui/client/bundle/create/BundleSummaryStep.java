@@ -18,12 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.TitleOrientation;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.Label;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
@@ -32,7 +32,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
  */
 public class BundleSummaryStep implements WizardStep {
 
-    private DynamicForm form;
     private final AbstractBundleCreateWizard wizard;
 
     public BundleSummaryStep(AbstractBundleCreateWizard bundleCreationWizard) {
@@ -40,41 +39,92 @@ public class BundleSummaryStep implements WizardStep {
     }
 
     public Canvas getCanvas() {
-        TextItem nameTextItem;
-        TextItem versionTextItem;
-        TextAreaItem descriptionTextAreaItem;
-        TextItem bundleTypeTextItem;
 
-        form = new DynamicForm();
-        form.setPadding(20);
-        form.setWidth100();
-        form.setNumCols(2);
+        VLayout top = new VLayout();
+        top.setAutoHeight();
+        top.setPadding(20);
+        top.setWidth100();
 
-        bundleTypeTextItem = new TextItem("bundleTypeItem", "Bundle Type");
-        bundleTypeTextItem.setValue(wizard.getBundleType().getName());
-        bundleTypeTextItem.setDisabled(true);
-        bundleTypeTextItem.setTitleAlign(Alignment.LEFT);
+        HLayout bundleTypeBox = new HLayout();
+        bundleTypeBox.setWidth100();
+        bundleTypeBox.setExtraSpace(10);
+        Label bundleTypeLabel = new Label("Type:");
+        bundleTypeLabel.setWidth("10%");
+        bundleTypeLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        bundleTypeLabel.setWordWrap(false);
+        Label bundleTypeValue = new Label(wizard.getBundleType().getName());
+        bundleTypeValue.setWidth("90%");
+        bundleTypeValue.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        bundleTypeBox.addMember(bundleTypeLabel);
+        bundleTypeBox.addMember(bundleTypeValue);
+        top.addMember(bundleTypeBox);
 
-        nameTextItem = new TextItem("name", "Name");
-        nameTextItem.setValue(wizard.getBundleName());
-        nameTextItem.setDisabled(true);
-        nameTextItem.setTitleAlign(Alignment.LEFT);
+        HLayout nameBox = new HLayout();
+        nameBox.setWidth100();
+        nameBox.setExtraSpace(10);
+        Label nameLabel = new Label("Name:");
+        nameLabel.setWidth("10%");
+        nameLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        nameLabel.setWordWrap(false);
+        Label nameValue = new Label(wizard.getBundleName());
+        nameValue.setWidth("90%");
+        nameValue.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        nameBox.addMember(nameLabel);
+        nameBox.addMember(nameValue);
+        top.addMember(nameBox);
+        top.addMember(new LayoutSpacer());
 
-        versionTextItem = new TextItem("version", "Version");
-        versionTextItem.setValue(wizard.getBundleVersionString());
-        versionTextItem.setDisabled(true);
-        versionTextItem.setTitleAlign(Alignment.LEFT);
+        HLayout versionBox = new HLayout();
+        versionBox.setWidth100();
+        versionBox.setExtraSpace(10);
+        Label versionLabel = new Label("Version:");
+        versionLabel.setWidth("10%");
+        versionLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        versionLabel.setWordWrap(false);
+        Label versionValue = new Label(wizard.getBundleVersionString());
+        versionValue.setWidth("90%");
+        versionValue.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        versionBox.addMember(versionLabel);
+        versionBox.addMember(versionValue);
+        top.addMember(versionBox);
+        top.addMember(new LayoutSpacer());
 
-        descriptionTextAreaItem = new TextAreaItem("description", "Description");
-        descriptionTextAreaItem.setValue(wizard.getBundleDescription());
-        descriptionTextAreaItem.setDisabled(true);
-        descriptionTextAreaItem.setTitleOrientation(TitleOrientation.TOP);
-        descriptionTextAreaItem.setColSpan(2);
-        descriptionTextAreaItem.setWidth(300);
+        HLayout descriptionBox = new HLayout();
+        descriptionBox.setWidth100();
+        descriptionBox.setExtraSpace(10);
+        Label descriptionLabel = new Label("Description:");
+        descriptionLabel.setWidth("10%");
+        descriptionLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        descriptionLabel.setWordWrap(false);
+        Label descriptionValue = new Label(wizard.getBundleDescription());
+        descriptionValue.setWidth("90%");
+        descriptionValue.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        descriptionBox.addMember(descriptionLabel);
+        descriptionBox.addMember(descriptionValue);
+        top.addMember(descriptionBox);
+        top.addMember(new LayoutSpacer());
 
-        form.setItems(bundleTypeTextItem, nameTextItem, versionTextItem, descriptionTextAreaItem);
+        HLayout filesBox = new HLayout();
+        filesBox.setWidth100();
+        filesBox.setExtraSpace(10);
+        Label filesLabel = new Label("Files:");
+        filesLabel.setWidth("10%");
+        filesLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        filesLabel.setWordWrap(false);
+        VLayout filesValues = new VLayout();
+        filesValues.setWidth("90%");
+        filesValues.setAutoHeight();
+        for (String filename : wizard.getAllBundleFilesStatus().keySet()) {
+            Label fileNameValue = new Label(filename);
+            fileNameValue.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+            fileNameValue.setWordWrap(false);
+            filesValues.addMember(fileNameValue);
+        }
+        filesBox.addMember(filesLabel);
+        filesBox.addMember(filesValues);
+        top.addMember(filesBox);
 
-        return form;
+        return top;
     }
 
     public boolean nextPage() {

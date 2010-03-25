@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -110,6 +111,7 @@ public class BundleSummaryStep implements WizardStep {
         Label filesLabel = new Label("Files:");
         filesLabel.setWidth("10%");
         filesLabel.setAlign(Alignment.LEFT);
+        filesLabel.setValign(VerticalAlignment.TOP);
         filesLabel.setWrap(false);
         VLayout filesValues = new VLayout();
         filesValues.setWidth("90%");
@@ -117,7 +119,9 @@ public class BundleSummaryStep implements WizardStep {
         for (String filename : wizard.getAllBundleFilesStatus().keySet()) {
             Label fileNameValue = new Label(filename);
             fileNameValue.setAlign(Alignment.LEFT);
+            fileNameValue.setValign(VerticalAlignment.TOP);
             fileNameValue.setWrap(false);
+            fileNameValue.setHeight(10);
             filesValues.addMember(fileNameValue);
         }
         filesBox.addMember(filesLabel);

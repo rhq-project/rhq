@@ -6,7 +6,7 @@
   <server name="TestServer">
     <plugin-configuration>
       <c:simple-property name="testProperty"/>
-      <c:simple-property name="testPropertyWithDefault" default="default"/>
+      <c:simple-property name="testPropertyWithDefault" required="true" default="default"/>
     </plugin-configuration>
   </server>
 </plugin>

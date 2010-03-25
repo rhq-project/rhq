@@ -5,7 +5,7 @@
         xmlns:c="urn:xmlns:rhq-configuration">
   <server name="TestServer">
     <plugin-configuration>
-      <c:simple-property name="testProperty"/>
+      <c:simple-property name="testProperty" required="true" default="default"/>
     </plugin-configuration>
   </server>
 </plugin>

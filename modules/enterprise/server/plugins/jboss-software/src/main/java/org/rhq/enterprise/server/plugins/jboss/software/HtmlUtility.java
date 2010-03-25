@@ -72,18 +72,22 @@ public class HtmlUtility {
             if (ampersandIndex >= 0 && ampersandIndex < (string.length() - 3)) {
                 int semicolonIndex = string.indexOf(";", ampersandIndex + 1);
                 if (semicolonIndex >= 0) {
-                    // Found an entity - see if it's one we grok.
+                    // Found an entity.
+
+                    // Append the substring from the index up to but not including the ampersand.
+                    unescapedString.append(string.substring(index, ampersandIndex));
+
                     String entity = string.substring(ampersandIndex, semicolonIndex + 1);
+                    // See if the entity is one we grok.
                     Character c = ENTITY_TO_CHAR_MAP.get(entity);
                     if (c != null) {
-                        // If we were able to map the entity, append the unescaped character.
+                        // If we were able to map the entity to a character, append the character.
                         unescapedString.append(c);
                     } else {
                         // Otherwise, append the unknown entity as is.
                         unescapedString.append(entity);
                     }
-                    // Append the substring from the index up to but not including the ampersand.
-                    unescapedString.append(string.substring(index, ampersandIndex));
+
                     index = semicolonIndex + 1;
                 } else {
                     // No semicolon found - not an entity. Append the substring from the index up to and including the
@@ -99,5 +103,15 @@ public class HtmlUtility {
         }
 
         return unescapedString.toString();
+    }
+
+    public static void main(String[] args) {
+        if (args.length != 1) {
+            System.err.println("Usage: java " + HtmlUtility.class.getName() + " html");
+            System.exit(1);
+        }
+        String html = args[0];
+        String unescapedHtml = unescapeHTML(html);
+        System.out.println(unescapedHtml);
     }
 }

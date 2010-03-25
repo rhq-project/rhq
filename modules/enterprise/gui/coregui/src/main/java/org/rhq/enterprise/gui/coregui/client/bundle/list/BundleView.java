@@ -23,8 +23,8 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -39,8 +39,8 @@ public class BundleView extends VLayout {
     private Label message = new Label("Select a bundle...");
     private VLayout canvas;
     private HeaderLabel headerLabel;
-    private Label descriptionValue;
-    private Label latestVersionValue;
+    private StaticTextItem descriptionItem;
+    private StaticTextItem latestVersionItem;
 
     public BundleView() {
         super();
@@ -87,42 +87,24 @@ public class BundleView extends VLayout {
     private Tab createSummaryTab() {
         Tab summaryTab = new Tab("Summary");
 
-        VLayout top = new VLayout();
-        top.setAutoHeight();
-        top.setPadding(20);
-        top.setWidth100();
+        DynamicForm form = new DynamicForm();
+        form.setPadding(10);
 
-        HLayout descriptionBox = new HLayout();
-        descriptionBox.setWidth100();
-        descriptionBox.setExtraSpace(10);
-        Label descriptionLabel = new Label("Description:");
-        descriptionLabel.setWidth("10%");
-        descriptionLabel.setAlign(Alignment.LEFT);
-        descriptionLabel.setWrap(false);
-        descriptionValue = new Label("");
-        descriptionValue.setWidth("90%");
-        descriptionValue.setAlign(Alignment.LEFT);
-        descriptionBox.addMember(descriptionLabel);
-        descriptionBox.addMember(descriptionValue);
-        top.addMember(descriptionBox);
-        top.addMember(new LayoutSpacer());
+        descriptionItem = new StaticTextItem("description", "Description");
+        descriptionItem.setTitleAlign(Alignment.LEFT);
+        descriptionItem.setAlign(Alignment.LEFT);
+        descriptionItem.setWrap(false);
+        descriptionItem.setValue("");
 
-        HLayout versionBox = new HLayout();
-        versionBox.setWidth100();
-        versionBox.setExtraSpace(10);
-        Label versionLabel = new Label("Latest Version:");
-        versionLabel.setWidth("10%");
-        versionLabel.setAlign(Alignment.LEFT);
-        versionLabel.setWrap(false);
-        latestVersionValue = new Label("");
-        latestVersionValue.setWidth("90%");
-        latestVersionValue.setAlign(Alignment.LEFT);
-        versionBox.addMember(versionLabel);
-        versionBox.addMember(latestVersionValue);
-        top.addMember(versionBox);
-        top.addMember(new LayoutSpacer());
+        latestVersionItem = new StaticTextItem("latestVersion", "Latest Version");
+        latestVersionItem.setTitleAlign(Alignment.LEFT);
+        latestVersionItem.setAlign(Alignment.LEFT);
+        latestVersionItem.setWrap(false);
+        latestVersionItem.setValue("");
 
-        summaryTab.setPane(top);
+        form.setFields(descriptionItem, latestVersionItem);
+        summaryTab.setPane(form);
+
         return summaryTab;
     }
 
@@ -132,8 +114,8 @@ public class BundleView extends VLayout {
 
         if (bundleBeingViewed != object.getBundleId()) {
             headerLabel.setContents(object.getBundleName());
-            latestVersionValue.setContents(object.getLatestVersion());
-            descriptionValue.setContents(object.getBundleDescription());
+            latestVersionItem.setValue(object.getLatestVersion());
+            descriptionItem.setValue(object.getBundleDescription());
         }
 
         try {

@@ -148,6 +148,9 @@ public class NotificationTemplatesUIBean implements Serializable {
         String summary = getDeletionSummary(numDeleted);
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, summary);
 
+        // Re-get the list of still existing templates
+        this.notificationTemplates = alertNotificationManager.listNotificationTemplates(this.subject);
+
         return null;
     }
 

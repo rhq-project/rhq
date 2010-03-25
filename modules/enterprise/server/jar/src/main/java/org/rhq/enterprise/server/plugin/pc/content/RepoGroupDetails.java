@@ -101,4 +101,14 @@ public class RepoGroupDetails {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("RepoGroupDetails[");
+        sb.append("name='").append(this.name).append('\'');
+        sb.append(", typeName='").append(this.typeName).append('\'');
+        sb.append(']');
+        return sb.toString();
+    }
 }

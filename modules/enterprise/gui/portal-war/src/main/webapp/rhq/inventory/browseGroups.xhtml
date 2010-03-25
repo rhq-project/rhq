@@ -39,6 +39,7 @@
                <h:inputText id="filter" value="#{BrowseGroupsUIBean.filter}"
                             onkeypress="return ignoreEnterKey(event);"
                             style="width: 600px;" />
+               <ui:remove>
                <rich:suggestionbox id="suggest" for="filter" 
                                    tokens=",[]"
                                    width="600" height="400"
@@ -58,6 +59,7 @@
                       <h:outputText value="#{suggestItem.label}" />
                    </h:column>
                </rich:suggestionbox>
+               </ui:remove>
                <rich:spacer/>
                <a4j:commandButton value="GO" 
                                   reRender="browseGroupsDataTable, browseGroupsDataTableScroller"

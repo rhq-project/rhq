@@ -1,6 +1,6 @@
 /*
 * RHQ Management Platform
-* Copyright (C) 2005-2008 Red Hat, Inc.
+* Copyright (C) 2005-2010 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -126,5 +126,16 @@ public class RepoDetails {
      */
     public void setRepoGroup(String repoGroup) {
         this.repoGroup = repoGroup;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("RepoDetails[");
+        sb.append("name='").append(this.name).append('\'');
+        sb.append(", parentRepoName='").append(this.parentRepoName).append('\'');
+        sb.append(", repoGroup='").append(this.repoGroup).append('\'');
+        sb.append(']');
+        return sb.toString();
     }
 }

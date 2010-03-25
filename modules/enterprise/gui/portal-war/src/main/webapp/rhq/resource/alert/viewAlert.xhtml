@@ -225,6 +225,7 @@
                 <h:form id="newNotificationsFromTemplateForm">
                     <input type="hidden" name="ad" value="${param.ad}"/>
 
+                    <rich:panel rendered="#{definitionNotificationsUIBean.notificationTemplates.size > 0}">
                     <div>
                         <h:selectOneMenu id="templateList" value="#{definitionNotificationsUIBean.selectedTemplate}">
                             <f:selectItems value="#{definitionNotificationsUIBean.notificationTemplates}"/>
@@ -243,11 +244,18 @@
                                    styleClass="buttonmed"
                                    style="margin-top: auto;">
                     </h:commandButton>
+                    </rich:panel>
+
+                    <rich:panel rendered="#{definitionNotificationsUIBean.notificationTemplates.size == 0}">
+                        No Alert Notification Templates have been defined yet.<br/>
+                        Please create some in Administration -> System Configuration -> AlertNotification Templates
+                    </rich:panel>
 
                     <h:outputLink id="alertTemplateCancelLink" styleClass="buttonmed" value="#" style="float: right; margin: 10px;">
                         <h:outputText value="Cancel" />
                         <rich:componentControl for="addAlertFromTemplatePanel" attachTo="alertTemplateCancelLink" operation="hide" event="onclick" />
                     </h:outputLink>
+
                 </h:form>
             </rich:modalPanel>
 

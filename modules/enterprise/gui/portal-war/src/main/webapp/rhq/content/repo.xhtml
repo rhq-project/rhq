@@ -109,14 +109,14 @@
             </c:choose></td>
           </tr>
           <tr>
-            <td align="right"><b>Raw Percentage :</b></td>
+            <td align="right"><b>Raw Percentage:</b></td>
             <td align="left">
                   <h:outputText id="syncPercent"
                     value="#{RepoDetailsUIBean.percentComplete}" />
 			</td>
           </tr>
           <tr>
-            <td align="right"><b>Synchronization Progress :</b></td>
+            <td align="right"><b>Synchronization Progress:</b></td>
             <td align="left">
               <c:choose>
                 <c:when
@@ -493,7 +493,9 @@
       </rich:panel>
     </h:form>
 
-    <!-- PACKAGE VERSION LIST -->
+
+
+    <!-- PACKAGE LIST -->
 
     <h:form id="repoPackageVersionsListForm">
       <a4j:region id="packageList">
@@ -503,7 +505,7 @@
         <rich:panel>
           <f:facet name="header">
             <h:outputText
-              value="Package Versions Accessible To This Repository" />
+              value="Packages" />
           </f:facet>
 
           <h:panelGrid columns="1" width="100%">
@@ -531,17 +533,15 @@
 
             </h:panelGroup>
 
-
             <ui:param name="repoPackageVersionsDataModel"
               value="#{RepoPackageVersionsUIBean.dataModel}" />
             <rich:dataTable id="repoPackageVersionsDataTable"
               rows="#{PageControl.RepoPackageVersionsList.pageSize}"
-              value="#{repoPackageVersionsDataModel}" var="pvitem"
+              value="#{repoPackageVersionsDataModel}" var="package"
               width="100%" columnsWidth="5%,20%, 10%, 5%, 60%"
               headerClass="tableRowHeader" footerClass="on-pager-footer"
               onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
               onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-
 
               <f:facet name="PageControlView">
                 <onc:paginationControl id="RepoPackageVersionsList" />
@@ -552,9 +552,8 @@
                   <onc:allSelect target="selectedPackages" />
                 </f:facet>
 
-                <onc:select name="selectedPackages" value="#{pvitem.id}" />
+                <onc:select name="selectedPackages" value="#{package.id}" />
               </rich:column>
-
 
               <rich:column rendered="#{param.debug}">
                 <f:facet name="header">
@@ -563,7 +562,7 @@
                   </onc:sortableColumnHeader>
                 </f:facet>
 
-                <h:outputText value="#{pvitem.id}" />
+                <h:outputText value="#{package.id}" />
               </rich:column>
 
               <rich:column>
@@ -574,8 +573,8 @@
                 </f:facet>
 
                 <h:outputLink value="packageVersion.xhtml">
-                  <f:param name="id" value="#{pvitem.id}" />
-                  <h:outputText value="#{pvitem.displayName}" />
+                  <f:param name="id" value="#{package.id}" />
+                  <h:outputText value="#{package.displayName}" />
                 </h:outputLink>
               </rich:column>
 
@@ -587,7 +586,7 @@
                   </onc:sortableColumnHeader>
                 </f:facet>
 
-                <h:outputText value="#{pvitem.displayVersion}" />
+                <h:outputText value="#{package.displayVersion}" />
               </rich:column>
 
               <rich:column>
@@ -597,7 +596,7 @@
                   </onc:sortableColumnHeader>
                 </f:facet>
 
-                <h:outputText value="#{pvitem.architecture.name}" />
+                <h:outputText value="#{package.architecture.name}" />
               </rich:column>
 
               <rich:column>
@@ -608,7 +607,9 @@
                   </onc:sortableColumnHeader>
                 </f:facet>
 
-                <h:outputText value="#{pvitem.shortDescription}" />
+                <h:panelGroup layout="block">
+                  <h:outputText value="#{package.shortDescription}" escape="false" />
+                </h:panelGroup>
               </rich:column>
 
               <f:facet name="footer">
@@ -650,7 +651,7 @@
       </a4j:region>
     </h:form>
 
-    <h:form id="repoDistributionListForm">
+    <h:form id="repoDistributionListForm" rendered="#{RepoDistributionUIBean.dataModel.rowCount gt 0}">
       <a4j:region id="distributionList">
         <input type="hidden" name="id" value="${param.id}" />
         <input type="hidden" name="mode" value="${param.mode}" />
@@ -658,7 +659,7 @@
         <rich:panel>
           <f:facet name="header">
             <h:outputText
-              value="Distribution Trees Associated To This Repository" />
+              value="Distribution Trees" />
           </f:facet>
 
           <h:panelGrid columns="1" width="100%">
@@ -745,14 +746,14 @@
       </a4j:region>
     </h:form>
 
-    <h:form id="repoAdvisoryListForm">
+    <h:form id="repoAdvisoryListForm" rendered="#{RepoAdvisoryUIBean.dataModel.rowCount gt 0}">
       <a4j:region id="advisoryList">
         <input type="hidden" name="id" value="${param.id}" />
         <input type="hidden" name="mode" value="${param.mode}" />
 
         <rich:panel>
           <f:facet name="header">
-            <h:outputText value="Advisory Associated To This Repository" />
+            <h:outputText value="Advisories" />
           </f:facet>
 
           <h:panelGrid columns="1" width="100%">

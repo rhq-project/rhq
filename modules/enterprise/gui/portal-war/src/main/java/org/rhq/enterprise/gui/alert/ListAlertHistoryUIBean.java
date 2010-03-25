@@ -179,7 +179,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
         Integer[] alertIds = StringUtility.getIntegerArray(selectedAlerts);
 
         try {
-            int num = alertManager.acknowledgeAlerts(subject,resource.getId(),alertIds);
+            int num = alertManager.acknowledgeAlerts(subject, alertIds);
             if (num==-1)
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,"No Alerts passed to ack");
             else

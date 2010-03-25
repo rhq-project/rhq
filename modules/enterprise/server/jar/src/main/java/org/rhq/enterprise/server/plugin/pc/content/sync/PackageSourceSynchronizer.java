@@ -85,6 +85,7 @@ public class PackageSourceSynchronizer {
 
     public SyncTracker synchronizePackageMetadata(SyncTracker tracker) throws SyncException, InterruptedException {
         if (!(provider instanceof PackageSource)) {
+            // Nothing to do.
             return tracker;
         }
 

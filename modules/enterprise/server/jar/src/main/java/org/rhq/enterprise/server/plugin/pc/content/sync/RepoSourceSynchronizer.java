@@ -37,7 +37,7 @@ import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Holds the methods necessary to interact with a plugin and execute its repo related
+ * Holds the methods necessary to interact with a plugin and execute its repo-related
  * synchronization tasks.
  *
  * @author Jason Dobies
@@ -63,11 +63,12 @@ public class RepoSourceSynchronizer {
     public void synchronizeCandidateRepos(StringBuilder progress) throws Exception {
 
         if (!(provider instanceof RepoSource)) {
+            // Nothing to do.
             return;
         }
 
         progress.append(new Date()).append(": ");
-        progress.append("Asking content provider for repositories to import...");
+        progress.append("Asking content provider for new repositories to import...\n");
 
         RepoSource repoSource = (RepoSource) provider;
 
@@ -82,5 +83,4 @@ public class RepoSourceSynchronizer {
         log.info("importRepos: [" + source.getName() + "]: report has been merged ("
             + (System.currentTimeMillis() - start) + ")ms");
     }
-
 }

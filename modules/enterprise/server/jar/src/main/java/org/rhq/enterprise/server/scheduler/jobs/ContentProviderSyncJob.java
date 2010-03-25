@@ -29,9 +29,12 @@ import org.quartz.StatefulJob;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.criteria.RepoCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -48,6 +51,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ContentProviderSyncJob implements StatefulJob {
     private static final String DATAMAP_CONTENT_SOURCE_NAME = "contentSourceName";
     private static final String DATAMAP_CONTENT_SOURCE_TYPE_NAME = "contentSourceTypeName";
+    public static final String DATAMAP_SYNC_IMPORTED_REPOS = "syncImportedRepos";
 
     private static final Log log = LogFactory.getLog(ContentProviderSyncJob.class);
     private static final String SEPARATOR = "--";
@@ -71,6 +75,7 @@ public class ContentProviderSyncJob implements StatefulJob {
 
             String name = dataMap.getString(DATAMAP_CONTENT_SOURCE_NAME);
             String typeName = dataMap.getString(DATAMAP_CONTENT_SOURCE_TYPE_NAME);
+            boolean syncImportedRepos = dataMap.getBoolean(DATAMAP_SYNC_IMPORTED_REPOS);
 
             if (name == null) {
                 throw new IllegalStateException("Missing the content source name in details data");
@@ -80,8 +85,13 @@ public class ContentProviderSyncJob implements StatefulJob {
                 throw new IllegalStateException("Missing the content source type name in details data");
             }
 
-            synchronizeAndLoad(name, typeName);
+            ContentSource contentSource = synchronizeAndLoad(name, typeName);
 
+            if (syncImportedRepos) {
+                // Synchronize all repos associated with the content provider - these may be repos we just
+                // discovered during this sync or ones that were already associated.
+                syncImportedRepos(contentSource);
+            }
         } catch (Exception e) {
             String errorMsg = "Failed to sync content source in job [" + context.getJobDetail() + "]";
             log.error(errorMsg, e);
@@ -101,6 +111,22 @@ public class ContentProviderSyncJob implements StatefulJob {
         }
     }
 
+    private void syncImportedRepos(ContentSource contentSource) throws InterruptedException {
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        Subject overlord = subjectManager.getOverlord();
+        RepoCriteria repoCriteria = new RepoCriteria();
+        repoCriteria.addFilterContentSourceIds(contentSource.getId());
+        repoCriteria.addFilterCandidate(false);
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        PageList<Repo> repos = repoManager.findReposByCriteria(overlord, repoCriteria);
+        Integer[] repoIds = new Integer[repos.size()];
+        for (int i = 0; i < repos.size(); i++) {
+            Repo repo = repos.get(i);
+            repoIds[i] = repo.getId();
+        }
+        repoManager.internalSynchronizeRepos(overlord, repoIds);
+    }
+
     /**
      * This will synchronize the identified content source such that its package version information is updated and, if
      * not lazy-loading, its package bits are downloaded.
@@ -109,12 +135,12 @@ public class ContentProviderSyncJob implements StatefulJob {
      * potentially very long running (on the order of hours potentially). We do our processing in here with this in
      * mind. We make sure we never do any one thing that potentially could timeout a transaction.</p>
      *
-     * @param  contentSourceName     name of the {@link ContentSource}
-     * @param  contentSourceTypeName name of the {@link ContentSourceType}
+     * @param  contentSourceName     name of the {@link org.rhq.core.domain.content.ContentSource}
+     * @param  contentSourceTypeName name of the {@link org.rhq.core.domain.content.ContentSourceType}
      *
      * @throws Exception if either the sync failed or one of the packages failed to download
      */
-    private void synchronizeAndLoad(String contentSourceName, String contentSourceTypeName) throws Exception {
+    private ContentSource synchronizeAndLoad(String contentSourceName, String contentSourceTypeName) throws Exception {
         // note that we will keep calling getOverlord on this subject manager - the overlord
         // has a very short session lifespan so we need to keep asking for a new one, due to the possibility
         // that some of the methods we call here take longer than the overlord's lifespan
@@ -142,6 +168,8 @@ public class ContentProviderSyncJob implements StatefulJob {
             log.info("Content source [" + contentSourceName + "] is currently being synchronized already. "
                 + "Please wait for the current sync job to finish.");
         }
+
+        return contentSource;
     }
 
     /**

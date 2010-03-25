@@ -21,10 +21,8 @@ package org.rhq.enterprise.gui.coregui.client.bundle.create;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
@@ -41,94 +39,48 @@ public class BundleSummaryStep implements WizardStep {
 
     public Canvas getCanvas() {
 
-        VLayout top = new VLayout();
-        top.setAutoHeight();
-        top.setPadding(20);
-        top.setWidth100();
+        DynamicForm form = new DynamicForm();
+        form.setNumCols(2);
 
-        HLayout bundleTypeBox = new HLayout();
-        bundleTypeBox.setWidth100();
-        bundleTypeBox.setExtraSpace(10);
-        Label bundleTypeLabel = new Label("Type:");
-        bundleTypeLabel.setWidth("10%");
+        StaticTextItem bundleTypeLabel = new StaticTextItem("bundleType", "Type");
+        bundleTypeLabel.setTitleAlign(Alignment.LEFT);
         bundleTypeLabel.setAlign(Alignment.LEFT);
         bundleTypeLabel.setWrap(false);
-        Label bundleTypeValue = new Label(wizard.getBundleType().getName());
-        bundleTypeValue.setWidth("90%");
-        bundleTypeValue.setAlign(Alignment.LEFT);
-        bundleTypeBox.addMember(bundleTypeLabel);
-        bundleTypeBox.addMember(bundleTypeValue);
-        top.addMember(bundleTypeBox);
+        bundleTypeLabel.setValue(wizard.getBundleType().getName());
 
-        HLayout nameBox = new HLayout();
-        nameBox.setWidth100();
-        nameBox.setExtraSpace(10);
-        Label nameLabel = new Label("Name:");
-        nameLabel.setWidth("10%");
+        StaticTextItem nameLabel = new StaticTextItem("name", "Name");
+        nameLabel.setTitleAlign(Alignment.LEFT);
         nameLabel.setAlign(Alignment.LEFT);
         nameLabel.setWrap(false);
-        Label nameValue = new Label(wizard.getBundleName());
-        nameValue.setWidth("90%");
-        nameValue.setAlign(Alignment.LEFT);
-        nameBox.addMember(nameLabel);
-        nameBox.addMember(nameValue);
-        top.addMember(nameBox);
-        top.addMember(new LayoutSpacer());
+        nameLabel.setValue(wizard.getBundleName());
 
-        HLayout versionBox = new HLayout();
-        versionBox.setWidth100();
-        versionBox.setExtraSpace(10);
-        Label versionLabel = new Label("Version:");
-        versionLabel.setWidth("10%");
+        StaticTextItem versionLabel = new StaticTextItem("Version");
+        versionLabel.setTitleAlign(Alignment.LEFT);
+        versionLabel.setTitleAlign(Alignment.LEFT);
         versionLabel.setAlign(Alignment.LEFT);
         versionLabel.setWrap(false);
-        Label versionValue = new Label(wizard.getBundleVersionString());
-        versionValue.setWidth("90%");
-        versionValue.setAlign(Alignment.LEFT);
-        versionBox.addMember(versionLabel);
-        versionBox.addMember(versionValue);
-        top.addMember(versionBox);
-        top.addMember(new LayoutSpacer());
+        versionLabel.setValue(wizard.getBundleVersionString());
 
-        HLayout descriptionBox = new HLayout();
-        descriptionBox.setWidth100();
-        descriptionBox.setExtraSpace(10);
-        Label descriptionLabel = new Label("Description:");
-        descriptionLabel.setWidth("10%");
+        StaticTextItem descriptionLabel = new StaticTextItem("Description");
+        descriptionLabel.setTitleAlign(Alignment.LEFT);
         descriptionLabel.setAlign(Alignment.LEFT);
         descriptionLabel.setWrap(false);
-        Label descriptionValue = new Label(wizard.getBundleDescription());
-        descriptionValue.setWidth("90%");
-        descriptionValue.setAlign(Alignment.LEFT);
-        descriptionBox.addMember(descriptionLabel);
-        descriptionBox.addMember(descriptionValue);
-        top.addMember(descriptionBox);
-        top.addMember(new LayoutSpacer());
+        descriptionLabel.setValue(wizard.getBundleDescription());
 
-        HLayout filesBox = new HLayout();
-        filesBox.setWidth100();
-        filesBox.setExtraSpace(10);
-        Label filesLabel = new Label("Files:");
-        filesLabel.setWidth("10%");
+        StaticTextItem filesLabel = new StaticTextItem("Files");
+        filesLabel.setTitleVAlign(VerticalAlignment.TOP);
+        filesLabel.setTitleAlign(Alignment.LEFT);
         filesLabel.setAlign(Alignment.LEFT);
-        filesLabel.setValign(VerticalAlignment.TOP);
         filesLabel.setWrap(false);
-        VLayout filesValues = new VLayout();
-        filesValues.setWidth("90%");
-        filesValues.setAutoHeight();
+        StringBuilder filesValueStr = new StringBuilder();
         for (String filename : wizard.getAllBundleFilesStatus().keySet()) {
-            Label fileNameValue = new Label(filename);
-            fileNameValue.setAlign(Alignment.LEFT);
-            fileNameValue.setValign(VerticalAlignment.TOP);
-            fileNameValue.setWrap(false);
-            fileNameValue.setHeight(10);
-            filesValues.addMember(fileNameValue);
+            filesValueStr.append(filename + "<br/>\n");
         }
-        filesBox.addMember(filesLabel);
-        filesBox.addMember(filesValues);
-        top.addMember(filesBox);
+        filesLabel.setValue(filesValueStr.toString());
 
-        return top;
+        form.setFields(bundleTypeLabel, nameLabel, versionLabel, descriptionLabel, filesLabel);
+
+        return form;
     }
 
     public boolean nextPage() {

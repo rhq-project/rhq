@@ -34,12 +34,15 @@ public class AssertUtils {
      * want to compare two objects without using their <code>equals()</code> methods or when do not implement <code>
      * equals()</code>.
      *
-     * @param expected The expected object to compare against
-     * @param actual The actual object to be compared
+     * @param expected The expected object to compare against. Should be non-null.
+     * @param actual The actual object to be compared. Should be non-null.
      * @param msg An error message
      * @param <T> The type of the objects to be compared
      */
     public static <T> void assertPropertiesMatch(T expected, T actual, String msg) {
+        assertNotNull(expected, "Expected object should not be null");
+        assertNotNull(actual, "Actual object should not be null");
+
         PropertyMatcher<T> matcher = new PropertyMatcher<T>();
         matcher.setExpected(expected);
         matcher.setActual(actual);

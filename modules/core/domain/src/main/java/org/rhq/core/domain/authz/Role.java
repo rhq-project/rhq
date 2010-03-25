@@ -47,6 +47,7 @@ import org.hibernate.annotations.CollectionOfElements;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.group.LdapGroup;
 
 /**
  * A role has zero or more {@link org.rhq.core.domain.resource.group.ResourceGroup}s assigned to it. You can assign a
@@ -78,8 +79,7 @@ import org.rhq.core.domain.auth.Subject;
         + "                          JOIN ss.roles AS rr " //
         + "                         WHERE ss.id = :subjectId )"), //
     @NamedQuery(name = Role.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
-        + "SELECT r.name, r.name FROM Role AS r")
-})
+        + "SELECT r.name, r.name FROM Role AS r") })
 @SequenceGenerator(name = "RHQ_ROLE_ID_SEQ", sequenceName = "RHQ_ROLE_ID_SEQ")
 @Table(name = "RHQ_ROLE")
 public class Role implements Serializable {
@@ -108,6 +108,12 @@ public class Role implements Serializable {
 
     @ManyToMany(mappedBy = "roles")
     private java.util.Set<Subject> subjects = new HashSet<Subject>();
+
+    @ManyToMany(mappedBy = "ldapRoles")
+    private java.util.Set<Subject> ldapSubjects = new HashSet<Subject>();
+
+    @OneToMany(mappedBy = "role", cascade = javax.persistence.CascadeType.ALL)
+    private Set<LdapGroup> ldapGroups = new HashSet<LdapGroup>();
 
     @ManyToMany(mappedBy = "roles")
     private java.util.Set<org.rhq.core.domain.resource.group.ResourceGroup> resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
@@ -180,6 +186,26 @@ public class Role implements Serializable {
         return this.permissions.remove(permission);
     }
 
+    public Set<LdapGroup> getLdapGroups() {
+        if (ldapGroups == null) {
+            ldapGroups = new HashSet<LdapGroup>();
+        }
+        return this.ldapGroups;
+    }
+
+    public void setLdapGroups(Set<LdapGroup> groups) {
+        this.ldapGroups = groups;
+    }
+
+    public void addLdapGroup(LdapGroup ldapGroup) {
+        ldapGroup.setRole(this);
+        this.ldapGroups.add(ldapGroup);
+    }
+
+    public boolean removeLdapGroup(LdapGroup ldapGroup) {
+        return this.ldapGroups.remove(ldapGroup);
+    }
+
     public java.util.Set<Subject> getSubjects() {
         return subjects;
     }
@@ -204,6 +230,32 @@ public class Role implements Serializable {
 
         subject.removeRole(this);
         this.subjects.remove(subject);
+    }
+
+    public java.util.Set<Subject> getLdapSubjects() {
+        return ldapSubjects;
+    }
+
+    public void setLdapSubjects(Set<Subject> subjects) {
+        this.ldapSubjects = subjects;
+    }
+
+    public void addLdapSubject(Subject subject) {
+        if (this.ldapSubjects == null) {
+            this.ldapSubjects = new HashSet<Subject>();
+        }
+
+        subject.addLdapRole(this);
+        this.ldapSubjects.add(subject);
+    }
+
+    public void removeLdapSubject(Subject subject) {
+        if (this.ldapSubjects == null) {
+            this.ldapSubjects = new HashSet<Subject>();
+        }
+
+        subject.removeLdapRole(this);
+        this.ldapSubjects.remove(subject);
     }
 
     public Set<org.rhq.core.domain.resource.group.ResourceGroup> getResourceGroups() {

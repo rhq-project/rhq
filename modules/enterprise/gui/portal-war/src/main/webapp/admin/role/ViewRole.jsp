@@ -12,12 +12,15 @@
 <script language="JavaScript" src="<html:rewrite page="/js/listWidget.js"/>" type="text/javascript"></script>
 <c:set var="userWidgetInstanceName" value="assignedUsers"/>
 <c:set var="groupWidgetInstanceName" value="assignedGroups"/>
+<c:set var="ldapGroupWidgetInstanceName" value="assignedLdapGroups"/>
 <script type="text/javascript">
 var pageData = new Array();
 initializeWidgetProperties('<c:out value="${userWidgetInstanceName}"/>');
 userWidgetProperties = getWidgetProperties('<c:out value="${userWidgetInstanceName}"/>');
 initializeWidgetProperties('<c:out value="${groupWidgetInstanceName}"/>');
 groupWidgetProperties = getWidgetProperties('<c:out value="${groupWidgetInstanceName}"/>');
+initializeWidgetProperties('<c:out value="${ldapGroupWidgetInstanceName}"/>');
+ldapGroupWidgetProperties = getWidgetProperties('<c:out value="${ldapGroupWidgetInstanceName}"/>');
 </script>
 
 <c:url var="selfPuAction" value="/admin/role/RoleAdmin.do">
@@ -164,6 +167,42 @@ groupWidgetProperties = getWidgetProperties('<c:out value="${groupWidgetInstance
   <tiles:put name="addToListParamName" value="r"/>
   <tiles:put name="addToListParamValue" beanName="Role" beanProperty="id"/>
   <tiles:put name="pageList" beanName="RoleResGrps"/>
+  <tiles:put name="pageAction" beanName="selfPgAction"/>
+  <tiles:put name="postfix" value="g"/>
+</tiles:insert>
+
+<html:hidden property="r"/>
+</html:form>
+</c:if>
+</c:if>
+
+<c:if test="${not Role.fsystem}">
+<c:if test="${useroperations['MANAGE_SECURITY']}">
+
+<html:form method="POST" action="/admin/role/RemoveLdapGroups">
+
+<tiles:insert definition=".header.tab">
+  <tiles:put name="tabKey" value="admin.role.groups.AssignedLdapGroupsTab"/>
+</tiles:insert>
+
+<display:table items="${RoleLdapGrps}" var="group" action="${selfPgAction}"
+               postfix="ldapGroups"
+               width="100%" cellpadding="0" cellspacing="0">
+
+  <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, ldapGroupWidgetProperties, true)\" name=\"listToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" >
+    <display:checkboxdecorator name="ldapGroups" onclick="ToggleSelection(this, ldapGroupWidgetProperties, true)" styleClass="listMember"/>
+  </display:column>
+
+  <display:column property="name" title="common.header.Group" sortAttr="r.name"/>
+
+</display:table>
+
+<tiles:insert definition=".toolbar.addToList">
+  <tiles:put name="addToListUrl" value="/admin/role/RoleAdmin.do?mode=addLdapGroups"/>
+  <tiles:put name="widgetInstanceName" beanName="ldapGroupWidgetInstanceName"/>
+  <tiles:put name="addToListParamName" value="r"/>
+  <tiles:put name="addToListParamValue" beanName="Role" beanProperty="id"/>
+  <tiles:put name="pageList" beanName="RoleLdapGrps"/>
   <tiles:put name="pageAction" beanName="selfPgAction"/>
   <tiles:put name="postfix" value="g"/>
 </tiles:insert>

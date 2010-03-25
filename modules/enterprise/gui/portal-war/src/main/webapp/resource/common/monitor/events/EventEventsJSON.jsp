@@ -178,9 +178,9 @@
             %>
 
 { "start" : "<%=sdf.format(event.getTimestamp())%>",
-  "title" : "<%= title%>",
+  "title" : "<%= (""+title).replaceAll("[\"']","").trim()%>",
   "link" : "<%=link%>",
-  "description" : "<%=detail%>",
+  "description" : "<%=(""+detail).replaceAll("[\"']","").trim()%>",
   "icon" : "<%=icon%>",
   "color" : "<%=color%>"
 }

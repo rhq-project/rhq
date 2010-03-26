@@ -555,9 +555,9 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
         assert b1f1.getId() != b2f1.getId() : "should have been different bundle files";
         assert b1f1.getPackageVersion().getId() != b2f1.getPackageVersion().getId() : "should be different PV";
-        assert b1f1.getPackageVersion().getGeneralPackage().getId() == b2f1.getPackageVersion().getGeneralPackage()
+        assert b1f1.getPackageVersion().getGeneralPackage().getId() != b2f1.getPackageVersion().getGeneralPackage()
             .getId() : "package IDs should be different";
-        assert b1f1.getPackageVersion().getGeneralPackage().equals(b2f1.getPackageVersion().getGeneralPackage()) : "should be different packages";
+        assert !b1f1.getPackageVersion().getGeneralPackage().equals(b2f1.getPackageVersion().getGeneralPackage()) : "should be different packages";
     }
 
     @Test(enabled = TESTS_ENABLED)

@@ -88,7 +88,7 @@ public class BundleDeployment implements Serializable {
 
     @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
-    protected BundlDeploymentStatus status;
+    protected BundleDeploymentStatus status;
 
     @Column(name = "CTIME")
     private Long ctime = -1L;
@@ -100,9 +100,7 @@ public class BundleDeployment implements Serializable {
     }
 
     public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource) {
-        this.bundleDeployDefinition = bundleDeploymentDef;
-        this.resource = resource;
-        this.status = BundlDeploymentStatus.INPROGRESS;
+        this(bundleDeploymentDef, resource, null);
     }
 
     public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource,
@@ -110,6 +108,7 @@ public class BundleDeployment implements Serializable {
         this.bundleDeployDefinition = bundleDeploymentDef;
         this.resource = resource;
         this.bundleGroupDeployment = bundleGroupDeployment;
+        this.status = BundleDeploymentStatus.INPROGRESS;
     }
 
     public BundleDeployDefinition getBundleDeployDefinition() {
@@ -172,11 +171,11 @@ public class BundleDeployment implements Serializable {
      *
      * @return the request status
      */
-    public BundlDeploymentStatus getStatus() {
+    public BundleDeploymentStatus getStatus() {
         return status;
     }
 
-    public void setStatus(BundlDeploymentStatus status) {
+    public void setStatus(BundleDeploymentStatus status) {
         this.status = status;
     }
 

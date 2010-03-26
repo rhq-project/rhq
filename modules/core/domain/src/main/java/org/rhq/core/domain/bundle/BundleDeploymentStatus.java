@@ -30,7 +30,7 @@ package org.rhq.core.domain.bundle;
  *
  * @author Jay Shaughnessy
  */
-public enum BundlDeploymentStatus {
+public enum BundleDeploymentStatus {
     INPROGRESS("In Progress"), //
     SUCCESS("Success"), //
     FAILURE("Failure"), //
@@ -38,7 +38,7 @@ public enum BundlDeploymentStatus {
 
     private String displayName;
 
-    BundlDeploymentStatus(String displayName) {
+    BundleDeploymentStatus(String displayName) {
         this.displayName = displayName;
     }
 

@@ -178,14 +178,16 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
                     icon.setTooltip("Uploaded bundle file successfully");
                     CoreGUI.getMessageCenter().notify(
                         new Message("Uploaded bundle file successfully", results, Severity.Info));
-                    markForRedraw();
+                    icon.hide();
+                    icon.show();
                 } else {
                     uploadResults = Boolean.FALSE;
                     icon.setIcons(iconRed);
                     icon.setTooltip("Bundle file upload failed");
                     CoreGUI.getMessageCenter()
                         .notify(new Message("Bundle file upload failed", results, Severity.Error));
-                    markForRedraw();
+                    icon.hide();
+                    icon.show();
                 }
             }
         });
@@ -196,7 +198,8 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
                 icon.setIcons(iconRed);
                 icon.setTooltip("Bundle file upload failed");
                 CoreGUI.getMessageCenter().notify(new Message("Bundle file upload request failed", Severity.Error));
-                markForRedraw();
+                icon.hide();
+                icon.show();
             }
         });
     }

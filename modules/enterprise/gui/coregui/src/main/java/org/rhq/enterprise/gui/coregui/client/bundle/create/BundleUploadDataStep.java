@@ -47,6 +47,7 @@ public class BundleUploadDataStep implements WizardStep {
     private final AbstractBundleCreateWizard wizard;
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private ArrayList<BundleFileUploadForm> uploadForms;
+    private Boolean noFilesNeedToBeUploaded = null; // will be non-null when we know the answer
 
     public BundleUploadDataStep(AbstractBundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
@@ -84,6 +85,10 @@ public class BundleUploadDataStep implements WizardStep {
     }
 
     private boolean isFinished() {
+        if (noFilesNeedToBeUploaded != null && noFilesNeedToBeUploaded.booleanValue()) {
+            return true;
+        }
+
         if (wizard.getAllBundleFilesStatus() == null) {
             return false;
         }
@@ -114,9 +119,11 @@ public class BundleUploadDataStep implements WizardStep {
             label.setWidth100();
             mainLayout.addMember(label);
             uploadForms = null;
+            noFilesNeedToBeUploaded = Boolean.TRUE;
             return;
         }
 
+        noFilesNeedToBeUploaded = Boolean.FALSE;
         uploadForms = new ArrayList<BundleFileUploadForm>();
 
         for (Map.Entry<String, Boolean> entry : allFilesStatus.entrySet()) {

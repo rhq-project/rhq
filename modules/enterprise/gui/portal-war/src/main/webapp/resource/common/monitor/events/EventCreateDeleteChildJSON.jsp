@@ -65,7 +65,7 @@
 { "start" : "<%=sdf.format(entry.getCreatedTime())%>",
   "title" : "Child resource created",
   "link" : "<%=link%>",
-  "description" : "<b>User:</b> <%=entry.getSubjectName()%><br/><b>Status:</b> <%=entry.getStatus()%>",
+  "description" : "<b>User:</b> <%=(""+entry.getSubjectName()).replaceAll("[\"']","").trim()%><br/><b>Status:</b> <%=(""+entry.getStatus()).replaceAll("[\"']","").trim()%>",
   "icon" : "<%=icon%>",
   "color" : "<%=(entry.getStatus() != CreateResourceStatus.FAILURE ? "#4EB84E" : "#DD5656")%>"
 }
@@ -101,7 +101,7 @@
 { "start" : "<%=sdf.format(entry.getCreatedTime())%>",
   "title" : "Child resource deleted",
   "link" : "<%=link%>",
-  "description" : "<b>User:</b> <%=entry.getSubjectName()%><br/><b>Status:</b> <%=entry.getStatus()%>",
+  "description" : "<b>User:</b> <%=(""+entry.getSubjectName()).replaceAll("[\"']","").trim()%><br/><b>Status:</b> <%=(""+entry.getStatus()).replaceAll("[\"']","").trim()%>",
   "icon" : "<%=icon%>",
   "color" : "<%=(entry.getStatus() != DeleteResourceStatus.FAILURE ? "#4EB84E" : "#DD5656")%>"
 }

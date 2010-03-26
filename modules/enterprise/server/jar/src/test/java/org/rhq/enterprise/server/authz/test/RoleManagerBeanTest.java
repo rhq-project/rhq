@@ -27,6 +27,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -239,6 +240,30 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
 
             roleManager.deleteRoles(superuser, new Integer[] { role.getId() });
             assert !roleManager.findRoles(PageControl.getUnlimitedInstance()).contains(role) : "Role should have been deleted";
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    /**
+     * Test creating, assigning, removing and deleting roles.
+     *
+     * @throws Exception
+     */
+    public void testLdapGroups() throws Exception {
+        getTransactionManager().begin();
+
+        try {
+            Subject superuser = subjectManager.getOverlord();
+            createSession(superuser);
+
+            Role role = new Role("role-manager-role");
+            role.setFsystem(false);
+            role = roleManager.createRole(superuser, role);
+            LdapGroup group = new LdapGroup();
+            group.setName("Foo");
+            role.addLdapGroup(group);
+            assert roleManager.findLdapGroupsByRole(role.getId(), PageControl.getUnlimitedInstance()).size() == 1 : "Ldap Group Foo Should be assigned";
         } finally {
             getTransactionManager().rollback();
         }

@@ -145,6 +145,13 @@ public class AuthenticateUserAction extends TilesAction {
             if ((url == null) || url.equals("/Logout.do")) {
                 url = URL_DASHBOARD;
             }
+            if (url.toLowerCase().indexOf("ajax") != -1) {
+                // we can't return to a URL that was a partial page request
+                // because the view no longer exists, and will blow up.
+                // instead, redirect back to the last saved URL
+                url = webUser.getWebPreferences().getLastVisitedURL(2);
+                System.out.println("Bypassing partial-page with " + url);
+            }
 
             af = new ActionForward(url);
         }

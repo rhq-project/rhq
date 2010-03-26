@@ -25,7 +25,7 @@
     <war.dir>${basedir}/target/${final.name}</war.dir>
 
     <!-- plugin versions -->
-    <jetty-jspc-maven-plugin.version>7.0.1.v20091125</jetty-jspc-maven-plugin.version>    
+    <jetty-jspc-maven-plugin.version>7.0.1.v20091125</jetty-jspc-maven-plugin.version>
 
     <product.shortName>RHQ</product.shortName>
     <product.name>RHQ</product.name>
@@ -88,6 +88,21 @@
       <version>${jboss.version}</version>
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
+
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jbosssx</artifactId>
+      <version>4.2.3.GA</version>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
+
+    <dependency>
+      <groupId>jboss.jbossas.core-libs</groupId>
+      <artifactId>jboss-jca</artifactId>
+      <version>4.2.2.GA</version>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
+
 
     <dependency>
         <groupId>javax.servlet</groupId>

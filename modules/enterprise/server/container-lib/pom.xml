@@ -40,6 +40,13 @@
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
+    <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jbosssx</artifactId>
+        <version>4.2.3.GA</version>
+        <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
+
    </dependencies>
 
    <profiles>

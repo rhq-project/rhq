@@ -49,6 +49,8 @@ import org.apache.tools.ant.helper.ProjectHelper2;
 
 import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.mx.util.ObjectNameFactory;
+import org.jboss.security.auth.login.XMLLoginConfig;
+import org.jboss.security.auth.login.XMLLoginConfigMBean;
 import org.jboss.system.server.ServerConfig;
 
 import org.rhq.core.db.DatabaseType;
@@ -128,7 +130,7 @@ public class ServerInformation {
 
     /**
      * Call this when you need to confirm that the database is supported.
-     * 
+     *
      * @param  props set of properties where the connection information is found
      *
      * @throws Exception if the database is not supported
@@ -208,7 +210,7 @@ public class ServerInformation {
      * data/tables and recreated.</p>
      *
      * @param  props
-     * 
+     *
      * @throws Exception if failed to create the new schema for some reason
      */
     public void createNewDatabaseSchema(Properties props) throws Exception {
@@ -246,7 +248,7 @@ public class ServerInformation {
      * occur.</p>
      *
      * @param  props
-     * 
+     *
      * @throws Exception if the upgrade failed for some reason
      */
     public void upgradeExistingDatabaseSchema(Properties props) throws Exception {
@@ -527,7 +529,7 @@ public class ServerInformation {
         return deployDirectory;
     }
 
-    private File getBinDirectory() {
+    protected File getBinDirectory() {
         if (binDirectory == null) {
             MBeanServer mbs = getMBeanServer();
             ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
@@ -788,8 +790,8 @@ public class ServerInformation {
      * Clean up messages in the JMS message table. Make sure you call this when no other Servers
      * are communicating with the database, otherwise, its possible in-flight messages will get lost
      * or go into a bad state.
-     * 
-     * @param props 
+     *
+     * @param props
      */
     public void cleanJmsTables(Properties props) {
 
@@ -816,6 +818,17 @@ public class ServerInformation {
                 // best effort only
             }
         }
+    }
+
+    public void restartLoginConfig() throws Exception {
+
+        MBeanServer mbs = getMBeanServer();
+        ObjectName name = ObjectNameFactory.create("jboss.security:service=XMLLoginConfig");
+        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name,XMLLoginConfigMBean.class,false);
+
+        XMLLoginConfigMBean conf = (XMLLoginConfigMBean) mbean;
+        conf.stop();
+        conf.start();
     }
 
     public static class Server {

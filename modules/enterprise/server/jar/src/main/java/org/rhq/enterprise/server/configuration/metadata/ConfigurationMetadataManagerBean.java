@@ -247,6 +247,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                             //                            properties = new ArrayList<Property>(properties);
                             //                            properties.add(ps);
                             //                            existConf.setProperties(properties);
+                            Property property = ps.deepCopy(false);
+                            existConf.put(property);
                         }
                     }
                 }
@@ -282,10 +284,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
         for (PropertyDefinition def : definitionsToDelete) {
             existingDefinition.getPropertyDefinitions().remove(def.getName());
-            existingProperties.remove(def); // does not operate on original list!!
-            entityManager.remove(def);
+            existingProperties.remove(def); // does not operate on original list!!            
         }
-        entityManager.flush();
     }
 
     /**

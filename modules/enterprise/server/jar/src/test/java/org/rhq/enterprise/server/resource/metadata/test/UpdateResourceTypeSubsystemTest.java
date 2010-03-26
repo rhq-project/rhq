@@ -90,7 +90,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    //   @Test  TODO further work on this
+    @Test  // TODO further work on this
     public void testMoveResoureType() throws Exception {
         System.out.println("testUpdatePlugin2 --- start");
         getTransactionManager().begin();

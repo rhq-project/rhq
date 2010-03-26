@@ -344,30 +344,23 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Repo createRepo(Subject subject, Repo repo) throws RepoException {
         validateRepo(repo);
-        repo.setCandidate(false);
 
         log.debug("User [" + subject + "] is creating [" + repo + "]...");
         entityManager.persist(repo);
-        log.debug("User [" + subject + "] created [" + repo + "]");
+        log.debug("User [" + subject + "] created [" + repo + "].");
 
-        // Schedule the repo sync job.
-        try {
-            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
-            // Schedule a job for the future
-            pc.scheduleRepoSyncJob(repo);
-        } catch (Exception e) {
-            log.error("Failed to schedule repository synchronization job for [" + repo + "].", e);
-            throw new RuntimeException(e);
+        // If this repo is imported, schedule the repo sync job.
+        if ( ! repo.isCandidate()) {
+            try {
+                ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+                pc.scheduleRepoSyncJob(repo);
+            } catch (Exception e) {
+                log.error("Failed to schedule repository synchronization job for [" + repo + "].", e);
+                throw new RuntimeException(e);
+            }
         }
 
-        return repo; // now has the ID set
-    }
-
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Repo createCandidateRepo(Subject subject, Repo repo) throws RepoException {
-        validateRepo(repo);
-        entityManager.persist(repo);
-        return repo;
+        return repo; // now has the id set
     }
 
     @SuppressWarnings("unchecked")
@@ -387,6 +380,10 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void processRepoImportReport(Subject subject, RepoImportReport report, int contentSourceId,
         StringBuilder result) {
+
+        // TODO: The below line was added to simplify things for JON (i.e. patches from JBoss CSP) - remove it if we
+        //       need more flexibility for other use cases. (ips, 03/26/10)
+        boolean autoImport = (report.getRepoGroups().isEmpty() && report.getRepos().size() == 1);
 
         // Import groups first
         List<RepoGroupDetails> repoGroups = report.getRepoGroups();
@@ -446,7 +443,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         for (RepoDetails createMe : repos) {
             if (createMe.getParentRepoName() == null) {
                 try {
-                    if (addCandidateRepo(contentSourceId, createMe)) {
+                    if (addCandidateRepo(contentSourceId, createMe, autoImport)) {
                         importedRepos.add(createMe);
                     }
                     removeRepoFromList(createMe.getName(), candidatesForThisProvider);
@@ -469,7 +466,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         for (RepoDetails createMe : repos) {
             if (createMe.getParentRepoName() != null) {
                 try {
-                    if (addCandidateRepo(contentSourceId, createMe)) {
+                    if (addCandidateRepo(contentSourceId, createMe, autoImport)) {
                         importedRepos.add(createMe);
                     }
                     removeRepoFromList(createMe.getName(), candidatesForThisProvider);                    
@@ -494,8 +491,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             for (Repo deleteMe : candidatesForThisProvider) {
                 deleteRepo(subject, deleteMe.getId());
             }
-            result.append("Deleted the following ").append(candidatesForThisProvider.size()).append("obsolete repository(s): ").
-                    append(candidatesForThisProvider).append('\n');
+            result.append("Deleted the following ").append(candidatesForThisProvider.size()).
+                    append(" obsolete repository(s): ").append(candidatesForThisProvider).append('\n');
         }
     }
 
@@ -873,10 +870,12 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
      * @param contentSourceId identifies the content provider that introduced the candidate into the system
      * @param createMe        describes the candidate to be created
      *
+     * @param autoImport      whether or not to import the repo
+     *
      * @throws Exception if there is an error associating the content source with the repo or if the repo
      *                   indicates a parent or repo group that does not exist
      */
-    private boolean addCandidateRepo(int contentSourceId, RepoDetails createMe) throws Exception {
+    private boolean addCandidateRepo(int contentSourceId, RepoDetails createMe, boolean autoImport) throws Exception {
 
         Subject overlord = subjectManager.getOverlord();
         String name = createMe.getName();
@@ -893,9 +892,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         // The repo doesn't exist yet in the system - create it.
         Repo addMe = new Repo(name);
-        // TODO: The below line was added to simplify things for JON (i.e. patches from JBoss CSP) - remove it if we
-        //       need more flexibility for other use cases. (ips, 03/24/10)
-        addMe.setCandidate(false); // auto-import
+        addMe.setCandidate(!autoImport);
         addMe.setDescription(createMe.getDescription());
 
         String createMeGroup = createMe.getRepoGroup();
@@ -905,7 +902,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
 
         // Add the new candidate to the database
-        addMe = createCandidateRepo(overlord, addMe);
+        addMe = createRepo(overlord, addMe);
 
         // Associate the content provider that introduced the candidate with the repo
         addContentSourcesToRepo(overlord, addMe.getId(), new int[] { contentSourceId });

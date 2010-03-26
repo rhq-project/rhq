@@ -162,17 +162,6 @@ public interface RepoManagerLocal {
     void addRepoRelationship(Subject subject, int repoId, int relatedRepoId, String relationshipTypeName);
 
     /**
-     * Functions similar to {@link RepoManagerRemote#createRepo(Subject, Repo)} except that it will ensure
-     * the candidate bit on the repo parameter is correctly set.
-     *
-     * @param subject user creating the repo
-     * @param repo    repo data to create
-     * @return persisted repo (ID will be populated)
-     * @throws RepoException if the repo contains invalid data
-     */
-    Repo createCandidateRepo(Subject subject, Repo repo) throws RepoException;
-
-    /**
      * Removes candidate repos whose only content source is the indicated content source.
      *
      * @param subject         user performing the delete

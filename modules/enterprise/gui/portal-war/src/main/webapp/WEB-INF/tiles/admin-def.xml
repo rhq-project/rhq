@@ -73,6 +73,10 @@
               controllerUrl="/admin/role/AddResourceGroupsFormPrepare.do"
               path="/admin/role/AddRoleGroups.jsp"/>
 
+  <definition name=".admin.role.AddLdapGroups"
+              controllerUrl="/admin/role/AddLdapGroupsFormPrepare.do"
+              path="/admin/role/AddLdapRoleGroups.jsp"/>
+              
   <definition name=".admin.role.ChangeOwner"
               controllerUrl="/admin/role/ChangeOwnerFormPrepare.do"
               path="/admin/role/ChangeRoleOwner.jsp"/>

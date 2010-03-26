@@ -20,14 +20,17 @@ package org.rhq.enterprise.gui.admin.role;
 
 import java.util.HashMap;
 import java.util.Properties;
+
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.authz.Role;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.Portal;
@@ -55,6 +58,9 @@ public class RoleAdminPortalAction extends BaseDispatchAction {
     private static final String TITLE_ADD_GROUPS = "admin.role.AddRoleGroupsTitle";
     private static final String PORTLET_ADD_GROUPS = ".admin.role.AddGroups";
 
+    private static final String TITLE_ADD_LDAP_GROUPS = "admin.role.AddRoleLdapGroupsTitle";
+    private static final String PORTLET_ADD_LDAP_GROUPS = ".admin.role.AddLdapGroups";
+
     private static final String TITLE_EDIT = "admin.role.EditRoleTitle";
 
     private static final String PORTLET_EDIT = ".admin.role.Edit";
@@ -78,6 +84,7 @@ public class RoleAdminPortalAction extends BaseDispatchAction {
         keyMethodMap.setProperty(Constants.MODE_LIST, "listRoles");
         keyMethodMap.setProperty(Constants.MODE_ADD_USERS, "addRoleUsers");
         keyMethodMap.setProperty(Constants.MODE_ADD_GROUPS, "addRoleGroups");
+        keyMethodMap.setProperty(Constants.MODE_ADD_LDAP_GROUPS, "addLdapGroups");
         keyMethodMap.setProperty(Constants.MODE_EDIT, "editRole");
         keyMethodMap.setProperty(Constants.MODE_NEW, "newRole");
         keyMethodMap.setProperty(Constants.MODE_VIEW, "viewRole");
@@ -115,6 +122,17 @@ public class RoleAdminPortalAction extends BaseDispatchAction {
         setRole(request);
 
         Portal portal = Portal.createPortal(TITLE_ADD_GROUPS, PORTLET_ADD_GROUPS);
+        portal.setDialog(true);
+        request.setAttribute(Constants.PORTAL_KEY, portal);
+
+        return null;
+    }
+
+    public ActionForward addLdapGroups(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+        HttpServletResponse response) throws Exception {
+        setRole(request);
+
+        Portal portal = Portal.createPortal(TITLE_ADD_LDAP_GROUPS, PORTLET_ADD_LDAP_GROUPS);
         portal.setDialog(true);
         request.setAttribute(Constants.PORTAL_KEY, portal);
 

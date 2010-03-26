@@ -33,27 +33,34 @@
   <tr>
     <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPUrlLabel"/></td>
     <td width="30%" class="BlockContent"><html:text size="31" property="ldapUrl"/></td>
-    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPSslLabel"/></td>
-    <td width="30%" class="BlockContent"><html:checkbox property="ldapSsl"/></td>
-  </tr>
-  <tr>
-    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPUsernameLabel"/></td>
-    <td width="30%" class="BlockContent"><html:text size="31" property="ldapUsername"/></td>
-    <td width="20%" class="BlockLabel"><fmt:message key="common.label.Password"/></td>
-    <td width="30%" class="BlockContent"><html:password size="31" property="ldapPassword" redisplay="true"/></td>
-  </tr>
-  <tr>
-    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPSearchBaseLabel"/></td>
-    <td width="30%" class="BlockContent"><html:text size="31" property="ldapSearchBase"/></td>
     <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPSearchFilterLabel"/></td>
     <td width="30%" class="BlockContent"><html:text size="31" property="ldapSearchFilter"/></td>
   </tr>
   <tr>
+    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPSearchBaseLabel"/></td>
+    <td width="30%" class="BlockContent"><html:text size="31" property="ldapSearchBase"/></td>
     <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPLoginPropertyLabel"/></td>
     <td width="30%" class="BlockContent"><html:text size="31" property="ldapLoginProperty"/></td>
+  </tr>
+  <tr>
+    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPUsernameLabel"/></td>
+    <td width="30%" class="BlockContent"><html:text size="31" property="ldapUsername"/></td>
+    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPGroupSearchLabel"/></td>
+    <td width="30%" class="BlockContent"><html:text size="31" property="ldapGroupFilter"/></td>
+  </tr>
+  <tr>
+    <td width="20%" class="BlockLabel"><fmt:message key="common.label.Password"/></td>
+    <td width="30%" class="BlockContent"><html:password size="31" property="ldapPassword" redisplay="true"/></td>
+    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPGroupMemberLabel"/></td>
+    <td width="30%" class="BlockContent"><html:text size="31" property="ldapGroupMember"/></td>
+  </tr>
+  <tr>
+    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPSslLabel"/></td>
+    <td width="30%" class="BlockContent"><html:checkbox property="ldapSsl"/></td>
     <td width="20%" class="BlockLabel">&nbsp;</td>
     <td width="30%" class="BlockContent">&nbsp;</td>
   </tr>
+
 
   <tr>
     <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>

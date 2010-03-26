@@ -19,9 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
@@ -51,6 +54,9 @@ public class BundlesListView extends VLayout {
         super.onDraw();
 
         final Table table = new Table("Bundles");
+        table.setHeight("50%");
+        table.setShowResizeBar(true);
+        table.setResizeBarTarget("next");
 
         table.setDataSource(new BundlesWithLatestVersionDataSource());
 
@@ -147,5 +153,15 @@ public class BundlesListView extends VLayout {
         });
 
         addMember(table);
+
+        final BundleView bundleView = new BundleView();
+        bundleView.setOverflow(Overflow.AUTO);
+        addMember(bundleView);
+
+        table.getListGrid().addRecordClickHandler(new RecordClickHandler() {
+            public void onRecordClick(RecordClickEvent event) {
+                bundleView.viewRecord(event.getRecord());
+            }
+        });
     }
 }

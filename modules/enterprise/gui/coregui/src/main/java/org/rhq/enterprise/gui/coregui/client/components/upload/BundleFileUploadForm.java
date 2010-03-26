@@ -20,9 +20,12 @@ package org.rhq.enterprise.gui.coregui.client.components.upload;
 
 import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.types.Encoding;
+import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
+import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.UploadItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
@@ -36,18 +39,25 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 public class BundleFileUploadForm extends DynamicCallbackForm {
 
-    private ButtonItem uploadButton;
     private UploadItem bundleUploadItem;
+    private ButtonItem uploadButton;
+    private StaticTextItem icon;
 
-    private BundleVersion bundleVersion;
-    private String name;
+    private Boolean uploadResults;
 
-    public BundleFileUploadForm(BundleVersion bundleVersion, String name) {
+    private final BundleVersion bundleVersion;
+    private final String name;
+    private final boolean showNameLabel;
+
+    public BundleFileUploadForm(BundleVersion bundleVersion, String name, boolean showNameLabel,
+        Boolean isAlreadyUploaded) {
+
         super(name);
         this.bundleVersion = bundleVersion;
         this.name = name;
+        this.showNameLabel = showNameLabel;
+        this.uploadResults = isAlreadyUploaded; // null if unknown, false if error during previous upload attempt, true if already uploaded before
 
-        setNumCols(8);
         setEncoding(Encoding.MULTIPART);
         setAction(GWT.getModuleBaseURL() + "/BundleFileUploadServlet");
     }
@@ -63,6 +73,23 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * Returns true if the file was successfully uploaded, false if an error occurred.
+     * Returns null if this upload form has not be submitted yet (see {@link #submitForm()}).
+     * @return status of the upload request
+     */
+    public Boolean getUploadResults() {
+        return uploadResults;
+    }
+
+    @Override
+    public void submitForm() {
+        icon.setShowIcons(true);
+        uploadButton.setDisabled(true);
+        markForRedraw();
+        super.submitForm();
     }
 
     @Override
@@ -81,58 +108,91 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         HiddenItem versionField = new HiddenItem("version");
         versionField.setValue("1.0");
 
-        setNumCols(4);
+        setNumCols(7);
 
-        bundleUploadItem = new UploadItem("bundleFile", name);
+        bundleUploadItem = new UploadItem("bundleFileUploadItem", name);
         bundleUploadItem.setEndRow(false);
+        bundleUploadItem.setShowTitle(showNameLabel);
 
         uploadButton = new ButtonItem("Upload");
         uploadButton.setStartRow(false);
+        uploadButton.setEndRow(false);
         uploadButton.setDisabled(true);
-
-        bundleUploadItem.addChangeHandler(new ChangeHandler() {
-            public void onChange(ChangeEvent changeEvent) {
-                uploadButton.setDisabled(false);
-            }
-        });
-
         uploadButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                uploadButton.setShowIcons(true);
-                markForRedraw();
                 submitForm();
             }
         });
+
+        icon = new StaticTextItem("icon");
+        icon.setStartRow(false);
+        icon.setShowTitle(false);
 
         FormItemIcon loadingIcon = new FormItemIcon();
         loadingIcon.setSrc("ajax-loader.gif");
         loadingIcon.setWidth(16);
         loadingIcon.setHeight(16);
-        uploadButton.setIcons(loadingIcon);
-        uploadButton.setShowIcons(false);
+        icon.setIcons(loadingIcon);
+        icon.setShowIcons(false);
 
-        setItems(sessionIdField, bundleVersionIdField, nameField, versionField, bundleUploadItem, uploadButton);
+        bundleUploadItem.addChangeHandler(new ChangeHandler() {
+            public void onChange(ChangeEvent changeEvent) {
+                if (uploadResults != null) {
+                    retrievalStatus(uploadResults.booleanValue());
+                } else {
+                    uploadButton.setDisabled(false);
+                    icon.setShowIcons(false);
+                }
+            }
+        });
+
+        if (uploadResults != null) {
+            retrievalStatus(uploadResults.booleanValue());
+        }
+
+        setItems(sessionIdField, bundleVersionIdField, nameField, versionField, bundleUploadItem, uploadButton, icon);
+
+        addFormHandler(new DynamicFormHandler() {
+            public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                String results = event.getResults();
+                if (!results.contains("Failed to upload bundle file")) {
+                    CoreGUI.getMessageCenter().notify(new Message("Uploaded bundle file successfully", Severity.Info));
+                    retrievalStatus(true);
+                } else {
+                    CoreGUI.getMessageCenter().notify(new Message("Bundle file upload failed", Severity.Error));
+                    retrievalStatus(false);
+                }
+            }
+        });
+
+        addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
+            public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                CoreGUI.getMessageCenter().notify(new Message("Bundle file upload failed", Severity.Error));
+                retrievalStatus(false);
+            }
+        });
     }
 
     /**
-     * Call this when the file retrieval finished. <code>true</code> means successful,
+     * Call this when the last file retrieval status is known. <code>true</code> means successful,
      * <code>false</code> means an error occurred.
      * @param ok status
      */
-    public void retrievalStatus(boolean ok) {
+    private void retrievalStatus(boolean ok) {
+        uploadResults = Boolean.valueOf(ok);
+
         if (uploadButton != null) {
             FormItemIcon loadedIcon = new FormItemIcon();
             if (ok) {
                 loadedIcon.setSrc("/images/icons/availability_green_16.png");
-                CoreGUI.getMessageCenter().notify(new Message("Uploaded bundle file successfully", Severity.Info));
             } else {
                 loadedIcon.setSrc("/images/icons/availability_red_16.png");
-                CoreGUI.getMessageCenter().notify(new Message("Bundle file upload failed", Severity.Error));
             }
             loadedIcon.setWidth(16);
             loadedIcon.setHeight(16);
-            uploadButton.setIcons(loadedIcon);
-            uploadButton.setShowIcons(true);
+            icon.setIcons(loadedIcon);
+            icon.setShowIcons(true);
+            uploadButton.setDisabled(uploadResults);
         }
     }
 }

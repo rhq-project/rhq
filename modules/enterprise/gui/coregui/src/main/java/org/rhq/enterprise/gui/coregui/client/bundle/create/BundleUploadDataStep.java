@@ -18,21 +18,22 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.upload.BundleFileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
@@ -45,25 +46,24 @@ public class BundleUploadDataStep implements WizardStep {
 
     private final AbstractBundleCreateWizard wizard;
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-    private DynamicForm form;
+    private ArrayList<BundleFileUploadForm> uploadForms;
 
     public BundleUploadDataStep(AbstractBundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 
     public Canvas getCanvas() {
-        form = new DynamicForm();
-
-        final VLayout layout = new VLayout();
-        layout.setMargin(Integer.valueOf(20));
-        layout.setAlign(Alignment.CENTER);
+        final VLayout mainLayout = new VLayout();
+        mainLayout.setMargin(Integer.valueOf(20));
+        mainLayout.setWidth100();
+        mainLayout.setHeight(10);
 
         bundleServer.getAllBundleVersionFilenames(this.wizard.getBundleVersion().getId(),
             new AsyncCallback<HashMap<String, Boolean>>() {
 
                 public void onSuccess(HashMap<String, Boolean> result) {
                     wizard.setAllBundleFilesStatus(result);
-                    prepareForm(layout);
+                    prepareForm(mainLayout);
                 }
 
                 public void onFailure(Throwable caught) {
@@ -72,8 +72,7 @@ public class BundleUploadDataStep implements WizardStep {
                 }
             });
 
-        form.addChild(layout);
-        return form;
+        return mainLayout;
     }
 
     public boolean nextPage() {
@@ -88,61 +87,82 @@ public class BundleUploadDataStep implements WizardStep {
         if (wizard.getAllBundleFilesStatus() == null) {
             return false;
         }
+
+        boolean needToUpload = false;
+        for (BundleFileUploadForm uploadForm : this.uploadForms) {
+            if (uploadForm.getUploadResults() == null) {
+                uploadForm.submitForm();
+                needToUpload = true;
+            }
+        }
+        if (needToUpload) {
+            return false;
+        }
+
         if (wizard.getAllBundleFilesStatus().containsValue(Boolean.FALSE)) {
             return false;
         }
         return true;
     }
 
-    private void prepareForm(VLayout layout) {
+    private void prepareForm(VLayout mainLayout) {
         // if there are no files to upload, immediately skip this step
         final HashMap<String, Boolean> allFilesStatus = wizard.getAllBundleFilesStatus();
 
         if (allFilesStatus != null && allFilesStatus.size() == 0) {
-            // TODO: do something to tell the user they don't have to do anything for this step
+            HeaderLabel label = new HeaderLabel("No files need to be uploaded for this bundle");
+            label.setWidth100();
+            mainLayout.addMember(label);
+            uploadForms = null;
             return;
         }
 
-        for (Map.Entry<String, Boolean> entry : allFilesStatus.entrySet()) {
-            HLayout formLayout = new HLayout();
-            layout.addMember(formLayout);
+        uploadForms = new ArrayList<BundleFileUploadForm>();
 
+        for (Map.Entry<String, Boolean> entry : allFilesStatus.entrySet()) {
             String fileToBeUploaded = entry.getKey();
             Boolean isAlreadyUploaded = entry.getValue();
 
-            if (isAlreadyUploaded) {
-                Label nameLabel = new Label(fileToBeUploaded + ": ");
-                formLayout.addMember(nameLabel);
-                Img img = new Img("/images/icons/availability_green_16.png", 16, 16);
-                formLayout.addMember(img);
-            } else {
-                final BundleFileUploadForm uploadForm = new BundleFileUploadForm(this.wizard.getBundleVersion(),
-                    fileToBeUploaded);
-                uploadForm.addFormHandler(new DynamicFormHandler() {
-                    public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
-                        String results = event.getResults();
-                        if (!results.contains("Failed to upload bundle file")) {
-                            uploadForm.retrievalStatus(true);
-                            allFilesStatus.put(uploadForm.getName(), Boolean.TRUE);
-                        } else {
-                            uploadForm.retrievalStatus(false);
-                            allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Failed to upload bundle file", results, Message.Severity.Error));
-                        }
-                    }
-                });
-                uploadForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
-                    public void onFormSubmitFailed(FormSubmitFailedEvent event) {
-                        uploadForm.retrievalStatus(false);
+            HLayout indivLayout = new HLayout();
+            indivLayout.setWidth100();
+            indivLayout.setAutoHeight();
+
+            Label nameLabel = new Label(fileToBeUploaded + ": ");
+            nameLabel.setWidth("*");
+            nameLabel.setAlign(Alignment.RIGHT);
+            nameLabel.setLayoutAlign(VerticalAlignment.CENTER);
+            indivLayout.addMember(nameLabel);
+
+            final BundleFileUploadForm uploadForm = new BundleFileUploadForm(this.wizard.getBundleVersion(),
+                fileToBeUploaded, false, (isAlreadyUploaded) ? Boolean.TRUE : null);
+            uploadForm.setWidth("75%");
+            indivLayout.addMember(uploadForm);
+
+            uploadForm.addFormHandler(new DynamicFormHandler() {
+                public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                    String results = event.getResults();
+                    if (!results.contains("Failed to upload bundle file")) {
+                        allFilesStatus.put(uploadForm.getName(), Boolean.TRUE);
+                    } else {
                         allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Failed to upload file", null, Message.Severity.Error));
+                            new Message("Failed to upload bundle file", results, Message.Severity.Error));
                     }
-                });
+                }
+            });
+            uploadForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
+                public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                    allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Failed to upload file", null, Message.Severity.Error));
+                }
+            });
 
-                formLayout.addMember(uploadForm);
-            }
+            uploadForms.add(uploadForm);
+
+            mainLayout.addMember(indivLayout);
         }
+
+        return;
     }
 }

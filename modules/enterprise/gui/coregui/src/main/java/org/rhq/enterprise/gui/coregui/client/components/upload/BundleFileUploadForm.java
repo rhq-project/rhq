@@ -27,8 +27,6 @@ import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.UploadItem;
-import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
@@ -48,6 +46,10 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
     private final BundleVersion bundleVersion;
     private final String name;
     private final boolean showNameLabel;
+    private final FormItemIcon iconLoading;
+    private final FormItemIcon iconGreen;
+    private final FormItemIcon iconRed;
+    private final FormItemIcon iconGrey;
 
     public BundleFileUploadForm(BundleVersion bundleVersion, String name, boolean showNameLabel,
         Boolean isAlreadyUploaded) {
@@ -60,6 +62,26 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
 
         setEncoding(Encoding.MULTIPART);
         setAction(GWT.getModuleBaseURL() + "/BundleFileUploadServlet");
+
+        iconLoading = new FormItemIcon();
+        iconLoading.setSrc("ajax-loader.gif");
+        iconLoading.setWidth(16);
+        iconLoading.setHeight(16);
+
+        iconGreen = new FormItemIcon();
+        iconGreen.setSrc("/images/icons/availability_green_16.png");
+        iconGreen.setWidth(16);
+        iconGreen.setHeight(16);
+
+        iconRed = new FormItemIcon();
+        iconRed.setSrc("/images/icons/availability_red_16.png");
+        iconRed.setWidth(16);
+        iconRed.setHeight(16);
+
+        iconGrey = new FormItemIcon();
+        iconGrey.setSrc("/images/icons/availability_grey_16.png");
+        iconGrey.setWidth(16);
+        iconGrey.setHeight(16);
     }
 
     public BundleVersion getBundleVersion() {
@@ -86,10 +108,15 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
 
     @Override
     public void submitForm() {
-        icon.setShowIcons(true);
-        uploadButton.setDisabled(true);
-        markForRedraw();
-        super.submitForm();
+        Object value = bundleUploadItem.getValue();
+        if (value == null || value.toString().length() == 0) {
+            icon.setIcons(iconRed);
+            icon.setTooltip("Please select a file to upload");
+        } else {
+            icon.setIcons(iconLoading);
+            icon.setTooltip("Loading...");
+            super.submitForm();
+        }
     }
 
     @Override
@@ -117,7 +144,6 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         uploadButton = new ButtonItem("Upload");
         uploadButton.setStartRow(false);
         uploadButton.setEndRow(false);
-        uploadButton.setDisabled(true);
         uploadButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 submitForm();
@@ -127,28 +153,19 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         icon = new StaticTextItem("icon");
         icon.setStartRow(false);
         icon.setShowTitle(false);
-
-        FormItemIcon loadingIcon = new FormItemIcon();
-        loadingIcon.setSrc("ajax-loader.gif");
-        loadingIcon.setWidth(16);
-        loadingIcon.setHeight(16);
-        icon.setIcons(loadingIcon);
-        icon.setShowIcons(false);
-
-        bundleUploadItem.addChangeHandler(new ChangeHandler() {
-            public void onChange(ChangeEvent changeEvent) {
-                if (uploadResults != null) {
-                    retrievalStatus(uploadResults.booleanValue());
-                } else {
-                    uploadButton.setDisabled(false);
-                    icon.setShowIcons(false);
-                }
-            }
-        });
-
         if (uploadResults != null) {
-            retrievalStatus(uploadResults.booleanValue());
+            if (uploadResults.booleanValue()) {
+                icon.setIcons(iconGreen);
+                icon.setTooltip("Bundle file has already been uploaded");
+            } else {
+                icon.setIcons(iconRed);
+                icon.setTooltip("Bundle file upload has previously failed");
+            }
+        } else {
+            icon.setIcons(iconGrey);
+            icon.setTooltip("Select a file to upload, then click the 'Upload' button or 'Next'");
         }
+        icon.setShowIcons(true);
 
         setItems(sessionIdField, bundleVersionIdField, nameField, versionField, bundleUploadItem, uploadButton, icon);
 
@@ -156,43 +173,31 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                 String results = event.getResults();
                 if (!results.contains("Failed to upload bundle file")) {
-                    CoreGUI.getMessageCenter().notify(new Message("Uploaded bundle file successfully", Severity.Info));
-                    retrievalStatus(true);
+                    uploadResults = Boolean.TRUE;
+                    icon.setIcons(iconGreen);
+                    icon.setTooltip("Uploaded bundle file successfully");
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Uploaded bundle file successfully", results, Severity.Info));
+                    markForRedraw();
                 } else {
-                    CoreGUI.getMessageCenter().notify(new Message("Bundle file upload failed", Severity.Error));
-                    retrievalStatus(false);
+                    uploadResults = Boolean.FALSE;
+                    icon.setIcons(iconRed);
+                    icon.setTooltip("Bundle file upload failed");
+                    CoreGUI.getMessageCenter()
+                        .notify(new Message("Bundle file upload failed", results, Severity.Error));
+                    markForRedraw();
                 }
             }
         });
 
         addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
             public void onFormSubmitFailed(FormSubmitFailedEvent event) {
-                CoreGUI.getMessageCenter().notify(new Message("Bundle file upload failed", Severity.Error));
-                retrievalStatus(false);
+                uploadResults = Boolean.FALSE;
+                icon.setIcons(iconRed);
+                icon.setTooltip("Bundle file upload failed");
+                CoreGUI.getMessageCenter().notify(new Message("Bundle file upload request failed", Severity.Error));
+                markForRedraw();
             }
         });
-    }
-
-    /**
-     * Call this when the last file retrieval status is known. <code>true</code> means successful,
-     * <code>false</code> means an error occurred.
-     * @param ok status
-     */
-    private void retrievalStatus(boolean ok) {
-        uploadResults = Boolean.valueOf(ok);
-
-        if (uploadButton != null) {
-            FormItemIcon loadedIcon = new FormItemIcon();
-            if (ok) {
-                loadedIcon.setSrc("/images/icons/availability_green_16.png");
-            } else {
-                loadedIcon.setSrc("/images/icons/availability_red_16.png");
-            }
-            loadedIcon.setWidth(16);
-            loadedIcon.setHeight(16);
-            icon.setIcons(loadedIcon);
-            icon.setShowIcons(true);
-            uploadButton.setDisabled(uploadResults);
-        }
     }
 }

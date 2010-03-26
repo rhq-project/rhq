@@ -417,6 +417,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             }
 
             Repo repo = new Repo(repoName);
+            repo.setCandidate(false);
             repo.setDescription(createMe.getDescription());
 
             try {

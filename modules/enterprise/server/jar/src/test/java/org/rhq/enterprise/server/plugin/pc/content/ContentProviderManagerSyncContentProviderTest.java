@@ -200,13 +200,13 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
         Repo existingCandidateRepo = new Repo(TestContentProvider.EXISTING_CANDIDATE_REPO_NAME);
         existingCandidateRepo.setCandidate(true);
         existingCandidateRepo.addContentSource(syncSource);
-        repoManager.createCandidateRepo(overlord, existingCandidateRepo);
+        repoManager.createRepo(overlord, existingCandidateRepo);
 
         // -> Simulate a candidate repo from a previous import that will *NOT* be in this report
         Repo previousRepo = new Repo(PREVIOUS_CANDIDATE_REPO_NAME);
         previousRepo.setCandidate(true);
         previousRepo.addContentSource(syncSource);
-        repoManager.createCandidateRepo(overlord, previousRepo);
+        repoManager.createRepo(overlord, previousRepo);
 
         // Test
         // --------------------------------------------
@@ -300,6 +300,5 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
         // -> Non-existent repo
         retrievedRepos = repoManager.getRepoByName("testRepoFoo");
         assert retrievedRepos.size() == 0;
-
     }
 }

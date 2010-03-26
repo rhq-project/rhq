@@ -361,7 +361,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // set the PackageVersion's filename to the bundleFile name, it's left null by default
         packageVersion.setFileName(name);
-        entityManager.merge(packageVersion);
+        packageVersion = entityManager.merge(packageVersion);
 
         // Create the mapping between the Bundle's Repo and the BundleFile's PackageVersion
         Repo repo = bundle.getRepo();

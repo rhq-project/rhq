@@ -22,9 +22,11 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.ui.Hyperlink;
-import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
@@ -39,7 +41,7 @@ public class MenuBarView extends VLayout {
 
     private AboutModalWindow aboutModalWindow;
 
-    public static final String[] SECTIONS = {"Dashboard", "Demo", "Inventory", "Bundles", "Administration"};
+    public static final String[] SECTIONS = { "Dashboard", "Demo", "Inventory", "Bundles", "Administration" };
 
     private String selected = "Dashboard";
 
@@ -65,13 +67,11 @@ public class MenuBarView extends VLayout {
     protected void onDraw() {
         super.onDraw();
 
-
         ToolStrip topStrip = new ToolStrip();
         topStrip.setHeight(34);
         topStrip.setWidth100();
         topStrip.setBackgroundImage("header/header_bg.png");
         topStrip.setMembersMargin(20);
-
 
         this.aboutModalWindow = new AboutModalWindow();
         Img logo = new Img("header/rhq_logo_28px.png", 80, 28);
@@ -82,7 +82,6 @@ public class MenuBarView extends VLayout {
         });
         topStrip.addMember(logo);
 
-
         linksPane = new HTMLFlow();
         linksPane.setContents(setupLinks());
 
@@ -90,12 +89,15 @@ public class MenuBarView extends VLayout {
 
         topStrip.addMember(new LayoutSpacer());
 
-        topStrip.addMember(new HTMLFlow("Logged in as " + CoreGUI.getSessionSubject().getName()));
-
-        topStrip.addMember(new Hyperlink("Help", "Help"));
-        topStrip.addMember(new Hyperlink("Preferences", "Preferences"));
-        topStrip.addMember(new Hyperlink("Log Out", "LogOut"));
-
+        HLayout helpLayout = new HLayout();
+        Label loggedInAs = new Label("Logged in as " + CoreGUI.getSessionSubject().getName());
+        loggedInAs.setValign(VerticalAlignment.CENTER);
+        helpLayout.addMember(loggedInAs);
+        helpLayout.addMember(new Hyperlink("Help", "Help"));
+        helpLayout.addMember(new Hyperlink("Preferences", "Preferences"));
+        helpLayout.addMember(new Hyperlink("Log Out", "LogOut"));
+        helpLayout.setLayoutAlign(VerticalAlignment.CENTER);
+        topStrip.addMember(helpLayout);
 
         /* DynamicForm links = new DynamicForm();
                 links.setNumCols(SECTIONS.length * 2);
@@ -128,9 +130,9 @@ public class MenuBarView extends VLayout {
         markForRedraw();
     }
 
-
     private String setupLinks() {
-        StringBuilder headerString = new StringBuilder("<table style=\"height: 34px;\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
+        StringBuilder headerString = new StringBuilder(
+            "<table style=\"height: 34px;\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
 
         boolean first = true;
         for (String section : SECTIONS) {
@@ -143,7 +145,6 @@ public class MenuBarView extends VLayout {
             if (section.equals(selected)) {
                 styleClass += "Selected";
             }
-
 
             headerString.append("<td class=\"" + styleClass + "\" onclick=\"document.location='#" + section + "'\" >");
             headerString.append(section);

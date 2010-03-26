@@ -103,6 +103,9 @@ public class BundleDeployDefinition implements Serializable {
     @OneToMany(mappedBy = "bundleDeployDefinition", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleDeployment> deployments = new ArrayList<BundleDeployment>();
 
+    @OneToMany(mappedBy = "bundleDeployDefinition", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleGroupDeployment> groupDeployments = new ArrayList<BundleGroupDeployment>();
+
     public BundleDeployDefinition() {
         // for JPA use
     }
@@ -210,6 +213,19 @@ public class BundleDeployDefinition implements Serializable {
 
     public void setDeployments(List<BundleDeployment> deployments) {
         this.deployments = deployments;
+    }
+
+    public List<BundleGroupDeployment> getGroupDeployments() {
+        return groupDeployments;
+    }
+
+    public void addGroupDeployment(BundleGroupDeployment bundleGroupDeployment) {
+        this.groupDeployments.add(bundleGroupDeployment);
+        bundleGroupDeployment.setBundleDeployDefinition(this);
+    }
+
+    public void setGroupDeployments(List<BundleGroupDeployment> groupDeployments) {
+        this.groupDeployments = groupDeployments;
     }
 
     @Override

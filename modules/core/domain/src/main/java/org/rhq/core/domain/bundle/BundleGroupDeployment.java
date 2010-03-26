@@ -26,7 +26,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -58,11 +57,11 @@ public class BundleGroupDeployment implements Serializable {
     private int id;
 
     @JoinColumn(name = "GROUP_ID", referencedColumnName = "ID")
-    @ManyToOne(cascade = { CascadeType.REMOVE })
+    @ManyToOne
     private ResourceGroup group;
 
     @JoinColumn(name = "BUNDLE_DEPLOY_DEF_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    @ManyToOne
     protected BundleDeployDefinition bundleDeployDefinition;
 
     @Column(name = "STATUS", nullable = false)
@@ -81,7 +80,7 @@ public class BundleGroupDeployment implements Serializable {
     @Column(name = "MTIME", nullable = false)
     protected long modifiedTime = System.currentTimeMillis();
 
-    @OneToMany(mappedBy = "bundleGroupDeployment", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "bundleGroupDeployment", fetch = FetchType.LAZY)
     private List<BundleDeployment> bundleDeployments = new ArrayList<BundleDeployment>();
 
     // For JPA

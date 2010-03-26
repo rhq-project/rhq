@@ -458,7 +458,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // The BundleDeployment record must exist in the db before the agent request because the agent may try to
         // add History to it during immediate deployments., so create and persist it (requires a new trans).
         BundleDeployment deployment = bundleManager.createBundleDeployment(subject, deployDef.getId(), resourceId,
-            bundleGroupDeployment.getId());
+            (null == bundleGroupDeployment) ? 0 : bundleGroupDeployment.getId());
 
         // make sure the deployment contains the info required by the schedule service
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, deployDef.getBundleVersion().getId());
@@ -516,10 +516,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         /*
-         * we need to create and persist the group deployment entity in a new transaction before the rest of the
-         * processing of this method; if we try to create and attach the deployment children
-         * to the parent before this is persisted we'll get StaleStateExceptions
-         * from Hibernate because of our use of flush/clear (we're trying to update it before it actually exists)
+         * we need to create the group deployment entity in a new transaction before the rest of the
+         * processing of this method; the individual deployments need to reference it.
          */
         BundleGroupDeployment bundleGroupDeployment = new BundleGroupDeployment(subject.getName(), deployDef,
             resourceGroup);

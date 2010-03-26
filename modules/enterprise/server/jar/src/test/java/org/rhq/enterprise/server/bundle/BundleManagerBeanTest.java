@@ -40,6 +40,7 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -151,6 +152,13 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleFile.class, ((BundleFile) removeMe).getId()));
+            }
+            // remove any orphaned bgds
+            q = em.createQuery("SELECT bgd FROM BundleGroupDeployment bgd WHERE bgd.bundleDeployDefinition.name LIKE '"
+                + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(BundleGroupDeployment.class, ((BundleGroupDeployment) removeMe).getId()));
             }
             // remove any orphaned bds
             q = em.createQuery("SELECT bd FROM BundleDeployment bd WHERE bd.bundleDeployDefinition.name LIKE '"

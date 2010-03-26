@@ -41,6 +41,7 @@ public class BundleSummaryStep implements WizardStep {
 
         DynamicForm form = new DynamicForm();
         form.setNumCols(2);
+        form.setMargin(20);
 
         StaticTextItem bundleTypeLabel = new StaticTextItem("bundleType", "Type");
         bundleTypeLabel.setTitleAlign(Alignment.LEFT);

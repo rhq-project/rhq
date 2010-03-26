@@ -525,6 +525,42 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     }
 
     @Test(enabled = TESTS_ENABLED)
+    public void testAddBundleFilesToDifferentBundles() throws Exception {
+        Bundle b1 = createBundle("one");
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
+        assertNotNull(bv1);
+        BundleFile b1f1 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-file1", "1.0",
+            null, "Bundle #1 File # 1".getBytes(), false);
+
+        // create a second bundle but create file of the same name as above
+        Bundle b2 = createBundle("two");
+        assertNotNull(b2);
+        BundleVersion bv2 = createBundleVersion(b2.getName(), "1.0", b2);
+        assertNotNull(bv2);
+        BundleFile b2f1 = bundleManager.addBundleFileViaByteArray(overlord, bv2.getId(), TEST_PREFIX + "-file1", "1.0",
+            null, "Bundle #2 File # 1".getBytes(), false);
+
+        BundleFileCriteria bfc = new BundleFileCriteria();
+        bfc.addFilterBundleVersionId(bv1.getId());
+        PageList<BundleFile> bundleFiles = bundleManager.findBundleFilesByCriteria(overlord, bfc);
+        assert bundleFiles.size() == 1 : bundleFiles;
+        assert bundleFiles.get(0).getId() == b1f1.getId() : bundleFiles;
+
+        bfc = new BundleFileCriteria();
+        bfc.addFilterBundleVersionId(bv2.getId());
+        bundleFiles = bundleManager.findBundleFilesByCriteria(overlord, bfc);
+        assert bundleFiles.size() == 1 : bundleFiles;
+        assert bundleFiles.get(0).getId() == b2f1.getId() : bundleFiles;
+
+        assert b1f1.getId() != b2f1.getId() : "should have been different bundle files";
+        assert b1f1.getPackageVersion().getId() != b2f1.getPackageVersion().getId() : "should be different PV";
+        assert b1f1.getPackageVersion().getGeneralPackage().getId() == b2f1.getPackageVersion().getGeneralPackage()
+            .getId() : "package IDs should be different";
+        assert b1f1.getPackageVersion().getGeneralPackage().equals(b2f1.getPackageVersion().getGeneralPackage()) : "should be different packages";
+    }
+
+    @Test(enabled = TESTS_ENABLED)
     public void testCreateBundleDeploymentDef() throws Exception {
         Bundle b1 = createBundle("one");
         assertNotNull(b1);

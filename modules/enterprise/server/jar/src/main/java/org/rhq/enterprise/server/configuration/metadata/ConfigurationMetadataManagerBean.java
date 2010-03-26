@@ -50,8 +50,11 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    public void updateConfigurationDefinition(ConfigurationDefinition newDefinition,
+    public ConfigurationDefinitionUpdateReport updateConfigurationDefinition(ConfigurationDefinition newDefinition,
         ConfigurationDefinition existingDefinition) {
+
+        ConfigurationDefinitionUpdateReport updateReport = new ConfigurationDefinitionUpdateReport(existingDefinition);
+
         /*
          * handle grouped and ungrouped properties separately. for ungrouped, we don't need to care about the group, but
          * for the grouped ones we need to start at group level and then look at the properties. This is done below.
@@ -68,6 +71,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                     updatePropertyDefinition(existingProp, newProperty);
                 } else {
                     existingDefinition.put(newProperty);
+                    updateReport.addNewPropertyDefinition(newProperty);
                 }
             }
 
@@ -123,6 +127,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                     updatePropertyDefinition(existingProperty, nDef);
                 } else {
                     existingDefinition.put(nDef);
+                    updateReport.addNewPropertyDefinition(nDef);
                 }
             }
 
@@ -191,6 +196,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         }
 
         entityManager.flush();
+
+        return updateReport;
     }
 
     /**

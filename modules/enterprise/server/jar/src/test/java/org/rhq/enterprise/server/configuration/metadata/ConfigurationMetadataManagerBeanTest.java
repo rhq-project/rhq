@@ -84,11 +84,7 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
     private ConfigurationDefinition createAndSaveConfigurationDef(String file) throws Exception {
         ConfigurationDefinition configurationDef = loadPluginConfigurationFromFile(file);
-
         entityMgr.persist(configurationDef);
-        entityMgr.flush();
-        entityMgr.clear();
-
         return configurationDef;
     }
 
@@ -118,7 +114,7 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
     void assertPropertyDefinitionMatches(String msg, PropertyDefinitionSimple expected,
             PropertyDefinitionSimple actual) {
-        AssertUtils.assertPropertiesMatch(expected, actual, msg);
+        AssertUtils.assertPropertiesMatch(msg, expected, actual, "id", "configurationDefinition");
     }
 
     @Test
@@ -136,6 +132,14 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
         PropertyDefinitionSimple actual = originalConfigurationDef.getPropertyDefinitionSimple("foo");
 
         assertPropertyDefinitionMatches("Existing ungrouped property defs should be updated", expected, actual);
+    }
+
+    @Test
+    public void propertyDefNotInNewConfigurationDefShouldBeRemovedFromConfigurationDef() throws Exception {
+        assertNull(
+            "A property def in the original configuration def that is removed in the new configuration def should be deleted", 
+            originalConfigurationDef.getPropertyDefinitionSimple("propertyToBeRemoved")
+        );
     }
 
 }

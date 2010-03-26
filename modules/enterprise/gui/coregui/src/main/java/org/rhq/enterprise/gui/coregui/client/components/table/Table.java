@@ -83,6 +83,10 @@ public class Table extends VLayout {
 
     private ArrayList<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
 
+    public Table() {
+        this(null, null, null, null, true);
+    }
+
     public Table(String tableTitle) {
         this(tableTitle, null, null, null, true);
     }
@@ -100,10 +104,11 @@ public class Table extends VLayout {
     }
 
     public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
-        this(tableTitle,criteria,sortSpecifiers,excludedFieldNames,true);
+        this(tableTitle, criteria, sortSpecifiers, excludedFieldNames, true);
     }
+
     public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames,
-                 boolean autoFetchData) {
+        boolean autoFetchData) {
         super();
 
         setWidth100();
@@ -111,11 +116,7 @@ public class Table extends VLayout {
 
         // Title
         title = new HTMLFlow();
-        title.setWidth100();
-        title.setHeight(35);
-        title.setContents(tableTitle);
-        title.setPadding(4);
-        title.setStyleName("HeaderLabel");
+        setTableTitle(tableTitle);
 
         // Grid
         listGrid = new ListGrid();
@@ -169,7 +170,8 @@ public class Table extends VLayout {
                 public void onClick(ClickEvent clickEvent) {
                     if (tableAction.confirmMessage != null) {
 
-                        String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid.getSelection().length));
+                        String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
+                            .getSelection().length));
 
                         SC.ask(message, new BooleanCallback() {
                             public void execute(Boolean confirmed) {
@@ -213,9 +215,8 @@ public class Table extends VLayout {
             }
         });
 
-
         // TODO GH: This doesn't yet work as desired to force the fields to fit to the table when you resize one of them.
-        if (false) {  // If Force Fit
+        if (false) { // If Force Fit
             listGrid.addDataArrivedHandler(new DataArrivedHandler() {
                 public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                     for (ListGridField f : listGrid.getFields()) {
@@ -273,14 +274,30 @@ public class Table extends VLayout {
     private ArrayList<Integer> fieldSizes = new ArrayList<Integer>();
     private boolean autoSizing = false;
 
-
     public void refresh(Criteria criteria) {
         this.listGrid.setCriteria(criteria);
         this.listGrid.markForRedraw();
     }
 
-    public void setTableTitle(String title) {
-        this.title.setContents(title);
+    public void setTableTitle(String titleString) {
+        if (titleString == null) {
+            titleString = "";
+        }
+        if (titleString.length() > 0) {
+            title.setWidth100();
+            title.setHeight(35);
+            title.setContents(titleString);
+            title.setPadding(4);
+            title.setStyleName("HeaderLabel");
+        } else {
+            title.setWidth100();
+            title.setHeight(0);
+            title.setContents(null);
+            title.setPadding(0);
+            title.setStyleName("normal");
+        }
+
+        title.markForRedraw();
     }
 
     public void setDataSource(RPCDataSource dataSource) {
@@ -299,7 +316,8 @@ public class Table extends VLayout {
         this.addTableAction(title, null, null, tableAction);
     }
 
-    public void addTableAction(String title, SelectionEnablement enablement, String confirmation, TableAction tableAction) {
+    public void addTableAction(String title, SelectionEnablement enablement, String confirmation,
+        TableAction tableAction) {
         if (enablement == null) {
             enablement = DEFAULT_SELECTION_ENABLEMENT;
         }
@@ -313,26 +331,25 @@ public class Table extends VLayout {
         for (TableActionInfo tableAction : tableActions) {
             boolean enabled;
             switch (tableAction.enablement) {
-                case ALWAYS:
-                    enabled = true;
-                    break;
-                case ANY:
-                    enabled = (count >= 1);
-                    break;
-                case SINGLE:
-                    enabled = (count == 1);
-                    break;
-                case MULTIPLE:
-                    enabled = (count > 1);
-                    break;
-                default:
-                    throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
+            case ALWAYS:
+                enabled = true;
+                break;
+            case ANY:
+                enabled = (count >= 1);
+                break;
+            case SINGLE:
+                enabled = (count == 1);
+                break;
+            case MULTIPLE:
+                enabled = (count > 1);
+                break;
+            default:
+                throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
             }
             tableAction.actionButton.setDisabled(!enabled);
         }
         this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
     }
-
 
     // -------------- Inner utility class -------------
 

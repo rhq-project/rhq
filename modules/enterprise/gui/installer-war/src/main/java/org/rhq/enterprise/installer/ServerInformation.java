@@ -529,7 +529,7 @@ public class ServerInformation {
         return deployDirectory;
     }
 
-    protected File getBinDirectory() {
+    private File getBinDirectory() {
         if (binDirectory == null) {
             MBeanServer mbs = getMBeanServer();
             ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");

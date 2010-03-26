@@ -768,17 +768,11 @@ public class ConfigurationBean {
             Class clazz = SecureIdentityLoginModule.class;
             Method m = clazz.getDeclaredMethod("encode",String.class);
             m.setAccessible(true);
-            String res = (String) m.invoke(lm,"rhqadmin");
+            String res = (String) m.invoke(lm,password);
             return res;
         } catch (Exception e) {
             throw new Exception("Encoding db password failed: " , e);
         }
-    }
-
-    private boolean isWindows() {
-        String osName = System.getProperty("os.name").toLowerCase(Locale.US);
-
-        return osName.indexOf("windows") > -1;
     }
 
     private Properties getConfigurationAsProperties(List<PropertyItemWithValue> config) {

@@ -26,7 +26,7 @@
  * said platform.
  */
 
-var TestsEnabled = false;
+var TestsEnabled = true;
 
 var bundleName = 'testScriptBundle';
 
@@ -83,9 +83,9 @@ function testDeployment() {
 }
 
 function testGroupDeployment() {
-//   if ( !TestsEnabled ) {
-//      return;
-//   }
+   if ( !TestsEnabled ) {
+      return;
+   }
    
    // delete the test bundle if it exists
    cleanupTestBundle();

@@ -136,6 +136,7 @@ public class SelectBundleVersionStep implements WizardStep {
                     radioGroupItem.redraw();
 
                     selectVersionItem.setValueMap(selectVersionValues);
+                    selectVersionItem.setValue(latestVersion.getVersion());
                     selectVersionItem.redraw();
 
                     form.markForRedraw();

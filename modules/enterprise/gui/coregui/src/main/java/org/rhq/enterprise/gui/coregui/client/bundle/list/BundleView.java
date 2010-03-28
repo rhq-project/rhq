@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.coregui.client.bundle.list;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.SelectionAppearance;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -32,6 +34,7 @@ import com.smartgwt.client.widgets.tab.TabSet;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 public class BundleView extends VLayout {
 
@@ -41,6 +44,7 @@ public class BundleView extends VLayout {
     private HeaderLabel headerLabel;
     private StaticTextItem descriptionItem;
     private StaticTextItem latestVersionItem;
+    private Table bundleVersionsTable;
 
     public BundleView() {
         super();
@@ -77,11 +81,30 @@ public class BundleView extends VLayout {
     }
 
     private Tab createDeploymentsTab() {
-        return new Tab("Deployments");
+        Tab deploymentsTab = new Tab("Deployments");
+        return deploymentsTab;
     }
 
     private Tab createVersionsTab() {
-        return new Tab("Versions");
+        Tab versionsTab = new Tab("Versions");
+
+        bundleVersionsTable = new Table();
+        bundleVersionsTable.setHeight100();
+
+        BundleVersionDataSource bundleVersionsDataSource = new BundleVersionDataSource();
+        bundleVersionsTable.setDataSource(bundleVersionsDataSource);
+
+        bundleVersionsTable.getListGrid().getField("id").setWidth("60");
+        bundleVersionsTable.getListGrid().getField("name").setWidth("25%");
+        bundleVersionsTable.getListGrid().getField("version").setWidth("10%");
+        bundleVersionsTable.getListGrid().getField("fileCount").setWidth("10%");
+        bundleVersionsTable.getListGrid().getField("description").setWidth("*");
+
+        bundleVersionsTable.getListGrid().setSelectionType(SelectionStyle.NONE);
+        bundleVersionsTable.getListGrid().setSelectionAppearance(SelectionAppearance.ROW_STYLE);
+
+        versionsTab.setPane(bundleVersionsTable);
+        return versionsTab;
     }
 
     private Tab createSummaryTab() {
@@ -109,21 +132,39 @@ public class BundleView extends VLayout {
     }
 
     public void viewRecord(Record record) {
-        final BundleWithLatestVersionComposite object;
-        object = (BundleWithLatestVersionComposite) record.getAttributeAsObject("object");
+        if (record == null) {
+            viewNone();
+        } else {
+            final BundleWithLatestVersionComposite object;
+            object = (BundleWithLatestVersionComposite) record.getAttributeAsObject("object");
 
-        if (bundleBeingViewed != object.getBundleId()) {
-            headerLabel.setContents(object.getBundleName());
-            latestVersionItem.setValue(object.getLatestVersion());
-            descriptionItem.setValue(object.getBundleDescription());
-        }
+            if (object == null) {
+                viewNone();
+            } else {
+                if (bundleBeingViewed != object.getBundleId()) {
+                    bundleBeingViewed = object.getBundleId();
 
-        try {
-            message.hide();
-            canvas.show();
-            markForRedraw();
-        } catch (Throwable t) {
-            CoreGUI.getErrorHandler().handleError("Cannot view bundle record", t);
+                    // summary tab
+                    headerLabel.setContents(object.getBundleName());
+                    latestVersionItem.setValue(object.getLatestVersion());
+                    descriptionItem.setValue(object.getBundleDescription());
+
+                    // versions tab
+                    BundleVersionDataSource bvDataSource;
+                    bvDataSource = (BundleVersionDataSource) bundleVersionsTable.getDataSource();
+                    bvDataSource.setBundleId(bundleBeingViewed);
+                    bvDataSource.fetchData();
+                    bundleVersionsTable.getListGrid().invalidateCache(); // TODO: is there a better way to refresh?
+                }
+
+                try {
+                    message.hide();
+                    canvas.show();
+                    markForRedraw();
+                } catch (Throwable t) {
+                    CoreGUI.getErrorHandler().handleError("Cannot view bundle record", t);
+                }
+            }
         }
     }
 

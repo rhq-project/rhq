@@ -501,6 +501,7 @@
         <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>        
         <column name="BUNDLE_TYPE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_TYPE"/>
         <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>        
+        <column name="PACKAGE_TYPE_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_TYPE"/>        
 
         <!--  This index is for constraint, not performance -->    
         <index name="RHQ_BUNDLE_UNIQUE" unique="true">

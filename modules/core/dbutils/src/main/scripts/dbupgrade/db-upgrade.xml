@@ -2852,6 +2852,7 @@
 
             <schemaSpec version="2.78.1">
                <schema-addColumn   table="RHQ_BUNDLE" column="REPO_ID" columnType="INTEGER" />
+               <schema-alterColumn table="RHQ_BUNDLE" column="REPO_ID" nullable="FALSE" />               
                <schema-directSQL>
                    <statement desc="Creating RHQ_BUNDLE foreign key relation to RHQ_REPO">
                        ALTER TABLE RHQ_BUNDLE
@@ -2922,13 +2923,13 @@
               <schema-directSQL>
                   <statement desc="Creating RHQ_BUNDLE_GROUP_DEPLOY foreign key relation to RHQ_RESOURCE_GROUP">
                       ALTER TABLE RHQ_BUNDLE_GROUP_DEPLOY
-                      ADD CONSTRAINT RHQ_RESOURCE_GROUP_FK
+                      ADD CONSTRAINT RHQ_RESOURCE_GROUP_ID_FK
                       FOREIGN KEY (GROUP_ID)
                       REFERENCES RHQ_RESOURCE_GROUP (ID)
                   </statement>
                  <statement desc="Creating RHQ_BUNDLE_GROUP_DEPLOY foreign key relation to RHQ_BUNDLE_DEPLOY_DEF">
                      ALTER TABLE RHQ_BUNDLE_GROUP_DEPLOY
-                     ADD CONSTRAINT RHQ_BUNDLE_DEPLOY_DEF_FK
+                     ADD CONSTRAINT RHQ_BUNDLE_DEPLOY_DEF_ID_FK
                      FOREIGN KEY (BUNDLE_DEPLOY_DEF_ID)
                      REFERENCES RHQ_BUNDLE_DEPLOY_DEF (ID)
                  </statement>                 
@@ -2938,7 +2939,7 @@
               <schema-directSQL>
                   <statement desc="Creating RHQ_BUNDLE_DEPLOY foreign key relation to RHQ_BUNDLE_GROUP_DEPLOY">
                       ALTER TABLE RHQ_BUNDLE_DEPLOY
-                      ADD CONSTRAINT RHQ_BUNDLE_GROUP_DEPLOY_FK
+                      ADD CONSTRAINT RHQ_BUNDLE_GROUP_DEPLOY_ID_FK
                       FOREIGN KEY (BUNDLE_GROUP_DEPLOY_ID)
                       REFERENCES RHQ_BUNDLE_GROUP_DEPLOY (ID)
                   </statement>
@@ -2948,6 +2949,19 @@
            <schemaSpec version="2.78.6">
               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="STATUS" columnType="VARCHAR2" precision="16" />
               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="STATUS" nullable="FALSE" />
+           </schemaSpec>
+
+           <schemaSpec version="2.78.7">
+              <schema-addColumn   table="RHQ_BUNDLE" column="PACKAGE_TYPE_ID" columnType="INTEGER" />
+              <schema-alterColumn table="RHQ_BUNDLE" column="PACKAGE_TYPE_ID" nullable="FALSE" />
+              <schema-directSQL>
+                  <statement desc="Creating RHQ_BUNDLE foreign key relation to RHQ_PACKAGE_TYPE">
+                      ALTER TABLE RHQ_BUNDLE
+                      ADD CONSTRAINT RHQ_PACKAGE_TYPE_ID_FK
+                      FOREIGN KEY (PACKAGE_TYPE_ID)
+                      REFERENCES RHQ_PACKAGE_TYPE (ID)
+                  </statement>
+              </schema-directSQL>
            </schemaSpec>
 
            <schemaSpec version="2.79">

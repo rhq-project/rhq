@@ -36,11 +36,14 @@ public class BundleCriteria extends Criteria {
 
     private Integer filterId;
     private Integer filterBundleTypeId; // needs override
-    private String filterBundleTypeName; // needs override
+    private String filterBundleTypeName; // needs override    
     private String filterDescription;
     private String filterName;
+    private Integer filterPackageTypeId; // needs override
+    private String filterPackageTypeName; // needs override    
 
     private boolean fetchBundleVersions;
+    private boolean fetchPackageType;
     private boolean fetchRepo;
 
     private PageOrdering sortName;
@@ -49,6 +52,9 @@ public class BundleCriteria extends Criteria {
     public BundleCriteria() {
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
         filterOverrides.put("bundleTypeName", "bundleType.name like ?");
+        filterOverrides.put("packageTypeId", "packageType.id = ?");
+        filterOverrides.put("packageTypeName", "packageType.name like ?");
+
     }
 
     @Override
@@ -76,8 +82,20 @@ public class BundleCriteria extends Criteria {
         this.filterName = filterName;
     }
 
+    public void addFilterPackageTypeId(Integer filterPackageTypeId) {
+        this.filterPackageTypeId = filterPackageTypeId;
+    }
+
+    public void addFilterPackageTypeName(String filterPackageTypeName) {
+        this.filterPackageTypeName = filterPackageTypeName;
+    }
+
     public void fetchBundleVersions(boolean fetchBundleVersions) {
         this.fetchBundleVersions = fetchBundleVersions;
+    }
+
+    public void fetchPackageType(boolean fetchPackageType) {
+        this.fetchPackageType = fetchPackageType;
     }
 
     public void fetchRepo(boolean fetchRepo) {

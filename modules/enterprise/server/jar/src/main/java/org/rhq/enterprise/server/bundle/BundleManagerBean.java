@@ -58,6 +58,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
@@ -143,13 +144,20 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         Bundle bundle = new Bundle(name, bundleType);
         bundle.setDescription(description);
 
-        // create and add the required Repo. the Repo is a detached object ehich helps in its eventual
+        // create and add the required Repo. the Repo is a detached object which helps in its eventual
         // removal.
         Repo repo = new Repo(name);
         repo.setCandidate(false);
         repo.setSyncSchedule(null);
         repo = repoManager.createRepo(subject, repo);
         bundle.setRepo(repo);
+
+        // add the required PackageType. the PackageType is an attached object which helps in cascade removal
+        // of packages in the bundle's repo.
+        ResourceType resourceType = entityManager.find(ResourceType.class, bundleType.getResourceType().getId());
+        PackageType packageType = new PackageType(name, resourceType);
+        packageType.setCategory(PackageCategory.BUNDLE);
+        bundle.setPackageType(packageType);
 
         log.info("Creating bundle: " + bundle);
         entityManager.persist(bundle);
@@ -349,7 +357,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // Create the PackageVersion the BundleFile is tied to.  This implicitly creates the
         // Package for the PackageVersion.
         Bundle bundle = bundleVersion.getBundle();
-        PackageType packageType = getBundleTypePackageType(bundle.getBundleType());
+        PackageType packageType = bundle.getPackageType();
         architecture = (null == architecture) ? contentManager.getNoArchitecture() : architecture;
         if (architecture.getId() == 0) {
             Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
@@ -422,15 +430,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         entityManager.persist(bundleFile);
 
         return bundleFile;
-    }
-
-    private PackageType getBundleTypePackageType(BundleType bundleType) {
-
-        Query packageTypeQuery = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
-        packageTypeQuery.setParameter("typeId", bundleType.getResourceType().getId());
-        packageTypeQuery.setParameter("name", bundleType.getName());
-
-        return (PackageType) packageTypeQuery.getSingleResult();
     }
 
     public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)

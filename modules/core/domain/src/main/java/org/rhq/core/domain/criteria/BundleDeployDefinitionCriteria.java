@@ -23,8 +23,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
-
 /**
  * @author Jay Shaughnessy
  */
@@ -42,12 +40,13 @@ public class BundleDeployDefinitionCriteria extends Criteria {
     private boolean fetchBundleVersion;
     private boolean fetchConfiguration;
     private boolean fetchDeployments;
+    private boolean fetchGroupDeployments;
 
     public BundleDeployDefinitionCriteria() {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<?> getPersistentClass() {
         return BundleDeployDefinitionCriteria.class;
     }
 
@@ -77,6 +76,10 @@ public class BundleDeployDefinitionCriteria extends Criteria {
 
     public void fetchDeployments(boolean fetchDeployments) {
         this.fetchDeployments = fetchDeployments;
+    }
+
+    public void fetchGroupDeployments(boolean fetchGroupDeployments) {
+        this.fetchGroupDeployments = fetchGroupDeployments;
     }
 
 }

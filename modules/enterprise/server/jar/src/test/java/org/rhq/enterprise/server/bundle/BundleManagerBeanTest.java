@@ -134,13 +134,9 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
             // clean up any tests that don't already clean up after themselves
 
-            q = em.createQuery("SELECT bdh FROM BundleDeploymentHistory bdh ");//WHERE bdh.name LIKE '" + TEST_PREFIX + "%'");
-            doomed = q.getResultList();
-            for (Object removeMe : doomed) {
-                em.remove(em.getReference(BundleDeploymentHistory.class, ((BundleDeploymentHistory) removeMe).getId()));
-            }
-
-            // remove bundleversions which cascade remove bundlefiles and bundledeploydefs  
+            // remove bundleversions which cascade remove bundlefiles and bundledeploydefs
+            // bundledeploydefs cascade remove bundledeployments and bundlegroupdeployments 
+            // bundledeployments cascade remove bundledeploymenthistory            
             q = em.createQuery("SELECT bv FROM BundleVersion bv WHERE bv.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
@@ -153,12 +149,11 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleFile.class, ((BundleFile) removeMe).getId()));
             }
-            // remove any orphaned bgds
-            q = em.createQuery("SELECT bgd FROM BundleGroupDeployment bgd WHERE bgd.bundleDeployDefinition.name LIKE '"
-                + TEST_PREFIX + "%'");
+            // remove any orphaned deployment history 
+            q = em.createQuery("SELECT bdh FROM BundleDeploymentHistory bdh ");//WHERE bdh.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
-                em.remove(em.getReference(BundleGroupDeployment.class, ((BundleGroupDeployment) removeMe).getId()));
+                em.remove(em.getReference(BundleDeploymentHistory.class, ((BundleDeploymentHistory) removeMe).getId()));
             }
             // remove any orphaned bds
             q = em.createQuery("SELECT bd FROM BundleDeployment bd WHERE bd.bundleDeployDefinition.name LIKE '"
@@ -167,17 +162,27 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleDeployment.class, ((BundleDeployment) removeMe).getId()));
             }
+            // remove any orphaned bgds
+            q = em.createQuery("SELECT bgd FROM BundleGroupDeployment bgd WHERE bgd.bundleDeployDefinition.name LIKE '"
+                + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(BundleGroupDeployment.class, ((BundleGroupDeployment) removeMe).getId()));
+            }
             // remove any orphaned bdds
             q = em.createQuery("SELECT bdd FROM BundleDeployDefinition bdd WHERE bdd.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleDeployDefinition.class, ((BundleDeployDefinition) removeMe).getId()));
             }
-            // remove packages which cascade remove packageversions
-            q = em.createQuery("SELECT p FROM Package p WHERE p.name LIKE '" + TEST_PREFIX + "%'");
+
+            // remove bundles which cascade remove repos and packageTypes
+            // packagetypes cascade remove packages
+            // package cascade remove packageversions            
+            q = em.createQuery("SELECT b FROM Bundle b WHERE b.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
-                em.remove(em.getReference(Package.class, ((Package) removeMe).getId()));
+                em.remove(em.getReference(Bundle.class, ((Bundle) removeMe).getId()));
             }
             em.flush();
             // remove any orphaned pvs
@@ -187,20 +192,26 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(PackageVersion.class, ((PackageVersion) removeMe).getId()));
             }
-            // remove bundles which cascade remove repos            
-            q = em.createQuery("SELECT b FROM Bundle b WHERE b.name LIKE '" + TEST_PREFIX + "%'");
+            // remove any oprphaned packages
+            q = em.createQuery("SELECT p FROM Package p WHERE p.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
-                em.remove(em.getReference(Bundle.class, ((Bundle) removeMe).getId()));
+                em.remove(em.getReference(Package.class, ((Package) removeMe).getId()));
             }
-            em.flush();
+            // remove any orphaned packagetypes            
+            q = em.createQuery("SELECT pt FROM PackageType pt WHERE pt.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(PackageType.class, ((PackageType) removeMe).getId()));
+            }
             // remove any orphaned repos            
             q = em.createQuery("SELECT r FROM Repo r WHERE r.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(Repo.class, ((Repo) removeMe).getId()));
             }
-            // remove ResourceTypes which cascade remove BundleTypes and PackageTypes            
+
+            // remove ResourceTypes which cascade remove BundleTypes
             q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
@@ -213,12 +224,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleType.class, ((BundleType) removeMe).getId()));
             }
-            // remove any orphaned packagetypes            
-            q = em.createQuery("SELECT pt FROM PackageType pt WHERE pt.name LIKE '" + TEST_PREFIX + "%'");
-            doomed = q.getResultList();
-            for (Object removeMe : doomed) {
-                em.remove(em.getReference(PackageType.class, ((PackageType) removeMe).getId()));
-            }
+
             // remove Agents left over from test resources            
             q = em.createQuery("SELECT a FROM Agent a WHERE a.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
@@ -526,7 +532,9 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
     @Test(enabled = TESTS_ENABLED)
     public void testAddBundleFilesToDifferentBundles() throws Exception {
-        Bundle b1 = createBundle("one");
+        // create a bundle type to use for both bundles.
+        BundleType bt = createBundleType("one");
+        Bundle b1 = createBundle("one", bt);
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
         assertNotNull(bv1);
@@ -534,7 +542,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             null, "Bundle #1 File # 1".getBytes(), false);
 
         // create a second bundle but create file of the same name as above
-        Bundle b2 = createBundle("two");
+        Bundle b2 = createBundle("two", bt);
         assertNotNull(b2);
         BundleVersion bv2 = createBundleVersion(b2.getName(), "1.0", b2);
         assertNotNull(bv2);
@@ -743,7 +751,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     private BundleType createBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-type-" + name;
         ResourceType rt = createResourceType(name);
-        PackageType pt = createPackageType(name, rt);
         BundleType bt = bundleManager.createBundleType(overlord, fullName, rt.getId());
 
         assert bt.getId() > 0;
@@ -798,20 +805,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         em.close();
         txMgr.commit();
         return rt;
-    }
-
-    private PackageType createPackageType(String name, ResourceType rt) throws Exception {
-        // the package type is named the same as the bundle type
-        final String fullName = TEST_PREFIX + "-type-" + name;
-        PackageType pt = new PackageType(fullName, rt);
-
-        TransactionManager txMgr = getTransactionManager();
-        txMgr.begin();
-        EntityManager em = getEntityManager();
-        em.persist(pt);
-        em.close();
-        txMgr.commit();
-        return pt;
     }
 
     // lifted from ResourceManagerBeanTest

@@ -256,6 +256,15 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return findSchedulesByResourcesAndDefinitions(subject, resourceIds, new int[] { definitionId });
     }
 
+    public List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionIds(int[] resourceIds, 
+            int[] definitionIds) {
+        Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
+        query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));
+        query.setParameter("resourceIds", ArrayUtils.wrapInList(resourceIds));
+        List<MeasurementSchedule> results = query.getResultList();
+        return results;
+    }
+
     @SuppressWarnings("unchecked")
     private List<MeasurementSchedule> findSchedulesByResourcesAndDefinitions(Subject subject, int[] resourceIds,
         int[] definitionIds) {
@@ -266,12 +275,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             }
         }
 
-        Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
-        query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));
-        query.setParameter("resourceIds", ArrayUtils.wrapInList(resourceIds));
-        List<MeasurementSchedule> results = query.getResultList();
-        return results;
+        return findSchedulesByResourceIdsAndDefinitionIds(resourceIds, definitionIds);
     }
+
 
     /**
      * Find MeasurementSchedules that are attached to a certain definition and a resource

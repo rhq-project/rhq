@@ -52,6 +52,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.common.PerformanceMonitorInterceptor;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
@@ -95,6 +97,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     private ResourceGroupManagerLocal resourceGroupManager;
     @EJB
     private MeasurementViewManagerLocal viewManager;
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
 
     public List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject,
         int autoGroupParentResourceId, int autoGroupChildResourceTypeId, int[] measurementDefinitionIds, long begin,
@@ -449,15 +453,18 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             return data;
         }
 
-        // TODO if cannot view resources throw permission exception
+        if (!authorizationManager.canViewResources(subject, ArrayUtils.wrapInList(resourceIds))) {
+            throw new PermissionException("User[" + subject.getName() + "] does not have permission to view metric " +
+                "schedules for resource ids, " + ArrayUtils.wrapInList(resourceIds));
+        }
 
         MeasurementDataManagerUtility dataUtil = MeasurementDataManagerUtility.getInstance(rhqDs);
 
         // Loop over the definitions, find matching schedules and create a MetricDisplaySummary for each definition
         for (int definitionId : measurementDefinitionIds) {
             int collecting = 0;
-            List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionId(subject,
-                resourceIds, definitionId);
+            List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionIds(resourceIds,
+                new int[] {definitionId});
             int[] scheduleIds = new int[schedules.size()];
             for (int i = 0; i < schedules.size(); i++) {
                 MeasurementSchedule schedule = schedules.get(i);

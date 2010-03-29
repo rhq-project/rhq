@@ -79,7 +79,6 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.HibernateDetachUtility;
@@ -248,12 +247,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // parse the recipe (validation occurs here) and get the config def and list of files
         BundleType bundleType = bundle.getBundleType();
-        BundleServerPluginFacet bp = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
-            .getBundleServerPluginFacet(bundleType.getName());
         RecipeParseResults results;
 
         try {
-            results = bp.parseRecipe(recipe);
+            results = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager().parseRecipe(
+                bundleType.getName(), recipe);
         } catch (Exception e) {
             // ensure that we throw a runtime exception to force a rollback
             throw new RuntimeException("Failed to parse recipe", e);
@@ -574,9 +572,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // parse the recipe (validation occurs here) and get the config def and list of files
         BundleType bundleType = bundleVersion.getBundle().getBundleType();
-        BundleServerPluginFacet bp = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
-            .getBundleServerPluginFacet(bundleType.getName());
-        RecipeParseResults parseResults = bp.parseRecipe(bundleVersion.getRecipe());
+        RecipeParseResults parseResults = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
+            .parseRecipe(bundleType.getName(), bundleVersion.getRecipe());
 
         Set<String> result = parseResults.getBundleFileNames();
 
@@ -613,9 +610,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // parse the recipe (validation occurs here) and get the config def and list of files
         BundleType bundleType = bundleVersion.getBundle().getBundleType();
-        BundleServerPluginFacet bp = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
-            .getBundleServerPluginFacet(bundleType.getName());
-        RecipeParseResults parseResults = bp.parseRecipe(bundleVersion.getRecipe());
+        RecipeParseResults parseResults = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
+            .parseRecipe(bundleType.getName(), bundleVersion.getRecipe());
 
         Set<String> filenames = parseResults.getBundleFileNames();
         Map<String, Boolean> result = new HashMap<String, Boolean>(filenames.size());

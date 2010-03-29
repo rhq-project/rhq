@@ -374,32 +374,62 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test
-    public void testCanViewResources() throws Exception {
+    public void testCanViewResourcesWhenSubjectIsInRole() throws Exception {
         getTransactionManager().begin();
         EntityManager entityMgr = getEntityManager();
 
         try {
             Subject subject = SessionTestHelper.createNewSubject(entityMgr, "testSubject");
-            Subject anotherSubject = SessionTestHelper.createNewSubject(entityMgr, "anotherTestSubject");
 
             Role roleWithSubject = SessionTestHelper.createNewRoleForSubject(entityMgr, subject, "role with subject");
             roleWithSubject.addPermission(Permission.VIEW_RESOURCE);
-
-            Role roleWithoutSubject = SessionTestHelper.createNewRoleForSubject(entityMgr, anotherSubject,
-                "role without subject");
 
             ResourceGroup group = SessionTestHelper.createNewCompatibleGroupForRole(entityMgr, roleWithSubject,
                 "accessible group");
 
             Resource r1 = SessionTestHelper.createNewResourceForGroup(entityMgr, group, "r1");
+            Resource r2 = SessionTestHelper.createNewResourceForGroup(entityMgr, group, "r2");
 
             entityMgr.flush();
 
-            List<Integer> resourceIds = Arrays.asList(r1.getId());
+            List<Integer> resourceIds = Arrays.asList(r1.getId(), r2.getId());
 
             assertTrue(
                 "The subject should have permission to view the resources",
                 authorizationManager.canViewResources(subject, resourceIds)
+            );
+
+        }
+        finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
+    public void testCanViewResourcesWhenSubjectIsNotInRole() throws Exception {
+        getTransactionManager().begin();
+        EntityManager entityMgr = getEntityManager();
+
+        try {
+            Subject subject = SessionTestHelper.createNewSubject(entityMgr, "testSubject");
+            Subject subjectNotInRole = SessionTestHelper.createNewSubject(entityMgr, "subjectNotInRole");
+
+            Role roleWithSubject = SessionTestHelper.createNewRoleForSubject(entityMgr, subject, "role with subject");
+            roleWithSubject.addPermission(Permission.VIEW_RESOURCE);
+
+            ResourceGroup group = SessionTestHelper.createNewCompatibleGroupForRole(entityMgr, roleWithSubject,
+                "accessible group");
+
+            Resource r1 = SessionTestHelper.createNewResourceForGroup(entityMgr, group, "r1");
+            Resource r2 = SessionTestHelper.createNewResourceForGroup(entityMgr, group, "r2");
+
+            entityMgr.flush();
+
+            List<Integer> resourceIds = Arrays.asList(r1.getId(), r2.getId());
+
+            assertFalse(
+                "The subject should not have permission to view the resources",
+                authorizationManager.canViewResources(subjectNotInRole, resourceIds)
             );
 
         }

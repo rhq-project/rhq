@@ -85,7 +85,7 @@ if not exist "%RHQ_SERVER_JAVA_EXE_FILE_PATH%" (
    exit /B 1
 )
 
-set _JB_DIR = %RHQ_SERVER_HOME%\jbossas
+set _JB_DIR=%RHQ_SERVER_HOME%\jbossas
 %RHQ_SERVER_JAVA_EXE_FILE_PATH% -cp %_JB_DIR%\lib\jboss-common.jar;%_JB_DIR%\lib\jboss-jmx.jar;%_JB_DIR%\server\default\lib\jbosssx.jar;%_JB_DIR%\server\default\lib\jboss-jca.jar org.jboss.resource.security.SecureIdentityLoginModule %1
 
 

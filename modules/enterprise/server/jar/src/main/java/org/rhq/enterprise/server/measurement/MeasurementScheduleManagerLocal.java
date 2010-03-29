@@ -261,6 +261,16 @@ public interface MeasurementScheduleManagerLocal {
         int definitionId);
 
     /**
+     * Return a list of MeasurementSchedules for the given definition ids and resource ids. Note that this method does
+     * not take a Subject argument. Security checks are the responsibility of the caller.
+     *
+     * @param resourceIds The ids of the resource for which schedules are being fetched
+     * @param definitionIds The ids of the the measurement definitions
+     * @return A list of MeasurementSchedules
+     */
+    List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionIds(int[] resourceIds, int[] definitionIds);
+
+    /**
      * Get the MeasurementSchedule composites for an autogroup
      *
      * @param  subject

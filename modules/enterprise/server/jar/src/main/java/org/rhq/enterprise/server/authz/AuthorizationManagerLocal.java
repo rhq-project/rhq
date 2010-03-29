@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.authz;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
@@ -43,6 +44,8 @@ public interface AuthorizationManagerLocal {
      * @return true if the current user has some role attached to some group that contains this resource
      */
     boolean canViewResource(Subject subject, int resourceId);
+
+    boolean canViewResources(Subject subject, List<Integer> resourceIds);
 
     /**
      * Returns true if the current user has some role attached to this group.

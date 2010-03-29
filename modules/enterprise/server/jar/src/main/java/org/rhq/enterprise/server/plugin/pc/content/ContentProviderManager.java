@@ -296,7 +296,7 @@ public class ContentProviderManager {
             return false;
         }
 
-        Exception ie = null;
+        boolean syncCancelled = false;
         try {
             ThreadUtil.checkInterrupted();
 
@@ -429,9 +429,9 @@ public class ContentProviderManager {
             tracker.setResults(progress.toString());
             
             log.debug("synchronizeRepo :: " + tracker.getRepoSyncResults().getStatus());
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
             RepoSyncResults recentResults = repoManager.getMostRecentSyncResults(overlord, repo.getId());
-            log.debug("Caught InterruptedException");
+            log.debug("Caught InterruptedException during sync of repo with id [" + repoId + "].");
             progress.append("\n ** Cancelled syncing **");
             tracker.setResults(progress.toString());
             tracker.getProgressWatcher().resetToZero();
@@ -441,7 +441,7 @@ public class ContentProviderManager {
             } catch (InterruptedException e1) {
                 throw new RuntimeException("Unexpected InterruptedException", e1);
             }
-            ie = e;
+            syncCancelled = true;
         }
 
         if (tracker.getRepoSyncResults() != null) {
@@ -452,12 +452,8 @@ public class ContentProviderManager {
             repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults());
             log.debug("synchronizeRepo :: merging results.");
         }
-        if (ie != null) {
-            return false;
-        } else {
-            return true;
-        }
-
+        
+        return !syncCancelled;
     }
 
     private SyncTracker updatePercentComplete(SyncTracker tracker, RepoManagerLocal repoManager) {
@@ -467,15 +463,16 @@ public class ContentProviderManager {
     }
 
     private SyncTracker processSyncException(Exception e, SyncTracker tracker, Repo repo, ContentSource source,
-        RepoManagerLocal repoManager) {
-
+        RepoManagerLocal repoManager) throws InterruptedException {
+        if (e instanceof InterruptedException) {
+            InterruptedException ie = (InterruptedException) e;
+            throw ie;
+        }
         StringBuilder progress = new StringBuilder();
         log.error("Error while synchronizing repo [" + repo + "] with content provider [" + source
             + "]. Synchronization for the repo will continue for other providers.", e);
 
-        // try to reload the results in case it was updated by the SLSB before
-        // the
-        // exception happened
+        // Try to reload the results in case it was updated by the SLSB before the exception happened.
         RepoSyncResults reloadedResults = repoManager.getRepoSyncResults(tracker.getRepoSyncResults().getId());
         if (reloadedResults != null) {
             tracker.setRepoSyncResults(reloadedResults);

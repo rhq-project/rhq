@@ -158,4 +158,30 @@ public class ResourceTypeFlyweight implements Serializable {
     public void setSubCategory(ResourceSubCategoryFlyweight subCategory) {
         this.subCategory = subCategory;
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || !(obj instanceof ResourceTypeFlyweight))
+            return false;
+        ResourceTypeFlyweight that = (ResourceTypeFlyweight) obj;
+        if (!this.name.equals(that.name))
+            return false;
+        if (this.plugin != null ? !this.plugin.equals(that.plugin) : that.plugin != null)
+            return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        if (name != null && this.plugin != null) {
+            result = this.name.hashCode();
+            result = 31 * result + (this.plugin != null ? plugin.hashCode() : 0);
+        } else {
+            result = 31 * id;
+        }
+        return result;
+    }    
 }

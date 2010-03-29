@@ -116,8 +116,8 @@ public class ResourceFlyweight implements Serializable {
             ResourceFlyweight parent = cache.getResources().get(parentId);
             if (parent == null) {
                 parent = construct(parentId, null, null, null, null, -1, null, cache);
-                parent.getChildResources().add(ret);
             }
+            parent.getChildResources().add(ret);
             ret.setParentResource(parent);
         } else {
             ResourceFlyweight previousParent = ret.getParentResource();
@@ -224,15 +224,27 @@ public class ResourceFlyweight implements Serializable {
         this.locked = locked;
     }
     
+    @Override
     public int hashCode() {
-        return id;
+        return ((uuid != null) ? uuid.hashCode() : 0);
     }
     
+    @Override
     public boolean equals(Object o) {
-        if (!(o instanceof ResourceFlyweight)) {
+        if (this == o) {
+            return true;
+        }
+
+        if ((o == null) || !(o instanceof ResourceFlyweight)) {
             return false;
         }
-        
-        return id == ((ResourceFlyweight)o).getId();
-    }
+
+        final ResourceFlyweight resource = (ResourceFlyweight) o;
+
+        if ((uuid != null) ? (!uuid.equals(resource.uuid)) : (resource.uuid != null)) {
+            return false;
+        }
+
+        return true;
+    }    
 }

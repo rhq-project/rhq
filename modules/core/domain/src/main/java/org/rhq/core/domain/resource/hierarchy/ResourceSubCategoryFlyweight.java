@@ -134,4 +134,31 @@ public class ResourceSubCategoryFlyweight implements Serializable {
     public void setParentSubCategory(ResourceSubCategoryFlyweight parentSubCategory) {
         this.parentSubCategory = parentSubCategory;
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (!(o instanceof ResourceSubCategoryFlyweight)) {
+            return false;
+        }
+
+        ResourceSubCategoryFlyweight that = (ResourceSubCategoryFlyweight) o;
+
+        if (!name.equals(that.getName())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        result = name.hashCode();
+
+        return result;
+    }    
 }

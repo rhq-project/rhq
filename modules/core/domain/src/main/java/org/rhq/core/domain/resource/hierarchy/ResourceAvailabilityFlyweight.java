@@ -70,4 +70,40 @@ public class ResourceAvailabilityFlyweight implements Serializable {
     public void setAvailabilityType(AvailabilityType availabilityType) {
         this.availabilityType = availabilityType;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = (prime * result) + ((availabilityType == null) ? 0 : availabilityType.hashCode());
+        result = (prime * result) + resourceId;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null || !(obj instanceof ResourceAvailabilityFlyweight)) {
+            return false;
+        }
+
+        final ResourceAvailabilityFlyweight other = (ResourceAvailabilityFlyweight) obj;
+
+        if (resourceId != other.resourceId) {
+            return false;
+        }
+
+        if (availabilityType == null) {
+            if (other.availabilityType != null) {
+                return false;
+            }
+        } else if (!availabilityType.equals(other.availabilityType)) {
+            return false;
+        }
+
+        return true;
+    }
 }

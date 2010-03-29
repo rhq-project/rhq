@@ -246,7 +246,7 @@ public class ResourceTreeModelUIBean {
             for (Object rsc : children.keySet()) {
                 if (rsc != null
                     && (rsc instanceof ResourceSubCategoryFlyweight || ((children.get(rsc).size() > 1 || (alwaysGroup && children
-                        .get(rsc).size() == 1)) && ((AutoGroupComposite) parentNode.getData()).getSubcategory() != null))) {
+                        .get(rsc).size() == 1)) && ((AutoGroupCompositeFlyweight) parentNode.getData()).getSubcategory() != null))) {
                     double avail = 0;
                     List<ResourceFlyweight> entries = children.get(rsc);
                     for (ResourceFlyweight res : entries) {

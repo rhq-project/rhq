@@ -203,13 +203,13 @@ public interface ContentSourceManagerLocal {
 
     /**
      * Given a content source ID, this will test that the adapter responsible for pulling data from the content source's
-     * remote repository can actually connect to that repository.
+     * remote repository can actually connect to that repository, and if not, throw an Exception.
      *
-     * @param  contentSourceId The id of the content source on which to test the connection.
+     * @param  contentSourceId the id of the content source on which to test the connection
      *
-     * @return <code>true</code> if the remote content souce can be reached
+     * @throws Exception if the test failed
      */
-    boolean testContentSourceConnection(int contentSourceId);
+    void testContentSourceConnection(int contentSourceId) throws Exception;
 
     /**
      * Requests that the identified content source be synchronized and if not lazy-loading to also download its

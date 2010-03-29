@@ -27,6 +27,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -66,13 +67,15 @@ public class ContentProviderDetailsUIBean {
     public String test() {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
 
-        if (manager.testContentSourceConnection(contentSource.getId())) {
+        try {
+            manager.testContentSourceConnection(this.contentSource.getId());
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
-                "Test passed - the remote repository for [" + contentSource.getName() + "] is available.");
-        } else {
+                    "Test passed - the remote repository for [" + this.contentSource.getName() + "] is available.");
+        } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                "Test failed - failed to connect to the remote repository for [" + contentSource.getName()
-                    + "] - check the configuration and make sure the remote repository is up and reachable.");
+                    "Test failed - failed to connect to the remote repository for [" + this.contentSource.getName()
+                        + "] - check the configuration and make sure the remote repository is up and reachable. Details: "
+                        + ThrowableUtil.getAllMessages(e));
         }
 
         return "success";
@@ -81,21 +84,24 @@ public class ContentProviderDetailsUIBean {
     public String sync() {
         // Test the content provider connection before proceeding.
         ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
-        if (!contentSourceManager.testContentSourceConnection(contentSource.getId())) {
+        try {
+            contentSourceManager.testContentSourceConnection(this.contentSource.getId());
+        } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "Failed to connect to the remote repository for [" + contentSource.getName()
-                    + "] - check the configuration and make sure the remote repository is up and reachable.");
+                    "Failed to connect to the remote repository for [" + this.contentSource.getName()
+                        + "] - check the configuration and make sure the remote repository is up and reachable. Details: "
+                        + ThrowableUtil.getAllMessages(e));
             return "success";
         }
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         try {
-            contentSourceManager.synchronizeAndLoadContentSource(subject, contentSource.getId());
+            contentSourceManager.synchronizeAndLoadContentSource(subject, this.contentSource.getId());
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing content provider ["
-                + contentSource.getName() + "] now.");
+                + this.contentSource.getName() + "] now.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                "Failed to start the synchronization process for [" + contentSource.getName() + "]", e);
+                "Failed to start the synchronization process for [" + this.contentSource.getName() + "]", e);
         }
 
         return "success";

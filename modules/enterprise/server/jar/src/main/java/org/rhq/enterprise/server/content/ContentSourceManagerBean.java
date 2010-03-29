@@ -556,16 +556,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     }
 
-    public boolean testContentSourceConnection(int contentSourceId) {
+    public void testContentSourceConnection(int contentSourceId) throws Exception {
         try {
-            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
-            return pc.getAdapterManager().testConnection(contentSourceId);
+            ContentServerPluginContainer contentServerPluginContainer = ContentManagerHelper.getPluginContainer();
+            contentServerPluginContainer.getAdapterManager().testConnection(contentSourceId);
         } catch (Exception e) {
             log.info("Failed to test connection to [" + contentSourceId + "]. Cause: "
                 + ThrowableUtil.getAllMessages(e));
             log.debug("Content source test connection failure stack follows for [" + contentSourceId + "]", e);
-
-            return false;
+            throw e;
         }
     }
 

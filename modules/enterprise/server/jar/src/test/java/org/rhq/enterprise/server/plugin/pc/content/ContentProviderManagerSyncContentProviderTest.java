@@ -211,8 +211,15 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
         // Test
         // --------------------------------------------
         // TestContentProviderManager providerManager = new TestContentProviderManager();
-        boolean tested = pluginService.getContentProviderManager().testConnection(syncSource.getId());
-        assert tested;
+        boolean tested = false;
+        try {
+            pluginService.getContentProviderManager().testConnection(syncSource.getId());
+            tested = true;
+        } catch (Exception e) {
+            System.err.println("testConnection() failed: " + e);
+            e.printStackTrace();
+        }
+        assert tested : "testConnection()";
 
         boolean completed = pluginService.getContentProviderManager().synchronizeContentProvider(syncSource.getId());
         assert completed;

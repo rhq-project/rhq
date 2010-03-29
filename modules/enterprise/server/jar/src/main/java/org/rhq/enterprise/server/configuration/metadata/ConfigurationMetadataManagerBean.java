@@ -28,6 +28,8 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -47,6 +49,8 @@ import org.rhq.enterprise.server.RHQConstants;
  */
 @Stateless
 public class ConfigurationMetadataManagerBean implements ConfigurationMetadataManagerLocal {
+    private final Log log = LogFactory.getLog(this.getClass());
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -76,9 +80,9 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             }
 
             // delete outdated properties
-            removeNolongerUsedProperties(newDefinition, existingDefinition, existingPropertyDefinitions, null);
+            removeNoLongerUsedProperties(newDefinition, existingDefinition, existingPropertyDefinitions);
         } else {
-            // TODO what if exisitingDefinitions is null?
+            // TODO what if existingDefinitions is null?
             // we probably don't run in here, as the initial persisting is done
             // somewhere else.
         }
@@ -132,8 +136,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             }
 
             // delete outdated properties of this group
-            removeNolongerUsedProperties(newDefinition, existingDefinition, existingDefinition
-                .getPropertiesInGroup(groupName), group);
+            removeNoLongerUsedProperties(newDefinition, existingDefinition, existingDefinition
+                .getPropertiesInGroup(groupName));
         }
 
         entityManager.flush();
@@ -270,28 +274,30 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
     /**
      * Removes PropertyDefinition items from the configuration
      *
-     * @param newDefinition      new configuration to persist
-     * @param existingDefinition existing persisted configuration
-     * @param existingProperties list of existing properties
-     * @param groupDef TODO
+     * @param newConfigDef       new configuration being merged into the existing one
+     * @param existingConfigDef  existing persisted configuration
+     * @param existingProperties list of existing properties to inspect for potential removal
      */
-    private void removeNolongerUsedProperties(ConfigurationDefinition newDefinition,
-        ConfigurationDefinition existingDefinition, List<PropertyDefinition> existingProperties,
-        PropertyGroupDefinition groupDef) {
-
-        List<PropertyDefinition> definitionsToDelete = new ArrayList<PropertyDefinition>();
-        for (PropertyDefinition exDef : existingProperties) {
-            PropertyDefinition nDef = newDefinition.get(exDef.getName());
-            if (nDef == null) {
+    private void removeNoLongerUsedProperties(ConfigurationDefinition newConfigDef,
+                                              ConfigurationDefinition existingConfigDef,
+                                              List<PropertyDefinition> existingProperties) {
+        List<PropertyDefinition> propDefsToDelete = new ArrayList<PropertyDefinition>();
+        for (PropertyDefinition existingPropDef : existingProperties) {
+            PropertyDefinition newPropDef = newConfigDef.get(existingPropDef.getName());
+            if (newPropDef == null) {
                 // not in new configuration
-                definitionsToDelete.add(exDef);
+                propDefsToDelete.add(existingPropDef);
             }
         }
-        //        System.out.println("Props to delete " + definitionsToDelete);
 
-        for (PropertyDefinition def : definitionsToDelete) {
-            existingDefinition.getPropertyDefinitions().remove(def.getName());
-            existingProperties.remove(def); // does not operate on original list!!            
+        if (!propDefsToDelete.isEmpty()) {
+            log.debug("Deleting obsolete props from configDef [" + existingConfigDef + "]: " + propDefsToDelete);
+            for (PropertyDefinition propDef : propDefsToDelete) {
+                existingConfigDef.getPropertyDefinitions().remove(propDef.getName());
+                existingProperties.remove(propDef); // does not operate on original list!!
+                entityManager.remove(propDef);
+            }
+            entityManager.merge(existingConfigDef);
         }
     }
 

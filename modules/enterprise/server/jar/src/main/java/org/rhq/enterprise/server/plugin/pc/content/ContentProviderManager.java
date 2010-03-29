@@ -512,24 +512,15 @@ public class ContentProviderManager {
     /**
      * Tests the connection to the content source that has the given ID.
      * 
-     * @param contentSourceId
-     *            refers to a valid content source in the database
-     * @return <code>true</code> if there is an adapter that can successfully
-     *         connect to the given content source <code>false</code> if there
-     *         is an adapter but it cannot connect
-     * @throws Exception
-     *             if failed to get an adapter to attempt the connection
+     * @param contentSourceId the id of the content source to be tested
+     *
+     * @throws Exception if the test connection to the specified content source failed
      */
-    public boolean testConnection(int contentSourceId) throws Exception {
+    public void testConnection(int contentSourceId) throws Exception {
         ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
-
-        try {
-            adapter.testConnection();
-        } catch (Throwable t) {
-            return false;
-        }
-
-        return true;
+        adapter.testConnection();
+        //noinspection UnnecessaryReturnStatement
+        return;
     }
 
     /**

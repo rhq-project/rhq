@@ -204,11 +204,6 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         return updateReport;
     }
 
-    /**
-     * Updates a template 
-     * @param existingDT
-     * @param newDT
-     */
     private void updateTemplate(ConfigurationTemplate existingDT, ConfigurationTemplate newDT) {
 
         try {
@@ -295,7 +290,6 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             for (PropertyDefinition propDef : propDefsToDelete) {
                 existingConfigDef.getPropertyDefinitions().remove(propDef.getName());
                 existingProperties.remove(propDef); // does not operate on original list!!
-                entityManager.remove(propDef);
             }
             entityManager.merge(existingConfigDef);
         }

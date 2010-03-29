@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<project name="simple-bundle-test">
+    <property id="_bundlefile.1" name="f" location="file.txt" />
+    <property id="_bundleconfig.1" name="custom.prop1" location="1" />
+
+    <target name="first-target">
+        <echo>Hello!!!!!!!!</echo>
+        <property id="_bundlefile.2" name="pkg" value="package.zip" />
+        <property id="_bundleconfig.2" name="custom.prop2" value="2" />
+        <echo>World!!!!!!!!</echo>
+    </target>
+</project>

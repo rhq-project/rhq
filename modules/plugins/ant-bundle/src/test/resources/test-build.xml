@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<project name="simple-build" default="first-target">
+    <property id="_bundlefile.1" name="f" location="file.txt" />
+    <property id="_bundleconfig.1" name="custom.prop1" location="1" />
+
+    <property name="outfile" value="${basedir}/output.2" />
+
+    <target name="first-target">
+        <property id="_bundlefile.2" name="pkg" value="${basedir}/package.zip" />
+        <property id="_bundleconfig.2" name="custom.prop2" value="2" />
+
+        <condition property="file.f.exists">
+           <available file="${f}" />
+        </condition>
+        <condition property="file.pkg.exists">
+           <available file="${pkg}" />
+        </condition>
+
+        <echo file="${outfile}">prop1=${custom.prop1}
+prop2=${custom.prop2}
+f.exists=${file.f.exists}
+pkg.exists=${file.pkg.exists}
+hostname=${rhq.system.hostname}
+tmpdir=${rhq.system.sysprop.java.io.tmpdir}
+        </echo>
+    </target>
+</project>

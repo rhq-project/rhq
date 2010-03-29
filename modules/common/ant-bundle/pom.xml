@@ -1,0 +1,50 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-common-parent</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-ant-bundle-common</artifactId>
+    <packaging>jar</packaging>
+
+    <name>RHQ Ant Bundle Plugins Common Library</name>
+    <description>A library with the code common to the agent and server plugins for Ant Bundles</description>
+
+    <scm>
+        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/ant-bundle/</connection>
+        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/ant-bundle/</developerConnection>
+    </scm>
+
+    <properties>
+        <scm.module.path>modules/common/ant-bundle/</scm.module.path>
+    </properties>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>1.6.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant-launcher</artifactId>
+            <version>1.6.5</version>
+        </dependency>
+
+        <!-- include some optional ant tasks for users to be able to use -->
+        <dependency>
+            <groupId>ant-contrib</groupId>
+            <artifactId>ant-contrib</artifactId>
+            <version>1.0b3</version>
+        </dependency>
+
+    </dependencies>
+
+</project>

@@ -162,6 +162,7 @@
 
            <!-- bundle plugins -->
            <module>filetemplate-bundle</module>
+           <module>ant-bundle</module>
         </modules>
     </profile>
 

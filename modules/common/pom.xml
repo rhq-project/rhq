@@ -67,5 +67,6 @@
    <modules>
       <module>jboss-as</module>
       <module>filetemplate-bundle</module>
+      <module>ant-bundle</module>
    </modules>
 </project>

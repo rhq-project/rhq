@@ -37,6 +37,10 @@ public class TemplateEngine implements Serializable {
         this.tokens = tokens;
     }
 
+    public Map<String, String> getTokens() {
+        return this.tokens;
+    }
+
     public String replaceTokens(String input) {
         StringBuffer buffer = new StringBuffer();
         Matcher matcher = tokenPattern.matcher(input);

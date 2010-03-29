@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="AntBundlePlugin"
+        displayName="Ant Bundle Plugin"
+        package="org.rhq.plugins.ant"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+   <server name="Ant Bundle Handler Server"
+           discovery="AntBundlePluginDiscoveryComponent"
+           class="AntBundlePluginComponent"
+           singleton="true"
+           description="This plugin is used to process Ant bundles">
+
+      <bundle type="Ant Bundle" />
+
+   </server>
+</plugin>

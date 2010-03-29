@@ -7,8 +7,6 @@
   <xa-datasource>
     <jndi-name>RHQDS</jndi-name>
     <xa-datasource-class>${rhq.server.database.xa-datasource-class}</xa-datasource-class>
-    <xa-datasource-property name="User">${rhq.server.database.user-name}</xa-datasource-property>
-    <xa-datasource-property name="Password">${rhq.server.database.password}</xa-datasource-property>
     <xa-datasource-property name="URL">${rhq.server.database.connection-url}</xa-datasource-property>
 
     <xa-datasource-property name="ConnectionProperties">SetBigStringTryClob=true</xa-datasource-property>
@@ -18,10 +16,10 @@
     <!-- Checks the Oracle error codes and messages for fatal errors -->
     <exception-sorter-class-name>org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter</exception-sorter-class-name>
     <!-- Oracles XA datasource cannot reuse a connection outside a transaction once enlisted in a global transaction and vice-versa -->
-    
     <track-connection-by-tx/>
-    <user-name>${rhq.server.database.user-name}</user-name>
-    <password>${rhq.server.database.password}</password>
+    
+    <security-domain>XADSRealm</security-domain>
+
     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
     <min-pool-size>5</min-pool-size>
     <max-pool-size>50</max-pool-size>
@@ -43,8 +41,9 @@
     <jndi-name>NoTxRHQDS</jndi-name>
     <connection-url>${rhq.server.database.connection-url}</connection-url>
     <driver-class>${rhq.server.database.driver-class}</driver-class>
-    <user-name>${rhq.server.database.user-name}</user-name>
-    <password>${rhq.server.database.password}</password>
+    
+    <security-domain>NONXADSRealm</security-domain>
+    
     <connection-property name="char.encoding">UTF-8</connection-property>
     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
     <min-pool-size>2</min-pool-size>

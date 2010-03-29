@@ -14,6 +14,28 @@
        </authentication>
     </application-policy>
 
+<!-- security domains for encrypted dataseouce passwords -->
+ <application-policy name = "XADSRealm">
+       <authentication>
+          <login-module code = "org.jboss.resource.security.SecureIdentityLoginModule"
+          flag = "required">
+             <module-option name = "username">${rhq.server.database.user-name}</module-option>
+             <module-option name = "password">${rhq.server.database.password}</module-option>
+             <module-option name = "managedConnectionFactoryName">jboss.jca:service=XATxCM,name=RHQDS</module-option>
+          </login-module>
+       </authentication>
+    </application-policy>
+    <application-policy name = "NONXADSRealm">
+       <authentication>
+          <login-module code = "org.jboss.resource.security.SecureIdentityLoginModule"
+          flag = "required">
+             <module-option name = "username">${rhq.server.database.user-name}</module-option>
+             <module-option name = "password">${rhq.server.database.password}</module-option>
+             <module-option name = "managedConnectionFactoryName">jboss.jca:service=NoTxCM,name=NoTxRHQDS</module-option>
+          </login-module>
+       </authentication>
+    </application-policy>
+
     <!-- Security domain for JBossMQ -->
     <application-policy name = "jbossmq">
        <authentication>

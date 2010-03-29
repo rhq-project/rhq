@@ -27,6 +27,7 @@ import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
@@ -52,6 +53,7 @@ import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.common.EntityContext;
+import org.rhq.enterprise.server.common.PerformanceMonitorInterceptor;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
@@ -66,6 +68,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+@Interceptors(PerformanceMonitorInterceptor.class)
 public class MeasurementChartsManagerBean implements MeasurementChartsManagerLocal {
 
     private final Log log = LogFactory.getLog(MeasurementChartsManagerBean.class);
@@ -445,6 +448,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         if (measurementDefinitionIds.length == 0) {
             return data;
         }
+
+        // TODO if cannot view resources throw permission exception
 
         MeasurementDataManagerUtility dataUtil = MeasurementDataManagerUtility.getInstance(rhqDs);
 

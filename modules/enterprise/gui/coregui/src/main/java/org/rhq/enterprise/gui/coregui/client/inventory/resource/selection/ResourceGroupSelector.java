@@ -20,63 +20,56 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.IPickTreeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceSelector extends AbstractSelector {
+public class ResourceGroupSelector extends AbstractSelector {
 
-    public ResourceSelector() {
+    public ResourceGroupSelector() {
         super();
     }
 
     protected DynamicForm getAvailableFilterForm() {
         DynamicForm availableFilterForm = new DynamicForm();
-        availableFilterForm.setNumCols(6);
+        availableFilterForm.setNumCols(4);
         final TextItem search = new TextItem("search", "Search");
 
-        IPickTreeItem typeSelectItem = new IPickTreeItem("type", "Type");
-        typeSelectItem.setDataSource(new ResourceTypeTreeDataSource());
-        typeSelectItem.setValueField("id");
-        typeSelectItem.setCanSelectParentItems(true);
-        typeSelectItem.setLoadDataOnDemand(false);
-
-        SelectItem categorySelect = new SelectItem("category", "Category");
-        categorySelect.setValueMap("Platform", "Server", "Service");
-        categorySelect.setAllowEmptyValue(true);
-        availableFilterForm.setItems(search, typeSelectItem, categorySelect);
+        SelectItem groupCategorySelect = new SelectItem("groupCategory", "Group Category");
+        groupCategorySelect.setValueMap("Compatible", "Mixed");
+        groupCategorySelect.setAllowEmptyValue(true);
+        availableFilterForm.setItems(search, groupCategorySelect);
 
         return availableFilterForm;
     }
 
     protected RPCDataSource<?> getDataSource() {
-        return new SelectedResourceDataSource();
+        return new SelectedResourceGroupsDataSource();
     }
 
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
         Criteria latestCriteria = new Criteria();
-        latestCriteria.setAttribute("name", availableFilterForm.getValue("search"));
-        latestCriteria.setAttribute("type", availableFilterForm.getValue("type"));
-        latestCriteria.setAttribute("category", availableFilterForm.getValue("category"));
+        Object search = availableFilterForm.getValue("search");
+        Object category = availableFilterForm.getValue("groupCategory");
+        latestCriteria.setAttribute("name", search);
+        latestCriteria.setAttribute("groupCategory", category);
 
         return latestCriteria;
     }
 
-    private class SelectedResourceDataSource extends ResourceDatasource {
+    private class SelectedResourceGroupsDataSource extends ResourceGroupsDataSource {
 
         @Override
-        public ListGridRecord[] buildRecords(PageList<Resource> resources) {
-            ListGridRecord[] records = super.buildRecords(resources);
+        public ListGridRecord[] buildRecords(PageList<ResourceGroup> resourceGroups) {
+            ListGridRecord[] records = super.buildRecords(resourceGroups);
             for (ListGridRecord record : records) {
                 if (selection.contains(record.getAttributeAsInt("id"))) {
                     record.setEnabled(false);

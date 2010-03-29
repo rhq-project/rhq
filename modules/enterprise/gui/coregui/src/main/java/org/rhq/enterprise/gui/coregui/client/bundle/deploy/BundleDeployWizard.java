@@ -36,8 +36,8 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         steps.add(new BundleDeployDefinitionInfoStep(this));
         steps.add(new SelectTemplateStep(this));
         steps.add(new CreateConfigStep(this));
-        steps.add(new DeployNowStep(this));
-        steps.add(new SelectPlatformsStep(this));
+        steps.add(new DeployOptionsStep(this));
+        steps.add(new DeployTargetStep(this));
         steps.add(new DeployStep(this));
     }
 
@@ -49,8 +49,8 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         steps.add(new BundleDeployDefinitionInfoStep(this));
         steps.add(new SelectTemplateStep(this));
         steps.add(new CreateConfigStep(this));
-        steps.add(new DeployNowStep(this));
-        steps.add(new SelectPlatformsStep(this));
+        steps.add(new DeployOptionsStep(this));
+        steps.add(new DeployTargetStep(this));
         steps.add(new DeployStep(this));
     }
 
@@ -63,8 +63,8 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
         steps.add(new SelectTemplateStep(this));
         steps.add(new CreateConfigStep(this));
-        steps.add(new DeployNowStep(this));
-        steps.add(new SelectPlatformsStep(this));
+        steps.add(new DeployOptionsStep(this));
+        steps.add(new DeployTargetStep(this));
         steps.add(new DeployStep(this));
     }
 

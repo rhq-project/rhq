@@ -54,7 +54,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         return INSTANCE;
     }
 
-    private ResourceGroupsDataSource() {
+    public ResourceGroupsDataSource() {
         super("ResourceGroups");
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);

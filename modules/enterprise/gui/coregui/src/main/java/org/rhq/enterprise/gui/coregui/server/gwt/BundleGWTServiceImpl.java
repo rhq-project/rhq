@@ -24,6 +24,7 @@ import java.util.HashMap;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -159,6 +160,17 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             BundleDeployment result = bundleManager.scheduleBundleDeployment(getSessionSubject(),
                 bundleDeployDefinitionId, resourceId);
             return SerialUtility.prepare(result, "scheduleBundleDeployment");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public BundleGroupDeployment scheduleBundleGroupDeployment(int bundleDeployDefinitionId, int resourceGroupId)
+        throws Exception {
+        try {
+            BundleGroupDeployment result = bundleManager.scheduleBundleGroupDeployment(getSessionSubject(),
+                bundleDeployDefinitionId, resourceGroupId);
+            return SerialUtility.prepare(result, "scheduleBundleGroupDeployment");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

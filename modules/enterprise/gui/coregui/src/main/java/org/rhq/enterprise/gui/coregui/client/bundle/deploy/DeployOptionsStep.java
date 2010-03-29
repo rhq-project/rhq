@@ -28,20 +28,25 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
-public class DeployNowStep implements WizardStep {
+public class DeployOptionsStep implements WizardStep {
 
     static private final String DEPLOY_LATER = "later";
     static private final String DEPLOY_NOW = "now";
 
+    static private final String DEPLOY_GROUP = "group";
+    static private final String DEPLOY_RESOURCE = "resource";
+
     private final BundleDeployWizard wizard;
     private DynamicForm form;
+    private RadioGroupItem rgDeployTimeItem;
+    private RadioGroupItem rgDeployTypeItem;
 
-    public DeployNowStep(BundleDeployWizard bundleCreationWizard) {
+    public DeployOptionsStep(BundleDeployWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 
     public String getName() {
-        return "Deploy Now or Later";
+        return "Deploy Options";
     }
 
     public Canvas getCanvas() {
@@ -51,21 +56,36 @@ public class DeployNowStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            RadioGroupItem radioGroupItem = new RadioGroupItem("deployTime", "Deployment Time");
-            LinkedHashMap<String, String> radioGroupValues = new LinkedHashMap<String, String>();
-            radioGroupValues.put(DEPLOY_NOW, "Deploy Now");
-            radioGroupValues.put(DEPLOY_LATER, "Save Definition and Deploy Later");
-            radioGroupItem.setRequired(true);
-            radioGroupItem.setValueMap(radioGroupValues);
-            radioGroupItem.setValue(DEPLOY_NOW);
+            rgDeployTimeItem = new RadioGroupItem("deployTime", "Deployment Time");
+            LinkedHashMap<String, String> deployTimeValues = new LinkedHashMap<String, String>();
+            deployTimeValues.put(DEPLOY_NOW, "Deploy Now");
+            deployTimeValues.put(DEPLOY_LATER, "Deploy Later");
+            rgDeployTimeItem.setRequired(true);
+            rgDeployTimeItem.setValueMap(deployTimeValues);
+            rgDeployTimeItem.setValue(DEPLOY_NOW);
             wizard.setDeployNow(true);
-            radioGroupItem.addChangedHandler(new ChangedHandler() {
+            rgDeployTimeItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     wizard.setDeployNow(DEPLOY_NOW.equals(event.getValue()));
+                    rgDeployTypeItem.setDisabled(!wizard.isDeployNow());
                 }
             });
 
-            form.setItems(radioGroupItem);
+            rgDeployTypeItem = new RadioGroupItem("deployTarget", "Deployment Target");
+            LinkedHashMap<String, String> deployTypeValues = new LinkedHashMap<String, String>();
+            deployTypeValues.put(DEPLOY_RESOURCE, "Deploy to Single Resource");
+            deployTypeValues.put(DEPLOY_GROUP, "Deploy to Group of Resources");
+            rgDeployTypeItem.setRequired(true);
+            rgDeployTypeItem.setValueMap(deployTypeValues);
+            rgDeployTypeItem.setValue(DEPLOY_RESOURCE);
+            wizard.setResourceDeploy(true);
+            rgDeployTypeItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    wizard.setResourceDeploy(DEPLOY_RESOURCE.equals(event.getValue()));
+                }
+            });
+
+            form.setItems(rgDeployTimeItem, rgDeployTypeItem);
         }
         return form;
     }

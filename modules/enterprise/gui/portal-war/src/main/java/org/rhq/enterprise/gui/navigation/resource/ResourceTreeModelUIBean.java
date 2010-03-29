@@ -34,8 +34,11 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.LockedResource;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.domain.resource.hierarchy.AutoGroupCompositeFlyweight;
+import org.rhq.core.domain.resource.hierarchy.ResourceFlyweight;
+import org.rhq.core.domain.resource.hierarchy.ResourceSubCategoryFlyweight;
+import org.rhq.core.domain.resource.hierarchy.ResourceTypeFlyweight;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -82,7 +85,7 @@ public class ResourceTreeModelUIBean {
 
         start = System.currentTimeMillis();
         monitorId = HibernatePerformanceMonitor.get().start();
-        List<Resource> resources = resourceManager.findResourcesByAgent(user, agent.getId(), PageControl
+        List<ResourceFlyweight> resources = resourceManager.findResourcesByAgent(user, agent.getId(), PageControl
             .getUnlimitedInstance());
         end = System.currentTimeMillis();
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree agent resource");
@@ -96,9 +99,9 @@ public class ResourceTreeModelUIBean {
         log.debug("Constructed tree in " + (end - start));
     }
 
-    public static ResourceTreeNode load(int rootId, List<Resource> resources, boolean alwaysGroup) {
-        Resource found = null;
-        for (Resource res : resources) {
+    public static ResourceTreeNode load(int rootId, List<ResourceFlyweight> resources, boolean alwaysGroup) {
+        ResourceFlyweight found = null;
+        for (ResourceFlyweight res : resources) {
             if (res.getId() == rootId) {
                 found = res;
             }
@@ -111,11 +114,11 @@ public class ResourceTreeModelUIBean {
 
     public static void load(ResourceTreeNode parentNode, boolean alwaysGroup) {
 
-        if (parentNode.getData() instanceof Resource) {
-            Resource parentResource = (Resource) parentNode.getData();
+        if (parentNode.getData() instanceof ResourceFlyweight) {
+            ResourceFlyweight parentResource = (ResourceFlyweight) parentNode.getData();
 
-            Map<Object, List<Resource>> children = new HashMap<Object, List<Resource>>();
-            for (Resource res : parentResource.getChildResources()) {
+            Map<Object, List<ResourceFlyweight>> children = new HashMap<Object, List<ResourceFlyweight>>();
+            for (ResourceFlyweight res : parentResource.getChildResources()) {
                 if (res.getResourceType().getSubCategory() != null) {
                     // These are children that have subcategories
                     // Split them by if they are a sub-sub category or just a category
@@ -123,7 +126,7 @@ public class ResourceTreeModelUIBean {
                         if (children.containsKey(res.getResourceType().getSubCategory())) {
                             children.get(res.getResourceType().getSubCategory()).add(res);
                         } else {
-                            ArrayList<Resource> list = new ArrayList<Resource>();
+                            ArrayList<ResourceFlyweight> list = new ArrayList<ResourceFlyweight>();
                             list.add(res);
                             children.put(res.getResourceType().getSubCategory(), list);
                         }
@@ -131,7 +134,7 @@ public class ResourceTreeModelUIBean {
                         if (children.containsKey(res.getResourceType().getSubCategory().getParentSubCategory())) {
                             children.get(res.getResourceType().getSubCategory().getParentSubCategory()).add(res);
                         } else {
-                            ArrayList<Resource> list = new ArrayList<Resource>();
+                            ArrayList<ResourceFlyweight> list = new ArrayList<ResourceFlyweight>();
                             list.add(res);
                             children.put(res.getResourceType().getSubCategory().getParentSubCategory(), list);
                         }
@@ -142,7 +145,7 @@ public class ResourceTreeModelUIBean {
                     if (children.containsKey(res.getResourceType())) {
                         children.get(res.getResourceType()).add(res);
                     } else {
-                        ArrayList<Resource> list = new ArrayList<Resource>();
+                        ArrayList<ResourceFlyweight> list = new ArrayList<ResourceFlyweight>();
                         list.add(res);
                         children.put(res.getResourceType(), list);
                     }
@@ -154,21 +157,21 @@ public class ResourceTreeModelUIBean {
 
             for (Object rsc : children.keySet()) {
                 if (rsc != null
-                    && (rsc instanceof ResourceSubCategory || children.get(rsc).size() > 1 || (alwaysGroup && children
+                    && (rsc instanceof ResourceSubCategoryFlyweight || children.get(rsc).size() > 1 || (alwaysGroup && children
                         .get(rsc).size() == 1))) {
                     double avail = 0;
-                    List<Resource> entries = children.get(rsc);
-                    for (Resource res : entries) {
+                    List<ResourceFlyweight> entries = children.get(rsc);
+                    for (ResourceFlyweight res : entries) {
                         avail += res.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? 1 : 0;
                     }
                     avail = avail / entries.size();
 
-                    AutoGroupComposite agc = null;
-                    if (rsc instanceof ResourceSubCategory) {
-                        agc = new AutoGroupComposite(avail, parentResource, (ResourceSubCategory) rsc, entries.size());
+                    AutoGroupCompositeFlyweight agc = null;
+                    if (rsc instanceof ResourceSubCategoryFlyweight) {
+                        agc = new AutoGroupCompositeFlyweight(avail, parentResource, (ResourceSubCategoryFlyweight) rsc, entries.size());
                     } else if (rsc instanceof ResourceType) {
-                        boolean isDupResourceTypeName = dupResourceTypeNames.contains(((ResourceType) rsc).getName());
-                        agc = new AutoGroupComposite(avail, parentResource, (ResourceType) rsc, entries.size(),
+                        boolean isDupResourceTypeName = dupResourceTypeNames.contains(((ResourceTypeFlyweight) rsc).getName());
+                        agc = new AutoGroupCompositeFlyweight(avail, parentResource, (ResourceTypeFlyweight) rsc, entries.size(),
                             isDupResourceTypeName);
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
@@ -178,8 +181,8 @@ public class ResourceTreeModelUIBean {
                         parentNode.getChildren().add(node);
                     }
                 } else {
-                    List<Resource> entries = children.get(rsc);
-                    for (Resource res : entries) {
+                    List<ResourceFlyweight> entries = children.get(rsc);
+                    for (ResourceFlyweight res : entries) {
                         ResourceTreeNode node = new ResourceTreeNode(res);
 
                         load(node, alwaysGroup);
@@ -193,12 +196,12 @@ public class ResourceTreeModelUIBean {
         } else {
             // #####################################################################################
 
-            AutoGroupComposite compositeParent = (AutoGroupComposite) parentNode.getData();
+            AutoGroupCompositeFlyweight compositeParent = (AutoGroupCompositeFlyweight) parentNode.getData();
 
-            Map<Object, List<Resource>> children = new HashMap<Object, List<Resource>>();
-            log.trace("composite parent" + compositeParent);
+            Map<Object, List<ResourceFlyweight>> children = new HashMap<Object, List<ResourceFlyweight>>();
+            log.debug("composite parent" + compositeParent);
             if (compositeParent != null) {
-                for (Resource res : compositeParent.getParentResource().getChildResources()) {
+                for (ResourceFlyweight res : compositeParent.getParentResource().getChildResources()) {
                     if (compositeParent.getSubcategory() != null) {
                         // parent is a sub category
                         if (res.getResourceType().getSubCategory() != null
@@ -210,7 +213,7 @@ public class ResourceTreeModelUIBean {
                             if (children.containsKey(res.getResourceType().getSubCategory())) {
                                 children.get(res.getResourceType().getSubCategory()).add(res);
                             } else {
-                                ArrayList<Resource> list = new ArrayList<Resource>();
+                                ArrayList<ResourceFlyweight> list = new ArrayList<ResourceFlyweight>();
                                 list.add(res);
                                 children.put(res.getResourceType().getSubCategory(), list);
                             }
@@ -220,7 +223,7 @@ public class ResourceTreeModelUIBean {
                             if (children.containsKey(res.getResourceType())) {
                                 children.get(res.getResourceType()).add(res);
                             } else {
-                                ArrayList<Resource> list = new ArrayList<Resource>();
+                                ArrayList<ResourceFlyweight> list = new ArrayList<ResourceFlyweight>();
                                 list.add(res);
                                 children.put(res.getResourceType(), list);
                             }
@@ -231,7 +234,7 @@ public class ResourceTreeModelUIBean {
                             if (children.containsKey(res.getResourceType())) {
                                 children.get(res.getResourceType()).add(res);
                             } else {
-                                ArrayList<Resource> list = new ArrayList<Resource>();
+                                ArrayList<ResourceFlyweight> list = new ArrayList<ResourceFlyweight>();
                                 list.add(res);
                                 children.put(res.getResourceType(), list);
                             }
@@ -242,21 +245,21 @@ public class ResourceTreeModelUIBean {
 
             for (Object rsc : children.keySet()) {
                 if (rsc != null
-                    && (rsc instanceof ResourceSubCategory || ((children.get(rsc).size() > 1 || (alwaysGroup && children
+                    && (rsc instanceof ResourceSubCategoryFlyweight || ((children.get(rsc).size() > 1 || (alwaysGroup && children
                         .get(rsc).size() == 1)) && ((AutoGroupComposite) parentNode.getData()).getSubcategory() != null))) {
                     double avail = 0;
-                    List<Resource> entries = children.get(rsc);
-                    for (Resource res : entries) {
+                    List<ResourceFlyweight> entries = children.get(rsc);
+                    for (ResourceFlyweight res : entries) {
                         avail += res.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? 1 : 0;
                     }
                     avail = avail / entries.size();
 
-                    AutoGroupComposite agc = null;
-                    if (rsc instanceof ResourceSubCategory) {
-                        agc = new AutoGroupComposite(avail, compositeParent.getParentResource(),
-                            (ResourceSubCategory) rsc, entries.size());
-                    } else if (rsc instanceof ResourceType) {
-                        agc = new AutoGroupComposite(avail, compositeParent.getParentResource(), (ResourceType) rsc,
+                    AutoGroupCompositeFlyweight agc = null;
+                    if (rsc instanceof ResourceSubCategoryFlyweight) {
+                        agc = new AutoGroupCompositeFlyweight(avail, compositeParent.getParentResource(),
+                            (ResourceSubCategoryFlyweight) rsc, entries.size());
+                    } else if (rsc instanceof ResourceTypeFlyweight) {
+                        agc = new AutoGroupCompositeFlyweight(avail, compositeParent.getParentResource(), (ResourceTypeFlyweight) rsc,
                             entries.size(), false);
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
@@ -265,8 +268,8 @@ public class ResourceTreeModelUIBean {
                         parentNode.getChildren().add(node);
                     }
                 } else {
-                    List<Resource> entries = children.get(rsc);
-                    for (Resource res : entries) {
+                    List<ResourceFlyweight> entries = children.get(rsc);
+                    for (ResourceFlyweight res : entries) {
                         ResourceTreeNode node = new ResourceTreeNode(res);
                         load(node, alwaysGroup);
                         if (!recursivelyLocked(node)) {
@@ -279,14 +282,10 @@ public class ResourceTreeModelUIBean {
     }
 
     public static boolean recursivelyLocked(ResourceTreeNode node) {
-        if (node.getData() instanceof LockedResource) {
-
-        } else if (node.getData() instanceof Resource) {
+        if (node.getData() instanceof ResourceFlyweight && !((ResourceFlyweight) node.getData()).isLocked()) {
             return false;
-        } else if (node.getData() instanceof AutoGroupComposite) {
-
         }
-
+        
         boolean allLocked = true;
         for (ResourceTreeNode child : node.getChildren()) {
             if (!recursivelyLocked(child))
@@ -320,14 +319,14 @@ public class ResourceTreeModelUIBean {
         this.nodeTitle = nodeTitle;
     }
 
-    private static Set<String> getDuplicateResourceTypeNames(Map<Object, List<Resource>> children, boolean alwaysGroup) {
+    private static Set<String> getDuplicateResourceTypeNames(Map<Object, List<ResourceFlyweight>> children, boolean alwaysGroup) {
         Set<String> resourceTypeNames = new HashSet();
         Set<String> dupResourceTypeNames = new HashSet();
         for (Object rsc : children.keySet()) {
             if (rsc != null
-                && (rsc instanceof ResourceType && (children.get(rsc).size() > 1 || (alwaysGroup && children.get(rsc)
+                && (rsc instanceof ResourceTypeFlyweight && (children.get(rsc).size() > 1 || (alwaysGroup && children.get(rsc)
                     .size() == 1)))) {
-                String resourceTypeName = ((ResourceType) rsc).getName();
+                String resourceTypeName = ((ResourceTypeFlyweight) rsc).getName();
                 if (resourceTypeNames.contains(resourceTypeName)) {
                     dupResourceTypeNames.add(resourceTypeName);
                 }

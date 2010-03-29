@@ -103,6 +103,10 @@ import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.domain.resource.hierarchy.FlyweightCache;
+import org.rhq.core.domain.resource.hierarchy.ResourceFlyweight;
+import org.rhq.core.domain.resource.hierarchy.ResourceSubCategoryFlyweight;
+import org.rhq.core.domain.resource.hierarchy.ResourceTypeFlyweight;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.PersistenceUtility;
@@ -1770,7 +1774,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<Resource> findResourcesByAgent(Subject user, int agentId, PageControl unlimitedInstance) {
+    public List<ResourceFlyweight> findResourcesByAgent(Subject user, int agentId, PageControl unlimitedInstance) {
         // Note: I didn't put these queries in as named queries since they have very specific prefeching
         // for this use case.
 
@@ -1795,7 +1799,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         reportingQuery.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
         List<Object[]> reportingQueryResults = reportingQuery.getResultList();
-        List<Resource> resources = getFlyWeightObjectGraphFromReportingQueryResults(reportingQueryResults);
+        List<ResourceFlyweight> resources = getFlyWeightObjectGraphFromReportingQueryResults(reportingQueryResults);
 
         if (!authorizationManager.isInventoryManager(user)) {
             String authorizationQueryString = "" //
@@ -1818,54 +1822,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             HashSet<Integer> visibleIdSet = new HashSet<Integer>(visibleResources);
 
-            ListIterator<Resource> iter = resources.listIterator();
+            ListIterator<ResourceFlyweight> iter = resources.listIterator();
             while (iter.hasNext()) {
-                Resource res = iter.next();
-
-                if (!visibleIdSet.contains(res.getId())) {
-                    Resource replacement = new LockedResource(res);
-                    if (res.getParentResource() != null) {
-                        Resource parent = res.getParentResource();
-                        parent.removeChildResource(res);
-                        parent.addChildResource(replacement);
-                    }
-                    iter.set(replacement);
-                }
+                ResourceFlyweight res = iter.next();
+                res.setLocked(!visibleIdSet.contains(res.getId()));
             }
         }
 
         return resources;
     }
 
-    private <T> T getFlyWeight(int id, String name, Map<Integer, T> cache, Class<T> clazz) {
-        if (cache.containsKey(id)) {
-            return cache.get(id);
-        }
-        try {
-            Constructor<T> noargConstructor = clazz.getConstructor();
-            T flyWeight = noargConstructor.newInstance();
+    private List<ResourceFlyweight> getFlyWeightObjectGraphFromReportingQueryResults(List<Object[]> reportQueryResults) {
+        List<ResourceFlyweight> resources = new ArrayList<ResourceFlyweight>();
 
-            Method setIdMethod = clazz.getMethod("setId", Integer.TYPE);
-            setIdMethod.invoke(flyWeight, id);
-
-            Method setNameMethod = clazz.getMethod("setName", String.class);
-            setNameMethod.invoke(flyWeight, name);
-
-            cache.put(id, flyWeight);
-            return flyWeight;
-        } catch (Throwable t) {
-            log.equals(t);
-            throw new IllegalArgumentException("Class " + clazz.getSimpleName()
-                + " needs a no-arg constructor, as well as setId(int) and setName(String) methods");
-        }
-    }
-
-    private List<Resource> getFlyWeightObjectGraphFromReportingQueryResults(List<Object[]> reportQueryResults) {
-        List<Resource> resources = new ArrayList<Resource>();
-
-        Map<Integer, Resource> flyWeightResourceCache = new HashMap<Integer, Resource>();
-        Map<Integer, ResourceType> flyWeightTypeCache = new HashMap<Integer, ResourceType>();
-        Map<Integer, ResourceSubCategory> flyWeightSubCategoryCache = new HashMap<Integer, ResourceSubCategory>();
+        FlyweightCache flyweightCache = new FlyweightCache();
         for (Object[] prefetched : reportQueryResults) {
             // casts
             int i = 0;
@@ -1890,45 +1860,25 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Integer parentSubCategoryId = (Integer) prefetched[i++];
             String parentSubCategoryName = (String) prefetched[i++];
 
-            // object graph
-            Resource flyWeightResource = getFlyWeight(resourceId, resourceName, flyWeightResourceCache, Resource.class);
-            flyWeightResource.setUuid(resourceUuid);
-            flyWeightResource.setResourceKey(resourceKey);
-
-            if (parentId != null) {
-                Resource flyWeightParent = getFlyWeight(parentId, parentName, flyWeightResourceCache, Resource.class);
-                flyWeightResource.setParentResource(flyWeightParent);
-                flyWeightParent.addChildResource(flyWeightResource);
-            }
-
-            ResourceAvailability currentAvail = new ResourceAvailability(flyWeightResource, availType);
-            flyWeightResource.setCurrentAvailability(currentAvail);
-
-            ResourceType flyWeightType = getFlyWeight(typeId, typeName, flyWeightTypeCache, ResourceType.class);
-            flyWeightType.setPlugin(typePlugin);
-            flyWeightType.setCategory(typeCategory);
-            flyWeightResource.setResourceType(flyWeightType);
-
             if (subCategoryId != null) {
-                ResourceSubCategory flyWeightSubCategory = getFlyWeight(subCategoryId, subCategoryName,
-                    flyWeightSubCategoryCache, ResourceSubCategory.class);
-                flyWeightType.setSubCategory(flyWeightSubCategory);
-
-                if (parentSubCategoryId != null) {
-                    ResourceSubCategory flyWeightParentSubCategory = getFlyWeight(parentSubCategoryId,
-                        parentSubCategoryName, flyWeightSubCategoryCache, ResourceSubCategory.class);
-                    flyWeightSubCategory.setParentSubCategory(flyWeightParentSubCategory);
-                }
+                //we don't need the reference to the sub category here. We need it just in the cache.
+                ResourceSubCategoryFlyweight.construct(subCategoryId, subCategoryName, parentSubCategoryId, parentSubCategoryName, flyweightCache);
             }
-
-            resources.add(flyWeightResource);
+            
+            //we don't need the resource type reference here, only in the cache
+            ResourceTypeFlyweight.construct(typeId, typeName, typePlugin, typeCategory, subCategoryId, flyweightCache);
+            
+            ResourceFlyweight resourceFlyweight = ResourceFlyweight.construct(
+                resourceId, resourceName, resourceUuid, resourceKey, parentId, typeId, availType, flyweightCache);
+            
+            resources.add(resourceFlyweight);
         }
 
         return resources;
     }
 
     @SuppressWarnings("unchecked")
-    public List<Resource> findResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl) {
+    public List<ResourceFlyweight> findResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl) {
         // Note: I didn't put these queries in as named queries since they have very specific pre-fetching
         // for this use case.
 
@@ -1954,43 +1904,34 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         reportingQuery.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
         List<Object[]> reportingQueryResults = reportingQuery.getResultList();
-        List<Resource> resources = getFlyWeightObjectGraphFromReportingQueryResults(reportingQueryResults);
+        List<ResourceFlyweight> resources = getFlyWeightObjectGraphFromReportingQueryResults(reportingQueryResults);
 
-        if (false) { //!authorizationManager.isInventoryManager(user)) {
-            String authorizationQueryString = "" //
-                + "    SELECT res.id \n" //
-                + "      FROM Resource res " //
-                + "     WHERE res.inventoryStatus = :inventoryStatus " //
-                + "       AND (res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n"
-                + "           OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
-                + "           OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
-                + "           OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
-                + "           OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)) \n"
-                + "       AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
-
-            Query authorizationQuery = entityManager.createQuery(authorizationQueryString);
-            authorizationQuery.setParameter("groupId", compatibleGroupId);
-            authorizationQuery.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
-            authorizationQuery.setParameter("subject", user);
-            List<Integer> visibleResources = authorizationQuery.getResultList();
-
-            HashSet<Integer> visibleIdSet = new HashSet<Integer>(visibleResources);
-
-            ListIterator<Resource> iter = resources.listIterator();
-            while (iter.hasNext()) {
-                Resource res = iter.next();
-
-                if (!visibleIdSet.contains(res.getId())) {
-                    Resource replacement = new LockedResource(res);
-                    if (res.getParentResource() != null) {
-                        Resource parent = res.getParentResource();
-                        parent.removeChildResource(res);
-                        parent.addChildResource(replacement);
-                    }
-                    iter.set(replacement);
-                }
-            }
-        }
+//        if (false) { //!authorizationManager.isInventoryManager(user)) {
+//            String authorizationQueryString = "" //
+//                + "    SELECT res.id \n" //
+//                + "      FROM Resource res " //
+//                + "     WHERE res.inventoryStatus = :inventoryStatus " //
+//                + "       AND (res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n"
+//                + "           OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
+//                + "           OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
+//                + "           OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
+//                + "           OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)) \n"
+//                + "       AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
+//
+//            Query authorizationQuery = entityManager.createQuery(authorizationQueryString);
+//            authorizationQuery.setParameter("groupId", compatibleGroupId);
+//            authorizationQuery.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
+//            authorizationQuery.setParameter("subject", user);
+//            List<Integer> visibleResources = authorizationQuery.getResultList();
+//
+//            HashSet<Integer> visibleIdSet = new HashSet<Integer>(visibleResources);
+//
+//            ListIterator<ResourceFlyweight> iter = resources.listIterator();
+//            while (iter.hasNext()) {
+//                ResourceFlyweight res = iter.next();
+//                res.setLocked(!visibleIdSet.contains(res.getId()));
+//            }
+//        }
 
         return resources;
     }

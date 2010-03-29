@@ -44,6 +44,7 @@ import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Repo;
 
 /**
@@ -88,6 +89,10 @@ public class Bundle implements Serializable {
     @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false)
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     private Repo repo;
+
+    @JoinColumn(name = "PACKAGE_TYPE_ID", referencedColumnName = "ID", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
+    private PackageType packageType;
 
     @OneToMany(mappedBy = "bundle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleVersion> bundleVersions = new ArrayList<BundleVersion>();
@@ -138,6 +143,14 @@ public class Bundle implements Serializable {
         this.bundleType = bundleType;
     }
 
+    public PackageType getPackageType() {
+        return packageType;
+    }
+
+    public void setPackageType(PackageType packageType) {
+        this.packageType = packageType;
+    }
+
     public Repo getRepo() {
         return repo;
     }
@@ -161,7 +174,7 @@ public class Bundle implements Serializable {
 
     @Override
     public String toString() {
-        return "Bundle[id=" + id + ",name=" + name + ",bundleType=" + bundleType + "]";
+        return "Bundle[id=" + id + ",name=" + name + ",bundleType=" + bundleType + ",packageType=" + packageType + "]";
     }
 
     @Override
@@ -169,6 +182,7 @@ public class Bundle implements Serializable {
         final int prime = 31;
         int result = 1;
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
+        result = (prime * result) + ((bundleType == null) ? 0 : bundleType.hashCode());
         return result;
     }
 
@@ -189,6 +203,14 @@ public class Bundle implements Serializable {
                 return false;
             }
         } else if (!name.equals(other.name)) {
+            return false;
+        }
+
+        if (bundleType == null) {
+            if (other.bundleType != null) {
+                return false;
+            }
+        } else if (!bundleType.equals(other.bundleType)) {
             return false;
         }
 

@@ -66,7 +66,7 @@ public class BundleGroupDeployment implements Serializable {
 
     @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
-    protected BundleGroupDeploymentStatus status;
+    protected BundleDeploymentStatus status;
 
     @Column(name = "ERROR_MESSAGE")
     protected String errorMessage;
@@ -91,7 +91,7 @@ public class BundleGroupDeployment implements Serializable {
         this.subjectName = subjectName;
         this.bundleDeployDefinition = bundleDeployDefinition;
         this.group = group;
-        this.status = BundleGroupDeploymentStatus.INPROGRESS;
+        this.status = BundleDeploymentStatus.INPROGRESS;
     }
 
     public int getId() {
@@ -108,11 +108,11 @@ public class BundleGroupDeployment implements Serializable {
      *
      * @return the request status
      */
-    public BundleGroupDeploymentStatus getStatus() {
+    public BundleDeploymentStatus getStatus() {
         return status;
     }
 
-    public void setStatus(BundleGroupDeploymentStatus status) {
+    public void setStatus(BundleDeploymentStatus status) {
         this.status = status;
     }
 
@@ -135,7 +135,7 @@ public class BundleGroupDeployment implements Serializable {
     /**
      * If not <code>null</code>, this is an error message (possibly a full stack trace) to indicate the overall error
      * that occurred when the configuration update failed. This will normally be <code>null</code> unless the
-     * {@link #getStatus() status} indicates a {@link BundleGroupDeploymentStatus#FAILURE}.
+     * {@link #getStatus() status} indicates a {@link BundleDeploymentStatus#FAILURE}.
      *
      * @return overall error that occurred
      */
@@ -155,7 +155,7 @@ public class BundleGroupDeployment implements Serializable {
         this.errorMessage = errorMessage;
 
         if (this.errorMessage != null) {
-            setStatus(BundleGroupDeploymentStatus.FAILURE);
+            setStatus(BundleDeploymentStatus.FAILURE);
         }
     }
 
@@ -212,7 +212,7 @@ public class BundleGroupDeployment implements Serializable {
     public long getDuration() {
         long start = this.createdTime;
         long end;
-        if ((status == null) || (status == BundleGroupDeploymentStatus.INPROGRESS)) {
+        if ((status == null) || (status == BundleDeploymentStatus.INPROGRESS)) {
             end = System.currentTimeMillis();
         } else {
             end = this.modifiedTime;

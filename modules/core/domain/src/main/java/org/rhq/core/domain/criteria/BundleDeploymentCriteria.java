@@ -23,6 +23,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 
 /**
  * @author Jay Shaughnessy
@@ -38,6 +39,7 @@ public class BundleDeploymentCriteria extends Criteria {
     private String filterBundleDeployDefinitionName; // requires override
     private Integer filterResourceId; // requires override
     private String filterResourceName; // requires override
+    private BundleDeploymentStatus filterStatus;
 
     private boolean fetchBundleDeployDefinition;
     private boolean fetchResource;
@@ -51,7 +53,7 @@ public class BundleDeploymentCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<?> getPersistentClass() {
         return BundleDeployment.class;
     }
 
@@ -73,6 +75,10 @@ public class BundleDeploymentCriteria extends Criteria {
 
     public void addFilterResourceName(String filterResourceName) {
         this.filterResourceName = filterResourceName;
+    }
+
+    public void addFilterStatus(BundleDeploymentStatus filterStatus) {
+        this.filterStatus = filterStatus;
     }
 
     public void fetchBundleDeployDefinition(boolean fetchBundleDeployDefinition) {

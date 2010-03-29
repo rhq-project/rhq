@@ -29,6 +29,8 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -84,6 +86,10 @@ public class BundleDeployment implements Serializable {
     @ManyToOne
     private BundleGroupDeployment bundleGroupDeployment;
 
+    @Column(name = "STATUS", nullable = false)
+    @Enumerated(EnumType.STRING)
+    protected BundleDeploymentStatus status;
+
     @Column(name = "CTIME")
     private Long ctime = -1L;
 
@@ -94,8 +100,7 @@ public class BundleDeployment implements Serializable {
     }
 
     public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource) {
-        this.bundleDeployDefinition = bundleDeploymentDef;
-        this.resource = resource;
+        this(bundleDeploymentDef, resource, null);
     }
 
     public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource,
@@ -103,6 +108,7 @@ public class BundleDeployment implements Serializable {
         this.bundleDeployDefinition = bundleDeploymentDef;
         this.resource = resource;
         this.bundleGroupDeployment = bundleGroupDeployment;
+        this.status = BundleDeploymentStatus.INPROGRESS;
     }
 
     public BundleDeployDefinition getBundleDeployDefinition() {
@@ -157,6 +163,20 @@ public class BundleDeployment implements Serializable {
 
     public void setBundleGroupDeployment(BundleGroupDeployment bundleGroupDeployment) {
         this.bundleGroupDeployment = bundleGroupDeployment;
+    }
+
+    /**
+     * The status of the request which indicates that the request is either still in progress, or it has completed and
+     * either succeeded or failed.
+     *
+     * @return the request status
+     */
+    public BundleDeploymentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(BundleDeploymentStatus status) {
+        this.status = status;
     }
 
     @Override

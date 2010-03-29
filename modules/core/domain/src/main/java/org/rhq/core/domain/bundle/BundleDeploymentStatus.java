@@ -23,13 +23,14 @@
 package org.rhq.core.domain.bundle;
 
 /**
- * Simple statuses for Bundle Group Deploy requests. When a request is first initiated, it will be considered in the
+ * Simple statuses for Bundle (Group) Deploy requests. When a request is first initiated, it will be considered in the
  * {@link #INPROGRESS} state. When the request has completed, it will have been either a {@link #SUCCESS} or
- * {@link #FAILURE}.
+ * {@link #FAILURE}. For group deploy requests the status values are the same. Any individual failure will be
+ * reflected as a group failure. 
  *
  * @author Jay Shaughnessy
  */
-public enum BundleGroupDeploymentStatus {
+public enum BundleDeploymentStatus {
     INPROGRESS("In Progress"), //
     SUCCESS("Success"), //
     FAILURE("Failure"), //
@@ -37,7 +38,7 @@ public enum BundleGroupDeploymentStatus {
 
     private String displayName;
 
-    BundleGroupDeploymentStatus(String displayName) {
+    BundleDeploymentStatus(String displayName) {
         this.displayName = displayName;
     }
 

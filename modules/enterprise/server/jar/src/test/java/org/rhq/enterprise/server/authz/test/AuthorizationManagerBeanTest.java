@@ -406,6 +406,40 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test
+    public void testCanViewResourceWhenSubjectIsInMultipleRolesAndResourcesInMultipleGroups() throws Exception {
+        getTransactionManager().begin();
+        EntityManager entityMgr = getEntityManager();
+
+        try {
+            Subject subject = SessionTestHelper.createNewSubject(entityMgr, "testSubject");
+
+            Role role1 = SessionTestHelper.createNewRoleForSubject(entityMgr, subject, "role1");
+            role1.addPermission(Permission.VIEW_RESOURCE);
+
+            Role role2 = SessionTestHelper.createNewRoleForSubject(entityMgr, subject, "role2");
+            role2.addPermission(Permission.VIEW_RESOURCE);
+
+            ResourceGroup group1 = SessionTestHelper.createNewCompatibleGroupForRole(entityMgr, role1, "group 1");
+            ResourceGroup group2 = SessionTestHelper.createNewCompatibleGroupForRole(entityMgr, role2, "group 2");
+
+            Resource r1 = SessionTestHelper.createNewResourceForGroup(entityMgr, group1, "r1");
+            Resource r2 = SessionTestHelper.createNewResourceForGroup(entityMgr, group2, "r2");
+
+            entityMgr.flush();
+
+            List<Integer> resourceIds = Arrays.asList(r1.getId(), r2.getId());
+
+            assertTrue(
+                "The subject should have permission to view the resources in different groups since the subject is in roles for those groups",
+                authorizationManager.canViewResources(subject, resourceIds)
+            );
+        }
+        finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
     public void testCanViewResourcesWhenSubjectIsNotInRole() throws Exception {
         getTransactionManager().begin();
         EntityManager entityMgr = getEntityManager();

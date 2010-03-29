@@ -45,6 +45,15 @@ public interface AuthorizationManagerLocal {
      */
     boolean canViewResource(Subject subject, int resourceId);
 
+    /**
+     * Returns true if the current user has a role attached to a group that contains the specified resources. Note that
+     * this method will return true if the resources span multiple groups so long has the user is in one or more roles
+     * granting view permission for those groups containing the resources.
+     *
+     * @param subject The current subject or caller
+     * @param resourceIds The resource ids against which we are checking whether the subject has access
+     * @return true only if the subject has a role attached to a group that contains all of the specified resources
+     */
     boolean canViewResources(Subject subject, List<Integer> resourceIds);
 
     /**

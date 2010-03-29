@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 
 public class WebUserTrackingFilter extends BaseFilter {
 
@@ -22,6 +23,8 @@ public class WebUserTrackingFilter extends BaseFilter {
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException,
         ServletException {
         HttpServletRequest request = (HttpServletRequest) req;
+
+        HibernatePerformanceMonitor.get().zeroStats();
 
         // only record GET requests, resubmitting to POST pages is dangerous
         String method = request.getMethod();

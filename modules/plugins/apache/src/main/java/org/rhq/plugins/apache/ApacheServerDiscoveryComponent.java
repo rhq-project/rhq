@@ -20,7 +20,6 @@ package org.rhq.plugins.apache;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
-import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.augeas.util.Glob;
 import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
@@ -49,6 +47,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.SystemInfoException;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
@@ -293,24 +292,51 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
     
     @Nullable
     private String getServerRoot(@NotNull ApacheBinaryInfo binaryInfo, @NotNull ProcessInfo processInfo) {
+        // First see if -d was specified on the httpd command line.
         String[] cmdLine = processInfo.getCommandLine();
         String root = getCommandLineOption(cmdLine, "-d");
 
+        // If not, extract the path from the httpd binary.
         if (root == null) {
             root = binaryInfo.getRoot();
         }
 
-        if (root != null) {
-            root = FileUtils.getCanonicalPath(root);
+        if (root == null) {
+            // We have failed to determine the server root  :(
+            return null;
         }
+
+        // If the path is relative, convert it to an absolute path, resolving it relative to the cwd of the httpd process.
+        File rootFile = new File(root);
+        if (!rootFile.isAbsolute()) {
+            String currentWorkingDir;
+            try {
+                currentWorkingDir = processInfo.getCurrentWorkingDirectory();
+            } catch (Exception e) {
+                log.error("Unable to determine current working directory of Apache process [" + processInfo
+                        + "], which is needed to determine the server root of the Apache instance.", e);
+                return null;
+            }
+            if (currentWorkingDir == null) {
+                log.error("Unable to determine current working directory of Apache process [" + processInfo
+                        + "], which is needed to determine the server root of the Apache instance.");
+                return null;
+            } else {
+                rootFile = new File(currentWorkingDir, root);
+                root = rootFile.getPath();
+            }
+        }
+
+        // And finally canonicalize the path, but using our own getCanonicalPath() method, which preserves symlinks.
+        root = FileUtils.getCanonicalPath(root);
 
         return root;
     }
 
     @Nullable
     private File getServerConfigFile(ApacheBinaryInfo binaryInfo, ProcessInfo processInfo, String serverRoot) {
-        String[] cmdLine = processInfo.getCommandLine();
         // First see if -f was specified on the httpd command line.
+        String[] cmdLine = processInfo.getCommandLine();
         String serverConfigFile = getCommandLineOption(cmdLine, "-f");
 
         // If not, extract the path from the httpd binary.
@@ -330,7 +356,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             serverConfigFile = file.getPath();
         }
 
-        // And now canonicalize the path, but using our own getCanonicalPath() method, which preserves symlinks.
+        // And finally canonicalize the path, but using our own getCanonicalPath() method, which preserves symlinks.
         serverConfigFile = FileUtils.getCanonicalPath(serverConfigFile);
 
         return new File(serverConfigFile);

@@ -49,6 +49,7 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
@@ -71,6 +72,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.StringUtils;
 import org.rhq.core.util.NumberUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -155,7 +157,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // of packages in the bundle's repo.
         ResourceType resourceType = entityManager.find(ResourceType.class, bundleType.getResourceType().getId());
         PackageType packageType = new PackageType(name, resourceType);
+        packageType.setDescription("Package type for content of bundle " + name);
         packageType.setCategory(PackageCategory.BUNDLE);
+        packageType.setSupportsArchitecture(false);
+        packageType.setDisplayName(StringUtils.deCamelCase(name));
+        packageType.setDiscoveryInterval(-1L);
+        packageType.setCreationData(false);
+        packageType.setDeploymentConfigurationDefinition(null);
         bundle.setPackageType(packageType);
 
         log.info("Creating bundle: " + bundle);
@@ -241,6 +249,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bv;
     }
 
+    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
         String version, String recipe) throws Exception {
@@ -310,6 +319,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
+    @SuppressWarnings("unchecked")
     private String getVersion(String version, Bundle bundle) {
         if (null != version && version.trim().length() > 0) {
             return version;
@@ -492,6 +502,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (!response.isSuccess()) {
             history = new BundleDeploymentHistory(subject.getName(), BundleDeploymentAction.DEPLOYMENT_END, "Failure: "
                 + response.getErrorMessage());
+            bundleManager.setBundleDeploymentStatus(subject, deployment.getId(), BundleDeploymentStatus.FAILURE);
             bundleManager.addBundleDeploymentHistory(subject, deployment.getId(), history);
         }
 
@@ -550,6 +561,37 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeployment deployment = new BundleDeployment(deployDef, resource, bundleGroupDeployment);
 
         entityManager.persist(deployment);
+        return deployment;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleDeployment setBundleDeploymentStatus(Subject subject, int bundleDeploymentId,
+        BundleDeploymentStatus status) throws Exception {
+
+        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
+        if (null == deployment) {
+            throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
+        }
+
+        deployment.setStatus(status);
+        this.entityManager.persist(deployment);
+
+        // If this is part of a group deployment then update the group status, if necessary. 
+        BundleGroupDeployment groupDeployment = deployment.getBundleGroupDeployment();
+        if ((null != groupDeployment) && (BundleDeploymentStatus.INPROGRESS.equals(groupDeployment.getStatus()))) {
+            if (BundleDeploymentStatus.FAILURE.equals(status)) {
+                groupDeployment.setStatus(status);
+            } else {
+                BundleDeploymentCriteria c = new BundleDeploymentCriteria();
+                c.addFilterBundleGroupDeploymentId(groupDeployment.getId());
+                c.addFilterStatus(BundleDeploymentStatus.INPROGRESS);
+                List<BundleDeployment> inProgressDeployments = findBundleDeploymentsByCriteria(subject, c);
+                if (inProgressDeployments.isEmpty()) {
+                    groupDeployment.setStatus(BundleDeploymentStatus.SUCCESS);
+                }
+            }
+        }
+
         return deployment;
     }
 
@@ -711,7 +753,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return results;
     }
 
-    // TODO This is not adequate!!!  
+    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deleteBundle(Subject subject, int bundleId) throws Exception {
         Bundle bundle = this.entityManager.find(Bundle.class, bundleId);

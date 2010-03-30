@@ -37,6 +37,7 @@ public class BundleDeploymentCriteria extends Criteria {
     private Integer filterId;
     private Integer filterBundleDeployDefinitionId; // requires override   
     private String filterBundleDeployDefinitionName; // requires override
+    private Integer filterBundleGroupDeploymentId; // requires override    
     private Integer filterResourceId; // requires override
     private String filterResourceName; // requires override
     private BundleDeploymentStatus filterStatus;
@@ -46,10 +47,11 @@ public class BundleDeploymentCriteria extends Criteria {
     private boolean fetchHistory;
 
     public BundleDeploymentCriteria() {
-        filterOverrides.put("resourceId", "resource.id = ?");
-        filterOverrides.put("resourceName", "resource.name like ?");
         filterOverrides.put("bundleDeployDefinitionId", "parentResource.id = ?");
         filterOverrides.put("bundleDeployDefinitionName", "parentResource.name like ?");
+        filterOverrides.put("bundleGroupDeploymentId", "bundleGroupDeployment.id = ?");
+        filterOverrides.put("resourceId", "resource.id = ?");
+        filterOverrides.put("resourceName", "resource.name like ?");
     }
 
     @Override
@@ -67,6 +69,10 @@ public class BundleDeploymentCriteria extends Criteria {
 
     public void addFilterBundleDeployDefinitionName(String filterBundleDeployDefinitionName) {
         this.filterBundleDeployDefinitionName = filterBundleDeployDefinitionName;
+    }
+
+    public void addFilterBundleGroupDeploymentId(Integer filterBundleGroupDeploymentId) {
+        this.filterBundleGroupDeploymentId = filterBundleGroupDeploymentId;
     }
 
     public void addFilterResourceId(Integer filterResourceId) {

@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
@@ -94,4 +95,15 @@ public class BundleServerServiceImpl implements BundleServerService {
             throw new WrappedRemotingException(e);
         }
     }
+
+    public void setBundleDeploymentStatus(int bundleDeploymentId, BundleDeploymentStatus status) {
+        try {
+            BundleManagerLocal bm = LookupUtil.getBundleManager();
+            bm.setBundleDeploymentStatus(LookupUtil.getSubjectManager().getOverlord(), bundleDeploymentId, status);
+        } catch (Exception e) {
+            log.error("Failed to set status for deployment id: " + bundleDeploymentId, e);
+            throw new WrappedRemotingException(e);
+        }
+    }
+
 }

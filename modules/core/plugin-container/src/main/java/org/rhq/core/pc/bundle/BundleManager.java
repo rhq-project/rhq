@@ -43,6 +43,7 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.PackageVersion;
@@ -146,7 +147,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             if (!result.isSuccess()) {
                 response.setErrorMessage(result.getErrorMessage());
             }
-            auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT_END, "Success");
+            completeDeployment(deployment, BundleDeploymentStatus.SUCCESS, "Success");
         } catch (Throwable t) {
             log.error("Failed to schedule bundle request: " + request, t);
             response.setErrorMessage(t);
@@ -203,6 +204,11 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         auditDeployment(deployment, BundleDeploymentAction.FILE_DOWNLOAD_END, null);
 
         return packageVersionFiles;
+    }
+
+    private void completeDeployment(BundleDeployment deployment, BundleDeploymentStatus status, String message) {
+        getBundleServerService().setBundleDeploymentStatus(deployment.getId(), status);
+        auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT_END, message);
     }
 
     private void auditDeployment(BundleDeployment deployment, BundleDeploymentAction action, String message) {

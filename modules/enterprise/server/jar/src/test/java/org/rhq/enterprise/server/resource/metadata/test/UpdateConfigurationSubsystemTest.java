@@ -140,7 +140,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    @Test
+    @Test(enabled = false)
     public void testBZ_573034() throws Exception {
         try {
             getTransactionManager().begin();

@@ -26,9 +26,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -42,14 +44,17 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 public class AntLauncher {
 
     // currently, the bundle plugins don't need custom ant tasks, but there is an ant task stubbed for future use here
-    private static final String ANT_TASKS = "bundle-ant-tasks.properties";
+    private static final String BUNDLE_ANT_TASKS = "bundle-ant-tasks.properties";
+
+    // "out of box" we will provide the antcontrib optional tasks
+    private static final String ANTCONTRIB_ANT_TASKS = "net/sf/antcontrib/antcontrib.properties";
 
     /**
      * Launches ANT and parses the given build file and optionally executes it.
      *
      * @param buildFile      the build file that ANT will run
      * @param target         the target to run, <code>null</code> will run the default target
-     * @param customTaskDefs the properties file found in classloader that contains all the taskdef definitions
+     * @param customTaskDefs the properties files found in classloader that contains all the taskdef definitions
      * @param properties     set of properties to set for the ANT task to access
      * @param logFile        where ANT messages will be logged
      * @param logStdOut      if <code>true</code>, log messages will be sent to stdout as well as the log file
@@ -57,7 +62,7 @@ public class AntLauncher {
      *
      * @throws RuntimeException
      */
-    public BundleAntProject startAnt(File buildFile, String target, String customTaskDefs, Properties properties,
+    public BundleAntProject startAnt(File buildFile, String target, Set<String> customTaskDefs, Properties properties,
         File logFile, boolean logStdOut, boolean execute) {
 
         PrintWriter logFileOutput = null;
@@ -67,9 +72,14 @@ public class AntLauncher {
 
             ClassLoader classLoader = getClass().getClassLoader();
 
+            if (customTaskDefs == null) {
+                customTaskDefs = new HashSet<String>(1);
+            }
+            customTaskDefs.add(ANTCONTRIB_ANT_TASKS); // we always want to provide these
+
             Properties taskDefs = new Properties();
-            if (customTaskDefs != null) {
-                InputStream taskDefsStream = classLoader.getResourceAsStream(customTaskDefs);
+            for (String customTaskDef : customTaskDefs) {
+                InputStream taskDefsStream = classLoader.getResourceAsStream(customTaskDef);
                 try {
                     taskDefs.load(taskDefsStream);
                 } finally {

@@ -56,7 +56,7 @@ public class TestBase extends AbstractEJB3Test {
 
     protected ContentSourceType getContentSourceType(String typeName) throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+        EntityManager em = getEntityManager();        
         try {
             Query q = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME_WITH_CONFIG_DEF);
             ContentSourceType type = (ContentSourceType) q.setParameter("name", typeName).getSingleResult();

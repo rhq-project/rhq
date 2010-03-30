@@ -96,25 +96,26 @@ public class ContentSourceMetadataManagerBean implements ContentSourceMetadataMa
     }
 
     private void updateConfigurationDefinition(ContentSourceType newType, ContentSourceType existingType) {
-        ConfigurationDefinition newConfig = newType.getContentSourceConfigurationDefinition();
-        ConfigurationDefinition existingConfig = existingType.getContentSourceConfigurationDefinition();
+        ConfigurationDefinition newConfigDef = newType.getContentSourceConfigurationDefinition();
+        ConfigurationDefinition existingConfigDef = existingType.getContentSourceConfigurationDefinition();
 
-        if (newConfig != null) {
-            if (existingConfig == null) {
+        if (newConfigDef != null) {
+            if (existingConfigDef == null) {
                 // everything is new
-                entityManager.persist(newConfig);
-                existingType.setContentSourceConfigurationDefinition(newConfig);
+                entityManager.persist(newConfigDef);
+                existingType.setContentSourceConfigurationDefinition(newConfigDef);
             } else {
                 // both new and existing had some kind of configuration, update the existing to match the new
-                configurationMetadataManager.updateConfigurationDefinition(newConfig, existingConfig);
+                configurationMetadataManager.updateConfigurationDefinition(newConfigDef, existingConfigDef);
             }
         } else {
             // the new config is null -> remove the existing config
-            if (existingConfig != null) {
+            if (existingConfigDef != null) {
                 existingType.setContentSourceConfigurationDefinition(null);
-                entityManager.remove(existingConfig);
+                entityManager.remove(existingConfigDef);
             }
         }
+        return;
     }
 
     /**

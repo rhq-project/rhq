@@ -210,11 +210,11 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
             previousRepo.addContentSource(syncSource);
             repoManager.createRepo(overlord, previousRepo);
 
-            // Test
-            // --------------------------------------------
-            // TestContentProviderManager providerManager = new TestContentProviderManager();
-            boolean tested = pluginService.getContentProviderManager().testConnection(syncSource.getId());
-            assert tested;
+        // Test
+        // --------------------------------------------
+        // TestContentProviderManager providerManager = new TestContentProviderManager();
+        boolean tested = pluginService.getContentProviderManager().testConnection(syncSource.getId());
+        assert tested;
 
             boolean completed = pluginService.getContentProviderManager().synchronizeContentProvider(syncSource.getId());
             assert completed;

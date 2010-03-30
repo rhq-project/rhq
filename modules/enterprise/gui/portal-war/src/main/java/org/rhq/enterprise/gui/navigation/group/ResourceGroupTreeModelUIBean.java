@@ -28,11 +28,8 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.resource.hierarchy.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.resource.hierarchy.ResourceFlyweight;
 import org.rhq.core.domain.util.PageControl;

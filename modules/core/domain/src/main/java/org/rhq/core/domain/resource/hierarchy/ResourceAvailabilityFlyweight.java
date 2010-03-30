@@ -37,6 +37,8 @@ import org.rhq.core.domain.measurement.ResourceAvailability;
  */
 public class ResourceAvailabilityFlyweight implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private ResourceFlyweight resource;
     private int resourceId;
     private AvailabilityType availabilityType;

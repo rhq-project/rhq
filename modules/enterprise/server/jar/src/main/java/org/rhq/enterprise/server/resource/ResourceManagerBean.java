@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.resource;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +29,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -91,7 +88,6 @@ import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
-import org.rhq.core.domain.resource.composite.LockedResource;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;

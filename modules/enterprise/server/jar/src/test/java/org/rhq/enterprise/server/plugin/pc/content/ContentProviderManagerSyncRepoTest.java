@@ -83,49 +83,55 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
         pluginService = new TestContentServerPluginService(this);
 
         TransactionManager tx = getTransactionManager();
-        tx.begin();
-        EntityManager entityManager = getEntityManager();
+        try {
+            tx.begin();
+            EntityManager entityManager = getEntityManager();
 
-        ContentSourceManagerLocal contentManager = LookupUtil.getContentSourceManager();
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        Subject overlord = subjectManager.getOverlord();
+            ContentSourceManagerLocal contentManager = LookupUtil.getContentSourceManager();
+            RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+            SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+            Subject overlord = subjectManager.getOverlord();
 
-        // Create a sample content source type that will be used in this test
-        contentSourceType = new ContentSourceType("testType");
-        entityManager.persist(contentSourceType);
-        entityManager.flush();
+            // Create a sample content source type that will be used in this test
+            contentSourceType = new ContentSourceType("testType");
+            entityManager.persist(contentSourceType);
+            entityManager.flush();
 
-        // A repo sync will query all providers for that repo, so add multiple providers
-        ContentSource cs1 = new ContentSource("contentSource1", contentSourceType);
-        cs1.setDownloadMode(DownloadMode.DATABASE);
-        ContentSource cs2 = new ContentSource("contentSource2", contentSourceType);
-        cs2.setDownloadMode(DownloadMode.DATABASE);
+            // A repo sync will query all providers for that repo, so add multiple providers
+            ContentSource cs1 = new ContentSource("contentSource1", contentSourceType);
+            cs1.setDownloadMode(DownloadMode.DATABASE);
+            ContentSource cs2 = new ContentSource("contentSource2", contentSourceType);
+            cs2.setDownloadMode(DownloadMode.DATABASE);
 
-        cs1 = contentManager.simpleCreateContentSource(overlord, cs1);
-        cs2 = contentManager.simpleCreateContentSource(overlord, cs2);
+            cs1 = contentManager.simpleCreateContentSource(overlord, cs1);
+            cs2 = contentManager.simpleCreateContentSource(overlord, cs2);
 
-        pluginService.associateContentProvider(cs1, contentProvider1);
-        pluginService.associateContentProvider(cs2, contentProvider2);
+            pluginService.associateContentProvider(cs1, contentProvider1);
+            pluginService.associateContentProvider(cs2, contentProvider2);
 
-        repoContentSources.add(cs1);
-        repoContentSources.add(cs2);
+            repoContentSources.add(cs1);
+            repoContentSources.add(cs2);
 
-        // Create the package type packages will be created against
-        resourceType = new ResourceType(TestContentProvider.RESOURCE_TYPE_NAME,
-            TestContentProvider.RESOURCE_TYPE_PLUGIN_NAME, ResourceCategory.PLATFORM, null);
-        entityManager.persist(resourceType);
+            // Create the package type packages will be created against
+            resourceType = new ResourceType(TestContentProvider.RESOURCE_TYPE_NAME,
+                TestContentProvider.RESOURCE_TYPE_PLUGIN_NAME, ResourceCategory.PLATFORM, null);
+            entityManager.persist(resourceType);
 
-        packageType = new PackageType(TestContentProvider.PACKAGE_TYPE_NAME, resourceType);
-        entityManager.persist(packageType);
+            packageType = new PackageType(TestContentProvider.PACKAGE_TYPE_NAME, resourceType);
+            entityManager.persist(packageType);
 
-        // Create the repo to be syncced
-        Repo repo = new Repo(TestContentProvider.REPO_WITH_PACKAGES);
-        repo.addContentSource(cs1);
+            // Create the repo to be syncced
+            Repo repo = new Repo(TestContentProvider.REPO_WITH_PACKAGES);
+            repo.addContentSource(cs1);
 //        repo.addContentSource(cs2);  Disabled until we implement a second test content provider to return new stuff
-        repoToSync = repoManager.createRepo(overlord, repo);
+            repoToSync = repoManager.createRepo(overlord, repo);
 
-        tx.commit();
+            tx.commit();
+        } catch (Throwable t) {
+            tx.rollback();
+            // rethrow because if we swallow the exception then tests proceed to execute when they probably should not
+            throw new RuntimeException(t);
+        }
     }
 
     @AfterMethod

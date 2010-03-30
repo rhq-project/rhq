@@ -169,7 +169,7 @@ public class ResourceTreeModelUIBean {
                     AutoGroupCompositeFlyweight agc = null;
                     if (rsc instanceof ResourceSubCategoryFlyweight) {
                         agc = new AutoGroupCompositeFlyweight(avail, parentResource, (ResourceSubCategoryFlyweight) rsc, entries.size());
-                    } else if (rsc instanceof ResourceType) {
+                    } else if (rsc instanceof ResourceTypeFlyweight) {
                         boolean isDupResourceTypeName = dupResourceTypeNames.contains(((ResourceTypeFlyweight) rsc).getName());
                         agc = new AutoGroupCompositeFlyweight(avail, parentResource, (ResourceTypeFlyweight) rsc, entries.size(),
                             isDupResourceTypeName);

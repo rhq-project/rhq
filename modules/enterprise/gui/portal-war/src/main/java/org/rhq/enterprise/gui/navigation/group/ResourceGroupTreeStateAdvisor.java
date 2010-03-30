@@ -34,6 +34,7 @@ import org.richfaces.model.TreeRowKey;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.hierarchy.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.inventory.resource.ResourceUIBean;
@@ -94,9 +95,9 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
             if (((ClusterKey) resourceTreeNode.getData()).equals(this.selectedClusterKey)) {
                 return true;
             }
-        } else if (resourceTreeNode.getData() instanceof AutoGroupComposite) {
+        } else if (resourceTreeNode.getData() instanceof AutoGroupCompositeFlyweight) {
             ClusterKey key = resourceTreeNode.getClusterKey();
-            AutoGroupComposite ag = (AutoGroupComposite) resourceTreeNode.getData();
+            AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) resourceTreeNode.getData();
             if (key.equals(selectedClusterKey)) {
                 return true;
             }
@@ -142,7 +143,7 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
 
                     response.sendRedirect(path + "?groupId=" + group.getId() + "&parentGroupId=" + ((ClusterKey) node.getData()).getClusterGroupId());
 
-                } else if (node.getData() instanceof AutoGroupComposite) {
+                } else if (node.getData() instanceof AutoGroupCompositeFlyweight) {
                     state.setSelected(e.getOldSelection());
                     FacesContext.getCurrentInstance().addMessage("leftNavGroupTreeForm:leftNavGroupTree",
                         new FacesMessage(FacesMessage.SEVERITY_WARN, "No cluster autogroup views available", null));

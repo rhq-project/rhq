@@ -111,6 +111,20 @@
     </profile>
 
     <profile>
+        <id>bundle-plugins</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+        <modules>
+           <module>filetemplate-bundle</module>
+           <module>ant-bundle</module>
+        </modules>
+    </profile>
+
+    <profile>
         <id>linux-plugins</id>
          <activation>
             <property>
@@ -159,10 +173,6 @@
            <module>perftest</module>
            <module>snmptrapd</module>
            <module>twitter</module>
-
-           <!-- bundle plugins -->
-           <module>filetemplate-bundle</module>
-           <module>ant-bundle</module>
         </modules>
     </profile>
 

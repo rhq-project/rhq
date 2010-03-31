@@ -107,6 +107,14 @@
         path="/resource/common/monitor/alerts/ViewAlertNotificationsList.jsp"/>
 
 
+  <definition name=".events.alert.view.notifications.roles"
+        path="/resource/common/monitor/alerts/ViewAlertNotificationsRoles.jsp"
+        controllerUrl="/alerts/ViewNotificationsRoles.do"/>
+
+  <definition name=".events.alert.view.notifications.users"
+        path="/resource/common/monitor/alerts/ViewAlertNotificationsUsers.jsp"
+        controllerUrl="/alerts/ViewNotificationsUsers.do"/>
+
   <definition name=".events.alert.view.controlaction"
               path="/resource/common/monitor/alerts/config/ViewDefinitionControlAction.jsp"
               controllerUrl="/alerts/ViewControlAction.do"/>

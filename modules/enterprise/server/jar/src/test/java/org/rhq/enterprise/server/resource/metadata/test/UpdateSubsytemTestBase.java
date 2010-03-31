@@ -20,14 +20,12 @@ package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.io.FileNotFoundException;
 import java.net.URL;
-import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -35,6 +33,10 @@ import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -65,6 +67,8 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     @EJB
     protected ResourceManagerLocal resMgr;
 
+    protected ResourceTypeManagerLocal resourceTypeManager;
+
     protected TestServerCommunicationsService agentServiceContainer;
 
     protected int agentId;
@@ -79,6 +83,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected void init() {
         try {
             metadataManager = LookupUtil.getResourceMetadataManager();
+            resourceTypeManager = LookupUtil.getResourceTypeManager();
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
@@ -93,7 +98,6 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         agentServiceContainer.measurementService = new MockAgentService();
 
         prepareScheduler();
-
     }
 
     @AfterClass
@@ -108,17 +112,25 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     }
 
     protected ResourceType getResourceType(String typeName, String pluginName) {
-        Query q1 = getEntityManager().createQuery("Select rt from ResourceType rt");
-        List<ResourceType> types = q1.getResultList();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-        Query q = getEntityManager().createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
-        q.setParameter("name", typeName).setParameter("plugin", pluginName);
-        try {
-            ResourceType type = (ResourceType) q.getSingleResult();
-            return type;
-        } catch (NoResultException nre) {
-            throw new NoResultException("==== Failed to lookup ResourceType [" + typeName + "] from Plugin ["
-                + pluginName + "] - found: " + types);
+        ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
+        resourceTypeCriteria.addFilterName(typeName);
+        resourceTypeCriteria.addFilterPluginName(pluginName);
+
+        resourceTypeCriteria.fetchPluginConfigurationDefinition(true);
+        resourceTypeCriteria.fetchResourceConfigurationDefinition(true);
+        // TODO: Fetch everything else.
+
+        PageList<ResourceType> results = this.resourceTypeManager.findResourceTypesByCriteria(overlord,
+                resourceTypeCriteria);
+        if (results.size() == 0) {
+            return null;
+        } else if (results.size() == 1) {
+            return results.get(0);
+        } else {
+            throw new IllegalStateException("Found more than one resourceType with name " + typeName + " from plugin "
+                    + pluginName + ".");
         }
     }
 
@@ -228,5 +240,4 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         }
 
     }
-
 }

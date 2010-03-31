@@ -529,7 +529,8 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
 
             /*
              * Deploy v2 of the plugin
-             */{ // extra block for variable scoping purposes
+             */
+            { // extra block for variable scoping purposes
                 registerPlugin("propertyList-v2.xml");
                 ResourceType platform = getResourceType("myPlatform6");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
@@ -607,7 +608,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                                 assert frc.getMaximum() == 5;
                                 assert frc.getDetails().equals("10.0#5.0");
                             } else {
-                                assert true == false : "Unknown constraint type encoutered";
+                                assert true == false : "Unknown constraint type encountered";
                             }
                         }
                     } else {
@@ -709,7 +710,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                     }
 
                     if (def.getName().equals("map1")) {
-                        assert def instanceof PropertyDefinitionSimple : "Map 1 should be a simle-property in v2";
+                        assert def instanceof PropertyDefinitionSimple : "Map 1 should be a simple-property in v2";
                     } else {
                         assert def instanceof PropertyDefinitionMap : "Not all properties are maps in v2";
                     }
@@ -782,7 +783,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                     } else if (def.getName().equals("six")) {
                         assert def instanceof PropertyDefinitionSimple;
                     } else {
-                        assert true == false : "Unknwon definition : " + def.getName() + " in v1";
+                        assert true == false : "Unknown definition : " + def.getName() + " in v1";
                     }
                 }
             }
@@ -817,7 +818,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                         assert def instanceof PropertyDefinitionList : "Expected a list-property, but it was "
                             + def.getClass().getCanonicalName();
                     } else {
-                        assert true == false : "Unknwon definition : " + def.getName() + " in v2";
+                        assert true == false : "Unknown definition : " + def.getName() + " in v2";
                     }
                 }
             }
@@ -1014,5 +1015,4 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             getTransactionManager().rollback();
         }
     }
-
 }

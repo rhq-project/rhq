@@ -36,6 +36,8 @@ import org.rhq.core.domain.bundle.BundleVersionRepo;
 import org.rhq.core.domain.bundle.BundleVersionRepoPK;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionType;
+import org.rhq.core.domain.content.PackageCategory;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -67,12 +69,8 @@ public class BundleTest extends AbstractEJB3Test {
             assert q.getResultList().size() == 0 : "should not have repo2 mapping in the db yet";
 
             BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
+            Bundle bundle = createBundle(em, name + "-Bundle", bundleType);
 
-            Repo bundleRepo = new Repo(name + "-Bundle");
-            em.persist(bundleRepo);
-            Bundle bundle = new Bundle(name + "-Bundle", bundleType);
-            bundle.setRepo(bundleRepo);
-            em.persist(bundle);
             BundleVersion bundleVersion = new BundleVersion(name, "1.0.0.BETA", bundle, recipe);
             bundleVersion.setVersionOrder(0);
             em.persist(bundleVersion);
@@ -133,13 +131,8 @@ public class BundleTest extends AbstractEJB3Test {
             String name = "BundleTest-testBundleVersion";
             String recipe = "action/script/recipe is here";
 
-            Repo repo1 = new Repo(name + "-Repo1");
-            em.persist(repo1);
-
             BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
-            Bundle bundle = new Bundle(name + "-Bundle", bundleType);
-            bundle.setRepo(repo1);
-            em.persist(bundle);
+            Bundle bundle = createBundle(em, name + "-Bundle", bundleType);
             id = bundle.getId();
             assert id > 0;
             assert bundle.getBundleType().getId() != 0 : "bundleType should have been cascade persisted too";
@@ -207,12 +200,15 @@ public class BundleTest extends AbstractEJB3Test {
             assert q.getResultList().size() == 1;
             bundle = (Bundle) q.getSingleResult();
             bundleType = bundle.getBundleType();
+            Repo repo = bundle.getRepo();
             em.remove(bundle);
-            em.remove(bundleType);
+            em.remove(repo);
+
+            deleteResourceType(em, bundleType.getResourceType());
+
             assert q.getResultList().size() == 0 : "didn't clean up test bundle";
             assert em.find(BundleType.class, bundleType.getId()) == null : "didn't clean up bundle type";
 
-            deleteResourceType(em, bundleType.getResourceType());
             em.close();
 
         } catch (Throwable t) {
@@ -232,13 +228,8 @@ public class BundleTest extends AbstractEJB3Test {
             String name = "BundleTest-testMultipleBundleVersions";
             String recipe = "action/script/recipe is here";
 
-            Repo repo1 = new Repo(name + "-Repo1");
-            em.persist(repo1);
-
             BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
-            Bundle bundle = new Bundle(name + "-Bundle", bundleType);
-            bundle.setRepo(repo1);
-            em.persist(bundle);
+            Bundle bundle = createBundle(em, name + "-Bundle", bundleType);
             id = bundle.getId();
             assert id > 0;
             assert bundle.getBundleType().getId() != 0 : "bundleType should have been cascade persisted too";
@@ -350,25 +341,19 @@ public class BundleTest extends AbstractEJB3Test {
         try {
             int id;
 
-            String name = "BundleTest-testBundle";
+            String name = "BundleTest-testBundle-Bundle";
 
             Query q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
             q.setParameter("name", name);
             assert q.getResultList().size() == 0; // not in the db yet
 
             BundleType bundleType = createBundleType(em, name + "-Type", createResourceType(em));
-
-            Repo bundleRepo = new Repo(name);
-            em.persist(bundleRepo);
-
-            Bundle b = new Bundle(name, bundleType);
-            b.setRepo(bundleRepo);
-            em.persist(b);
+            Bundle b = createBundle(em, name, bundleType);
             id = b.getId();
             assert id > 0;
             assert b.getBundleType().getId() != 0 : "bundleType should have been persisted independently";
             assert b.getRepo().getId() != 0 : "bundle's repo should have been cascade persisted with the bundle";
-            assert name.equals(b.getRepo().getName()) : "bundle's repo should have same name as bundle";
+            assert b.getName().equals(b.getRepo().getName()) : "bundle's repo should have same name as bundle";
 
             q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
             q.setParameter("name", name);
@@ -481,6 +466,22 @@ public class BundleTest extends AbstractEJB3Test {
         BundleType bt = new BundleType(name, rt);
         em.persist(bt);
         return bt;
+    }
+
+    private Bundle createBundle(EntityManager em, String name, BundleType bt) throws Exception {
+        // implicit Bundle'sRepo
+        Repo repo = new Repo(name);
+        repo.setCandidate(false);
+        repo.setSyncSchedule(null);
+        em.persist(repo);
+
+        // Bundle's packageType
+        PackageType pt = new PackageType(name, bt.getResourceType());
+        pt.setCategory(PackageCategory.BUNDLE);
+
+        Bundle bundle = new Bundle(name, bt, repo, pt);
+        em.persist(bundle);
+        return bundle;
     }
 
     private ResourceType deleteResourceType(EntityManager em, ResourceType rt) {

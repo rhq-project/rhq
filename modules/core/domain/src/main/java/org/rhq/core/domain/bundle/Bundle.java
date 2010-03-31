@@ -101,14 +101,11 @@ public class Bundle implements Serializable {
         // for JPA use
     }
 
-    public Bundle(String name, BundleType type) {
+    public Bundle(String name, BundleType type, Repo repo, PackageType packageType) {
         setName(name);
         setBundleType(type);
-        // add implicit Repo
-        Repo repo = new Repo(name);
-        repo.setCandidate(false);
-        repo.setSyncSchedule(null);
         setRepo(repo);
+        setPackageType(packageType);
     }
 
     public int getId() {

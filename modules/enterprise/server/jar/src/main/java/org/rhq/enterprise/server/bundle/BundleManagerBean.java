@@ -142,16 +142,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid bundleTypeId: " + bundleTypeId);
         }
 
-        Bundle bundle = new Bundle(name, bundleType);
-        bundle.setDescription(description);
-
         // create and add the required Repo. the Repo is a detached object which helps in its eventual
         // removal.
         Repo repo = new Repo(name);
         repo.setCandidate(false);
         repo.setSyncSchedule(null);
         repo = repoManager.createRepo(subject, repo);
-        bundle.setRepo(repo);
 
         // add the required PackageType. the PackageType is an attached object which helps in cascade removal
         // of packages in the bundle's repo.
@@ -164,6 +160,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         packageType.setDiscoveryInterval(-1L);
         packageType.setCreationData(false);
         packageType.setDeploymentConfigurationDefinition(null);
+
+        Bundle bundle = new Bundle(name, bundleType, repo, packageType);
+        bundle.setDescription(description);
         bundle.setPackageType(packageType);
 
         log.info("Creating bundle: " + bundle);

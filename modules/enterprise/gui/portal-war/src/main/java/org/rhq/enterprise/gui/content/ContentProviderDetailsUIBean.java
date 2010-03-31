@@ -27,6 +27,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -49,10 +50,10 @@ public class ContentProviderDetailsUIBean {
 
         try {
             manager.updateContentSource(subject, contentSource, true);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The content provider ["
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The content source ["
                 + contentSource.getName() + "] has been updated.");
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Failed to update content provider ["
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Failed to update content source ["
                 + contentSource.getName() + "]", e);
         }
 
@@ -67,33 +68,40 @@ public class ContentProviderDetailsUIBean {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
 
         try {
-            if (manager.testContentSourceConnection(contentSource.getId())) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
-                    "The test passed - the remote repository for [" + contentSource.getName() + "] is available.");
-            } else {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                    "Failed the attempt to connect to the remote repository for [" + contentSource.getName()
-                        + "] Check the configuration and make sure the remote repository is up.");
-            }
+            manager.testContentSourceConnection(this.contentSource.getId());
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                    "Test passed - the remote repository for [" + this.contentSource.getName() + "] is available.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                "Unable to make a connection to the remote repository for [" + contentSource.getName() + "]", e);
+                    "Test failed - failed to connect to the remote repository for [" + this.contentSource.getName()
+                        + "] - check the configuration and make sure the remote repository is up and reachable. Details: "
+                        + ThrowableUtil.getAllMessages(e));
         }
 
         return "success";
     }
 
     public String sync() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-
+        // Test the content source connection before proceeding.
+        ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
         try {
-            manager.synchronizeAndLoadContentSource(subject, contentSource.getId());
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing content provider ["
-                + contentSource.getName() + "] now.");
+            contentSourceManager.testContentSourceConnection(this.contentSource.getId());
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Failed to connect to the remote repository for [" + this.contentSource.getName()
+                        + "] - check the configuration and make sure the remote repository is up and reachable. Details: "
+                        + ThrowableUtil.getAllMessages(e));
+            return "success";
+        }
+
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        try {
+            contentSourceManager.synchronizeAndLoadContentSource(subject, this.contentSource.getId());
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing content source ["
+                + this.contentSource.getName() + "] now.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                "Failed to start the sychronization process for [" + contentSource.getName() + "]", e);
+                "Failed to start the synchronization process for [" + this.contentSource.getName() + "]", e);
         }
 
         return "success";

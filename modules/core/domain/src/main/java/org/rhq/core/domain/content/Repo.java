@@ -48,6 +48,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.common.Tag;
 import org.rhq.core.domain.common.Taggable;
 import org.rhq.core.domain.resource.Resource;
@@ -88,7 +89,8 @@ import org.rhq.core.domain.resource.Resource;
         + ") "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
-        + "AND c.candidate is false " + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
+        + "AND c.candidate = false "
+        + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
     @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
@@ -254,8 +256,8 @@ public class Repo implements Serializable, Taggable {
     }
 
     /**
-     * Indicates if the repo is a "real" repo in RHQ or is just a candidate for import, such as those introduced by
-     * a content provider.
+     * Indicates if the repo is an imported (i.e. subscribable) repo in RHQ or is just a candidate for import, such as
+     * those introduced by a content source.
      */
     public boolean isCandidate() {
         return candidate;
@@ -797,7 +799,7 @@ public class Repo implements Serializable, Taggable {
     /**
      * Add a tag association with this repo.
      *
-     * @param  tag
+     * @param tag
      */
     public void addTag(Tag tag) {
         if (this.repoTags == null) {
@@ -811,7 +813,7 @@ public class Repo implements Serializable, Taggable {
     /**
      * Set tag associations with this repo.
      *
-     * @param  tag
+     * @param tags
      */
     public void setTags(Set<Tag> tags) {
         if (this.repoTags == null) {
@@ -870,23 +872,20 @@ public class Repo implements Serializable, Taggable {
     /**
      * The list of sync results - order ENSURED by the incrementing ID of this object
      */
+    @NotNull
     public List<RepoSyncResults> getSyncResults() {
-        if (syncResults == null) {
-            return null;
+        if (this.syncResults == null) {
+            this.syncResults = new ArrayList<RepoSyncResults>();
+            return this.syncResults;
         }
 
-        Comparator dc = new Comparator() {
-            public int compare(Object arg0, Object arg1) {
-                RepoSyncResults c1 = (RepoSyncResults) arg0;
-                RepoSyncResults c2 = (RepoSyncResults) arg1;
-
+        Collections.sort(syncResults, new Comparator<RepoSyncResults>() {
+            public int compare(RepoSyncResults c1, RepoSyncResults c2) {
                 Integer id1 = c1.getId();
                 Integer id2 = c2.getId();
-
                 return id1.compareTo(id2);
             }
-        };
-        Collections.sort(syncResults, dc);
+        });
 
         return syncResults;
     }

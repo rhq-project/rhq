@@ -29,5 +29,6 @@ public interface ConfigurationMetadataManagerLocal {
      * @param newDefinition
      * @param existingDefinition
      */
-    void updateConfigurationDefinition(ConfigurationDefinition newDefinition, ConfigurationDefinition existingDefinition);
+    ConfigurationDefinitionUpdateReport updateConfigurationDefinition(ConfigurationDefinition newDefinition, 
+        ConfigurationDefinition existingDefinition);
 }

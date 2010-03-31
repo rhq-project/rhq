@@ -295,7 +295,7 @@
 
    </navigation-rule>
 
-   <!-- Content Provider List -->
+   <!-- Content Source List -->
    <navigation-rule>
       <from-view-id>/rhq/content/listContentProviders.xhtml</from-view-id>
 

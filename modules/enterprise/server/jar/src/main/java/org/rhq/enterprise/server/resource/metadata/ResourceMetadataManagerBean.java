@@ -26,6 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -55,8 +56,13 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -71,6 +77,8 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.configuration.metadata.ConfigurationDefinitionUpdateReport;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
@@ -100,18 +108,27 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
+
     @EJB
     private MeasurementScheduleManagerLocal scheduleManager;
+
     @EJB
     private ConfigurationMetadataManagerLocal configurationMetadataManager;
+
     @EJB
     private SubjectManagerLocal subjectManager;
+
     @EJB
     private ResourceManagerLocal resourceManager;
+
     @EJB
     private EventManagerLocal eventManager;
+
     @EJB
     private ResourceMetadataManagerLocal resourceMetadataManager; // self
+
+    @EJB
+    private ConfigurationManagerLocal configurationManager;
 
     @SuppressWarnings("unchecked")
     public List<Plugin> getAllPluginsById(List<Integer> pluginIds) {
@@ -740,8 +757,20 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 existingType.setPluginConfigurationDefinition(resourceType.getPluginConfigurationDefinition());
             } else // update the configuration
             {
-                configurationMetadataManager.updateConfigurationDefinition(resourceType
-                    .getPluginConfigurationDefinition(), existingConfigurationDefinition);
+                ConfigurationDefinitionUpdateReport updateReport =
+                    configurationMetadataManager.updateConfigurationDefinition(
+                        resourceType.getPluginConfigurationDefinition(), existingConfigurationDefinition);
+                
+                if (updateReport.getNewPropertyDefinitions().size() > 0) {
+                    Subject overlord = subjectManager.getOverlord();
+                    ResourceCriteria criteria = new ResourceCriteria();
+                    criteria.addFilterResourceTypeId(existingType.getId());
+                    List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, criteria);
+
+                    for (Resource resource : resources) {
+                        updateResourcePluginConfiguration(resource, updateReport);
+                    }
+                }
             }
         } else {
             // resourceType.getPlu... is null -> remove the existing config
@@ -749,6 +778,25 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 existingType.setPluginConfigurationDefinition(null);
                 entityManager.remove(existingConfigurationDefinition);
             }
+        }
+    }
+
+    private void updateResourcePluginConfiguration(Resource resource,
+            ConfigurationDefinitionUpdateReport updateReport) {
+        Configuration pluginConfiguration = resource.getPluginConfiguration();
+        int numberOfProperties = pluginConfiguration.getProperties().size();
+        ConfigurationTemplate template = updateReport.getConfigurationDefinition().getDefaultTemplate();
+        Configuration templateConfiguration = template.getConfiguration();
+
+        for (PropertyDefinition propertyDef : updateReport.getNewPropertyDefinitions()) {
+            if (propertyDef.isRequired() ) {
+                Property templateProperty = templateConfiguration.get(propertyDef.getName());
+                pluginConfiguration.put(templateProperty.deepCopy(false));
+            }
+        }
+
+        if (pluginConfiguration.getProperties().size() > numberOfProperties) {
+            resource.setMtime(new Date().getTime());
         }
     }
 

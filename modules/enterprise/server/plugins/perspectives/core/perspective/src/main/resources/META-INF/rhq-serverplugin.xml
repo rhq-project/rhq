@@ -528,8 +528,8 @@
 
    <!--  Core Menu: administration.content -->
    <menu-item
-      name="administration.content.contentProviders"
-      displayName="Content Providers"
+      name="administration.content.contentSources"
+      displayName="Content Sources"
       url="/rhq/content/listContentProviders.xhtml">
       <position
          name="administration.content"
@@ -540,7 +540,7 @@
       displayName="Repositories"
       url="/rhq/content/listRepos.xhtml">
       <position
-         name="administration.content.contentProviders"
+         name="administration.content.contentSources"
          placement="after" />
    </menu-item>
 

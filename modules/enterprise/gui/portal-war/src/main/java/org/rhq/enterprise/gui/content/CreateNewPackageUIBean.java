@@ -469,6 +469,7 @@ public class CreateNewPackageUIBean {
             RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
 
             Repo newRepo = new Repo(newRepoName);
+            newRepo.setCandidate(false);
             newRepo = repoManager.createRepo(subject, newRepo);
 
             repoId = Integer.toString(newRepo.getId());

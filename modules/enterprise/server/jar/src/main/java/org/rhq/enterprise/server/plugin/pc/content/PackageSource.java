@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.util.Collection;
 
 /**
- * Indicates a content provider has the capability to provide packages into the server. Package synchronization will
+ * Indicates a content source has the capability to provide packages into the server. Package synchronization will
  * be done through the calls defined in this interface. This interface should use the configuration settings
  * passed into the plugin through {@link ContentProvider#initialize(org.rhq.core.domain.configuration.Configuration)}
  *

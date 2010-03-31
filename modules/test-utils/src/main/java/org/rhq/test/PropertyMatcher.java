@@ -25,8 +25,11 @@ package org.rhq.test;
 
 import org.apache.commons.beanutils.PropertyUtils;
 
-import java.util.Map;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class PropertyMatcher<T> {
 
@@ -34,12 +37,18 @@ public class PropertyMatcher<T> {
 
     private T actual;
 
+    private Set<String> ignoredProperties = new HashSet<String>();
+
     public void setExpected(T expected) {
         this.expected = expected;
     }
 
     public void setActual(T actual) {
         this.actual = actual;
+    }
+
+    public void setIgnoredProperties(Collection<String> ignoredProperties) {
+        this.ignoredProperties.addAll(ignoredProperties);
     }
 
     public MatchResult execute() {
@@ -54,6 +63,10 @@ public class PropertyMatcher<T> {
             for (String name : expectedProps.keySet()) {
                 Object expectedValue = expectedProps.get(name);
                 Object actualValue = actualProps.get(name);
+
+                if (ignoredProperties.contains(name)) {
+                    continue;
+                }
 
                 if (!propertyEquals(expectedValue, actualValue)) {
                     isMatch = false;

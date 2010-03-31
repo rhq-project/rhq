@@ -68,6 +68,11 @@ public class PortalAction extends ResourceController {
         keyMethodMap.setProperty("editConditions", "editDefinitionConditions");
         keyMethodMap.setProperty("editControlAction", "editDefinitionControlAction");
 
+        keyMethodMap.setProperty("viewRoles", "viewDefinitionRoles");
+        keyMethodMap.setProperty("viewUsers", "viewDefinitionUsers");
+
+        keyMethodMap.setProperty("addRoles", "addRolesDefinitions");
+        keyMethodMap.setProperty("addUsers", "addUsersDefinitions");
     }
 
     @Override
@@ -162,6 +167,34 @@ public class PortalAction extends ResourceController {
         setTitle(request, portal, "alerts.config.platform.EditControlAction.Title");
         portal.addPortlet(new Portlet(".events.config.edit.controlaction"), 1);
         portal.setDialog(true);
+        request.setAttribute(Constants.PORTAL_KEY, portal);
+
+        return null;
+    }
+
+
+
+    public ActionForward viewDefinitionRoles(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+        HttpServletResponse response) throws Exception {
+        setResource(request);
+        Portal portal = Portal.createPortal();
+        setTitle(request, portal, "alert.config.platform.props.ViewDef.roles.Title");
+        portal.addPortlet(new Portlet(".events.config.view.roles"), 1);
+
+        // JW - this shouldn't be a dialog ... portal.setDialog(true);
+        request.setAttribute(Constants.PORTAL_KEY, portal);
+
+        return null;
+    }
+
+    public ActionForward viewDefinitionUsers(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+        HttpServletResponse response) throws Exception {
+        setResource(request);
+        Portal portal = Portal.createPortal();
+        setTitle(request, portal, "alert.config.platform.props.ViewDef.users.Title");
+        portal.addPortlet(new Portlet(".events.config.view.users"), 1);
+
+        // JW - this shouldn't be a dialog ... portal.setDialog(true);
         request.setAttribute(Constants.PORTAL_KEY, portal);
 
         return null;

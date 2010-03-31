@@ -9,7 +9,8 @@
    <property name="default.rhq.server.database.driver-class" value="org.postgresql.Driver" />
    <property name="default.rhq.server.database.xa-datasource-class" value="org.postgresql.xa.PGXADataSource" />
    <property name="default.rhq.server.database.user-name" value="rhqadmin" />
-   <property name="default.rhq.server.database.password" value="rhqadmin" />
+   <!-- NOTE: The below value is "rhqadmin" encrypted. -->
+   <property name="default.rhq.server.database.password" value="1eeb2f255e832171df8592078de921bc" />
    <property name="default.rhq.server.database.type-mapping" value="PostgreSQL" />
    <!-- these are needed for the PostgreSQL XADataSource setup -->
    <property name="default.rhq.server.database.server-name" value="127.0.0.1" />

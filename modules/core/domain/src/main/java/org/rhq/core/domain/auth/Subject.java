@@ -156,8 +156,7 @@ import java.util.Set;
         + "   AND s.fsystem = FALSE " //
         + "   AND s.factive = TRUE"), //
     @NamedQuery(name = Subject.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
-        + "SELECT s.name, s.name FROM Subject AS s WHERE s.fsystem = false")
-})
+        + "SELECT s.name, s.name FROM Subject AS s WHERE s.fsystem = false") })
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
@@ -228,11 +227,16 @@ public class Subject implements Serializable, Recordizable {
     @ManyToMany
     private java.util.Set<Role> roles;
 
+    @JoinTable(name = "RHQ_SUBJECT_ROLE_LDAP_MAP", joinColumns = { @JoinColumn(name = "SUBJECT_ID") }, inverseJoinColumns = { @JoinColumn(name = "ROLE_ID") })
+    @ManyToMany
+    private java.util.Set<Role> ldapRoles;
+
     @Transient
     private Integer sessionId = null;
 
     private void init() {
         roles = new HashSet<Role>();
+        ldapRoles = new HashSet<Role>();
     }
 
     /**
@@ -369,12 +373,39 @@ public class Subject implements Serializable, Recordizable {
         this.roles = roles;
     }
 
-    public void addRole(Role role) {
+    public void addRole(Role role, boolean isLdap) {
         getRoles().add(role);
+        if (isLdap) {
+            getLdapRoles().add(role);
+        }
+    }
+
+    public void addRole(Role role) {
+        addRole(role, false);
     }
 
     public void removeRole(Role role) {
         getRoles().remove(role);
+    }
+
+    public java.util.Set<Role> getLdapRoles() {
+        if (this.ldapRoles == null) {
+            this.ldapRoles = new HashSet<Role>();
+        }
+
+        return this.ldapRoles;
+    }
+
+    public void setLdapRoles(Set<Role> roles) {
+        this.ldapRoles = roles;
+    }
+
+    public void addLdapRole(Role role) {
+        getLdapRoles().add(role);
+    }
+
+    public void removeLdapRole(Role role) {
+        getLdapRoles().remove(role);
     }
 
     @Override

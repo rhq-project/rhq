@@ -34,10 +34,10 @@ public class HibernateStatisticsStopWatch {
 
     private Statistics stats;
 
-    long queryExecutions;
-    long transations;
-    long entityLoads;
-    long connects;
+    long queryExecutions; // Get global number of executed queries
+    long transations; // The number of transactions we know to have completed
+    long entityLoads; // Get global number of entity loads
+    long connects; //  Get the global number of connections asked by the sessions
     long time;
 
     public HibernateStatisticsStopWatch(EntityManager entityManager) {
@@ -59,6 +59,30 @@ public class HibernateStatisticsStopWatch {
         entityLoads += stats.getEntityLoadCount();
         connects += stats.getConnectCount();
         time += System.currentTimeMillis();
+    }
+
+    public Statistics getStats() {
+        return stats;
+    }
+
+    public long getQueryExecutions() {
+        return queryExecutions;
+    }
+
+    public long getTransations() {
+        return transations;
+    }
+
+    public long getEntityLoads() {
+        return entityLoads;
+    }
+
+    public long getConnects() {
+        return connects;
+    }
+
+    public long getTime() {
+        return time;
     }
 
     public String toString() {

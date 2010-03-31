@@ -158,7 +158,6 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
     public String acknowledgeSelectedAlerts() {
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Resource resource = EnterpriseFacesContextUtility.getResource();
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
 
         try {

@@ -58,9 +58,9 @@
 %>
 
 { "start" : "<%=sdf.format(new Date(operation.getCreatedTime()))%>",
-  "title" : "Operation: <%=operation.getOperationDefinition().getName()%>",
+  "title" : "Operation: <%=(""+operation.getOperationDefinition().getName()).replaceAll("[\"']","").trim()%>",
   "link" : "<%=link%>",
-  "description" : "<b>User:</b> <%=operation.getSubjectName()%><br/><b>Status:</b> <%=operation.getStatus()%>",
+  "description" : "<b>User:</b> <%=(""+operation.getSubjectName()).replaceAll("[\"']","").trim()%><br/><b>Status:</b> <%=(""+operation.getStatus()).replaceAll("[\"']","").trim()%>",
   "icon" : "<%=icon%>",
   "color" : "<%=(operation.getStatus() == OperationRequestStatus.SUCCESS ? "#4EB84E" : "#DD5656")%>"
 }

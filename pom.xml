@@ -74,7 +74,7 @@
     <postgresql.version>8.4-701.jdbc3</postgresql.version>
     <h2.version>1.1.117</h2.version>
     <jtds.version>1.2.2</jtds.version>
-    <richfaces.version>3.3.2.GA</richfaces.version>
+    <richfaces.version>3.3.3.CR1</richfaces.version>
     <jline.version>0.9.94</jline.version>
     <sigar.version>1.6.3.82</sigar.version>
     <quartz.version>1.6.5</quartz.version>
@@ -531,9 +531,8 @@
        </plugins>
      </pluginManagement>
 
+
     <plugins>
-
-
 
       <!-- Set the 'maven.version' property to the version of Maven being used,
            so we can include the Maven version in the MANIFEST.MF files of all
@@ -588,7 +587,7 @@
         </executions>
       </plugin>
 
-        <plugin>
+      <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
             <executions>
@@ -609,13 +608,14 @@
                     </configuration>
                 </execution>
             </executions>
-        </plugin>
+      </plugin>
 
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <executions>
+        <executions>       
           <execution>
+            <id>read-build-properties</id>
             <phase>process-resources</phase>
             <goals>
               <goal>read-project-properties</goal>

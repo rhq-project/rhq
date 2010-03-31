@@ -233,6 +233,12 @@ public interface AttrConstants {
     public static final String ROLE_RESGRPS_ATTR = "RoleResGrps";
 
     /**
+     * The request scope attribute under which actions store the <code>List</code> of <code>LDAPGroupValue</code>
+     * objects for the requested role.
+     */
+    public static final String ROLE_LDAPGRPS_ATTR = "RoleLdapGrps";
+
+    /**
      * The request scope attribute under which actions store the number of <code>AuthzSubjectValue</code> objects in the
      * associated <code>List</code>.
      */
@@ -296,6 +302,12 @@ public interface AttrConstants {
      * the associated <code>List</code>.
      */
     public static final String NUM_RESGRPS_ATTR = "NumResGrps";
+
+    /**
+     * The request scope attribute under which actions store the number of <code>LdapGroupValue</code> objects in
+     * the associated <code>List</code>.
+     */
+    public static final String NUM_LDAPGRPS_ATTR = "NumLdapGrps";
 
     /**
      * The request scope attribute under which actions store the full <code>List</code> of <code>

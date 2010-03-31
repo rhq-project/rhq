@@ -126,7 +126,7 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
         try {
             rssDocument = retrieveRssDocument();
         } catch (Exception e) {
-            throw new SyncException("Error retrieving rss doc", e);
+            throw new SyncException("Error retrieving RSS document.", e);
         }
 
         if (rssDocument == null) {

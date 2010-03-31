@@ -25,59 +25,71 @@ import org.apache.struts.action.ActionMapping;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 
 /**
- * A subclass of <code>BaseValidatorForm</code> representing the <em>Remove Role Resource Groups</em> form.
+ * A subclass of <code>Spider</code> representing the <em>Add Role Resource Groups</em> form.
  */
-public class RemoveResourceGroupsForm extends BaseValidatorForm {
+public class AddLdapGroupsForm extends BaseValidatorForm {
     //-------------------------------------instance variables
 
-    private Integer[] ldapGroups;
-    private Integer ldapGroupPageSize;
-
-    private Integer[] groups;
+    private String[] availableGroups;
+    private String[] pendingGroups;
+    private Integer psa;
+    private Integer psp;
     private Integer r;
 
     //-------------------------------------constructors
 
-    public RemoveResourceGroupsForm() {
+    public AddLdapGroupsForm() {
         super();
     }
 
     //-------------------------------------public methods
 
-    public Integer[] getG() {
-        return this.groups;
+    public String[] getAvailableGroup() {
+        return this.availableGroups;
     }
 
-    public Integer[] getGroups() {
-        return getG();
+    public String[] getAvailableGroups() {
+        return getAvailableGroup();
     }
 
-    public void setG(Integer[] groups) {
-        this.groups = groups;
+    public void setAvailableGroup(String[] availableGroups) {
+        this.availableGroups = availableGroups;
     }
 
-    public void setLdapGroups(Integer[] groups) {
-        this.ldapGroups = groups;
+    public void setAvailableGroups(String[] availableGroups) {
+        setAvailableGroup(availableGroups);
     }
 
-    public Integer[] getLdapGroups() {
-        return ldapGroups;
+    public String[] getPendingGroup() {
+        return this.pendingGroups;
     }
 
-    public Integer getPsg() {
-        return getPs();
+    public String[] getPendingGroups() {
+        return getPendingGroup();
     }
 
-    public void setPsg(Integer pageSize) {
-        setPs(pageSize);
+    public void setPendingGroup(String[] pendingGroups) {
+        this.pendingGroups = pendingGroups;
     }
 
-    public Integer getPsldapGroups() {
-        return ldapGroupPageSize;
+    public void setPendingGroups(String[] pendingGroups) {
+        setPendingGroup(pendingGroups);
     }
 
-    public void setPsldapGroups(Integer pageSize) {
-        ldapGroupPageSize = pageSize;
+    public Integer getPsa() {
+        return this.psa;
+    }
+
+    public void setPsa(Integer ps) {
+        this.psa = ps;
+    }
+
+    public Integer getPsp() {
+        return this.psp;
+    }
+
+    public void setPsp(Integer ps) {
+        this.psp = ps;
     }
 
     public Integer getR() {
@@ -90,23 +102,31 @@ public class RemoveResourceGroupsForm extends BaseValidatorForm {
 
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         super.reset(mapping, request);
-        this.groups = new Integer[0];
+        this.psa = null;
+        this.psp = null;
         this.r = null;
+        this.pendingGroups = new String[0];
+        this.availableGroups = new String[0];
     }
 
     public String toString() {
-        StringBuffer s = new StringBuffer(super.toString());
-
+        StringBuilder s = new StringBuilder(super.toString());
         s.append("r=" + r + " ");
+        s.append("psa=" + psa + " ");
+        s.append("psp=" + psp + " ");
 
-        s.append("groups={");
-        listToString(s, groups);
+        s.append("availableGroups={");
+        listToString(s, availableGroups);
         s.append("} ");
+
+        s.append("pendingGroups={");
+        listToString(s, pendingGroups);
+        s.append("}");
 
         return s.toString();
     }
 
-    private void listToString(StringBuffer s, Integer[] l) {
+    private void listToString(StringBuilder s, String[] l) {
         if (l != null) {
             for (int i = 0; i < l.length; i++) {
                 s.append(l[i]);

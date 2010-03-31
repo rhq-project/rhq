@@ -18,6 +18,12 @@
  */
 package org.rhq.enterprise.installer;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.Statement;
@@ -36,14 +42,16 @@ import mazz.i18n.Msg;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.resource.security.SecureIdentityLoginModule;
+
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
 /**
- * Responisible for taking the settings the user selects in the installer window and saves them
+ * Responsible for taking the settings the user selects in the installer window and saves them
  * as the server's initial configuration.
- * 
+ *
  * @author John Mazzitelli
  * @author Jay Shaughnessy
  */
@@ -195,7 +203,7 @@ public class ConfigurationBean {
      * so the caller will not see any of the hidden properties in the returned list.
      *
      * @return current server settings, minus database related settings and hidden settings.
-     * 
+     *
      * @see #getDatabaseConfiguration()
      * @see #getConfiguration()
      */
@@ -218,7 +226,7 @@ public class ConfigurationBean {
      * Loads in the server's current configuration and returns only the database related properties.
      *
      * @return current database settings
-     * 
+     *
      * @see #getNonDatabaseConfiguration()
      * @see #getConfiguration()
      */
@@ -240,7 +248,7 @@ public class ConfigurationBean {
      * Checks to see if the server has been preconfigured and should be auto-installed. If <code>true</code>
      * is returned, the installer webapp should not be needed to install the server and the installer should
      * immediately begin the installation process.
-     * 
+     *
      * @return <code>true</code> if auto-install should occur; <code>false</code> means the user needs to use
      *         the installer GUI before the installation can begin
      */
@@ -475,7 +483,7 @@ public class ConfigurationBean {
             path = path.replace('\\', '/'); // in case we are on windows, we still want forward slashes
             return path;
         } catch (Exception e) {
-            throw new RuntimeException(e); // this should never happen unless the file system is out of wack 
+            throw new RuntimeException(e); // this should never happen unless the file system is out of wack
         }
     }
 
@@ -722,6 +730,17 @@ public class ConfigurationBean {
             // Ensure the install server info is up to date and stored in the DB
             serverInfo.storeServer(configurationAsProperties, haServer);
 
+            // encode database password and set updated properties
+            String pass = configurationAsProperties.getProperty(ServerProperties.PROP_DATABASE_PASSWORD);
+            pass = encryptPassword(pass);
+            configurationAsProperties.setProperty(ServerProperties.PROP_DATABASE_PASSWORD,pass);
+
+            serverInfo.setServerProperties(configurationAsProperties);
+
+            // We have changed the password of the database connection, so we need to
+            // tell the login config about it
+            serverInfo.restartLoginConfig();
+
             // build a keystore whose cert has a CN of this server's public endpoint address
             serverInfo.createKeystore(haServer);
 
@@ -737,6 +756,23 @@ public class ConfigurationBean {
         LOG.info("Installer: final submitted values: " + configurationAsProperties);
 
         return StartPageResults.SUCCESS;
+    }
+
+    private String encryptPassword(String password) throws Exception {
+
+        // We need to do some mumbo jumbo, as the interesting method is private
+        // in SecureIdentityLoginModule
+
+        try {
+            SecureIdentityLoginModule lm = new SecureIdentityLoginModule();
+            Class clazz = SecureIdentityLoginModule.class;
+            Method m = clazz.getDeclaredMethod("encode",String.class);
+            m.setAccessible(true);
+            String res = (String) m.invoke(lm,password);
+            return res;
+        } catch (Exception e) {
+            throw new Exception("Encoding db password failed: " , e);
+        }
     }
 
     private Properties getConfigurationAsProperties(List<PropertyItemWithValue> config) {
@@ -839,7 +875,7 @@ public class ConfigurationBean {
 
         this.haServerName = serverName;
 
-        // try pulling info from the database for this server name 
+        // try pulling info from the database for this server name
         if (isRegisteredServers()) {
             Properties configurationAsProperties = getConfigurationAsProperties(configuration);
             setHaServer(serverInfo.getServerDetail(configurationAsProperties, serverName));
@@ -881,10 +917,10 @@ public class ConfigurationBean {
     /**
      * This method will set the HA Server information based solely on the server configuration
      * properties. It does not rely on any database access.
-     * 
+     *
      * This is used by the auto-installation process - see {@link AutoInstallServlet}.
      *
-     * @throws Exception 
+     * @throws Exception
      */
     public void setHaServerFromPropertiesOnly() throws Exception {
 

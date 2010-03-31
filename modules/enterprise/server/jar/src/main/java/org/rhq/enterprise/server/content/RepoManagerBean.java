@@ -394,8 +394,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         // Import groups first
         List<RepoGroupDetails> repoGroups = report.getRepoGroups();
-        int repoGroupCounter = 0;
 
+        List<RepoGroupDetails> importedRepoGroups = new ArrayList<RepoGroupDetails>();
         for (RepoGroupDetails createMe : repoGroups) {
             String name = createMe.getName();
 
@@ -411,7 +411,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                 // but be sure to mention it to the report
                 try {
                     createRepoGroup(subject, existingGroup);
-                    repoGroupCounter++;
+                    importedRepoGroups.add(createMe);
                 } catch (RepoException e) {
 
                     if (e.getType() == RepoException.RepoExceptionType.NAME_ALREADY_EXISTS) {
@@ -424,7 +424,13 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                 }
             }
         }
-        result.append("Imported [").append(repoGroupCounter).append("] repo groups.").append('\n');
+
+        if (importedRepoGroups.isEmpty()) {
+            result.append("There are new repo groups since the last time this content source was synchronized.\n");
+        } else {
+            result.append("Imported the following [").append(importedRepoGroups.size()).append("] repo group(s): ").
+                    append(importedRepoGroups).append('\n');
+        }
 
         // Hold on to all current candidate repos for the content provider. If any were not present in this
         // report, remove them from the system (the rationale being, the content provider no longer knows
@@ -437,19 +443,18 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         // Once the groups are in the system, import any repos that were added
         List<RepoDetails> repos = report.getRepos();
-        int repoCounter = 0;
 
         // First add repos that have no parent. We later add repos with a parent afterwards to prevent
         // issues where both the parent and child are specified in this report.
+        List<RepoDetails> importedRepos = new ArrayList<RepoDetails>();
         for (RepoDetails createMe : repos) {
-
             if (createMe.getParentRepoName() == null) {
                 try {
-                    addCandidateRepo(contentSourceId, createMe);
+                    if (addCandidateRepo(contentSourceId, createMe)) {
+                        importedRepos.add(createMe);
+                    }
                     removeRepoFromList(createMe.getName(), candidatesForThisProvider);
-                    repoCounter++;
                 } catch (Exception e) {
-
                     if (e instanceof RepoException
                         && ((RepoException) e).getType() == RepoException.RepoExceptionType.NAME_ALREADY_EXISTS) {
                         result.append("Skipping addition of existing repo [").append(createMe.getName()).append("]")
@@ -466,12 +471,12 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         // Take a second pass through the list checking for any repos that were created to be
         // a child of another repo.
         for (RepoDetails createMe : repos) {
-
             if (createMe.getParentRepoName() != null) {
                 try {
-                    addCandidateRepo(contentSourceId, createMe);
-                    removeRepoFromList(createMe.getName(), candidatesForThisProvider);
-                    repoCounter++;
+                    if (addCandidateRepo(contentSourceId, createMe)) {
+                        importedRepos.add(createMe);
+                    }
+                    removeRepoFromList(createMe.getName(), candidatesForThisProvider);                    
                 } catch (Exception e) {
                     log.error("Error processing repo [" + createMe + "]", e);
                     result.append("Could not add repo [").append(createMe.getName()).append(
@@ -480,7 +485,12 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             }
         }
 
-        result.append("Imported [").append(repoCounter).append("] repos.").append('\n');
+        if (importedRepos.isEmpty()) {
+            result.append("There are new repos since the last time this content source was synchronized.\n");
+        } else {
+            result.append("Imported the following ").append(importedRepos.size()).append(" repo(s): ").
+                    append(importedRepos).append('\n');
+        }
 
         // Any repos that haven't been removed from candidatesForThisProvider were not returned in this
         // report, so remove them from the database.
@@ -500,7 +510,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             }
 
             if (!repo.isCandidate()) {
-                throw new RepoException("Unable to import repo, repo is already imported. ID: " + repoId);
+                throw new RepoException("Unable to import repo - repo is already imported. ID: " + repoId);
             }
 
             repo.setCandidate(false);
@@ -861,7 +871,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
      * @throws Exception if there is an error associating the content source with the repo or if the repo
      *                   indicates a parent or repo group that does not exist
      */
-    private void addCandidateRepo(int contentSourceId, RepoDetails createMe) throws Exception {
+    private boolean addCandidateRepo(int contentSourceId, RepoDetails createMe) throws Exception {
 
         Subject overlord = subjectManager.getOverlord();
         String name = createMe.getName();
@@ -870,7 +880,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         // If the repo doesn't exist, create it.
         if (existingRepo.size() != 0) {
-            return;
+            return false;
         }
 
         // Create and populate the repo
@@ -904,6 +914,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                 addRepoRelationship(overlord, addMe.getId(), parent.getId(), PARENT_RELATIONSHIP_NAME);
             }
         }
+
+        return true;
     }
 
     private void removeRepoFromList(String repoName, List<Repo> repoList) {

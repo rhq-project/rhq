@@ -50,10 +50,10 @@ public class ContentSourceSyncResultsUIBean extends PagedDataTableUIBean {
                 contentSourceManager.deleteContentSourceSyncResults(subject, ids);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length
-                    + "] content provider sync results.");
+                    + "] content source sync results.");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to delete content provider sync results.", e);
+                    "Failed to delete content source sync results.", e);
             }
         }
 

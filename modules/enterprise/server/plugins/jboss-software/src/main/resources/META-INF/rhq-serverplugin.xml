@@ -2,29 +2,29 @@
 
 <content-plugin name="JBossASPatchContentSourcePlugin"
                 displayName="JBoss CSP Content"
-                description="Provides the ability to obtain content from the JBoss CSP RSS feed"
+                description="Provides the ability to obtain patches from the JBoss CSP RSS feed"
                 xmlns="urn:xmlns:rhq-serverplugin.content"
                 xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
 
     <serverplugin:help><![CDATA[
-        Provides a content provider that retrieves content from the  JBoss CSP RSS feed.
+        Provides a content source that retrieves content from the JBoss CSP RSS feed.
     ]]></serverplugin:help>
 
    <contentSourceType name="JBossASPatchSource"
-                      displayName="JBoss AS Patch Content Provider"
-                      description="This content provider retrieves packages from the JBoss CSP RSS feed."
+                      displayName="JBoss Patch Content Source"
+                      description="This content source retrieves patches from the JBoss CSP RSS feed."
                       lazyLoad="true"
                       apiClass="org.rhq.enterprise.server.plugins.jboss.software.JBossSoftwareContentSourceAdapter">
 
       <configuration>
          <c:group name="csp" displayName="CSP Feed Settings">
             <c:simple-property name="url" displayName="Feed URL" type="string" required="true"
-                               description="Destination URL of the feed."/>
+                               description="URL of the RSS feed."/>
             <c:simple-property name="username" displayName="Username" type="string" required="false"
-                               description="Username used to log into the feed."/>
+                               description="Username used to log into the CSP."/>
             <c:simple-property name="password" displayName="Password" type="password" required="false"
-                               description="Password used to log into the feed."/>
+                               description="Password used to log into the CSP."/>
             <c:simple-property name="active" displayName="Active" type="boolean" required="true" default="true"
                                description="Indicates if this instance should go out and check the feed for packages."/>
          </c:group>
@@ -36,7 +36,7 @@
             <c:simple-property name="proxyUsername" displayName="Proxy Username" type="string" required="false"
                                description="Optional. If the proxy requires authentication, this is the user to log in as."/>
             <c:simple-property name="proxyPassword" displayName="Proxy Password" type="password" required="false"
-                               description="Optional. If the proxy requires authentitcation, this is the password for the user."/>
+                               description="Optional. If the proxy requires authentication, this is the password for the user."/>
          </c:group>
       </configuration>
 

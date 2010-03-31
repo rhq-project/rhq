@@ -178,11 +178,10 @@ public class ContentProviderManager {
             // locking.
             synchronized (synchronizeContentSourceLock) {
                 progress.append(new Date()).append(": ");
-                progress.append("Start synchronization of content provider [").append(contentSource.getName()).append(
-                    "]");
-                progress.append('\n');
+                progress.append("Start synchronization of content source [").append(contentSource.getName()).append(
+                    "]\n");
                 progress.append(new Date()).append(": ");
-                progress.append("Getting currently known list of content source packages...");
+                progress.append("Getting currently known list of packages...\n");
                 results = new ContentSourceSyncResults(contentSource);
                 results.setResults(progress.toString());
                 results = contentSourceManager.persistContentSourceSyncResults(results);
@@ -200,8 +199,8 @@ public class ContentProviderManager {
                 // Even if it does happen, it may still work, or
                 // one sync will get an error and rollback its tx and no harm
                 // will be done.
-                log.info("Content provider [" + contentSource.getName()
-                    + "] is already currently being synchronized - this sync request will be ignored.");
+                log.info("Content source [" + contentSource.getName()
+                    + "] is already being synchronized - this sync request will be ignored.");
                 return false;
             }
 
@@ -246,7 +245,7 @@ public class ContentProviderManager {
     }
 
     /**
-     * Asks each content provider associated with the given repo to synchronize
+     * Asks each content source associated with the given repo to synchronize
      * the following information for the given repo:
      * <ul>
      * <li>Package Metadata</li>
@@ -275,17 +274,16 @@ public class ContentProviderManager {
         // Load the repo to sync
         Repo repo = repoManager.getRepo(overlord, repoId);
         if (repo == null) {
-            throw new IllegalArgumentException("Invalid repo ID specified for sync: " + repoId);
+            throw new IllegalArgumentException("Invalid repository with id [" + repoId + "] specified for sync.");
         }
 
         // results =
         // contentSourceManager.persistContentSourceSyncResults(results);
         StringBuilder progress = new StringBuilder();
         progress.append(new Date()).append(": ");
-        progress.append("Start synchronization of Repository [").append(repo.getName()).append("]");
-        progress.append('\n');
+        progress.append("Start synchronization of Repository [").append(repo.getName()).append("]\n");
         progress.append(new Date()).append(": ");
-        progress.append("Getting currently known list of content source packages...");
+        progress.append("Getting currently known list of content source packages...\n");
         SyncTracker tracker = new SyncTracker(new RepoSyncResults(repo), new ProgressWatcher());
         tracker.setResults(progress.toString());
         tracker.setRepoSyncResults(repoManager.persistRepoSyncResults(tracker.getRepoSyncResults()));
@@ -294,14 +292,15 @@ public class ContentProviderManager {
 
         if (tracker.getRepoSyncResults() == null) {
             log.info("Repository [" + repo.getName()
-                + "] is already currently being synchronized, this sync request will be ignored");
+                + "] is already currently being synchronized - this sync request will be ignored.");
             return false;
         }
 
-        Exception ie = null;
+        boolean syncCancelled = false;
         try {
             ThreadUtil.checkInterrupted();
-            // METADATA Loop
+
+            // Sync each of the content sources associated with the repo.
             for (ContentSource source : repo.getContentSources()) {
                 try {
                     ContentProvider provider = getIsolatedContentProvider(source.getId());
@@ -312,7 +311,7 @@ public class ContentProviderManager {
 
                     tracker = updateSyncStatus(tracker, ContentSyncStatus.PACKAGEMETADATA);
                     tracker = packageSourceSynchronizer.synchronizePackageMetadata(tracker);
-                } catch (SyncException e) {
+                } catch (Exception e) {
                     processSyncException(e, tracker, repo, source, repoManager);
                 }
             }
@@ -331,103 +330,117 @@ public class ContentProviderManager {
             }
             tracker = updatePercentComplete(tracker, repoManager);
 
-            // PACKAGEBITS Loop
-            // Synchronize every content provider associated with the repo
+            // Sync package bits.
             for (ContentSource source : repo.getContentSources()) {
                 // Don't let the entire sync fail if a single content source
                 // fails
                 try {
                     ContentProvider provider = getIsolatedContentProvider(source.getId());
-
-                    PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
-                        provider);
-                    log.debug("synchronizeRepo :: synchronizePackageBits");
-                    tracker = updateSyncStatus(tracker, ContentSyncStatus.PACKAGEBITS);
-                    tracker = packageSourceSynchronizer.synchronizePackageBits(tracker, provider);
-                    tracker = updatePercentComplete(tracker, repoManager);
-                    // Check to cancel after each contentsource
-                    ThreadUtil.checkInterrupted();
-
-                } catch (SyncException e) {
+                    if (provider instanceof PackageSource) {
+                        PackageSourceSynchronizer packageSourceSyncer = new PackageSourceSynchronizer(repo, source,
+                            provider);
+                        log.debug("synchronizeRepo :: synchronizePackageBits");
+                        tracker = updateSyncStatus(tracker, ContentSyncStatus.PACKAGEBITS);
+                        tracker = packageSourceSyncer.synchronizePackageBits(tracker, provider);
+                        tracker = updatePercentComplete(tracker, repoManager);
+                    }
+                } catch (Exception e) {
                     processSyncException(e, tracker, repo, source, repoManager);
                 }
+                // Check for cancellation after each content source.
+                ThreadUtil.checkInterrupted();
             }
-            // Distro meta
+
+            // Sync distro metadata.
+            log.debug("synchronizeRepo :: synchronizeDistributionMetadata");
             for (ContentSource source : repo.getContentSources()) {
                 try {
                     ContentProvider provider = getIsolatedContentProvider(source.getId());
-                    DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
-                        repo, source, provider);
-
-                    log.debug("synchronizeRepo :: synchronizeDistributionMetadata");
-                    tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROMETADATA);
-                    tracker = distributionSourceSynchronizer.synchronizeDistributionMetadata(tracker);
-                    tracker = updatePercentComplete(tracker, repoManager);
-                    ThreadUtil.checkInterrupted();
-                } catch (SyncException e) {
+                    if (provider instanceof DistributionSource) {
+                        DistributionSourceSynchronizer distroSourceSyncer = new DistributionSourceSynchronizer(
+                            repo, source, provider);
+                        tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROMETADATA);
+                        tracker = distroSourceSyncer.synchronizeDistributionMetadata(tracker);
+                        tracker = updatePercentComplete(tracker, repoManager);
+                    }
+                } catch (Exception e) {
                     processSyncException(e, tracker, repo, source, repoManager);
                 }
+                // Check for cancellation after each content source.
+                ThreadUtil.checkInterrupted();
             }
 
-            // Distro bits
+            // Sync distro bits.
+            log.debug("synchronizeRepo :: synchronizeDistributionBits");
             for (ContentSource source : repo.getContentSources()) {
                 try {
                     ContentProvider provider = getIsolatedContentProvider(source.getId());
-                    DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
-                        repo, source, provider);
-
-                    log.debug("synchronizeRepo :: synchronizeDistributionBits");
-                    tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROBITS);
-                    tracker = distributionSourceSynchronizer.synchronizeDistributionBits(tracker);
-                    tracker = updatePercentComplete(tracker, repoManager);
+                    if (provider instanceof DistributionSource) {
+                        DistributionSourceSynchronizer distroSourceSyncer = new DistributionSourceSynchronizer(
+                            repo, source, provider);
+                        tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROBITS);
+                        tracker = distroSourceSyncer.synchronizeDistributionBits(tracker);
+                        tracker = updatePercentComplete(tracker, repoManager);
+                    }
                     ThreadUtil.checkInterrupted();
-                } catch (SyncException e) {
+                } catch (Exception e) {
                     processSyncException(e, tracker, repo, source, repoManager);
                 }
+                // Check for cancellation after each content source.
+                ThreadUtil.checkInterrupted();
             }
 
-            // advisory meta
+            // Sync advisory metadata.
+            log.debug("synchronizeRepo :: synchronizeAdvisoryMetadata");
             for (ContentSource source : repo.getContentSources()) {
                 try {
-                    log.debug("synchronizeRepo :: synchronizeAdvisoryMetadata");
+
                     ContentProvider provider = getIsolatedContentProvider(source.getId());
-                    tracker = updateSyncStatus(tracker, ContentSyncStatus.ADVISORYMETADATA);
-                    AdvisorySourceSynchronizer advisorySourcesync = new AdvisorySourceSynchronizer(repo, source,
-                        provider);
-                    tracker = advisorySourcesync.synchronizeAdvisoryMetadata(tracker);
-                    tracker = updatePercentComplete(tracker, repoManager);
-                    ThreadUtil.checkInterrupted();
-                } catch (SyncException e) {
+                    if (provider instanceof AdvisorySource) {
+                        tracker = updateSyncStatus(tracker, ContentSyncStatus.ADVISORYMETADATA);
+                        AdvisorySourceSynchronizer advisorySourceSyncer = new AdvisorySourceSynchronizer(repo, source,
+                            provider);
+                        tracker = advisorySourceSyncer.synchronizeAdvisoryMetadata(tracker);
+                        tracker = updatePercentComplete(tracker, repoManager);
+                    }
+                } catch (Exception e) {
                     processSyncException(e, tracker, repo, source, repoManager);
                 }
+                // Check for cancellation after each content source.
+                ThreadUtil.checkInterrupted();
             }
 
             // Update status to finished.
+            if (tracker.getRepoSyncResults().getStatus() != ContentSyncStatus.FAILURE) {
+                tracker.getRepoSyncResults().setStatus(ContentSyncStatus.SUCCESS);
+            }
+            tracker = updateSyncStatus(tracker, tracker.getRepoSyncResults().getStatus());
+
             progress = new StringBuilder();
             progress.append("\n");
             progress.append(tracker.getRepoSyncResults().getResults());
             progress.append("\n");
             progress.append(new Date()).append(": ");
-            progress.append(" Repository [").append(repo.getName()).append("]");
-            progress.append('\n');
-            progress.append(new Date()).append(": ");
-            progress.append("completed syncing.");
+            progress.append("Repository [").append(repo.getName()).append("] ");
+            progress.append("completed syncing with ");
+            progress.append((tracker.getRepoSyncResults().getStatus() == ContentSyncStatus.FAILURE) ? "one or more" : "no");
+            progress.append(" errors.\n");
             tracker.setResults(progress.toString());
-            tracker = updateSyncStatus(tracker, ContentSyncStatus.SUCCESS);
-            log.debug("synchronizeRepo :: Success");
-        } catch (Exception e) {
+            
+            log.debug("synchronizeRepo :: " + tracker.getRepoSyncResults().getStatus());
+        } catch (InterruptedException e) {
             RepoSyncResults recentResults = repoManager.getMostRecentSyncResults(overlord, repo.getId());
-            log.debug("Caught InterruptedException");
+            log.debug("Caught InterruptedException during sync of repo with id [" + repoId + "].");
             progress.append("\n ** Cancelled syncing **");
             tracker.setResults(progress.toString());
             tracker.getProgressWatcher().resetToZero();
             tracker = updatePercentComplete(tracker, repoManager);
             try {
-                tracker = updateSyncStatus(tracker, ContentSyncStatus.CANCELLED, false);
+                tracker = updateSyncStatus(tracker, ContentSyncStatus.CANCELLED);
             } catch (InterruptedException e1) {
                 throw new RuntimeException("Unexpected InterruptedException", e1);
             }
-            ie = e;
+            syncCancelled = true;
         }
 
         if (tracker.getRepoSyncResults() != null) {
@@ -438,12 +451,8 @@ public class ContentProviderManager {
             repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults());
             log.debug("synchronizeRepo :: merging results.");
         }
-        if (ie != null) {
-            return false;
-        } else {
-            return true;
-        }
-
+        
+        return !syncCancelled;
     }
 
     private SyncTracker updatePercentComplete(SyncTracker tracker, RepoManagerLocal repoManager) {
@@ -453,15 +462,16 @@ public class ContentProviderManager {
     }
 
     private SyncTracker processSyncException(Exception e, SyncTracker tracker, Repo repo, ContentSource source,
-        RepoManagerLocal repoManager) {
-
+        RepoManagerLocal repoManager) throws InterruptedException {
+        if (e instanceof InterruptedException) {
+            InterruptedException ie = (InterruptedException) e;
+            throw ie;
+        }
         StringBuilder progress = new StringBuilder();
-        log.error("Error while synchronizing repo [" + repo + "] with content provider [" + source
-            + "]. Synchronization for the repo will continue for other providers.", e);
+        log.error("Error while synchronizing repo [" + repo + "] with content source [" + source
+            + "]. Synchronization of the repo will continue for any other associated content sources.", e);
 
-        // try to reload the results in case it was updated by the SLSB before
-        // the
-        // exception happened
+        // Try to reload the results in case it was updated by the SLSB before the exception happened.
         RepoSyncResults reloadedResults = repoManager.getRepoSyncResults(tracker.getRepoSyncResults().getId());
         if (reloadedResults != null) {
             tracker.setRepoSyncResults(reloadedResults);
@@ -481,11 +491,7 @@ public class ContentProviderManager {
 
     }
 
-    private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status) throws InterruptedException {
-        return updateSyncStatus(tracker, status, true);
-    }
-
-    private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status, boolean checkCancelling)
+    private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status)
         throws InterruptedException {
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
@@ -505,24 +511,15 @@ public class ContentProviderManager {
     /**
      * Tests the connection to the content source that has the given ID.
      * 
-     * @param contentSourceId
-     *            refers to a valid content source in the database
-     * @return <code>true</code> if there is an adapter that can successfully
-     *         connect to the given content source <code>false</code> if there
-     *         is an adapter but it cannot connect
-     * @throws Exception
-     *             if failed to get an adapter to attempt the connection
+     * @param contentSourceId the id of the content source to be tested
+     *
+     * @throws Exception if the test connection to the specified content source failed
      */
-    public boolean testConnection(int contentSourceId) throws Exception {
+    public void testConnection(int contentSourceId) throws Exception {
         ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
-
-        try {
-            adapter.testConnection();
-        } catch (Throwable t) {
-            return false;
-        }
-
-        return true;
+        adapter.testConnection();
+        //noinspection UnnecessaryReturnStatement
+        return;
     }
 
     /**
@@ -853,8 +850,7 @@ public class ContentProviderManager {
             try {
                 Thread.currentThread().setContextClassLoader(classLoader);
                 return method.invoke(instance, args);
-            } finally {
-                Thread.currentThread().setContextClassLoader(startingClassLoader);
+            } finally {                Thread.currentThread().setContextClassLoader(startingClassLoader);
             }
         }
     }

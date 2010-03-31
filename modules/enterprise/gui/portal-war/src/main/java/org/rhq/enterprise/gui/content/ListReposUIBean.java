@@ -72,7 +72,7 @@ public class ListReposUIBean extends PagedDataTableUIBean {
             }
             if (syncCount > 0) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing [" + syncCount
-                    + "] content providers.");
+                    + "] content sources.");
             } else {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
                     "Selected Repositories have no content to sync.");

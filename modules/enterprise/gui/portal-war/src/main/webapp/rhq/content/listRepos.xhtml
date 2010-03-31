@@ -114,10 +114,8 @@
                   </f:facet>
  
 				  <a4j:region>
-				       <a4j:poll id="poll" interval="5000"
-				           reRender="statusid" />
-			           <h:outputText style="font-size:16px"
-			                value="#{item.syncStatus}" />           
+				       <a4j:poll id="poll" interval="5000" reRender="statusid" />
+			           <h:outputText styleClass="headerText" value="#{item.syncStatus}" />
 				  </a4j:region>
                </rich:column>
 
@@ -167,7 +165,7 @@
       </h:form>
       <p align="center">
          <h:outputLink value="listContentProviders.xhtml">
-            <h:outputText value="Go To All Content Providers View" />
+            <h:outputText value="Go to All Content Sources View" />
          </h:outputLink>
       </p>
 

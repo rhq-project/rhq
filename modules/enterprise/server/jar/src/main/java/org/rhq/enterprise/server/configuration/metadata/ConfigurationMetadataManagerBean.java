@@ -28,6 +28,8 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -47,11 +49,16 @@ import org.rhq.enterprise.server.RHQConstants;
  */
 @Stateless
 public class ConfigurationMetadataManagerBean implements ConfigurationMetadataManagerLocal {
+    private final Log log = LogFactory.getLog(this.getClass());
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    public void updateConfigurationDefinition(ConfigurationDefinition newDefinition,
+    public ConfigurationDefinitionUpdateReport updateConfigurationDefinition(ConfigurationDefinition newDefinition,
         ConfigurationDefinition existingDefinition) {
+
+        ConfigurationDefinitionUpdateReport updateReport = new ConfigurationDefinitionUpdateReport(existingDefinition);
+
         /*
          * handle grouped and ungrouped properties separately. for ungrouped, we don't need to care about the group, but
          * for the grouped ones we need to start at group level and then look at the properties. This is done below.
@@ -68,13 +75,14 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                     updatePropertyDefinition(existingProp, newProperty);
                 } else {
                     existingDefinition.put(newProperty);
+                    updateReport.addNewPropertyDefinition(newProperty);
                 }
             }
 
             // delete outdated properties
-            removeNolongerUsedProperties(newDefinition, existingDefinition, existingPropertyDefinitions, null);
+            removeNoLongerUsedProperties(newDefinition, existingDefinition, existingPropertyDefinitions);
         } else {
-            // TODO what if exisitingDefinitions is null?
+            // TODO what if existingDefinitions is null?
             // we probably don't run in here, as the initial persisting is done
             // somewhere else.
         }
@@ -123,12 +131,13 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                     updatePropertyDefinition(existingProperty, nDef);
                 } else {
                     existingDefinition.put(nDef);
+                    updateReport.addNewPropertyDefinition(nDef);
                 }
             }
 
             // delete outdated properties of this group
-            removeNolongerUsedProperties(newDefinition, existingDefinition, existingDefinition
-                .getPropertiesInGroup(groupName), group);
+            removeNoLongerUsedProperties(newDefinition, existingDefinition, existingDefinition
+                .getPropertiesInGroup(groupName));
         }
 
         entityManager.flush();
@@ -191,13 +200,10 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         }
 
         entityManager.flush();
+
+        return updateReport;
     }
 
-    /**
-     * Updates a template 
-     * @param existingDT
-     * @param newDT
-     */
     private void updateTemplate(ConfigurationTemplate existingDT, ConfigurationTemplate newDT) {
 
         try {
@@ -247,6 +253,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                             //                            properties = new ArrayList<Property>(properties);
                             //                            properties.add(ps);
                             //                            existConf.setProperties(properties);
+                            Property property = ps.deepCopy(false);
+                            existConf.put(property);
                         }
                     }
                 }
@@ -261,31 +269,30 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
     /**
      * Removes PropertyDefinition items from the configuration
      *
-     * @param newDefinition      new configuration to persist
-     * @param existingDefinition existing persisted configuration
-     * @param existingProperties list of existing properties
-     * @param groupDef TODO
+     * @param newConfigDef       new configuration being merged into the existing one
+     * @param existingConfigDef  existing persisted configuration
+     * @param existingProperties list of existing properties to inspect for potential removal
      */
-    private void removeNolongerUsedProperties(ConfigurationDefinition newDefinition,
-        ConfigurationDefinition existingDefinition, List<PropertyDefinition> existingProperties,
-        PropertyGroupDefinition groupDef) {
-
-        List<PropertyDefinition> definitionsToDelete = new ArrayList<PropertyDefinition>();
-        for (PropertyDefinition exDef : existingProperties) {
-            PropertyDefinition nDef = newDefinition.get(exDef.getName());
-            if (nDef == null) {
+    private void removeNoLongerUsedProperties(ConfigurationDefinition newConfigDef,
+                                              ConfigurationDefinition existingConfigDef,
+                                              List<PropertyDefinition> existingProperties) {
+        List<PropertyDefinition> propDefsToDelete = new ArrayList<PropertyDefinition>();
+        for (PropertyDefinition existingPropDef : existingProperties) {
+            PropertyDefinition newPropDef = newConfigDef.get(existingPropDef.getName());
+            if (newPropDef == null) {
                 // not in new configuration
-                definitionsToDelete.add(exDef);
+                propDefsToDelete.add(existingPropDef);
             }
         }
-        //        System.out.println("Props to delete " + definitionsToDelete);
 
-        for (PropertyDefinition def : definitionsToDelete) {
-            existingDefinition.getPropertyDefinitions().remove(def.getName());
-            existingProperties.remove(def); // does not operate on original list!!
-            entityManager.remove(def);
+        if (!propDefsToDelete.isEmpty()) {
+            log.debug("Deleting obsolete props from configDef [" + existingConfigDef + "]: " + propDefsToDelete);
+            for (PropertyDefinition propDef : propDefsToDelete) {
+                existingConfigDef.getPropertyDefinitions().remove(propDef.getName());
+                existingProperties.remove(propDef); // does not operate on original list!!
+            }
+            entityManager.merge(existingConfigDef);
         }
-        entityManager.flush();
     }
 
     /**
@@ -421,21 +428,18 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
     /**
      * Replace the existing property of a given type with a new property of a (possibly) different type
      *
-     * @param existingProperty
-     * @param newProperty
+     * @param existingProperty the existing prop
+     * @param newProperty the new prop that should replace the existing prop
      */
     private void replaceProperty(PropertyDefinition existingProperty, PropertyDefinition newProperty) {
-        // take id and definition from the existing one
+        ConfigurationDefinition configDef = existingProperty.getConfigurationDefinition();
+
+        // First take id from existing prop, and replace existing prop in the config def.
         newProperty.setId(existingProperty.getId());
-        newProperty.setConfigurationDefinition(existingProperty.getConfigurationDefinition());
+        configDef.put(newProperty);
 
-        //  need to remove the old crap
-        existingProperty.getConfigurationDefinition().getPropertyDefinitions().remove(existingProperty.getName());
-        existingProperty.setConfigurationDefinition(null);
         entityManager.remove(existingProperty);
-
-        // persist the new one
-        entityManager.merge(newProperty);
+        entityManager.merge(configDef);
         entityManager.flush();
     }
 

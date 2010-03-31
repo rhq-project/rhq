@@ -8,11 +8,11 @@
         xmlns:c="urn:xmlns:rhq-configuration">
 
     <serverplugin:help><![CDATA[
-        Provides a content provider that retrieves content from the Red Hat Network.
+        Provides a content source that retrieves content from the Red Hat Network (RHN).
     ]]></serverplugin:help>
 
    <contentSourceType name="RHNSource"
-                      displayName="RHN Hosted Source"
+                      displayName="RHN Hosted Content Source"
                       description="This plugin facilitates communication with Red Hat Network."
                       lazyLoad="false"
                       downloadMode="filesystem"

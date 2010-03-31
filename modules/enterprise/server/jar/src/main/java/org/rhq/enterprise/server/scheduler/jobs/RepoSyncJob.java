@@ -195,6 +195,7 @@ public class RepoSyncJob implements StatefulJob, InterruptableJob {
      * @throws Exception if there is an error in the sync
      */
     private void sync(String repoName) throws InterruptedException {
+        log.debug("Syncing repo [" + repoName + "]...");
 
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();

@@ -70,6 +70,12 @@
          <version>${project.version}</version>
       </dependency>
 
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>test-utils</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
       <!-- 3rd Party Deps -->
 
       <dependency>

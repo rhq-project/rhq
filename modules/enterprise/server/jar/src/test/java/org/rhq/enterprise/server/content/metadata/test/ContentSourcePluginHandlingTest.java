@@ -107,6 +107,7 @@ public class ContentSourcePluginHandlingTest extends TestBase {
 
             // now hot deploy a new version of that plugin
             registerPlugin("./test/metadata/content-source-update-v2.xml");
+            getEntityManager().clear();
             type1 = getContentSourceType("testCSPHT1");
             type2 = getContentSourceType("testCSPHT2");
             type3 = getContentSourceType("testCSPHT3");

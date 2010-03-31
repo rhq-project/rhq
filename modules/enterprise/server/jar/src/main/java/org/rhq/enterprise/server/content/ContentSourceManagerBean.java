@@ -417,6 +417,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             }
 
             Repo repo = new Repo(repoName);
+            repo.setCandidate(false);
             repo.setDescription(createMe.getDescription());
 
             try {
@@ -555,16 +556,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     }
 
-    public boolean testContentSourceConnection(int contentSourceId) {
+    public void testContentSourceConnection(int contentSourceId) throws Exception {
         try {
-            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
-            return pc.getAdapterManager().testConnection(contentSourceId);
+            ContentServerPluginContainer contentServerPluginContainer = ContentManagerHelper.getPluginContainer();
+            contentServerPluginContainer.getAdapterManager().testConnection(contentSourceId);
         } catch (Exception e) {
             log.info("Failed to test connection to [" + contentSourceId + "]. Cause: "
                 + ThrowableUtil.getAllMessages(e));
             log.debug("Content source test connection failure stack follows for [" + contentSourceId + "]", e);
-
-            return false;
+            throw e;
         }
     }
 
@@ -915,7 +915,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean internalSynchronizeContentSource(int contentSourceId) throws Exception {
         ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
-        return pc.getAdapterManager().synchronizeContentProvider(contentSourceId);
+        ContentProviderManager contentProviderManager = pc.getAdapterManager();
+        return contentProviderManager.synchronizeContentProvider(contentSourceId);
     }
 
     @SuppressWarnings("unchecked")
@@ -1254,7 +1255,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         for (ContentProviderPackageDetails doomedDetails : report.getDeletedPackages()) {
 
-            // Delete the mapping between package version and content provider
+            // Delete the mapping between package version and content source
             ContentProviderPackageDetailsKey doomedDetailsKey = doomedDetails.getContentProviderPackageDetailsKey();
             PackageVersionContentSource doomedPvcs = previous.get(doomedDetailsKey);
             doomedPvcs = entityManager.find(PackageVersionContentSource.class, doomedPvcs
@@ -1271,7 +1272,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // Delete the package version if it is sufficiently orphaned:
             // - No repos
-            // - No content providers
+            // - No content sources
             // - No installed packages
             PackageVersion doomedPv = doomedPvcs.getPackageVersionContentSourcePK().getPackageVersion();
             q = entityManager.createNamedQuery(PackageVersion.DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS);

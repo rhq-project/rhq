@@ -47,7 +47,7 @@ public class ResourceCriteria extends Criteria {
     private InventoryStatus filterInventoryStatus = InventoryStatus.COMMITTED; // default
     private String filterVersion;
     private String filterDescription;
-    private String filterResourceTypeId; // needs overrides
+    private Integer filterResourceTypeId; // needs overrides
     private String filterResourceTypeName; // needs overrides
     private ResourceCategory filterResourceCategory; // needs overrides
     private String filterPluginName; // needs overrides
@@ -138,7 +138,7 @@ public class ResourceCriteria extends Criteria {
         this.filterDescription = filterDescription;
     }
 
-    public void addFilterResourceTypeId(String filterResourceTypeId) {
+    public void addFilterResourceTypeId(Integer filterResourceTypeId) {
         this.filterResourceTypeId = filterResourceTypeId;
     }
 

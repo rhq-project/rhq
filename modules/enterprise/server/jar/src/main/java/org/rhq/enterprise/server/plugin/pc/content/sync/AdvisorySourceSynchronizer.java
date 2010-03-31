@@ -87,7 +87,7 @@ public class AdvisorySourceSynchronizer {
 
     public SyncTracker synchronizeAdvisoryMetadata(SyncTracker tracker) throws SyncException, InterruptedException {
         if (!(provider instanceof AdvisorySource)) {
-            log.error(" Advisory Instance:" + provider);
+            // Nothing to do.
             return tracker;
         }
 
@@ -98,7 +98,7 @@ public class AdvisorySourceSynchronizer {
         long start = System.currentTimeMillis();
 
         List<Advisory> advs = repoManager.findAssociatedAdvisory(overlord, repo.getId(), pc);
-        log.error("Found " + advs.size() + " Advisory for repo " + repo.getId());
+        log.error("Found " + advs.size() + " advisories for repo " + repo.getId());
         ThreadUtil.checkInterrupted();
 
         AdvisorySyncReport advReport = new AdvisorySyncReport(repo.getId());

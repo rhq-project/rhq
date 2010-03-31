@@ -151,6 +151,19 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
+    public boolean canViewResources(Subject subject, List<Integer> resourceIds) {
+        if (isInventoryManager(subject)) {
+            return true;
+        }
+
+        Query query = entityManager.createNamedQuery(Subject.QUERY_CAN_VIEW_RESOURCES);
+        query.setParameter("subject", subject);
+        query.setParameter("resourceIds", resourceIds);
+        long count = (Long) query.getSingleResult();
+
+        return count == resourceIds.size();
+    }
+
     public boolean canViewGroup(Subject subject, int groupId) {
         if (isInventoryManager(subject)) {
             return true;

@@ -707,7 +707,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                 ResourceType platform = getResourceType("myPlatform7");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
                 Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
-                assert propDefs.size() == 5 : "Expected to find 5 properties in v2, but got " + propDefs.size();
+                assert propDefs.size() == 4 : "Expected to find 4 properties in v2, but got " + propDefs.size();
 
                 int found = 0;
                 for (PropertyDefinition def : propDefs.values()) {
@@ -754,7 +754,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                     }
                 }
 
-                assert found == 5 : "Did not find the 5 desired properties in v2";
+                assert found == 4 : "Did not find the 4 desired properties in v2, instead found " + found;
             }
         } finally {
             getTransactionManager().rollback();

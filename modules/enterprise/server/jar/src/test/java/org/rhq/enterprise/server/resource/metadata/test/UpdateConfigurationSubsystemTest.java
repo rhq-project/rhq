@@ -42,6 +42,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Tests for {@link org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean}.
+ *
+ * @author Heiko Rupp
+ */
 public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
 
     @Override
@@ -50,7 +55,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
     }
 
     /**
-     * Test updating of plugin and resource configs
+     * Test updating of plugin configs.
      *
      * @throws Exception
      */

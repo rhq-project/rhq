@@ -48,6 +48,15 @@ if "%RHQ_SERVER_DEBUG%" == "false" (
 )
 
 rem ----------------------------------------------------------------------
+rem Ensure password parameter is present
+rem ----------------------------------------------------------------------
+
+if /i "%1"=="" (
+   echo Usage: %0 { plainTextPassword }
+   goto :done
+)
+
+rem ----------------------------------------------------------------------
 rem Change directory so the current directory is the Server home.
 rem ----------------------------------------------------------------------
 
@@ -86,7 +95,7 @@ if not exist "%RHQ_SERVER_JAVA_EXE_FILE_PATH%" (
 )
 
 set _JB_DIR=%RHQ_SERVER_HOME%\jbossas
-%RHQ_SERVER_JAVA_EXE_FILE_PATH% -cp %_JB_DIR%\lib\jboss-common.jar;%_JB_DIR%\lib\jboss-jmx.jar;%_JB_DIR%\server\default\lib\jbosssx.jar;%_JB_DIR%\server\default\lib\jboss-jca.jar org.jboss.resource.security.SecureIdentityLoginModule %1
+"%RHQ_SERVER_JAVA_EXE_FILE_PATH%" -cp %_JB_DIR%\lib\jboss-common.jar;%_JB_DIR%\lib\jboss-jmx.jar;%_JB_DIR%\server\default\lib\jbosssx.jar;%_JB_DIR%\server\default\lib\jboss-jca.jar org.jboss.resource.security.SecureIdentityLoginModule %1
 
 
 goto :done

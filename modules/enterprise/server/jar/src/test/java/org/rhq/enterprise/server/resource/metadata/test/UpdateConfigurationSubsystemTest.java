@@ -43,7 +43,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Tests for {@link org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean}.
+ * Tests the updating of persisted ResourceTypes' resource and plugin ConfigurationDefinitions, which is essentially
+ * handled by {@link org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean}.
  *
  * @author Heiko Rupp
  */

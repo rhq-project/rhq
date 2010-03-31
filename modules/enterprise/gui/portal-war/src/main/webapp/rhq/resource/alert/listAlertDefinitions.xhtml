@@ -108,8 +108,10 @@
                      <h:outputText styleClass="headerText" value="Parent" />
                   </f:facet>
 
-                  <h:outputLink value="http://localhost:7080/rhq/resource/alert/viewAlert.xhtml" rendered="#{item.parentId ne 0}">
+                  <h:outputLink value="/alerts/Config.do" rendered="#{item.parentId ne 0}">
+                     <f:param name="mode" value="viewRoles"/>
                      <f:param name="type" value="#{item.resource.resourceType.id}"/>
+                     <f:param name="from" value="#{item.id}"/>
                      <f:param name="ad" value="#{item.parentId}"/>
                      <h:outputText value="View Template" />
                   </h:outputLink>

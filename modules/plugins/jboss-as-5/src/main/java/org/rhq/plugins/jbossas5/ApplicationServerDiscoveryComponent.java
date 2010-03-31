@@ -85,11 +85,14 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     static {
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.AS, new ComparableVersion("5.2.0.Beta1"));
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EAP, new ComparableVersion("5.0.0.Beta"));
+        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EWP, new ComparableVersion("5.0.0.CR1"));
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.SOA, new ComparableVersion("5.0.0.Beta"));
     }
 
     private static final String[] CLIENT_JARS = new String[] {
             "client/jbossall-client.jar",
+            "client/trove.jar",
+            "client/javassist.jar",
             "common/lib/jboss-security-aspects.jar",
             "lib/jboss-managed.jar",
             "lib/jboss-metatype.jar",

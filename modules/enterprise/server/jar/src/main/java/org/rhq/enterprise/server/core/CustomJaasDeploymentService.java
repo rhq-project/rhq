@@ -166,6 +166,8 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         configOptions.put(Context.SECURITY_PROTOCOL, conf.getProperty(RHQConstants.LDAPProtocol));
         configOptions.put("LoginProperty", conf.getProperty(RHQConstants.LDAPLoginProperty));
         configOptions.put("Filter", conf.getProperty(RHQConstants.LDAPFilter));
+        configOptions.put("GroupFilter", conf.getProperty(RHQConstants.LDAPGroupFilter));
+        configOptions.put("GroupMemberFilter", conf.getProperty(RHQConstants.LDAPGroupMember));
         configOptions.put("BaseDN", conf.getProperty(RHQConstants.LDAPBaseDN));
         configOptions.put("BindDN", conf.getProperty(RHQConstants.LDAPBindDN));
         configOptions.put("BindPW", conf.getProperty(RHQConstants.LDAPBindPW));

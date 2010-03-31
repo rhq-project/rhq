@@ -30,6 +30,8 @@
                  type="org.rhq.enterprise.gui.admin.role.RemoveUsersForm"/>
       <form-bean name="AddRoleResourceGroupsForm"
                  type="org.rhq.enterprise.gui.admin.role.AddResourceGroupsForm"/>
+      <form-bean name="AddRoleLdapGroupsForm"
+                 type="org.rhq.enterprise.gui.admin.role.AddLdapGroupsForm"/>                 
       <form-bean name="RemoveRoleResourceGroupsForm"
                  type="org.rhq.enterprise.gui.admin.role.RemoveResourceGroupsForm"/>
       <!-- / -->
@@ -546,6 +548,46 @@
          <forward name="failure" path="/admin/role/RoleAdmin.do?mode=view"/>
          <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
       </action>
+
+
+      <action path="/admin/role/AddLdapGroupsFormPrepare"
+              name="AddRoleLdapGroupsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.role.AddLdapGroupsFormPrepareAction">
+         <set-property property="title" value="Add+Resource+Group"/>
+      </action>
+
+      <action path="/admin/role/AddLdapGroups"
+              type="org.rhq.enterprise.gui.admin.role.AddLdapGroupsAction"
+              name="AddRoleLdapGroupsForm"
+              scope="request"
+              input="/admin/role/RoleAdmin.do?mode=addLdapGroups">
+         <set-property property="workflow" value="role/ViewUser"/>
+         <forward name="cancel" path="/admin/role/RoleAdmin.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/admin/role/RoleAdmin.do?mode=addLdapGroups"
+                  redirect="true"/>
+         <forward name="new" path="/resource/group/Inventory.do?mode=new" redirect="true"/>
+         <forward name="add" path="/admin/role/RoleAdmin.do?mode=addLdapGroups"/>
+         <forward name="remove" path="/admin/role/RoleAdmin.do?mode=addLdapGroups"/>
+         <forward name="failure" path="/admin/role/RoleAdmin.do?mode=addLdapGroups"/>
+         <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
+      </action>
+      
+      <action path="/admin/role/RemoveLdapGroups"
+              type="org.rhq.enterprise.gui.admin.role.RemoveLdapGroupsAction"
+              name="RemoveRoleResourceGroupsForm"
+              scope="request"
+              input="/admin/role/RoleAdmin.do?mode=view">
+         <forward name="failure" path="/admin/role/RoleAdmin.do?mode=view"/>
+         <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
+      </action>      
+
+
+
+
+
+      
       <!-- / -->
 
       <action path="/admin/role/ChangeOwnerFormPrepare"

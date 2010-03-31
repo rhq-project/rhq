@@ -62,10 +62,27 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
     public void renderView(FacesContext context, UIViewRoot viewToRender) throws IOException, FacesException {
         long monitorId = HibernatePerformanceMonitor.get().start();
         super.renderView(context, viewToRender);
-        HibernatePerformanceMonitor.get().stop(monitorId, "URL " + viewToRender.getViewId());
+        HibernatePerformanceMonitor.get().stop(monitorId, "URL " + getURL(viewToRender));
     }
 
-    protected void handleRnderException(FacesContext context, Exception ex) throws IOException, ELException,
+    private String getURL(UIViewRoot viewToRender) {
+        StringBuilder results = new StringBuilder(viewToRender.getViewId());
+
+        boolean first = true;
+        for (Map.Entry<String, Object> urlParam : viewToRender.getAttributes().entrySet()) {
+            if (first) {
+                results.append('?');
+            } else {
+                results.append('&');
+            }
+            results.append(urlParam.getKey() + "=" + urlParam.getValue());
+        }
+
+        return results.toString();
+    }
+
+    @Override
+    protected void handleRenderException(FacesContext context, Exception ex) throws IOException, ELException,
         FacesException {
         try {
             if (context.getViewRoot().getViewId().equals("/rhq/common/error.xhtml")) {

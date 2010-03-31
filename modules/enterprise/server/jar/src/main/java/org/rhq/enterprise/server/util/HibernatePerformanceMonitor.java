@@ -18,14 +18,20 @@
  */
 package org.rhq.enterprise.server.util;
 
+import java.lang.management.ManagementFactory;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.management.MBeanServer;
 import javax.persistence.EntityManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.stat.QueryStatistics;
+import org.hibernate.stat.Statistics;
+
+import org.rhq.core.server.PersistenceUtility;
 
 /**
  * @author Joseph Marques
@@ -45,6 +51,15 @@ public class HibernatePerformanceMonitor {
         return singleton;
     }
 
+    public void zeroStats() {
+        if (log.isDebugEnabled()) {
+            EntityManager entityManager = LookupUtil.getEntityManager();
+            MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
+            Statistics stats = PersistenceUtility.getStatisticsService(entityManager, platformMBeanServer);
+            stats.clear();
+        }
+    }
+
     public long start() {
         if (log.isDebugEnabled()) {
             EntityManager entityManager = LookupUtil.getEntityManager();
@@ -61,11 +76,38 @@ public class HibernatePerformanceMonitor {
         if (log.isDebugEnabled()) {
             HibernateStatisticsStopWatch watch = watches.remove(id);
             if (watch == null) {
-                // could happen if debugging was turned on and the start() call was already skipped
-                return;
+                return; // could happen if debugging was turned on and the start() call was already skipped
             }
             watch.stop();
-            log.debug(watch.toString() + (logPrefix == null ? "(unknown)" : " for " + logPrefix + " "));
+
+            String cause = "";
+            if (watch.getQueryExecutions() != 0) {
+                if ((watch.getConnects() / (double) (watch.getEntityLoads() + watch.getQueryExecutions())) >= 5.0) {
+                    cause = "(N+1 issue?) ";// might indicate need for LEFT JOIN FETCHes
+                }
+                if ((watch.getTransations() / (double) watch.getQueryExecutions()) >= 5.0) {
+                    cause = "(xaction nesting?) "; // might indicate excessive @REQUIRES_NEW
+                } else if (watch.getTransations() > 10) {
+                    cause = "(too many xactions?";
+                }
+            }
+            if (watch.getTime() > 3000) {
+                cause = "(slowness?) "; // might indicate inefficient query or table contention
+            }
+
+            String callingContext = " for " + (logPrefix == null ? "(unknown)" : logPrefix);
+            log.debug(watch.toString() + cause + callingContext);
+
+            if (logPrefix.contains("URL")) {
+                String[] queries = watch.getStats().getQueries();
+                for (int i = 0; i < queries.length; i++) {
+                    String query = queries[i];
+                    QueryStatistics queryStats = watch.getStats().getQueryStatistics(query);
+                    log.debug("queryString[" + i + "]=" + queries[i]);
+                    log.debug("queryStats[" + i + "=" + queryStats);
+                }
+                //watch.getStats().logSummary();
+            }
         }
     }
 

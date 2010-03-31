@@ -384,7 +384,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         try {
             template = (NotificationTemplate) q.getSingleResult();
         } catch (NoResultException nre) {
-            throw new IllegalArgumentException("There is no template with name '" + templateName +"'");
+            LOG.info("There is no alert notification template with name '" + templateName +"'");
+            template = new NotificationTemplate("dummy",null);
         }
         return template;
     }

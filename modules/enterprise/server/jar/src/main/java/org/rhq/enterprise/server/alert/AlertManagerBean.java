@@ -603,8 +603,11 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         for (int id : alertIds) {
             acknowledgeAlert(id,user);
             i++;
-            if (i %20 == 0)
+            if (i % 50 == 0) {
                 entityManager.flush();
+                entityManager.clear();
+            }
+
         }
         return i;
     }

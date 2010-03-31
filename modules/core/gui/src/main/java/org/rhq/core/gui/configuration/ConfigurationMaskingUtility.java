@@ -54,7 +54,7 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
  */
 public abstract class ConfigurationMaskingUtility {
 
-    private static final String MASKED_PROPERTY_VALUE = "\u0002MASKED\u0003";
+    private static final String MASKED_PROPERTY_VALUE = "___MASKED___";
 
     /**
      * Mask the values of all simple properties of type PASSWORD in the configuration. The configuration does not

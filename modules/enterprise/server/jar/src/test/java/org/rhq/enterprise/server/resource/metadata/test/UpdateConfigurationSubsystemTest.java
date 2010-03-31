@@ -18,12 +18,6 @@
  */
 package org.rhq.enterprise.server.resource.metadata.test;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -38,8 +32,22 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
+import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.testng.annotations.Test;
 
+import javax.persistence.EntityManager;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Tests the updating of persisted ResourceTypes' resource and plugin ConfigurationDefinitions, which is essentially
+ * handled by {@link org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean}.
+ *
+ * @author Heiko Rupp
+ */
 public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
 
     @Override
@@ -48,7 +56,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
     }
 
     /**
-     * Test updating of plugin and resource configs
+     * Test updating of plugin configs.
      *
      * @throws Exception
      */
@@ -134,6 +142,80 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
 
             // TODO check changing back
         } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test(enabled = false)
+    public void testBZ_573034() throws Exception {
+        try {
+            getTransactionManager().begin();
+            EntityManager entityMgr = getEntityManager();
+
+            // register plugin
+            String pluginName = "BZ_573034_test_plugin";
+            String version1 = "1.0";
+            String version2 = "2.0";
+
+            registerPlugin("BZ_573034_v1.xml", version1);
+
+            // create resource with plugin configuration
+            ResourceType testServerResourceType = getResourceType("TestServer", pluginName);
+
+            ConfigurationDefinition pluginConfigurationDef = testServerResourceType.getPluginConfigurationDefinition();
+            PropertyDefinition testPropertyDef = pluginConfigurationDef.getPropertyDefinitionSimple("testProperty");
+
+            assertNotNull(
+                "Expected plugin configuration definition to have a property definition for 'testProperty'",
+                testPropertyDef
+            );
+
+            Agent agent = new Agent("testAgent", "localhost", 1, "", "testoken");
+            entityMgr.persist(agent);
+            entityMgr.flush();
+
+            String resourceKey = testServerResourceType.getName() + System.currentTimeMillis();
+            Resource testResource = new Resource(resourceKey, resourceKey, testServerResourceType);
+            testResource.setAgent(agent);
+            entityMgr.persist(testResource);
+            entityMgr.flush();
+
+            testResource = entityMgr.find(Resource.class, testResource.getId());
+            int pluginConfigurationId = testResource.getPluginConfiguration().getId();
+
+            Configuration pluginConfiguration = entityMgr.find(Configuration.class, pluginConfigurationId);
+            PropertySimple testProperty = pluginConfiguration.getSimple("testProperty");
+
+            assertNull(
+                "Did not expect to find a value for 'testProperty' since a value has not been supplied for it yet",
+                testProperty
+            );
+
+            // register new version of plugin that specifies new plugin configuration property having a default value
+            registerPlugin("BZ_573034_v2.xml", version2);
+
+            // verify existing resource has its plugin configuration updated with new property having default value
+            testServerResourceType = getResourceType("TestServer", pluginName);
+
+            pluginConfigurationDef = testServerResourceType.getPluginConfigurationDefinition();
+            PropertyDefinition testPropertyWithDefaultDef =
+                pluginConfigurationDef.getPropertyDefinitionSimple("testPropertyWithDefault");
+
+            assertNotNull(
+                "Expected updated plugin configuration definition to define the property 'testPropertyWithDefault'",
+                testPropertyWithDefaultDef
+            );
+
+            pluginConfiguration = entityMgr.find(Configuration.class, pluginConfigurationId);
+            PropertySimple testPropertyWithDefault = pluginConfiguration.getSimple("testPropertyWithDefault");
+
+            assertNotNull(
+                "Expected to find the property 'testPropertyWithDefault' in the updated plugin configuration",
+                testPropertyWithDefault
+            );
+            assertEquals("Expected default value to be set", "default", testPropertyWithDefault.getStringValue());
+        }
+        finally {
             getTransactionManager().rollback();
         }
     }
@@ -353,7 +435,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
      *
      * @throws Exception
      */
-    @Test
+    @Test(enabled = false)
     public void testConstraintMinMax() throws Exception {
         getTransactionManager().begin();
         try {
@@ -453,7 +535,8 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
 
             /*
              * Deploy v2 of the plugin
-             */{ // extra block for variable scoping purposes
+             */
+            { // extra block for variable scoping purposes
                 registerPlugin("propertyList-v2.xml");
                 ResourceType platform = getResourceType("myPlatform6");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
@@ -519,19 +602,25 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                         for (Constraint constraint : constraints) {
                             if (constraint instanceof IntegerRangeConstraint) {
                                 IntegerRangeConstraint irc = (IntegerRangeConstraint) constraint;
+                                assert irc != null : "Integer-constraint was null, but should not be";
                                 // See JBNADM-1596/97
+                                assert irc.getDetails().equals("-2#10");
+                                // TODO (ips, 3/31/10): The below is a workaround for IntegerRangeConstraint.onLoad() not being called by Hibernate.
+                                irc.setDetails(irc.getDetails());
                                 assert irc.getMaximum() == 10;
                                 assert irc.getMinimum() == -2;
-                                assert irc.getDetails().equals("-2#10");
                             } else if (constraint instanceof FloatRangeConstraint) {
                                 FloatRangeConstraint frc = (FloatRangeConstraint) constraint;
                                 assert frc != null : "Float-constraint was null, but should not be";
                                 // See JBNADM-1596/97
+                                assert frc.getDetails().equals("10.0#5.0");
+                                // TODO (ips, 3/31/10): The below is a workaround for FloatRangeConstraint.onLoad() not being called by Hibernate.
+                                frc.setDetails(frc.getDetails());
                                 assert frc.getMinimum() == 10; // TODO change when JBNADM-1597 is being worked on
                                 assert frc.getMaximum() == 5;
-                                assert frc.getDetails().equals("10.0#5.0");
+
                             } else {
-                                assert true == false : "Unknown constraint type encoutered";
+                                assert true == false : "Unknown constraint type encountered";
                             }
                         }
                     } else {
@@ -610,7 +699,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                     }
                 }
 
-                assert found == 5 : "Did not find the 5 desird maps in v1";
+                assert found == 5 : "Did not find the 5 desired maps in v1";
             }
 
             System.out.println("Done with v1");
@@ -633,7 +722,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                     }
 
                     if (def.getName().equals("map1")) {
-                        assert def instanceof PropertyDefinitionSimple : "Map 1 should be a simle-property in v2";
+                        assert def instanceof PropertyDefinitionSimple : "Map 1 should be a simple-property in v2";
                     } else {
                         assert def instanceof PropertyDefinitionMap : "Not all properties are maps in v2";
                     }
@@ -671,7 +760,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                     }
                 }
 
-                assert found == 5 : "Did not find the 5 desired properties in v2";
+                assert found == 5 : "Did not find the 5 desired properties in v2, instead found " + found;
             }
         } finally {
             getTransactionManager().rollback();
@@ -706,7 +795,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                     } else if (def.getName().equals("six")) {
                         assert def instanceof PropertyDefinitionSimple;
                     } else {
-                        assert true == false : "Unknwon definition : " + def.getName() + " in v1";
+                        assert true == false : "Unknown definition : " + def.getName() + " in v1";
                     }
                 }
             }
@@ -741,7 +830,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                         assert def instanceof PropertyDefinitionList : "Expected a list-property, but it was "
                             + def.getClass().getCanonicalName();
                     } else {
-                        assert true == false : "Unknwon definition : " + def.getName() + " in v2";
+                        assert true == false : "Unknown definition : " + def.getName() + " in v2";
                     }
                 }
             }
@@ -769,7 +858,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                         assert def instanceof PropertyDefinitionList : "Expected a list-property, but it was "
                             + def.getClass().getCanonicalName();
                     } else if (def.getName().equals("five")) {
-                        assert def instanceof PropertyDefinitionSimple : "Expected a simle-property, but it was "
+                        assert def instanceof PropertyDefinitionSimple : "Expected a simple-property, but it was "
                             + def.getClass().getCanonicalName();
                     } else if (def.getName().equals("six")) {
                         assert def instanceof PropertyDefinitionSimple : "Expected a simple-property, but it was "
@@ -938,5 +1027,4 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             getTransactionManager().rollback();
         }
     }
-
 }

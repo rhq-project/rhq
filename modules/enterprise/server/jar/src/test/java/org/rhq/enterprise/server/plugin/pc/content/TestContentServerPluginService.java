@@ -73,11 +73,11 @@ public class TestContentServerPluginService extends ServerPluginService implemen
      * the proper source -> provider mapping.
      * <p/>
      * If this method is never called, in other words no specific associations are made, an instance of the default
-     * content provider ({@link TestContentProvider}) will be used by the <code>ContentProviderManager</code>
+     * content source ({@link TestContentProvider}) will be used by the <code>ContentProviderManager</code>
      * regardless of content source requested.
      *
      * @param source   source that will be handed to the ContentProviderManager and used to retrieve a specific
-     *                 content provider
+     *                 content source
      * @param provider provider to use when the given source is requested for operations
      */
     public void associateContentProvider(ContentSource source, ContentProvider provider) {

@@ -78,6 +78,7 @@ public class DistributionSourceSynchronizer {
 
     public SyncTracker synchronizeDistributionMetadata(SyncTracker tracker) throws SyncException, InterruptedException {
         if (!(provider instanceof DistributionSource)) {
+            // Nothing to do.
             return tracker;
         }
 

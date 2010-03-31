@@ -16,7 +16,21 @@
     </component>
 
 
-    <!-- Load i18n bundles -->
+    <!--<component class="org.jboss.seam.web.MultipartFilter">-->
+       <!--<property name="createTempFiles">true</property>-->
+       <!--<property name="maxRequestSize">1000000</property>-->
+       <!--<property name="urlPattern">*.xhtml</property>-->
+    <!--</component>-->
+
+  <!--<component class="org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean"-->
+             <!--name="ExistingResourceConfigurationViewUIBean"-->
+             <!--scope="page"/>-->
+
+  <!--<component class="org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean"-->
+             <!--name="ExistingResourceConfigurationUIBean"-->
+             <!--scope="session"/>-->
+
+  <!-- Load i18n bundles -->
     <core:resource-loader>
         <core:bundle-names>
             <value>messages</value>

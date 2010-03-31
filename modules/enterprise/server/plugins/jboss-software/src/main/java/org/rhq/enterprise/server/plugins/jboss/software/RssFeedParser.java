@@ -56,29 +56,29 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 public class RssFeedParser {
     // Constants  --------------------------------------------
 
-    public static final String JBOSS_AS4_PLUGIN_NAME = "JBossAS";
-    public static final String JBOSS_AS5_PLUGIN_NAME = "JBossAS5";
+    private static final String JBOSS_AS4_PLUGIN_NAME = "JBossAS";
+    private static final String JBOSS_AS5_PLUGIN_NAME = "JBossAS5";
 
-    public static final String ARCHITECTURE = "noarch";
+    private static final String ARCHITECTURE = "noarch";
 
     /**
-     * Corresponds to the resource type name defined in the JBoss AS plugin.
+     * Corresponds to the resource type name defined in the JBossAS or JBossAS5 plugin.
      */
-    public static final String RESOURCE_TYPE_JBOSS_AS = "JBossAS Server";
+    private static final String RESOURCE_TYPE_JBOSS_AS = "JBossAS Server";
 
     /**
      * Corresponds to the package type name defined in the JBoss AS plugin.
      */
-    public static final String PACKAGE_TYPE_CUMULATIVE_PATCH = "cumulativePatch";
+    private static final String PACKAGE_TYPE_CUMULATIVE_PATCH = "cumulativePatch";
 
-    public static final String RSS_SOFTWARE_TYPE_BUGFIX = "BUGFIX";
-    public static final String RSS_SOFTWARE_TYPE_SECURITY = "SECURITY";
-    public static final String RSS_SOFTWARE_TYPE_ENHANCEMENT = "ENHANCEMENT";
-    public static final String RSS_SOFTWARE_TYPE_DISTRIBUTION = "DISTRIBUTION";
+    private static final String RSS_SOFTWARE_TYPE_BUGFIX = "BUGFIX";
+    private static final String RSS_SOFTWARE_TYPE_SECURITY = "SECURITY";
+    private static final String RSS_SOFTWARE_TYPE_ENHANCEMENT = "ENHANCEMENT";
+    private static final String RSS_SOFTWARE_TYPE_DISTRIBUTION = "DISTRIBUTION";
 
-    public static final String DIST_STATUS_AVAILABLE = "AVAILABLE";
-    public static final String DIST_STATUS_OBSOLETE = "OBSOLETE";
-    public static final String DIST_STATUS_REMOVED = "REMOVED";
+    private static final String DIST_STATUS_AVAILABLE = "AVAILABLE";
+    private static final String DIST_STATUS_OBSOLETE = "OBSOLETE";
+    private static final String DIST_STATUS_REMOVED = "REMOVED";
 
     // Attributes  --------------------------------------------
 
@@ -104,10 +104,10 @@ public class RssFeedParser {
 
         while (repos.hasMoreElements()) {
             RssChannel repo = (RssChannel) repos.nextElement();
-            Enumeration repotems = repo.items();
+            Enumeration repoItems = repo.items();
 
-            while (repotems.hasMoreElements()) {
-                RssChannelItem item = (RssChannelItem) repotems.nextElement();
+            while (repoItems.hasMoreElements()) {
+                RssChannelItem item = (RssChannelItem) repoItems.nextElement();
 
                 RssJbnPatch patch = item.getJbnPatch();
                 RssDublinCore dublinCore = item.getDublinCore();
@@ -199,9 +199,9 @@ public class RssFeedParser {
                         try {
                             Document document = builder.parse(new ByteArrayInputStream(instructions.getBytes()));
                             String choppedInstructions = xpath.evaluate(instructionExpression, document);
-                            // the jbpm xml processor doesn't like whitespace at the beginning, so trim it
-                            // bytes will be retrieved using platform encoding on the agent side so use the same
-                            // on the server side and assume they are identical
+                            // The JBPM XML processor doesn't like whitespace at the beginning, so trim it.
+                            // Bytes will be retrieved using platform encoding on the agent side, so use the same
+                            // on the server side and assume they are identical.
                             packageDetails.setMetadata(choppedInstructions.trim().getBytes());
                         } catch (Exception e) {
                             log.error("Could not parse or set automated installation instructions for package: "
@@ -212,13 +212,13 @@ public class RssFeedParser {
 
                     packageDetails.setExtraProperties(extraProperties);
 
-                    // For each product listed for the patch, add an entry for its resource version
+                    // For each product listed for the patch, add an entry for its resource version.
                     for (Object productObj : products) {
                         RssJbnDependency product = (RssJbnDependency) productObj;
 
                         // The CSP feed will include an optional JON version that maps up to how the resource
-                        // version will be identified by (now RHQ). If this is specified, we'll want to use
-                        // the mapped version instead
+                        // version will be identified by RHQ. If this is specified, we'll want to use the mapped
+                        // version instead.
                         String productVersion = product.getJonResourceVersion();
 
                         if (product.getProductVersion().equals("4.0.4")) {

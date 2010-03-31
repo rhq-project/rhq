@@ -151,7 +151,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
     @Test(enabled = ENABLED)
     public void createFindDeleteCandidateRepo() throws Exception {
         // Setup
-        Repo repo = new Repo("test candidate repo");
+        Repo repo = new Repo("test create candidate repo");
 
         PageList<Repo> importedRepos = repoManager.findRepos(overlord, new PageControl());
         int origSize = 0;
@@ -160,13 +160,14 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         }
 
         // Test
-        repo = repoManager.createCandidateRepo(overlord, repo);
+        repo.setCandidate(true);
+        repo = repoManager.createRepo(overlord, repo);
 
         // Verify
         try {
             assert repo.isCandidate();
 
-            // Should not be returned from this call since its a candidate repo
+            // Should not be returned from this call since it's a candidate repo
             importedRepos = repoManager.findRepos(overlord, new PageControl());
             assert importedRepos.size() == origSize;
             assert repoManager.getRepo(overlord, repo.getId()) != null;
@@ -302,8 +303,9 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
         //   Create a candidate repo associated with that source
         Repo candidateRepo = new Repo(candidateRepoName);
+        candidateRepo.setCandidate(true);
         candidateRepo.addContentSource(contentSource);
-        candidateRepo = repoManager.createCandidateRepo(overlord, candidateRepo);
+        candidateRepo = repoManager.createRepo(overlord, candidateRepo);
 
         // Test
         RepoCriteria criteria = new RepoCriteria();
@@ -329,7 +331,8 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
     public void importCandidateRepo() throws Exception {
         // Setup
         Repo candidate = new Repo("create me");
-        Repo created = repoManager.createCandidateRepo(overlord, candidate);
+        candidate.setCandidate(true);
+        Repo created = repoManager.createRepo(overlord, candidate);
 
         // Test
         List<Integer> repoIds = new ArrayList<Integer>(1);
@@ -395,24 +398,28 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
         // -> Only has source to delete, should be deleted
         Repo repo1 = new Repo("repo1");
+        repo1.setCandidate(true);
         repo1.addContentSource(source1);
 
         // -> Has different source, should not be deleted
         Repo repo2 = new Repo("repo2");
+        repo2.setCandidate(true);
         repo2.addContentSource(source2);
 
         // -> Has source to delete and another source, should not be deleted
         Repo repo3 = new Repo("repo3");
+        repo3.setCandidate(true);
         repo3.addContentSource(source1);
         repo3.addContentSource(source2);
 
         // -> No sources, should not be deleted
         Repo repo4 = new Repo("repo4");
+        repo4.setCandidate(true);
 
-        repo1 = repoManager.createCandidateRepo(overlord, repo1);
-        repo2 = repoManager.createCandidateRepo(overlord, repo2);
-        repo3 = repoManager.createCandidateRepo(overlord, repo3);
-        repo4 = repoManager.createCandidateRepo(overlord, repo4);
+        repo1 = repoManager.createRepo(overlord, repo1);
+        repo2 = repoManager.createRepo(overlord, repo2);
+        repo3 = repoManager.createRepo(overlord, repo3);
+        repo4 = repoManager.createRepo(overlord, repo4);
 
         // Test
         repoManager.deleteCandidatesWithOnlyContentSource(overlord, source1.getId());

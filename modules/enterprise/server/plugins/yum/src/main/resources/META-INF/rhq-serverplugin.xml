@@ -8,12 +8,12 @@
                 xmlns:c="urn:xmlns:rhq-configuration">
 
     <serverplugin:help><![CDATA[
-        Provides a content provider that retrieves content from a local or remote Yum repository.
+        Provides a content source that retrieves content from a local or remote Yum repository.
     ]]></serverplugin:help>
 
    <contentSourceType name="YumSource"
-                      displayName="Yum Repository Content Provider"
-                      description="This content provider retrieves packages from a local or remote Yum repository."
+                      displayName="Yum Repository Content Source"
+                      description="This content source retrieves packages from a local or remote Yum repository."
                       lazyLoad="true"
                       downloadMode="filesystem"
                       apiClass="org.rhq.enterprise.server.plugins.yum.RepoProvider">

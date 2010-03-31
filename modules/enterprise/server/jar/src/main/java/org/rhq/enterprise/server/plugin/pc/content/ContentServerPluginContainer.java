@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.plugin.pc.content;
 
 import java.util.Date;
 
+import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
@@ -121,7 +122,8 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         JobDetail job = new JobDetail(ContentProviderSyncJob.createUniqueJobName(contentSource),
             CONTENT_SRC_SYNC_JOB_GROUP_NAME, ContentProviderSyncJob.class, false, false, false);
 
-        ContentProviderSyncJob.createJobDataMap(contentSource, job);
+        JobDataMap jobDataMap = ContentProviderSyncJob.createJobDataMap(contentSource, job);
+        jobDataMap.putAsString(ContentProviderSyncJob.DATAMAP_SYNC_IMPORTED_REPOS, true);
 
         SimpleTrigger trigger = new SimpleTrigger(job.getName(), job.getGroup());
         trigger.setVolatility(false);
@@ -130,7 +132,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         Date next = scheduler.scheduleJob(job, trigger);
 
         getLog().info(
-            "Scheduled content provider sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at ["
+            "Scheduled content source sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at ["
                 + next + "] for [" + contentSource + "]");
     }
 

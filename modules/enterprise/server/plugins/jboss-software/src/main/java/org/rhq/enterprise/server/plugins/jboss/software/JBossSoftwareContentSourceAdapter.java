@@ -111,9 +111,9 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
 
     public void testConnection() throws Exception {
         if (!active)
-            throw new Exception("Content source is NOT set to active, connection cannot be established.");
+            throw new Exception("Content source is NOT set to active - connection cannot be established.");
 
-        // If there is an error in the connection, this call will throw an exception describing it
+        // If there is an error in the connection, this call will throw an exception describing it.
         retrieveRssDocument();
     }
 
@@ -135,8 +135,8 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
 
         try {
             parser.parseResults(rssDocument, report, existingPackages);
-        } catch (ParserConfigurationException e) {
-            throw new SyncException("error parsing results.", e);
+        } catch (Exception e) {
+            throw new SyncException("Error parsing RSS document.", e);
         }
     }
 
@@ -220,7 +220,7 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
 
             if (status == 404) {
                 throw new SyncException("Could not find the feed at URL [" + url
-                    + "]. Make sure the URL field correctly " + "refers to the CSP feed location.");
+                    + "]. Make sure the URL field correctly refers to the CSP feed location.");
             }
 
             if (status == 401 || status == 403) {
@@ -237,7 +237,7 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
             method.releaseConnection();
         }
 
-        // Parse the raw feed into chuchill domain objects
+        // Parse the raw feed into churchill domain objects
         RssDocument parsedFeed = null;
         if (rawFeed != null) {
             parsedFeed = RssParser.parseRss(rawFeed);

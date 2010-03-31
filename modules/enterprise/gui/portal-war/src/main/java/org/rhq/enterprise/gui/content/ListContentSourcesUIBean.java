@@ -57,9 +57,9 @@ public class ListContentSourcesUIBean extends PagedDataTableUIBean {
                 }
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length
-                    + "] content providers.");
+                    + "] content sources.");
             } catch (Exception e) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete content providers.", e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete content sources.", e);
             }
         }
 
@@ -78,10 +78,10 @@ public class ListContentSourcesUIBean extends PagedDataTableUIBean {
                 }
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing [" + ids.length
-                    + "] content providers.");
+                    + "] content sources.");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to synchronized content providers.", e);
+                    "Failed to synchronized content sources.", e);
             }
         }
 

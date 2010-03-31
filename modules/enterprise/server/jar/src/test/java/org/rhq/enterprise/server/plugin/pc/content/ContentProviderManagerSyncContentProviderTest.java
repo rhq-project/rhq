@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.testng.annotations.AfterMethod;
@@ -178,128 +179,132 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
     @SuppressWarnings("unchecked")
     public void synchronizeContentSource() throws Exception {
 
-        // Setup
-        // --------------------------------------------
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        Subject overlord = subjectManager.getOverlord();
+        try {
+            getTransactionManager().begin();
 
-        // -> Add an already imported repo to the system so it already exists when the report introduces it
-        Repo existingImportedRepo = new Repo(TestContentProvider.EXISTING_IMPORTED_REPO_NAME);
-        existingImportedRepo.setCandidate(false);
-        existingImportedRepo.addContentSource(syncSource);
-        repoManager.createRepo(overlord, existingImportedRepo);
+            // Setup
+            // --------------------------------------------
+            RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+            SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+            Subject overlord = subjectManager.getOverlord();
 
-        // -> Add an already imported repo that wasn't introduced from the report; a user created repo
-        Repo customImportedRepo = new Repo(CUSTOM_IMPORTED_REPO_NAME);
-        customImportedRepo.setCandidate(false);
-        customImportedRepo.addContentSource(syncSource);
-        repoManager.createRepo(overlord, customImportedRepo);
+            // -> Add an already imported repo to the system so it already exists when the report introduces it
+            Repo existingImportedRepo = new Repo(TestContentProvider.EXISTING_IMPORTED_REPO_NAME);
+            existingImportedRepo.setCandidate(false);
+            repoManager.createRepo(overlord, existingImportedRepo);
 
-        // -> Simulate a candidate repo from a previous import that will be in this report as well
-        Repo existingCandidateRepo = new Repo(TestContentProvider.EXISTING_CANDIDATE_REPO_NAME);
-        existingCandidateRepo.setCandidate(true);
-        existingCandidateRepo.addContentSource(syncSource);
-        repoManager.createCandidateRepo(overlord, existingCandidateRepo);
+            // -> Add an already imported repo that wasn't introduced from the report; a user created repo
+            Repo customImportedRepo = new Repo(CUSTOM_IMPORTED_REPO_NAME);
+            customImportedRepo.setCandidate(false);
+            customImportedRepo.addContentSource(syncSource);
+            repoManager.createRepo(overlord, customImportedRepo);
 
-        // -> Simulate a candidate repo from a previous import that will *NOT* be in this report
-        Repo previousRepo = new Repo(PREVIOUS_CANDIDATE_REPO_NAME);
-        previousRepo.setCandidate(true);
-        previousRepo.addContentSource(syncSource);
-        repoManager.createCandidateRepo(overlord, previousRepo);
+            // -> Simulate a candidate repo from a previous import that will be in this report as well
+            Repo existingCandidateRepo = new Repo(TestContentProvider.EXISTING_CANDIDATE_REPO_NAME);
+            existingCandidateRepo.setCandidate(true);
+            repoManager.createRepo(overlord, existingCandidateRepo);
+
+            // -> Simulate a candidate repo from a previous import that will *NOT* be in this report
+            Repo previousRepo = new Repo(PREVIOUS_CANDIDATE_REPO_NAME);
+            previousRepo.setCandidate(true);
+            previousRepo.addContentSource(syncSource);
+            repoManager.createRepo(overlord, previousRepo);
 
         // Test
         // --------------------------------------------
         // TestContentProviderManager providerManager = new TestContentProviderManager();
-        boolean tested = pluginService.getContentProviderManager().testConnection(syncSource.getId());
-        assert tested;
+            pluginService.getContentProviderManager().testConnection(syncSource.getId());
 
-        boolean completed = pluginService.getContentProviderManager().synchronizeContentProvider(syncSource.getId());
-        assert completed;
+            boolean completed = pluginService.getContentProviderManager().synchronizeContentProvider(syncSource.getId());
+            assert completed;
 
-        // Verify RepoGroups
-        RepoGroup repoGroup = repoManager.getRepoGroupByName("testRepoGroup");
-        assert repoGroup != null;
-        repoGroupsToDelete.add(repoGroup.getId());
+            // Verify RepoGroups
+            RepoGroup repoGroup = repoManager.getRepoGroupByName("testRepoGroup");
+            assert repoGroup != null;
+            repoGroupsToDelete.add(repoGroup.getId());
 
-        // Verify Repos
-        // --------------------------------------------
-        List<Repo> retrievedRepos;
+            // Verify Repos
+            // --------------------------------------------
+            List<Repo> retrievedRepos;
 
-        // -> Simple Repo
-        retrievedRepos = repoManager.getRepoByName("testRepo1");
-        assert retrievedRepos.size() == 1;
-        assert retrievedRepos.get(0).isCandidate();
-        reposToDelete.add(retrievedRepos.get(0).getId());
+            // -> Simple Repo
+            retrievedRepos = repoManager.getRepoByName("testRepo1");
+            assert retrievedRepos.size() == 1;
+            assert retrievedRepos.get(0).isCandidate();
+            reposToDelete.add(retrievedRepos.get(0).getId());
 
-        // -> Repo in a group
-        retrievedRepos = repoManager.getRepoByName("testRepo2");
-        assert retrievedRepos.size() == 1;
-        assert retrievedRepos.get(0).isCandidate();
-        reposToDelete.add(retrievedRepos.get(0).getId());
+            // -> Repo in a group
+            retrievedRepos = repoManager.getRepoByName("testRepo2");
+            assert retrievedRepos.size() == 1;
+            assert retrievedRepos.get(0).isCandidate();
+            reposToDelete.add(retrievedRepos.get(0).getId());
 
-        Repo repoInGroup = retrievedRepos.get(0);
+            Repo repoInGroup = retrievedRepos.get(0);
 
-        RepoCriteria findWithRepoGroup = new RepoCriteria();
-        findWithRepoGroup.fetchRepoRepoGroups(true);
-        findWithRepoGroup.addFilterId(repoInGroup.getId());
+            RepoCriteria findWithRepoGroup = new RepoCriteria();
+            findWithRepoGroup.fetchRepoRepoGroups(true);
+            findWithRepoGroup.addFilterId(repoInGroup.getId());
 
-        PageList<Repo> repoPageList = repoManager.findReposByCriteria(overlord, findWithRepoGroup);
-        repoInGroup = repoPageList.get(0);
+            PageList<Repo> repoPageList = repoManager.findReposByCriteria(overlord, findWithRepoGroup);
+            repoInGroup = repoPageList.get(0);
 
-        Set<RepoRepoGroup> repoGroups = repoInGroup.getRepoRepoGroups();
-        assert repoGroups.size() == 1;
+            Set<RepoRepoGroup> repoGroups = repoInGroup.getRepoRepoGroups();
+            assert repoGroups.size() == 1;
 
-        RepoRepoGroup repoRepoGroup = repoGroups.iterator().next();
-        assert repoRepoGroup.getRepoRepoGroupPK().getRepoGroup().getName().equals("testRepoGroup");
-        assert repoRepoGroup.getRepoRepoGroupPK().getRepo().getName().equals("testRepo2");
+            RepoRepoGroup repoRepoGroup = repoGroups.iterator().next();
+            assert repoRepoGroup.getRepoRepoGroupPK().getRepoGroup().getName().equals("testRepoGroup");
+            assert repoRepoGroup.getRepoRepoGroupPK().getRepo().getName().equals("testRepo2");
 
-        // -> Repo with a parent
-        retrievedRepos = repoManager.getRepoByName("testRepo3");
-        assert retrievedRepos.size() == 1;
-        assert retrievedRepos.get(0).isCandidate();
-        reposToDelete.add(retrievedRepos.get(0).getId());
-        relatedRepoId = retrievedRepos.get(0).getId();
+            // -> Repo with a parent
+            retrievedRepos = repoManager.getRepoByName("testRepo3");
+            assert retrievedRepos.size() == 1;
+            assert retrievedRepos.get(0).isCandidate();
+            reposToDelete.add(retrievedRepos.get(0).getId());
+            relatedRepoId = retrievedRepos.get(0).getId();
 
-        retrievedRepos = repoManager.getRepoByName("testRepo4");
-        assert retrievedRepos.size() == 1;
-        assert retrievedRepos.get(0).isCandidate();
-        reposToDelete.add(retrievedRepos.get(0).getId());
-        repoId = retrievedRepos.get(0).getId();
+            retrievedRepos = repoManager.getRepoByName("testRepo4");
+            assert retrievedRepos.size() == 1;
+            assert retrievedRepos.get(0).isCandidate();
+            reposToDelete.add(retrievedRepos.get(0).getId());
+            repoId = retrievedRepos.get(0).getId();
 
-        RepoCriteria findWithRelationships = new RepoCriteria();
-        findWithRelationships.addFilterName("testRepo4");
-        findWithRelationships.fetchRepoRepoRelationships(true);
-        PageList<Repo> childRepoList = repoManager.findReposByCriteria(overlord, findWithRelationships);
-        assert childRepoList.size() == 1;
+            RepoCriteria findWithRelationships = new RepoCriteria();
+            findWithRelationships.addFilterName("testRepo4");
+            findWithRelationships.fetchRepoRepoRelationships(true);
+            PageList<Repo> childRepoList = repoManager.findReposByCriteria(overlord, findWithRelationships);
+            assert childRepoList.size() == 1;
 
-        Repo childRepo = childRepoList.get(0);
-        Set<RepoRepoRelationship> childRepoRepoRelationship = childRepo.getRepoRepoRelationships();
-        assert childRepoRepoRelationship.size() == 1;
+            Repo childRepo = childRepoList.get(0);
+            Set<RepoRepoRelationship> childRepoRepoRelationship = childRepo.getRepoRepoRelationships();
+            assert childRepoRepoRelationship.size() == 1;
 
-        // -> Repo that was already imported in the system (make sure there is still only one)
-        retrievedRepos = repoManager.getRepoByName(TestContentProvider.EXISTING_IMPORTED_REPO_NAME);
-        assert retrievedRepos.size() == 1;
-        reposToDelete.add(retrievedRepos.get(0).getId());
+            // -> Repo that was already imported in the system (make sure there is still only one)
+            retrievedRepos = repoManager.getRepoByName(TestContentProvider.EXISTING_IMPORTED_REPO_NAME);
+            assert retrievedRepos.size() == 1;
+            reposToDelete.add(retrievedRepos.get(0).getId());
 
-        // -> Repo that was imported but not in the report (i.e. a user created repo)
-        retrievedRepos = repoManager.getRepoByName(CUSTOM_IMPORTED_REPO_NAME);
-        assert retrievedRepos.size() == 1;
-        reposToDelete.add(retrievedRepos.get(0).getId());
+            // -> Repo that was imported but not in the report (i.e. a user created repo)
+            retrievedRepos = repoManager.getRepoByName(CUSTOM_IMPORTED_REPO_NAME);
+            assert retrievedRepos.size() == 1;
+            reposToDelete.add(retrievedRepos.get(0).getId());
 
-        // -> Repo that was already a candidate in the system (make sure it's not added again)
-        retrievedRepos = repoManager.getRepoByName(TestContentProvider.EXISTING_CANDIDATE_REPO_NAME);
-        assert retrievedRepos.size() == 1;
-        reposToDelete.add(retrievedRepos.get(0).getId());
+            // -> Repo that was already a candidate in the system (make sure it's not added again)
+            retrievedRepos = repoManager.getRepoByName(TestContentProvider.EXISTING_CANDIDATE_REPO_NAME);
+            assert retrievedRepos.size() == 1;
+            reposToDelete.add(retrievedRepos.get(0).getId());
 
-        // -> Make sure a repo that was previously a candidate of this content provider but did not
-        //    come back in the latest sync is removed
-        retrievedRepos = repoManager.getRepoByName(PREVIOUS_CANDIDATE_REPO_NAME);
-        assert retrievedRepos.size() == 0;
+            // -> Make sure a repo that was previously a candidate of this content source but did not
+            //    come back in the latest sync is removed
+            retrievedRepos = repoManager.getRepoByName(PREVIOUS_CANDIDATE_REPO_NAME);
+            assert retrievedRepos.size() == 0;
 
-        // -> Non-existent repo
-        retrievedRepos = repoManager.getRepoByName("testRepoFoo");
-        assert retrievedRepos.size() == 0;
+            // -> Non-existent repo
+            retrievedRepos = repoManager.getRepoByName("testRepoFoo");
+            assert retrievedRepos.size() == 0;
 
+            getTransactionManager().commit();
+        } catch(Throwable t) {
+            getTransactionManager().rollback();
+        }
     }
 }

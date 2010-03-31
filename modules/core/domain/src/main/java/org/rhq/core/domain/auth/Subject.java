@@ -115,6 +115,10 @@ import java.util.Set;
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id = :resourceId"),
 
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCES, query = "SELECT COUNT(res) "
+        + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
+        + "WHERE s = :subject AND res.id IN (:resourceIds)"),
+
     @NamedQuery(name = Subject.QUERY_CAN_VIEW_GROUP, query = "SELECT count(g) " + "FROM ResourceGroup g "
         + "WHERE (g.id IN (SELECT rg.id " + "                  FROM ResourceGroup rg "
         + "                  JOIN rg.roles r " + "                  JOIN r.subjects s "
@@ -176,6 +180,7 @@ public class Subject implements Serializable, Recordizable {
     public static final String QUERY_HAS_RESOURCE_PERMISSION = "Subject.hasResourcePermission";
 
     public static final String QUERY_CAN_VIEW_RESOURCE = "Subject.canViewResource";
+    public static final String QUERY_CAN_VIEW_RESOURCES = "Subject.canViewResources";
     public static final String QUERY_CAN_VIEW_GROUP = "Subject.canViewGroup";
 
     public static final String QUERY_GET_RESOURCES_BY_PERMISSION = "Subject.getResourcesByPermission";

@@ -37,7 +37,7 @@ import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * This is the list of content providers that are currently associated with a repo.
+ * This is the list of content sources that are currently associated with a repo.
  */
 public class RepoAssociationsUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "RepoAssociationsUIBean";
@@ -77,10 +77,10 @@ public class RepoAssociationsUIBean extends PagedDataTableUIBean {
                 manager.removeContentSourcesFromRepo(subject, repoId, contentSourceIds);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disassociated [" + contentSourceIds.length
-                    + "] content providers from repo");
+                    + "] content sources from repo");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to disassociate one or more content providers from repo", e);
+                    "Failed to disassociate one or more content sources from repo", e);
             }
         }
 

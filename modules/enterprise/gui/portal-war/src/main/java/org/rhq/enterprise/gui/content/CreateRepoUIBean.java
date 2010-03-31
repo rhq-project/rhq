@@ -44,6 +44,7 @@ public class CreateRepoUIBean {
         RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
 
         try {
+            newRepo.setCandidate(false);
             Repo created = manager.createRepo(subject, newRepo);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Saved [" + created.getName()
                 + "] with the ID of [" + created.getId() + "]");

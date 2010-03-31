@@ -15,7 +15,7 @@
 
     <xs:annotation>
         <xs:documentation>
-            Schema for server-side content provider plugins.
+            Schema for server-side content source plugins.
        </xs:documentation>
         <xs:appinfo>
             <jaxb:schemaBindings>
@@ -27,7 +27,7 @@
     <xs:element name="content-plugin" type="content:ContentPluginDescriptorType" substitutionGroup="serverplugin:server-plugin">
         <xs:annotation>
             <xs:documentation>
-                A plugin representing a set of defined server content provider implementations.
+                A plugin representing a set of defined server content source implementations.
                 This plugin will allow remote repositories to feed content into
                 the server's content subsystem.
             </xs:documentation>

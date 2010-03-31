@@ -596,17 +596,23 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                         for (Constraint constraint : constraints) {
                             if (constraint instanceof IntegerRangeConstraint) {
                                 IntegerRangeConstraint irc = (IntegerRangeConstraint) constraint;
+                                assert irc != null : "Integer-constraint was null, but should not be";
                                 // See JBNADM-1596/97
+                                assert irc.getDetails().equals("-2#10");
+                                // TODO (ips, 3/31/10): The below is a workaround for IntegerRangeConstraint.onLoad() not being called by Hibernate.
+                                irc.setDetails(irc.getDetails());
                                 assert irc.getMaximum() == 10;
                                 assert irc.getMinimum() == -2;
-                                assert irc.getDetails().equals("-2#10");
                             } else if (constraint instanceof FloatRangeConstraint) {
                                 FloatRangeConstraint frc = (FloatRangeConstraint) constraint;
                                 assert frc != null : "Float-constraint was null, but should not be";
                                 // See JBNADM-1596/97
+                                assert frc.getDetails().equals("10.0#5.0");
+                                // TODO (ips, 3/31/10): The below is a workaround for FloatRangeConstraint.onLoad() not being called by Hibernate.
+                                frc.setDetails(frc.getDetails());
                                 assert frc.getMinimum() == 10; // TODO change when JBNADM-1597 is being worked on
                                 assert frc.getMaximum() == 5;
-                                assert frc.getDetails().equals("10.0#5.0");
+
                             } else {
                                 assert true == false : "Unknown constraint type encountered";
                             }
@@ -687,7 +693,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                     }
                 }
 
-                assert found == 5 : "Did not find the 5 desird maps in v1";
+                assert found == 5 : "Did not find the 5 desired maps in v1";
             }
 
             System.out.println("Done with v1");
@@ -846,7 +852,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                         assert def instanceof PropertyDefinitionList : "Expected a list-property, but it was "
                             + def.getClass().getCanonicalName();
                     } else if (def.getName().equals("five")) {
-                        assert def instanceof PropertyDefinitionSimple : "Expected a simle-property, but it was "
+                        assert def instanceof PropertyDefinitionSimple : "Expected a simple-property, but it was "
                             + def.getClass().getCanonicalName();
                     } else if (def.getName().equals("six")) {
                         assert def instanceof PropertyDefinitionSimple : "Expected a simple-property, but it was "

@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * The definition of properties in a map. The map may be null allowing for the requirement of the map's existence but no
- * contraints on its contents. (i.e. an arbitrary map)
+ * constraints on its contents. (i.e. an arbitrary map)
  *
  * @author Greg Hinkle
  */

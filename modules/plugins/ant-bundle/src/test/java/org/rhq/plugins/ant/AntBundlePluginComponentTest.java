@@ -38,6 +38,8 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -81,7 +83,9 @@ public class AntBundlePluginComponentTest {
     public void testSimpleBundle() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
-        Bundle bundle = new Bundle("testSimpleBundle", bundleType);
+        Repo repo = new Repo("testSimpleBundle");
+        PackageType packageType = new PackageType("testSimpleBundle", resourceType);
+        Bundle bundle = new Bundle("testSimpleBundle", bundleType, repo, packageType);
         BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
             getRecipeFromFile("simple-build.xml"));
 
@@ -107,7 +111,9 @@ public class AntBundlePluginComponentTest {
     public void testAntBundle() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
-        Bundle bundle = new Bundle("testSimpleBundle", bundleType);
+        Repo repo = new Repo("testSimpleBundle");
+        PackageType packageType = new PackageType("testSimpleBundle", resourceType);
+        Bundle bundle = new Bundle("testSimpleBundle", bundleType, repo, packageType);
         BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
             getRecipeFromFile("test-build.xml"));
 
@@ -141,7 +147,9 @@ public class AntBundlePluginComponentTest {
         assert props.getProperty("f.exists").equals("true") : props;
         assert props.getProperty("pkg.exists").equals("true") : props;
         assert props.getProperty("hostname").equals(SystemInfoFactory.createSystemInfo().getHostname()) : props;
-        assert props.getProperty("tmpdir").equals(System.getProperty("java.io.tmpdir")) : props;
+        String javaIoTmpDir = System.getProperty("java.io.tmpdir");
+        String val = props.getProperty("tmpdir");
+        assert val.equals(javaIoTmpDir) : props;
     }
 
     private void assertResultsSuccess(BundleDeployResult results) {

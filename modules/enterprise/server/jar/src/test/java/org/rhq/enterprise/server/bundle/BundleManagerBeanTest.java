@@ -176,7 +176,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 em.remove(em.getReference(BundleDeployDefinition.class, ((BundleDeployDefinition) removeMe).getId()));
             }
 
-            // remove bundles which cascade remove repos and packageTypes
+            // remove bundles which cascade remove packageTypes
             // packagetypes cascade remove packages
             // package cascade remove packageversions            
             q = em.createQuery("SELECT b FROM Bundle b WHERE b.name LIKE '" + TEST_PREFIX + "%'");
@@ -204,7 +204,8 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(PackageType.class, ((PackageType) removeMe).getId()));
             }
-            // remove any orphaned repos            
+
+            // remove repos no longer referenced by bundles            
             q = em.createQuery("SELECT r FROM Repo r WHERE r.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {

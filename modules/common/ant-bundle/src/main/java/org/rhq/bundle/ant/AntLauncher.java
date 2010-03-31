@@ -94,7 +94,10 @@ public class AntLauncher {
 
             if (properties != null) {
                 for (Map.Entry<Object, Object> property : properties.entrySet()) {
-                    project.setProperty(property.getKey().toString(), property.getValue().toString());
+                    // On the assumption that these properties will be slurped in via Properties.load we
+                    // need to escape backslashes to have them treated as literals 
+                    project.setProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
+                        "\\\\"));
                 }
             }
 

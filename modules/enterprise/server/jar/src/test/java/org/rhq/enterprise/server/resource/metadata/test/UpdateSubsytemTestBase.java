@@ -59,6 +59,7 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+// TODO: Fix typo in class name.
 public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -66,8 +67,6 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     @EJB
     protected ResourceManagerLocal resMgr;
-
-    protected ResourceTypeManagerLocal resourceTypeManager;
 
     protected TestServerCommunicationsService agentServiceContainer;
 
@@ -77,7 +76,9 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     protected static final String PLUGIN_NAME = "ResourceMetaDataManagerBeanTest";
     protected static final String COMMON_PATH_PREFIX = "./test/metadata/";
+
     protected static ResourceMetadataManagerLocal metadataManager;
+    protected static ResourceTypeManagerLocal resourceTypeManager;
 
     @BeforeSuite
     protected void init() {

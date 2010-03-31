@@ -384,9 +384,9 @@ public interface ContentSourceManagerLocal {
     ContentSourceSyncResults getContentSourceSyncResults(int resultsId);
 
     /**
-     * Updates the server with the results of a repo import from a content provider.
+     * Updates the server with the results of a repo import from a content source.
      *
-     * @param repos list of repo data received from the content provider; should not be <code>null</code>
+     * @param repos list of repo data received from the content source; should not be <code>null</code>
      */
     void mergeRepoImportResults(List<RepoDetails> repos);
 

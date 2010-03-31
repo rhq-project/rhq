@@ -8,14 +8,14 @@
                 xmlns:c="urn:xmlns:rhq-configuration">
 
     <serverplugin:help><![CDATA[
-        Provides a content provider that retrieves content from a local file system.
+        Provides a content source that retrieves content from a local file system.
         If deployed in an HA environment, this must be on a distributed file system that all servers can access.
-        The content must be of the package type as defined in the content provider configuration.
+        The content must be of the package type as defined in the content source configuration.
     ]]></serverplugin:help>
 
     <contentSourceType name="DiskSource"
-                       displayName="Local Disk Storage Content Provider"
-                       description="This content provider retrieves packages from a local file system. If deployed in an HA environment, this must be on a distributed file system that all servers can access."
+                       displayName="Local Disk Storage Content Source"
+                       description="This content source retrieves packages from a local file system. If deployed in an HA environment, this must be on a distributed file system that all servers can access."
                        lazyLoad="true"
                        downloadMode="never"
                        apiClass="org.rhq.enterprise.server.plugins.disk.DiskSource">
@@ -24,7 +24,7 @@
 
             <c:group name="General">
                 <c:simple-property name="rootDirectory" type="directory" required="true"
-                                   description="The root directory that contains all content that is to be served by this content provider. In an HA environment, this must be on a distributed file system that all servers can access."/>
+                                   description="The root directory that contains all content that is to be served by this content source. In an HA environment, this must be on a distributed file system that all servers can access."/>
             </c:group>
 
             <c:group name="Package Source">

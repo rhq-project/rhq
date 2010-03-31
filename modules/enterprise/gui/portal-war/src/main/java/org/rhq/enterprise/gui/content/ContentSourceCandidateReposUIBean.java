@@ -61,10 +61,10 @@ public class ContentSourceCandidateReposUIBean extends PagedDataTableUIBean {
                 repoManager.importCandidateRepo(subject, ids);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Imported " + repoIds.length
-                    + " repositories from content provider.");
+                    + " repositories from content source.");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to import one or more repositories from content provider.", e);
+                    "Failed to import one or more repositories from content source.", e);
             }
         }
 

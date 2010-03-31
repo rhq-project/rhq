@@ -18,7 +18,7 @@
 
    <ui:param name="id" value="#{param.id}" />
    <ui:param name="mode" value="#{param.mode}" />
-   <ui:param name="pageTitle" value="Content Provider '#{ContentProviderDetailsUIBean.contentSource.name}'"/>
+   <ui:param name="pageTitle" value="Content Source '#{ContentProviderDetailsUIBean.contentSource.name}'"/>
    <ui:param name="item" value="#{ContentProviderDetailsUIBean.contentSource}" />
    
    <ui:define name="breadcrumbs">
@@ -41,7 +41,7 @@
          <input type="hidden" name="mode" value="#{param.mode}"/>
 
          <!-- TODO: Only update if a sync is in progress. -->
-         <a4j:poll id="poller" interval="7000" enabled="true" reRender="poller,bodyPanel"/>
+         <a4j:poll id="poller" interval="7000" enabled="true" reRender="poller,contentSourceSyncResultsListForm"/>
       </h:form>
    </a4j:region>
 
@@ -54,8 +54,6 @@
                globalOnly="true"
                layout="table"
                style="width: 100%"/>
-
-   <h:panelGroup id="bodyPanel" layout="block">
 
       <h:form id="contentProviderDetailsForm">
          <input type="hidden" name="id" value="${param.id}"/>
@@ -159,7 +157,7 @@
              <onc:config configurationDefinition="#{ContentProviderDetailsUIBean.contentSourceTypeConfigurationDefinition}"
                          configuration="#{ContentProviderDetailsUIBean.contentSource.configuration}"
                          readOnly="#{mode ne 'edit'}"
-                         nullConfigurationDefinitionMessage="This content provider type does not require a configuration."
+                         nullConfigurationDefinitionMessage="This content source type does not require a configuration."
                          nullConfigurationMessage="Configuration is empty."
                          nullConfigurationStyle="InfoBlock"/>
          </rich:panel>
@@ -311,7 +309,7 @@
       </h:form>
 
 
-      <!-- REPO IMPORT RESULTS LIST -->
+      <!-- SYNCHRONIZATION RESULTS HISTORY -->
 
       <h:form id="contentSourceSyncResultsListForm">
          <input type="hidden" name="id" value="${param.id}"/>
@@ -319,7 +317,7 @@
       
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Repository Import Results"/>
+               <h:outputText value="Synchronization Results History"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
@@ -514,8 +512,6 @@
             
          </rich:panel>
       </h:form>
-
-   </h:panelGroup>
 
    </ui:define>
 

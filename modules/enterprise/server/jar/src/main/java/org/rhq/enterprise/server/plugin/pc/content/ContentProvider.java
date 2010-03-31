@@ -25,8 +25,8 @@ package org.rhq.enterprise.server.plugin.pc.content;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
- * Interface used by the server to communicate with a content provider. Content providers implement this interface as
- * well as any other source interfaces to further describe what functionality is provided by the provider.
+ * Interface used by the server to communicate with a content source. Content sources implement this interface as
+ * well as any other source interfaces to further describe what functionality is provided by the content source.
  * <p/>
  * The class name of this interface's implementation is the class name specified in the server plugin descriptor.
  *
@@ -41,9 +41,9 @@ public interface ContentProvider {
     /**
      * Initializes the adapter with the configuration values indicating how to connect to the external source system.
      *
-     * @param  configuration user entered values describing how the content provider should function.
+     * @param  configuration user entered values describing how the content source should function.
      *
-     * @throws Exception if the content provider has an issue being configured.
+     * @throws Exception if the content source has an issue being configured.
      */
     void initialize(Configuration configuration) throws Exception;
 
@@ -53,7 +53,7 @@ public interface ContentProvider {
     void shutdown();
 
     /**
-     * Tests if the content provider can communicate with the external package source. This will be called after
+     * Tests if the content source can communicate with the external package source. This will be called after
      * {@link #initialize(Configuration)} to ensure the adapter is in a configured state to run the test.
      *
      * @throws Exception if the connection cannot be made to the external system.
@@ -68,10 +68,9 @@ public interface ContentProvider {
      * Package Metadata
      * Package Bits
      * Distribution Metadata
-     * Distrubtion Bits
+     * Distribution Bits
      * Advisory (Errata) Metadata
      * Advisory Bits ?
      */
-
     SyncProgressWeight getSyncProgressWeight();
 }

@@ -293,7 +293,7 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
             assert retrievedRepos.size() == 1;
             reposToDelete.add(retrievedRepos.get(0).getId());
 
-            // -> Make sure a repo that was previously a candidate of this content provider but did not
+            // -> Make sure a repo that was previously a candidate of this content source but did not
             //    come back in the latest sync is removed
             retrievedRepos = repoManager.getRepoByName(PREVIOUS_CANDIDATE_REPO_NAME);
             assert retrievedRepos.size() == 0;

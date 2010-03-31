@@ -1255,7 +1255,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         for (ContentProviderPackageDetails doomedDetails : report.getDeletedPackages()) {
 
-            // Delete the mapping between package version and content provider
+            // Delete the mapping between package version and content source
             ContentProviderPackageDetailsKey doomedDetailsKey = doomedDetails.getContentProviderPackageDetailsKey();
             PackageVersionContentSource doomedPvcs = previous.get(doomedDetailsKey);
             doomedPvcs = entityManager.find(PackageVersionContentSource.class, doomedPvcs
@@ -1272,7 +1272,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // Delete the package version if it is sufficiently orphaned:
             // - No repos
-            // - No content providers
+            // - No content sources
             // - No installed packages
             PackageVersion doomedPv = doomedPvcs.getPackageVersionContentSourcePK().getPackageVersion();
             q = entityManager.createNamedQuery(PackageVersion.DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS);

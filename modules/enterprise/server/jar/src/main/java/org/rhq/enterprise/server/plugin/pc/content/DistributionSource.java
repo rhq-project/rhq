@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.util.Collection;
 
 /**
- * Indicates a content provider has the capability to provide distributions into the server.
+ * Indicates a content source has the capability to provide distributions into the server.
  * Distribution synchronization will be done through the calls defined in this interface.
  *
  * @author Pradeep Kilambi

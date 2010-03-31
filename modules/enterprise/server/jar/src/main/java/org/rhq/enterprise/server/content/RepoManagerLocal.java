@@ -170,7 +170,7 @@ public interface RepoManagerLocal {
     void deleteCandidatesWithOnlyContentSource(Subject subject, int contentSourceId);
 
     /**
-     * Handles a repo report from a content provider, adding and removing candidate repos as necessary into the
+     * Handles a repo report from a content source, adding and removing candidate repos as necessary into the
      * database.
      *
      * @param subject         user triggering the report processing

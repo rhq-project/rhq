@@ -93,7 +93,7 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
     }
 
     /**
-     * Creates the list of content providers to be displayed in
+     * Creates the list of content sources to be displayed in
      * the radio buttons.
      * @return An array of options.
      */

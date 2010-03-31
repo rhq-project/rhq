@@ -40,13 +40,13 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     public static final String EXISTING_CANDIDATE_REPO_NAME = "testRepoCandidateExisting";
 
     /**
-     * This content provider will return packages when asked to synchronize a
+     * This content source will return packages when asked to synchronize a
      * repo with this name.
      */
     public static final String REPO_WITH_PACKAGES = EXISTING_IMPORTED_REPO_NAME;
 
     /**
-     * This content provider will return distributions when asked to synchronize
+     * This content source will return distributions when asked to synchronize
      * a repo with this name.
      */
     public static final String REPO_WITH_DISTRIBUTIONS = EXISTING_IMPORTED_REPO_NAME;
@@ -164,7 +164,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     public void testConnection() throws Exception {
 
         if (failTest) {
-            throw new Exception("Mock content provider configured to fail the connection test");
+            throw new Exception("Mock content source configured to fail the connection test");
         }
 
         System.out.println("Connection tested.");

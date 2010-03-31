@@ -132,7 +132,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         Date next = scheduler.scheduleJob(job, trigger);
 
         getLog().info(
-            "Scheduled content provider sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at ["
+            "Scheduled content source sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at ["
                 + next + "] for [" + contentSource + "]");
     }
 

@@ -123,7 +123,7 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
             // Create the repo to be syncced
             Repo repo = new Repo(TestContentProvider.REPO_WITH_PACKAGES);
             repo.addContentSource(cs1);
-//        repo.addContentSource(cs2);  Disabled until we implement a second test content provider to return new stuff
+//        repo.addContentSource(cs2);  Disabled until we implement a second test content source to return new stuff
             repoToSync = repoManager.createRepo(overlord, repo);
 
             tx.commit();

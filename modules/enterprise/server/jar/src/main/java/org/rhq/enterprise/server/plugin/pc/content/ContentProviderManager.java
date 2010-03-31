@@ -178,7 +178,7 @@ public class ContentProviderManager {
             // locking.
             synchronized (synchronizeContentSourceLock) {
                 progress.append(new Date()).append(": ");
-                progress.append("Start synchronization of content provider [").append(contentSource.getName()).append(
+                progress.append("Start synchronization of content source [").append(contentSource.getName()).append(
                     "]\n");
                 progress.append(new Date()).append(": ");
                 progress.append("Getting currently known list of packages...\n");
@@ -199,7 +199,7 @@ public class ContentProviderManager {
                 // Even if it does happen, it may still work, or
                 // one sync will get an error and rollback its tx and no harm
                 // will be done.
-                log.info("Content provider [" + contentSource.getName()
+                log.info("Content source [" + contentSource.getName()
                     + "] is already being synchronized - this sync request will be ignored.");
                 return false;
             }
@@ -245,7 +245,7 @@ public class ContentProviderManager {
     }
 
     /**
-     * Asks each content provider associated with the given repo to synchronize
+     * Asks each content source associated with the given repo to synchronize
      * the following information for the given repo:
      * <ul>
      * <li>Package Metadata</li>
@@ -330,8 +330,7 @@ public class ContentProviderManager {
             }
             tracker = updatePercentComplete(tracker, repoManager);
 
-            // PACKAGEBITS Loop
-            // Synchronize every content provider associated with the repo
+            // Sync package bits.
             for (ContentSource source : repo.getContentSources()) {
                 // Don't let the entire sync fail if a single content source
                 // fails
@@ -469,8 +468,8 @@ public class ContentProviderManager {
             throw ie;
         }
         StringBuilder progress = new StringBuilder();
-        log.error("Error while synchronizing repo [" + repo + "] with content provider [" + source
-            + "]. Synchronization for the repo will continue for other providers.", e);
+        log.error("Error while synchronizing repo [" + repo + "] with content source [" + source
+            + "]. Synchronization of the repo will continue for any other associated content sources.", e);
 
         // Try to reload the results in case it was updated by the SLSB before the exception happened.
         RepoSyncResults reloadedResults = repoManager.getRepoSyncResults(tracker.getRepoSyncResults().getId());

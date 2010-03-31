@@ -256,8 +256,8 @@ public class Repo implements Serializable, Taggable {
     }
 
     /**
-     * Indicates if the repo is a "real" repo in RHQ or is just a candidate for import, such as those introduced by
-     * a content provider.
+     * Indicates if the repo is an imported (i.e. subscribable) repo in RHQ or is just a candidate for import, such as
+     * those introduced by a content source.
      */
     public boolean isCandidate() {
         return candidate;

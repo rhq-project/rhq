@@ -34,10 +34,10 @@ import javax.persistence.Table;
 
 /**
  * A generic tag that can be associated with domain objects such as 
- * Repository, Content Provider, Resource, Package etc. 
+ * Repository, Content Source, Resource, Package etc.
+ *
  * @author Sayli Karmarkar
  */
-
 @Entity
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_TAG_ID_SEQ")
 @Table(name = "RHQ_TAG")

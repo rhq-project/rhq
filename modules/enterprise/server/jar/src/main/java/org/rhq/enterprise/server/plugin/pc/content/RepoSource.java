@@ -23,7 +23,7 @@
 package org.rhq.enterprise.server.plugin.pc.content;
 
 /**
- * Indicates a content provider has the capability to provide repos into the server. Repo synchronization will be
+ * Indicates a content source has the capability to provide repos into the server. Repo synchronization will be
  * done through calls defined in this interface. This interface should use the configuration settings
  * passed into the plugin through {@link ContentProvider#initialize(org.rhq.core.domain.configuration.Configuration)}
  *
@@ -32,8 +32,8 @@ package org.rhq.enterprise.server.plugin.pc.content;
 public interface RepoSource {
 
     /**
-     * Requests the content provider return a list of all repos it wants to ensure exist in the server. This call
-     * should return the current state of the repos as known to the content provider, not a diff of what has
+     * Requests the content source return a list of all repos it wants to ensure exist in the server. This call
+     * should return the current state of the repos as known to the content source, not a diff of what has
      * changed from the previous call to it. The server will resolve the differences.
      *
      * @return contains a list of all groups and repos to be imported into the system

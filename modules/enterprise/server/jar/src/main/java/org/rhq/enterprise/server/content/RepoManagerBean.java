@@ -425,8 +425,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                     append(importedRepoGroups).append('\n');
         }
 
-        // Hold on to all current candidate repos for the content provider. If any were not present in this
-        // report, remove them from the system (the rationale being, the content provider no longer knows
+        // Hold on to all current candidate repos for the content source. If any were not present in this
+        // report, remove them from the system (the rationale being, the content source no longer knows
         // about them and thus they cannot be imported).
         RepoCriteria candidateReposCriteria = new RepoCriteria();
         candidateReposCriteria.addFilterContentSourceIds(contentSourceId);
@@ -867,7 +867,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
      * Calling this method with a repo that has a parent assumes the parent has already been created. This call
      * assumes the repo group has been created as well.
      *
-     * @param contentSourceId identifies the content provider that introduced the candidate into the system
+     * @param contentSourceId identifies the content source that introduced the candidate into the system
      * @param createMe        describes the candidate to be created
      *
      * @param autoImport      whether or not to import the repo
@@ -883,7 +883,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         List<Repo> existingRepos = getRepoByName(name);
 
         if (!existingRepos.isEmpty()) {
-            // The repo already exists - make sure it is associated with the specified content provider.
+            // The repo already exists - make sure it is associated with the specified content source.
             for (Repo existingRepo : existingRepos) {
                 addContentSourcesToRepo(overlord, existingRepo.getId(), new int[] { contentSourceId });
             }
@@ -904,7 +904,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         // Add the new candidate to the database
         addMe = createRepo(overlord, addMe);
 
-        // Associate the content provider that introduced the candidate with the repo
+        // Associate the content source that introduced the candidate with the repo
         addContentSourcesToRepo(overlord, addMe.getId(), new int[] { contentSourceId });
 
         // If the repo indicates it has a parent, create that relationship

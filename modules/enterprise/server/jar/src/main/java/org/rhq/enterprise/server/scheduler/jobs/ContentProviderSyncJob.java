@@ -88,7 +88,7 @@ public class ContentProviderSyncJob implements StatefulJob {
             ContentSource contentSource = synchronizeAndLoad(name, typeName);
 
             if (syncImportedRepos) {
-                // Synchronize all repos associated with the content provider - these may be repos we just
+                // Synchronize all repos associated with the content source - these may be repos we just
                 // discovered during this sync or ones that were already associated.
                 syncImportedRepos(contentSource);
             }

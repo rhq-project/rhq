@@ -31,7 +31,7 @@
       <form-bean name="AddRoleResourceGroupsForm"
                  type="org.rhq.enterprise.gui.admin.role.AddResourceGroupsForm"/>
       <form-bean name="AddRoleLdapGroupsForm"
-                 type="org.rhq.enterprise.gui.admin.role.AddLdapGroupsForm"/>                 
+                 type="org.rhq.enterprise.gui.admin.role.AddLdapGroupsForm"/>
       <form-bean name="RemoveRoleResourceGroupsForm"
                  type="org.rhq.enterprise.gui.admin.role.RemoveResourceGroupsForm"/>
       <!-- / -->
@@ -573,7 +573,7 @@
          <forward name="failure" path="/admin/role/RoleAdmin.do?mode=addLdapGroups"/>
          <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
       </action>
-      
+
       <action path="/admin/role/RemoveLdapGroups"
               type="org.rhq.enterprise.gui.admin.role.RemoveLdapGroupsAction"
               name="RemoveRoleResourceGroupsForm"
@@ -581,13 +581,13 @@
               input="/admin/role/RoleAdmin.do?mode=view">
          <forward name="failure" path="/admin/role/RoleAdmin.do?mode=view"/>
          <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
-      </action>      
+      </action>
 
 
 
 
 
-      
+
       <!-- / -->
 
       <action path="/admin/role/ChangeOwnerFormPrepare"
@@ -2693,10 +2693,9 @@
          <forward name="reset" path="/alerts/Config.do?mode=new"
                   redirect="true"/>
          <forward name="failure" path="/alerts/Config.do?mode=new"/>
+         <forward name="success" path="/alerts/Config.do?mode=viewRoles"/>
          <forward name="add" path="/alerts/Config.do?mode=new"/>
          <forward name="remove" path="/alerts/Config.do?mode=new"/>
-
-         <forward name="success" path="/rhq/resource/alert/viewAlert.xhtml" redirect="true" />
       </action>
 
       <action path="/alerts/EditPropertiesFormPrepare"
@@ -2729,13 +2728,12 @@
               name="EditAlertDefinitionConditionsForm"
               scope="request"
               input="/alerts/Config.do?mode=editConditions">
+         <forward name="cancel" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
          <forward name="reset" path="/alerts/Config.do?mode=editConditions" redirect="true"/>
+         <forward name="success" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
          <forward name="failure" path="/alerts/Config.do?mode=editConditions"/>
          <forward name="add" path="/alerts/Config.do?mode=editConditions"/>
          <forward name="remove" path="/alerts/Config.do?mode=editConditions"/>
-
-         <forward name="cancel" path="/rhq/resource/alert/viewAlert.xhtml" redirect="true" />
-         <forward name="success" path="/rhq/resource/alert/viewAlert.xhtml" redirect="true" />
       </action>
 
       <action path="/alerts/EditControlActionFormPrepare"

@@ -42,6 +42,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Tests the updating of persisted ResourceTypes' resource and plugin ConfigurationDefinitions, which is essentially
+ * handled by {@link org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean}.
+ *
+ * @author Heiko Rupp
+ */
 public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
 
     @Override
@@ -50,7 +56,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
     }
 
     /**
-     * Test updating of plugin and resource configs
+     * Test updating of plugin configs.
      *
      * @throws Exception
      */

@@ -428,21 +428,18 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
     /**
      * Replace the existing property of a given type with a new property of a (possibly) different type
      *
-     * @param existingProperty
-     * @param newProperty
+     * @param existingProperty the existing prop
+     * @param newProperty the new prop that should replace the existing prop
      */
     private void replaceProperty(PropertyDefinition existingProperty, PropertyDefinition newProperty) {
-        // take id and definition from the existing one
+        ConfigurationDefinition configDef = existingProperty.getConfigurationDefinition();
+
+        // First take id from existing prop, and replace existing prop in the config def.
         newProperty.setId(existingProperty.getId());
-        newProperty.setConfigurationDefinition(existingProperty.getConfigurationDefinition());
+        configDef.put(newProperty);
 
-        //  need to remove the old crap
-        existingProperty.getConfigurationDefinition().getPropertyDefinitions().remove(existingProperty.getName());
-        existingProperty.setConfigurationDefinition(null);
         entityManager.remove(existingProperty);
-
-        // persist the new one
-        entityManager.merge(newProperty);
+        entityManager.merge(configDef);
         entityManager.flush();
     }
 

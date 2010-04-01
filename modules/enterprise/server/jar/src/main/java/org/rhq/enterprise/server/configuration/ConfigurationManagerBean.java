@@ -840,6 +840,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         Resource resource = entityManager.find(Resource.class, resourceId);
 
+        // TODO (ips, 04/01/10): Our id's are not guaranteed to be sequential, because our sequences are configured to
+        //                       pre-create and cache blocks of 10 sequence id's, so it may be better to order by
+        //                       "cu.createdTime", rather than "cu.id".
         pc.initDefaultOrderingField("cu.id", PageOrdering.DESC);
 
         String queryName = ResourceConfigurationUpdate.QUERY_FIND_ALL_BY_RESOURCE_ID;

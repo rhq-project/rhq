@@ -41,7 +41,7 @@ public class BundleFileCriteria extends Criteria {
 
     private boolean fetchBundleVersion;
     private boolean fetchPackageVersion;
-    private boolean fetchPackage;
+    private boolean fetchGeneralPackage;
 
     public BundleFileCriteria() {
         super();
@@ -76,8 +76,8 @@ public class BundleFileCriteria extends Criteria {
         this.fetchBundleVersion = fetchBundleVersion;
     }
 
-    public void fetchPackage(boolean fetchPackage) {
-        this.fetchPackage = fetchPackage;
+    public void fetchPackage(boolean fetchGeneralPackage) {
+        this.fetchGeneralPackage = fetchGeneralPackage;
     }
 
     public void fetchPackageVersion(boolean fetchPackageVersion) {

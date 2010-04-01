@@ -365,8 +365,16 @@ public class SystemInfoFactory {
             SystemInfo systemInfo = createSystemInfo();
 
             Map<String, String> tokens = new HashMap<String, String>();
-            tokens.put(TOKEN_PREFIX + "hostname", systemInfo.getHostname());
 
+            // support several standard Java system properties
+            String[] syspropsToSupport = new String[] { "java.io.tmpdir", "file.separator", "line.separator",
+                "path.separator", "java.home", "java.version", "user.timezone", "user.region", "user.country",
+                "user.language" };
+            for (String sysprop : syspropsToSupport) {
+                tokens.put(TOKEN_PREFIX + "sysprop." + sysprop, System.getProperty(sysprop, sysprop)); // default is the name itself, just to show it wasn't there
+            }
+
+            tokens.put(TOKEN_PREFIX + "hostname", systemInfo.getHostname());
             tokens.put(TOKEN_PREFIX + "os.name", systemInfo.getOperatingSystemName());
             tokens.put(TOKEN_PREFIX + "os.version", systemInfo.getOperatingSystemVersion());
             tokens.put(TOKEN_PREFIX + "os.type", systemInfo.getOperatingSystemType().toString());

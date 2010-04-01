@@ -1,0 +1,263 @@
+/*body {
+    background-color: white;
+    color: black;
+    font-family: Arial, sans-serif;
+    font-size: small;
+    margin: 8px;
+}*/
+
+body, p, td, th, option, input, textarea, select {
+    color: #000000;
+    font-family: tahoma, verdana, sans-serif;
+    font-size: 11px;
+}
+
+img {
+    border-style: none;
+}
+
+hr {
+    background-color: #AAAAAA;
+    border: 0 none;
+    color: #AAAAAA;
+    height: 1px;
+    margin-left: 0;
+    margin-right: 0;
+    text-align: center;
+    width: 100%;
+}
+
+a:link {
+    color: #4A5D75;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+a:visited {
+    color: #4A5D75;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #4A5D75;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.HeaderLabel {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #444444;
+}
+
+
+.OddRow {
+    background-color: white;
+    border-bottom-color: rgb(230, 234, 239);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-right-color: rgb(217, 224, 227);
+    border-right-style: solid;
+    border-right-width: 1px;
+
+}
+
+.OddRowDisabled {
+    background-color: white;
+    border-bottom-color: rgb(230, 234, 239);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-right-color: rgb(217, 224, 227);
+    border-right-style: solid;
+    border-right-width: 1px;
+
+}
+
+.EvenRow {
+    background-color: rgb(246, 246, 246);
+    border-bottom-color: rgb(230, 234, 239);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-right-color: rgb(217, 224, 227);
+    border-right-style: solid;
+    border-right-width: 1px;
+
+}
+
+.EvenRowDisabled {
+    background-color: rgb(246, 246, 246);
+    border-bottom-color: rgb(230, 234, 239);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-right-color: rgb(217, 224, 227);
+    border-right-style: solid;
+    border-right-width: 1px;
+
+}
+
+.TopSectionLink, .topsectionlinkselected {
+    vertical-align: bottom;
+    padding:5px;
+    padding-left: 15px;
+    padding-right: 15px;
+
+    cursor: pointer;
+    font-size: 10pt;
+    font-weight: bold;
+    text-decoration: none;
+    color: #4A5D75;
+}
+
+.TopSectionLinkSelected {
+    background-image: url('images/header/header_bg_selected.png');
+    color: white;
+}
+
+.BreadCrumb {
+    font-size: 10pt;
+    font-weight: bold;
+    text-decoration: none;
+    color: #363636;
+}
+
+.SectionHeader {
+    font-size: 16pt;
+    font-weight: bold;
+}
+
+.textItemDisabled {
+    background: rgb(214, 213, 217);
+}
+
+.formTitle, .formTitleFocused {
+    font-weight: bold;
+}
+
+
+
+.GraphTooltip {
+    background-color:#B5D5FF;
+    font-weight:bold;
+    padding:5px;
+}
+
+
+/* About Modal Window */
+.DisplayContent,.DisplayLabel {
+    font-size: 11px;
+}
+
+.DisplayLabel {
+    font-weight: bold;
+}
+
+.DisplaySubhead {
+    font-weight: bolder;
+    font-size: 16px;
+    color: #DE652D;
+}
+
+
+.SubTabButton,
+.SubTabButtonOver,
+.SubTabButtonFocused,
+.SubTabButtonFocusedOver,
+.SubTabButtonDown,
+.SubTabButtonFocusedDown,
+.SubTabButtonSelected,
+.SubTabButtonSelectedFocused,
+.SubTabButtonSelectedDown,
+.SubTabButtonSelectedFocusedDown,
+.SubTabButtonSelectedOver,
+.SubTabButtonSelectedFocusedOver,
+.SubTabButtonDisabled,
+.SubTabButtonSelectedDisabled {
+    font-family: Arial, Verdana, Bitstream Vera Sans, sans-serif;
+    font-size: 11px;
+    padding: 2px;
+    }
+
+.SubTabButtonDisabled {
+
+}
+
+.SubTabButtonDisabled,
+.SubTabButtonSelectedDisabled {
+    font-weight: normal;
+    color: #AAAAAA;
+}
+
+.SubTabButtonFocused,
+.SubTabButtonFocusedOver,
+.SubTabButtonSelectedFocused,
+.SubTabButtonSelectedFocusedOver,
+.SubTabButtonSelectedFocusedDown {
+
+}
+
+.SubTabButtonOver,
+.SubTabButtonFocusedOver,
+.SubTabButtonSelectedFocused,
+.SubTabButtonSelectedFocusedOver {
+    font-weight: bold;
+}
+
+.SubTabButtonDown,
+.SubTabButtonFocusedDown,
+.SubTabButtonSelectedDown,
+.SubTabButtonSelectedFocusedDown {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.SubTabButtonSelected,
+.SubTabButtonSelectedFocused,
+.SubTabButtonSelectedOver,
+.SubTabButtonSelectedFocusedOver,
+.SubTabButtonSelectedDisabled {
+    font-weight: bold;
+}
+
+
+
+.SimpleButton,
+.SimpleButtonOver,
+.SimpleButtonFocused,
+.SimpleButtonFocusedOver,
+.SimpleButtonDown,
+.SimpleButtonFocusedDown,
+.SimpleButtonSelected,
+.SimpleButtonSelectedFocused,
+.SimpleButtonSelectedDown,
+.SimpleButtonSelectedFocusedDown,
+.SimpleButtonSelectedOver,
+.SimpleButtonSelectedFocusedOver,
+.SimpleButtonDisabled,
+.SimpleButtonSelectedDisabled,
+.SimpleButtonDisabled,
+.SimpleButtonDisabled,
+.SimpleButtonSelectedDisabled,
+.SimpleButtonFocused,
+.SimpleButtonFocusedOver,
+.SimpleButtonSelectedFocused,
+.SimpleButtonSelectedFocusedOver,
+.SimpleButtonSelectedFocusedDown ,
+.SimpleButtonOver,
+.SimpleButtonFocusedOver,
+.SimpleButtonSelectedFocused,
+.SimpleButtonSelectedFocusedOver ,
+.SimpleButtonDown,
+.SimpleButtonFocusedDown,
+.SimpleButtonSelectedDown,
+.SimpleButtonSelectedFocusedDown ,
+.SimpleButtonSelected,
+.SimpleButtonSelectedFocused,
+.SimpleButtonSelectedOver,
+.SimpleButtonSelectedFocusedOver,
+.SimpleButtonSelectedDisabled{
+    font-family: Arial, Verdana, Bitstream Vera Sans, sans-serif;
+    font-size: 11px;
+    padding: 2px;
+    font-weight: bold;
+}

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@
 package org.rhq.core.domain.criteria;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,22 +32,15 @@ import java.util.Map;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Criteria implements Serializable {
-
-    private static final Log LOG = LogFactory.getLog(Criteria.class);
-
-    private enum Type {
+    public enum Type {
         FILTER, FETCH, SORT;
     }
 
@@ -67,14 +59,16 @@ public abstract class Criteria implements Serializable {
     protected PageControl pageControlOverrides;
 
     private List<String> orderingFieldNames;
+    private String alias;
 
     private String searchExpression;
 
     public Criteria() {
-        filterOverrides = new HashMap<String, String>();
-        sortOverrides = new HashMap<String, String>();
 
-        orderingFieldNames = new ArrayList<String>();
+        this.filterOverrides = new HashMap<String, String>();
+        this.sortOverrides = new HashMap<String, String>();
+
+        this.orderingFieldNames = new ArrayList<String>();
 
         /*
          * reasonably large default, but prevent accidentally returning 100K objects
@@ -85,44 +79,16 @@ public abstract class Criteria implements Serializable {
 
     public abstract Class<?> getPersistentClass();
 
-    private List<Field> getFields(Type fieldType) {
-        String prefix = fieldType.name().toLowerCase();
-        List<Field> results = new ArrayList<Field>();
-
-        Class<?> currentLevelClass = this.getClass();
-        while (currentLevelClass.equals(Criteria.class) == false) {
-            for (Field field : currentLevelClass.getDeclaredFields()) {
-                field.setAccessible(true);
-                if (field.getName().startsWith(prefix)) {
-                    results.add(field);
-                }
-            }
-            currentLevelClass = currentLevelClass.getSuperclass();
-        }
-
-        return results;
+    public Integer getPageNumber() {
+        return pageNumber;
     }
 
-    public Map<String, Object> getFilterFields() {
-        Map<String, Object> results = new HashMap<String, Object>();
-        for (Field filterField : getFields(Type.FILTER)) {
-            Object filterFieldValue = null;
-            try {
-                filterFieldValue = filterField.get(this);
-            } catch (IllegalAccessException iae) {
-                throw new RuntimeException(iae);
-            }
-            if (filterFieldValue != null) {
-                results.put(getCleansedFieldName(filterField, 6), filterFieldValue);
-            }
-        }
+    public Integer getPageSize() {
+        return pageSize;
+    }
 
-        if (LOG.isDebugEnabled()) {
-            for (Map.Entry<String, Object> entries : results.entrySet()) {
-                LOG.debug("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
-            }
-        }
-        return results;
+    public List<String> getOrderingFieldNames() {
+        return orderingFieldNames;
     }
 
     public String getJPQLFilterOverride(String fieldName) {
@@ -135,31 +101,6 @@ public abstract class Criteria implements Serializable {
 
     public PageControl getPageControlOverrides() {
         return pageControlOverrides;
-    }
-
-    public List<String> getFetchFields() {
-        List<String> results = new ArrayList<String>();
-        for (Field fetchField : getFields(Type.FETCH)) {
-            Object fetchFieldValue = null;
-            try {
-                fetchField.setAccessible(true);
-                fetchFieldValue = fetchField.get(this);
-            } catch (IllegalAccessException iae) {
-                throw new RuntimeException(iae);
-            }
-            if (fetchFieldValue != null) {
-                boolean shouldFetch = ((Boolean) fetchFieldValue).booleanValue();
-                if (shouldFetch) {
-                    results.add(getCleansedFieldName(fetchField, 5));
-                }
-            }
-        }
-        if (LOG.isDebugEnabled()) {
-            for (String entry : results) {
-                LOG.debug("Fetch: (" + entry + ")");
-            }
-        }
-        return results;
     }
 
     protected void addSortField(String fieldName) {
@@ -258,44 +199,14 @@ public abstract class Criteria implements Serializable {
         this.requiredPermissions = Arrays.asList(requiredPermissions);
     }
 
-    public PageControl getPageControl() {
-        PageControl pc = null;
-
-        if (pageControlOverrides != null) {
-            pc = pageControlOverrides;
-        } else {
-            if (pageNumber == null || pageSize == null) {
-                pc = PageControl.getUnlimitedInstance();
-            } else {
-                pc = new PageControl(pageNumber, pageSize);
-            }
-            for (String fieldName : orderingFieldNames) {
-                for (Field sortField : getFields(Type.SORT)) {
-                    if (sortField.getName().equals(fieldName) == false) {
-                        continue;
-                    }
-                    Object sortFieldValue = null;
-                    try {
-                        sortFieldValue = sortField.get(this);
-                    } catch (IllegalAccessException iae) {
-                        throw new RuntimeException(iae);
-                    }
-                    if (sortFieldValue != null) {
-                        PageOrdering pageOrdering = (PageOrdering) sortFieldValue;
-                        pc.addDefaultOrderingField(getCleansedFieldName(sortField, 4), pageOrdering);
-                    }
-                }
-            }
+    public String getAlias() {
+        if (this.alias == null) {
+            // Base alias on persistent class's name: org.rhq.core.domain.ResourceType -> "resourcetype"
+            // don't use getSimpleName - not available to GWT
+            String className = getPersistentClass().getName();
+            String classSimpleName = className.substring(className.lastIndexOf(".") + 1);
+            this.alias = classSimpleName.toLowerCase();
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Page Control: " + pc);
-        }
-        return pc;
-    }
-
-    private String getCleansedFieldName(Field field, int leadingCharsToStrip) {
-        String fieldNameFragment = field.getName().substring(leadingCharsToStrip);
-        String fieldName = Character.toLowerCase(fieldNameFragment.charAt(0)) + fieldNameFragment.substring(1);
-        return fieldName;
+        return this.alias;
     }
 }

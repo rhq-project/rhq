@@ -25,7 +25,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PostPersist;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.InventoryStatus;

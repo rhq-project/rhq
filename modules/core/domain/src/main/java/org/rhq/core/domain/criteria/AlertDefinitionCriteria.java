@@ -29,8 +29,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -62,8 +62,6 @@ public class AlertDefinitionCriteria extends Criteria {
     private PageOrdering sortPriority;
 
     public AlertDefinitionCriteria() {
-        super();
-
         filterOverrides.put("alertTemplateParentId", "parentId = ?");
         filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");
         filterOverrides.put("alertTemplateResourceTypeName", "resourceType.name like ?");
@@ -71,7 +69,8 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("operationName", "operationDefinition.name like ?");
     }
 
-    public Class<AlertDefinition> getPersistentClass() {
+    @Override
+    public Class getPersistentClass() {
         return AlertDefinition.class;
     }
 

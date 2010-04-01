@@ -90,7 +90,7 @@ public class CVE implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("CVE: name=[%s]", this.name);
+        return "CVE: name=[" + this.name + "]";
     }
 
     @Override

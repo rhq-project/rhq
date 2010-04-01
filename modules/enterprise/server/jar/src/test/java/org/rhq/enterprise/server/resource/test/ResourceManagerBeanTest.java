@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.resource.test;
 
 import java.util.List;
+import java.util.Random;
 
 import javax.persistence.EntityManager;
 
@@ -139,6 +140,7 @@ public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
                 em.flush();
 
                 resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
+                resource.setUuid("" + new Random().nextInt());
                 resource.setAgent(agent);
                 em.persist(resource);
             } catch (Exception e) {

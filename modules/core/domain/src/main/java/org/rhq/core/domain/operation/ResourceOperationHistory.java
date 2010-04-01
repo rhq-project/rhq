@@ -176,9 +176,10 @@ public class ResourceOperationHistory extends OperationHistory {
 
         // there may be some operations whose results are sensitive values, like passwords
         // do not show them by default - but allow testers to see them via a system property
-        if (Boolean.getBoolean("rhq.test.operation.show-values")) {
+        /* TODO: GWT
+        if (Boolean.valueOf(System.getProperty("rhq.test.operation.show-values"))) {
             str.append("], results=[" + this.results);
-        }
+        }*/
 
         str.append("], group-history=[" + this.groupOperationHistory);
         str.append("], " + super.toString());

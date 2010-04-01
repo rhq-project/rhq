@@ -25,12 +25,12 @@ package org.rhq.core.clientapi.agent.content;
 import java.util.List;
 import java.util.Set;
 import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
-import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
+import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
+import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
+import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesRequest;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
+import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 
 /**
  * The interface to the agent's content subsystem that the server can call into.
@@ -70,7 +70,7 @@ public interface ContentAgentService {
     /**
      * Requests that the plugin translate the package's metadata into domain specific installation instructions. These
      * instructions can then be displayed to the user. Additionally, once the call to
-     * {@link #deployPackages(org.rhq.core.domain.content.transfer.DeployPackagesRequest)} is made, the results of each
+     * {@link #deployPackages(org.rhq.core.clientapi.server.content.DeployPackagesRequest)} is made, the results of each
      * individual step will be reported. Installation steps are optional. This method may return <code>null</code> if
      * the plugin chooses to not express the installation in terms of steps.
      *

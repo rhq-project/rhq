@@ -32,6 +32,9 @@ import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageOrdering;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author Joseph Marques
  */
@@ -42,6 +45,8 @@ public class ResourceTypeCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private List<Integer> filterIds; // requires overrides
+
     private String filterName;
     private String filterDescription;
     private ResourceCategory filterCategory;
@@ -68,19 +73,23 @@ public class ResourceTypeCriteria extends Criteria {
     private PageOrdering sortPluginName; // needs overrides
 
     public ResourceTypeCriteria() {
-        super();
-
         filterOverrides.put("pluginName", "plugin like ?");
+        filterOverrides.put("ids", "id in ( ? )");
 
         sortOverrides.put("pluginName", "plugin");
     }
 
-    public Class<ResourceType> getPersistentClass() {
+    @Override
+    public Class getPersistentClass() {
         return ResourceType.class;
     }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
+    }
+
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = Arrays.asList(filterIds);
     }
 
     public void addFilterName(String filterName) {

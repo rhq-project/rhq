@@ -98,6 +98,6 @@ public class OrderingField implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[field=" + this.field + ", ordering=" + this.ordering + "]";
+        return "OrderingField [field=" + this.field + ", ordering=" + this.ordering + "]";
     }
 }

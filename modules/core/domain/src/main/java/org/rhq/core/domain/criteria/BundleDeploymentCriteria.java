@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.domain.criteria;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -24,6 +23,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 
 /**
  * @author Jay Shaughnessy
@@ -37,23 +37,25 @@ public class BundleDeploymentCriteria extends Criteria {
     private Integer filterId;
     private Integer filterBundleDeployDefinitionId; // requires override   
     private String filterBundleDeployDefinitionName; // requires override
+    private Integer filterBundleGroupDeploymentId; // requires override    
     private Integer filterResourceId; // requires override
     private String filterResourceName; // requires override
+    private BundleDeploymentStatus filterStatus;
 
     private boolean fetchBundleDeployDefinition;
     private boolean fetchResource;
     private boolean fetchHistory;
 
     public BundleDeploymentCriteria() {
-        super();
-
-        filterOverrides.put("resourceId", "resource.id = ?");
-        filterOverrides.put("resourceName", "resource.name like ?");
         filterOverrides.put("bundleDeployDefinitionId", "parentResource.id = ?");
         filterOverrides.put("bundleDeployDefinitionName", "parentResource.name like ?");
+        filterOverrides.put("bundleGroupDeploymentId", "bundleGroupDeployment.id = ?");
+        filterOverrides.put("resourceId", "resource.id = ?");
+        filterOverrides.put("resourceName", "resource.name like ?");
     }
 
-    public Class<BundleDeployment> getPersistentClass() {
+    @Override
+    public Class<?> getPersistentClass() {
         return BundleDeployment.class;
     }
 
@@ -69,6 +71,10 @@ public class BundleDeploymentCriteria extends Criteria {
         this.filterBundleDeployDefinitionName = filterBundleDeployDefinitionName;
     }
 
+    public void addFilterBundleGroupDeploymentId(Integer filterBundleGroupDeploymentId) {
+        this.filterBundleGroupDeploymentId = filterBundleGroupDeploymentId;
+    }
+
     public void addFilterResourceId(Integer filterResourceId) {
         this.filterResourceId = filterResourceId;
     }
@@ -77,12 +83,17 @@ public class BundleDeploymentCriteria extends Criteria {
         this.filterResourceName = filterResourceName;
     }
 
+    public void addFilterStatus(BundleDeploymentStatus filterStatus) {
+        this.filterStatus = filterStatus;
+    }
+
     public void fetchBundleDeployDefinition(boolean fetchBundleDeployDefinition) {
         this.fetchBundleDeployDefinition = fetchBundleDeployDefinition;
     }
 
     /**
      * Requires MANAGE_INVENTORY
+     *
      * @param fetchResource
      */
     public void fetchResource(boolean fetchResource) {
@@ -93,7 +104,9 @@ public class BundleDeploymentCriteria extends Criteria {
         this.fetchHistory = fetchHistory;
     }
 
-    /** subclasses should override as necessary */
+    /**
+     * subclasses should override as necessary
+     */
     public boolean isInventoryManagerRequired() {
         return (this.fetchResource);
     }

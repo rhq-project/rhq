@@ -41,7 +41,6 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.configuration.PropertyDynamicType;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
@@ -282,7 +281,7 @@ public class StartupServlet extends HttpServlet {
         try {
             ServerCommunicationsServiceUtil.getService().startCommunicationServices();
             ServerCommunicationsServiceUtil.getService().getServiceContainer().addCommandListener(
-                new ExternalizableStrategyCommandListener(ExternalizableStrategy.Subsystem.AGENT));
+                new ExternalizableStrategyCommandListener(org.rhq.core.server.ExternalizableStrategy.Subsystem.AGENT));
         } catch (Exception e) {
             throw new ServletException("Cannot start the server-side communications services", e);
         }

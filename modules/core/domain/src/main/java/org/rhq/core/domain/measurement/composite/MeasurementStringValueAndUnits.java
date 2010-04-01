@@ -22,10 +22,9 @@
   */
 package org.rhq.core.domain.measurement.composite;
 
-import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
+ import org.rhq.core.domain.measurement.MeasurementUnits;
 
-import java.io.Serializable;
+ import java.io.Serializable;
 
 public class MeasurementStringValueAndUnits implements MeasurementValueAndUnits, Serializable {
 
@@ -50,6 +49,6 @@ public class MeasurementStringValueAndUnits implements MeasurementValueAndUnits,
 
     @Override
     public String toString() {
-        return MeasurementConverter.format(getValue(), getUnits());
+        return value + " " + units; // TODO: GWT   MeasurementConverter.format(getValue(), getUnits());
     }
 }

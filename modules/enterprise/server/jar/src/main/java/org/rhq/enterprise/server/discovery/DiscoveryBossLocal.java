@@ -29,9 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -70,6 +70,16 @@ public interface DiscoveryBossLocal {
      * @return the platforms and servers that need to be imported or ignored
      */
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, PageControl pc);
+
+
+    /**
+     * Like the above method, but can find ignored, commited or both
+     * @param user
+     * @param statuses
+     * @param pc
+     * @return
+     */
+    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, EnumSet<InventoryStatus> statuses, PageControl pc);
 
     /**
      * This returns all platform resources that either have the given status themselves or one or more of their child

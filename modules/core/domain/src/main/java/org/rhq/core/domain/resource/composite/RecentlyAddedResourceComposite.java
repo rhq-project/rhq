@@ -31,10 +31,14 @@ public class RecentlyAddedResourceComposite implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int id;
+    private int parentId;
     private String name;
     private long ctime;
     private boolean showChildren;
     private List<RecentlyAddedResourceComposite> children;
+
+    public RecentlyAddedResourceComposite() {
+    }
 
     public RecentlyAddedResourceComposite(int id, String name, long ctime) {
         this.id = id;
@@ -44,6 +48,10 @@ public class RecentlyAddedResourceComposite implements Serializable {
 
     public int getId() {
         return id;
+    }
+
+    public int getParentId() {
+        return parentId;
     }
 
     public String getName() {
@@ -68,6 +76,9 @@ public class RecentlyAddedResourceComposite implements Serializable {
 
     public void setChildren(List<RecentlyAddedResourceComposite> children) {
         this.children = children;
+        for (RecentlyAddedResourceComposite child : children) {
+            child.parentId = id;
+        }
     }
 
     @Override

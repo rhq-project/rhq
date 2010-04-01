@@ -22,12 +22,7 @@
  */
 package org.rhq.core.domain.measurement.calltime;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.text.DateFormat;
-import java.util.Date;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -41,7 +36,8 @@ import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.jetbrains.annotations.Nullable;
+import java.io.Serializable;
+import java.util.Date;
 
 /**
  * Measurement data for a set of calls to a particular destination over a certain time span.
@@ -70,7 +66,7 @@ import org.jetbrains.annotations.Nullable;
     @NamedQuery(name = CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, query = "DELETE CallTimeDataValue ctdv WHERE ctdv.key IN ( SELECT ctdk.id FROM CallTimeDataKey ctdk WHERE ctdk.schedule.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(name = "idGenerator", sequenceName = "RHQ_CALLTIME_DATA_VALUE_ID_SEQ")
 @Table(name = "RHQ_CALLTIME_DATA_VALUE")
-public class CallTimeDataValue implements Externalizable {
+public class CallTimeDataValue implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_COMPOSITES_FOR_RESOURCE = "CallTimeDataValue.findCompositesForResource";
@@ -185,7 +181,7 @@ public class CallTimeDataValue implements Externalizable {
             this.maximum = callTime;
         }
     }
-
+/*
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeLong(this.beginTime);
         out.writeLong(this.endTime);
@@ -202,13 +198,13 @@ public class CallTimeDataValue implements Externalizable {
         this.maximum = in.readDouble();
         this.total = in.readDouble();
         this.count = in.readLong();
-    }
+    }*/
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + "key=" + this.key + ", " + "beginTime="
-            + DateFormat.getInstance().format(this.beginTime) + ", " + "endTime="
-            + DateFormat.getInstance().format(this.endTime) + ", " + "minimum=" + this.minimum + ", " + "maximum="
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "key=" + this.key + ", " + "beginTime="
+            + new Date(this.beginTime) + ", " + "endTime="
+            + new Date(this.endTime) + ", " + "minimum=" + this.minimum + ", " + "maximum="
             + this.maximum + ", " + "total=" + this.total + ", " + "count=" + this.count + "]";
     }
 }

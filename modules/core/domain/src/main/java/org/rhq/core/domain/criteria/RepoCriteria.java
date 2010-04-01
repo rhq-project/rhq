@@ -55,14 +55,15 @@ public class RepoCriteria extends Criteria {
     private PageOrdering sortName;
 
     public RepoCriteria() {
-        super();
-
         filterOverrides.put("resourceIds", "resourceRepos.resource.id IN ( ? )");
-        filterOverrides.put("contentSourceIds", "id IN (SELECT innerRepo FROM Repo innerRepo "
-            + "JOIN innerRepo.repoContentSources rcs " + "WHERE rcs.contentSource.id IN ( ? ))");
+        filterOverrides.put("contentSourceIds",
+            "id IN (SELECT innerRepo FROM Repo innerRepo " +
+            "JOIN innerRepo.repoContentSources rcs " +
+            "WHERE rcs.contentSource.id IN ( ? ))");
     }
 
-    public Class<Repo> getPersistentClass() {
+    @Override
+    public Class getPersistentClass() {
         return Repo.class;
     }
 

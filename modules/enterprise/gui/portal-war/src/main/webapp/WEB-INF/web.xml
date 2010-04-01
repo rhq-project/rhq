@@ -407,7 +407,7 @@
       <load-on-startup>2</load-on-startup>
    </servlet>
 
-   <!-- The endpoints to the agent update servlet -->
+    <!-- The endpoints to the agent update servlet -->
    <servlet-mapping>
       <servlet-name>AgentUpdateServlet</servlet-name>
       <url-pattern>/agentupdate/version</url-pattern>
@@ -476,7 +476,8 @@
       <servlet-name>action</servlet-name>
       <url-pattern>*.do</url-pattern>
    </servlet-mapping>
-   <session-config>
+
+    <session-config>
       <session-timeout>30</session-timeout>
    </session-config>
 

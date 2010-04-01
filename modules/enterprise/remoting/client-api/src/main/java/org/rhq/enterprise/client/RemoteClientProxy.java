@@ -35,7 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import org.rhq.core.server.ExternalizableStrategy;
 
 /**
  * This class acts as a local SLSB proxy to make remote invocations

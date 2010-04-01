@@ -37,6 +37,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
 import org.rhq.plugins.augeas.helper.AugeasRawConfigHelper;
@@ -123,12 +124,16 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Au
             Set<RawConfiguration> configs = new HashSet<RawConfiguration>();
             RawConfiguration modules = new RawConfiguration();
             modules.setPath(MODULES_PATH);
-            modules.setContents(FileUtils.readFileToString(new File(MODULES_PATH)));
+            String contents = FileUtils.readFileToString(new File(MODULES_PATH));
+            String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+            modules.setContents(contents, sha256);
             configs.add(modules);
 
             RawConfiguration settings = new RawConfiguration();
             settings.setPath(SETTINGS_PATH);
-            settings.setContents(FileUtils.readFileToString(new File(SETTINGS_PATH)));
+            contents = FileUtils.readFileToString(new File(SETTINGS_PATH));
+            sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+            settings.setContents(contents, sha256);
             configs.add(settings);
             return configs;
         } catch (Exception e) {

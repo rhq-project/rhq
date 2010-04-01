@@ -78,13 +78,16 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
         bundleFileNames.addAll(deployFiles.keySet());
         Set<String> scriptFiles = recipeContext.getScriptFiles();
         bundleFileNames.addAll(scriptFiles);
+        Set<String> files = recipeContext.getFiles().keySet();
+        bundleFileNames.addAll(files);
 
         ConfigurationDefinition configDef = null;
         if (recipeContext.getReplacementVariables() != null) {
             configDef = new ConfigurationDefinition("replacementVariables", null);
             for (String replacementVar : recipeContext.getReplacementVariables()) {
-                PropertyDefinitionSimple prop = new PropertyDefinitionSimple(replacementVar, null, false,
-                    PropertySimpleType.STRING);
+                PropertyDefinitionSimple prop = new PropertyDefinitionSimple(replacementVar,
+                    "Needed by bundle recipe.", false, PropertySimpleType.STRING);
+                prop.setDisplayName(replacementVar);
                 configDef.put(prop);
             }
         }

@@ -52,7 +52,7 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 
 /**

@@ -32,6 +32,10 @@ import org.rhq.core.domain.resource.Agent;
 
 @Test
 public class TokenGenerationTest {
+   /*
+    TODO: GWT
+    (This is no longer needed... switched to using SecureRandom generation from the CoreServerServiceImpl)
+
     public void testUniqueTokenGeneration1() throws Exception {
         final Collection<String> tokens = Collections.synchronizedSet(new HashSet<String>());
         final int maxThreads = 20;
@@ -77,5 +81,5 @@ public class TokenGenerationTest {
         assert latch.await(120, TimeUnit.SECONDS) : "Did not wait long enough for the threads to finish";
         assert tokens.size() == maxThreads : "One or more generated tokens were duplicated: " + maxThreads + " : "
             + tokens.size() + " : " + tokens;
-    }
+    }*/
 }

@@ -43,6 +43,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * Allows the RHQ server to manage the Name Server Switch Configuration for a Linux Platform 
@@ -180,7 +181,9 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
 
         raw.setPath(ETC_NSSWITCH_CONF);
 
-        raw.setContents(getContents(new File(raw.getPath())));
+        String contents = getContents(new File(raw.getPath()));
+        String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+        raw.setContents(contents, sha256);
 
         raws.add(raw);
         return raws;

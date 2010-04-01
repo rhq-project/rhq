@@ -26,6 +26,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -68,9 +69,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.util.EntitySerializer;
 import org.rhq.core.domain.util.Summary;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 /**
  * Defines a type of {@link Resource} (e.g. a Linux platform, a JBossAS server, or a Datasource service).
@@ -239,7 +238,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 })
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
-public class ResourceType implements Externalizable, Comparable<ResourceType> {
+public class ResourceType implements Serializable, Comparable<ResourceType> {
     private static final long serialVersionUID = 2L;
 
     public static final String TABLE_NAME = "RHQ_RESOURCE_TYPE";
@@ -656,6 +655,10 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return operationDefinitions;
     }
 
+    public void setOperationDefinitions(Set<OperationDefinition> operationDefinitions) {
+        this.operationDefinitions = operationDefinitions;
+    }
+
     public boolean addOperationDefinition(OperationDefinition operationDefinition) {
         operationDefinition.setResourceType(this);
         return this.operationDefinitions.add(operationDefinition);
@@ -770,9 +773,12 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         if (obj == null || !(obj instanceof ResourceType))
             return false;
         ResourceType that = (ResourceType) obj;
-        if (!this.name.equals(that.name))
+        if (this.name != null ? !this.name.equals(that.name) : that.name != null)
             return false;
         if (this.plugin != null ? !this.plugin.equals(that.plugin) : that.plugin != null)
+            return false;
+        //only compare id's if they've both been set
+        if (this.id != 0 && that.id != 0 && this.id != that.id)
             return false;
         return true;
     }
@@ -781,7 +787,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     public int hashCode() {
         int result;
         if (name != null && this.plugin != null) {
-            result = this.name.hashCode();
+            result = (this.name != null ? this.name.hashCode() : 0);
             result = 31 * result + (this.plugin != null ? plugin.hashCode() : 0);
         } else {
             result = 31 * id;
@@ -804,6 +810,9 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
             + this.plugin + /*", parents=" + parents +*/"]";
     }
 
+
+/*
+TODO: GWT
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
         out.writeChar(strategy.id());
@@ -882,5 +891,6 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         this.ctime = in.readLong();
         this.mtime = in.readLong();
     }
+*/
 
 }

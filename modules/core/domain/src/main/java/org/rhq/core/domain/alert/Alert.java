@@ -31,6 +31,7 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -126,6 +127,8 @@ import org.rhq.core.domain.auth.Subject;
         + "     AND (a.ctime > :startDate OR :startDate IS NULL) "
         + "     AND (a.ctime < :endDate OR :endDate IS NULL) "),
     @NamedQuery(name = Alert.QUERY_FIND_ALL, query = "SELECT a FROM Alert AS a"),
+    @NamedQuery(name = Alert.QUERY_FIND_RESOURCES, query = "SELECT res FROM Alert AS a JOIN a.alertDefinition aDef "
+        + "     JOIN aDef.resource res WHERE a.id in (:alertIds) AND res.id IS NOT NULL"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_CTIME, query = "" //
         + "DELETE FROM Alert AS a " //
         + " WHERE a.ctime BETWEEN :begin AND :end"),//
@@ -205,6 +208,7 @@ public class Alert implements Serializable {
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_AUTOGROUP = "Alert.findByMeasDefIdAndAutoGroup";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE = "Alert.findByMeasDefIdAndResource";
     public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES";
+    public static final String QUERY_FIND_RESOURCES = "Alert.findResources";
 
     public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT";
 
@@ -246,6 +250,10 @@ public class Alert implements Serializable {
      */
     @Column(name = "RECOVERY_ID")
     private Integer recoveryId;
+
+    @JoinColumn(name = "RECOVERY_ID", referencedColumnName = "ID", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private AlertDefinition recoveryAlertDefinition;
 
     @Column(name = "WILL_RECOVER", nullable = false)
     private boolean willRecover;
@@ -365,6 +373,10 @@ public class Alert implements Serializable {
                 "An alert definition can either be a recovery definition or a definition to-be-recovered, but not both.");
         }
         this.recoveryId = actOnTriggerId;
+    }
+
+    public AlertDefinition getRecoveryAlertDefinition() {
+        return this.recoveryAlertDefinition;
     }
 
     @Override

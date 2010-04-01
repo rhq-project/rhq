@@ -53,8 +53,25 @@ import org.rhq.core.domain.content.Distribution;
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = BundleVersion.QUERY_FIND_ALL, query = "SELECT bv FROM BundleVersion bv"), //
-    @NamedQuery(name = BundleVersion.QUERY_FIND_BY_NAME, query = "SELECT bv FROM BundleVersion bv WHERE bv.name = :name") //
+    @NamedQuery(name = BundleVersion.UPDATE_VERSION_ORDER_BY_BUNDLE_ID, query = "" // 
+        + "UPDATE BundleVersion bv "//
+        + "   SET bv.versionOrder = (bv.versionOrder+1) " //
+        + " WHERE bv.bundle.id = :bundleId " //
+        + "   AND bv.versionOrder >= :versionOrder"), //
+    @NamedQuery(name = BundleVersion.QUERY_FIND_LATEST_BY_BUNDLE_ID, query = "" //
+        + "SELECT bv " //
+        + "  FROM BundleVersion bv " // 
+        + " WHERE bv.bundle.id = :bundleId " //
+        + "   AND bv.versionOrder = (SELECT MAX(bv2.versionOrder) FROM BundleVersion bv2 WHERE bv2.bundle.id = :bundleId) "), //
+    // this returns a desc ordered list of a 2-D array - first element in array is the version string, second is its associated version order
+    @NamedQuery(name = BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID, query = "" //
+        + "SELECT bv.version, bv.versionOrder " //
+        + "  FROM BundleVersion bv " // 
+        + " WHERE bv.bundle.id = :bundleId " //
+        + " ORDER BY bv.versionOrder DESC "), //
+    @NamedQuery(name = BundleVersion.QUERY_FIND_ALL, query = "SELECT bv FROM BundleVersion bv "), //
+    @NamedQuery(name = BundleVersion.QUERY_FIND_BY_NAME, query = "SELECT bv FROM BundleVersion bv WHERE bv.name = :name "), //
+    @NamedQuery(name = BundleVersion.QUERY_FIND_BY_BUNDLE_ID, query = "SELECT bv FROM BundleVersion bv WHERE bv.bundle.id = :bundleId ") //
 })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_VERSION_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_VERSION")
@@ -62,8 +79,12 @@ import org.rhq.core.domain.content.Distribution;
 public class BundleVersion implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final String UPDATE_VERSION_ORDER_BY_BUNDLE_ID = "BundleVersion.updateVersionOrderByBundleId";
+    public static final String QUERY_FIND_LATEST_BY_BUNDLE_ID = "BundleVersion.findLatestByBundleId";
+    public static final String QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID = "BundleVersion.findVersionsByBundleId";
     public static final String QUERY_FIND_ALL = "BundleVersion.findAll";
     public static final String QUERY_FIND_BY_NAME = "BundleVersion.findByName";
+    public static final String QUERY_FIND_BY_BUNDLE_ID = "BundleVersion.findByBundleId";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -78,6 +99,9 @@ public class BundleVersion implements Serializable {
 
     @Column(name = "VERSION", nullable = false)
     private String version;
+
+    @Column(name = "VERSION_ORDER", nullable = false)
+    private int versionOrder;
 
     @Column(name = "ACTION", nullable = false)
     private String recipe;
@@ -141,6 +165,14 @@ public class BundleVersion implements Serializable {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public int getVersionOrder() {
+        return versionOrder;
+    }
+
+    public void setVersionOrder(int versionOrder) {
+        this.versionOrder = versionOrder;
     }
 
     public String getRecipe() {

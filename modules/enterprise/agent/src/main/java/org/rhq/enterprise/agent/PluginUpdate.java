@@ -315,7 +315,7 @@ public class PluginUpdate {
                 }
             }
         }
-        LOG.info(AgentI18NResourceKeys.DOWNLOADING_PLUGIN_COMPLETE, plugin.getPath());
+        LOG.info(AgentI18NResourceKeys.DOWNLOADING_PLUGIN_COMPLETE, plugin.getName(), plugin.getPath());
     }
 
     /**

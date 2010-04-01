@@ -49,7 +49,11 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
+import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
+import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
+import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
+import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -66,17 +70,13 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesRequest;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
@@ -94,6 +94,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * EJB that handles content subsystem interaction with resources, including content discovery reports and create/delete
@@ -1041,7 +1042,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         ContentServiceRequest persistedRequest = (ContentServiceRequest) query.getSingleResult();
         Resource resource = persistedRequest.getResource();
 
-        persistedRequest.setErrorMessageFromThrowable(error);
+        persistedRequest.setErrorMessage(ThrowableUtil.getStackAsString(error));
         persistedRequest.setStatus(ContentRequestStatus.FAILURE);
 
         // This should only be called as the result of an exception during the user initiated action. As such,
@@ -1052,7 +1053,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             InstalledPackageHistory failedEntry = new InstalledPackageHistory();
             failedEntry.setContentServiceRequest(persistedRequest);
             failedEntry.setDeploymentConfigurationValues(history.getDeploymentConfigurationValues());
-            failedEntry.setErrorMessageFromThrowable(error);
+            failedEntry.setErrorMessage(ThrowableUtil.getStackAsString(error));
             failedEntry.setPackageVersion(history.getPackageVersion());
             failedEntry.setResource(resource);
             failedEntry.setStatus(InstalledPackageHistoryStatus.FAILED);
@@ -1215,6 +1216,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
 
+        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
         // Write the content into the newly created package version. This may eventually move, but for now we'll just
         // use the byte array in the package version to store the bits.
         byte[] packageBits;
@@ -1441,13 +1443,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 "resource", subject.getId());
         }
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
+        CriteriaQueryRunner<InstalledPackage> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
 
-        long count = (Long) countQuery.getSingleResult();
-        List<InstalledPackage> results = query.getResultList();
-
-        return new PageList<InstalledPackage>(results, (int) count, criteria.getPageControl());
+        return queryRunner.execute();
     }
 
     @SuppressWarnings("unchecked")
@@ -1467,13 +1465,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
+        CriteriaQueryRunner<PackageVersion> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
 
-        long count = (Long) countQuery.getSingleResult();
-        List<PackageVersion> results = query.getResultList();
-
-        return new PageList<PackageVersion>(results, (int) count, criteria.getPageControl());
+        return queryRunner.execute();
     }
 
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {

@@ -43,6 +43,7 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.PackageVersion;
@@ -146,7 +147,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             if (!result.isSuccess()) {
                 response.setErrorMessage(result.getErrorMessage());
             }
-            auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT_END, "Success");
+            completeDeployment(deployment, BundleDeploymentStatus.SUCCESS, "Success");
         } catch (Throwable t) {
             log.error("Failed to schedule bundle request: " + request, t);
             response.setErrorMessage(t);
@@ -205,6 +206,11 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         return packageVersionFiles;
     }
 
+    private void completeDeployment(BundleDeployment deployment, BundleDeploymentStatus status, String message) {
+        getBundleServerService().setBundleDeploymentStatus(deployment.getId(), status);
+        auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT_END, message);
+    }
+
     private void auditDeployment(BundleDeployment deployment, BundleDeploymentAction action, String message) {
         BundleDeploymentHistory history = new BundleDeploymentHistory("Bundle Plugin", action, message);
         getBundleServerService().addDeploymentHistory(deployment.getId(), history);
@@ -226,7 +232,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
 
         if (packageVersion.getMD5() != null) {
-            String realMD5 = MessageDigestGenerator.getDigestString(packageFile);
+            String realMD5 = new MessageDigestGenerator(MessageDigestGenerator.MD5).calcDigestString(packageFile);
             if (!packageVersion.getMD5().equals(realMD5)) {
                 throw new Exception("Package version [" + packageVersion + "] failed MD5 check. expected=["
                     + packageVersion.getMD5() + "], actual=[" + realMD5 + "]");
@@ -234,9 +240,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         } else if (packageVersion.getSHA256() != null) {
             FileInputStream is = new FileInputStream(packageFile);
             try {
-                MessageDigestGenerator gen = new MessageDigestGenerator("SHA256");
-                gen.add(is);
-                String realSHA256 = gen.getDigestString();
+                String realSHA256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(is);
                 if (!packageVersion.getSHA256().equals(realSHA256)) {
                     throw new Exception("Package version [" + packageVersion + "] failed SHA256 check. expected=["
                         + packageVersion.getSHA256() + "], actual=[" + realSHA256 + "]");

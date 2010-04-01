@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.resource.group.test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import javax.persistence.EntityManager;
 
@@ -94,6 +95,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
 
             // test update implicit resources
             Resource newChildOfNodeA = new Resource("new nodeOne child", "new nodeOne child", nodeA.getResourceType());
+            newChildOfNodeA.setUuid("" + new Random().nextInt());
 
             resourceManager.createResource(subject, newChildOfNodeA, nodeA.getId()); // sets up implicit relationships
 
@@ -140,6 +142,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
 
             // test update implicit resources
             Resource gen5 = new Resource("g5", "g5", gen4.getResourceType());
+            gen5.setUuid("" + new Random().nextInt());
             resourceManager.createResource(subject, gen5, gen4.getId()); // sets up implicit relationships
 
             // confirm results

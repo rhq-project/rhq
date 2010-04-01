@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -35,6 +36,10 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
+import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
+import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
+import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
+import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -51,17 +56,13 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesRequest;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -638,8 +639,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             // Add a few tests for the new Criteria Search feature
             PackageVersionCriteria criteria = new PackageVersionCriteria();
             criteria.addFilterResourceId(resource1.getId());
-            PageList<PackageVersion> pageList = contentManager.findPackageVersionsByCriteria(overlord,
-                criteria);
+            PageList<PackageVersion> pageList = contentManager.findPackageVersionsByCriteria(overlord, criteria);
             assertNotNull(pageList);
             ArrayList<PackageVersion> pvs = pageList.getValues();
             assertEquals(2, pvs.size());
@@ -1480,6 +1480,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
                 // Create resource against which we'll merge the discovery report
                 resource1 = new Resource("parent" + System.currentTimeMillis(), "name", resourceType1);
+                resource1.setUuid("" + new Random().nextInt());
                 em.persist(resource1);
 
                 // Install packages on the resource

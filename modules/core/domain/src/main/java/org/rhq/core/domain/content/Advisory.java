@@ -237,7 +237,7 @@ public class Advisory implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Advisory [Advisory=%s, Type=%s, Name=%s]", advisory, advisoryType, advisory_name);
+        return "Advisory [Advisory=" + advisory + ", Type=" + advisoryType + ", Name=" + advisory_name + "]";
     }
 
     @Override

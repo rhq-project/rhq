@@ -57,6 +57,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -77,7 +78,8 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -378,6 +380,15 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     private ResourceConfigurationUpdate persistNewAgentReportedResourceConfiguration(Resource resource,
         Configuration liveConfig) throws ConfigurationUpdateStillInProgressException {
+
+        if (liveConfig.getRawConfigurations() != null) {
+            for (RawConfiguration raw : liveConfig.getRawConfigurations()) {
+                MessageDigestGenerator sha256Generator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+                sha256Generator.add(raw.getContents().getBytes());
+                raw.setSha256(sha256Generator.getDigestString());
+            }
+        }
+
         /*
         * NOTE: We pass the overlord, since this is a system side-effect.  here, the system
         * and *not* the user, is choosing to persist the most recent configuration because it was different
@@ -833,9 +844,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
 
-        if (!authorizationManager.canViewResource(subject, resourceId)) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resourceId)) {
             throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to view resource[id=" + resourceId + "]");
+                + "] does not have permission to manage configuration for resource[id=" + resourceId + "]");
         }
 
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -1090,7 +1101,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             // and set its error message field.
             if (null != update) {
                 update.setStatus(ConfigurationUpdateStatus.FAILURE);
-                update.setErrorMessageFromThrowable(e);
+                update.setErrorMessage(ThrowableUtil.getStackAsString(e));
 
                 // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
                 this.configurationManager.mergeConfigurationUpdate(update);

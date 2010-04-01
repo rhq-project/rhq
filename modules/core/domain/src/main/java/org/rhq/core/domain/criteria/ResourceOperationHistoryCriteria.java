@@ -45,9 +45,12 @@ public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
     private boolean fetchResults;
 
     public ResourceOperationHistoryCriteria() {
-        super(ResourceOperationHistory.class);
-
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
+    }
+
+    @Override
+    public Class getPersistentClass() {
+        return ResourceOperationHistory.class;
     }
 
     public void addFilterResourceIds(Integer... filterResourceIds) {

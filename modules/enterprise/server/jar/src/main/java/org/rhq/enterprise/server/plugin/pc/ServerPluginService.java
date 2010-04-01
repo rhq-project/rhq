@@ -143,12 +143,12 @@ public class ServerPluginService implements ServerPluginServiceManagement {
 
         File tmpDir = LookupUtil.getCoreServer().getJBossServerTempDir();
 
-        // TODO: determine what things to hide from our war classloader
-        //StringBuilder defaultRegex = new StringBuilder();
-        //defaultRegex.append("(package\\.with\\.classes\\.to\\.hide\\..*)|");
+        // determine what things to hide from our war classloader
+        StringBuilder defaultRegex = new StringBuilder();
+        defaultRegex.append("(org\\.apache\\.tools\\..*)"); // ant.jar
 
         MasterServerPluginContainerConfiguration config;
-        config = new MasterServerPluginContainerConfiguration(pluginDir, dataDir, tmpDir, null);
+        config = new MasterServerPluginContainerConfiguration(pluginDir, dataDir, tmpDir, defaultRegex.toString());
         pc.initialize(config);
         return pc;
     }

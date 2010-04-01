@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.content.test;
 
+import java.util.Random;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -153,6 +155,7 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
 
                 // Create resource against which we'll be retrieving packages
                 resource = new Resource("parent" + System.currentTimeMillis(), "name", resourceType);
+                resource.setUuid("" + new Random().nextInt());
                 resource.setVersion("1.0");
                 em.persist(resource);
 

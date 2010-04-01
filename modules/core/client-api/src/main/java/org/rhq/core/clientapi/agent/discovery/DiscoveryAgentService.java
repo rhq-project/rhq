@@ -23,9 +23,9 @@
 package org.rhq.core.clientapi.agent.discovery;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;

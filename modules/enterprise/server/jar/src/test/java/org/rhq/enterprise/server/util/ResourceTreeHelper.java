@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import javax.persistence.EntityManager;
 
@@ -95,6 +96,7 @@ public class ResourceTreeHelper {
                 parentResource = resources.get(parent);
             } else {
                 parentResource = new Resource(parent, parent, fakeType);
+                parentResource.setUuid("" + new Random().nextInt());
                 resources.put(parent, parentResource);
             }
 
@@ -107,6 +109,7 @@ public class ResourceTreeHelper {
                     childResource = resources.get(child);
                 } else {
                     childResource = new Resource(child, child, fakeType);
+                    childResource.setUuid("" + new Random().nextInt());
                     resources.put(child, childResource);
                 }
 

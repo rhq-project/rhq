@@ -42,8 +42,10 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -363,12 +365,19 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.createBundleVersion(subject, bundleId, name, description, version, recipe);
     }
 
+    public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
+        int bundleTypeId, String bundleVersionName, String bundleVersionDescription, String version, String recipe)
+        throws Exception {
+        return bundleManager.createBundleAndBundleVersion(subject, bundleName, bundleDescription, bundleTypeId,
+            bundleVersionName, bundleVersionDescription, version, recipe);
+    }
+
     public void deleteBundle(Subject subject, int bundleId) throws Exception {
         bundleManager.deleteBundle(subject, bundleId);
     }
 
-    public void deleteBundleVersion(Subject subject, int bundleVersionId) throws Exception {
-        bundleManager.deleteBundleVersion(subject, bundleVersionId);
+    public void deleteBundleVersion(Subject subject, int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
+        bundleManager.deleteBundleVersion(subject, bundleVersionId, deleteBundleIfEmpty);
     }
 
     public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
@@ -392,6 +401,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.findBundleVersionsByCriteria(subject, criteria);
     }
 
+    public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
+        Subject subject, BundleCriteria criteria) {
+        return bundleManager.findBundlesWithLastestVersionCompositesByCriteria(subject, criteria);
+    }
+
     public List<BundleType> getAllBundleTypes(Subject subject) {
         return bundleManager.getAllBundleTypes(subject);
     }
@@ -401,12 +415,23 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.getBundleVersionFilenames(subject, bundleVersionId, withoutBundleFileOnly);
     }
 
+    /*
+    public Map<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception {
+        return bundleManager.getAllBundleVersionFilenames(subject, bundleVersionId);
+    }
+    */
+
     public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
         throws Exception {
         return bundleManager.scheduleBundleDeployment(subject, bundleDeployDefinitionId, resourceId);
     }
 
-    //BUNDLEMANAGER: END ----------------------------------
+    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeployDefinitionId,
+        int resourceGroupId) throws Exception {
+        return bundleManager.scheduleBundleGroupDeployment(subject, bundleDeployDefinitionId, resourceGroupId);
+    }
+
+    //BUNDLEMANAGER: END ----------------------------------  
 
     //CALLTIMEDATAMANAGER: BEGIN ----------------------------------
     public PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,

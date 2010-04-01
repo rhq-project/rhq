@@ -59,7 +59,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.SystemConfiguration;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;

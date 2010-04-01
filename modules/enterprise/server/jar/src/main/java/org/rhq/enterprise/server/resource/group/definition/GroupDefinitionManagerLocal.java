@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.resource.group.definition;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -59,6 +60,8 @@ public interface GroupDefinitionManagerLocal {
         throws GroupDefinitionException;
 
     PageList<GroupDefinition> getGroupDefinitions(Subject subject, PageControl pc);
+
+    PageList<GroupDefinition> findGroupDefinitionsByCriteria(Subject subject, ResourceGroupDefinitionCriteria criteria);
 
     int getGroupDefinitionCount(Subject subject);
 

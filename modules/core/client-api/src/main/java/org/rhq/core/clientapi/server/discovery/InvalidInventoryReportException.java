@@ -22,7 +22,7 @@
   */
 package org.rhq.core.clientapi.server.discovery;
 
-import org.rhq.core.domain.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 
 /**
  * Exception to indicate that a given {@link InventoryReport} contained some invalid data and could not be processed.

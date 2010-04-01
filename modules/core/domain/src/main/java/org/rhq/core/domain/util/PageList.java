@@ -41,8 +41,6 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Log LOG = LogFactory.getLog(PageList.class);
-
     private int totalSize = 0;
     private boolean isUnbounded; // Is the total size of the list known?
     private PageControl pageControl;
@@ -66,7 +64,7 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
         super(collection);
         this.totalSize = totalSize;
         if (collection.size() == 0 && totalSize > 0) {
-            LOG.warn("PageList was passed an empty collection but 'totalSize' was " + totalSize + ", " + pageControl);
+            // TODO: GWT   LOG.warn("PageList was passed an empty collection but 'totalSize' was " + totalSize + ", " + pageControl);
         }
         this.isUnbounded = false;
         this.pageControl = pageControl;

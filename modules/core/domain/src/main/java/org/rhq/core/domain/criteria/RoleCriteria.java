@@ -37,20 +37,22 @@ public class RoleCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
-    private String filterName;
     private String filterDescription;
+    private String filterName;
+    private Integer filterSubjectId;
 
-    private boolean fetchSubjects;
-    private boolean fetchResourceGroups;
     private boolean fetchPermissions;
+    private boolean fetchResourceGroups;
     private boolean fetchRoleNotifications;
+    private boolean fetchSubjects;
 
     private PageOrdering sortName;
 
     public RoleCriteria() {
-        super();
+        filterOverrides.put("subjectId", "id in (select sr.id from Role sr JOIN sr.subjects s where s.id = :id)");
     }
 
+    @Override
     public Class<Role> getPersistentClass() {
         return Role.class;
     }
@@ -65,6 +67,10 @@ public class RoleCriteria extends Criteria {
 
     public void addFilterDescription(String filterDescription) {
         this.filterDescription = filterDescription;
+    }
+
+    public void addFilterSubjectId(Integer filterSubjectId) {
+        this.filterSubjectId = filterSubjectId;
     }
 
     /**
@@ -146,8 +152,6 @@ public class RoleCriteria extends Criteria {
     }
 
     /**
-     * Requires MANAGE_SECURITY
-     * @param fetchSubjects
      * @Deprecated use fetchResourceGroups
      */
     @Deprecated

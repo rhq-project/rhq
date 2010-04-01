@@ -39,6 +39,7 @@
         <module>webdav-war</module>
         <module>content_http-war</module>
         <module>alert-migration</module>
+        <module>coregui</module>
       </modules>
     </profile>
 

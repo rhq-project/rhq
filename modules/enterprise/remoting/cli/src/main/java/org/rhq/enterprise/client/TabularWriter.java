@@ -26,8 +26,11 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -499,59 +502,87 @@ public class TabularWriter {
         print(Arrays.asList(data));
     }
 
+    private void resizeColumns(int[] actualColumnWidths, int maxColumnWidth, List<Integer> columns) {
+        int extraSpace = 0;
+
+        Iterator<Integer> iterator = columns.iterator();
+        while (iterator.hasNext()) {
+            int col = iterator.next();
+
+            if (actualColumnWidths[col] < maxColumnWidth) {
+                extraSpace += maxColumnWidth - actualColumnWidths[col];
+                iterator.remove();
+            }
+        }
+
+        if (extraSpace == 0) {
+            // There is no extra space with which to work so at this point we have to
+            // truncate any columns that still need more space
+            for (Integer col : columns) {
+                actualColumnWidths[col] = maxColumnWidth;
+            }
+        }
+        else if (columns.size() == 0) {
+            // If the columns list is empty then that means that there is enough available
+            // space for each column so we are done.
+            return;
+        }
+        else if (extraSpace > 0) {
+            // Since we have extra space, we will go ahead and recalculate the widths for
+            // those columns still needing space
+            int newMaxColumnWidth = (maxColumnWidth + extraSpace) / columns.size();
+            resizeColumns(actualColumnWidths, newMaxColumnWidth, columns);
+        }
+    }
+
     public void print(String[][] data) {
 
         if (data == null || data.length == 0) {
             out.println("0 rows");
             return;
         }
-        maxColumnLength = new int[data[0].length];
+
+        int numberOfColumns = data[0].length;
+        int maxColumnWidth = width / numberOfColumns;
+        int[] actualColumnWidths = new int[numberOfColumns];
 
         for (String[] row : data) {
-
-            for (int i = 0; i < row.length; i++) {
-                if (row[i] == null) {
-                    row[i] = "";
+            for (int col = 0; col < row.length; ++col) {
+                if (row[col] == null) {
+                    row[col] = "";
                 }
-                maxColumnLength[i] = Math.max(maxColumnLength[i], row[i].length());
+                actualColumnWidths[col] = Math.max(actualColumnWidths[col], row[col].length());
             }
         }
 
         if (headers != null) {
-            for (int i = 0; i < headers.length; i++) {
-                maxColumnLength[i] = Math.max(maxColumnLength[i], headers[i].length());
+            for (int col = 0; col < headers.length; ++col) {
+                actualColumnWidths[col] = Math.max(actualColumnWidths[col], headers[col].length());
             }
         }
 
-        int totalColumnLength = 0;
-        for (int len : maxColumnLength) {
-            totalColumnLength += len;
+        List<Integer> columns = new LinkedList();
+        for (int col = 0; col < actualColumnWidths.length; ++col) {
+            columns.add(col);
         }
-        // add space for spaces
-        totalColumnLength += maxColumnLength.length;
-
-        double shrink = 1;
-        if (totalColumnLength > width) {
-            shrink = ((double) width) / totalColumnLength;
-        }
-
-        for (int i = 0; i < maxColumnLength.length; i++) {
-            maxColumnLength[i] = (int) Math.floor(shrink * maxColumnLength[i]);
-        }
+        resizeColumns(actualColumnWidths, maxColumnWidth, columns);
 
         if (headers != null) {
             if (CSV.equals(format)) {
                 csvWriter.writeNext(headers);
             } else {
-                for (int i = 0; i < maxColumnLength.length; i++) {
-                    int colSize = maxColumnLength[i];
+                //for (int i = 0; i < maxColumnLength.length; i++) {
+                for (int i = 0; i < actualColumnWidths.length; i++) {
+                    int colSize = actualColumnWidths[i];
                     printSpaced(out, headers[i], colSize);
-                    out.print(" ");
+                    if (i < actualColumnWidths.length - 1) {
+                        out.print(" ");
+                    }
                 }
 
                 out.print("\n");
 
-                for (int i = 0; i < width; i++) {
+                for (int i = 1; i < width; i++) {
                     out.print("-");
                 }
             }
@@ -565,11 +596,13 @@ public class TabularWriter {
             }
         } else {
             for (String[] row : data) {
-                for (int i = 0; i < maxColumnLength.length; i++) {
-                    int colSize = maxColumnLength[i];
+                for (int i = 0; i < actualColumnWidths.length; i++) {
+                    int colSize = actualColumnWidths[i];
 
                     printSpaced(out, row[i], colSize);
-                    out.print(" ");
+                    if (i < actualColumnWidths.length - 1) {
+                        out.print(" ");
+                    }
                 }
                 out.print("\n");
             }
@@ -581,7 +614,6 @@ public class TabularWriter {
     private void printSpaced(PrintWriter out, String data, int length) {
         int dataLength = data.length();
         if (dataLength > length) {
-            //out.println(abbreviate(data, length));
             out.print(data.substring(0, length));
         } else {
             out.print(data);

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.plugin.pc.bundle;
 
+import org.rhq.enterprise.server.bundle.RecipeParseResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
@@ -68,28 +69,51 @@ public class BundleServerPluginManager extends ServerPluginManager {
     }
 
     /**
-     * Given the {@link BundleType#getName() name of a bundle type}, this will return the stateful plugin component
-     * that manages bundles of that type.
+     * Given the {@link BundleType#getName() name of a bundle type}, this will parse the given recipe by asking the
+     * bundle plugin that can parse a recipe of that bundle type.
      * 
-     * @param bundleTypeName
+     * @param bundleTypeName essentially identifies the kind of recipe that is to be parsed
+     * @param recipe the recipe to parse
      *
-     * @return the plugin component object that will manage bundles of the named bundle type; <code>null</code> if there is no plugin
-     *         that can support the given bundle type
+     * @return the results of the parse
+     * 
+     * @throws Exception if the recipe could not be parsed successfully
      */
-    public BundleServerPluginFacet getBundleServerPluginFacet(String bundleTypeName) {
+    public RecipeParseResults parseRecipe(String bundleTypeName, String recipe) throws Exception {
+
         if (bundleTypeName == null) {
             throw new IllegalArgumentException("bundleTypeName == null");
         }
+        if (recipe == null) {
+            throw new IllegalArgumentException("recipe == null");
+        }
 
+        // find the plugin environment for the bundle plugin of the given type
+        ServerPluginEnvironment pluginEnv = null;
         for (ServerPluginEnvironment env : getPluginEnvironments()) {
             BundlePluginDescriptorType descriptor = (BundlePluginDescriptorType) env.getPluginDescriptor();
             if (bundleTypeName.equals(descriptor.getBundle().getType())) {
-                ServerPluginComponent component = getServerPluginComponent(env.getPluginKey().getPluginName());
-                // we know this cast will work because our loadPlugin ensured that this component implements this interface
-                return (BundleServerPluginFacet) component;
+                pluginEnv = env;
+                break;
             }
         }
 
-        return null;
+        if (pluginEnv == null) {
+            throw new IllegalArgumentException("Bundle type [" + bundleTypeName + "] is not known to the system");
+        }
+
+        // get the facet and call the parse method in the appropriate classloader
+        String pluginName = pluginEnv.getPluginKey().getPluginName();
+        ServerPluginComponent component = getServerPluginComponent(pluginName);
+        BundleServerPluginFacet facet = (BundleServerPluginFacet) component; // we know this cast will work because our loadPlugin ensured so
+        getLog().debug("Bundle server plugin [" + pluginName + "] is parsing a bundle recipe");
+        ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(pluginEnv.getPluginClassLoader());
+            RecipeParseResults results = facet.parseRecipe(recipe);
+            return results;
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+        }
     }
 }

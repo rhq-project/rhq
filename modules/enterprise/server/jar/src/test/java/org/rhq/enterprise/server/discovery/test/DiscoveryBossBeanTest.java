@@ -22,14 +22,19 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Random;
+
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.persistence.EntityManager;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 import org.jboss.mx.util.MBeanServerLocator;
-import org.rhq.core.domain.discovery.InventoryReport;
+
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -90,6 +95,11 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             server.addChildResource(service1);
             server.addChildResource(service2);
 
+            platform.setUuid("" + new Random().nextInt());
+            server.setUuid("" + new Random().nextInt());
+            service1.setUuid("" + new Random().nextInt());
+            service2.setUuid("" + new Random().nextInt());
+
             inventoryReport.addAddedRoot(platform);
 
             ResourceSyncInfo syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
@@ -111,6 +121,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             // First just submit the platform
             InventoryReport inventoryReport = new InventoryReport(agent);
             Resource platform = new Resource("alpha", "platform", platformType);
+            platform.setUuid("" + new Random().nextInt());
             inventoryReport.addAddedRoot(platform);
             ResourceSyncInfo syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
             assert syncInfo != null;
@@ -125,6 +136,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             Resource service2 = new Resource("delta", "service 2", serviceType2);
             server.addChildResource(service1);
             server.addChildResource(service2);
+
+            server.setUuid("" + new Random().nextInt());
+            service1.setUuid("" + new Random().nextInt());
+            service2.setUuid("" + new Random().nextInt());
 
             inventoryReport.addAddedRoot(server);
 

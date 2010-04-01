@@ -54,8 +54,6 @@ public class EventCriteria extends Criteria {
     private PageOrdering sortSeverity;
 
     public EventCriteria() {
-        super();
-
         filterOverrides.put("sourceName", "source.eventDefinition.name like ?");
         filterOverrides.put("startTime", "timestamp >= ?");
         filterOverrides.put("endTime", "timestamp <= ?");
@@ -77,7 +75,8 @@ public class EventCriteria extends Criteria {
             + "   WHERE parent.id = ? )");
     }
 
-    public Class<Event> getPersistentClass() {
+    @Override
+    public Class getPersistentClass() {
         return Event.class;
     }
 

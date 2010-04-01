@@ -25,8 +25,8 @@ package org.rhq.core.domain.criteria;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.auth.Subject;
 
 /**
  * @author Joseph Marques
@@ -59,10 +59,10 @@ public class SubjectCriteria extends Criteria {
     private PageOrdering sortDepartment;
 
     public SubjectCriteria() {
-        super();
     }
 
-    public Class<Subject> getPersistentClass() {
+    @Override
+    public Class getPersistentClass() {
         return Subject.class;
     }
 

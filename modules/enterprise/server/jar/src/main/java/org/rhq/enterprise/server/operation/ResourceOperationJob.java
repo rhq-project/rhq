@@ -25,6 +25,7 @@ import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -119,7 +120,7 @@ public class ResourceOperationJob extends OperationJob {
                 resource.getId(), schedule.getOperationName(), schedule.getParameters());
         } catch (Exception e) {
             // failed to even send to the agent, immediately mark the job as failed
-            resourceHistory.setErrorMessageFromThrowable(e);
+            resourceHistory.setErrorMessage(ThrowableUtil.getStackAsString(e));
             operationManager.updateOperationHistory(getUserWithSession(schedule.getSubject(), true), resourceHistory);
             operationManager.checkForCompletedGroupOperation(resourceHistory.getId());
             throw e;

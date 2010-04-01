@@ -44,8 +44,6 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 public class CallTimeData implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private static final Log LOG = LogFactory.getLog(CallTimeData.class);
-
     private int scheduleId;
     private Map<String, CallTimeDataValue> values = new HashMap<String, CallTimeDataValue>();
 
@@ -89,8 +87,10 @@ public class CallTimeData implements Serializable {
     Date beginTime, @NotNull
     Date endTime, double minimum, double maximum, double total, long count) {
         if (count == 0) {
+            /* TODO: GWT
             LOG.warn("Plugin attempted to add aggregated call data with a call count of 0 for destination '"
                 + destination + "' - data will not be added.");
+                */
             return;
         }
 
@@ -123,8 +123,10 @@ public class CallTimeData implements Serializable {
         }
 
         if (destination.length() > CallTimeDataKey.DESTINATION_MAX_LENGTH) {
+            /*  TODO: GWT
             LOG.warn("Call destination is longer than the maximum length (" + CallTimeDataKey.DESTINATION_MAX_LENGTH
                 + " characters) - truncating it to " + CallTimeDataKey.DESTINATION_MAX_LENGTH + " characters...");
+            */
             destination = destination.substring(0, CallTimeDataKey.DESTINATION_MAX_LENGTH);
         }
 

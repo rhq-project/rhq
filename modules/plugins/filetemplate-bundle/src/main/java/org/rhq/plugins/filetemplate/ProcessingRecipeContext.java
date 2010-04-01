@@ -78,14 +78,14 @@ public class ProcessingRecipeContext extends RecipeContext {
                 throw new RuntimeException("Failed to unbundle file [" + pe + "]: " + results);
             }
             // existingFile.delete(); WOULD WE WANT TO REMOVE THE COMPRESSED FILE?
-            log.debug("bundle deploy: unzipped " + existingFile + " to " + directory);
+            log.debug("bundle deploy: unzipped [" + existingFile + "] to [" + directory + "]");
         } else {
             // not a zipped format - just move the file to the directory as-is
             File newFile = new File(directory, filename);
             if (!existingFile.renameTo(newFile)) {
                 throw new RuntimeException("Failed to move [" + existingFile + "] to [" + newFile + "]");
             }
-            log.debug("bundle deploy: renamed " + existingFile + " to " + newFile);
+            log.debug("bundle deploy: renamed [" + existingFile + "] to [" + newFile + "]");
         }
     }
 
@@ -100,7 +100,7 @@ public class ProcessingRecipeContext extends RecipeContext {
             destinationFile.getParentFile().mkdirs();
             FileUtil.copyFile(sourceFile, destinationFile);
 
-            log.debug("bundle file: copied " + sourceFile + " to " + destinationFile);
+            log.debug("bundle file: copied [" + sourceFile + "] to [" + destinationFile + "]");
         } catch (Exception e) {
             throw new RuntimeException("Failed to copy file [" + sourceFile + "] to [" + destinationFile + "]", e);
         }
@@ -142,7 +142,7 @@ public class ProcessingRecipeContext extends RecipeContext {
                 throw new RuntimeException("Failed to rename realized tmp file [" + realizedTmpFile + "]");
             }
 
-            log.debug("bundle realize file: renamed realized" + realizedTmpFile + " to " + trueFile);
+            log.debug("bundle realize file: renamed realized [" + realizedTmpFile + "] to [" + trueFile + "]");
         } catch (Exception e) {
             throw new RuntimeException("Cannot realize file [" + file + "]", e);
         } finally {

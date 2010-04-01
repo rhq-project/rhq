@@ -36,6 +36,7 @@ import org.apache.struts.util.MessageResources;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -51,7 +52,6 @@ import org.rhq.enterprise.gui.legacy.util.HubUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.resource.InventorySummary;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**

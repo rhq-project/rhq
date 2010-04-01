@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -347,8 +348,10 @@ public class MeasurementTest extends AbstractEJB3Test {
         ResourceType resourceType = new ResourceType("fake platform", "fake plugin", ResourceCategory.PLATFORM, null);
         em.persist(resourceType);
         Resource platform = new Resource("org.jboss.on.TestPlatfor", "Fake Platform", resourceType);
+        platform.setUuid("" + new Random().nextInt());
         em.persist(platform);
         Resource platform2 = new Resource("org.jboss.on.TestPlatform2", "Fake Platform2", resourceType);
+        platform2.setUuid("" + new Random().nextInt());
         em.persist(platform2);
 
         MeasurementDefinition md = new MeasurementDefinition(resourceType, "Heiko");

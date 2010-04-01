@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.resource.test;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -449,6 +450,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
 
                 // Create parent resource off of which to hang created resources
                 parentResource = new Resource("parent" + System.currentTimeMillis(), "name", parentResourceType);
+                parentResource.setUuid("" + new Random().nextInt());
                 em.persist(parentResource);
             } catch (Exception e) {
                 System.out.println(e);
@@ -512,6 +514,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         try {
             try {
                 resource = new Resource("child" + System.currentTimeMillis(), "name", parentResourceType);
+                resource.setUuid("" + new Random().nextInt());
                 resource.setParentResource(parentResource);
                 resource.setInventoryStatus(InventoryStatus.COMMITTED);
                 em.persist(resource);

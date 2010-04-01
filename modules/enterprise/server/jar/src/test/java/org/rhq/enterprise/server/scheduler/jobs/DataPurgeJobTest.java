@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -423,7 +424,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         Alert a = new Alert(ad, timestamp);
         em.persist(a);
 
-        AlertNotificationLog anl = new AlertNotificationLog(a,"dummy");
+        AlertNotificationLog anl = new AlertNotificationLog(a, "dummy");
         em.persist(anl);
 
         AlertCondition ac = ad.getConditions().iterator().next();
@@ -454,6 +455,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 em.flush();
 
                 resource = new Resource("reskey" + now, "resname", resourceType);
+                resource.setUuid("" + new Random().nextInt());
                 resource.setAgent(agent);
                 em.persist(resource);
 

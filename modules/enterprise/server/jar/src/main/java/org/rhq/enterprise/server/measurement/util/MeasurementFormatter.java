@@ -21,7 +21,7 @@ package org.rhq.enterprise.server.measurement.util;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.core.server.MeasurementConverter;
 import org.rhq.enterprise.server.legacy.measurement.MeasurementConstants;
 
 public class MeasurementFormatter {

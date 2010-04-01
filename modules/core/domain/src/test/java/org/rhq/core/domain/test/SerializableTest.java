@@ -44,7 +44,6 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
@@ -73,7 +72,7 @@ public class SerializableTest {
     public void testSerialization() {
         List<Serializable> objects = new ArrayList<Serializable>();
         Serializable[] simpleObjects = new Serializable[] { new AvailabilityReport(), new PackageType(),
-            new Architecture(), new Repo(), new ContentDiscoveryReport(), new ContentServiceRequest(),
+            new Architecture(), new Repo(), new ContentServiceRequest(),
             new ContentSource(), new ContentSourceType(), new InstalledPackage(), new Package(),
             new PackageInstallationStep(), new PackageType(), new PackageVersion() };
         objects.addAll(Arrays.asList(simpleObjects));

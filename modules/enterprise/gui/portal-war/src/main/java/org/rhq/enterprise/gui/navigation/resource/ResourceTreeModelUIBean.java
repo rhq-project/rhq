@@ -196,7 +196,7 @@ public class ResourceTreeModelUIBean {
             AutoGroupComposite compositeParent = (AutoGroupComposite) parentNode.getData();
 
             Map<Object, List<Resource>> children = new HashMap<Object, List<Resource>>();
-            log.debug("composite parent" + compositeParent);
+            log.trace("composite parent" + compositeParent);
             if (compositeParent != null) {
                 for (Resource res : compositeParent.getParentResource().getChildResources()) {
                     if (compositeParent.getSubcategory() != null) {

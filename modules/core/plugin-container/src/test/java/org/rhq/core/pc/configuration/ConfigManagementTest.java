@@ -23,6 +23,16 @@
 
 package org.rhq.core.pc.configuration;
 
+import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+import static org.testng.Assert.assertEquals;
+
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+
+import org.testng.annotations.BeforeMethod;
+
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -31,16 +41,8 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.test.JMockTest;
-import org.testng.annotations.BeforeMethod;
-
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-
-import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
-import static org.rhq.test.AssertUtils.assertPropertiesMatch;
-import static org.testng.Assert.assertEquals;
 
 public class ConfigManagementTest extends JMockTest {
 
@@ -77,7 +79,9 @@ public class ConfigManagementTest extends JMockTest {
 
     RawConfiguration createRawConfiguration(String path) {
         RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents(new String(randomBytes()));
+        String contents = new String(randomBytes());
+        String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+        rawConfig.setContents(contents, sha256);
         rawConfig.setPath(path);
 
         return rawConfig;
@@ -98,25 +102,20 @@ public class ConfigManagementTest extends JMockTest {
     }
 
     void assertRawsLoaded(Set<RawConfiguration> expectedRaws, Configuration actualConfig) {
-        assertCollectionEqualsNoOrder(
-            expectedRaws,
-            actualConfig.getRawConfigurations(),
-            "The raw configs were not loaded correctly."
-        );
+        assertCollectionEqualsNoOrder(expectedRaws, actualConfig.getRawConfigurations(),
+            "The raw configs were not loaded correctly.");
     }
 
     void assertStructuredLoaded(Configuration expectedConfig, Configuration actualConfig) {
-        assertCollectionEqualsNoOrder(
-            expectedConfig.getProperties(),
-            actualConfig.getProperties(),
-            "The structured configuration was not loaded correctly."
-        );
+        assertCollectionEqualsNoOrder(expectedConfig.getProperties(), actualConfig.getProperties(),
+            "The structured configuration was not loaded correctly.");
     }
 
     void assertNotesSetToDefault(Configuration loadedConfig) {
         String expectedNotes = "Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId;
 
-        assertEquals(loadedConfig.getNotes(), expectedNotes, "The notes property should be set to a default when it is not already initialized.");
+        assertEquals(loadedConfig.getNotes(), expectedNotes,
+            "The notes property should be set to a default when it is not already initialized.");
     }
 
     void assertConfigurationUpdateResponseMatches(ConfigurationUpdateResponse expected,

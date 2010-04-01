@@ -36,7 +36,7 @@ import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.CoreServerServiceImpl;
 

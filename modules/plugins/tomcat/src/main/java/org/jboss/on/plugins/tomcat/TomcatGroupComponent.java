@@ -28,12 +28,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
@@ -41,7 +43,8 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * 
  * @author Jay Shaughnessy
  */
-public class TomcatGroupComponent extends MBeanResourceComponent<TomcatUserDatabaseComponent> implements DeleteResourceFacet {
+public class TomcatGroupComponent extends MBeanResourceComponent<TomcatUserDatabaseComponent> implements
+    DeleteResourceFacet {
 
     public static final String CONFIG_DESCRIPTION = "description";
     public static final String CONFIG_GROUP_NAME = "groupname";
@@ -116,7 +119,7 @@ public class TomcatGroupComponent extends MBeanResourceComponent<TomcatUserDatab
         try {
             consolidateSettings(newRoles, currentRoles, "addRole", "removeRole", "role");
         } catch (Exception e) {
-            newRoles.setErrorMessageFromThrowable(e);
+            newRoles.setErrorMessage(ThrowableUtil.getStackAsString(e));
             report.setErrorMessage("Failed setting resource configuration - see property error messages for details");
             log.info("Failure setting Tomcat User Roles configuration value", e);
             return;
@@ -131,7 +134,8 @@ public class TomcatGroupComponent extends MBeanResourceComponent<TomcatUserDatab
         }
     }
 
-    private void consolidateSettings(PropertySimple newVals, PropertySimple currentVals, String addOp, String removeOp, String arg) throws Exception {
+    private void consolidateSettings(PropertySimple newVals, PropertySimple currentVals, String addOp, String removeOp,
+        String arg) throws Exception {
 
         // add new values not in the current settings
         String currentValsLongString = currentVals.getStringValue();
@@ -149,7 +153,8 @@ public class TomcatGroupComponent extends MBeanResourceComponent<TomcatUserDatab
                     try {
                         invokeOperation(addOp, opConfig);
                     } catch (Exception e) {
-                        throw new IllegalArgumentException("Could not add " + arg + "=" + newVal + ". Please check spelling/existence.");
+                        throw new IllegalArgumentException("Could not add " + arg + "=" + newVal
+                            + ". Please check spelling/existence.");
                     }
                 }
             }
@@ -164,7 +169,8 @@ public class TomcatGroupComponent extends MBeanResourceComponent<TomcatUserDatab
                     try {
                         invokeOperation(removeOp, opConfig);
                     } catch (Exception e) {
-                        throw new IllegalArgumentException("Could not remove " + arg + "=" + currentVal + ". Please check spelling/existence.");
+                        throw new IllegalArgumentException("Could not remove " + arg + "=" + currentVal
+                            + ". Please check spelling/existence.");
                     }
                 }
             }

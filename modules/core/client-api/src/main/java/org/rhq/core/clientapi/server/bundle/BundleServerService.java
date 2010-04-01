@@ -30,6 +30,7 @@ import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.content.PackageVersion;
 
 /**
@@ -42,8 +43,6 @@ public interface BundleServerService {
 
     @Asynchronous(guaranteedDelivery = true)
     void addDeploymentHistory(int bundleDeploymentId, BundleDeploymentHistory history);
-
-    List<PackageVersion> getAllBundleVersionPackageVersions(int bundleVersionId);
 
     /**
      * Requests that the server download and stream the bits for the specified package version.
@@ -60,4 +59,15 @@ public interface BundleServerService {
     @Timeout(45 * 60 * 1000L)
     @LimitedConcurrency(ContentServerService.CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
     long downloadPackageBits(PackageVersion packageVersion, OutputStream outputStream);
+
+    List<PackageVersion> getAllBundleVersionPackageVersions(int bundleVersionId);
+
+    /**
+     * Set the (completion) status of a deployment.  If required, detailed messages should be provided via
+     * addDeploymentHistory(). Deployments are automatically initialized to IN_PROGRESS.
+     * @param bundleDeploymentId
+     * @param status
+     */
+    @Asynchronous(guaranteedDelivery = true)
+    void setBundleDeploymentStatus(int bundleDeploymentId, BundleDeploymentStatus status);
 }

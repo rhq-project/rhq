@@ -22,27 +22,21 @@
  */
 package org.rhq.core.domain.configuration;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
-import org.jetbrains.annotations.NotNull;
-
-import org.rhq.core.domain.util.serial.HibernateUtil;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Holds an indexed list of child {@link Property properties}. This can hold any number of properties, including
@@ -159,25 +153,26 @@ public class PropertyList extends Property {
         property.setParentList(this);
     }
 
-    /**
+   /* TODO: GWT
+   * *//**
      * @see org.rhq.core.domain.configuration.Property#writeExternal(java.io.ObjectOutput)
-     */
+     *//*
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         out.writeObject(HibernateUtil.safeList(list));
     }
 
-    /**
+    *//**
      * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
-     */
+     *//*
     @Override
     @SuppressWarnings("unchecked")
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         list = (List<Property>) in.readObject();
     }
-
+*/
     /**
      * NOTE: An PropertyList containing a null list is considered equal to a PropertyList containing an empty list.
      */
@@ -232,7 +227,7 @@ public class PropertyList extends Property {
      * This listener runs after jaxb unmarshalling and reconnects children properties to their parent list (as we don't
      * send them avoiding cyclic references).
      */
-    public void afterUnmarshal(Unmarshaller u, Object parent) {
+    public void afterUnmarshal(Object u, Object parent) {
         for (Property p : this.list) {
             p.setParentList(this);
         }

@@ -51,6 +51,8 @@ import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.GroupDefinition;
@@ -59,12 +61,13 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -81,6 +84,8 @@ import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionE
 import org.rhq.enterprise.server.resource.group.definition.framework.InvalidExpressionException;
 import org.rhq.enterprise.server.resource.group.definition.mbean.GroupDefinitionRecalculationThreadMonitor;
 import org.rhq.enterprise.server.resource.group.definition.mbean.GroupDefinitionRecalculationThreadMonitorMBean;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
@@ -553,6 +558,20 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         } else {
             return new PageList<GroupDefinition>(pc);
         }
+    }
+
+    public PageList<GroupDefinition> findGroupDefinitionsByCriteria(Subject subject, ResourceGroupDefinitionCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            if (criteria.isInventoryManagerRequired()) {
+                throw new PermissionException("Subject [" + subject.getName()
+                    + "] requires InventoryManager permission for requested query criteria.");
+            }
+        }
+
+        CriteriaQueryRunner<GroupDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+
+        return queryRunner.execute();
     }
 
     public int getGroupDefinitionCount(Subject subject) {

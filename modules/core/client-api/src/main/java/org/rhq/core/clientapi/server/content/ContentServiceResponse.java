@@ -25,12 +25,10 @@ package org.rhq.core.clientapi.server.content;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.util.Set;
-import org.rhq.core.domain.content.ContentRequestStatus;
-import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
 
-/**
+import org.rhq.core.domain.content.ContentRequestStatus;
+
+ /**
  * Server/agent communications object to convey the result of a request for a content subsystem operation.
  *
  * @author Jason Dobies

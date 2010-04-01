@@ -24,7 +24,7 @@ import java.util.Set;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.rhq.core.domain.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.pc.PluginContainer;

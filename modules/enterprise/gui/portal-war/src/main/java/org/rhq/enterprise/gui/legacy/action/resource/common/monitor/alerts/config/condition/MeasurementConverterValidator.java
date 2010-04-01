@@ -29,7 +29,8 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.core.server.MeasurementConverter;
+import org.rhq.core.server.MeasurementParser;
 import org.rhq.core.util.NumberUtil;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ConditionBean;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
@@ -52,7 +53,7 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
         toCondition.setMeasurementDefinition(definition);
 
         if (fromBean.getThresholdType().equals(TYPE_ABS)) {
-            MeasurementNumericValueAndUnits valueAndUnits = MeasurementConverter.parse(fromBean.getAbsoluteValue(),
+            MeasurementNumericValueAndUnits valueAndUnits = MeasurementParser.parse(fromBean.getAbsoluteValue(),
                 definition.getUnits());
 
             toCondition.setCategory(AlertConditionCategory.THRESHOLD);
@@ -60,7 +61,7 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
             toCondition.setComparator(fromBean.getAbsoluteComparator());
 
         } else if (fromBean.getThresholdType().equals(TYPE_PERC)) {
-            MeasurementNumericValueAndUnits threshold = MeasurementConverter.parse(fromBean.getPercentage(),
+            MeasurementNumericValueAndUnits threshold = MeasurementParser.parse(fromBean.getPercentage(),
                 MeasurementUnits.PERCENTAGE);
 
             toCondition.setCategory(AlertConditionCategory.BASELINE);

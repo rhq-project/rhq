@@ -23,8 +23,8 @@ import org.hibernate.stat.Statistics;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.core.domain.util.PersistenceUtility;
 
 /**
  * A utility to track down how many round trips hibernate may be doing for a given set of code.

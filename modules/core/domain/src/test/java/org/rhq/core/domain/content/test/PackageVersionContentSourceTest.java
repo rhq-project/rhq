@@ -23,6 +23,7 @@
 package org.rhq.core.domain.content.test;
 
 import java.util.List;
+import java.util.Random;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -64,6 +65,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
 
             ResourceType rt = new ResourceType("testPVCSResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
             Resource resource = new Resource("testPVCSResource", "testPVCSResource", rt);
+            resource.setUuid("" + new Random().nextInt());
             Architecture arch = new Architecture("testPVCSInsertArch");
             PackageType pt = new PackageType("testPVCSInsertPT", resource.getResourceType());
             Package pkg = new Package("testPVCSInsertPackage", pt);
@@ -178,6 +180,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
 
             ResourceType rt = new ResourceType("testPVCSResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
             Resource resource = new Resource("testPVCSResource", "testPVCSResource", rt);
+            resource.setUuid("" + new Random().nextInt());
             Architecture arch = new Architecture("testPVCSInsertArch");
             PackageType pt = new PackageType("testPVCSInsertPT", resource.getResourceType());
             Package pkg = new Package("testPVCSInsertPackage", pt);
@@ -233,6 +236,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
 
             ResourceType rt = new ResourceType("testPVCSResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
             Resource resource = new Resource("testPVCSResource", "testPVCSResource", rt);
+            resource.setUuid("" + new Random().nextInt());
             Architecture arch = new Architecture("testPVCSInsertArch");
             PackageType pt = new PackageType("testPVCSInsertPT", resource.getResourceType());
             Package pkg = new Package("testPVCSInsertPackage", pt);

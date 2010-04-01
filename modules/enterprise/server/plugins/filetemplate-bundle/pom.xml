@@ -101,6 +101,12 @@
                                     <version>${project.version}</version>
                                 </artifactItem>
 
+                                <artifactItem>
+                                    <groupId>gnu-getopt</groupId>
+                                    <artifactId>getopt</artifactId>
+                                    <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+                                </artifactItem>
+
                             </artifactItems>
                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                         </configuration>

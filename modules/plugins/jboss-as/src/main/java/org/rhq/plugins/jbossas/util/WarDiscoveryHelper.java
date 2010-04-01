@@ -140,12 +140,7 @@ public class WarDiscoveryHelper {
                         key += ",vhost=" + vhost;
 
                         Configuration pluginConfigClone;
-                        try {
-                            pluginConfigClone = discoResDetail.getPluginConfiguration().clone();
-                        } catch (CloneNotSupportedException e) {
-                            LOG.error("Failed to clone plugin config for WAR " + discoResDetail + ".", e);
-                            continue;
-                        }
+                        pluginConfigClone = discoResDetail.getPluginConfiguration().deepCopy();                        
 
                         String resourceName = baseResourceName + " (" + webModuleName + ")";
                         String resourceDescription = baseResourceDescription + " (" + webModuleName + ")";

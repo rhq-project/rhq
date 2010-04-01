@@ -22,16 +22,12 @@
  */
 package org.rhq.core.domain.resource;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -55,7 +51,6 @@ import javax.persistence.PrePersist;
 import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -80,9 +75,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.EntitySerializer;
 import org.rhq.core.domain.util.Summary;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 /**
  * Represents a JON managed resource (i.e. a platform, server, or service).
@@ -729,7 +722,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 @Table(name = Resource.TABLE_NAME)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
-public class Resource implements Comparable<Resource>, Externalizable {
+public class Resource implements Comparable<Resource>, Serializable {
     public static final String TABLE_NAME = "RHQ_RESOURCE";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT = "Resource.findProblemResourcesAlert";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN = "Resource.findProblemResourcesAlert_admin";
@@ -858,6 +851,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     private static final String NAME_CONCAT_SEPARATOR = "~!@#)))";
 
+    private static final int UUID_LENGTH = 36;
+
     /**
      * Helper for {@link #NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL}.
      * We need to guard against concatenation with a NULL value which
@@ -946,8 +941,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @Summary(index = 0)
     private int id;
 
-    @Column(name = "UUID")
-    private String uuid = UUID.randomUUID().toString();
+    @Column(name = "UUID", length = UUID_LENGTH)
+    // db type is CHAR, this string will thus always be of this length
+    private String uuid;
 
     @Column(name = "RESOURCE_KEY")
     private String resourceKey;
@@ -988,6 +984,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
+    // TODO GH: It would be prefferable for this to be lazy, but will need cleanup throughout the app (fetch = FetchType.LAZY)
     @Summary(index = 4)
     private ResourceType resourceType;
 
@@ -1103,7 +1100,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     //    private List<BundleDeployment> deployments = new ArrayList<BundleDeployment>();
 
     public Resource() {
-        this.uuid = UUID.randomUUID().toString();
+
     }
 
     /**
@@ -1144,6 +1141,17 @@ public class Resource implements Comparable<Resource>, Externalizable {
     }
 
     public void setUuid(String uuid) {
+        if (uuid != null && uuid.length() != UUID_LENGTH) {
+            if (uuid.length() > UUID_LENGTH) {
+                throw new IllegalArgumentException("UUIDs must not be longer than [" + UUID_LENGTH + "]");
+            } else {
+                // must be less than UUID_LENGTH, pad it with spaces - usually this only happens in tests
+                int spacesNeeded = UUID_LENGTH - uuid.length();
+                for (int i = 0; i < spacesNeeded; i++) {
+                    uuid = uuid + ' ';
+                }
+            }
+        }
         this.uuid = uuid;
     }
 
@@ -1548,7 +1556,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
      *
      * @return the mapping entities
      *
-     * @see    #getResources()
+     * @see    #getResourceRepos()
      */
     public Set<ResourceRepo> getResourceRepos() {
         return resourceRepos;
@@ -1697,7 +1705,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder();
-        buffer.append(Resource.class.getSimpleName()).append("[");
+        buffer.append("Resource").append("[");
         buffer.append("id=").append(this.id);
         String typeName = (this.resourceType != null) ? this.resourceType.getName() : "<null>";
         buffer.append(", type=").append(typeName);
@@ -1720,171 +1728,171 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return buffer.toString();
     }
 
-    public void writeExternal(ObjectOutput out) throws IOException {
-        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
-        out.writeChar(strategy.id());
+    /*  public void writeExternal(ObjectOutput out) throws IOException {
+          ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+          out.writeChar(strategy.id());
 
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
-            writeExternalRemote(out);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
-            EntitySerializer.writeExternalRemote(this, out);
-        } else {
-            writeExternalAgent(out);
-        }
-    }
+          if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
+              writeExternalRemote(out);
+          } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
+              EntitySerializer.writeExternalRemote(this, out);
+          } else {
+              writeExternalAgent(out);
+          }
+      }
 
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        char c = in.readChar();
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
-            readExternalRemote(in);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
-            EntitySerializer.readExternalRemote(this, in);
-        } else {
-            readExternalAgent(in);
-        }
-    }
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+          char c = in.readChar();
+          if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
+              readExternalRemote(in);
+          } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
+              EntitySerializer.readExternalRemote(this, in);
+          } else {
+              readExternalAgent(in);
+          }
+      }
 
-    public void writeExternalAgent(ObjectOutput out) throws IOException {
-        // Note that a Resource may have been constructed with id only. Check for uninitialized fields. 
-        out.writeInt(id);
-        out.writeUTF(uuid);
-        out.writeUTF((null == resourceKey) ? "" : resourceKey);
-        out.writeUTF((null == name) ? "" : name);
-        out.writeInt(inventoryStatus.ordinal());
-        out.writeUTF((null == version) ? "" : version);
-        out.writeUTF((null == description) ? "" : description);
-        out.writeLong(ctime);
-        out.writeLong(mtime);
-        out.writeLong(itime);
+      public void writeExternalAgent(ObjectOutput out) throws IOException {
+          // Note that a Resource may have been constructed with id only. Check for uninitialized fields. 
+          out.writeInt(id);
+          out.writeUTF(uuid);
+          out.writeUTF((null == resourceKey) ? "" : resourceKey);
+          out.writeUTF((null == name) ? "" : name);
+          out.writeInt(inventoryStatus.ordinal());
+          out.writeUTF((null == version) ? "" : version);
+          out.writeUTF((null == description) ? "" : description);
+          out.writeLong(ctime);
+          out.writeLong(mtime);
+          out.writeLong(itime);
 
-        //Subject modifiedBy;
-        //Subject owner;
-        //String location;
-        out.writeObject(parentResource);
+          //Subject modifiedBy;
+          //Subject owner;
+          //String location;
+          out.writeObject(parentResource);
 
-        if (null == resourceType) {
-            out.writeUTF("");
-            out.writeUTF("");
-            out.writeObject(null);
-        } else {
-            out.writeUTF(resourceType.getName());
-            out.writeUTF(resourceType.getPlugin());
-            out.writeObject(resourceType.getCategory());
-        }
+          if (null == resourceType) {
+              out.writeUTF("");
+              out.writeUTF("");
+              out.writeObject(null);
+          } else {
+              out.writeUTF(resourceType.getName());
+              out.writeUTF(resourceType.getPlugin());
+              out.writeObject(resourceType.getCategory());
+          }
 
-        // We make a copy of the childResources Set for two reasons: 1) to avoid calling writeObject() on the Set if it
-        // happens to be a Hibernate proxy (which would only ever be true on the Server side), and 2) to reduce the
-        // chances of a ConcurrentModificationException occurring in some other thread that is iterating the original Set.
-        out.writeObject((null == childResources) ? null : new LinkedHashSet<Resource>(childResources));
+          // We make a copy of the childResources Set for two reasons: 1) to avoid calling writeObject() on the Set if it
+          // happens to be a Hibernate proxy (which would only ever be true on the Server side), and 2) to reduce the
+          // chances of a ConcurrentModificationException occurring in some other thread that is iterating the original Set.
+          out.writeObject((null == childResources) ? null : new LinkedHashSet<Resource>(childResources));
 
-        // Don't write plugin configs out if they are a lazy proxy
-        if (pluginConfiguration != null && pluginConfiguration.getClass().getName().contains("hibernate")) {
-            out.writeObject(null);
-        } else {
-            out.writeObject(pluginConfiguration);
-        }
+          // Don't write plugin configs out if they are a lazy proxy
+          if (pluginConfiguration != null && pluginConfiguration.getClass().getName().contains("hibernate")) {
+              out.writeObject(null);
+          } else {
+              out.writeObject(pluginConfiguration);
+          }
 
-        //Set<MeasurementSchedule> schedules = new LinkedHashSet<MeasurementSchedule>();
-        //Agent agent;
-        //Set<ResourceGroup> resourceGroups = new HashSet<ResourceGroup>();
-    }
+          //Set<MeasurementSchedule> schedules = new LinkedHashSet<MeasurementSchedule>();
+          //Agent agent;
+          //Set<ResourceGroup> resourceGroups = new HashSet<ResourceGroup>();
+      }
 
-    @SuppressWarnings("unchecked")
-    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
-        id = in.readInt();
-        uuid = in.readUTF();
-        resourceKey = in.readUTF();
-        name = in.readUTF();
-        inventoryStatus = InventoryStatus.values()[in.readInt()];
-        version = in.readUTF();
-        description = in.readUTF();
-        ctime = in.readLong();
-        mtime = in.readLong();
-        itime = in.readLong();
+      @SuppressWarnings("unchecked")
+      public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
+          id = in.readInt();
+          uuid = in.readUTF();
+          resourceKey = in.readUTF();
+          name = in.readUTF();
+          inventoryStatus = InventoryStatus.values()[in.readInt()];
+          version = in.readUTF();
+          description = in.readUTF();
+          ctime = in.readLong();
+          mtime = in.readLong();
+          itime = in.readLong();
 
-        //Subject modifiedBy;
-        //Subject owner;
-        //String location;
-        parentResource = (Resource) in.readObject();
-        resourceType = new ResourceType(in.readUTF(), in.readUTF(), (ResourceCategory) in.readObject(),
-            (parentResource != null) ? parentResource.getResourceType() : null);
-        childResources = (Set<Resource>) in.readObject();
+          //Subject modifiedBy;
+          //Subject owner;
+          //String location;
+          parentResource = (Resource) in.readObject();
+          resourceType = new ResourceType(in.readUTF(), in.readUTF(), (ResourceCategory) in.readObject(),
+              (parentResource != null) ? parentResource.getResourceType() : null);
+          childResources = (Set<Resource>) in.readObject();
 
-        pluginConfiguration = (Configuration) in.readObject();
-    }
+          pluginConfiguration = (Configuration) in.readObject();
+      }
 
-    // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
-    public void writeExternalRemote(ObjectOutput out) throws IOException {
-        // Note that a Resource may have been constructed with id only. Check for uninitialized fields. 
-        out.writeInt(id);
-        out.writeUTF(uuid);
-        out.writeUTF(resourceKey);
-        out.writeUTF(name);
-        out.writeInt(inventoryStatus.ordinal());
-        out.writeUTF((null == version) ? "" : version);
-        out.writeUTF((null == description) ? "" : description);
-        out.writeLong(ctime);
-        out.writeLong(mtime);
-        out.writeLong(itime);
-        // not supplied by remote: modifiedBy
-        out.writeUTF((null == location) ? "" : location);
-        out.writeObject(resourceType);
-        // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original
-        out.writeObject((null == childResources) ? null : new LinkedHashSet<Resource>(childResources));
-        out.writeObject(parentResource);
-        out.writeObject(resourceConfiguration);
-        out.writeObject(pluginConfiguration);
-        out.writeObject(agent);
-        // not supplied by remote: alertDefinitions        
-        // not supplied by remote: resourceConfigurationUpdates
-        // not supplied by remote: pluginConfigurationUpdates
-        // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original        
-        out.writeObject((null == implicitGroups) ? null : new LinkedHashSet<ResourceGroup>(implicitGroups));
-        // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original
-        out.writeObject((null == explicitGroups) ? null : new LinkedHashSet<ResourceGroup>(explicitGroups));
-        // not supplied by remote: contentServiceRequests
-        // not supplied by remote: createChildResourceRequests
-        // not supplied by remote: deleteResourceRequests
-        // not supplied by remote: operationHistories
-        // not supplied by remote: installedPackages
-        // not supplied by remote: installedPackageHistory
-        // not supplied by remote: resourceRepos
-        // not supplied by remote: schedules
-        out.writeObject(availability);
-        out.writeObject(currentAvailability);
-        out.writeObject(resourceErrors);
-        // not supplied by remote: eventSources        
-        out.writeObject(productVersion);
-    }
+      // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
+      public void writeExternalRemote(ObjectOutput out) throws IOException {
+          // Note that a Resource may have been constructed with id only. Check for uninitialized fields. 
+          out.writeInt(id);
+          out.writeUTF(uuid);
+          out.writeUTF(resourceKey);
+          out.writeUTF(name);
+          out.writeInt(inventoryStatus.ordinal());
+          out.writeUTF((null == version) ? "" : version);
+          out.writeUTF((null == description) ? "" : description);
+          out.writeLong(ctime);
+          out.writeLong(mtime);
+          out.writeLong(itime);
+          // not supplied by remote: modifiedBy
+          out.writeUTF((null == location) ? "" : location);
+          out.writeObject(resourceType);
+          // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original
+          out.writeObject((null == childResources) ? null : new LinkedHashSet<Resource>(childResources));
+          out.writeObject(parentResource);
+          out.writeObject(resourceConfiguration);
+          out.writeObject(pluginConfiguration);
+          out.writeObject(agent);
+          // not supplied by remote: alertDefinitions        
+          // not supplied by remote: resourceConfigurationUpdates
+          // not supplied by remote: pluginConfigurationUpdates
+          // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original        
+          out.writeObject((null == implicitGroups) ? null : new LinkedHashSet<ResourceGroup>(implicitGroups));
+          // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original
+          out.writeObject((null == explicitGroups) ? null : new LinkedHashSet<ResourceGroup>(explicitGroups));
+          // not supplied by remote: contentServiceRequests
+          // not supplied by remote: createChildResourceRequests
+          // not supplied by remote: deleteResourceRequests
+          // not supplied by remote: operationHistories
+          // not supplied by remote: installedPackages
+          // not supplied by remote: installedPackageHistory
+          // not supplied by remote: resourceRepos
+          // not supplied by remote: schedules
+          out.writeObject(availability);
+          out.writeObject(currentAvailability);
+          out.writeObject(resourceErrors);
+          // not supplied by remote: eventSources        
+          out.writeObject(productVersion);
+      }
 
-    @SuppressWarnings("unchecked")
-    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-        id = in.readInt();
-        uuid = in.readUTF();
-        resourceKey = in.readUTF();
-        name = in.readUTF();
-        inventoryStatus = InventoryStatus.values()[in.readInt()];
-        version = in.readUTF();
-        description = in.readUTF();
-        ctime = in.readLong();
-        mtime = in.readLong();
-        itime = in.readLong();
-        location = in.readUTF();
-        resourceType = (ResourceType) in.readObject();
-        childResources = (Set<Resource>) in.readObject();
-        parentResource = (Resource) in.readObject();
-        resourceConfiguration = (Configuration) in.readObject();
-        pluginConfiguration = (Configuration) in.readObject();
-        agent = (Agent) in.readObject();
-        implicitGroups = (Set<ResourceGroup>) in.readObject();
-        explicitGroups = (Set<ResourceGroup>) in.readObject();
-        availability = (List<Availability>) in.readObject();
-        currentAvailability = (ResourceAvailability) in.readObject();
-        resourceErrors = (List<ResourceError>) in.readObject();
-        productVersion = (ProductVersion) in.readObject();
-    }
+      @SuppressWarnings("unchecked")
+      public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
+          id = in.readInt();
+          uuid = in.readUTF();
+          resourceKey = in.readUTF();
+          name = in.readUTF();
+          inventoryStatus = InventoryStatus.values()[in.readInt()];
+          version = in.readUTF();
+          description = in.readUTF();
+          ctime = in.readLong();
+          mtime = in.readLong();
+          itime = in.readLong();
+          location = in.readUTF();
+          resourceType = (ResourceType) in.readObject();
+          childResources = (Set<Resource>) in.readObject();
+          parentResource = (Resource) in.readObject();
+          resourceConfiguration = (Configuration) in.readObject();
+          pluginConfiguration = (Configuration) in.readObject();
+          agent = (Agent) in.readObject();
+          implicitGroups = (Set<ResourceGroup>) in.readObject();
+          explicitGroups = (Set<ResourceGroup>) in.readObject();
+          availability = (List<Availability>) in.readObject();
+          currentAvailability = (ResourceAvailability) in.readObject();
+          resourceErrors = (List<ResourceError>) in.readObject();
+          productVersion = (ProductVersion) in.readObject();
+      }*/
 
-    public void afterUnmarshal(Unmarshaller u, Object parent) {
+    public void afterUnmarshal(Object u, Object parent) {
         this.parentResource = (Resource) parent;
     }
 

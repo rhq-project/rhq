@@ -42,7 +42,7 @@
 
    <dependencies>
 
-      <!-- Internal Deps -->
+       <!-- Internal Deps -->
 
       <dependency>
          <groupId>org.rhq</groupId>
@@ -580,6 +580,7 @@
    </profiles>
 
    <repositories>
+
       <repository>
          <id>java.net-m1-releases</id>
          <name>Java.net Maven1 Repository - for javax.faces, javax.el, com.sun.el, and com.sun.facelets releases</name>

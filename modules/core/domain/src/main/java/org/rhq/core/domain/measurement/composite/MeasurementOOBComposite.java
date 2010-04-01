@@ -18,11 +18,11 @@
  */
 package org.rhq.core.domain.measurement.composite;
 
-import java.io.Serializable;
-
+import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
+
+import java.io.Serializable;
 
 /**
  * Composite that holds information about an oob
@@ -163,8 +163,8 @@ public class MeasurementOOBComposite implements Serializable {
 
     public String getFormattedBaseband() {
 
-        String min = MeasurementConverter.format(blMin, units, true);
-        String max = MeasurementConverter.format(blMax, units, true);
+        String min = MeasurementConverterClient.format(blMin, units, true);
+        String max = MeasurementConverterClient.format(blMax, units, true);
 
         String result =  min + ", " + max ;
 
@@ -172,7 +172,7 @@ public class MeasurementOOBComposite implements Serializable {
     }
 
     public String getFormattedOutlier() {
-        return MeasurementConverter.format(outlier, units, true);
+        return MeasurementConverterClient.format(outlier, units, true);
     }
 
     @Override

@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.measurement.test;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -403,10 +404,12 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         em.persist(platformType);
 
         platform = new Resource("platform1", "testAutoBaseline Platform One", platformType);
+        platform.setUuid("" + new Random().nextInt());
         em.persist(platform);
         platform.setAgent(agent);
 
         platform2 = new Resource("platform2", "testAutoBaseline Platform Two", platformType);
+        platform2.setUuid("" + new Random().nextInt());
         // deleteResource removes the agent, so we can't have two direct platforms for it, make one a child of the other
         platform.addChildResource(platform2);
         em.persist(platform2);
@@ -498,6 +501,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         Resource root = null;
         for (int r = 0; r < resourceCount; r++) {
             Resource resource = new Resource(String.valueOf(r), "testAutoBaselineResource" + r, platformType);
+            resource.setUuid("" + new Random().nextInt());
             if (root == null) {
                 root = resource;
             } else {

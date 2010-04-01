@@ -26,8 +26,9 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.operation.JobId;
-import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -56,21 +57,13 @@ public abstract class OperationHistoryCriteria extends Criteria {
     private PageOrdering sortEndTime; // requires override
     private PageOrdering sortOperationName; // requires override
 
-    Class<? extends OperationHistory> clazz;
-
     public OperationHistoryCriteria() {
-        this(OperationHistory.class);
-    }
-
-    protected OperationHistoryCriteria(Class<? extends OperationHistory> clazz) {
-        super();
-
-        this.clazz = clazz;
         init();
     }
 
-    public Class<? extends OperationHistory> getPersistentClass() {
-        return this.clazz;
+    @Override
+    public Class getPersistentClass() {
+        return ResourceOperationHistory.class;
     }
 
     private void init() {
@@ -80,9 +73,9 @@ public abstract class OperationHistoryCriteria extends Criteria {
         filterOverrides.put("endTime", "modifiedTime <= ?");
 
         filterOverrides.put("resourceIds", "id IN " //
-            + " ( SELECT roh.id " //
-            + "     FROM ResourceOperationHistory roh " //
-            + "    WHERE roh.resource.id IN ( ? ) ) ");
+                + " ( SELECT roh.id " //
+                + "     FROM ResourceOperationHistory roh " //
+                + "    WHERE roh.resource.id IN ( ? ) ) ");
 
         sortOverrides.put("startTime", "startedTime");
         sortOverrides.put("endTime", "modifiedTime");

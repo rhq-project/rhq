@@ -22,11 +22,9 @@
  */
 package org.rhq.core.domain.configuration;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -38,11 +36,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
-import org.jetbrains.annotations.NotNull;
-
-import org.rhq.core.domain.util.serial.HibernateUtil;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Holds a map of child {@link Property properties}. This can hold any number of properties, including additional lists
@@ -210,9 +205,11 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
         return (PropertyMap) get(name);
     }
 
-    /**
+   /* TODO: GWT *
+
+   //**
      * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
-     */
+     *//*
     @Override
     @SuppressWarnings("unchecked")
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
@@ -220,14 +217,14 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
         map = (Map<String, Property>) in.readObject();
     }
 
-    /**
+    *//**
      * @see org.rhq.core.domain.configuration.Property#writeExternal(java.io.ObjectOutput)
-     */
+     *//*
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         out.writeObject(HibernateUtil.safeMap(map));
-    }
+    }*/
 
     /**
      * NOTE: An PropertyMap containing a null map is considered equal to a PropertyMap containing an empty map.
@@ -283,7 +280,7 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
      * This listener runs after jaxb unmarshalling and reconnects children properties to their parent maps (as we don't
      * send them avoiding cyclic references).
      */
-    public void afterUnmarshal(Unmarshaller u, Object parent) {
+    public void afterUnmarshal(Object u, Object parent) {
         for (Property p : this.map.values()) {
             p.setParentMap(this);
         }

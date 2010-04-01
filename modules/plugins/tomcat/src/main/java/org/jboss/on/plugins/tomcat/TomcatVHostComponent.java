@@ -54,6 +54,7 @@ import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
@@ -132,7 +133,7 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         try {
             consolidateSettings(newAliases, currentAliases, "addAlias", "removeAlias", "alias");
         } catch (Exception e) {
-            newAliases.setErrorMessageFromThrowable(e);
+            newAliases.setErrorMessage(ThrowableUtil.getStackAsString(e));
             report.setErrorMessage("Failed setting resource configuration - see property error messages for details");
             log.info("Failure setting Tomcat VHost aliases configuration value", e);
         }

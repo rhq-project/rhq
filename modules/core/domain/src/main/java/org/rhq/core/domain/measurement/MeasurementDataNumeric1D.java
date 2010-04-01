@@ -23,7 +23,6 @@
 package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
-import java.text.DecimalFormat;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
@@ -78,7 +77,7 @@ public class MeasurementDataNumeric1D extends MeasurementData implements Seriali
 
     @Override
     public String toString() {
-        return "MeasurementDataNumeric1D[" + "average=[" + new DecimalFormat("0.00").format(value) + "], "
+        return "MeasurementDataNumeric1D[" + "average=[" + value + "], "
             + super.toString() + "]";
     }
 }

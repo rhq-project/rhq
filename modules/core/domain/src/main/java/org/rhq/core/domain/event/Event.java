@@ -262,7 +262,7 @@ public class Event implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + "id=" + this.id + ", " + "source=" + this.source + ", "
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "id=" + this.id + ", " + "source=" + this.source + ", "
             + "timestamp=" + this.timestamp + ", " + "severity=" + this.severity + ", " + "detail=" + this.detail + "]";
 
     }

@@ -124,7 +124,7 @@ public class Role implements Serializable {
     @JoinTable(name = "RHQ_PERMISSION", joinColumns = @JoinColumn(name = "ROLE_ID"))
     private Set<Permission> permissions = new HashSet<Permission>();
 
-    protected Role() {
+    public Role() {
         fsystem = Boolean.FALSE;
     }
 

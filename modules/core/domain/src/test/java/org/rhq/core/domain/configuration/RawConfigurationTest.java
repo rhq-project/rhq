@@ -23,25 +23,22 @@
 
 package org.rhq.core.domain.configuration;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.testng.annotations.Test;
-import org.rhq.core.util.MessageDigestGenerator;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.io.IOException;
+import org.rhq.core.util.MessageDigestGenerator;
 
 public class RawConfigurationTest {
 
     @Test
     public void sha256ShouldChangeWhenContentsChange() throws Exception {
         RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents("contents");
+        setContentsAndSha256(rawConfig, "contents");
 
         String actualSha256 = rawConfig.getSha256();
 
@@ -50,7 +47,7 @@ public class RawConfigurationTest {
         assertEquals(actualSha256, expectedSha256, "Failed to calculate the SHA-256 correctly.");
 
         String newContents = "new contents";
-        rawConfig.setContents(newContents);
+        setContentsAndSha256(rawConfig, newContents);
 
         actualSha256 = rawConfig.getSha256();
 
@@ -74,8 +71,8 @@ public class RawConfigurationTest {
     public void verifyEqualsWhenObjectIsNotARawConfiguration() {
         RawConfiguration rawConfig = new RawConfiguration();
 
-        assertFalse(rawConfig.equals(new Object()), "equals() should return false when incoming object is not a " +
-            RawConfiguration.class.getSimpleName());
+        assertFalse(rawConfig.equals(new Object()), "equals() should return false when incoming object is not a "
+            + RawConfiguration.class.getSimpleName());
     }
 
     @Test
@@ -89,7 +86,7 @@ public class RawConfigurationTest {
     @Test
     public void verifyEqualsWhenRawConfigurationArgHasNullContents() {
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents("contents");
+        setContentsAndSha256(r1, "contents");
 
         RawConfiguration r2 = new RawConfiguration();
 
@@ -99,13 +96,14 @@ public class RawConfigurationTest {
     @Test
     public void verifyEqualsWhenRawConfigurationArgHasNullPath() {
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents("contents");
+        setContentsAndSha256(r1, "contents");
         r1.setPath("/tmp/foo");
 
         RawConfiguration r2 = new RawConfiguration();
-        r2.setContents("contents");
+        setContentsAndSha256(r2, "contents");
 
-        assertFalse(r1.equals(r2), "equals() should return false when one of the raw configs does not have its paths set");
+        assertFalse(r1.equals(r2),
+            "equals() should return false when one of the raw configs does not have its paths set");
     }
 
     @Test
@@ -118,10 +116,10 @@ public class RawConfigurationTest {
     @Test
     public void verifyEqualsAndHashCodeAreSymmetricWhenPathIsNull() {
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents("contents");
+        setContentsAndSha256(r1, "contents");
 
         RawConfiguration r2 = new RawConfiguration();
-        r2.setContents("contents");
+        setContentsAndSha256(r2, "contents");
 
         assertTrue(r1.equals(r2), "equals() should be true when contents are the same and path is null for both.");
         assertTrue(r2.equals(r1), "equals() should be symmetric.");
@@ -132,11 +130,11 @@ public class RawConfigurationTest {
     @Test
     public void verifyEqualsAndHashCodeAreSymmetricWhenPathIsNotNull() {
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents("contents");
+        setContentsAndSha256(r1, "contents");
         r1.setPath("/tmp/foo");
 
         RawConfiguration r2 = new RawConfiguration();
-        r2.setContents("contents");
+        setContentsAndSha256(r2, "contents");
         r2.setPath("/tmp/foo");
 
         assertTrue(r1.equals(r2), "equals() should be true when contents and paths are the same.");
@@ -150,15 +148,16 @@ public class RawConfigurationTest {
         String contents = "contents";
 
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents(contents);
+        setContentsAndSha256(r1, contents);
 
         RawConfiguration r2 = new RawConfiguration();
-        r2.setContents(contents);
+        setContentsAndSha256(r2, contents);
 
         RawConfiguration r3 = new RawConfiguration();
-        r3.setContents(contents);
+        setContentsAndSha256(r3, contents);
 
-        assertTrue(r1.equals(r2) && r2.equals(r3), "equals() should be true when contents are the same and paths are null.");
+        assertTrue(r1.equals(r2) && r2.equals(r3),
+            "equals() should be true when contents are the same and paths are null.");
         assertTrue(r1.equals(r3), "equals() should be transitive when contents are the same and paths are null.");
 
         assertEquals(r1.hashCode(), r3.hashCode(), "hashCode() should be the same for r1 and r3 via transitivity.");
@@ -169,15 +168,15 @@ public class RawConfigurationTest {
         String contents = "contents";
 
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents(contents);
+        setContentsAndSha256(r1, contents);
         r1.setPath("/tmp/foo");
 
         RawConfiguration r2 = new RawConfiguration();
-        r2.setContents(contents);
+        setContentsAndSha256(r2, contents);
         r2.setPath("/tmp/foo");
 
         RawConfiguration r3 = new RawConfiguration();
-        r3.setContents(contents);
+        setContentsAndSha256(r3, contents);
         r3.setPath("/tmp/foo");
 
         assertTrue(r1.equals(r2) && r2.equals(r3), "equals() should be true when contents and paths are the same.");
@@ -213,7 +212,7 @@ public class RawConfigurationTest {
     @Test
     public void deepCopyShouldCopyContentsWhenCopyingId() {
         RawConfiguration original = new RawConfiguration();
-        original.setContents("contents");
+        setContentsAndSha256(original, "contents");
 
         RawConfiguration copy = original.deepCopy(true);
 
@@ -224,7 +223,7 @@ public class RawConfigurationTest {
     @Test
     public void deepCopyShouldCopyContentsWhenNotCopyingId() {
         RawConfiguration original = new RawConfiguration();
-        original.setContents("contents");
+        setContentsAndSha256(original, "contents");
 
         RawConfiguration copy = original.deepCopy(false);
 
@@ -232,4 +231,8 @@ public class RawConfigurationTest {
         assertEquals(copy.getContents(), original.getContents(), "Failed to copy contents property.");
     }
 
+    private void setContentsAndSha256(RawConfiguration rc, String contents) {
+        String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+        rc.setContents(contents, sha256);
+    }
 }

@@ -22,10 +22,7 @@
   */
 package org.rhq.core.domain.configuration;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -48,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 @Entity
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
-public class PropertySimple extends Property implements Externalizable {
+public class PropertySimple extends Property implements Serializable {
     public static final int MAX_VALUE_LENGTH = 2000;
 
     private static final long serialVersionUID = 1L;
@@ -270,9 +267,9 @@ public class PropertySimple extends Property implements Externalizable {
         this.unmaskedStringValue = unmaskedStringValue;
     }
 
-    /**
+/*    *//**
      * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
-     */
+     *//*
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
@@ -280,9 +277,9 @@ public class PropertySimple extends Property implements Externalizable {
         override = in.readBoolean();
     }
 
-    /**
+    *//**
      * @see org.rhq.core.domain.configuration.Property#writeExternal(java.io.ObjectOutput)
-     */
+     *//*
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
@@ -292,7 +289,7 @@ public class PropertySimple extends Property implements Externalizable {
         } else {
             out.writeBoolean(override);
         }
-    }
+    }*/
 
     @Override
     public boolean equals(Object obj) {

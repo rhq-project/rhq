@@ -23,6 +23,7 @@
 package org.rhq.core.domain.resource.test;
 
 import java.util.List;
+import java.util.Random;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -210,9 +211,11 @@ public class ProblemResourceTest extends AbstractEJB3Test {
         platformType = new ResourceType("testplatPR", "p", ResourceCategory.PLATFORM, null);
         em.persist(platformType);
         platform = new Resource("platform1", "testProblemResources Platform One", platformType);
+        platform.setUuid("" + new Random().nextInt());
         platform.setInventoryStatus(InventoryStatus.COMMITTED);
         em.persist(platform);
         platform2 = new Resource("platform2", "testProblemResources Platform Two", platformType);
+        platform2.setUuid("" + new Random().nextInt());
         platform2.setInventoryStatus(InventoryStatus.COMMITTED);
         em.persist(platform2);
 

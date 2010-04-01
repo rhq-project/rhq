@@ -234,22 +234,6 @@ public class ContentServiceRequest implements Serializable {
         this.installedPackageHistory = installedPackageHistory;
     }
 
-    /**
-     * Convienence method that sets the error message to the given throwable's stack trace dump. If the given throwable
-     * is <code>null</code>, the error message will be set to <code>null</code> as if passing <code>null</code> to
-     * {@link #setErrorMessage(String)}.
-     *
-     * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
-     */
-    public void setErrorMessageFromThrowable(Throwable t) {
-        if (t != null) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            t.printStackTrace(new PrintStream(baos));
-            setErrorMessage(baos.toString());
-        } else {
-            setErrorMessage(null);
-        }
-    }
 
     /**
      * The duration of the configuration update request which simply is the difference between the

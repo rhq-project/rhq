@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.operation;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import javax.ejb.EJBException;
 import javax.persistence.EntityManager;
@@ -1598,6 +1599,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
                 em.flush();
 
                 resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
+                resource.setUuid("" + new Random().nextInt());
                 resource.setAgent(agent);
                 em.persist(resource);
 

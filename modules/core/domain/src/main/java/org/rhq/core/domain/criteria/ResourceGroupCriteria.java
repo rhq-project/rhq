@@ -41,6 +41,7 @@ public class ResourceGroupCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private Integer filterDownMemberCount; // required overrides
     private String filterName;
     private Boolean filterRecursive;
     private Integer filterResourceTypeId; // requires overrides
@@ -62,9 +63,14 @@ public class ResourceGroupCriteria extends Criteria {
     private PageOrdering sortResourceTypeName; // requires overrides
 
     public ResourceGroupCriteria() {
-        super();
-
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
+        filterOverrides.put("downMemberCount", "" //
+            + "id IN ( SELECT implicitGroup.id " //
+            + "          FROM Resource res " //
+            + "          JOIN res.implicitGroups implicitGroup " //
+            + "         WHERE res.currentAvailability.availabilityType = 0 " //
+            + "      GROUP BY implicitGroup.id " // 
+            + "         HAVING COUNT(res) >= ? )");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
         filterOverrides.put("pluginName", "resourceType.plugin like ?");
         filterOverrides.put("explicitResourceIds", "" //
@@ -81,12 +87,20 @@ public class ResourceGroupCriteria extends Criteria {
         sortOverrides.put("resourceTypeName", "resourceType.name");
     }
 
-    public Class<ResourceGroup> getPersistentClass() {
+    @Override
+    public Class getPersistentClass() {
         return ResourceGroup.class;
     }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
+    }
+
+    /**
+     * Only returns groups with at least this many downed implicit resource members
+     */
+    public void addFilterDownMemberCount(Integer filterDownMemberCount) {
+        this.filterDownMemberCount = filterDownMemberCount;
     }
 
     public void addFilterName(String filterName) {

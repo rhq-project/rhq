@@ -32,6 +32,9 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author Joseph Marques
  */
@@ -55,6 +58,9 @@ public class ResourceCriteria extends Criteria {
     private String filterParentResourceName; // needs overrides
     private String filterAgentName; // needs overrides
     private AvailabilityType filterCurrentAvailability; // needs overrides
+    private Long filterStartItime;
+    private Long filterEndItime;
+    private List<Integer> filterIds; // needs overrides
 
     private boolean fetchResourceType;
     private boolean fetchChildResources;
@@ -91,8 +97,6 @@ public class ResourceCriteria extends Criteria {
     private PageOrdering sortCurrentAvailability; // needs overrides
 
     public ResourceCriteria() {
-        super();
-
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceCategory", "resourceType.category = ?");
@@ -101,6 +105,9 @@ public class ResourceCriteria extends Criteria {
         filterOverrides.put("parentResourceName", "parentResource.name like ?");
         filterOverrides.put("agentName", "agent.name like ?");
         filterOverrides.put("currentAvailability", "currentAvailability.availabilityType = ?");
+        filterOverrides.put("startItime", "itime >= ?");
+        filterOverrides.put("endItime", "itime <= ?");
+        filterOverrides.put("ids", "id IN ( ? )");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");
@@ -110,7 +117,8 @@ public class ResourceCriteria extends Criteria {
         sortOverrides.put("currentAvailability", "currentAvailability.availabilityType");
     }
 
-    public Class<Resource> getPersistentClass() {
+    @Override
+    public Class getPersistentClass() {
         return Resource.class;
     }
 
@@ -169,6 +177,19 @@ public class ResourceCriteria extends Criteria {
     public void addFilterCurrentAvailability(AvailabilityType filterCurrentAvailability) {
         this.filterCurrentAvailability = filterCurrentAvailability;
     }
+
+    public void addFilterStartItime(long itime) {
+        filterStartItime = itime;
+    }
+
+    public void addFilterEndItime(long itime) {
+        filterEndItime = itime;
+    }
+
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = Arrays.asList(filterIds);
+    }
+
 
     public void fetchResourceType(boolean fetchResourceType) {
         this.fetchResourceType = fetchResourceType;

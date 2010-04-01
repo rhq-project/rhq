@@ -24,6 +24,7 @@ package org.rhq.enterprise.server.util;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +47,7 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.search.execution.SearchTranslationManager;
 
@@ -81,18 +82,10 @@ public final class CriteriaQueryGenerator {
 
     public CriteriaQueryGenerator(Criteria criteria) {
         this.criteria = criteria;
+        this.className = criteria.getPersistentClass().getSimpleName();
+        this.alias = this.criteria.getAlias();
+
         initializeJPQLFragmentFromSearchExpression();
-
-        String criteriaClassName = criteria.getClass().getSimpleName();
-        className = criteriaClassName.substring(0, criteriaClassName.length() - 8);
-
-        StringBuilder aliasBuilder = new StringBuilder();
-        for (char c : this.className.toCharArray()) {
-            if (Character.isUpperCase(c)) {
-                aliasBuilder.append(Character.toLowerCase(c));
-            }
-        }
-        this.alias = aliasBuilder.toString();
     }
 
     public void setAuthorizationCustomConditionFragment(String fragment) {
@@ -200,7 +193,7 @@ public final class CriteriaQueryGenerator {
              * don't fetch in the count query to avoid: "query specified join fetching, 
              * but the owner of the fetched association was not present in the select list"
              */
-            for (String fetchJoin : criteria.getFetchFields()) {
+            for (String fetchJoin : getFetchFields(criteria)) {
                 if (isPersistentBag(fetchJoin)) {
                     addPersistentBag(fetchJoin);
                 } else {
@@ -212,7 +205,7 @@ public final class CriteriaQueryGenerator {
             results.append(authorizationJoinFragment);
         }
 
-        Map<String, Object> filterFields = criteria.getFilterFields();
+        Map<String, Object> filterFields = getFilterFields(criteria);
         if (filterFields.size() > 0 || authorizationJoinFragment != null) {
             results.append("WHERE ");
         }
@@ -295,7 +288,7 @@ public final class CriteriaQueryGenerator {
             PageControl pc = criteria.getPageControlOverrides();
             if (pc == null) {
                 overridden = false;
-                pc = criteria.getPageControl();
+                pc = getPageControl(criteria);
             }
 
             boolean first = true;
@@ -307,25 +300,89 @@ public final class CriteriaQueryGenerator {
                     results.append(", ");
                 }
 
-                if (overridden) {
-                    String fieldName = orderingField.getField();
-                    PageOrdering ordering = orderingField.getOrdering();
-
-                    results.append(fieldName).append(' ').append(ordering);
+                String fieldName = orderingField.getField();
+                String override = criteria.getJPQLSortOverride(fieldName);
+                if (override == null) {
+                    override = alias + "." + fieldName;
                 } else {
-                    String fieldName = orderingField.getField();
-                    String override = criteria.getJPQLSortOverride(fieldName);
-                    String fragment = override != null ? override : fieldName;
-
-                    results.append(alias).append('.').append(fragment);
-                    results.append(' ').append(orderingField.getOrdering());
+                    override = alias + "." + override;
                 }
+
+                PageOrdering ordering = orderingField.getOrdering();
+
+                results.append(override).append(' ').append(ordering);
             }
         }
         results.append(NL);
 
         LOG.debug(results);
         return results.toString();
+    }
+
+    public List<String> getFetchFields(Criteria criteria) {
+        List<String> results = new ArrayList<String>();
+        for (Field fetchField : getFields(criteria, Criteria.Type.FETCH)) {
+            Object fetchFieldValue = null;
+            try {
+                fetchField.setAccessible(true);
+                fetchFieldValue = fetchField.get(criteria);
+            } catch (IllegalAccessException iae) {
+                throw new RuntimeException(iae);
+            }
+            if (fetchFieldValue != null) {
+                boolean shouldFetch = ((Boolean) fetchFieldValue).booleanValue();
+                if (shouldFetch) {
+                    results.add(getCleansedFieldName(fetchField, 5));
+                }
+            }
+        }
+        //        for (String entry : results) {
+        //            LOG.info("Fetch: (" + entry + ")");
+        //        }
+        return results;
+    }
+
+    private static List<Field> getFields(Criteria criteria, Criteria.Type fieldType) {
+        String prefix = fieldType.name().toLowerCase();
+        List<Field> results = new ArrayList<Field>();
+
+        Class<?> currentLevelClass = criteria.getClass();
+        while (currentLevelClass.equals(Criteria.class) == false) {
+            for (Field field : currentLevelClass.getDeclaredFields()) {
+                field.setAccessible(true);
+                if (field.getName().startsWith(prefix)) {
+                    results.add(field);
+                }
+            }
+            currentLevelClass = currentLevelClass.getSuperclass();
+        }
+
+        return results;
+    }
+
+    public static String getCleansedFieldName(Field field, int leadingCharsToStrip) {
+        String fieldNameFragment = field.getName().substring(leadingCharsToStrip);
+        String fieldName = Character.toLowerCase(fieldNameFragment.charAt(0)) + fieldNameFragment.substring(1);
+        return fieldName;
+    }
+
+    public Map<String, Object> getFilterFields(Criteria criteria) {
+        Map<String, Object> results = new HashMap<String, Object>();
+        for (Field filterField : getFields(criteria, Criteria.Type.FILTER)) {
+            Object filterFieldValue = null;
+            try {
+                filterFieldValue = filterField.get(criteria);
+            } catch (IllegalAccessException iae) {
+                throw new RuntimeException(iae);
+            }
+            if (filterFieldValue != null) {
+                results.put(getCleansedFieldName(filterField, 6), filterFieldValue);
+            }
+        }
+        //        for (Map.Entry<String, Object> entries : results.entrySet()) {
+        //            LOG.info("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
+        //        }
+        return results;
     }
 
     private void initializeJPQLFragmentFromSearchExpression() {
@@ -349,7 +406,6 @@ public final class CriteriaQueryGenerator {
             LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
                 + ThrowableUtil.getAllMessages(e, true));
         }
-
     }
 
     private boolean isPersistentBag(String fieldName) {
@@ -415,7 +471,7 @@ public final class CriteriaQueryGenerator {
         String queryString = getQueryString(false);
         Query query = em.createQuery(queryString);
         setBindValues(query, false);
-        PersistenceUtility.setDataPage(query, criteria.getPageControl());
+        PersistenceUtility.setDataPage(query, getPageControl(criteria));
         return query;
     }
 
@@ -430,7 +486,7 @@ public final class CriteriaQueryGenerator {
         boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive();
         boolean wantsFuzzyMatching = !criteria.isStrict();
 
-        for (Map.Entry<String, Object> critField : criteria.getFilterFields().entrySet()) {
+        for (Map.Entry<String, Object> critField : getFilterFields(criteria).entrySet()) {
             Object value = critField.getValue();
             if (value instanceof String) {
                 String formattedValue = (String) value;
@@ -521,5 +577,37 @@ public final class CriteriaQueryGenerator {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(resourceCriteria);
         generator.getQueryString(false);
         generator.getQueryString(true);
+    }
+
+    public static PageControl getPageControl(Criteria criteria) {
+        PageControl pc = null;
+
+        if (criteria.getPageControlOverrides() != null) {
+            pc = criteria.getPageControlOverrides();
+        } else {
+            if (criteria.getPageNumber() == null || criteria.getPageSize() == null) {
+                pc = PageControl.getUnlimitedInstance();
+            } else {
+                pc = new PageControl(criteria.getPageNumber(), criteria.getPageSize());
+            }
+            for (String fieldName : criteria.getOrderingFieldNames()) {
+                for (Field sortField : getFields(criteria, Criteria.Type.SORT)) {
+                    if (sortField.getName().equals(fieldName) == false) {
+                        continue;
+                    }
+                    Object sortFieldValue = null;
+                    try {
+                        sortFieldValue = sortField.get(criteria);
+                    } catch (IllegalAccessException iae) {
+                        throw new RuntimeException(iae);
+                    }
+                    if (sortFieldValue != null) {
+                        PageOrdering pageOrdering = (PageOrdering) sortFieldValue;
+                        pc.addDefaultOrderingField(getCleansedFieldName(sortField, 4), pageOrdering);
+                    }
+                }
+            }
+        }
+        return pc;
     }
 }

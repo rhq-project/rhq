@@ -22,8 +22,7 @@
   */
 package org.rhq.core.domain.measurement.composite;
 
-import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
+ import org.rhq.core.domain.measurement.MeasurementUnits;
 
 public class MeasurementNumericValueAndUnits implements MeasurementValueAndUnits {
     /*
@@ -55,6 +54,6 @@ public class MeasurementNumericValueAndUnits implements MeasurementValueAndUnits
     /** Equivalent to MeasurementConverter.format(value, units, true) */
     @Override
     public String toString() {
-        return MeasurementConverter.format(value, units, true);
+        return value + " " + units; // TODO: GWT MeasurementConverter.format(value, units, true);
     }
 }

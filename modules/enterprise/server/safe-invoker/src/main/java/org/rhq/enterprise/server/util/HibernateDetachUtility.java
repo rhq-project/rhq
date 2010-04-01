@@ -26,6 +26,7 @@ import org.hibernate.proxy.HibernateProxy;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
+
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -38,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -65,7 +67,7 @@ public class HibernateDetachUtility {
     }
 
     private static void nullOutUninitializedFields(Object value, Set<Integer> nulledObjects, int depth,
-        SerializationType serializationType) throws Exception {
+                                                   SerializationType serializationType) throws Exception {
         if (depth > 50) {
             LOG.warn("Getting different object hierarchies back from calls: " + value.getClass().getName());
             return;
@@ -79,22 +81,47 @@ public class HibernateDetachUtility {
 
         if (value instanceof Object[]) {
             Object[] objArray = (Object[]) value;
-            for(int i = 0; i < objArray.length; i++)
-            {
-                nullOutUninitializedFields(objArray[i], nulledObjects, depth +1, serializationType);
+            for (int i = 0; i < objArray.length; i++) {
+                nullOutUninitializedFields(objArray[i], nulledObjects, depth + 1, serializationType);
+            }
+
+        } else if (value instanceof List) {
+            // Null out any entries in initialized collections
+            ListIterator i = ((List)value).listIterator();
+            while (i.hasNext()) {
+                Object val = i.next();
+                Object replace = replaceObject(val);
+                if (replace != null) {
+                    val = replace;
+                    i.set(replace);
+                }
+                nullOutUninitializedFields(val, nulledObjects, depth + 1, serializationType);
             }
 
         } else if (value instanceof Collection) {
-            // Null out any entries in initialized collections
-            for (Object val : (Collection) value) {
-                nullOutUninitializedFields(val, nulledObjects, depth + 1, serializationType);
+            Collection collection = (Collection) value;
+            Collection itemsToBeReplaced = new ArrayList();
+            Collection replacementItems = new ArrayList();
+            for (Object item : collection) {
+                Object replacementItem = replaceObject(item);
+                if (replacementItem != null) {
+                    itemsToBeReplaced.add(item);
+                    replacementItems.add(replacementItem);
+                    item = replacementItem;
+                }
+                nullOutUninitializedFields(item, nulledObjects, depth + 1, serializationType);
             }
+            collection.removeAll(itemsToBeReplaced);
+            collection.addAll(replacementItems);            
         } else if (value instanceof Map) {
-            for (Object key : ((Map)value).keySet()) {
-                nullOutUninitializedFields(((Map)value).get(key), nulledObjects, depth+1, serializationType);
-                nullOutUninitializedFields(key, nulledObjects, depth+1, serializationType);
+            for (Object key : ((Map) value).keySet()) {
+                nullOutUninitializedFields(((Map) value).get(key), nulledObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(key, nulledObjects, depth + 1, serializationType);
             }
-        } 
+        } else if (value instanceof Enum) {
+            // don't need to detach enums, treat them as special objects
+            return;
+        }
 
 
         if (serializationType == SerializationType.JAXB) {
@@ -114,7 +141,7 @@ public class HibernateDetachUtility {
     }
 
     private static void nullOutFieldsByFieldAccess(Object object, Set<Integer> nulledObjects, int depth,
-        SerializationType serializationType) throws Exception {
+                                                   SerializationType serializationType) throws Exception {
 
 
         Class tmpClass = object.getClass();
@@ -155,7 +182,7 @@ public class HibernateDetachUtility {
                         String className = fieldValue.getClass().getName();
                         className = className.substring(0, className.indexOf("_$$_"));
                         if (!replacement.getClass().getName().contains("hibernate")) {
-                            nullOutUninitializedFields(replacement, nulledObjects, depth+1, serializationType);
+                            nullOutUninitializedFields(replacement, nulledObjects, depth + 1, serializationType);
 
                             field.set(object, replacement);
                         } else {
@@ -214,20 +241,20 @@ public class HibernateDetachUtility {
                         } else if (fieldValue instanceof Set) {
                             replacement = new HashSet((Set) fieldValue);
                         } else if (fieldValue instanceof Collection) {
-                            replacement = new ArrayList((Collection)fieldValue);
+                            replacement = new ArrayList((Collection) fieldValue);
                         }
                         setField(object, field.getName(), replacement);
 
-                        nullOutUninitializedFields(replacement, nulledObjects, depth+1, serializationType);
+                        nullOutUninitializedFields(replacement, nulledObjects, depth + 1, serializationType);
                     }
 
                 } else {
                     if (fieldValue != null &&
                             (fieldValue.getClass().getName().contains("org.rhq") ||
-                                fieldValue instanceof Collection ||
-                                fieldValue instanceof Object[] || 
-                                fieldValue instanceof Map))
-                        nullOutUninitializedFields((fieldValue), nulledObjects, depth+1, serializationType);
+                                    fieldValue instanceof Collection ||
+                                    fieldValue instanceof Object[] ||
+                                    fieldValue instanceof Map))
+                        nullOutUninitializedFields((fieldValue), nulledObjects, depth + 1, serializationType);
                 }
             }
             if (accessModifierFlag) {
@@ -238,10 +265,28 @@ public class HibernateDetachUtility {
     }
 
 
+    private static Object replaceObject(Object object) {
+        Object replacement = null;
 
-    
+        if (object instanceof HibernateProxy) {
+            if (object.getClass().getName().contains("javassist")) {
+                Class assistClass = object.getClass();
+                try {
+                    Method m = assistClass.getMethod("writeReplace");
+                    replacement = m.invoke(object);
+
+                    String className = object.getClass().getName();
+                } catch (Exception e) {
+                    System.out.println("Unable to write replace object " + object.getClass());
+                }
+            }
+        }
+        return replacement;
+    }
+
+
     private static void nullOutFieldsByAccessors(Object value, Set<Integer> nulledObjects, int depth,
-        SerializationType serializationType) throws Exception {
+                                                 SerializationType serializationType) throws Exception {
         // Null out any collections that aren't loaded
         BeanInfo bi = Introspector.getBeanInfo(value.getClass(), Object.class);
 
@@ -264,18 +309,18 @@ public class HibernateDetachUtility {
 
                     Method writeMethod = pd.getWriteMethod();
                     if ((writeMethod != null) && (writeMethod.getAnnotation(XmlTransient.class) == null)) {
-                        pd.getWriteMethod().invoke(value, new Object[] { null });
+                        pd.getWriteMethod().invoke(value, new Object[]{null});
                     } else {
                         nullOutField(value, pd.getName());
                     }
                 } catch (Exception lie) {
                     LOG.debug("Couldn't null out: " + pd.getName() + " off of " + value.getClass().getSimpleName()
-                        + " trying field access", lie);
+                            + " trying field access", lie);
                     nullOutField(value, pd.getName());
                 }
             } else {
                 if ((propertyValue instanceof Collection)
-                    || ((propertyValue != null) && propertyValue.getClass().getName().startsWith("org.rhq.core.domain"))) {
+                        || ((propertyValue != null) && propertyValue.getClass().getName().startsWith("org.rhq.core.domain"))) {
                     nullOutUninitializedFields(propertyValue, nulledObjects, depth + 1, serializationType);
                 }
             }

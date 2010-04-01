@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -176,6 +177,7 @@ public class EventManagerTest extends AbstractEJB3Test {
         ResourceType resourceType = new ResourceType("fake platform", "fake plugin", ResourceCategory.PLATFORM, null);
         em.persist(resourceType);
         Resource platform = new Resource("org.jboss.on.TestPlatform", "Fake Platform", resourceType);
+        platform.setUuid("" + new Random().nextInt());
         em.persist(platform);
         em.flush();
 

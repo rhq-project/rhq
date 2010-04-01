@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import javax.servlet.http.HttpServletRequest;
 import javax.faces.component.UIData;
 import javax.faces.model.SelectItem;
+
+import org.ajax4jsf.model.KeepAlive;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.content.InstalledPackageHistory;
@@ -37,6 +39,7 @@ import org.rhq.enterprise.server.content.ContentUIManagerLocal;
  *
  * @author Jason Dobies
  */
+@KeepAlive
 public class ShowInstalledPackageHistoryUIBean {
 
     private InstalledPackageHistory history;

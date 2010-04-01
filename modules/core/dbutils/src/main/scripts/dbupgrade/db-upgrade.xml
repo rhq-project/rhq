@@ -1471,6 +1471,20 @@
             </schemaSpec>
 
             <schemaSpec version="2.59">
+               <schema-directSQL>
+                   <statement desc="Changing default persistence mode to FILESYSTEM for new JBoss CSP content sources">
+                      UPDATE rhq_content_source_type SET default_download_mode = 'FILESYSTEM'
+                      WHERE id = 101
+                   </statement>
+                   <statement desc="Changing persistence mode to FILESYSTEM on out-of-box JBoss CSP content source">
+                      UPDATE rhq_content_source SET download_mode = 'FILESYSTEM'
+                      WHERE id = 101 AND configuration_id =
+                      (SELECT configuration_id FROM rhq_config_property WHERE id = 112 AND string_value IS null)
+                   </statement>
+               </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.60">
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_RAW_CONFIG">
                         CREATE TABLE RHQ_RAW_CONFIG (ID INTEGER)
@@ -1479,7 +1493,7 @@
                 <schema-alterColumn table="RHQ_RAW_CONFIG" column="ID" columnType="INTEGER" nullable="FALSE" />
                 <schema-createSequence name="RHQ_RAW_CONFIG_ID_SEQ" initial="10001" />
                 <schema-directSQL>
-                    <statement desc="Creating primary key for RHQ_PARTITION_EVENT">
+                    <statement desc="Creating primary key for RHQ_RAW_CONFIG">
                         ALTER TABLE RHQ_RAW_CONFIG ADD PRIMARY KEY (ID)
                     </statement>
                 </schema-directSQL>
@@ -1532,7 +1546,7 @@
 
             </schemaSpec>
 
-            <schemaSpec version="2.59.1">
+            <schemaSpec version="2.60.1">
                 <schema-addColumn table="RHQ_PLUGIN" column="AMPS_VERSION" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_PLUGIN"
                                     column="AMPS_VERSION"
@@ -1540,7 +1554,7 @@
                                     precision="16"/>
             </schemaSpec>
 
-            <schemaSpec version="2.59.2">
+            <schemaSpec version="2.60.2">
                 <schema-directSQL>
                     <!-- RHN_CHANNEL => RHQ_REPO -->
                     <statement>
@@ -2696,6 +2710,7 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+
             <schemaSpec version="2.78">
                <!-- Remove obsolete tables RHQ_BUNDLE_CONFIG and RHQ_BUNDLE_DEPLOYMENT (the latter by cascade) -->
                <schema-dropTable table="RHQ_BUNDLE_DEPLOYMENT" />
@@ -2908,7 +2923,7 @@
                     </statement>
                 </schema-directSQL>
                 <schema-directSQL>
-                    <statement desc="Creating primary key for RHQ_AFFINITY_GROUP">
+                    <statement desc="Creating primary key for RHQ_SAVED_SEARCH">
                         ALTER TABLE RHQ_SAVED_SEARCH ADD PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
@@ -2971,4 +2986,3 @@
         </dbupgrade>
     </target>
 </project>
-

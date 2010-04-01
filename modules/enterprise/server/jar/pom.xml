@@ -641,7 +641,7 @@
                                  <link href="../domain" />
                                  <link href="../plugin-api" />
                                  <link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
-                                 <bottom><![CDATA[Copyright &#169; 2008-2009 <a href="http://rhq-project.org/">Red Hat, Inc.</a>. All Rights Reserved.]]></bottom>
+                                 <bottom><![CDATA[Copyright &#169; 2008-2010 <a href="http://rhq-project.org/">Red Hat, Inc.</a>. All Rights Reserved.]]></bottom>
                               </javadoc>
                            </tasks>
                         </configuration>

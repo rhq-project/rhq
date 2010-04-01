@@ -9,8 +9,8 @@
    <property name="default.rhq.server.database.driver-class" value="org.postgresql.Driver" />
    <property name="default.rhq.server.database.xa-datasource-class" value="org.postgresql.xa.PGXADataSource" />
    <property name="default.rhq.server.database.user-name" value="rhqadmin" />
-   <!-- NOTE: The below value is "rhqadmin" encrypted. -->
-   <property name="default.rhq.server.database.password" value="1eeb2f255e832171df8592078de921bc" />
+   <property name="default.rhq.server.database.password" value="rhqadmin" />
+   <property name="default.rhq.server.database.password.encrypted" value="1eeb2f255e832171df8592078de921bc" />
    <property name="default.rhq.server.database.type-mapping" value="PostgreSQL" />
    <!-- these are needed for the PostgreSQL XADataSource setup -->
    <property name="default.rhq.server.database.server-name" value="127.0.0.1" />
@@ -31,19 +31,19 @@
 
    <target name="set-dev-server-props" if="predeploy">
       <echo>*** Using dev database settings in rhq-server.properties...</echo>
-      <property name="rhq.server.database.hibernate-dialect" value="${rhq.test.ds.hibernate-dialect}" />
-      <property name="rhq.server.database.connection-url" value="${rhq.test.ds.connection-url}" />
-      <property name="rhq.server.database.driver-class" value="${rhq.test.ds.driver-class}" />
-      <property name="rhq.server.database.xa-datasource-class" value="${rhq.test.ds.xa-datasource-class}" />
-      <property name="rhq.server.database.user-name" value="${rhq.test.ds.user-name}" />
-      <property name="rhq.server.database.password" value="${rhq.test.ds.password}" />
-      <property name="rhq.server.database.type-mapping" value="${rhq.test.ds.type-mapping}" />
-      <property name="rhq.server.database.server-name" value="${rhq.test.ds.server-name}" />
-      <property name="rhq.server.database.port" value="${rhq.test.ds.port}" />
-      <property name="rhq.server.database.db-name" value="${rhq.test.ds.db-name}" />
-      <property name="rhq.server.quartz.driverDelegateClass" value="${rhq.test.quartz.driverDelegateClass}" />
-      <property name="rhq.server.quartz.selectWithLockSQL" value="${rhq.test.quartz.selectWithLockSQL}" />
-      <property name="rhq.server.quartz.lockHandlerClass" value="${rhq.test.quartz.lockHandlerClass}" />
+      <property name="rhq.server.database.hibernate-dialect" value="${rhq.dev.ds.hibernate-dialect}" />
+      <property name="rhq.server.database.connection-url" value="${rhq.dev.ds.connection-url}" />
+      <property name="rhq.server.database.driver-class" value="${rhq.dev.ds.driver-class}" />
+      <property name="rhq.server.database.xa-datasource-class" value="${rhq.dev.ds.xa-datasource-class}" />
+      <property name="rhq.server.database.user-name" value="${rhq.dev.ds.user-name}" />
+      <property name="rhq.server.database.password" value="${rhq.dev.ds.password.encrypted}" />
+      <property name="rhq.server.database.type-mapping" value="${rhq.dev.ds.type-mapping}" />
+      <property name="rhq.server.database.server-name" value="${rhq.dev.ds.server-name}" />
+      <property name="rhq.server.database.port" value="${rhq.dev.ds.port}" />
+      <property name="rhq.server.database.db-name" value="${rhq.dev.ds.db-name}" />
+      <property name="rhq.server.quartz.driverDelegateClass" value="${rhq.dev.quartz.driverDelegateClass}" />
+      <property name="rhq.server.quartz.selectWithLockSQL" value="${rhq.dev.quartz.selectWithLockSQL}" />
+      <property name="rhq.server.quartz.lockHandlerClass" value="${rhq.dev.quartz.lockHandlerClass}" />
    </target>
 
    <target name="set-default-server-props" unless="predeploy">
@@ -53,7 +53,7 @@
       <property name="rhq.server.database.driver-class" value="${default.rhq.server.database.driver-class}" />
       <property name="rhq.server.database.xa-datasource-class" value="${default.rhq.server.database.xa-datasource-class}" />
       <property name="rhq.server.database.user-name" value="${default.rhq.server.database.user-name}" />
-      <property name="rhq.server.database.password" value="${default.rhq.server.database.password}" />
+      <property name="rhq.server.database.password" value="${default.rhq.server.database.password.encrypted}" />
       <property name="rhq.server.database.type-mapping" value="${default.rhq.server.database.type-mapping}" />
       <property name="rhq.server.database.server-name" value="${default.rhq.server.database.server-name}" />
       <property name="rhq.server.database.port" value="${default.rhq.server.database.port}" />
@@ -164,7 +164,7 @@
          </not>
       </condition>
 
-   </target>
+  </target>
 
   <target name="prepare-container"
           depends="prepare-web-services-1,
@@ -212,8 +212,8 @@
     <echo>Running upgrade script for JBossWS ${jbossws-native-dist.version} </echo>
     <ant antfile="${basedir}/target/${jboss-native-dir}/build.xml" target="deploy-jboss423" dir="${basedir}/target/${jboss-native-dir}" />
 
-  	<echo> </echo>
-      <echo>Installing safe ejb3 web invoker ...</echo>
+    <echo/>
+    <echo>Installing safe ejb3 web invoker ...</echo>
       <delete verbose="true">
          <fileset dir="${jboss.deploy.dir}/jbossws.sar">
             <include name="safe-invoker*" />
@@ -272,7 +272,7 @@
          <fileset dir="${jboss.deploy.dir}/jms">
             <include name="jbossmq-destinations-service.xml" />
             <include name="uil2-service.xml" />
-        <include name="hsqldb-jdbc2-service.xml" /> <!-- no longer use Hypersonic for JMS backend -->
+            <include name="hsqldb-jdbc2-service.xml" /> <!-- no longer use Hypersonic for JMS backend -->
          </fileset>
       </delete>
 
@@ -329,16 +329,16 @@
 
       <echo>Deploying installer webapp ...</echo>
       <mkdir dir="${jboss.deploy.dir}/rhq-installer.war" />
-    <unwar src="${settings.localRepository}/org/rhq/rhq-installer/${rhq.version}/rhq-installer-${rhq.version}.war"
-           dest="${jboss.deploy.dir}/rhq-installer.war" />
+      <unwar src="${settings.localRepository}/org/rhq/rhq-installer/${rhq.version}/rhq-installer-${rhq.version}.war"
+             dest="${jboss.deploy.dir}/rhq-installer.war" />
 
       <echo>Deploying embedded agent sar ...</echo>
-    <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-agent-sar/${rhq.version}/rhq-enterprise-server-agent-sar-${rhq.version}.sar"
-           dest="${jboss.deploy.dir}/rhq-agent.sar" />
+      <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-agent-sar/${rhq.version}/rhq-enterprise-server-agent-sar-${rhq.version}.sar"
+             dest="${jboss.deploy.dir}/rhq-agent.sar" />
 
       <echo>Deploying RT filter jar ...</echo>
-    <copy file="${settings.localRepository}/org/rhq/rhq-rtfilter/${rhq.version}/rhq-rtfilter-${rhq.version}.jar"
-          todir="${jboss.home}/server/default/lib" verbose="true" />
+      <copy file="${settings.localRepository}/org/rhq/rhq-rtfilter/${rhq.version}/rhq-rtfilter-${rhq.version}.jar"
+            todir="${jboss.home}/server/default/lib" verbose="true" />
 
       <!-- Delete docs dir and README files... -->
       <delete dir="${jboss.home}/docs" />
@@ -354,17 +354,17 @@
 
       <!-- deploy the agent update binary to the downloads location -->
       <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq.version}.jar</echo>
-    <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agentupdate/${rhq.version}/rhq-enterprise-agentupdate-${rhq.version}.jar"
-          tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent/rhq-enterprise-agent-${rhq.version}.jar"
-          verbose="true"
-          failonerror="true"/>
+      <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agentupdate/${rhq.version}/rhq-enterprise-agentupdate-${rhq.version}.jar"
+            tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent/rhq-enterprise-agent-${rhq.version}.jar"
+            verbose="true"
+            failonerror="true"/>
 
       <!-- deploy the remote client binary to the downloads location. -->
       <echo>Deploying the latest remote client binary</echo>
-   <copy file="${settings.localRepository}/org/rhq/rhq-remoting-cli/${rhq.version}/rhq-remoting-cli-${rhq.version}.zip"
-         tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq.version}.zip"
-         verbose="true"
-         failonerror="false"/>
+      <copy file="${settings.localRepository}/org/rhq/rhq-remoting-cli/${rhq.version}/rhq-remoting-cli-${rhq.version}.zip"
+            tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq.version}.zip"
+            verbose="true"
+            failonerror="false"/>
 
       <!-- optionally package the connectors -->
       <antcall target="package-connectors" />
@@ -895,3 +895,4 @@ rhq.autoinstall.public-endpoint-address=
    </target>
 
 </project>
+

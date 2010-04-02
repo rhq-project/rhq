@@ -32,9 +32,9 @@ import org.richfaces.component.html.HtmlTree;
 import org.richfaces.model.TreeRowKey;
 
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.resource.hierarchy.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.inventory.resource.ResourceUIBean;

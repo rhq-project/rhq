@@ -28,10 +28,10 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
+import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.resource.hierarchy.AutoGroupCompositeFlyweight;
-import org.rhq.core.domain.resource.hierarchy.ResourceFlyweight;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.navigation.resource.ResourceTreeModelUIBean;

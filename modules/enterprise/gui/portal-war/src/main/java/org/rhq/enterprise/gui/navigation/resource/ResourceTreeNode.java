@@ -24,9 +24,9 @@ import java.util.TreeSet;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
+import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
+import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
-import org.rhq.core.domain.resource.hierarchy.AutoGroupCompositeFlyweight;
-import org.rhq.core.domain.resource.hierarchy.ResourceFlyweight;
 import org.rhq.core.util.sort.HumaneStringComparator;
 
 /**

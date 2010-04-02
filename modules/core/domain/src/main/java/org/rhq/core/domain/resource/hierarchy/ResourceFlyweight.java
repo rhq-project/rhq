@@ -132,25 +132,8 @@ public class ResourceFlyweight implements Serializable {
         return ret;
     }
 
-    public ResourceFlyweight() {
+    private ResourceFlyweight() {
 
-    }
-
-    /**
-     * Constructs a new flyweight from the resource.
-     * Note that this does *NOT* initialize the parentResource, resourceType properties as that would create new instances of those
-     * types which might not be what the user of this constructor wanted.
-     * 
-     * @param resource
-     */
-    public ResourceFlyweight(Resource resource) {
-        setId(resource.getId());
-        setName(resource.getName());
-        setUuid(resource.getUuid());
-        setResourceKey(resource.getResourceKey());
-        ResourceAvailability avail = resource.getCurrentAvailability();
-        setCurrentAvailability(new ResourceAvailabilityFlyweight(this, avail != null ? avail.getAvailabilityType()
-            : null));
     }
 
     public ResourceFlyweight getParentResource() {

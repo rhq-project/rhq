@@ -97,18 +97,8 @@ public class ResourceSubCategoryFlyweight implements Serializable {
         return ret;
     }
 
-    public ResourceSubCategoryFlyweight() {
+    private ResourceSubCategoryFlyweight() {
 
-    }
-
-    /**
-     * Initializes only id and name properties.
-     * 
-     * @param subCategory
-     */
-    public ResourceSubCategoryFlyweight(ResourceSubCategory subCategory) {
-        setId(subCategory.getId());
-        setName(subCategory.getName());
     }
 
     public int getId() {

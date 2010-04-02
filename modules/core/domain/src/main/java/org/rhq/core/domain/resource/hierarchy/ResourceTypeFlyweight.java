@@ -101,22 +101,8 @@ public class ResourceTypeFlyweight implements Serializable {
         return ret;
     }
 
-    public ResourceTypeFlyweight() {
+    private ResourceTypeFlyweight() {
 
-    }
-
-    /**
-     * Creates a new instance of the resource type flyweight from the resource type itself.
-     * Note that the subCategory property isn't initialized because that would require a new
-     * instance to be constructed which might not be what the user intended.
-     * 
-     * @param resourceType
-     */
-    public ResourceTypeFlyweight(ResourceType resourceType) {
-        setId(resourceType.getId());
-        setName(resourceType.getName());
-        setPlugin(resourceType.getPlugin());
-        setCategory(resourceType.getCategory());
     }
 
     public int getId() {

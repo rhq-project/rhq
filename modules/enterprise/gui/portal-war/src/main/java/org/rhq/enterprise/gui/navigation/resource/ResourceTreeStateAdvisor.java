@@ -32,13 +32,10 @@ import org.richfaces.component.state.TreeStateAdvisor;
 import org.richfaces.model.TreeRowKey;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.composite.LockedResource;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
-import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;

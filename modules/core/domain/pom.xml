@@ -201,13 +201,44 @@
          <scope>test</scope>
       </dependency>
 
+
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-user</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-dev</artifactId>
+            <version>2.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+       <!--<dependency>
+           <groupId>com.smartgwt</groupId>
+           <artifactId>smartgwt</artifactId>
+           <version>2.0</version>
+       </dependency>-->
+       
+
    </dependencies>
 
    <build>
 
       <finalName>rhq-core-domain-ejb3</finalName>
 
-      <testResources>
+       <resources>
+           <resource>
+               <directory>src/main/java</directory>
+           </resource>
+           <resource>
+               <directory>src/main/resources</directory>
+           </resource>
+       </resources>
+
+
+       <testResources>
          <testResource>
             <directory>src/test/resources</directory>
             <filtering>true</filtering>
@@ -216,7 +247,35 @@
 
       <plugins>
 
-         <plugin>
+
+          <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>gwt-maven-plugin</artifactId>
+              <version>1.2</version>
+
+              <configuration>
+                  <noServer>true</noServer>
+                  <inplace>false</inplace>
+                  <logLevel>INFO</logLevel>
+                  <extraJvmArgs>-Xmx512m</extraJvmArgs>
+                  <localWorkers>2</localWorkers>
+                  <draftCompile>true</draftCompile>
+                  <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
+                  <hostedWebapp>target/hostedwar</hostedWebapp>
+                  <debugSuspend>false</debugSuspend>
+              </configuration>
+
+              <executions>
+                  <execution>
+                      <goals>
+                          <goal>compile</goal>
+                      </goals>
+                  </execution>
+              </executions>
+          </plugin>
+
+
+          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
               <systemProperties>
@@ -308,6 +367,7 @@
 
          <build>
             <plugins>
+
                <plugin>
                   <artifactId>maven-javadoc-plugin</artifactId>
 
@@ -330,6 +390,7 @@
                            <breakiterator>true</breakiterator>
                            <links>
                               <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
+                              <link>http://java.sun.com/javaee/5/docs/api/</link>
                            </links>
                         </configuration>
                      </execution>
@@ -340,5 +401,19 @@
       </profile>
       
    </profiles>
+
+
+    <repositories>
+        <repository>
+            <id>codehaus</id>
+            <name>codehaus</name>
+            <url>http://repository.codehaus.org/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+
 
 </project>

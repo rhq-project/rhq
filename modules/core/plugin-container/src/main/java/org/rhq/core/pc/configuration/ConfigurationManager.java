@@ -53,9 +53,7 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.system.SystemInfoFactory;
-
-import org.rhq.core.util.exception.WrappedRemotingException;
+import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * Manages configuration of all resources across all plugins.
@@ -191,7 +189,8 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
             for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
                 String contents = rawConfig.getContents();
-                rawConfig.setContents(contents);
+                String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+                rawConfig.setContents(contents, sha256);
                 structuredConfig.addRawConfiguration(rawConfig);
                 facet.mergeStructuredConfiguration(rawConfig, configuration);
             }
@@ -221,7 +220,9 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             RawConfiguration mergedRaw = facet.mergeRawConfiguration(configuration, originalRaw);
             if (mergedRaw != null) {
                 //TODO bypass validation of structured config for template values
-                mergedRaw.setContents(mergedRaw.getContents());
+                String contents = mergedRaw.getContents();
+                String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+                mergedRaw.setContents(contents, sha256);
                 updateRawConfig(configuration, originalRaw, mergedRaw);
             }
         }
@@ -358,6 +359,6 @@ public class ConfigurationManager extends AgentService implements ContainerServi
                 }
             }
         }
-        return success ?  null: configuration;
+        return success ? null : configuration;
     }
 }

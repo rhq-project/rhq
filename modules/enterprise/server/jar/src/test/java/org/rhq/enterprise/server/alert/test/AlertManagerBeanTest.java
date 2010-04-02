@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.alert.test;
 
+import java.util.Random;
+
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.AfterMethod;
@@ -90,6 +92,7 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
 
                 resource = new Resource("reskey" + now, "resname", resourceType);
                 resource.setAgent(agent);
+                resource.setUuid("" + new Random().nextInt());
                 em.persist(resource);
 
                 AlertDefinition ad = new AlertDefinition();
@@ -112,7 +115,7 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
                 Alert a = new Alert(ad, now);
                 em.persist(a);
 
-                AlertNotificationLog anl = new AlertNotificationLog(a,"dummy");
+                AlertNotificationLog anl = new AlertNotificationLog(a, "dummy");
                 em.persist(anl);
 
             } catch (Exception e) {

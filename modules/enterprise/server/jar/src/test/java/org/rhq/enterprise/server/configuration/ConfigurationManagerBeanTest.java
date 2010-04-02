@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
 
 import javax.persistence.EntityManager;
 
@@ -39,6 +38,7 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -46,10 +46,8 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
@@ -59,6 +57,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -78,7 +77,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     private Resource newResource1;
     private Resource newResource2;
     private ResourceGroup compatibleGroup;
-    private PageControl pageControl;
+    private PageControl configUpdatesPageControl;
     private Agent agent;
     private Subject overlord;
 
@@ -87,9 +86,12 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
      */
     @BeforeClass
     public void beforeClass() {
-        // make sure page control sorts so the latest config is last
-        pageControl = PageControl.getUnlimitedInstance();
-        pageControl.addDefaultOrderingField("cu.id", PageOrdering.ASC);
+        // Make sure page control sorts so the latest config update is last (the default is for the latest to be first).
+        configUpdatesPageControl = PageControl.getUnlimitedInstance();
+        // (ips, 04/01/10): Use createdTime, rather than id, to order by, since the id's are not guaranteed to be
+        //                  ordered sequentially (this is because, dbsetup configures our sequences to pre-create
+        //                  and cache sequence values 10 at a time.
+        configUpdatesPageControl.addDefaultOrderingField("cu.createdTime", PageOrdering.ASC);
 
         configurationManager = LookupUtil.getConfigurationManager();
         resourceManager = LookupUtil.getResourceManager();
@@ -224,7 +226,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert history1 != null;
         PropertySimple myprop = history1.getConfiguration().getSimple("myboolean");
         assert myprop != null;
-        assert myprop.getStringValue().equals("true");
+        assert "true".equals(myprop.getStringValue());
 
         // now update to that second config - the "agent" will sleep for a bit before it completes
         // so we will have an INPROGRESS configuration for a few seconds before it goes to SUCCESS
@@ -244,7 +246,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 assert history2.getId() == history1.getId();
                 myprop = history2.getConfiguration().getSimple("myboolean");
                 assert myprop != null;
-                assert myprop.getStringValue().equals("true");
+                assert "true".equals(myprop.getStringValue());
                 myprop = history2.getConfiguration().getSimple("mysleep"); // this wasn't in the first config
                 assert myprop == null;
                 // record that this test case ran, we expect it will if the agent delay is there 
@@ -256,9 +258,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 assert history2.getId() != history1.getId();
                 myprop = history2.getConfiguration().getSimple("myboolean");
                 assert myprop != null;
-                assert myprop.getStringValue().equals("false");
+                assert "false".equals(myprop.getStringValue());
                 myprop = history2.getConfiguration().getSimple("mysleep");
-                assert myprop.getLongValue() == 7000L;
+                assert myprop.getLongValue() != null;
+                assert myprop.getLongValue().longValue() == 7000L;
             }
         } while (inProgress);
 
@@ -555,7 +558,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
             configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration);
 
-            Thread.sleep(4000); // wait for the test agent to complete the request
+            Thread.sleep(2000); // wait for the test agent to complete the request
 
             // our test service pretends the agent got an error - it will set some errors and the call to
             // completedConfigurationUpdate is made inline (in the real code, this would be asynchronous)
@@ -626,13 +629,13 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration);
 
-        Thread.sleep(4000); // wait for the test agent to complete the request
+        Thread.sleep(2000); // wait for the test agent to complete the request
 
         // at this point in time, the round trip messaging is done and we have the agent response
         List<ResourceConfigurationUpdate> requests;
 
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            pageControl);
+                configUpdatesPageControl);
 
         assert requests.size() == 1;
         assert requests.get(0) != null;
@@ -663,7 +666,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert live != null;
         mybool = live.getSimple("myboolean");
         assert mybool != null;
-        assert mybool.getStringValue().equals("true");
+        assert "true".equals(mybool.getStringValue());
         assert mybool.getErrorMessage() == null;
 
         // purging a non-existing request is a no-op
@@ -674,7 +677,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         configurationManager.purgeResourceConfigurationUpdate(overlord, request.getId(), false);
 
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            pageControl);
+                configUpdatesPageControl);
 
         assert requests.size() == 1; // it will create one for us from the "live" configuration
     }
@@ -704,34 +707,35 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         List<ResourceConfigurationUpdate> history;
         history = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            pageControl);
+                configUpdatesPageControl);
 
         assert history != null;
         assert history.size() == 3;
-        Configuration currentConfiguration = history.get(2).getConfiguration(); // the last is the current one
+
+        Configuration currentConfiguration = history.get(2).getConfiguration();
         PropertySimple mybool = currentConfiguration.getSimple("myboolean");
         assert mybool != null;
-        assert mybool.getStringValue().equals("TRUE");
+        assert "TRUE".equals(mybool.getStringValue()) : "actual: " + mybool.getStringValue();
 
         // now grab one of the earlier configurations and rollback to it
         Configuration rollbackToHere = history.get(1).getConfiguration(); // the "false" one
         mybool = rollbackToHere.getSimple("myboolean");
         assert mybool != null;
-        assert mybool.getStringValue().equals("false");
+        assert "false".equals(mybool.getStringValue()) : "actual: " + mybool.getStringValue();
 
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), rollbackToHere);
         Thread.sleep(2000); // wait for the test agent to complete the request
 
         history = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            pageControl);
+                configUpdatesPageControl);
         assert history != null;
         assert history.size() == 4;
-        ResourceConfigurationUpdate newConfigUpdate = history.get(3);
-        Configuration newConfiguration = newConfigUpdate.getConfiguration(); // the last is the new one
+        ResourceConfigurationUpdate newConfigUpdate = history.get(3); // the last one is the new one
+        Configuration newConfiguration = newConfigUpdate.getConfiguration();
         assert newConfiguration.getId() != rollbackToHere.getId();
         mybool = newConfiguration.getSimple("myboolean");
         assert mybool != null;
-        assert mybool.getStringValue().equals("false");
+        assert "false".equals(mybool.getStringValue());
         assert mybool.getErrorMessage() == null;
 
         ResourceConfigurationUpdate current = configurationManager.getLatestResourceConfigurationUpdate(overlord,
@@ -768,7 +772,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         List<ResourceConfigurationUpdate> requests;
 
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            pageControl);
+                configUpdatesPageControl);
 
         assert requests != null;
         assert requests.size() == 1 : "Got " + requests.size() + " config update requests - expected 1.";
@@ -799,7 +803,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         List<ResourceConfigurationUpdate> requests;
 
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            pageControl);
+                configUpdatesPageControl);
 
         assert requests != null;
         assert requests.size() == 2 : "Got " + requests.size() + " config update requests - expected 2.";
@@ -813,7 +817,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         // now get the current configs/requests and
         // make sure we deleted just the one configuration, leaving one left
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            pageControl);
+                configUpdatesPageControl);
 
         assert requests.size() == 1;
         assert requests.get(0).getId() == savedRequest.getId();
@@ -835,14 +839,14 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         Configuration activeConfigurationBefore = configurationManager.getResourceConfiguration(resource.getId());
 
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
-        Thread.sleep(4000); // wait for the test agent to complete the request
+        Thread.sleep(2000); // wait for the test agent to complete the request
 
         Configuration activeConfigurationAfter = configurationManager.getResourceConfiguration(resource.getId());
         assert activeConfigurationBefore.equals(activeConfigurationAfter) : "ActiveResourceConfiguration was not supposed to change for a failed update -- old was: "
             + activeConfigurationBefore + ", new was: " + activeConfigurationAfter;
 
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
-        Thread.sleep(4000); // wait for the test agent to complete the request
+        Thread.sleep(2000); // wait for the test agent to complete the request
 
         Configuration activeConfiguration = configurationManager.getResourceConfiguration(resource.getId());
         assert activeConfiguration != null : "ActiveResourceConfiguration was not updated with configuration2";
@@ -851,19 +855,19 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert activeProperties.containsKey("myboolean");
         PropertySimple activeProperty = activeProperties.get("myboolean");
         assert activeProperty.getName().equals("myboolean");
-        assert activeProperty.getStringValue().equals("true");
+        assert "true".equals(activeProperty.getStringValue());
 
         // at this point in time, the round trip messaging is done and we have the agent response
         List<ResourceConfigurationUpdate> requests;
 
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            pageControl);
+                configUpdatesPageControl);
 
         assert requests != null;
         assert requests.size() == 2; // one succeeded and one failed
 
-        assert requests.get(0).getStatus() == ConfigurationUpdateStatus.FAILURE;
-        assert requests.get(1).getStatus() == ConfigurationUpdateStatus.SUCCESS;
+        assert requests.get(0).getStatus() == ConfigurationUpdateStatus.FAILURE : "actual: " + requests.get(0).getStatus();
+        assert requests.get(1).getStatus() == ConfigurationUpdateStatus.SUCCESS : "actual: " + requests.get(1).getStatus();
 
         ResourceConfigurationUpdate savedRequest = requests.get(0); // this is the one that failed
         ResourceConfigurationUpdate doomedRequest = requests.get(1); // this is the one that succeeded
@@ -873,7 +877,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         // now get the current configs/requests and
         // make sure we deleted the only one configuration that succeeded, leaving one update record
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            pageControl);
+                configUpdatesPageControl);
 
         assert requests.size() == 1;
 
@@ -942,7 +946,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     void delete(Configuration configuration) {
         EntityManager entityMgr = getEntityManager();
         Configuration managedConfig = entityMgr.find(Configuration.class, configuration.getId());
-        entityMgr.remove(managedConfig);    
+        entityMgr.remove(managedConfig);
     }
 
     private class TestServices implements ConfigurationAgentService, DiscoveryAgentService {
@@ -989,7 +993,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                             response = new ConfigurationUpdateResponse(request.getConfigurationUpdateId(), null,
                                 ConfigurationUpdateStatus.SUCCESS, null);
                         } else {
-                            mybool.setErrorMessageFromThrowable(new IllegalArgumentException("Not a valid boolean"));
+                            mybool.setErrorMessage(ThrowableUtil.getStackAsString(new IllegalArgumentException(
+                                "Not a valid boolean")));
                             response = new ConfigurationUpdateResponse(request.getConfigurationUpdateId(), request
                                 .getConfiguration(), new NullPointerException("This simulates a failed update"));
                         }
@@ -1087,9 +1092,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         @Asynchronous(guaranteedDelivery = true)
         public void synchronizeInventory(ResourceSyncInfo syncInfo) {
         }
-	public Configuration validate(Configuration configuration, int resourceId, boolean isStructured)
+
+        public Configuration validate(Configuration configuration, int resourceId, boolean isStructured)
             throws PluginContainerException {
-	    return null;
+            return null;
         }
     }
 }

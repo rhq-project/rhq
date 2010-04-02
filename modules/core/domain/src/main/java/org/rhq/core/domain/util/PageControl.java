@@ -44,6 +44,8 @@ public class PageControl implements Serializable, Cloneable {
     private int pageSize = PageControl.SIZE_MAX;
     private LinkedList<OrderingField> orderingFields;
 
+    private Integer firstRecord;
+
     public PageControl() {
         this.orderingFields = new LinkedList<OrderingField>();
     }
@@ -52,6 +54,13 @@ public class PageControl implements Serializable, Cloneable {
         this();
         this.pageNumber = pageNumber;
         this.pageSize = pageSize;
+    }
+
+    public static PageControl getExplicitPageControl(int firstRecord, int recordCount) {
+        PageControl pc = new PageControl();
+        pc.firstRecord = firstRecord;
+        pc.pageSize = recordCount;
+        return pc;
     }
 
     public PageControl(int pageNumber, int pageSize, OrderingField... orderingFields) {
@@ -123,7 +132,15 @@ public class PageControl implements Serializable, Cloneable {
     public void setPageSize(int pageSize) {
         this.pageNumber = (pageSize != 0 && pageSize != SIZE_UNLIMITED) ? (getStartRow() / pageSize) : 0;
         this.pageSize = pageSize;
-    }    
+    }
+
+    public Integer getFirstRecord() {
+        return firstRecord;
+    }
+
+    public void setFirstRecord(Integer firstRecord) {
+        this.firstRecord = firstRecord;
+    }
 
     public PageOrdering getPrimarySortOrder() {
         OrderingField primaryOrderingField = getPrimaryOrderingField();
@@ -227,7 +244,11 @@ public class PageControl implements Serializable, Cloneable {
      * @return the index of the starting row for the page
      */
     public int getStartRow() {
-        return pageNumber * pageSize;
+        if (firstRecord != null) {
+            return firstRecord;
+        } else {
+            return pageNumber * pageSize;
+        }
     }
 
     public void reset() {
@@ -279,8 +300,7 @@ public class PageControl implements Serializable, Cloneable {
         return buf.toString();
     }
 
-    @Override
-    public Object clone() throws CloneNotSupportedException {
+    public Object clone() {
         return new PageControl(pageNumber, pageSize, getOrderingFieldsAsArray());
     }
 }

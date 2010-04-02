@@ -27,6 +27,7 @@ import static org.rhq.test.AssertUtils.*;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.*;
 import static org.testng.Assert.*;
 
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.test.JMockTest;
 import org.rhq.test.jmock.PropertyMatcher;
 import org.rhq.core.domain.auth.Subject;
@@ -341,7 +342,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             fixture.configuration, fixture.subject.getName());
         expectedUpdate.setId(-1);
         expectedUpdate.setStatus(FAILURE);
-        expectedUpdate.setErrorMessageFromThrowable(exception);
+        expectedUpdate.setErrorMessage(ThrowableUtil.getStackAsString(exception));
 
         context.checking(new Expectations() {{
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));

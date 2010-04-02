@@ -55,10 +55,6 @@ import org.rhq.core.domain.event.EventSource;
 public class EventReport implements Serializable {
     private static final long serialVersionUID = 2L;
 
-    // The log field must be either static final or transient, since sending this class over the wire will cause
-    // InvalidClassExceptions (due to the Server having a different version of Commons Logging).
-    private static final Log LOG = LogFactory.getLog(EventReport.class);
-
     private final int maxEventsPerSource;
     private final int maxEventsPerReport;
 
@@ -176,7 +172,9 @@ public class EventReport implements Serializable {
                     + this.maxEventsPerReport + "] - dropped [" + droppedCount + "] events";
             }
 
+            /* TODO: GWT
             LOG.warn(warningMessage + ": source=[" + eventSource + "]");
+            */
             warningEvent = new Event(eventSource.getEventDefinition().getName(), eventSource.getLocation(), now,
                 EventSeverity.WARN, warningMessage, eventSource);
             eventSet.add(warningEvent);
@@ -197,6 +195,6 @@ public class EventReport implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + this.events + "]";
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + this.events + "]";
     }
 }

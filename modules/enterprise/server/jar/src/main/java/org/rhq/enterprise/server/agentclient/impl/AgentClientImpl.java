@@ -27,7 +27,7 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import org.rhq.core.server.ExternalizableStrategy;
 import org.rhq.enterprise.communications.Ping;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
@@ -35,6 +35,7 @@ import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
 import org.rhq.enterprise.communications.command.client.SendCallback;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.util.HibernateDetachUtility;
 
 /**
  * Provides the mechanism by which you obtain remote interface proxies to a particular agent. Using those remote
@@ -172,6 +173,14 @@ public class AgentClientImpl implements AgentClient {
         };
 
         public void sending(Command command) {
+//            long start = System.currentTimeMillis();
+            try {
+                HibernateDetachUtility.nullOutUninitializedFields(command, HibernateDetachUtility.SerializationType.SERIALIZATION);
+//                System.out.println("HDU: " + (System.currentTimeMillis() - start));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
         }
 

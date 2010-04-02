@@ -168,7 +168,7 @@ public class RepoSyncResults implements Serializable, ContentSyncResults {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder(this.getClass().getSimpleName() + ": ");
+        StringBuilder str = new StringBuilder(this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + ": ");
         str.append("start-time=[" + new Date(startTime));
         str.append("], end-time=[" + ((endTime != null) ? new Date(endTime) : "---"));
         str.append("], percentComplete=[" + status);

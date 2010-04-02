@@ -22,10 +22,7 @@
   */
 package org.rhq.core.domain.discovery;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -43,7 +40,7 @@ import org.rhq.core.domain.resource.Resource;
  *
  * @author Greg Hinkle
  */
-public class AvailabilityReport implements Externalizable {
+public class AvailabilityReport implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String agentName;
@@ -138,7 +135,7 @@ public class AvailabilityReport implements Externalizable {
         return str.toString();
     }
 
-    public void writeExternal(ObjectOutput out) throws IOException {
+  /*  public void writeExternal(ObjectOutput out) throws IOException {
         out.writeObject(this.agentName);
         out.writeBoolean(this.changesOnly);
 
@@ -178,5 +175,5 @@ public class AvailabilityReport implements Externalizable {
             Availability a = new Availability(r, startTime, at);
             availabilities.add(a);
         }
-    }
+    }*/
 }

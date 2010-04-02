@@ -47,7 +47,7 @@ import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
@@ -59,7 +59,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -164,27 +164,30 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return syncInfo;
     }
 
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, PageControl pc) {
+        return getQueuedPlatformsAndServers(user, EnumSet.of(InventoryStatus.NEW), pc);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, EnumSet<InventoryStatus> statuses, PageControl pc) {
         // pc.initDefaultOrderingField("res.ctime", PageOrdering.DESC); // this is set in getQueuedPlatforms,
 
         // maps a platform to a list of child servers
         Map<Resource, List<Resource>> queuedResources = new HashMap<Resource, List<Resource>>();
 
-        List<Resource> queuedPlatforms = getQueuedPlatforms(user, EnumSet.of(InventoryStatus.NEW), pc);
+        List<Resource> queuedPlatforms = getQueuedPlatforms(user, statuses, pc);
         for (Resource platform : queuedPlatforms) {
-            List<Resource> queuedServers = getQueuedPlatformChildServers(user, InventoryStatus.NEW, platform);
-
-            ArrayList<Resource> servers = new ArrayList<Resource>();
-            for (Resource server : queuedServers) {
-                servers.add(server);
+            List<Resource> queuedServers = new ArrayList<Resource>();
+            for (InventoryStatus status : statuses) {
+                queuedServers.addAll(getQueuedPlatformChildServers(user, status, platform));
             }
-
-            queuedResources.put(platform, servers);
+            queuedResources.put(platform, queuedServers);
         }
-
         return queuedResources;
     }
+
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")

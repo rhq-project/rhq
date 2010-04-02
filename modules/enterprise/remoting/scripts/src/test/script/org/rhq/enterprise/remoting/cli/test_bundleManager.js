@@ -82,6 +82,51 @@ function testDeployment() {
    cleanupTestBundle();
 }
 
+function testGroupDeployment() {
+   if ( !TestsEnabled ) {
+      return;
+   }
+   
+   // delete the test bundle if it exists
+   cleanupTestBundle();
+
+   // create the test bundle
+   var testBundle = BundleManager.createBundle( bundleName, bundleName, getBundleType() );
+   
+   // define the recipe for bundleVersion 1.0 
+   var recipe = "file -s testBundle.war -d <%bundleTest.deployHome%>/group/testBundle.war"
+      
+   // create bundleVersion 1.0
+   var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, bundleName, null, recipe);
+
+   // add the single bundleFile, the test war file
+   var fileBytes = scriptUtil.getFileBytes("./src/test/resources/testBundle.war"); 
+   var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "testBundle.war",
+         "1.0", null, fileBytes, false);
+
+   // create the config, setting the required properties from the recipe
+   var config = new Configuration();   
+   var property = new PropertySimple("bundleTest.deployHome", "/tmp/bundle-test");
+   config.put( property );
+
+   // create a deploy def using the above config
+   var testDeployDef = BundleManager.createBundleDeployDefinition(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", config, false, -1, false);
+
+   // Find a target platform group
+   var rgc = new ResourceGroupCriteria();
+   rgc.addFilterName("platforms"); // wINdows, lINux
+   var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
+   Assert.assertTrue( groups.size() > 0 );
+   var groupId = groups.get(0).getId();
+   
+   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployDef.getId(), groupId);
+   Assert.assertNotNull( bgd );      
+   
+   // delete the test bundle if it exists (after allowing agent audit messages to complete)
+   sleep( 5000 );
+   cleanupTestBundle();
+}
+
 function getBundleType() {
  
    var types = BundleManager.getAllBundleTypes();

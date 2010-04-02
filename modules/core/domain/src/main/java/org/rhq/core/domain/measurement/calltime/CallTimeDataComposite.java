@@ -84,7 +84,7 @@ public class CallTimeDataComposite implements Serializable {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + "callDestination=" + this.callDestination + ", " + "minimum="
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "callDestination=" + this.callDestination + ", " + "minimum="
             + this.minimum + ", " + "maximum=" + this.maximum + ", " + "total=" + this.total + ", " + "count="
             + this.total + ", " + "average=" + this.average + "]";
     }

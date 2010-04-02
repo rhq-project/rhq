@@ -31,7 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.hibernate.stat.QueryStatistics;
 import org.hibernate.stat.Statistics;
 
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 
 /**
  * @author Joseph Marques

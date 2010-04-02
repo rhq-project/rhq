@@ -22,10 +22,10 @@
  */
 package org.rhq.core.domain.event;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -56,7 +56,7 @@ import org.rhq.core.domain.resource.ResourceType;
     + " WHERE ed.resourceTypeId = :resourceTypeId ") })
 @Table(name = EventDefinition.TABLE_NAME)
 @SequenceGenerator(name = "idGenerator", sequenceName = EventDefinition.TABLE_NAME + "_ID_SEQ", allocationSize = 100)
-public class EventDefinition implements Externalizable {
+public class EventDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String TABLE_NAME = "RHQ_EVENT_DEF";
@@ -145,8 +145,13 @@ public class EventDefinition implements Externalizable {
             return false;
         }
 
-        if (!name.equals(that.name))
+        if ((name != null ? (!name.equals(that.name)) : (that.name != null))) {
             return false;
+        }
+
+        if (id != 0 && that.id != 0 && id != that.id) {
+            return false;
+        }
 
         return true;
     }
@@ -155,25 +160,16 @@ public class EventDefinition implements Externalizable {
     public int hashCode() {
         int result;
         result = (resourceType != null) ? resourceType.hashCode() : 0;
-        result = 31 * result + name.hashCode();
+        result = 31 * result + ((name != null) ? name.hashCode() : 0);
+        result = 31 * result + id;
         return result;
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + "id=" + this.id + ", " + "resourceType.name="
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "id=" + this.id + ", " + "resourceType.name="
             + ((this.resourceType != null) ? this.resourceType.getName() : "null") + ", " + "name=" + this.name + "]";
 
-    }
-
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(this.resourceType);
-        out.writeUTF(this.name);
-    }
-
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.resourceType = (ResourceType) in.readObject();
-        this.name = in.readUTF();
     }
 
     public void setResourceTypeId(int resourceTypeId) {

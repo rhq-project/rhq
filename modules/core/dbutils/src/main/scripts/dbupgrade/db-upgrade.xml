@@ -1471,6 +1471,20 @@
             </schemaSpec>
 
             <schemaSpec version="2.59">
+               <schema-directSQL>
+                   <statement desc="Changing default persistence mode to FILESYSTEM for new JBoss CSP content sources">
+                      UPDATE rhq_content_source_type SET default_download_mode = 'FILESYSTEM'
+                      WHERE id = 101
+                   </statement>
+                   <statement desc="Changing persistence mode to FILESYSTEM on out-of-box JBoss CSP content source">
+                      UPDATE rhq_content_source SET download_mode = 'FILESYSTEM'
+                      WHERE id = 101 AND configuration_id =
+                      (SELECT configuration_id FROM rhq_config_property WHERE id = 112 AND string_value IS null)
+                   </statement>
+               </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.60">
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_RAW_CONFIG">
                         CREATE TABLE RHQ_RAW_CONFIG (ID INTEGER)
@@ -1479,7 +1493,7 @@
                 <schema-alterColumn table="RHQ_RAW_CONFIG" column="ID" columnType="INTEGER" nullable="FALSE" />
                 <schema-createSequence name="RHQ_RAW_CONFIG_ID_SEQ" initial="10001" />
                 <schema-directSQL>
-                    <statement desc="Creating primary key for RHQ_PARTITION_EVENT">
+                    <statement desc="Creating primary key for RHQ_RAW_CONFIG">
                         ALTER TABLE RHQ_RAW_CONFIG ADD PRIMARY KEY (ID)
                     </statement>
                 </schema-directSQL>
@@ -1532,7 +1546,7 @@
 
             </schemaSpec>
 
-            <schemaSpec version="2.59.1">
+            <schemaSpec version="2.60.1">
                 <schema-addColumn table="RHQ_PLUGIN" column="AMPS_VERSION" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_PLUGIN"
                                     column="AMPS_VERSION"
@@ -1540,7 +1554,7 @@
                                     precision="16"/>
             </schemaSpec>
 
-            <schemaSpec version="2.59.2">
+            <schemaSpec version="2.60.2">
                 <schema-directSQL>
                     <!-- RHN_CHANNEL => RHQ_REPO -->
                     <statement>
@@ -2696,6 +2710,7 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+
             <schemaSpec version="2.78">
                <!-- Remove obsolete tables RHQ_BUNDLE_CONFIG and RHQ_BUNDLE_DEPLOYMENT (the latter by cascade) -->
                <schema-dropTable table="RHQ_BUNDLE_DEPLOYMENT" />
@@ -2819,7 +2834,7 @@
                <!-- RHQ_BUNDLE_DEPLOY_HIST -->
                <schema-directSQL>
                    <statement desc="Creating table RHQ_BUNDLE_DEPLOY_HIST">
-                       CREATE TABLE RHQ_BUNDLE_DEPLOY_HIST ( ID INTEGER )
+                       CREATE TABLE RHQ_BUNDLE_DEPLOY_HIST ( ID INTEGER PRIMARY KEY )
                    </statement>
                </schema-directSQL>
                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="ID" nullable="FALSE" />
@@ -2852,6 +2867,7 @@
 
             <schemaSpec version="2.78.1">
                <schema-addColumn   table="RHQ_BUNDLE" column="REPO_ID" columnType="INTEGER" />
+               <schema-alterColumn table="RHQ_BUNDLE" column="REPO_ID" nullable="FALSE" />               
                <schema-directSQL>
                    <statement desc="Creating RHQ_BUNDLE foreign key relation to RHQ_REPO">
                        ALTER TABLE RHQ_BUNDLE
@@ -2893,7 +2909,77 @@
                </schema-directSQL>               
             </schemaSpec>              
 
-            <schemaSpec version="2.79">
+            <schemaSpec version="2.78.4">
+                <schema-addColumn   table="RHQ_BUNDLE_VERSION" column="VERSION_ORDER" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="VERSION_ORDER" nullable="FALSE" />
+            </schemaSpec>
+
+           <schemaSpec version="2.78.5">
+           <!-- RHQ_BUNDLE_GROUP_DEPLOY -->           
+              <schema-directSQL>
+                  <statement desc="Creating table RHQ_BUNDLE_GROUP_DEPLOY">
+                      CREATE TABLE RHQ_BUNDLE_GROUP_DEPLOY ( ID INTEGER PRIMARY KEY )
+                  </statement>
+              </schema-directSQL>
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="ID" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="GROUP_ID" columnType="INTEGER" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="GROUP_ID" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="BUNDLE_DEPLOY_DEF_ID" columnType="INTEGER" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="BUNDLE_DEPLOY_DEF_ID" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="STATUS" columnType="VARCHAR2" precision="16" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="STATUS" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="ERROR_MESSAGE" columnType="LONGVARCHAR" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="SUBJECT_NAME" columnType="VARCHAR2" precision="255" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="SUBJECT_NAME" nullable="FALSE" />              
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="CTIME" columnType="LONG" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="CTIME" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP_DEPLOY" column="MTIME" columnType="LONG" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_DEPLOY" column="MTIME" nullable="FALSE" />              
+              <schema-directSQL>
+                  <statement desc="Creating RHQ_BUNDLE_GROUP_DEPLOY foreign key relation to RHQ_RESOURCE_GROUP">
+                      ALTER TABLE RHQ_BUNDLE_GROUP_DEPLOY
+                      ADD CONSTRAINT RHQ_RESOURCE_GROUP_ID_FK
+                      FOREIGN KEY (GROUP_ID)
+                      REFERENCES RHQ_RESOURCE_GROUP (ID)
+                  </statement>
+                 <statement desc="Creating RHQ_BUNDLE_GROUP_DEPLOY foreign key relation to RHQ_BUNDLE_DEPLOY_DEF">
+                     ALTER TABLE RHQ_BUNDLE_GROUP_DEPLOY
+                     ADD CONSTRAINT RHQ_BUNDLE_DEPLOY_DEF_ID_FK
+                     FOREIGN KEY (BUNDLE_DEPLOY_DEF_ID)
+                     REFERENCES RHQ_BUNDLE_DEPLOY_DEF (ID)
+                 </statement>                 
+              </schema-directSQL>
+             
+              <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="BUNDLE_GROUP_DEPLOY_ID" columnType="INTEGER" />
+              <schema-directSQL>
+                  <statement desc="Creating RHQ_BUNDLE_DEPLOY foreign key relation to RHQ_BUNDLE_GROUP_DEPLOY">
+                      ALTER TABLE RHQ_BUNDLE_DEPLOY
+                      ADD CONSTRAINT RHQ_BUNDLE_GROUP_DEPLOY_ID_FK
+                      FOREIGN KEY (BUNDLE_GROUP_DEPLOY_ID)
+                      REFERENCES RHQ_BUNDLE_GROUP_DEPLOY (ID)
+                  </statement>
+              </schema-directSQL>              
+           </schemaSpec>
+
+           <schemaSpec version="2.78.6">
+              <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="STATUS" columnType="VARCHAR2" precision="16" />
+              <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="STATUS" nullable="FALSE" />
+           </schemaSpec>
+
+           <schemaSpec version="2.78.7">
+              <schema-addColumn   table="RHQ_BUNDLE" column="PACKAGE_TYPE_ID" columnType="INTEGER" />
+              <schema-alterColumn table="RHQ_BUNDLE" column="PACKAGE_TYPE_ID" nullable="FALSE" />
+              <schema-directSQL>
+                  <statement desc="Creating RHQ_BUNDLE foreign key relation to RHQ_PACKAGE_TYPE">
+                      ALTER TABLE RHQ_BUNDLE
+                      ADD CONSTRAINT RHQ_PACKAGE_TYPE_ID_FK
+                      FOREIGN KEY (PACKAGE_TYPE_ID)
+                      REFERENCES RHQ_PACKAGE_TYPE (ID)
+                  </statement>
+              </schema-directSQL>
+           </schemaSpec>
+
+           <schemaSpec version="2.79">
                 <schema-directSQL>
                     <statement desc="Normalizing resource group descriptions">
                         UPDATE RHQ_RESOURCE_GROUP SET DESCRIPTION = NULL WHERE DESCRIPTION = ''
@@ -2908,7 +2994,7 @@
                     </statement>
                 </schema-directSQL>
                 <schema-directSQL>
-                    <statement desc="Creating primary key for RHQ_AFFINITY_GROUP">
+                    <statement desc="Creating primary key for RHQ_SAVED_SEARCH">
                         ALTER TABLE RHQ_SAVED_SEARCH ADD PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
@@ -2971,4 +3057,3 @@
         </dbupgrade>
     </target>
 </project>
-

@@ -29,8 +29,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -41,6 +41,14 @@ import org.rhq.core.domain.util.PageOrdering;
 @SuppressWarnings("unused")
 public class AlertCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
+
+    // sort fields from the Alert itself
+    public static final String SORT_FIELD_CTIME = "ctime";
+
+    // sort fields from the Alert's AlertDefinition
+    public static final String SORT_FIELD_NAME = "name";
+    public static final String SORT_FIELD_PRIORITY = "priority";
+    public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
 
     private Integer filterId;
     private String filterTriggeredOperationName; // requires overrides
@@ -59,13 +67,15 @@ public class AlertCriteria extends Criteria {
     private boolean fetchAlertDefinition;
     private boolean fetchConditionLogs;
     private boolean fetchNotificationLogs;
+    private boolean fetchRecoveryAlertDefinition;
 
-    private PageOrdering sortName; // requires overrides
     private PageOrdering sortCtime;
-    private PageOrdering sortPriority; // requires overrides
+
+    private PageOrdering sortName; // requires sort override
+    private PageOrdering sortPriority; // requires sort override
+    private PageOrdering sortResourceId; // requires sort override
 
     public AlertCriteria() {
-        super();
 
         filterOverrides.put("triggeredOperationName", "triggeredOperation like ?");
         filterOverrides.put("startTime", "ctime >= ?");
@@ -84,11 +94,13 @@ public class AlertCriteria extends Criteria {
         filterOverrides.put("alertDefinitionIds", "alertDefinition.id IN ( ? )");
         filterOverrides.put("groupAlertDefinitionIds", "alertDefinition.groupAlertDefinition.id IN ( ? )");
 
-        sortOverrides.put("name", "alertDefinition.name");
-        sortOverrides.put("priority", "alertDefinition.priority");
+        sortOverrides.put(SORT_FIELD_NAME, "alertDefinition.name");
+        sortOverrides.put(SORT_FIELD_PRIORITY, "alertDefinition.priority");
+        sortOverrides.put(SORT_FIELD_RESOURCE_ID, "alertDefinition.resource.id");
     }
 
-    public Class<Alert> getPersistentClass() {
+    @Override
+    public Class getPersistentClass() {
         return Alert.class;
     }
 
@@ -156,18 +168,27 @@ public class AlertCriteria extends Criteria {
         this.fetchNotificationLogs = fetchNotificationLogs;
     }
 
-    public void addSortName(PageOrdering sortName) {
-        addSortField("name");
-        this.sortName = sortName;
+    public void fetchRecoveryAlertDefinition(boolean fetchRecoveryAlertDefinition) {
+        this.fetchRecoveryAlertDefinition = fetchRecoveryAlertDefinition;
     }
 
     public void addSortCtime(PageOrdering sortCtime) {
-        addSortField("ctime");
+        addSortField(SORT_FIELD_CTIME);
         this.sortCtime = sortCtime;
     }
 
+    public void addSortName(PageOrdering sortName) {
+        addSortField(SORT_FIELD_NAME);
+        this.sortName = sortName;
+    }
+
     public void addSortPriority(PageOrdering sortPriority) {
-        addSortField("priority");
+        addSortField(SORT_FIELD_PRIORITY);
         this.sortPriority = sortPriority;
+    }
+
+    public void addSortResourceId(PageOrdering sortResourceId) {
+        addSortField(SORT_FIELD_RESOURCE_ID);
+        this.sortResourceId = sortResourceId;
     }
 }

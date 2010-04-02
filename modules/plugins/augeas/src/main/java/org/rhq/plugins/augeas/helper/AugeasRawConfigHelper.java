@@ -33,6 +33,7 @@ import org.apache.commons.io.FileUtils;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * @author paji
@@ -82,7 +83,9 @@ public class AugeasRawConfigHelper {
             aug.save();
 
             toUpdate.setPath(existingConfig.getPath());
-            toUpdate.setContents(FileUtils.readFileToString(new File(file)));
+            String contents = FileUtils.readFileToString(new File(file));
+            String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+            toUpdate.setContents(contents, sha256);
         } finally {
             if (aug != null) {
                 aug.close();

@@ -139,7 +139,7 @@ public class GroupPluginConfigurationUpdate extends AbstractGroupConfigurationUp
                    "PropertyList type not supported for group plugin configuration updates");
             } else {
                throw new UnsupportedOperationException("Property of type '"
-                   + changesProperty.getClass().getSimpleName() + "' "
+                   + changesProperty.this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "' "
                    + "not supported for group plugin configuration updates");
             }
             */

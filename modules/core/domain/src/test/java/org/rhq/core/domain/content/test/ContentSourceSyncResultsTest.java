@@ -31,8 +31,8 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
@@ -49,16 +49,17 @@ public class ContentSourceSyncResultsTest extends AbstractEJB3Test {
         try {
             EntityManager em = getEntityManager();
 
-            ResourceType rt = new ResourceType("testPVCSResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
-            Resource resource = new Resource("testPVCSResource", "testPVCSResource", rt);
-            Architecture arch = new Architecture("testPVCSInsertArch");
-            PackageType pt = new PackageType("testPVCSInsertPT", resource.getResourceType());
-            Package pkg = new Package("testPVCSInsertPackage", pt);
+            ResourceType rt = new ResourceType("testCSSRResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
+            Resource resource = new Resource("testCSSRResource", "testCSSRResource", rt);
+            resource.setUuid("uuid");
+            Architecture arch = new Architecture("testCSSRInsertArch");
+            PackageType pt = new PackageType("testCSSRInsertPT", resource.getResourceType());
+            Package pkg = new Package("testCSSRInsertPackage", pt);
             PackageVersion pv = new PackageVersion(pkg, "version", arch);
-            ContentSourceType cst = new ContentSourceType("testPVCSContentSourceType");
-            ContentSource cs = new ContentSource("testPVCSContentSource", cst);
+            ContentSourceType cst = new ContentSourceType("testCSSRContentSourceType");
+            ContentSource cs = new ContentSource("testCSSRContentSource", cst);
             ContentSourceSyncResults results = new ContentSourceSyncResults(cs);
-            Repo repo = new Repo("testPVCSRepo");
+            Repo repo = new Repo("testCSSRRepo");
             repo.addContentSource(cs);
 
             em.persist(rt);
@@ -107,6 +108,9 @@ public class ContentSourceSyncResultsTest extends AbstractEJB3Test {
             syncResults = cs.getSyncResults();
             assert syncResults != null;
             assert syncResults.size() == 2;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         } finally {
             getTransactionManager().rollback();
         }

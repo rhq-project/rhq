@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<bundle-plugin name="AntBundleServerPlugin"
+               displayName="Ant Bundle Processor"
+               description="Processes bundles whose recipes are Ant scripts"
+               package="org.rhq.enterprise.server.plugins.ant"
+               xmlns="urn:xmlns:rhq-serverplugin.bundle"
+               xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+               xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:help><![CDATA[
+        Processes Ant bundles on the server side.
+    ]]></serverplugin:help>
+
+    <serverplugin:plugin-component class="AntBundleServerPluginComponent">
+    </serverplugin:plugin-component>
+
+    <bundle type="Ant Bundle"/>
+
+</bundle-plugin>

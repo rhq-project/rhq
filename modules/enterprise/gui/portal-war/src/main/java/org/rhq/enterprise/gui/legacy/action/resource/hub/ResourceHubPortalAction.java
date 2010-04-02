@@ -48,7 +48,7 @@ import org.rhq.enterprise.gui.legacy.util.HubUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.resource.InventorySummary;
+import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

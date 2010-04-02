@@ -28,19 +28,21 @@ import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.clientapi.server.content.ContentServerService;
-import org.rhq.core.domain.content.PackageDetailsKey;
+
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.DeployPackagesRequest;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.util.exception.ThrowableUtil;
 
-/**
+ /**
  * Runnable to allow threaded creation of a content.
  *
  * @author Jason Dobies
@@ -84,7 +86,7 @@ public class CreateContentRunner implements Runnable, Callable<DeployPackagesRes
             response = contentManager.performPackageDeployment(request.getResourceId(), request.getPackages());
         } catch (Throwable throwable) {
             response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
-            response.setErrorMessageFromThrowable(throwable);
+            response.setOverallRequestErrorMessage(ThrowableUtil.getStackAsString(throwable));
         }
 
         // We don't rely on the plugin to map up the response to the request ID, so we do it here

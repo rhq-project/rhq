@@ -18,11 +18,15 @@
  */
 package org.rhq.enterprise.server.bundle;
 
+import java.util.Map;
+
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 
 /**
@@ -63,9 +67,30 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     BundleType createBundleType(Subject subject, String name, int resourceTypeId) throws Exception;
 
     /**
-     * This is typically not called directly, typically deployBundle() is called externally. This executes
-     * in a New Transaction and supports deployBundle. 
+     * This is typically not called directly, typically scheduleBundleDeployment() is called externally. This executes
+     * in a New Transaction and supports scheduleBundleDeployment. 
      */
-    BundleDeployment createBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
+    BundleDeployment createBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId,
+        int bundleGroupDeploymentId) throws Exception;
+
+    /**
+     * This is typically not called directly, typically scheduleBundleGroupDeployment() is called externally.
+     * This executes in a New Transaction and supports scheduleBundleGroupDeployment. 
+     */
+    BundleGroupDeployment createBundleGroupDeployment(BundleGroupDeployment bundleGroupDeployment) throws Exception;
+
+    // added here because the same method in @Remote was commented out to bypass a WSProvide issue
+    Map<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception;
+
+    /**
+     * Called internally to set deployment status. Typically to a completion status when deployment ends.
+     * 
+     * @param subject
+     * @param bundleDeploymentId id of the deployment appending the history record
+     * @param status
+     * @return the updated BundleDeployment  
+     */
+    BundleDeployment setBundleDeploymentStatus(Subject subject, int bundleDeploymentId, BundleDeploymentStatus status)
         throws Exception;
+
 }

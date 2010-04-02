@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<project name="test" default="init">
+    <property name="outfile" value="${basedir}/output.1" />
+
+    <target name="init">
+        <echo file="${outfile}" message="HELLO WORLD"/>
+    </target>
+</project>

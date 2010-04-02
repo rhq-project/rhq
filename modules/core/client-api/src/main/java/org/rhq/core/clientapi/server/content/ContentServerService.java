@@ -33,7 +33,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
-import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
+import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;

@@ -38,7 +38,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.core.server.MeasurementParser;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -276,7 +276,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
         // validate here rather than in ViewChartForm.validate() because we don't want to parse the number twice
         if (highRangeStr.length() > 0) {
             try {
-                double highRange = MeasurementConverter.parse(highRangeStr, schedule).getValue();
+                double highRange = MeasurementParser.parse(highRangeStr, schedule).getValue();
 
                 MeasurementBaseline baseline = schedule.getBaseline();
 
@@ -319,7 +319,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
         // validate here rather than in ViewChartForm.validate() because we don't want to parse the number twice
         if (lowRangeStr.length() > 0) {
             try {
-                double lowRange = MeasurementConverter.parse(lowRangeStr, schedule).getValue();
+                double lowRange = MeasurementParser.parse(lowRangeStr, schedule).getValue();
 
                 MeasurementBaseline baseline = schedule.getBaseline();
 

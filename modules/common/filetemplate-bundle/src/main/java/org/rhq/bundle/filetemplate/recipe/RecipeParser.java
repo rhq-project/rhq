@@ -108,7 +108,7 @@ public class RecipeParser {
 
         RecipeCommand recipeCommand = this.recipeCommands.get(commandName);
         if (recipeCommand == null) {
-            throw new Exception("Unknown command in recipe: " + commandName);
+            throw new Exception("Unknown command in recipe [" + commandName + "]");
         }
 
         Set<String> replacementVars = getReplacementVariables(line);
@@ -129,6 +129,7 @@ public class RecipeParser {
         HashMap<String, RecipeCommand> commands = new HashMap<String, RecipeCommand>();
 
         RecipeCommand[] knownCommands = new RecipeCommand[] { new ScriptRecipeCommand(), //
+            new ConfigDefRecipeCommand(), //
             new CommandRecipeCommand(), //
             new FileRecipeCommand(), //
             new RealizeRecipeCommand(), //
@@ -188,7 +189,7 @@ public class RecipeParser {
             }
 
             // If we didn't find a replacement for the key then leave the original value unchanged
-            matcher.appendReplacement(buffer, next);
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(next));
         }
         matcher.appendTail(buffer);
         return buffer.toString();

@@ -143,23 +143,6 @@ public abstract class AbstractConfigurationUpdate implements Serializable {
     }
 
     /**
-     * Convienence method that sets the error message to the given throwable's stack trace dump. If the given throwable
-     * is <code>null</code>, the error message will be set to <code>null</code> as if passing <code>null</code> to
-     * {@link #setErrorMessage(String)}.
-     *
-     * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
-     */
-    public void setErrorMessageFromThrowable(Throwable t) {
-        if (t != null) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            t.printStackTrace(new PrintStream(baos));
-            setErrorMessage(baos.toString());
-        } else {
-            setErrorMessage(null);
-        }
-    }
-
-    /**
      * For auditing purposes, this method tells you the username of the person that created the request. This is not a
      * relationship to an actual Subject because we want to maintain the audit trail, even if a Subject has been deleted
      * from the database.
@@ -261,7 +244,7 @@ public abstract class AbstractConfigurationUpdate implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder(getClass().getSimpleName());
+        StringBuilder str = new StringBuilder(this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1));
         str.append("[status=").append(this.status);
         str.append(", configuration=").append(this.configuration);
         str.append(", subjectName=").append(this.subjectName);

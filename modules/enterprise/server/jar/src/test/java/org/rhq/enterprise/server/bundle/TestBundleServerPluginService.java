@@ -187,9 +187,8 @@ public class TestBundleServerPluginService extends ServerPluginService implement
         }
 
         @Override
-        public BundleServerPluginFacet getBundleServerPluginFacet(String bundleTypeName) {
-
-            return new TestBundlePluginComponent();
+        public RecipeParseResults parseRecipe(String bundleTypeName, String recipe) throws Exception {
+            return new TestBundlePluginComponent().parseRecipe(recipe);
         }
     }
 

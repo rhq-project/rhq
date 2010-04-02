@@ -59,13 +59,13 @@ public class CriteriaQueryRunner<T> {
         long count = (Long) countQuery.getSingleResult();
         List<T> results = query.getResultList();
 
-        if (autoInitializeBags) {
+        if (autoInitializeBags && (!queryGenerator.getPersistentBagFields().isEmpty())) {
             for (T entity : results) {
                 initPersistentBags(entity);
             }
         }
 
-        return new PageList<T>(results, (int) count, criteria.getPageControl());
+        return new PageList<T>(results, (int) count, CriteriaQueryGenerator.getPageControl(criteria));
     }
 
     public void initPersistentBags(Object entity) {

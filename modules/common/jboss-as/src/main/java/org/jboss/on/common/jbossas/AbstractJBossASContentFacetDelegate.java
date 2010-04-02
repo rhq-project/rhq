@@ -39,6 +39,7 @@ import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * This is a base class for the ContentFacet implementation delegates for JBoss AS plugins.
@@ -111,7 +112,7 @@ public abstract class AbstractJBossASContentFacetDelegate implements ContentFace
                     // Don't forget to provide an individual response for the failed package.
                     DeployIndividualPackageResponse response = new DeployIndividualPackageResponse(pkg.getKey(),
                         ContentResponseResult.FAILURE);
-                    response.setErrorMessageFromThrowable(throwable);
+                    response.setErrorMessage(ThrowableUtil.getStackAsString(throwable));
                     individualResponses.add(response);
 
                     overallResult = ContentResponseResult.FAILURE;

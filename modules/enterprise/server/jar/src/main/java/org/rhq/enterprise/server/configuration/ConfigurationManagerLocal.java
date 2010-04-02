@@ -107,29 +107,38 @@ public interface ConfigurationManagerLocal {
         Long endDate, PageControl pc);
 
     /**
-     * Returns the list of all resource configuration updates for the given resource. This will show you an audit trail
-     * of the update history for the resource (who updated it, when and what did they do). You can pick one
+     * Returns the list of all Resource configuration updates for the given Resource, in reverse of the order in which
+     * they were created (i.e. most recent update will be the first item in the list). This will show you an audit trail
+     * of the update history for the Resource (who updated it, when and what did they change). You can pick one
      * configuration version to later rollback to that version via
      * {@link #updateResourceConfiguration(Subject, int, Configuration)}.
      *
-     * @param  subject         the user who wants to see the information
+     * @param  subject        the user who wants to see the information
      * @param  resourceId     the resource whose update requests are to be returned, if null will not filter by resourceId
      * @param  beginDate      filter used to show only results occurring after this epoch millis parameter, nullable
      * @param  endDate        filter used to show only results occurring before this epoch millis parameter, nullable
      * @param  suppressOldest if true, will not include the oldest element in the history (usually the initial update)
      * @param  pc             the pagination controls
      *
-     * @return the resource's complete list of updates (will be empty (not <code>null</code>) if none)
+     * @return the Resource's complete list of updates (will be empty (not <code>null</code>) if none)
      */
     PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc);
 
+    /**
+     * Returns a single plugin configuration update.
+     *
+     * @param subject               the user who wants to see the information
+     * @param configurationUpdateId the ID of the configuration update entity to return
+     *
+     * @return the plugin configuration update
+     */
     PluginConfigurationUpdate getPluginConfigurationUpdate(Subject subject, int configurationUpdateId);
 
     /**
      * Returns a single resource configuration update
      *
-     * @param  subject                the user who wants to see the information
+     * @param  subject               the user who wants to see the information
      * @param  configurationUpdateId the ID of the configuration update entity to return
      *
      * @return the resource configuration update

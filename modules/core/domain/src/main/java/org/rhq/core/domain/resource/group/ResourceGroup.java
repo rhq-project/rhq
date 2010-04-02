@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.Resource;
@@ -403,6 +404,11 @@ public class ResourceGroup extends Group {
     // by primary key which will also put the configuration updates in chronological order
     private List<AbstractGroupConfigurationUpdate> configurationUpdates = new ArrayList<AbstractGroupConfigurationUpdate>();
 
+    @OneToMany(mappedBy = "group", cascade = { CascadeType.REMOVE })
+    @OrderBy
+    // by primary key which will also put the bundle deployments in chronological order
+    private List<BundleGroupDeployment> bundleGroupDeployments = new ArrayList<BundleGroupDeployment>();
+
     @JoinColumn(name = "GROUP_DEFINITION_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private GroupDefinition groupDefinition;
@@ -548,6 +554,14 @@ public class ResourceGroup extends Group {
         this.configurationUpdates = configurationUpdates;
     }
 
+    public List<BundleGroupDeployment> getBundleGroupDeployments() {
+        return bundleGroupDeployments;
+    }
+
+    public void setBundleGroupDeployments(List<BundleGroupDeployment> bundleGroupDeployments) {
+        this.bundleGroupDeployments = bundleGroupDeployments;
+    }
+
     public GroupDefinition getGroupDefinition() {
         return groupDefinition;
     }
@@ -644,7 +658,7 @@ public class ResourceGroup extends Group {
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder();
-        buffer.append(ResourceGroup.class.getSimpleName()).append("[");
+        buffer.append("ResourceGroup").append("[");
         buffer.append("id=").append(this.id);
         buffer.append(", name=").append(this.getName());
         buffer.append(", category=").append(groupCategory.name());

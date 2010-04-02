@@ -3,8 +3,8 @@ package org.rhq.core.domain.criteria;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.content.InstalledPackage;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
@@ -25,8 +25,6 @@ public class InstalledPackageCriteria extends Criteria {
     private PageOrdering sortInstallationDate;
 
     public InstalledPackageCriteria() {
-        super();
-
         filterOverrides.put("installationTimeMinimum", "installationDate >= ?");
         filterOverrides.put("installationTimeMaximum", "installationDate <= ?");
         filterOverrides.put("packageVersionId", "packageVersion.id = ? ");
@@ -34,7 +32,8 @@ public class InstalledPackageCriteria extends Criteria {
         filterOverrides.put("userId", "user.id = ? ");
     }
 
-    public Class<InstalledPackage> getPersistentClass() {
+    @Override
+    public Class getPersistentClass() {
         return InstalledPackage.class;
     }
 

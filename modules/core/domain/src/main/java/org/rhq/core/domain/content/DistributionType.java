@@ -106,7 +106,7 @@ public class DistributionType implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("DistributionType: name=[%s]", this.name);
+        return "DistributionType: name=[" + this.name + "]";
     }
 
     @Override

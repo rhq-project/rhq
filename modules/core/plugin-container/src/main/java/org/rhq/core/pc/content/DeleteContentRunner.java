@@ -27,13 +27,14 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.content.ContentServerService;
+import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
 import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
+import org.rhq.core.util.exception.ThrowableUtil;
 
-/**
+ /**
  * Runnable to allow threaded deleting of content.
  *
  * @author Jason Dobies
@@ -67,7 +68,7 @@ public class DeleteContentRunner implements Runnable {
             response = contentManager.performPackageDelete(request.getResourceId(), request.getPackages());
         } catch (Throwable throwable) {
             response = new RemovePackagesResponse(ContentResponseResult.FAILURE);
-            response.setErrorMessageFromThrowable(throwable);
+            response.setOverallRequestErrorMessage(ThrowableUtil.getStackAsString(throwable));
         }
 
         // We don't rely on the plugin to map up the response to the request ID, so we do it here

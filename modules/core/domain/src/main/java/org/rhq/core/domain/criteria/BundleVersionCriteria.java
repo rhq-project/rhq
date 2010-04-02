@@ -38,6 +38,7 @@ public class BundleVersionCriteria extends Criteria {
     private String filterDescription;
     private String filterName;
     private String filterVersion;
+    private Integer filterBundleId; // needs override    
     private String filterBundleName; // needs override    
 
     private boolean fetchBundle;
@@ -47,12 +48,12 @@ public class BundleVersionCriteria extends Criteria {
     private boolean fetchConfigurationDefinition;
 
     public BundleVersionCriteria() {
-        super();
-
+        filterOverrides.put("bundleId", "bundle.id = ?");
         filterOverrides.put("bundleName", "bundle.name like ?");
     }
 
-    public Class<BundleVersion> getPersistentClass() {
+    @Override
+    public Class getPersistentClass() {
         return BundleVersion.class;
     }
 
@@ -66,6 +67,10 @@ public class BundleVersionCriteria extends Criteria {
 
     public void addFilterName(String filterName) {
         this.filterName = filterName;
+    }
+
+    public void addFilterBundleId(Integer filterBundleId) {
+        this.filterBundleId = filterBundleId;
     }
 
     public void addFilterBundleName(String filterBundleName) {
@@ -86,6 +91,10 @@ public class BundleVersionCriteria extends Criteria {
 
     public void fetchBundleFiles(boolean fetchBundleFiles) {
         this.fetchBundleFiles = fetchBundleFiles;
+    }
+
+    public void fetchConfigurationDefinition(boolean fetchConfigurationDefinition) {
+        this.fetchConfigurationDefinition = fetchConfigurationDefinition;
     }
 
     public void fetchDistribution(boolean fetchDistribution) {

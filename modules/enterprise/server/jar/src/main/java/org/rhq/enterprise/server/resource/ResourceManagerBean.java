@@ -105,7 +105,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -647,6 +647,19 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         return resourceLineage;
     }
+
+    public List<Resource> getResourceLineageAndSiblings(int resourceId) {
+        List<Resource> resourceLineage = getResourceLineage(resourceId);
+        LinkedList<Resource> result = new LinkedList<Resource>();
+
+        result.add(resourceLineage.get(0));
+        for (Resource resource : resourceLineage) {
+            result.addAll(resource.getChildResources());
+        }
+
+        return result;
+    }
+
 
     @NotNull
     public Resource getRootResourceForResource(int resourceId) {

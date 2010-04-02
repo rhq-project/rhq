@@ -84,6 +84,7 @@
     <module>alert-subject</module>
     <module>cobbler</module>
     <module>filetemplate-bundle</module>
+    <module>ant-bundle</module>
     <module>validate-all-serverplugins</module>
   </modules>
 

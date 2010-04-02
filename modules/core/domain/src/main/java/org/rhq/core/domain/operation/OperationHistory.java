@@ -281,23 +281,6 @@ public abstract class OperationHistory implements Serializable {
     }
 
     /**
-     * Convienence method that sets the error message to the given throwable's stack trace dump. If the given throwable
-     * is <code>null</code>, the error message will be set to <code>null</code> as if passing <code>null</code> to
-     * {@link #setErrorMessage(String)}.
-     *
-     * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
-     */
-    public void setErrorMessageFromThrowable(Throwable t) {
-        if (t != null) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            t.printStackTrace(new PrintStream(baos));
-            setErrorMessage(baos.toString());
-        } else {
-            setErrorMessage(null);
-        }
-    }
-
-    /**
      * For auditing purposes, this method tells you the username of the person that invoked the operation. This is not a
      * relationship to an actual Subject because we want to maintain the audit trail, even if a Subject has been deleted
      * from the database.
@@ -394,9 +377,10 @@ public abstract class OperationHistory implements Serializable {
 
         // there may be some operations whose parameters are sensitive values, like passwords
         // do not show them by default - but allow testers to see them via a system property
+        /* TODO: GWT
         if (Boolean.getBoolean("rhq.test.operation.show-values")) {
             buf.append("], parameters=[" + this.parameters);
-        }
+        }*/
 
         buf.append("], ctime=[" + new java.util.Date(this.createdTime));
         buf.append("], mtime=[" + new java.util.Date(this.modifiedTime));

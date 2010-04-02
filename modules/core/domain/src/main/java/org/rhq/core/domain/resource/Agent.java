@@ -22,10 +22,10 @@
  */
 package org.rhq.core.domain.resource;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import org.rhq.core.domain.cloud.AffinityGroup;
+import org.rhq.core.domain.cloud.Server;
+
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -41,10 +41,9 @@ import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.jetbrains.annotations.NotNull;
-
-import org.rhq.core.domain.cloud.AffinityGroup;
-import org.rhq.core.domain.cloud.Server;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A JON agent.
@@ -491,31 +490,5 @@ public class Agent implements Serializable {
         return "Agent[id=" + id + ",name=" + this.name + ",address=" + this.address + ",port=" + this.port
             + ",remote-endpoint=" + this.remoteEndpoint + ",last-availability-report=" + this.lastAvailabilityReport
             + "]";
-    }
-
-    /**
-     * Generates a string of up to 100 chars of a (generally) random token. You can then pass the generated string into
-     * {@link #setAgentToken(String)} if you need to assign the agent a new token.
-     *
-     * @param  seed a string to help seed the random number generator - try to make this as unique as possible so as not
-     *              to collide with other agents (agent name would be a good candidate)
-     *
-     * @return a random token string
-     */
-    public static String generateRandomToken(String seed) {
-        Random r;
-        long rand1;
-        long rand2;
-        long seedHash = Math.abs(seed.hashCode());
-
-        r = new Random(new Object().hashCode());
-        rand1 = Math.abs(r.nextLong());
-        try {
-            Thread.sleep((rand1 % 100) + 30L);
-        } catch (InterruptedException e) {
-        }
-
-        rand2 = r.nextLong();
-        return System.currentTimeMillis() + "-" + seedHash + "-" + Math.abs(rand2);
     }
 }

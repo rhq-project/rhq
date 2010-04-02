@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TemplateEngine implements Serializable{
+public class TemplateEngine implements Serializable {
     /**
      * 
      */
@@ -35,6 +35,10 @@ public class TemplateEngine implements Serializable{
     public TemplateEngine(Map<String, String> tokens) {
         super();
         this.tokens = tokens;
+    }
+
+    public Map<String, String> getTokens() {
+        return this.tokens;
     }
 
     public String replaceTokens(String input) {

@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.util;
 
 import java.io.BufferedInputStream;
@@ -35,8 +35,17 @@ import java.security.NoSuchAlgorithmException;
  * An object that generates a message digest or hash for algorithms such as MD5 or SHA. This class is basically a
  * wrapper around {@link java.security.MessageDigest} and provides convenience methods making it easier to generate
  * hashes.
+ * 
+ * There are static methods in here that use MD5 as the default algorithm. If you want to use another
+ * algorithm, instantiate an instance of this object and use its instance methods.
  */
 public class MessageDigestGenerator {
+    /** you can pass this to the constructor to indicate you want to generate MD5 message digests */
+    public static final String MD5 = "MD5";
+
+    /** you can pass this to the constructor to indicate you want to generate SHA 256 message digests */
+    public static final String SHA_256 = "SHA-256";
+
     private final MessageDigest messageDigest;
 
     /**
@@ -48,7 +57,7 @@ public class MessageDigestGenerator {
      * @throws IllegalStateException if the MD5 algorithm cannot be computed by the VM
      */
     public MessageDigestGenerator() {
-        this("MD5");
+        this(MD5);
     }
 
     /**
@@ -61,8 +70,7 @@ public class MessageDigestGenerator {
     public MessageDigestGenerator(String algorithm) {
         try {
             messageDigest = MessageDigest.getInstance(algorithm);
-        }
-        catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(algorithm + " is not a supported algorithm");
         }
     }
@@ -142,9 +150,13 @@ public class MessageDigestGenerator {
      * @throws IOException if failed to read the stream for some reason
      */
     public static byte[] getDigest(InputStream is) throws IOException {
-        MessageDigestGenerator md5 = new MessageDigestGenerator();
-        md5.add(is);
-        return md5.getDigest();
+        MessageDigestGenerator md5 = new MessageDigestGenerator(MD5);
+        return md5.calcDigest(is);
+    }
+
+    public byte[] calcDigest(InputStream is) throws IOException {
+        add(is);
+        return getDigest();
     }
 
     /**
@@ -157,9 +169,13 @@ public class MessageDigestGenerator {
      * @throws IOException if failed to read the stream for some reason
      */
     public static String getDigestString(InputStream is) throws IOException {
-        MessageDigestGenerator md5 = new MessageDigestGenerator();
-        md5.add(is);
-        return md5.getDigestString();
+        MessageDigestGenerator md5 = new MessageDigestGenerator(MD5);
+        return md5.calcDigestString(is);
+    }
+
+    public String calcDigestString(InputStream is) throws IOException {
+        add(is);
+        return getDigestString();
     }
 
     /**
@@ -172,9 +188,14 @@ public class MessageDigestGenerator {
      * @throws RuntimeException if a system error occurred - should never really happen
      */
     public static byte[] getDigest(String source_str) {
+        MessageDigestGenerator md5 = new MessageDigestGenerator(MD5);
+        return md5.calcDigest(source_str);
+    }
+
+    public byte[] calcDigest(String source_str) {
         try {
             ByteArrayInputStream bs = new ByteArrayInputStream(source_str.getBytes());
-            return getDigest(bs);
+            return calcDigest(bs);
         } catch (IOException e) {
             throw new RuntimeException("IOException reading a byte array input stream, this should never happen", e);
         }
@@ -188,7 +209,12 @@ public class MessageDigestGenerator {
      * @return the string's digest or hash as a String
      */
     public static String getDigestString(String source_str) {
-        return calculateDigestStringFromBytes(getDigest(source_str));
+        MessageDigestGenerator md5 = new MessageDigestGenerator(MD5);
+        return md5.calcDigestString(source_str);
+    }
+
+    public String calcDigestString(String source_str) {
+        return calculateDigestStringFromBytes(calcDigest(source_str));
     }
 
     /**
@@ -201,11 +227,16 @@ public class MessageDigestGenerator {
      * @throws IOException if the file could not be read or accessed
      */
     public static byte[] getDigest(File file) throws IOException {
+        MessageDigestGenerator md5 = new MessageDigestGenerator(MD5);
+        return md5.calcDigest(file);
+    }
+
+    public byte[] calcDigest(File file) throws IOException {
         FileInputStream is = null;
 
         try {
             is = new FileInputStream(file);
-            return getDigest(new BufferedInputStream(is, 1024 * 32));
+            return calcDigest(new BufferedInputStream(is, 1024 * 32));
         } finally {
             if (is != null) {
                 is.close();
@@ -223,7 +254,12 @@ public class MessageDigestGenerator {
      * @throws IOException if the file could not be read or accessed
      */
     public static String getDigestString(File file) throws IOException {
-        return calculateDigestStringFromBytes(getDigest(file));
+        MessageDigestGenerator md5 = new MessageDigestGenerator(MD5);
+        return md5.calcDigestString(file);
+    }
+
+    public String calcDigestString(File file) throws IOException {
+        return calculateDigestStringFromBytes(calcDigest(file));
     }
 
     /**
@@ -257,5 +293,7 @@ public class MessageDigestGenerator {
         String file = args[0];
         String digest = MessageDigestGenerator.getDigestString(new File(file));
         System.out.println("MD5=" + digest);
+        digest = new MessageDigestGenerator(SHA_256).calcDigestString(new File(file));
+        System.out.println("SHA-256=" + digest);
     }
 }

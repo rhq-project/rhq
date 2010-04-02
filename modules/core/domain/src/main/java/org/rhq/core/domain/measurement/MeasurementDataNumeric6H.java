@@ -22,13 +22,13 @@
   */
 package org.rhq.core.domain.measurement;
 
-import java.io.Serializable;
-import java.text.DecimalFormat;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
+ import javax.persistence.Column;
+ import javax.persistence.Entity;
+ import javax.persistence.NamedQueries;
+ import javax.persistence.NamedQuery;
+ import javax.persistence.Table;
+
+ import java.io.Serializable;
 
 /**
  * Subclass for numerical measurement data
@@ -78,7 +78,7 @@ public class MeasurementDataNumeric6H extends MeasurementData implements Seriali
 
     @Override
     public String toString() {
-        return "MeasurementDataNumeric6H[" + "average=[" + new DecimalFormat("0.00").format(value) + "], "
+        return "MeasurementDataNumeric6H[" + "average=[" + value + "], "
             + super.toString() + "]";
     }
 }

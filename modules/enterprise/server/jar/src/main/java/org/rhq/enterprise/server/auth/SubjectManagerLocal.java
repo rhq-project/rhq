@@ -37,11 +37,12 @@ import org.rhq.enterprise.server.exception.LoginException;
 @Local
 public interface SubjectManagerLocal {
     /**
-     * Loads in the given subject's {@link Subject#getUserConfiguration() configuration}.
+     * Loads in the given subject's {@link Subject#getUserConfiguration() preferences} and
+     * {@link Subject#getRoles() roles}.
      *
-     * @param  subjectId identifies the subject whose user configuration is to be loaded
+     * @param  subjectId identifies the subject whose preferences and roles are to be loaded
      *
-     * @return the subject, with its user configuration loaded
+     * @return the subject, with its preferences and roles loaded
      */
     Subject loadUserConfiguration(Integer subjectId);
 
@@ -64,7 +65,7 @@ public interface SubjectManagerLocal {
     Subject getOverlord();
 
     /**
-     * @see SubjectManagerRemote#findAllSubjects(PageControl)
+     * @see SubjectManagerRemote#findAllSubjects
      */
     PageList<Subject> findAllSubjects(PageControl pageControl);
 
@@ -217,7 +218,7 @@ public interface SubjectManagerLocal {
     Subject getSubjectByName(String username);
 
     /**
-     * @see {@link SubjectManagerRemote#getSubjectBySessionId(int)}
+     * @see {@link SubjectManagerRemote#getSubjectByNameAndSessionId(String, int)}
      */
     Subject getSubjectByNameAndSessionId(String username, int sessionId) throws Exception;
 
@@ -232,7 +233,7 @@ public interface SubjectManagerLocal {
     void logout(Subject subject);
 
     /**
-     * @see SubjectManagerRemote#findSubjectsByCriteria(Subject, Subject)
+     * @see SubjectManagerRemote#updateSubject(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.auth.Subject)
      */
     Subject updateSubject(Subject subject, Subject subjectToModify);
 

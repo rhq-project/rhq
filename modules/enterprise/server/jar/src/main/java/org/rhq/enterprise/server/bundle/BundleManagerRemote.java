@@ -33,8 +33,10 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -152,9 +154,33 @@ public interface BundleManagerRemote {
      */
     BundleVersion createBundleVersion( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleId") int bundleId, //
+        @WebParam(name = "bundleId") int bundleId, //        
         @WebParam(name = "name") String name, //
         @WebParam(name = "description") String description, //                
+        @WebParam(name = "version") String version, //
+        @WebParam(name = "recipe") String recipe) throws Exception;
+
+    /**
+     * Convienence method that combines {@link #createBundle(Subject, String, int)} and {@link #createBundleVersion(Subject, int, String, String, String)}.
+     * This will first check to see if a bundle with the given type/name exists - if it doesn't, it will be created. If it does, it will be reused.
+     * This will then create the bundle version that will be associated with the bundle that was created or found.
+     * 
+     * @param subject must be InventoryManager
+     * @param bundleName name of the bundle to use (if not found, it will be created)
+     * @param bundleDescription optional long description of the bundle
+     * @param bundleTypeId the bundle type for the new bundle (if it is created) for which this will be the first version
+     * @param bundleVersionName name of the bundle version
+     * @param bundleVersionDescription optional long description of the bundle version  
+     * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
+     * @return the persisted BundleVersion (id is assigned)
+     */
+    BundleVersion createBundleAndBundleVersion( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleName") String bundleName, //
+        @WebParam(name = "bundleDescription") String bundleDescription, //        
+        @WebParam(name = "bundleTypeId") int bundleTypeId, //
+        @WebParam(name = "bundleVersionName") String bundleVersionName, //
+        @WebParam(name = "bundleVersionDescription") String bundleVersionDescription, //        
         @WebParam(name = "version") String version, //
         @WebParam(name = "recipe") String recipe) throws Exception;
 
@@ -179,12 +205,15 @@ public interface BundleManagerRemote {
      *    
      * @param subject
      * @param bundleVersionId
+     * @param deleteBundleIfEmpty if <code>true</code> and if this method deletes the last bundle version for its
+     *                            bundle, then that bundle entity itself will be completely purged
      * @throws Exception if any part of the removal fails. 
      */
     @WebMethod
     void deleteBundleVersion( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleVersionId") int bundleVersionId) throws Exception;
+        @WebParam(name = "bundleVersionId") int bundleVersionId, //
+        @WebParam(name = "deleteBundleIfEmpty") boolean deleteBundleIfEmpty) throws Exception;
 
     @WebMethod
     PageList<Bundle> findBundlesByCriteria( //
@@ -212,6 +241,11 @@ public interface BundleManagerRemote {
         @WebParam(name = "criteria") BundleVersionCriteria criteria);
 
     @WebMethod
+    PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") BundleCriteria criteria);
+
+    @WebMethod
     List<BundleType> getAllBundleTypes( //
         @WebParam(name = "subject") Subject subject);
 
@@ -232,6 +266,22 @@ public interface BundleManagerRemote {
         @WebParam(name = "withoutBundleFileOnly") boolean withoutBundleFileOnly) throws Exception;
 
     /**
+     * Similar to {@link #getBundleVersionFilenames(Subject, int, boolean)}, this will determine the files required for a BundleVersion and return
+     * all of the filenames, with the values of the map being true if they already exist or false if they lack BundleFile representation
+     * in the BundleVersion.
+     *   
+     * @param subject must be InventoryManager
+     * @param bundleVersionId the BundleVersion being queried
+     * @return map keyed on filenames whose value indicates if a bundle file exists for the file or not
+     * @throws Exception
+     */
+    /* comment back in when someone writes an adapter to support Map un/marshalling
+    Map<String, Boolean> getAllBundleVersionFilenames( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleVersionId") int bundleVersionId) throws Exception;
+     */
+
+    /**
      * Deploy the bundle as described in the provided deploy definition to the specified resource.
      * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
      * returned BundleDeployment can be used to track the history of the deployment.
@@ -250,4 +300,23 @@ public interface BundleManagerRemote {
         @WebParam(name = "bundleDeployDefinitionId") int bundleDeployDefinitionId, //
         @WebParam(name = "resourceId") int resourceId) throws Exception;
 
+    /**
+     * Deploy the bundle as described in the provided deploy definition to all of the resources in the
+     * specified resource group.
+     * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
+     * returned BundleGroupDeployment can be used to track the history of the deployments.
+     * 
+     *  TODO: Add the scheduling capability, currently it's Immediate. 
+     * 
+     * @param subject must be InventoryManager
+     * @param bundleDeployDefinitionId the BundleDeployDefinition being used to guide the deployments
+     * @param resourceGroupId the target resourceGroup (must exist), typically platforms, for the deployments
+     * @return the BundleGroupDeployment created to track the deployments. 
+     * @throws Exception
+     */
+    @WebMethod
+    BundleGroupDeployment scheduleBundleGroupDeployment( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleDeployDefinitionId") int bundleDeployDefinitionId, //
+        @WebParam(name = "resourceGroupId") int resourceGroupId) throws Exception;
 }

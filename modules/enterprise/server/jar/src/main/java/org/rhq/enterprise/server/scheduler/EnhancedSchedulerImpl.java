@@ -63,12 +63,17 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
         try {
             // see if the job is already scheduled and if so,
             // either remove it so we can reschedule it or keep it (based on rescheduleIfExists)
-            if (this.scheduler.getJobDetail(name, groupName) != null) {
+            JobDetail job = this.scheduler.getJobDetail(name, groupName);
+            if (job != null) {
                 if (rescheduleIfExists) {
                     log.debug("Looks like repeating job [" + name + ':' + groupName
                         + "] is already scheduled - removing it so it can be rescheduled");
 
                     this.scheduler.deleteJob(name, groupName);
+                    if (!this.scheduler.deleteJob(name, groupName)) {
+                        log.error("Failed to delete job [" + job + "] in order to reschedule it.");
+                        return;
+                    }
                 } else {
                     log.debug("Looks like repeating job [" + name + ':' + groupName
                         + "] is already scheduled - leaving the original job as-is");
@@ -107,12 +112,16 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
         try {
             // see if the job is already scheduled and if so,
             // either remove it so we can reschedule it or keep it (based on rescheduleIfExists)
-            if (this.scheduler.getJobDetail(name, groupName) != null) {
+            JobDetail job = this.scheduler.getJobDetail(name, groupName);
+            if (job != null) {
                 if (rescheduleIfExists) {
                     log.debug("Looks like cron job [" + name + ':' + groupName
                         + "] is already scheduled - removing it so it can be rescheduled");
 
-                    this.scheduler.deleteJob(name, groupName);
+                    if (!this.scheduler.deleteJob(name, groupName)) {
+                        log.error("Failed to delete job [" + job + "] in order to reschedule it.");
+                        return;
+                    }
                 } else {
                     log.debug("Looks like cron job [" + name + ':' + groupName
                         + "] is already scheduled - leaving the original job as-is");
@@ -142,7 +151,7 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
         Date next = this.scheduler.scheduleJob(job, trigger);
 
         log.info("Scheduled cron job [" + name + ':' + groupName + "] to fire next at [" + next
-            + "] with the cronString of [" + cronString + "]");
+            + "] with the cronString of [" + cronString + "].");
 
         return;
     }

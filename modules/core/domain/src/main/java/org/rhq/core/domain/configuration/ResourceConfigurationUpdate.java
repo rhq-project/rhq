@@ -189,8 +189,8 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     @ManyToOne
     private GroupResourceConfigurationUpdate groupConfigurationUpdate;
 
-    protected ResourceConfigurationUpdate() {
-    } // JPA
+    public ResourceConfigurationUpdate() {
+    }
 
     public ResourceConfigurationUpdate(Resource resource, Configuration config, String subjectName) {
         super(config, subjectName);

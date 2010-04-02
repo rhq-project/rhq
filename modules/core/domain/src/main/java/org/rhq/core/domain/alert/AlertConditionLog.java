@@ -61,7 +61,8 @@ import javax.persistence.Table;
         + "   WHERE acl.id IN ( SELECT iacl.id " //
         + "                       FROM AlertConditionLog iacl" //
         + "                      WHERE iacl.condition.alertDefinition.id = :alertDefinitionId )" // 
-        + "     AND acl.alert IS NULL") })
+        + "     AND acl.alert IS NULL")
+})
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION_LOG")
 public class AlertConditionLog implements Serializable {

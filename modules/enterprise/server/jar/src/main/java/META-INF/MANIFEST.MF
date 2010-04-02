@@ -10,5 +10,33 @@ Class-Path: i18nlog-1.0.9.jar junit-3.8.1.jar rhq-enterprise-comm-1.4.
  anutils-1.6.1.jar commons-collections-3.2.jar commons-httpclient-3.0.
  1.jar commons-codec-1.2.jar commons-validator-1.1.4.jar xml-apis-1.0.
  b2.jar jboss-cache-1.4.1.SP9.jar jbpm-3.1.1.jar snmp4j-1.8.2.jar post
- gresql-8.4-701.jdbc3.jar rss4j-0.92-on.2.jar
+ gresql-8.4-701.jdbc3.jar rss4j-0.92-on.2.jar lib/postgresql-8.4-701.j
+ dbc3.jar lib/i18nlog-1.0.9.jar lib/log4j-1.2.14.jar lib/hibernate-ann
+ otations-3.2.1.GA.jar lib/jboss-system-4.2.3.GA.jar lib/commons-valid
+ ator-1.1.4.jar lib/concurrent-1.3.4.jar lib/junit-3.8.1.jar lib/catal
+ ina-5.5.20.jar lib/hibernate-entitymanager-3.2.1.GA.jar lib/persisten
+ ce-api-1.0.jar lib/quartz-oracle-1.6.5.jar lib/rss4j-0.92-on.2.jar li
+ b/easymockclassextension-2.2.jar lib/easymock-2.2.jar lib/cglib-nodep
+ -2.1_3.jar lib/snmp4j-1.8.2.jar lib/jboss-annotations-ejb3-4.2.3.GA.j
+ ar lib/xalan-2.5.1.jar lib/jboss-cache-1.4.1.SP9.jar lib/hibernate3-3
+ .2.r14201-2.jar lib/rhq-core-util.jar lib/jdom-1.0.jar lib/jaxb-api-2
+ .1.jar lib/stax-api-1.0-2.jar lib/activation-1.1.jar lib/annotations-
+ 7.0.2.jar lib/commons-logging-1.1.0.jboss.jar lib/jboss-ejb3-all-1.0.
+ 0.Alpha9.jar lib/rhq-enterprise-server-xml-schemas.jar lib/rhq-core-c
+ lient-api.jar lib/jaxb-impl-2.1.6.jar lib/antlr-2.7.7.jar lib/quartz-
+ 1.6.5.jar lib/jboss-j2ee-4.2.3.GA.jar lib/rhq-enterprise-comm.jar lib
+ /rhq-core-comm-api.jar lib/dom4j-1.6.1-jboss.jar lib/getopt-1.0.13.ja
+ r lib/jboss-common-1.2.1.GA.jar lib/jboss-jmx-4.2.3.GA.jar lib/jboss-
+ remoting-2.2.2.SP8.jar lib/jboss-serialization-1.0.3.GA.jar lib/jsp-a
+ pi-2.0.jar lib/servlet-api-2.4.jar lib/xml-apis-1.0.b2.jar lib/testng
+ -5.9-jdk15.jar lib/commons-beanutils-1.6.1.jar lib/commons-collection
+ s-3.2.jar lib/commons-httpclient-3.0.1.jar lib/commons-codec-1.2.jar 
+ lib/commons-lang-2.4.jar lib/mail-1.3.1.jar lib/trove-1.0.2.jar lib/j
+ bpm-3.1.1.jar lib/javassist-3.8.0.GA.jar lib/jbosssx-4.2.3.GA.jar lib
+ /safe-invoker.jar lib/jbossws-native-core-3.1.1.GA.jar lib/jbossws-sp
+ i-1.1.1.GA.jar lib/rhq-core-dbutils.jar lib/ant-1.6.5.jar lib/jboss-e
+ jb3x-4.2.3.GA.jar lib/tomcat-jk-4.1.31.jar lib/test-utils.jar lib/jmo
+ ck-2.5.1.jar lib/hamcrest-core-1.1.jar lib/hamcrest-library-1.1.jar l
+ ib/xercesImpl-2.8.1.jar lib/jboss-jta-4.2.3.SP7.jar lib/jboss-jts-com
+ mon-4.2.3.SP7.jar lib/rhq-core-domain.jar
 

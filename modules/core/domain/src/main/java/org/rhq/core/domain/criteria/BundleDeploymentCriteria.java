@@ -44,7 +44,7 @@ public class BundleDeploymentCriteria extends Criteria {
 
     private boolean fetchBundleDeployDefinition;
     private boolean fetchResource;
-    private boolean fetchHistory;
+    private boolean fetchHistories;
 
     public BundleDeploymentCriteria() {
         filterOverrides.put("bundleDeployDefinitionId", "parentResource.id = ?");
@@ -100,8 +100,8 @@ public class BundleDeploymentCriteria extends Criteria {
         this.fetchResource = fetchResource;
     }
 
-    public void fetchHistory(boolean fetchHistory) {
-        this.fetchHistory = fetchHistory;
+    public void fetchHistories(boolean fetchHistories) {
+        this.fetchHistories = fetchHistories;
     }
 
     /**

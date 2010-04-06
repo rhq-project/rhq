@@ -60,41 +60,25 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
     public void scheduleRepeatingJob(String name, String groupName, JobDataMap jobData, Class<? extends Job> jobClass,
         boolean rescheduleIfExists, boolean isVolatile, long initialDelay, long interval) throws SchedulerException {
 
-        try {
-            // see if the job is already scheduled and if so,
-            // either remove it so we can reschedule it or keep it (based on rescheduleIfExists)
-            JobDetail job = this.scheduler.getJobDetail(name, groupName);
-            if (job != null) {
-                if (rescheduleIfExists) {
-                    log.debug("Looks like repeating job [" + name + ':' + groupName
-                        + "] is already scheduled - removing it so it can be rescheduled");
-
-                    this.scheduler.deleteJob(name, groupName);
-                    if (!this.scheduler.deleteJob(name, groupName)) {
-                        log.error("Failed to delete job [" + job + "] in order to reschedule it.");
-                        return;
-                    }
-                } else {
-                    log.debug("Looks like repeating job [" + name + ':' + groupName
-                        + "] is already scheduled - leaving the original job as-is");
-                    return;
+        // See if the job is already scheduled and if so,
+        // either remove it so we can reschedule it or keep it (based on rescheduleIfExists).
+        JobDetail existingJob = getExistingJob(name, groupName, rescheduleIfExists);
+        if (existingJob != null) {
+             if (rescheduleIfExists) {
+                log.debug("Looks like repeating job [" + name + ':' + groupName
+                    + "] is already scheduled - removing it so it can be rescheduled...");
+                if (!this.scheduler.deleteJob(name, groupName)) {
+                    throw new SchedulerException("Failed to delete repeating job [" + existingJob + "] in order to reschedule it.");
                 }
+            } else {
+                log.debug("Looks like repeating job [" + name + ':' + groupName
+                    + "] is already scheduled - leaving the original job as-is.");
+                return;
             }
-        } catch (SchedulerException ignore) {
-            // probably just not scheduled yet - fall thru to try and schedule it
         }
 
-        JobDetail job = new JobDetail(name, groupName, jobClass, isVolatile, false, false);
-
-        if (jobData != null) {
-            job.setJobDataMap(jobData);
-        }
-
-        Date start = new Date(System.currentTimeMillis() + initialDelay);
-        SimpleTrigger trigger = new SimpleTrigger(name, groupName, start, null, SimpleTrigger.REPEAT_INDEFINITELY,
-            interval);
-        trigger.setVolatility(isVolatile);
-
+        JobDetail job = createJobDetail(name, groupName, jobClass, isVolatile, jobData);
+        SimpleTrigger trigger = createSimpleTrigger(name, groupName, isVolatile, initialDelay, interval);
         Date next = this.scheduler.scheduleJob(job, trigger);
 
         log.info("Scheduled job [" + name + ':' + groupName + "] to fire next at [" + next + "] and repeat every ["
@@ -109,49 +93,27 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
     public void scheduleCronJob(String name, String groupName, JobDataMap jobData, Class<? extends Job> jobClass,
         boolean rescheduleIfExists, boolean isVolatile, String cronString) throws SchedulerException {
 
-        try {
-            // see if the job is already scheduled and if so,
-            // either remove it so we can reschedule it or keep it (based on rescheduleIfExists)
-            JobDetail job = this.scheduler.getJobDetail(name, groupName);
-            if (job != null) {
-                if (rescheduleIfExists) {
-                    log.debug("Looks like cron job [" + name + ':' + groupName
-                        + "] is already scheduled - removing it so it can be rescheduled");
-
-                    if (!this.scheduler.deleteJob(name, groupName)) {
-                        log.error("Failed to delete job [" + job + "] in order to reschedule it.");
-                        return;
-                    }
-                } else {
-                    log.debug("Looks like cron job [" + name + ':' + groupName
-                        + "] is already scheduled - leaving the original job as-is");
-                    return;
-                }
+        // See if the job is already scheduled and if so,
+        // either remove it so we can reschedule it or keep it (based on rescheduleIfExists).
+        JobDetail existingJob = getExistingJob(name, groupName, rescheduleIfExists);
+        if (existingJob != null) {
+             if (rescheduleIfExists) {
+                log.debug("Looks like cron job [" + name + ':' + groupName
+                    + "] is already scheduled - removing it so it can be rescheduled...");
+                 deleteJob(name, groupName, existingJob);
+             } else {
+                log.debug("Looks like cron job [" + name + ':' + groupName
+                    + "] is already scheduled - leaving the original job as-is.");
+                return;
             }
-        } catch (SchedulerException ignore) {
-            // probably just not scheduled yet - fall thru to try and schedule it
         }
 
-        JobDetail job = new JobDetail(name, groupName, jobClass, isVolatile, false, false);
-
-        if (jobData != null) {
-            job.setJobDataMap(jobData);
-        }
-
-        CronTrigger trigger;
-
-        try {
-            trigger = new CronTrigger(name, groupName, name, groupName, cronString);
-        } catch (ParseException e) {
-            throw new SchedulerException(e);
-        }
-
-        trigger.setVolatility(isVolatile);
-
+        JobDetail job = createJobDetail(name, groupName, jobClass, isVolatile, jobData);
+        CronTrigger trigger = createCronTrigger(name, groupName, isVolatile, cronString);
         Date next = this.scheduler.scheduleJob(job, trigger);
 
         log.info("Scheduled cron job [" + name + ':' + groupName + "] to fire next at [" + next
-            + "] with the cronString of [" + cronString + "].");
+            + "] with the cron string [" + cronString + "].");
 
         return;
     }
@@ -477,5 +439,61 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
 
     public void startDelayed(int delay) throws SchedulerException {
         this.scheduler.startDelayed(delay);
+    }
+
+    private JobDetail getExistingJob(String name, String groupName, boolean rescheduleIfExists) {
+        try {
+            return this.scheduler.getJobDetail(name, groupName);
+        } catch (SchedulerException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof ClassNotFoundException) {
+                // This probably means the job class was not found in the classpath. Try to delete the invalid job.
+                try {
+                    deleteJob(name, groupName, null);
+                } catch (SchedulerException e1) {
+                    log.error("Failed to delete job [" + name + ":" + groupName + "] with invalid job class (as per "
+                            + cause + ")", e1);
+                }
+            } else {
+                log.error("Error while attempting to lookup job [" + name + ":" + groupName + "].", e);
+            }
+            // Fall through and hope we get lucky and are still able to schedule the job.
+            return null;
+        }
+    }
+
+    private void deleteJob(String name, String groupName, JobDetail job) throws SchedulerException {
+        if (!this.scheduler.deleteJob(name, groupName)) {
+            String jobString = (job != null) ? job.toString() : (name + ":" + groupName);
+            throw new SchedulerException("Failed to delete job [" + jobString + "].");
+        }
+    }
+
+    private JobDetail createJobDetail(String name, String groupName, Class<? extends Job> jobClass, boolean isVolatile,
+                                      JobDataMap jobData) {
+        JobDetail job = new JobDetail(name, groupName, jobClass, isVolatile, false, false);
+        job.setJobDataMap(jobData);
+        return job;
+    }
+
+    private SimpleTrigger createSimpleTrigger(String name, String groupName, boolean isVolatile, long initialDelay,
+                                              long interval) {
+        Date start = new Date(System.currentTimeMillis() + initialDelay);
+        SimpleTrigger trigger = new SimpleTrigger(name, groupName, start, null, SimpleTrigger.REPEAT_INDEFINITELY,
+            interval);
+        trigger.setVolatility(isVolatile);
+        return trigger;
+    }
+
+    private CronTrigger createCronTrigger(String name, String groupName, boolean isVolatile, String cronString)
+            throws SchedulerException {
+        CronTrigger trigger;
+        try {
+            trigger = new CronTrigger(name, groupName, name, groupName, cronString);
+        } catch (ParseException e) {
+            throw new SchedulerException(e);
+        }
+        trigger.setVolatility(isVolatile);
+        return trigger;
     }
 }

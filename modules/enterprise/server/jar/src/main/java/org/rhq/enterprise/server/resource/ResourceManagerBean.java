@@ -278,7 +278,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         cleanupScheduledOperationsForResource(overlord, resourceId);
 
         // delete the resource and all its children
-        log.info("User [" + user + "] is marking resource [" + resource + "] for asychronous deletion");
+        log.info("User [" + user + "] is marking resource [" + resource + "] for asynchronous deletion");
 
         // set agent references null
         // foobar the resourceKeys

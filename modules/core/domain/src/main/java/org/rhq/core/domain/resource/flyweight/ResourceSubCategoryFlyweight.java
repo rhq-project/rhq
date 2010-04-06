@@ -25,8 +25,6 @@ package org.rhq.core.domain.resource.flyweight;
 
 import java.io.Serializable;
 
-import org.rhq.core.domain.resource.ResourceSubCategory;
-
 /**
  * Flyweight representation of a resource sub category. Only id, name and parent are preserved.
  * 
@@ -40,64 +38,7 @@ public class ResourceSubCategoryFlyweight implements Serializable {
     private String name;
     private ResourceSubCategoryFlyweight parentSubCategory;
 
-    /**
-     * @see #construct(int, String, Integer, FlyweightCache)
-     * 
-     * @param original
-     * @param cache
-     * @return
-     */
-    public static ResourceSubCategoryFlyweight construct(ResourceSubCategory original, FlyweightCache cache) {
-        int id = original.getId();
-        String name = original.getName();
-        ResourceSubCategory parent = original.getParentSubCategory();
-        Integer parentId = parent != null ? parent.getId() : null;
-        String parentName = parent != null ? parent.getName() : null;
-        
-        return construct(id, name, parentId, parentName, cache);
-    }
-
-    /**
-     * An existing sub category is first looked up in the cache. If there already is a flyweight
-     * instance in the cache, its properties are updated with the provided values, otherwise a new instance
-     * is put in the cache.
-     * <p>
-     * If parent sub category id is not null but a corresponding flyweight doesn't exist in the cache yet,
-     * a new instance is put in the cache initialized with the parent id and name.
-     * 
-     * @param id
-     * @param name
-     * @param parentSubCategoryId
-     * @param parentSubCategoryName
-     * @param cache
-     * @return
-     */
-    public static ResourceSubCategoryFlyweight construct(int id, String name, Integer parentSubCategoryId,
-        String parentSubCategoryName, FlyweightCache cache) {
-        ResourceSubCategoryFlyweight ret = cache.getSubCategories().get(id);
-
-        if (ret == null) {
-            ret = new ResourceSubCategoryFlyweight();
-            cache.getSubCategories().put(id, ret);
-        }
-
-        ret.setId(id);
-        ret.setName(name);
-
-        if (parentSubCategoryId != null) {
-            ResourceSubCategoryFlyweight parent = cache.getSubCategories().get(parentSubCategoryId);
-            if (parent == null) {
-                parent = construct(parentSubCategoryId, parentSubCategoryName, null, null, cache);
-            }
-            ret.setParentSubCategory(parent);
-        } else {
-            ret.setParentSubCategory(null);
-        }
-
-        return ret;
-    }
-
-    private ResourceSubCategoryFlyweight() {
+    public ResourceSubCategoryFlyweight() {
 
     }
 

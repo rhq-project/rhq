@@ -1858,14 +1858,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             if (subCategoryId != null) {
                 //we don't need the reference to the sub category here. We need it just in the cache.
-                ResourceSubCategoryFlyweight.construct(subCategoryId, subCategoryName, parentSubCategoryId, parentSubCategoryName, flyweightCache);
+                flyweightCache.constructSubCategory(subCategoryId, subCategoryName, parentSubCategoryId, parentSubCategoryName);
             }
             
             //we don't need the resource type reference here, only in the cache
-            ResourceTypeFlyweight.construct(typeId, typeName, typePlugin, typeCategory, subCategoryId, flyweightCache);
+            flyweightCache.constructResourceType(typeId, typeName, typePlugin, typeCategory, subCategoryId);
             
-            ResourceFlyweight resourceFlyweight = ResourceFlyweight.construct(
-                resourceId, resourceName, resourceUuid, resourceKey, parentId, typeId, availType, flyweightCache);
+            ResourceFlyweight resourceFlyweight = flyweightCache.constructResource(
+                resourceId, resourceName, resourceUuid, resourceKey, parentId, typeId, availType);
             
             resources.add(resourceFlyweight);
         }

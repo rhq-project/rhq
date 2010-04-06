@@ -3059,6 +3059,32 @@
                      </statement>
                 </schema-directSQL>
             </schemaSpec>
+            
+            <schemaSpec version="2.83">
+                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="SUPPORTS_SUPPORT_FACET" columnType="BOOLEAN" />
+
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                       UPDATE RHQ_RESOURCE_TYPE SET SUPPORTS_SUPPORT_FACET = FALSE
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                       UPDATE RHQ_RESOURCE_TYPE SET SUPPORTS_SUPPORT_FACET = 0
+                    </statement>
+                    <statement targetDBVendor="postgresql">                     
+                       update RHQ_RESOURCE_TYPE set SUPPORTS_SUPPORT_FACET = true where exists
+                       (select cd.id from RHQ_CONFIG_DEF cd inner join RHQ_CONFIG_PROP_DEF pd on cd.id=pd.config_def_id
+                       where RHQ_RESOURCE_TYPE.PLUGIN_CONFIG_DEF_ID=cd.id and pd.name='snapshotLogEnabled')
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                       update RHQ_RESOURCE_TYPE set SUPPORTS_SUPPORT_FACET = 1 where exists
+                       (select cd.id from RHQ_CONFIG_DEF cd inner join RHQ_CONFIG_PROP_DEF pd on cd.id=pd.config_def_id
+                       where RHQ_RESOURCE_TYPE.PLUGIN_CONFIG_DEF_ID=cd.id and pd.name='snapshotLogEnabled')
+                    </statement>                        
+                </schema-directSQL>
+
+                <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="SUPPORTS_SUPPORT_FACET" nullable="false" />
+            </schemaSpec>
+            
         </dbupgrade>
     </target>
 </project>

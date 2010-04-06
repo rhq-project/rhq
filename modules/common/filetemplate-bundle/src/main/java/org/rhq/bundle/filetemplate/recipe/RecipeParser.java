@@ -93,8 +93,9 @@ public class RecipeParser {
     }
 
     protected void parseRecipeCommandLine(RecipeContext context, String line) throws Exception {
+        line = (null == line) ? line : line.trim();
         // ignore blank lines or comment lines that start with #
-        if (line == null || line.trim().length() == 0 || line.startsWith("#")) {
+        if (null == line || line.length() == 0 || line.startsWith("#")) {
             return;
         }
 

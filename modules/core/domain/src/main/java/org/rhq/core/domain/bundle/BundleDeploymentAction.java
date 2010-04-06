@@ -33,7 +33,7 @@ public enum BundleDeploymentAction {
     DEPLOYMENT, // The actual deployment of the bundle: IN_PROGRESS | FAILURE | SUCCESS 
     DEPLOYMENT_REQUESTED, // request processed: FAILURE | SUCCESS  
     DEPLOYMENT_SCHEDULED, // request schedules: FAILURE | SUCCESS
+    DEPLOYMENT_STEP, // A supplemental message at any point in the process: NO_CHANGE    
     FILE_DOWNLOAD, // The file download preceding actualy deployment: IN_PROGRESS | FAILURE | SUCCESS 
-    LOG, // A supplemental log message at any point in the process: NO_CHANGE
     POLICY_CHECK_FAIL
 }

@@ -620,7 +620,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertTrue(size > 0);
         String auditMessage = "BundleTest-Message";
         bundleManager.addBundleDeploymentHistory(overlord, bd.getId(), new BundleDeploymentHistory(overlord.getName(),
-            BundleDeploymentAction.LOG, BundleDeploymentStatus.NOCHANGE, auditMessage));
+            BundleDeploymentAction.DEPLOYMENT_STEP, BundleDeploymentStatus.NOCHANGE, auditMessage));
         bds = bundleManager.findBundleDeploymentsByCriteria(overlord, c);
         assertEquals(1, bds.size());
         assertEquals(bd.getId(), bds.get(0).getId());
@@ -635,7 +635,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             }
         }
         assertNotNull(newHistory);
-        assertEquals(BundleDeploymentAction.LOG, newHistory.getAuditAction());
+        assertEquals(BundleDeploymentAction.DEPLOYMENT_STEP, newHistory.getAuditAction());
         assertEquals(BundleDeploymentStatus.NOCHANGE, newHistory.getAuditStatus());
     }
 

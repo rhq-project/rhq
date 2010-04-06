@@ -62,10 +62,10 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
     @Override
     public void initialize() throws Exception {
-        getLog().debug("Content server plugin container initializing");
+        getLog().debug("Content server plugin container initializing...");
         super.initialize();
         this.adapterManager = createAdapterManager();
-        getLog().debug("Content server plugin container initialized");
+        getLog().debug("Content server plugin container initialized.");
     }
 
     @Override
@@ -76,10 +76,10 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
     @Override
     public void shutdown() {
-        getLog().debug("Content server plugin container is shutting down");
+        getLog().debug("Content server plugin container is shutting down...");
         this.adapterManager.shutdown();
         super.shutdown();
-        getLog().debug("Content server plugin container is shutdown");
+        getLog().debug("Content server plugin container is shutdown.");
     }
 
     @Override
@@ -133,7 +133,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
         getLog().info(
             "Scheduled content source sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at ["
-                + next + "] for [" + contentSource + "]");
+                + next + "] for [" + contentSource + "].");
     }
 
     /**
@@ -161,7 +161,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         }
         getLog().info(
             "Scheduled repo sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at [" + nextExecution
-                + "] for [" + repo + "]");
+                + "] for [" + repo + "].");
     }
 
     public void cancelRepoSync(Subject subject, Repo repo) throws SchedulerException {
@@ -177,7 +177,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
         boolean cancelled = scheduler.interrupt(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME);
 
-        getLog().info("cancelled repo sync job [" + jobDetail.getName() + ':' + jobDetail.getGroup() + "] ");
+        getLog().info("Cancelled repo sync job [" + jobDetail.getName() + ':' + jobDetail.getGroup() + "].");
     }
 
     /**
@@ -185,8 +185,8 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      * source's adapter will be asked to synchronize with the remote content source according to the time(s) specified
      * in the {@link ContentSource#getSyncSchedule() schedule}.
      *
-     * <p>If the content source's sync schedule is empty, this method assumes it should not be automatically sync'ed so
-     * no schedule will be created and this method simply returns.</p>
+     * <p>If the content source's sync schedule is empty, this method assumes it should not be automatically sync'ed, so
+     * no schedule will be created, and this method simply returns.</p>
      *
      * @param  contentSource provider to sync
      *
@@ -195,7 +195,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
     public void scheduleProviderSyncJob(ContentSource contentSource) throws SchedulerException {
         String syncSchedule = contentSource.getSyncSchedule();
         if ((syncSchedule == null) || (syncSchedule.trim().length() == 0)) {
-            getLog().debug(contentSource.toString() + " does not define a sync schedule - not scheduling");
+            getLog().debug(contentSource.toString() + " does not define a sync schedule - not scheduling.");
             return;
         }
 
@@ -206,21 +206,21 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
     }
 
     /**
-     * This will schedule the sync job for the given content source. Once the scheduling is complete, the content
-     * source's adapter will be asked to synchronize with the remote content source according to the time(s) specified
-     * in the {@link ContentSource#getSyncSchedule() schedule}.
+     * This will schedule the sync job for the given repository. Once the scheduling is complete, the repository's
+     * adapter will be asked to synchronize with the remote repository according to the time(s) specified
+     * in the {@link Repo#getSyncSchedule() schedule}.
      *
-     * <p>If the content source's sync schedule is empty, this method assumes it should not be automatically sync'ed so
-     * no schedule will be created and this method simply returns.</p>
+     * <p>If the repository's sync schedule is empty, this method assumes it should not be automatically sync'ed, so
+     * no schedule will be created, and this method simply returns.</p>
      *
-     * @param  contentSource provider to sync
+     * @param  repo repository to sync
      *
      * @throws SchedulerException if failed to schedule the job
      */
     public void scheduleRepoSyncJob(Repo repo) throws SchedulerException {
         String syncSchedule = repo.getSyncSchedule();
         if ((syncSchedule == null) || (syncSchedule.trim().length() == 0)) {
-            getLog().warn(repo.toString() + " does not define a sync schedule - not scheduling");
+            getLog().warn(repo.toString() + " does not define a sync schedule - not scheduling.");
             return;
         }
 
@@ -250,7 +250,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
                         }
                     }
                 } catch (Exception e) {
-                    getLog().warn("Could not schedule sync job for content source [" + contentSource + "]", e);
+                    getLog().warn("Could not schedule sync job for content source [" + contentSource + "].", e);
                 }
             }
         }
@@ -297,5 +297,5 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         ContentProviderManager am = new ContentProviderManager();
         return am;
     }
-
+    
 }

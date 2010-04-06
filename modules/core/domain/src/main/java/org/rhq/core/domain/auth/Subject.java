@@ -115,7 +115,7 @@ import java.util.Set;
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id = :resourceId"),
 
-    @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCES, query = "SELECT COUNT(res) "
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCES, query = "SELECT DISTINCT COUNT(res) "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id IN (:resourceIds)"),
 

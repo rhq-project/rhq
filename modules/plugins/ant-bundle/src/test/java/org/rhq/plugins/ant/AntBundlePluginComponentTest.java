@@ -34,6 +34,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
@@ -95,7 +96,7 @@ public class AntBundlePluginComponentTest {
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(tmpDir);
-        request.setBundleDeployDefinition(deployDef);
+        request.setBundleDeployment(new BundleDeployment(deployDef, null));
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -132,7 +133,7 @@ public class AntBundlePluginComponentTest {
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(tmpDir);
-        request.setBundleDeployDefinition(deployDef);
+        request.setBundleDeployment(new BundleDeployment(deployDef, null));
 
         BundleDeployResult results = plugin.deployBundle(request);
 

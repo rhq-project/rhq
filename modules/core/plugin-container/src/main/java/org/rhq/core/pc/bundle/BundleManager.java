@@ -145,7 +145,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
 
             BundleDeployRequest deployRequest = new BundleDeployRequest();
             deployRequest.setBundleManagerProvider(this);
-            deployRequest.setBundleDeployDefinition(bundleDeployDef);
+            deployRequest.setBundleDeployment(deployment);
             deployRequest.setBundleFilesLocation(bundleFilesDir);
             deployRequest.setPackageVersionFiles(downloadedFiles);
             BundleDeployResult result = bundlePluginComponent.deployBundle(deployRequest);
@@ -159,6 +159,15 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
 
         return response;
+    }
+
+    public void auditDeployment(BundleDeployment deployment, BundleDeploymentAction action,
+        BundleDeploymentStatus status, String message) {
+        if (null == status) {
+            status = BundleDeploymentStatus.NOCHANGE;
+        }
+        BundleDeploymentHistory history = new BundleDeploymentHistory("Bundle Plugin", action, status, message);
+        getBundleServerService().addDeploymentHistory(deployment.getId(), history);
     }
 
     /**
@@ -190,8 +199,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                 packageFile.getParentFile().mkdirs();
                 FileOutputStream fos = new FileOutputStream(packageFile);
                 try {
-                    auditDeployment(deployment, BundleDeploymentAction.LOG, BundleDeploymentStatus.NOCHANGE,
-                        "Downloading [" + packageVersion + "]");
+                    auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT_STEP,
+                        BundleDeploymentStatus.NOCHANGE, "Downloading [" + packageVersion + "]");
                     long size = getFileContent(packageVersion, fos);
                     if (packageVersion.getFileSize() != null && size != packageVersion.getFileSize().longValue()) {
                         log.warn("Downloaded bundle file [" + packageVersion + "] but its size was [" + size
@@ -216,15 +225,6 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     private void completeDeployment(BundleDeployment deployment, BundleDeploymentStatus status, String message) {
         getBundleServerService().setBundleDeploymentStatus(deployment.getId(), status);
         auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT, status, message);
-    }
-
-    private void auditDeployment(BundleDeployment deployment, BundleDeploymentAction action,
-        BundleDeploymentStatus status, String message) {
-        if (null == status) {
-            status = BundleDeploymentStatus.NOCHANGE;
-        }
-        BundleDeploymentHistory history = new BundleDeploymentHistory("Bundle Plugin", action, status, message);
-        getBundleServerService().addDeploymentHistory(deployment.getId(), history);
     }
 
     /**

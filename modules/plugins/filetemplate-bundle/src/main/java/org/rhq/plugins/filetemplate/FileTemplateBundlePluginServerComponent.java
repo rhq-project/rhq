@@ -23,6 +23,9 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentAction;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
@@ -55,7 +58,8 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
     public BundleDeployResult deployBundle(BundleDeployRequest request) {
         BundleDeployResult result = new BundleDeployResult();
         try {
-            BundleDeployDefinition bundleDeployDef = request.getBundleDeployDefinition();
+            BundleDeployment bundleDeployment = request.getBundleDeployment();
+            BundleDeployDefinition bundleDeployDef = bundleDeployment.getBundleDeployDefinition();
             BundleVersion bundleVersion = bundleDeployDef.getBundleVersion();
 
             // process the recipe
@@ -64,14 +68,27 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
             ProcessingRecipeContext recipeContext = new ProcessingRecipeContext(recipe, request
                 .getPackageVersionFiles(), this.resourceContext.getSystemInformation(), request
                 .getBundleFilesLocation().getAbsolutePath());
-            recipeContext.setReplacementVariableValues(bundleDeployDef.getConfiguration());
-            parser.setReplaceReplacementVariables(true);
-            parser.parseRecipe(recipeContext);
 
+            request.getBundleManagerProvider()
+                .auditDeployment(
+                    bundleDeployment,
+                    BundleDeploymentAction.DEPLOYMENT_STEP,
+                    BundleDeploymentStatus.NOCHANGE,
+                    "setting replacement variable values using [" + bundleDeployDef.getConfiguration().toString(true)
+                        + "]");
+            recipeContext.setReplacementVariableValues(bundleDeployDef.getConfiguration());
+
+            parser.setReplaceReplacementVariables(true);
+
+            request.getBundleManagerProvider().auditDeployment(bundleDeployment,
+                BundleDeploymentAction.DEPLOYMENT_STEP, BundleDeploymentStatus.NOCHANGE,
+                "Parsing Recipe using context [" + recipeContext + "]");
+            parser.parseRecipe(recipeContext);
         } catch (Throwable t) {
             log.error("Failed to deploy bundle [" + request + "]", t);
             result.setErrorMessage(t);
         }
+
         return result;
     }
 }

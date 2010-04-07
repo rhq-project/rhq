@@ -118,6 +118,7 @@ public class StartupServlet extends HttpServlet {
         // (that is, a scheduled job would more likely need to send a message; as opposed to an incoming message
         // causing a job to be scheduled), so that explains the ordering of the comm layer and the scheduler.
         startHibernateStatistics();
+        initScheduler(); // make sure this is initialized before starting the plugin deployer
         startPluginDeployer(); // make sure this is before starting the server plugin container
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         installJaasModules();
@@ -251,6 +252,21 @@ public class StartupServlet extends HttpServlet {
             jaas_mbean.installJaasModules();
         } catch (Exception e) {
             throw new ServletException("Cannot deploy our JAAS login modules!", e);
+        }
+    }
+
+    /**
+     * Initializes, but doesn't start, the Quartz scheduler now.
+     *
+     * @throws ServletException
+     */
+    private void initScheduler() throws ServletException {
+        log("Initializing the scheduler");
+
+        try {
+            LookupUtil.getSchedulerBean().initQuartzScheduler();
+        } catch (SchedulerException e) {
+            throw new ServletException("Cannot initialize the scheduler!", e);
         }
     }
 

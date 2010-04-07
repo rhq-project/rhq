@@ -22,7 +22,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+
 import javax.management.ObjectName;
+
 import org.quartz.Calendar;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -35,7 +37,9 @@ import org.quartz.SchedulerMetaData;
 import org.quartz.Trigger;
 import org.quartz.TriggerListener;
 import org.quartz.spi.JobFactory;
+
 import org.jboss.mx.util.ObjectNameFactory;
+
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 
 /**
@@ -44,7 +48,7 @@ import org.rhq.enterprise.server.operation.OperationManagerLocal;
  */
 public interface SchedulerServiceMBean extends Scheduler {
     /**
-     * The JON Scheduler MBean Server name.
+     * The Scheduler MBean Server name.
      */
     ObjectName SCHEDULER_MBEAN_NAME = ObjectNameFactory.create("rhq:service=scheduler");
 
@@ -75,6 +79,13 @@ public interface SchedulerServiceMBean extends Scheduler {
      * @see    OperationManagerLocal#checkForTimedOutOperations()
      */
     Integer getDefaultOperationTimeout();
+
+    /**
+     * This creates the scheduler but does not start it. Calling this method will NOT start executing jobs.
+     *
+     * @throws SchedulerException
+     */
+    void initQuartzScheduler() throws SchedulerException;
 
     /**
      * This actually starts the scheduler. Calling this method will start executing jobs. Make sure when you call this

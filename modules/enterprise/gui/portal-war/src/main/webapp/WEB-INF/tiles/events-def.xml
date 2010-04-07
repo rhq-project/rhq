@@ -106,7 +106,6 @@
   <definition name=".events.alert.view.notifications.list"
         path="/resource/common/monitor/alerts/ViewAlertNotificationsList.jsp"/>
 
-
   <definition name=".events.alert.view.notifications.roles"
         path="/resource/common/monitor/alerts/ViewAlertNotificationsRoles.jsp"
         controllerUrl="/alerts/ViewNotificationsRoles.do"/>
@@ -203,6 +202,9 @@
 
   <definition name=".events.config.view.conditions"
         path="/resource/common/monitor/alerts/config/ViewDefinitionConditions.jsp"/>
+
+  <definition name=".events.config.view.senders"
+    path="/resource/common/monitor/alerts/config/ViewDefinitionSenders.jsp"/>
 
   <definition name=".events.config.view.notifications"
     path="/resource/common/monitor/alerts/config/ViewDefinitionNotifications.jsp"/>

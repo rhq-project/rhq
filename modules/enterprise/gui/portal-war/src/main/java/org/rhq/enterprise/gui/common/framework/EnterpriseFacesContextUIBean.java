@@ -26,6 +26,14 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 
 public class EnterpriseFacesContextUIBean {
+    protected final static String OUTCOME_SUCCESS = "success";
+    protected final static String OUTCOME_FAILURE = "failed";
+
+    protected final static String OUTCOME_CREATE = "create";
+    protected final static String OUTCOME_EDIT = "edit";
+    protected final static String OUTCOME_SAVE = "save";
+    protected final static String OUTCOME_CANCELLED = "cancel";
+
     public Subject getSubject() {
         return EnterpriseFacesContextUtility.getSubject();
     }

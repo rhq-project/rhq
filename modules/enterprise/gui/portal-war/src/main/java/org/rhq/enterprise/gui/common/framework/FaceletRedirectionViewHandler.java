@@ -55,11 +55,13 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
         // (e.g. "/rhq/resource/artifact/view.xhtml?id=#{param.id}")
         ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(viewId, String.class);
         String actionURL = FacesExpressionUtility.getValue(valueExpression, String.class);
+        System.out.println("FaceletRedirectionViewHandler: getActionURL: actionURL = " + actionURL);
         return actionURL;
     }
 
     @Override
     public void renderView(FacesContext context, UIViewRoot viewToRender) throws IOException, FacesException {
+        System.out.println("FaceletRedirectionViewHandler: renderView: url = " + getURL(viewToRender));
         long monitorId = HibernatePerformanceMonitor.get().start();
         super.renderView(context, viewToRender);
         HibernatePerformanceMonitor.get().stop(monitorId, "URL " + getURL(viewToRender));

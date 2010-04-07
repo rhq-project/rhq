@@ -18,10 +18,17 @@
  */
 package org.rhq.enterprise.server.plugin.pc.alert;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 
@@ -61,5 +68,45 @@ public abstract class AlertSender<T extends ServerPluginComponent> {
      * @param alert the Alert to operate on
      * @return result of sending - a ResultState and a message for auditing
      */
-    public abstract SenderResult send(Alert alert) ;
+    public abstract SenderResult send(Alert alert);
+
+    /**
+     * Allow users to see a preview of the stored configuration data without having to edit it.
+     * A default implementation is already provided which will print the properties in alphabetical
+     * order, one per line, each followed by a string representation of that property's data.
+     */
+    public String previewConfiguration() {
+        StringBuilder builder = new StringBuilder();
+
+        List<Property> properties = new ArrayList<Property>(alertParameters.getProperties());
+        Collections.sort(properties); // alpha sort by property name
+
+        boolean first = true;
+        for (Property next : properties) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(" | ");
+            }
+            builder.append(next.getName());
+            builder.append(": ");
+            builder.append(printProperty(next));
+        }
+
+        return builder.toString();
+    }
+
+    private String printProperty(Property property) {
+        if (property instanceof PropertySimple) {
+            return ((PropertySimple) property).getStringValue();
+        } else if (property instanceof PropertyMap) {
+            Map<String, Property> map = ((PropertyMap) property).getMap();
+            StringBuilder builder = new StringBuilder();
+            for (Property next : map.values()) {
+                builder.append(printProperty(next));
+            }
+            return builder.toString();
+        }
+        return "no preview available";
+    }
 }

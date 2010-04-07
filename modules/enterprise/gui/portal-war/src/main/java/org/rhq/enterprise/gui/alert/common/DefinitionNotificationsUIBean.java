@@ -16,40 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.alert;
+package org.rhq.enterprise.gui.alert.common;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
-import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.notification.NotificationTemplate;
-import org.rhq.core.domain.auth.Subject;
+
+import org.rhq.core.domain.alert.notification.AlertNotificationTemplate;
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.framework.EnterpriseFacesContextUIBean;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 
-@Scope(ScopeType.PAGE)
+@Scope(ScopeType.EVENT)
 @Name("definitionNotificationsUIBean")
-public class DefinitionNotificationsUIBean implements Serializable {
+public class DefinitionNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
     @In
-    private AlertDefinition alertDefinition;
-    @In
     private AlertNotificationManagerLocal alertNotificationManager;
-    @In("#{webUser.subject}")
-    private Subject subject;
-    
+
     private String selectedTemplate;
     private Boolean clearExistingNotifications;
     private Map<String, String> notificationTemplates;
-
-    public AlertDefinition getAlertDefinition() {
-        return alertDefinition;
-    }
 
     public String getSelectedTemplate() {
         return selectedTemplate;
@@ -72,8 +65,9 @@ public class DefinitionNotificationsUIBean implements Serializable {
     }
 
     public String addAlertSenderFromTemplate() {
+        int alertDefinitionId = FacesContextUtility.getRequiredRequestParameter("ad", Integer.class);
         this.alertNotificationManager.applyNotificationTemplateToAlertDefinition(getSelectedTemplate(),
-                this.alertDefinition.getId(), getClearExistingNotifications());
+            alertDefinitionId, getClearExistingNotifications());
 
         return "success";
     }
@@ -85,17 +79,18 @@ public class DefinitionNotificationsUIBean implements Serializable {
 
     private Map<String, String> lookupNotificationTemplates() {
         Map<String, String> result = new TreeMap<String, String>();
-        List<NotificationTemplate> templates = this.alertNotificationManager.listNotificationTemplates(this.subject);
+        List<AlertNotificationTemplate> templates = this.alertNotificationManager
+            .listNotificationTemplates(getSubject());
 
-        for (NotificationTemplate template : templates) {
+        for (AlertNotificationTemplate template : templates) {
             String displayName = getNotificationDisplayName(template);
             result.put(displayName, template.getName()); // displayed text, option value
         }
-        
+
         return result;
     }
 
-    private String getNotificationDisplayName(NotificationTemplate template) {
+    private String getNotificationDisplayName(AlertNotificationTemplate template) {
         StringBuilder builder = new StringBuilder(template.getName());
 
         builder.append(" (");
@@ -104,6 +99,5 @@ public class DefinitionNotificationsUIBean implements Serializable {
 
         return builder.toString();
     }
-    
 
 }

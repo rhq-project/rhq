@@ -32,7 +32,11 @@
             </c:forEach>
         </c:when>
         <c:otherwise>
-            <strong>No notifications were specified for this alert's definition</strong>
+            <tr>
+               <td class="BlockContent">
+                  <strong>No notifications were specified for this alert's definition</strong>
+               </td>
+            </tr>
         </c:otherwise>
     </c:choose>
 </table>

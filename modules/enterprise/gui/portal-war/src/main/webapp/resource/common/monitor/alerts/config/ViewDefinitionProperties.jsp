@@ -89,7 +89,7 @@
     <td colspan="4" class="BlockContent"><span style="height: 1px;"></span></td>
   </tr>
   <tr>
-    <td colspan="4" class="BlockBottomLine"><span style="height: 1px;"></span></td>
+    <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
 </table>
 

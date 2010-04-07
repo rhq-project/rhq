@@ -45,7 +45,7 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
  *
  * @author Justin Harris
  */
-@Scope(ScopeType.PAGE)
+@Scope(ScopeType.EVENT)
 @Name("alertNotificationsUIBean")
 public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
@@ -55,8 +55,8 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
     private Integer notificationId;
     @In
     private AlertNotificationManagerLocal alertNotificationManager;
-
-    private AlertNotificationStore alertNotificationStore;
+    @In
+    private AlertNotificationStoreUIBean alertNotificationStore;
 
     private List<AlertNotification> alertNotifications;
     private Set<AlertNotification> selectedNotifications;
@@ -130,7 +130,6 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
     @Create
     public void initNotifications() {
-        this.alertNotificationStore = new AlertNotificationStore();
         this.alertNotifications = this.alertNotificationStore.lookupNotifications(getSubject());
         this.selectedNotifications = new HashSet<AlertNotification>();
         this.notificationConverter = new AlertNotificationConverter();

@@ -20,21 +20,33 @@ package org.rhq.enterprise.gui.alert.common;
 
 import java.util.List;
 
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.annotations.web.RequestParameter;
+
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class AlertNotificationStore {
+@Scope(ScopeType.EVENT)
+@Name("alertNotificationStoreUIBean")
+public class AlertNotificationStoreUIBean {
 
-    private String context = FacesContextUtility.getOptionalRequestParameter("context");
-    private Integer contextId = FacesContextUtility.getOptionalRequestParameter("contextId", Integer.class);
+    @RequestParameter("context")
+    private String context;
+
+    @RequestParameter("contextId")
+    private Integer contextId;
 
     private AlertNotificationManagerLocal alertNotificationManager = LookupUtil.getAlertNotificationManager();
 
     public List<AlertNotification> lookupNotifications(Subject subject) {
+        System.out.println("AlertNotificationStore: lookupNotifications context = " + context);
+        System.out.println("AlertNotificationStore: lookupNotifications contextId = " + contextId);
+
         if (context.equals("template")) {
             return this.alertNotificationManager.getNotificationsForTemplate(subject, contextId);
         } else {

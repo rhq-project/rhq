@@ -26,8 +26,12 @@
     </ui:define>
 
     <ui:define name="body">
-        <ui:param name="redirect" value="Alert Notifications"/>
-    
+        <a4j:keepAlive beanName="AlertNotificationContextUIBean" />
+        <a4j:keepAlive beanName="alertNotificationStoreUIBean" />
+        <a4j:keepAlive beanName="alertNotificationsUIBean" />
+        <a4j:keepAlive beanName="customContentUIBean" />
+        <a4j:keepAlive beanName="definitionNotificationsUIBean" />
+        
         <rich:panel id="existingAlertsPanel">
         
             <f:facet name="header">
@@ -99,7 +103,13 @@
                             <rich:componentControl for="addAlertPanel" attachTo="addAlertLink" operation="show" event="onclick" />
                         </h:outputLink>
 
-                        <ui:insert name="actionButtons"/>
+                        <h:outputLink id="addAlertTemplateLink" styleClass="buttonmed" value="#">
+                            <h:outputText value="Add Alert Notifications from Template" />
+                            <rich:componentControl for="addAlertFromTemplatePanel"
+                                                   attachTo="addAlertTemplateLink"
+                                                   operation="show"
+                                                   event="onclick" />
+                        </h:outputLink>
                     </h:form>
                 </h:panelGroup>
 
@@ -183,7 +193,46 @@
             </h:outputLink>
         </rich:modalPanel>
         
-        <a4j:log />
+        <h:form id="newNotificationsFromTemplateForm">
+        <rich:modalPanel id="addAlertFromTemplatePanel" moveable="false" autosized="true"
+                         domElementAttachment="parent" >
+            <f:facet name="header">
+                <h:outputText value="Add Alert Notifications from template"/>
+            </f:facet>
+                <input type="hidden" name="ad" value="#{param.contextId}"/>
+
+                <rich:panel rendered="#{definitionNotificationsUIBean.notificationTemplates.size > 0}">
+                <div>
+                    <h:selectOneMenu id="templateList" value="#{definitionNotificationsUIBean.selectedTemplate}">
+                        <f:selectItems value="#{definitionNotificationsUIBean.notificationTemplates}"/>
+                    </h:selectOneMenu>
+
+                    <br/>
+
+                    <h:selectBooleanCheckbox title="clearExisting" value="#{definitionNotificationsUIBean.clearExistingNotifications}"/>
+                    <h:outputText value="Clear existing notifications"/>
+                </div>
+
+                <br />
+                <h:commandButton id="addTemplateButton"
+                               value="Add Alert Notifications"
+                               action="#{definitionNotificationsUIBean.addAlertSenderFromTemplate}"
+                               styleClass="buttonmed"
+                               style="margin-top: auto;">
+                </h:commandButton>
+                </rich:panel>
+
+                <rich:panel rendered="#{definitionNotificationsUIBean.notificationTemplates.size == 0}">
+                    No Alert Notification Templates have been defined yet.<br/>
+                    Please create some in Administration -> System Configuration -> Alert Notification Templates
+                </rich:panel>
+
+                <h:outputLink id="alertTemplateCancelLink" styleClass="buttonmed" value="#" style="float: right; margin: 10px;">
+                    <h:outputText value="Cancel" />
+                    <rich:componentControl for="addAlertFromTemplatePanel" attachTo="alertTemplateCancelLink" operation="hide" event="onclick" />
+                </h:outputLink>
+        </rich:modalPanel>
+        </h:form>
         
         <script type="text/javascript">
             function updateCustomContent() {

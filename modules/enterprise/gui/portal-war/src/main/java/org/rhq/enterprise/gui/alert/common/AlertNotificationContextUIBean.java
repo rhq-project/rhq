@@ -24,7 +24,7 @@ import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 
-@Scope(ScopeType.PAGE)
+@Scope(ScopeType.EVENT)
 @Name("AlertNotificationContextUIBean")
 public class AlertNotificationContextUIBean {
     private enum Context {
@@ -48,6 +48,10 @@ public class AlertNotificationContextUIBean {
 
     @Create
     public void init() {
+        System.out.println("AlertNotificationContextUIBean: context = " + context);
+        System.out.println("AlertNotificationContextUIBean: contextId = " + contextId);
+        System.out.println("AlertNotificationContextUIBean: contextSubId = " + contextSubId);
+
         if (context.equals("template")) {
             name = "Alert Notification Template";
             redirect = create(Context.AlertNotificationTemplate, "mode", "view", "templateId", contextId);
@@ -69,6 +73,10 @@ public class AlertNotificationContextUIBean {
 
         refresh = create(Context.NotificationDetails, "context", context, "contextId", contextId, "contextSubId",
             contextSubId);
+
+        System.out.println("AlertNotificationContextUIBean: name = " + name);
+        System.out.println("AlertNotificationContextUIBean: redirect = " + redirect);
+        System.out.println("AlertNotificationContextUIBean: refresh = " + refresh);
     }
 
     public String create(Context context, Object... nameValuePairs) {
@@ -106,5 +114,17 @@ public class AlertNotificationContextUIBean {
 
     public String getRefresh() {
         return refresh;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public Integer getContextId() {
+        return contextId;
+    }
+
+    public Integer getContextSubId() {
+        return contextSubId;
     }
 }

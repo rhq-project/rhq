@@ -32,7 +32,7 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 
-@Scope(ScopeType.PAGE)
+@Scope(ScopeType.EVENT)
 @Name("customContentUIBean")
 public class CustomContentUIBean {
 
@@ -55,7 +55,7 @@ public class CustomContentUIBean {
     }
 
     @Create
-    public void init()  {
+    public void init() {
         AlertSenderInfo info = alertNotificationManager.getAlertInfoForSender(this.senderName);
 
         if (info != null && info.getUiSnippetUrl() != null) {
@@ -64,7 +64,7 @@ public class CustomContentUIBean {
 
         String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(this.senderName);
         CustomAlertSenderBackingBean backingBean = alertNotificationManager.getBackingBeanForSender(this.senderName, // TODO notificationId may be stale after removal of notification
-                notificationId);
+            notificationId);
 
         if (backingBeanName != null && backingBean != null) {
             backingBean.setWebUser(subject);
@@ -83,8 +83,8 @@ public class CustomContentUIBean {
         Context context = Contexts.getSessionContext();
 
         CustomAlertSenderBackingBean csb = (CustomAlertSenderBackingBean) context.get(name);
-        if (csb ==null)
-            context.set(name,bean);
+        if (csb == null)
+            context.set(name, bean);
 
     }
 }

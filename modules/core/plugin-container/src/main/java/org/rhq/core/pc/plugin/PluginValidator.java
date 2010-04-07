@@ -178,15 +178,10 @@ public class PluginValidator {
                         + "] does not support the bundle facet but defines a bundle type.");
                 }
                 if (!resourceType.getPackageTypes().isEmpty() && !ContentFacet.class.isAssignableFrom(componentClazz)) {
-                    // this might be OK - there is a package type implicit if a bundle type is also defined
-                    // if there is one package type, and there is a bundle type, they should have the same name
-                    if (!(resourceType.getBundleType() != null && resourceType.getPackageTypes().size() == 1 && resourceType
-                        .getBundleType().getName().equals(resourceType.getPackageTypes().iterator().next().getName()))) {
-                        success = false;
-                        LOG.error("Component class [" + componentClass + "] for resource type ["
-                            + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                            + "] does not support the content management facet but defines package types.");
-                    }
+                    success = false;
+                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                        + "] from plugin [" + resourceType.getPlugin()
+                        + "] does not support the content management facet but defines package types.");
                 }
                 if (resourceType.getResourceConfigurationDefinition() != null
                     && !ConfigurationFacet.class.isAssignableFrom(componentClazz)) {

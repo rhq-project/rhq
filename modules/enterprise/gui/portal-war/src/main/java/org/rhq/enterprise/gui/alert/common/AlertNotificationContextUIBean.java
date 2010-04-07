@@ -48,10 +48,6 @@ public class AlertNotificationContextUIBean {
 
     @Create
     public void init() {
-        System.out.println("AlertNotificationContextUIBean: context = " + context);
-        System.out.println("AlertNotificationContextUIBean: contextId = " + contextId);
-        System.out.println("AlertNotificationContextUIBean: contextSubId = " + contextSubId);
-
         if (context.equals("template")) {
             name = "Alert Notification Template";
             redirect = create(Context.AlertNotificationTemplate, "mode", "view", "templateId", contextId);
@@ -73,10 +69,6 @@ public class AlertNotificationContextUIBean {
 
         refresh = create(Context.NotificationDetails, "context", context, "contextId", contextId, "contextSubId",
             contextSubId);
-
-        System.out.println("AlertNotificationContextUIBean: name = " + name);
-        System.out.println("AlertNotificationContextUIBean: redirect = " + redirect);
-        System.out.println("AlertNotificationContextUIBean: refresh = " + refresh);
     }
 
     public String create(Context context, Object... nameValuePairs) {

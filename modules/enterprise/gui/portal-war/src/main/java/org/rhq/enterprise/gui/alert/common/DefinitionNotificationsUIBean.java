@@ -38,6 +38,8 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 public class DefinitionNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
     @In
+    private AlertNotificationsUIBean alertNotificationsUIBean;
+    @In
     private AlertNotificationManagerLocal alertNotificationManager;
 
     private String selectedTemplate;
@@ -68,7 +70,7 @@ public class DefinitionNotificationsUIBean extends EnterpriseFacesContextUIBean 
         int alertDefinitionId = FacesContextUtility.getRequiredRequestParameter("ad", Integer.class);
         this.alertNotificationManager.applyNotificationTemplateToAlertDefinition(getSelectedTemplate(),
             alertDefinitionId, getClearExistingNotifications());
-
+        this.alertNotificationsUIBean.reloadAlertNotifications();
         return "success";
     }
 

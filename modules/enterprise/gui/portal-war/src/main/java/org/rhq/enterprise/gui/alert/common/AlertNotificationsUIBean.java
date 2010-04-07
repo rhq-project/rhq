@@ -55,8 +55,8 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
     private Integer notificationId;
     @In
     private AlertNotificationManagerLocal alertNotificationManager;
-    @In
-    private AlertNotificationStoreUIBean alertNotificationStore;
+    @In(create = true)
+    private AlertNotificationStoreUIBean alertNotificationStoreUIBean;
 
     private List<AlertNotification> alertNotifications;
     private Set<AlertNotification> selectedNotifications;
@@ -130,13 +130,17 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
     @Create
     public void initNotifications() {
-        this.alertNotifications = this.alertNotificationStore.lookupNotifications(getSubject());
+        reloadAlertNotifications();
         this.selectedNotifications = new HashSet<AlertNotification>();
         this.notificationConverter = new AlertNotificationConverter();
         this.notificationConverter.setAlertNotifications(alertNotifications);
         this.alertSenders = lookupAlertSenders();
 
         selectActiveNotification();
+    }
+
+    public void reloadAlertNotifications() {
+        this.alertNotifications = this.alertNotificationStoreUIBean.lookupNotifications(getSubject());
     }
 
     // Sets the initial state of the bean given the requrest parameters, this allows
@@ -175,8 +179,11 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
             newSenderConfig = new Configuration();
         }
 
-        this.activeNotification = this.alertNotificationStore.addNotification(getSubject(), this.selectedNewSender,
-            this.newAlertName, newSenderConfig);
+        AlertNotification newlyCreated = this.alertNotificationStoreUIBean.addNotification(getSubject(),
+            this.selectedNewSender, this.newAlertName, newSenderConfig);
+        this.alertNotifications.add(newlyCreated); // only add if no errors
+        this.activeNotification = newlyCreated;
+        this.selectedNotifications.add(this.activeNotification);
 
         return SUCCESS_OUTCOME;
     }
@@ -192,14 +199,14 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
     public String removeSelected() {
         List<Integer> ids = getSelectedIds(this.selectedNotifications);
 
-        this.alertNotificationStore.removeNotifications(getSubject(), toArray(ids));
+        this.alertNotificationStoreUIBean.removeNotifications(getSubject(), toArray(ids));
+        this.alertNotifications.removeAll(this.selectedNotifications); // only remove if no errors
 
         return SUCCESS_OUTCOME;
     }
 
     public String saveOrder() {
         int orderIndex = 0;
-
         for (AlertNotification notification : this.alertNotifications) {
             notification.setOrder(orderIndex++);
 

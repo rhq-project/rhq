@@ -44,9 +44,6 @@ public class AlertNotificationStoreUIBean {
     private AlertNotificationManagerLocal alertNotificationManager = LookupUtil.getAlertNotificationManager();
 
     public List<AlertNotification> lookupNotifications(Subject subject) {
-        System.out.println("AlertNotificationStore: lookupNotifications context = " + context);
-        System.out.println("AlertNotificationStore: lookupNotifications contextId = " + contextId);
-
         if (context.equals("template")) {
             return this.alertNotificationManager.getNotificationsForTemplate(subject, contextId);
         } else {

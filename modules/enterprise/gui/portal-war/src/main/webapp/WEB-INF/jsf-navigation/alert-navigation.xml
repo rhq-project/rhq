@@ -167,6 +167,7 @@
 
             <redirect />
         </navigation-case>
+        
 
     </navigation-rule>
     
@@ -175,7 +176,7 @@
 
         <navigation-case>
             <from-outcome>ALERT_NOTIFICATIONS</from-outcome>
-            <to-view-id>#{param.refresh}</to-view-id>
+            <to-view-id>#{param.redirect}</to-view-id>
 
             <redirect />
         </navigation-case>

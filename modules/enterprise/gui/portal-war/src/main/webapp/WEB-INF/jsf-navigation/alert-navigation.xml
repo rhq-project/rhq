@@ -82,37 +82,100 @@
       </navigation-case>
 
    </navigation-rule>
-
+    
+    <!-- CRUD for alert notification templates -->
     <navigation-rule>
-        <from-view-id>/rhq/resource/alert/viewAlert.xhtml</from-view-id>
+        <from-view-id>/rhq/admin/alert/template/notification/list.xhtml</from-view-id>
+
+        <navigation-case>
+            <from-outcome>create</from-outcome>
+            <to-view-id>/rhq/admin/alert/template/notification/new.xhtml</to-view-id>
+
+            <redirect />
+        </navigation-case>
 
         <navigation-case>
             <from-outcome>success</from-outcome>
-            <to-view-id>/rhq/resource/alert/viewAlert.xhtml?ad=#{alertDefinition.id}&amp;nid=#{alertNotificationsUIBean.activeNotification.id}</to-view-id>
+            <to-view-id>/rhq/admin/alert/template/notification/list.xhtml</to-view-id>
 
             <redirect />
         </navigation-case>
 
     </navigation-rule>
-
+    
     <navigation-rule>
-        <from-view-id>/rhq/resource/alert/notif/customContent.xhtml</from-view-id>
+        <from-view-id>/rhq/admin/alert/template/notification/new.xhtml</from-view-id>
+
+        <navigation-case>
+            <from-outcome>success</from-outcome>
+            <to-view-id>/rhq/admin/alert/template/notification/details.xhtml?mode=view&amp;templateId=#{NewAlertNotificationTemplateUIBean.createdTemplateId}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+        
+        <navigation-case>
+            <from-outcome>cancel</from-outcome>
+            <to-view-id>/rhq/admin/alert/template/notification/list.xhtml</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
+    
+    <navigation-rule>
+        <from-view-id>/rhq/admin/alert/template/notification/details.xhtml</from-view-id>
+
+        <!-- navigation cases for CRUD of general properties -->
+        <navigation-case>
+            <from-action>#{AlertNotificationTemplateDetailsUIBean.edit}</from-action>
+            <to-view-id>/rhq/admin/alert/template/notification/details.xhtml?mode=edit&amp;templateId=#{param.templateId}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+        <navigation-case>
+            <from-action>#{AlertNotificationTemplateDetailsUIBean.save}</from-action>
+            <to-view-id>/rhq/admin/alert/template/notification/details.xhtml?mode=view&amp;templateId=#{param.templateId}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+        <navigation-case>
+            <from-action>#{AlertNotificationTemplateDetailsUIBean.cancel}</from-action>
+            <to-view-id>/rhq/admin/alert/template/notification/details.xhtml?mode=view&amp;templateId=#{param.templateId}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+        
+        <!-- navigation case to go to the common page for editing alert notifications -->
+        <navigation-case>
+            <from-action>#{AlertNotificationTemplateDetailsUIBean.editNotifications}</from-action>
+            <to-view-id>/rhq/common/alert/notification/details.xhtml?context=template&amp;contextId=#{param.templateId}</to-view-id>
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
+    
+    <!-- alert notifications and custom sender UI -->
+    <navigation-rule>
+        <from-view-id>/rhq/common/alert/notification/details.xhtml</from-view-id>
+
+        <!-- catch all for reloading the page, pass through context parameters from calling context -->
+        <navigation-case>
+            <from-action>success</from-action>
+            <to-view-id>/rhq/common/alert/notification/details.xhtml?context=#{param.context}&amp;contextId=#{param.contextId}&amp;contextSubId=#{param.contextSubId}&amp;nid=#{alertNotificationsUIBean.activeNotification.id}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
+    
+    <navigation-rule>
+        <from-view-id>/rhq/common/alert/notification/customContent.xhtml</from-view-id>
 
         <navigation-case>
             <from-outcome>ALERT_NOTIFICATIONS</from-outcome>
-            <to-view-id>#{param.redirect}</to-view-id>
-
-            <redirect />
-        </navigation-case>
-
-    </navigation-rule>
-
-    <navigation-rule>
-        <from-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml</from-view-id>
-
-        <navigation-case>
-            <from-outcome>success</from-outcome>
-            <to-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml?nid=#{alertNotificationsUIBean.activeNotification.id}&amp;tid=#{notificationTemplatesUIBean.selectedTemplateId}</to-view-id>
+            <to-view-id>#{param.refresh}</to-view-id>
 
             <redirect />
         </navigation-case>

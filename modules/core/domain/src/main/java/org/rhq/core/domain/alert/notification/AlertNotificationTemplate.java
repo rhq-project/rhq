@@ -30,57 +30,77 @@ import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+
 /**
- * A template that consists of multiple notifications. This can be used to create
- * 'bundles' of preconfigured alert notifications which can then be applied to
- * AlertDefinitions directly or via AlertTemplates.
+ * An {@link AlertNotificationTemplate} is a group of {@link AlertNotification}. This can be used to create
+ * pre-configured sets of notifications which can then be applied to all types of {@link AlertDefinition}s -
+ * those at the {@link Resource}-level, {@link ResourceGroup}-level, and {@link ResourceType}-level (a.k.a
+ * Alert Template).
  *
  * @author Heiko W. Rupp
  */
 
-@NamedQueries({
-        @NamedQuery(name = NotificationTemplate.FIND_BY_NAME, query = "SELECT t FROM NotificationTemplate t WHERE t.name = :name"),
-        @NamedQuery(name = NotificationTemplate.FIND_ALL, query = "SELECT t FROM NotificationTemplate AS t")
-})
+@NamedQueries( {
+    @NamedQuery(name = AlertNotificationTemplate.FIND_BY_NAME, query = "SELECT t FROM AlertNotificationTemplate t WHERE t.name = :name"),
+    @NamedQuery(name = AlertNotificationTemplate.FIND_ALL, query = "SELECT t FROM AlertNotificationTemplate AS t") })
 @Entity
-@Table(name="RHQ_ALERT_NOTIF_TEMPL")
-@SequenceGenerator(name="RHQ_ALERT_NOTIF_TEMPL_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_TEMPL_ID_SEQ")
-public class NotificationTemplate implements Serializable {
+@Table(name = "RHQ_ALERT_NOTIF_TEMPL")
+@SequenceGenerator(name = "RHQ_ALERT_NOTIF_TEMPL_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_TEMPL_ID_SEQ")
+public class AlertNotificationTemplate implements Serializable {
 
-    public static final String FIND_BY_NAME = "NotificationTemplate.findByName";
-    public static final String FIND_ALL = "NotificationTemplate.findAll";
+    private static final long serialVersionUID = 1L;
 
+    public static final String FIND_BY_NAME = "AlertNotificationTemplate.findByName";
+    public static final String FIND_ALL = "AlertNotificationTemplate.findAll";
 
-    @Column(name="ID", nullable = false)
+    @Column(name = "ID", nullable = false)
     @GeneratedValue(generator = "RHQ_ALERT_NOTIF_TEMPL_ID_SEQ")
     @Id
     private int id;
 
-    @Column(name="NAME")
+    @Column(name = "CTIME")
+    private long ctime;
+
+    @Column(name = "MTIME")
+    private long mtime;
+
+    @Column(name = "NAME")
     private String name;
 
-    @Column(name="DESCRIPTION")
+    @Column(name = "DESCRIPTION")
     private String description;
 
-
-    @OneToMany(mappedBy = "notificationTemplate", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "alertNotificationTemplate", cascade = CascadeType.ALL)
     List<AlertNotification> notifications = new ArrayList<AlertNotification>();
 
-    @SuppressWarnings("unused")
-    protected NotificationTemplate() {
+    protected AlertNotificationTemplate() {
         // for JPA
     }
 
-    public NotificationTemplate(String name, String description) {
+    public AlertNotificationTemplate(String name, String description) {
         this.name = name;
         this.description = description;
     }
 
     public int getId() {
-        return id;
+        return this.id;
+    }
+
+    public long getCtime() {
+        return ctime;
+    }
+
+    public long getMtime() {
+        return mtime;
     }
 
     public String getName() {
@@ -92,7 +112,7 @@ public class NotificationTemplate implements Serializable {
     }
 
     public String getDescription() {
-        return description;
+        return this.description;
     }
 
     public void setDescription(String description) {
@@ -112,12 +132,24 @@ public class NotificationTemplate implements Serializable {
         return this.notifications;
     }
 
+    @PrePersist
+    void onPersist() {
+        this.mtime = this.ctime = System.currentTimeMillis();
+    }
+
+    @PreUpdate
+    void onPreUpdate() {
+        this.mtime = System.currentTimeMillis();
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
-        NotificationTemplate that = (NotificationTemplate) o;
+        AlertNotificationTemplate that = (AlertNotificationTemplate) o;
 
         if (description != null ? !description.equals(that.description) : that.description != null)
             return false;

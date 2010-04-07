@@ -36,6 +36,7 @@ import org.rhq.core.clientapi.util.units.UnitNumber;
 import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.core.clientapi.util.units.UnitsFormat;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -57,6 +58,8 @@ import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -358,7 +361,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
             throw new IllegalArgumentException("No availability icon for size " + size);
         }
         if (type == null) {
-            return (size == 16) ? "/images/icons/availability_gray_16.png" : "/images/icons/availability_gray_24.png";
+            return (size == 16) ? "/images/icons/availability_geay_16.png" : "/images/icons/availability_grey_24.png";
         } else if (type == AvailabilityType.UP) {
             return (size == 16) ? "/images/icons/availability_green_16.png" : "/images/icons/availability_green_24.png";
         } else if (type == AvailabilityType.DOWN) {
@@ -433,5 +436,11 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
 
         String additional = (grouped ? "_multi" : "");
         return "/images/icons/Events_" + color + additional + "_16.png";
+    }
+
+    public static String getAlertSenderConfigurationPreview(AlertNotification alertNotification) {
+        AlertSenderPluginManager alertSenderPluginManager = LookupUtil.getAlertManager().getAlertPluginManager();
+        AlertSender sender = alertSenderPluginManager.getAlertSenderForNotification(alertNotification);
+        return sender.previewConfiguration();
     }
 }

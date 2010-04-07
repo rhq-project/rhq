@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.alert;
+package org.rhq.enterprise.gui.alert.common;
 
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;

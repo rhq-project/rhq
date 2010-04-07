@@ -24,7 +24,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.alert.notification.NotificationTemplate;
+import org.rhq.core.domain.alert.notification.AlertNotificationTemplate;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -68,7 +68,8 @@ public interface AlertNotificationManagerLocal {
      * @param alertName name of the new {@link AlertNotification}
      * @param configuration Properties for this alert sender.
      */
-    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, String alertName, Configuration configuration);
+    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, String alertName,
+        Configuration configuration);
 
     /**
      * Return notifications for a certain alertDefinitionId
@@ -98,7 +99,8 @@ public interface AlertNotificationManagerLocal {
      * @param def AlertDefinition  to apply the template to
      * @param removeOldNotifications Shall old Notifications on the Definition be removed?
      */
-    void applyNotificationTemplateToAlertDefinition(NotificationTemplate template, AlertDefinition def, boolean removeOldNotifications);
+    void applyNotificationTemplateToAlertDefinition(AlertNotificationTemplate template, AlertDefinition def,
+        boolean removeOldNotifications);
 
     /**
      * Return the backing bean for the AlertSender with the passed shortNama
@@ -129,15 +131,19 @@ public interface AlertNotificationManagerLocal {
      * @return the newly created template
      * @throws IllegalArgumentException when a template with the passed name already exists
      */
-    NotificationTemplate createNotificationTemplate(String name, String description,
-                                                    List<AlertNotification> notifications, boolean copyNotifications) throws IllegalArgumentException;
+    AlertNotificationTemplate createNotificationTemplate(String name, String description,
+        List<AlertNotification> notifications, boolean copyNotifications) throws IllegalArgumentException;
+
+    void updateNotificationTemplate(Subject subject, int templateId, String newName, String newDescription);
 
     /**
      * Get all defined notification templates in the system along with their AlertNotifications
      * @param user Subject of the caller
      * @return List of all defined alert notification templates
      */
-    List<NotificationTemplate> listNotificationTemplates(Subject user);
+    List<AlertNotificationTemplate> listNotificationTemplates(Subject user);
+
+    AlertNotificationTemplate getAlertNotificationTemplate(Subject user, int alertNotificationTemplateId);
 
     /**
      * Take the passed NotificationTemplate and apply its Notifications to the passed AlertDefinition
@@ -145,7 +151,8 @@ public interface AlertNotificationManagerLocal {
      * @param alertDefinitionId id of an AlertDefinition on which the template should be applied
      * @param removeOldNotifications Shall old Notifications on the Definition be removed?
      */
-    void applyNotificationTemplateToAlertDefinition(String templateName, int alertDefinitionId, boolean removeOldNotifications);
+    void applyNotificationTemplateToAlertDefinition(String templateName, int alertDefinitionId,
+        boolean removeOldNotifications);
 
     /**
      * Add a new alert Notification to a template
@@ -156,7 +163,8 @@ public interface AlertNotificationManagerLocal {
      * @param notificationConfiguration the configuration of this AlertNotification
      * @return the new AlertNotification
      */
-    AlertNotification addAlertNotificationToTemplate(Subject user,String templateName,String sender, String notificationName, Configuration notificationConfiguration);
+    AlertNotification addAlertNotificationToTemplate(Subject user, int templateId, String sender,
+        String notificationName, Configuration notificationConfiguration);
 
     int removeNotificationsFromTemplate(Subject subject, int templateId, Integer[] notificationIds);
 

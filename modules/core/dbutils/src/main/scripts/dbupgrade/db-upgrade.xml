@@ -2227,8 +2227,16 @@
                         PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="NAME" columnType="VARCHAR2" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="DESCRIPTION" columnType="VARCHAR2" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ALERT_NOTIF_TEMPL" column="CTIME" nullable="false" />
+                
+                <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="MTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ALERT_NOTIF_TEMPL" column="MTIME" nullable="false" />
+                
+                <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="NAME" precision="100" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ALERT_NOTIF_TEMPL" column="NAME" nullable="false" />
+                
+                <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="DESCRIPTION" precision="250" columnType="VARCHAR2" />
             </schemaSpec>
 
             <!-- RHQ Advisory Representation -->

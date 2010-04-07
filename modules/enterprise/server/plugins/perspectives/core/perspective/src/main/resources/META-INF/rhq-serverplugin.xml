@@ -517,7 +517,7 @@
    <menu-item
       name="administration.systemConfiguration.notifcationTemplates"
       displayName="Alert Notification Templates"
-      url="/rhq/resource/alert/notif/notificationTemplates.xhtml">
+      url="/rhq/admin/alert/template/notification/list.xhtml">
        <position name="administration.systemConfiguration.templates"
                  placement="after"/>
        <activators>

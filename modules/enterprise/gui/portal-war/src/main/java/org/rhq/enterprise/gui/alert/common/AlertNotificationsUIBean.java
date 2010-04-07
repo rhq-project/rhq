@@ -16,10 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.alert;
+package org.rhq.enterprise.gui.alert.common;
 
-import org.rhq.enterprise.gui.alert.converter.AlertNotificationConverter;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -34,10 +32,12 @@ import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
+
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.enterprise.gui.alert.converter.AlertNotificationConverter;
+import org.rhq.enterprise.gui.common.framework.EnterpriseFacesContextUIBean;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 
 /**
@@ -47,7 +47,7 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
  */
 @Scope(ScopeType.PAGE)
 @Name("alertNotificationsUIBean")
-public class AlertNotificationsUIBean implements Serializable {
+public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
     private final static String SUCCESS_OUTCOME = "success";
 
@@ -55,10 +55,8 @@ public class AlertNotificationsUIBean implements Serializable {
     private Integer notificationId;
     @In
     private AlertNotificationManagerLocal alertNotificationManager;
-    @In
+
     private AlertNotificationStore alertNotificationStore;
-    @In("#{webUser.subject}")
-    private Subject subject;
 
     private List<AlertNotification> alertNotifications;
     private Set<AlertNotification> selectedNotifications;
@@ -132,7 +130,8 @@ public class AlertNotificationsUIBean implements Serializable {
 
     @Create
     public void initNotifications() {
-        this.alertNotifications = this.alertNotificationStore.lookupNotifications(this.subject);
+        this.alertNotificationStore = new AlertNotificationStore();
+        this.alertNotifications = this.alertNotificationStore.lookupNotifications(getSubject());
         this.selectedNotifications = new HashSet<AlertNotification>();
         this.notificationConverter = new AlertNotificationConverter();
         this.notificationConverter.setAlertNotifications(alertNotifications);
@@ -168,7 +167,8 @@ public class AlertNotificationsUIBean implements Serializable {
 
     public String addAlertSender() {
         Configuration newSenderConfig = null;
-        ConfigurationDefinition configDefinition = this.alertNotificationManager.getConfigurationDefinitionForSender(selectedNewSender);
+        ConfigurationDefinition configDefinition = this.alertNotificationManager
+            .getConfigurationDefinitionForSender(selectedNewSender);
 
         if (configDefinition != null) {
             newSenderConfig = configDefinition.getDefaultTemplate().createConfiguration();
@@ -176,7 +176,8 @@ public class AlertNotificationsUIBean implements Serializable {
             newSenderConfig = new Configuration();
         }
 
-        this.activeNotification = this.alertNotificationStore.addNotification(this.subject, this.selectedNewSender, this.newAlertName, newSenderConfig);
+        this.activeNotification = this.alertNotificationStore.addNotification(getSubject(), this.selectedNewSender,
+            this.newAlertName, newSenderConfig);
 
         return SUCCESS_OUTCOME;
     }
@@ -192,7 +193,7 @@ public class AlertNotificationsUIBean implements Serializable {
     public String removeSelected() {
         List<Integer> ids = getSelectedIds(this.selectedNotifications);
 
-        this.alertNotificationStore.removeNotifications(this.subject, toArray(ids));
+        this.alertNotificationStore.removeNotifications(getSubject(), toArray(ids));
 
         return SUCCESS_OUTCOME;
     }

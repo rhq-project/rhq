@@ -571,7 +571,6 @@ public class TabularWriter {
             if (CSV.equals(format)) {
                 csvWriter.writeNext(headers);
             } else {
-                //for (int i = 0; i < maxColumnLength.length; i++) {
                 for (int i = 0; i < actualColumnWidths.length; i++) {
                     int colSize = actualColumnWidths[i];
                     printSpaced(out, headers[i], colSize);

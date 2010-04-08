@@ -18,17 +18,26 @@
  */
 package org.rhq.enterprise.server.operation;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import javax.ejb.EJBException;
 
 /**
  * A job that invokes an operation on a single resource.
@@ -37,6 +46,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceOperationJob extends OperationJob {
     public static final String DATAMAP_INT_RESOURCE_ID = "resourceId";
+
+    private static final Log log = LogFactory.getLog(ResourceOperationJob.class);
 
     /**
      * Prefix for all job names and job groups names of resource operations.
@@ -65,11 +76,17 @@ public class ResourceOperationJob extends OperationJob {
             JobDetail jobDetail = context.getJobDetail();
             OperationManagerLocal operationManager = LookupUtil.getOperationManager();
 
+            if (isResourceUninventoried(jobDetail)) {
+                int resourceId = getResourceId(jobDetail);
+                log.warn("The resource with id " + resourceId + " was not found in inventory. It may have been " +
+                    "deleted. Canceling job.");
+                return;
+            }
+
             updateOperationScheduleEntity(jobDetail, context.getNextFireTime(), operationManager);
 
             // retrieve the stored schedule using the overlord so it succeeds no matter what
-            schedule = operationManager.getResourceOperationSchedule(LookupUtil.getSubjectManager().getOverlord(),
-                jobDetail);
+            schedule = operationManager.getResourceOperationSchedule(getOverlord(), jobDetail);
 
             // Login the schedule's subject so its assigned a session, so our security tests pass.
             // Create a new session even if user is logged in elsewhere, we don't want to attach to that user's session
@@ -85,8 +102,33 @@ public class ResourceOperationJob extends OperationJob {
             invokeOperationOnResource(schedule, resourceHistory, operationManager);
         } catch (Exception e) {
             String error = "Failed to execute scheduled operation [" + schedule + "]";
-            LogFactory.getLog(ResourceOperationJob.class).error(error, e);
+            log.error(error, e);
             throw new JobExecutionException(error, e, false);
+        }
+    }
+
+    private Subject getOverlord() {
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        return subjectMgr.getOverlord();
+    }
+
+    private int getResourceId(JobDetail jobDetail) {
+        JobDataMap jobDataMap = jobDetail.getJobDataMap();
+        return jobDataMap.getIntFromString(DATAMAP_INT_RESOURCE_ID);
+    }
+
+    private boolean isResourceUninventoried(JobDetail jobDetail) {
+        ResourceManagerLocal resourceMgr = LookupUtil.getResourceManager();
+        int resourceId = getResourceId(jobDetail);
+
+        try {
+            return resourceMgr.getResource(getOverlord(), resourceId) == null;
+        }
+        catch (EJBException e) {
+            if (e.getCausedByException() instanceof ResourceNotFoundException) {
+                return true;
+            }
+            throw e;
         }
     }
 
@@ -113,6 +155,11 @@ public class ResourceOperationJob extends OperationJob {
         // now tell the agent to invoke it!
         try {
             Resource resource = schedule.getResource();
+
+            if (resource == null || resource.getInventoryStatus() == InventoryStatus.UNINVENTORIED) {
+                return;    
+            }
+
             AgentManagerLocal agentManager = LookupUtil.getAgentManager();
             AgentClient agentClient = agentManager.getAgentClient(resource.getId());
 

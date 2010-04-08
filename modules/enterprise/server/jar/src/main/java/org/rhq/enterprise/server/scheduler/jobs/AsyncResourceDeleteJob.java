@@ -26,6 +26,9 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -47,6 +50,7 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
             try {
                 log.debug("Before asynchronous deletion of resource[id=" + doomedResourceId + "]");
                 long startTime = System.currentTimeMillis();
+                unscheduleJobs(overlord, doomedResourceId);
                 resourceManager.deleteSingleResourceInNewTransaction(overlord, doomedResourceId);
                 long endTime = System.currentTimeMillis();
                 time += (endTime - startTime);
@@ -62,6 +66,35 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
         if (deletedSuccessfully > 0 || deletedWithFailure > 0) {
             log.info("Async resource deletion - " + deletedSuccessfully + " successful, " + deletedWithFailure
                 + " failed, took [" + time + "]ms");
+        }
+    }
+
+    private void unscheduleJobs(Subject overlord, Integer resourceId) {
+        log.debug("Unscheduling jobs for resource[id=" + resourceId + "]");
+        OperationManagerLocal operationManager = LookupUtil.getOperationManager();
+        try {
+            List<ResourceOperationSchedule> schedules = operationManager.findScheduledResourceOperations(overlord,
+                resourceId);
+
+            for (ResourceOperationSchedule schedule : schedules) {
+                try {
+                    /*
+                     * unscheduleResourceOperation already takes care of ignoring requests to delete unknown schedules,
+                     * which would happen if the following sequence occurs:
+                     *
+                     * - a user tries to delete a resource, gets the list of resource operation schedules - just then, one
+                     * or more of the schedules completes it's last scheduled firing, and is removed - then we try to
+                     * unschedule it here, except that the jobid will no longer be known
+                     */
+                    operationManager.unscheduleResourceOperation(overlord, schedule.getJobId().toString(), resourceId);
+                } catch (UnscheduleException ise) {
+                    log.warn("Failed to unschedule job [" + schedule + "] for a resource being deleted [" + resourceId
+                        + "]", ise);
+                }
+            }
+        } catch (Throwable t) {
+            log.warn("Failed to get jobs for a resource being deleted [" + resourceId
+                + "]; will not attempt to unschedule anything", t);
         }
     }
 }

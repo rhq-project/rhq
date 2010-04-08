@@ -94,19 +94,24 @@ public class ResourceOperationJob extends OperationJob {
 
             invokeOperationOnResource(schedule, resourceHistory, operationManager);
         } catch (Exception e) {
+            if (e instanceof CancelJobException) {
+                // if a cancel job exception was thrown we do not need to do anything else.
+                // we can just rethrow the exception.
+                throw (CancelJobException) e;
+            }
+
             String error = "Failed to execute scheduled operation [" + schedule + "]";
             log.error(error, e);
 
-            JobExecutionException exception = new JobExecutionException(error, e, false);
-
-            if (isResourceUninventoried(context.getJobDetail())) {
-                exception.setUnscheduleAllTriggers(true);
+            if (isResourceUncommitted(context.getJobDetail())) {
                 int resourceId = getResourceId(context.getJobDetail());
-                log.warn("The resource with id " + resourceId + " was not found in inventory. It may have been " +
-                    "deleted. Canceling job.");
+                String msg = "The resource with id " + resourceId + " is not committed in inventory. It may have " +
+                    "been deleted from inventory. Canceling job.";
+                log.warn(msg);
+                throw new CancelJobException(msg, e);
             }
 
-            throw exception;
+            throw new JobExecutionException(error, e, false);
         }
     }
 
@@ -120,13 +125,13 @@ public class ResourceOperationJob extends OperationJob {
         return jobDataMap.getIntFromString(DATAMAP_INT_RESOURCE_ID);
     }
 
-    private boolean isResourceUninventoried(JobDetail jobDetail) {
+    private boolean isResourceUncommitted(JobDetail jobDetail) {
         ResourceManagerLocal resourceMgr = LookupUtil.getResourceManager();
         int resourceId = getResourceId(jobDetail);
 
         try {
             Resource resource = resourceMgr.getResource(getOverlord(), resourceId);
-            return resource == null || resource.getInventoryStatus().equals(InventoryStatus.UNINVENTORIED);
+            return isResourceUncommitted(resource);
         }
         catch (EJBException e) {
             if (e.getCausedByException() instanceof ResourceNotFoundException) {
@@ -135,6 +140,11 @@ public class ResourceOperationJob extends OperationJob {
             throw e;
         }
     }
+
+    private boolean isResourceUncommitted(Resource resource) {
+        return resource == null || resource.getInventoryStatus() != InventoryStatus.COMMITTED;
+    }
+
 
     /**
      * Actually invokes the operation by sending the command to the agent. This is package-scoped so the group job can
@@ -160,8 +170,11 @@ public class ResourceOperationJob extends OperationJob {
         try {
             Resource resource = schedule.getResource();
 
-            if (resource == null || resource.getInventoryStatus() == InventoryStatus.UNINVENTORIED) {
-                return;    
+            if (isResourceUncommitted(resource)) {
+                String msg = "The resource with id " + resource.getId() + " is not committed in inventory. It may " +
+                    "have been deleted from inventory. Canceling job.";
+                log.warn(msg);
+                throw new CancelJobException(msg);
             }
 
             AgentManagerLocal agentManager = LookupUtil.getAgentManager();

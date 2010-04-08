@@ -76,13 +76,6 @@ public class ResourceOperationJob extends OperationJob {
             JobDetail jobDetail = context.getJobDetail();
             OperationManagerLocal operationManager = LookupUtil.getOperationManager();
 
-            if (isResourceUninventoried(jobDetail)) {
-                int resourceId = getResourceId(jobDetail);
-                log.warn("The resource with id " + resourceId + " was not found in inventory. It may have been " +
-                    "deleted. Canceling job.");
-                return;
-            }
-
             updateOperationScheduleEntity(jobDetail, context.getNextFireTime(), operationManager);
 
             // retrieve the stored schedule using the overlord so it succeeds no matter what
@@ -103,7 +96,17 @@ public class ResourceOperationJob extends OperationJob {
         } catch (Exception e) {
             String error = "Failed to execute scheduled operation [" + schedule + "]";
             log.error(error, e);
-            throw new JobExecutionException(error, e, false);
+
+            JobExecutionException exception = new JobExecutionException(error, e, false);
+
+            if (isResourceUninventoried(context.getJobDetail())) {
+                exception.setUnscheduleAllTriggers(true);
+                int resourceId = getResourceId(context.getJobDetail());
+                log.warn("The resource with id " + resourceId + " was not found in inventory. It may have been " +
+                    "deleted. Canceling job.");
+            }
+
+            throw exception;
         }
     }
 
@@ -122,7 +125,8 @@ public class ResourceOperationJob extends OperationJob {
         int resourceId = getResourceId(jobDetail);
 
         try {
-            return resourceMgr.getResource(getOverlord(), resourceId) == null;
+            Resource resource = resourceMgr.getResource(getOverlord(), resourceId);
+            return resource == null || resource.getInventoryStatus().equals(InventoryStatus.UNINVENTORIED);
         }
         catch (EJBException e) {
             if (e.getCausedByException() instanceof ResourceNotFoundException) {

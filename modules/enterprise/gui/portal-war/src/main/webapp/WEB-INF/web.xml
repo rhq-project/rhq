@@ -41,11 +41,11 @@
    <!-- Making sure we don't overload the session with too much data. -->
    <context-param>
       <param-name>com.sun.faces.numberOfViewsInSession</param-name>
-      <param-value>1</param-value>
+      <param-value>2</param-value>
    </context-param>
    <context-param>
       <param-name>com.sun.faces.numberOfLogicalViews</param-name>
-      <param-value>1</param-value>
+      <param-value>2</param-value>
    </context-param>
 
    <!-- flags for debugging during development -->

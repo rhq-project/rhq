@@ -42,6 +42,8 @@ public class ResourceTitleBar extends HLayout {
     private static final String NOT_FAV_ICON = "Favorite_24.png";
 
     private Resource resource;
+
+    private Img badge;
     private Img favoriteButton;
     private HTMLFlow title;
     private Img availabilityImage;
@@ -51,6 +53,7 @@ public class ResourceTitleBar extends HLayout {
         super();
         setWidth100();
         setHeight(30);
+        setPadding(5);
     }
 
     @Override
@@ -71,6 +74,9 @@ public class ResourceTitleBar extends HLayout {
             }
         });
 
+        badge = new Img("types/Service_up_24.png", 24, 24);
+
+        addMember(badge);
         addMember(title);
         addMember(availabilityImage);
         addMember(favoriteButton);
@@ -79,7 +85,7 @@ public class ResourceTitleBar extends HLayout {
     public void setResource(Resource resource) {
         this.resource = resource;
 
-        this.title.setContents("<h2>" + resource.getName() + "</h2>");
+        this.title.setContents("<span class=\"SectionHeader\">" + resource.getName() + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
 
         Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
         this.favorite = favorites.contains(resource.getId());
@@ -88,6 +94,11 @@ public class ResourceTitleBar extends HLayout {
         this.availabilityImage.setSrc("resources/availability_" +
                 (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red") +
                 "_24.png");
+
+        String category = this.resource.getResourceType().getCategory().getDisplayName();
+        String avail = resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase();
+        badge.setSrc("types/" + category + "_" + avail + "_24.png");
+
         markForRedraw();
     }
 

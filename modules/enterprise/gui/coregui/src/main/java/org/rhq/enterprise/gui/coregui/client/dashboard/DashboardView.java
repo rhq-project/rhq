@@ -41,37 +41,50 @@ import org.rhq.enterprise.gui.coregui.client.inventory.summary.SummaryCountsView
  */
 public class DashboardView extends VLayout {
 
-    private static String[] colors = new String[]{
-            "FF6600", "808000", "008000", "008080", "0000FF", "666699",
-            "FF0000", "FF9900", "99CC00", "339966", "33CCCC", "3366FF",
-            "800080", "969696", "FF00FF", "FFCC00", "FFFF00", "00FF00",
-            "00FFFF", "00CCFF", "993366", "C0C0C0", "FF99CC", "FFCC99",
-            "FFFF99", "CCFFCC", "CCFFFF", "99CCFF", "CC99FF", "FFFFFF"
-    };
+
+    boolean editMode = false;
+
+    PortalLayout portalLayout;
+    DynamicForm form;
+    ButtonItem addPortlet;
 
     public DashboardView() {
         setOverflow(Overflow.AUTO);
         setPadding(5);
     }
 
-    public void onInit() {
+    public void redraw() {
+        for (Canvas c : getChildren()) {
+            c.destroy();
+        }
+
+        buildPortlets();
+    }
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        buildPortlets();
+    }
+
+    public void buildPortlets() {
         setWidth100();
         setHeight100();
 
 
-        final PortalLayout portalLayout = new PortalLayout(2);
+        portalLayout = new PortalLayout(2);
         portalLayout.setWidth100();
         portalLayout.setHeight100();
 
 
-        Portlet summaryPortlet = new Portlet();
+        Portlet summaryPortlet = new Portlet(editMode);
         summaryPortlet.setTitle("Inventory Summary");
         summaryPortlet.addItem(new SummaryCountsView());
         summaryPortlet.setHeight(300);
         portalLayout.addPortlet(summaryPortlet);
 
 
-        Portlet adPortlet = new Portlet();
+        Portlet adPortlet = new Portlet(editMode);
         adPortlet.setTitle("Auto Discovery Queue");
         adPortlet.addItem(new ResourceAutodiscoveryView(true));
         adPortlet.setHeight(250);
@@ -80,7 +93,7 @@ public class DashboardView extends VLayout {
 
         // create portlets...
         for (int i = 1; i <= 2; i++) {
-            Portlet portlet = new Portlet();
+            Portlet portlet = new Portlet(editMode);
             portlet.setTitle("Portlet");
 
             // Label label = new Label();
@@ -96,15 +109,15 @@ public class DashboardView extends VLayout {
 
         final VLayout vLayout = new VLayout(15);
 
-        final DynamicForm form = new DynamicForm();
+        form = new DynamicForm();
         form.setAutoWidth();
-        form.setNumCols(5);
+        form.setNumCols(7);
 
         final StaticTextItem numColItem = new StaticTextItem();
         numColItem.setTitle("Columns");
         numColItem.setValue(portalLayout.getMembers().length);
 
-        ButtonItem addColumn = new ButtonItem("addColun", "Add Column");
+        ButtonItem addColumn = new ButtonItem("addColumn", "Add Column");
 //        addColumn.setIcon("silk/application_side_expand.png");
         addColumn.setAutoFit(true);
         addColumn.setStartRow(false);
@@ -140,7 +153,19 @@ public class DashboardView extends VLayout {
             }
         });
 
-        final ButtonItem addPortlet = new ButtonItem("addPortlet", "Add Portlet");
+
+        final ButtonItem editButton = new ButtonItem("editable", editMode ? "View Mode" : "Edit Mode");
+        editButton.setAutoFit(true);
+        editButton.setStartRow(false);
+        editButton.setEndRow(false);
+        editButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
+                editMode = !editMode;
+                redraw();
+            }
+        });
+
+        addPortlet = new ButtonItem("addPortlet", "Add Portlet");
         addPortlet.setIcon("[skin]/images/actions/add.png");
         addPortlet.setAutoFit(true);
 
@@ -149,7 +174,25 @@ public class DashboardView extends VLayout {
         addPortlet.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
 
-                final Portlet newPortlet = new Portlet();
+                addPortlet();
+
+            }
+        });
+
+
+        if (editMode) {
+            form.setItems(numColItem, addPortlet, addColumn, removeColumn, editButton);
+        } else {
+            form.setItems(editButton);
+        }
+        addMember(form);
+        addMember(portalLayout);
+
+    }
+
+
+    private void addPortlet() {
+         final Portlet newPortlet = new Portlet(true);
                 newPortlet.setTitle("Portlet ");
 
 //                Label label = new Label();
@@ -211,14 +254,5 @@ public class DashboardView extends VLayout {
                                 newPortlet.show();
                             }
                         }, 750);
-            }
-        });
-
-
-        form.setItems(numColItem, addPortlet, addColumn, removeColumn);
-
-        addMember(form);
-        addMember(portalLayout);
-
     }
 }

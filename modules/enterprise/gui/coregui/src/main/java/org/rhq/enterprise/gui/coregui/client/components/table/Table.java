@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Ian Springer
  */
 public class Table extends VLayout {
+
     private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
 
     private HTMLFlow title;

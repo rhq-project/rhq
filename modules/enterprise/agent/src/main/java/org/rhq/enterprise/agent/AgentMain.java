@@ -365,9 +365,14 @@ public class AgentMain {
     private boolean m_disableNativeSystem;
 
     /**
+     * Tracks whether we already logged a warning to let the user know SIGAR support isn't available.
+     */
+    private boolean loggedNativeSystemInfoUnavailableWarning;
+
+    /**
      * The main method that starts the whole thing.
      *
-     * @param args
+     * @param args the arguments passed on the command line (e.g. java org.rhq.enterprise.agent.AgentMain arg1 arg2 arg3)
      */
     public static void main(String[] args) {
         reconfigureJavaLogging();
@@ -2069,15 +2074,21 @@ public class AgentMain {
                 SystemInfoFactory.disableNativeSystemInfo();
                 LOG.info(AgentI18NResourceKeys.NATIVE_SYSTEM_DISABLED);
             }
+            this.loggedNativeSystemInfoUnavailableWarning = false;
         } else {
             if (!SystemInfoFactory.isNativeSystemInfoAvailable()) {
-                Throwable t = SystemInfoFactory.getNativeLibraryLoadThrowable();
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug(AgentI18NResourceKeys.NATIVE_SYSINFO_UNAVAILABLE_DEBUG, t);
-                } else {
-                    LOG.warn(AgentI18NResourceKeys.NATIVE_SYSINFO_UNAVAILABLE);
-                }
-            }                        
+                if (!this.loggedNativeSystemInfoUnavailableWarning) {
+                    Throwable t = SystemInfoFactory.getNativeLibraryLoadThrowable();
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug(AgentI18NResourceKeys.NATIVE_SYSINFO_UNAVAILABLE_DEBUG, t);
+                    } else {
+                        LOG.warn(AgentI18NResourceKeys.NATIVE_SYSINFO_UNAVAILABLE);
+                    }
+                    this.loggedNativeSystemInfoUnavailableWarning = true;
+                }                
+            } else {
+                this.loggedNativeSystemInfoUnavailableWarning = false;
+            }
         }
 
         return;

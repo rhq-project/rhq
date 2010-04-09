@@ -16,6 +16,10 @@
    <name>RHQ Enterprise Remote CLI Scripts</name>
    <description>RHQ Enterprise Remote Command Line Interface</description>
 
+   <properties>
+      <rhq.server.name>localhost</rhq.server.name>  
+   </properties>
+
    <scm>
       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/client/</connection>
       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/client/</developerConnection>
@@ -92,9 +96,11 @@
                             classpathref="maven.test.classpath"
                             resultproperty="script.tests.failed"
                             fork="true">
+                         
                          <sysproperty key="script.dir" value="${basedir}/src/test/script"/>
                          <sysproperty key="test.output.dir" value="${basedir}/target/surefire-reports"/>
                          <sysproperty key="test" value="${test}"/>
+                         <sysproperty key="rhq.server.name" value="${rhq.server.name}"/>
                       </java>
 
                       <fail message="There were test failures">

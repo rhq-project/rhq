@@ -197,6 +197,10 @@ public class GroupOperationJob extends OperationJob {
                     try {
                         invokeOperationOnResource(composite, operationManager);
                     } catch (Exception e) {
+                        if (e instanceof CancelJobException) {
+                            throw e;
+                        }
+
                         // failed to even send to the agent, immediately mark the job as failed
                         groupHistory.setErrorMessage(ThrowableUtil.getStackAsString(e));
                         groupHistory = (GroupOperationHistory) operationManager.updateOperationHistory(
@@ -209,6 +213,10 @@ public class GroupOperationJob extends OperationJob {
                 }
             }
         } catch (Exception e) {
+            if (e instanceof CancelJobException) {
+                throw (CancelJobException) e;
+            }
+
             String error = "Failed to execute scheduled operation [" + schedule + "]";
             LogFactory.getLog(GroupOperationJob.class).error(error, e);
             throw new JobExecutionException(error, e, false);

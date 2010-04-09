@@ -79,12 +79,12 @@
       </fmt:message>
     </td>
   </tr>
-  <tr>
-    <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
-  </tr>
   
   <!-- Enablement option section -->
   <c:if test="${alertDef.recoveryId > 0}">
+  <tr>
+    <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
+  </tr>
   
   <tr valign="top">
     <td class="BlockLabel">

@@ -92,10 +92,19 @@ public class SchedulerService implements SchedulerServiceMBean, MBeanRegistratio
         return timeout;
     }
 
+    public void initQuartzScheduler() throws SchedulerException {
+        if (scheduler == null) {
+            // TODO: if we are running in a server cluster, make sure we are using Quartz's clustering capability
+            log.debug("Scheduler service will initialize Quartz scheduler now.");
+            scheduler = schedulerFactory.getScheduler();
+        } else {
+            log.debug("Quartz scheduler is initialized and can be started");
+        }
+    }
+
     public void startQuartzScheduler() throws SchedulerException {
-        // TODO: if we are running in a server cluster, make sure we are using Quartz's clustering capability
-        log.info("Scheduler service will start Quartz now.");
-        scheduler = schedulerFactory.getScheduler();
+        initQuartzScheduler();
+        log.info("Scheduler service will start Quartz scheduler now - jobs will begin executing.");
         scheduler.start();
 
         return;

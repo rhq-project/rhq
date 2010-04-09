@@ -18,12 +18,12 @@
 
 <tiles:insert definition=".events.config.view.conditionsbox"/>
 
+<tiles:insert definition=".events.config.view.senders"/>
+
 <%--<tiles:insert definition=".events.config.view.notifications"/>--%>
 
 <%--<tiles:insert definition=".events.config.view.controlactionbox"/>--%>
 
 <tiles:insert definition=".events.config.view.nav"/>
-
-<%--<a href="/rhq/resource/alert/notif/listAlertSender.xhtml?id=${param.id}&ad=${param.ad}">To Alert sender plugins</a>--%>
 
 <tiles:insert definition=".page.footer"/>

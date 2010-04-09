@@ -226,6 +226,7 @@ public final class AlertDefUtil {
                 alertDefinition = LookupUtil.getAlertDefinitionManager()
                     .getAlertDefinitionById(user, alertDefinitionId);
                 request.setAttribute(Constants.ALERT_DEFINITION_ATTR, alertDefinition);
+                request.setAttribute("alertNotifCount", alertDefinition.getAlertNotifications().size());
 
                 AlertDefinitionContext context = AlertDefinitionContext.get(alertDefinition);
                 if (context == AlertDefinitionContext.Type) {

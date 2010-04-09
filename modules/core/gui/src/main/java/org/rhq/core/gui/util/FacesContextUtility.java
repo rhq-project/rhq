@@ -180,6 +180,10 @@ public abstract class FacesContextUtility {
         return facesContext;
     }
 
+    public static String getViewId() {
+        return getFacesContext().getViewRoot().getViewId();
+    }
+
     @SuppressWarnings("unchecked")
     // TODO: Do this instead by evaluating an EL expression.
     public static <T> T getBean(Class<T> type) {

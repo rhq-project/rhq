@@ -75,6 +75,7 @@ public class AntLauncher {
             if (customTaskDefs == null) {
                 customTaskDefs = new HashSet<String>(1);
             }
+            customTaskDefs.add(BUNDLE_ANT_TASKS); // these are our required tasks
             customTaskDefs.add(ANTCONTRIB_ANT_TASKS); // we always want to provide these
 
             Properties taskDefs = new Properties();

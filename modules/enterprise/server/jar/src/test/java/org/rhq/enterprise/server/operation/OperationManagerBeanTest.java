@@ -27,6 +27,7 @@ import javax.persistence.EntityManager;
 
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -1601,6 +1602,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
                 resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
                 resource.setUuid("" + new Random().nextInt());
                 resource.setAgent(agent);
+                resource.setInventoryStatus(InventoryStatus.COMMITTED);
                 em.persist(resource);
 
                 ResourceGroup group = new ResourceGroup("testgroup" + System.currentTimeMillis(), resourceType);

@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Stateless;
-import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -216,83 +215,73 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //ADVISORYMANAGER: BEGIN ------------------------------------------
 
-    public Advisory createAdvisory(@WebParam(name = "subject") Subject user,
-        @WebParam(name = "advisory") String advisory, @WebParam(name = "advisoryType") String advisoryType,
-        @WebParam(name = "advisoryName") String advisoryName) throws AdvisoryException {
-        return advisoryManager.createAdvisory(user, advisory, advisoryType, advisoryName);
-    }
-
-    public CVE createCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cvename") String cvename)
+    public Advisory createAdvisory(Subject subject, String advisory, String advisoryType, String advisoryName)
         throws AdvisoryException {
-        return advisoryManager.createCVE(user, cvename);
+        return advisoryManager.createAdvisory(subject, advisory, advisoryType, advisoryName);
     }
 
-    public AdvisoryCVE createAdvisoryCVE(@WebParam(name = "subject") Subject user,
-        @WebParam(name = "advisory") Advisory advisory, @WebParam(name = "cve") CVE cve) throws AdvisoryException {
-        return advisoryManager.createAdvisoryCVE(user, advisory, cve);
+    public CVE createCVE(Subject subject, String cvename) throws AdvisoryException {
+        return advisoryManager.createCVE(subject, cvename);
     }
 
-    public AdvisoryPackage createAdvisoryPackage(@WebParam(name = "subject") Subject user,
-        @WebParam(name = "advisory") Advisory advisory, @WebParam(name = "pkg") PackageVersion pkg)
+    public AdvisoryCVE createAdvisoryCVE(Subject subject, Advisory advisory, CVE cve) throws AdvisoryException {
+        return advisoryManager.createAdvisoryCVE(subject, advisory, cve);
+    }
+
+    public AdvisoryPackage createAdvisoryPackage(Subject subject, Advisory advisory, PackageVersion pkg)
         throws AdvisoryException {
-        return advisoryManager.createAdvisoryPackage(user, advisory, pkg);
+        return advisoryManager.createAdvisoryPackage(subject, advisory, pkg);
     }
 
-    public CVE getCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cveId") int cveId) {
-        return advisoryManager.getCVE(user, cveId);
+    public CVE getCVE(Subject subject, int cveId) {
+        return advisoryManager.getCVE(subject, cveId);
     }
 
-    public void deleteCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cveId") int cveId) {
-        advisoryManager.deleteCVE(user, cveId);
+    public void deleteCVE(Subject subject, int cveId) {
+        advisoryManager.deleteCVE(subject, cveId);
     }
 
-    public void deleteAdvisoryCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "advId") int advId) {
-        advisoryManager.deleteAdvisoryCVE(user, advId);
+    public void deleteAdvisoryCVE(Subject subject, int advId) {
+        advisoryManager.deleteAdvisoryCVE(subject, advId);
     }
 
-    public void deleteAdvisoryByAdvId(@WebParam(name = "subject") Subject subject, @WebParam(name = "advId") int advId) {
+    public void deleteAdvisoryByAdvId(Subject subject, int advId) {
         advisoryManager.deleteAdvisoryByAdvId(subject, advId);
     }
 
-    public Advisory getAdvisoryByName(@WebParam(name = "advlabel") String advlabel) {
+    public Advisory getAdvisoryByName(String advlabel) {
         return advisoryManager.getAdvisoryByName(advlabel);
     }
 
-    public List<AdvisoryPackage> findPackageByAdvisory(@WebParam(name = "subject") Subject subject,
-        @WebParam(name = "advId") int advId, @WebParam(name = "pc") PageControl pc) {
+    public List<AdvisoryPackage> findPackageByAdvisory(Subject subject, int advId, PageControl pc) {
         return advisoryManager.findPackageByAdvisory(subject, advId, pc);
     }
 
-    public PackageVersion findPackageVersionByPkgId(@WebParam(name = "subject") Subject subject,
-        @WebParam(name = "rpmName") String rpmName, @WebParam(name = "pc") PageControl pc) {
+    public PackageVersion findPackageVersionByPkgId(Subject subject, String rpmName, PageControl pc) {
         return advisoryManager.findPackageVersionByPkgId(subject, rpmName, pc);
     }
 
-    public PageList<AdvisoryCVE> getAdvisoryCVEByAdvId(@WebParam(name = "subject") Subject subject,
-        @WebParam(name = "advId") int advId, @WebParam(name = "pc") PageControl pc) {
+    public PageList<AdvisoryCVE> getAdvisoryCVEByAdvId(Subject subject, int advId, PageControl pc) {
         return advisoryManager.getAdvisoryCVEByAdvId(subject, advId, pc);
     }
 
-    public List<AdvisoryBuglist> getAdvisoryBuglistByAdvId(@WebParam(name = "subject") Subject subject,
-        @WebParam(name = "advId") int advId) {
+    public List<AdvisoryBuglist> getAdvisoryBuglistByAdvId(Subject subject, int advId) {
         return advisoryManager.getAdvisoryBuglistByAdvId(subject, advId);
     }
 
-    public void deleteAdvisoryBugList(@WebParam(name = "subject") Subject overlord, @WebParam(name = "advId") int id) {
+    public void deleteAdvisoryBugList(Subject overlord, int id) {
         advisoryManager.deleteAdvisoryBugList(overlord, id);
     }
 
-    public void deleteAdvisoryPackage(@WebParam(name = "subject") Subject user, @WebParam(name = "advId") int advId) {
-        advisoryManager.deleteAdvisoryPackage(user, advId);
+    public void deleteAdvisoryPackage(Subject subject, int advId) {
+        advisoryManager.deleteAdvisoryPackage(subject, advId);
     }
 
-    public AdvisoryPackage findAdvisoryPackage(@WebParam(name = "subject") Subject overlord,
-        @WebParam(name = "advId") int advId, @WebParam(name = "pkgVerId") int pkgVerId) {
+    public AdvisoryPackage findAdvisoryPackage(Subject overlord, int advId, int pkgVerId) {
         return advisoryManager.findAdvisoryPackage(overlord, advId, pkgVerId);
     }
 
-    public AdvisoryBuglist getAdvisoryBuglist(@WebParam(name = "subject") Subject subject,
-        @WebParam(name = "advId") int advId, @WebParam(name = "buginfo") String buginfo) {
+    public AdvisoryBuglist getAdvisoryBuglist(Subject subject, int advId, String buginfo) {
         return advisoryManager.getAdvisoryBuglist(subject, advId, buginfo);
     }
 
@@ -646,8 +635,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return contentManager.getBackingPackageForResource(subject, resourceId);
     }
 
-    public byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId) {
-        return contentManager.getPackageBytes(user, resourceId, installedPackageId);
+    public byte[] getPackageBytes(Subject subject, int resourceId, int installedPackageId) {
+        return contentManager.getPackageBytes(subject, resourceId, installedPackageId);
     }
 
     //CONTENTMANAGER: END ----------------------------------
@@ -676,44 +665,45 @@ public class WebservicesManagerBean implements WebservicesRemote {
         discoveryBoss.unignoreResources(subject, resourceIds);
     }
 
+    public Resource manuallyAddResource(Subject subject, int resourceTypeId, int parentResourceId,
+        Configuration pluginConfiguration) throws Exception {
+        return discoveryBoss.manuallyAddResource(subject, resourceTypeId, parentResourceId, pluginConfiguration);
+    }
+
     //DISCOVERYBOSS: END ------------------------------------
 
     //DISTRIBUTION: START ------------------------------------
 
-    public DistributionType getDistributionTypeByName(@WebParam(name = "name") String name) {
+    public DistributionType getDistributionTypeByName(String name) {
         return distributionManager.getDistributionTypeByName(name);
     }
 
-    public void deleteDistributionFilesByDistId(@WebParam(name = "subject") Subject subject,
-        @WebParam(name = "distid") int distid) {
+    public void deleteDistributionFilesByDistId(Subject subject, int distid) {
         distributionManager.deleteDistributionByDistId(subject, distid);
     }
 
-    public List<DistributionFile> getDistributionFilesByDistId(@WebParam(name = "distid") int distid) {
+    public List<DistributionFile> getDistributionFilesByDistId(int distid) {
         return distributionManager.getDistributionFilesByDistId(distid);
     }
 
-    public Distribution getDistributionByPath(@WebParam(name = "basepath") String basepath) {
+    public Distribution getDistributionByPath(String basepath) {
         return distributionManager.getDistributionByPath(basepath);
     }
 
-    public Distribution getDistributionByLabel(@WebParam(name = "kslabel") String kslabel) {
+    public Distribution getDistributionByLabel(String kslabel) {
         return distributionManager.getDistributionByLabel(kslabel);
     }
 
-    public void deleteDistributionByDistId(@WebParam(name = "subject") Subject subject,
-        @WebParam(name = "distId") int distId) throws Exception {
+    public void deleteDistributionByDistId(Subject subject, int distId) throws Exception {
         distributionManager.deleteDistributionByDistId(subject, distId);
     }
 
-    public void deleteDistributionTypeByName(@WebParam(name = "subject") Subject subject,
-        @WebParam(name = "name") String name) {
+    public void deleteDistributionTypeByName(Subject subject, String name) {
         distributionManager.deleteDistributionTypeByName(subject, name);
     }
 
-    public Distribution createDistribution(@WebParam(name = "subject") Subject subject,
-        @WebParam(name = "kslabel") String kslabel, @WebParam(name = "basepath") String basepath,
-        @WebParam(name = "disttype") DistributionType disttype) throws DistributionException {
+    public Distribution createDistribution(Subject subject, String kslabel, String basepath, DistributionType disttype)
+        throws DistributionException {
         return distributionManager.createDistribution(subject, kslabel, basepath, disttype);
     }
 
@@ -929,9 +919,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
         registrationManager.importPlatform(subject, resource);
     }
 
-    public void subscribePlatformToBaseRepo(Subject user, Resource platform, String release, String version, String arch)
-        throws RegistrationException {
-        registrationManager.subscribePlatformToBaseRepo(user, platform, release, version, arch);
+    public void subscribePlatformToBaseRepo(Subject subject, Resource platform, String release, String version,
+        String arch) throws RegistrationException {
+        registrationManager.subscribePlatformToBaseRepo(subject, platform, release, version, arch);
     }
 
     public void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,

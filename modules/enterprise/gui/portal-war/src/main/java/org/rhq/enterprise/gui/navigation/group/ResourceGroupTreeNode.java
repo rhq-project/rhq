@@ -18,7 +18,8 @@
  */
 package org.rhq.enterprise.gui.navigation.group;
 
-import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
+import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.sort.HumaneStringComparator;
 import org.rhq.enterprise.server.resource.cluster.ClusterKey;
@@ -86,12 +87,24 @@ public class ResourceGroupTreeNode implements Comparable<ResourceGroupTreeNode> 
         return level;
     }
 
+    public String getNodeType() {
+        if (level instanceof ResourceGroup) {
+            return "ResourceGroup";
+        } else if (level instanceof AutoGroupCompositeFlyweight) {
+            return "AutoGroupComposite";
+        } else if (level instanceof ResourceFlyweight) {
+            return "Resource";
+        } else {
+            return level.getClass().getSimpleName();
+        }
+    }
+    
     public String toString() {
         if (level instanceof ResourceGroup) {
             ResourceGroup group = (ResourceGroup) level;
             return group.getName();
-        } else if (level instanceof AutoGroupComposite) {
-            AutoGroupComposite ag = (AutoGroupComposite) level;
+        } else if (level instanceof AutoGroupCompositeFlyweight) {
+            AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) level;
             if (ag.getResourceType() != null) {
                 return ag.getResourceType().getName();
             } else if (ag.getSubcategory() != null) {

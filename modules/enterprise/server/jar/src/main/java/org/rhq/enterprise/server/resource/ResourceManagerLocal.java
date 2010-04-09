@@ -45,6 +45,7 @@ import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
+import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -408,9 +409,9 @@ public interface ResourceManagerLocal {
      * @param pageControl the filter for the resources
      * @return the list of all resources on a platform
      */
-    List<Resource> findResourcesByAgent(Subject user, int agentId, PageControl pageControl);
+    List<ResourceFlyweight> findResourcesByAgent(Subject user, int agentId, PageControl pageControl);
 
-    List<Resource> findResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl);
+    List<ResourceFlyweight> findResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl);
 
     ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
 

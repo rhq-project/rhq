@@ -44,7 +44,7 @@
                            nodeSelectListener="#{ResourceTreeStateAdvisor.nodeSelectListener}"
                            ajaxSubmitSelection="true"
                            showConnectingLines="false"
-                           nodeFace="#{treeNode.data.class.simpleName}">
+                           nodeFace="#{treeNode.nodeType}">
                     <rich:recursiveTreeNodesAdaptor roots="#{ResourceTreeModelUIBean.roots}"
                                                     var="resourceTreeItem"
                                                     nodes="#{resourceTreeItem.children}" />
@@ -95,8 +95,6 @@
                                 <f:param value="#{resourceTreeItem.data.name}" name="name"/>
                                 <f:param value="#{resourceTreeItem.data.id}" name="id"/>
                                 <f:param value="#{resourceTreeItem.data.resourceType.name}" name="type"/>
-                                <f:param value="'#{resourceTreeItem.data.resourceType.operationDefinitions}'"
-                                         name="ops"/>
                             </rich:componentControl>
                         </a4j:support>
                         <h:outputText value="#{resourceTreeItem}"

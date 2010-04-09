@@ -16,12 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.bundle.ant;
+package org.rhq.bundle.ant.task;
 
-import org.apache.tools.ant.Task;
+import org.apache.tools.ant.BuildException;
 
-public abstract class AbstractBundleTask extends Task {
-    public BundleAntProject getBundleAntProject() {
-        return (BundleAntProject) getProject();
+
+public class BundleTask extends AbstractBundleTask {
+    @Override
+    public void execute() throws BuildException {
+        // TODO this is a stub for a custom bundle task, in case we need one
+        return;
     }
 }

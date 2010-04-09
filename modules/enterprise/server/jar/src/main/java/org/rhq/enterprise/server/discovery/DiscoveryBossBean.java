@@ -44,10 +44,10 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
@@ -164,14 +164,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return syncInfo;
     }
 
-
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, PageControl pc) {
         return getQueuedPlatformsAndServers(user, EnumSet.of(InventoryStatus.NEW), pc);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, EnumSet<InventoryStatus> statuses, PageControl pc) {
+    public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, EnumSet<InventoryStatus> statuses,
+        PageControl pc) {
         // pc.initDefaultOrderingField("res.ctime", PageOrdering.DESC); // this is set in getQueuedPlatforms,
 
         // maps a platform to a list of child servers
@@ -187,7 +187,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
         return queuedResources;
     }
-
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
@@ -299,6 +298,25 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
             resourceAvailabilityManager.insertNeededAvailabilityForImportedResources(allResourceIds);
         }
+    }
+
+    public Resource manuallyAddResource(Subject subject, int resourceTypeId, int parentResourceId,
+        Configuration pluginConfiguration) throws Exception {
+
+        Resource result = null;
+
+        try {
+            ResourceType resourceType = this.resourceTypeManager.getResourceTypeById(subject, resourceTypeId);
+            // the subsequent call to manuallyAddResource requires a detached ResourceType param so clear 
+            entityManager.clear();
+            MergeResourceResponse response = manuallyAddResource(subject, resourceType, parentResourceId,
+                pluginConfiguration);
+            result = this.resourceManager.getResourceById(subject, response.getResourceId());
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+
+        return result;
     }
 
     @NotNull

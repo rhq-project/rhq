@@ -46,7 +46,10 @@ public class JavaUtilLoggingResourceComponent extends MBeanResourceComponent {
         if (getResourceContext().getPluginContainerDeployment() == PluginContainerDeployment.AGENT) {
             PropertySimple configManagementEnabled = getResourceContext().getPluginConfiguration().getSimple("configManagementEnabled");
             if (configManagementEnabled == null || !configManagementEnabled.getBooleanValue()) {
-                throw new RuntimeException("Configuration management is currently disabled for this resource. It can be enabled in the connection properties tab.");
+                throw new RuntimeException("Configuration management is currently disabled for the "
+                        + getResourceContext().getResourceType() + " Resource with key ["
+                        + getResourceContext().getResourceKey()
+                        + "] - it can be enabled in the Resource's Inventory > Connection tab.");
             }
         }
 

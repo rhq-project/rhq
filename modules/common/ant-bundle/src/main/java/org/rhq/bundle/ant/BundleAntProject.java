@@ -29,6 +29,19 @@ import org.apache.tools.ant.Project;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 
+/**
+ * This is the Ant project object that is used when processing bundle Ant scripts
+ * (aka "Bundle Recipes").
+ * 
+ * It extends the normal Ant project object by providing additional methods that help
+ * collect additional information about the Ant script.
+ * 
+ * This project object is to be used by either the bundle {@link AntLauncher} or custom
+ * bundle Ant tasks. The launcher or tasks can inform this project object of things that
+ * are happening as the Ant script is being parsed and/or executed.
+ * 
+ * @author John Mazzitelli
+ */
 public class BundleAntProject extends Project {
     private final Map<String, String> bundleFiles = new HashMap<String, String>();
     private ConfigurationDefinition configDef;

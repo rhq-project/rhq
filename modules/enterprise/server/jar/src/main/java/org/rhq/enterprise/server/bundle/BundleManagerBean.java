@@ -487,7 +487,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // add the deployment request history (in a new trans)
         BundleDeploymentHistory history = new BundleDeploymentHistory(subject.getName(),
-            BundleDeploymentAction.DEPLOYMENT_REQUESTED, "Requested deployment time: "
+            BundleDeploymentAction.DEPLOYMENT_REQUESTED, BundleDeploymentStatus.SUCCESS, "Requested deployment time: "
                 + request.getRequestedDeployTimeAsString());
         bundleManager.addBundleDeploymentHistory(subject, deployment.getId(), history);
 
@@ -497,10 +497,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // we don't want to commit the scrubbed entities so clear the changes
         this.entityManager.clear();
 
-        // Add any more history as needed
+        // Handle Schedule Failures. This may include deployment failures for immediate deployment request
         if (!response.isSuccess()) {
-            history = new BundleDeploymentHistory(subject.getName(), BundleDeploymentAction.DEPLOYMENT_END, "Failure: "
-                + response.getErrorMessage());
+            history = new BundleDeploymentHistory(subject.getName(), BundleDeploymentAction.DEPLOYMENT,
+                BundleDeploymentStatus.FAILURE, response.getErrorMessage());
             bundleManager.setBundleDeploymentStatus(subject, deployment.getId(), BundleDeploymentStatus.FAILURE);
             bundleManager.addBundleDeploymentHistory(subject, deployment.getId(), history);
         }

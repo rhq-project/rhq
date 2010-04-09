@@ -28,8 +28,10 @@
 &nbsp;<br>
 <tiles:insert definition=".events.alert.view.notifications"/>
 
+<%-- 
 &nbsp;<br>
 <tiles:insert definition=".events.alert.view.controlaction"/>
+--%>
 
 <tiles:insert definition=".form.buttons.deleteCancel"/>
 

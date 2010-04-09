@@ -118,8 +118,11 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             }
             int bundleHandlerResourceId = resources.iterator().next().getId();
 
-            auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT_SCHEDULED, "Scheduled deployment time: "
-                + request.getRequestedDeployTimeAsString() + " (immediate)");
+            auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT_SCHEDULED, BundleDeploymentStatus.SUCCESS,
+                "Scheduled deployment time: " + request.getRequestedDeployTimeAsString() + " (immediate)");
+
+            // TODO: The logic below this point should be executed asynchronously in response to an actual
+            //       scheduling mechanism.  For now all deployments are "immediate" so just do it here.
 
             // pull down the bundle files that the plugin will need in order to process the bundle
             ResourceContainer resourceContainer = im.getResourceContainer(bundleHandlerResourceId);
@@ -136,24 +139,35 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             BundleFacet bundlePluginComponent = getBundleFacet(bundleHandlerResourceId, facetMethodTimeout);
 
             // deploy the bundle utilizing the bundle facet object
-            auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT_START, null);
+            String deploymentMessage = "Deployment [" + bundleDeployDef + "] to [" + deployment.getResource() + "]";
+            auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT, BundleDeploymentStatus.INPROGRESS,
+                deploymentMessage);
 
             BundleDeployRequest deployRequest = new BundleDeployRequest();
             deployRequest.setBundleManagerProvider(this);
-            deployRequest.setBundleDeployDefinition(bundleDeployDef);
+            deployRequest.setBundleDeployment(deployment);
             deployRequest.setBundleFilesLocation(bundleFilesDir);
             deployRequest.setPackageVersionFiles(downloadedFiles);
             BundleDeployResult result = bundlePluginComponent.deployBundle(deployRequest);
             if (!result.isSuccess()) {
                 response.setErrorMessage(result.getErrorMessage());
             }
-            completeDeployment(deployment, BundleDeploymentStatus.SUCCESS, "Success");
+            completeDeployment(deployment, BundleDeploymentStatus.SUCCESS, deploymentMessage);
         } catch (Throwable t) {
             log.error("Failed to schedule bundle request: " + request, t);
             response.setErrorMessage(t);
         }
 
         return response;
+    }
+
+    public void auditDeployment(BundleDeployment deployment, BundleDeploymentAction action,
+        BundleDeploymentStatus status, String message) {
+        if (null == status) {
+            status = BundleDeploymentStatus.NOCHANGE;
+        }
+        BundleDeploymentHistory history = new BundleDeploymentHistory("Bundle Plugin", action, status, message);
+        getBundleServerService().addDeploymentHistory(deployment.getId(), history);
     }
 
     /**
@@ -171,7 +185,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         BundleVersion bundleVersion = bundleDeployDef.getBundleVersion();
 
         // download all the bundle files to the bundle plugin's tmp directory
-        auditDeployment(deployment, BundleDeploymentAction.FILE_DOWNLOAD_START, null);
+        auditDeployment(deployment, BundleDeploymentAction.FILE_DOWNLOAD, BundleDeploymentStatus.INPROGRESS, null);
 
         Map<PackageVersion, File> packageVersionFiles = new HashMap<PackageVersion, File>();
         List<PackageVersion> packageVersions = getAllBundleVersionPackageVersions(bundleVersion);
@@ -185,6 +199,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                 packageFile.getParentFile().mkdirs();
                 FileOutputStream fos = new FileOutputStream(packageFile);
                 try {
+                    auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT_STEP,
+                        BundleDeploymentStatus.NOCHANGE, "Downloading [" + packageVersion + "]");
                     long size = getFileContent(packageVersion, fos);
                     if (packageVersion.getFileSize() != null && size != packageVersion.getFileSize().longValue()) {
                         log.warn("Downloaded bundle file [" + packageVersion + "] but its size was [" + size
@@ -201,19 +217,14 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             packageVersionFiles.put(packageVersion, packageFile);
         }
 
-        auditDeployment(deployment, BundleDeploymentAction.FILE_DOWNLOAD_END, null);
+        auditDeployment(deployment, BundleDeploymentAction.FILE_DOWNLOAD, BundleDeploymentStatus.SUCCESS, null);
 
         return packageVersionFiles;
     }
 
     private void completeDeployment(BundleDeployment deployment, BundleDeploymentStatus status, String message) {
         getBundleServerService().setBundleDeploymentStatus(deployment.getId(), status);
-        auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT_END, message);
-    }
-
-    private void auditDeployment(BundleDeployment deployment, BundleDeploymentAction action, String message) {
-        BundleDeploymentHistory history = new BundleDeploymentHistory("Bundle Plugin", action, message);
-        getBundleServerService().addDeploymentHistory(deployment.getId(), history);
+        auditDeployment(deployment, BundleDeploymentAction.DEPLOYMENT, status, message);
     }
 
     /**

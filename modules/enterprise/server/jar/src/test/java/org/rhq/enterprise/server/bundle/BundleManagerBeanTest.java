@@ -38,7 +38,9 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
@@ -52,6 +54,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
@@ -70,8 +73,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
-@SuppressWarnings( { "unchecked", "unused" })
+@SuppressWarnings( { "unused" })
 @Test
 public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
@@ -130,7 +134,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             em = getEntityManager();
 
             Query q;
-            List doomed;
+            List<?> doomed;
 
             // clean up any tests that don't already clean up after themselves
 
@@ -603,6 +607,36 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bd);
         assertEquals(bdd1.getId(), bd.getBundleDeployDefinition().getId());
         assertEquals(platformResource.getId(), bd.getResource().getId());
+        assertEquals(BundleDeploymentStatus.INPROGRESS, bd.getStatus());
+        BundleDeploymentCriteria c = new BundleDeploymentCriteria();
+        c.addFilterId(bd.getId());
+        c.fetchHistories(true);
+        List<BundleDeployment> bds = bundleManager.findBundleDeploymentsByCriteria(overlord, c);
+        assertEquals(1, bds.size());
+        assertEquals(bd.getId(), bds.get(0).getId());
+        bd = bds.get(0);
+        assertNotNull(bd.getBundleDeploymentHistories());
+        int size = bd.getBundleDeploymentHistories().size();
+        assertTrue(size > 0);
+        String auditMessage = "BundleTest-Message";
+        bundleManager.addBundleDeploymentHistory(overlord, bd.getId(), new BundleDeploymentHistory(overlord.getName(),
+            BundleDeploymentAction.DEPLOYMENT_STEP, BundleDeploymentStatus.NOCHANGE, auditMessage));
+        bds = bundleManager.findBundleDeploymentsByCriteria(overlord, c);
+        assertEquals(1, bds.size());
+        assertEquals(bd.getId(), bds.get(0).getId());
+        bd = bds.get(0);
+        assertNotNull(bd.getBundleDeploymentHistories());
+        assertTrue((size + 1) == bd.getBundleDeploymentHistories().size());
+        BundleDeploymentHistory newHistory = null;
+        for (BundleDeploymentHistory h : bd.getBundleDeploymentHistories()) {
+            if (auditMessage.equals(h.getAuditMessage())) {
+                newHistory = h;
+                break;
+            }
+        }
+        assertNotNull(newHistory);
+        assertEquals(BundleDeploymentAction.DEPLOYMENT_STEP, newHistory.getAuditAction());
+        assertEquals(BundleDeploymentStatus.NOCHANGE, newHistory.getAuditStatus());
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -741,14 +775,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(null);
     }
 
-    private BundleDeployment createDeployment() {
-        Resource resource = new Resource();
-
-        BundleDeployDefinition def = new BundleDeployDefinition();
-
-        return new BundleDeployment(def, resource);
-    }
-
     private BundleType createBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-type-" + name;
         ResourceType rt = createResourceType(name);
@@ -846,34 +872,4 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
         return resource;
     }
-
-    // lifted from ResourceManagerBeanTest
-    private void deleteTestResource(Resource resource) throws Exception {
-        if (resource != null) {
-            getTransactionManager().begin();
-            EntityManager em = getEntityManager();
-            try {
-                ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
-                Resource res = em.find(Resource.class, resource.getId());
-
-                List<Integer> deletedIds = resourceManager.deleteResource(overlord, res.getId());
-                for (Integer deletedResourceId : deletedIds) {
-                    resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
-                }
-                em.remove(type);
-
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                try {
-                    System.out.println("CANNOT CLEAN UP TEST: Cause: " + e);
-                    getTransactionManager().rollback();
-                } catch (Exception ignore) {
-                    //
-                }
-            } finally {
-                em.close();
-            }
-        }
-    }
-
 }

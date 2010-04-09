@@ -23,17 +23,17 @@
 package org.rhq.core.domain.bundle;
 
 /**
- * Bundle Deployment Actions that can be audited.
+ * Bundle Deployment Actions that can be audited.  The same action can be used multiple times in a single
+ * deployment audit although the status may change   Typically with different status' to  along with the expected status messages of each.
  * 
  * @author Jay Shaughnessy
  */
 public enum BundleDeploymentAction {
 
-    DEPLOYMENT_REQUESTED, //
-    DEPLOYMENT_SCHEDULED, //
-    FILE_DOWNLOAD_START, //
-    FILE_DOWNLOAD_END, //    
-    DEPLOYMENT_START, //
-    DEPLOYMENT_END, //
+    DEPLOYMENT, // The actual deployment of the bundle: IN_PROGRESS | FAILURE | SUCCESS 
+    DEPLOYMENT_REQUESTED, // request processed: FAILURE | SUCCESS  
+    DEPLOYMENT_SCHEDULED, // request schedules: FAILURE | SUCCESS
+    DEPLOYMENT_STEP, // A supplemental message at any point in the process: NO_CHANGE    
+    FILE_DOWNLOAD, // The file download preceding actualy deployment: IN_PROGRESS | FAILURE | SUCCESS 
     POLICY_CHECK_FAIL
 }

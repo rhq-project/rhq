@@ -13,7 +13,7 @@
 
    <contentSourceType name="JBossASPatchSource"
                       displayName="JBoss Patch Content Source"
-                      description="This content source retrieves patches from the JBoss CSP RSS feed."
+                      description="a content source that retrieves package metadata from an RSS feed; the feed must be in the format used by the JBoss CSP"
                       lazyLoad="true"
                       apiClass="org.rhq.enterprise.server.plugins.jboss.software.JBossSoftwareContentSourceAdapter">
 

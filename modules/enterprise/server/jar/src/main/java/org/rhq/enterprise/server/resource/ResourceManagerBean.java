@@ -275,10 +275,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // since we delete the resource asychronously now, we need to make sure we remove things that would cause
         // system side effects after markForDeletion completed but before the resource was actually removed from the DB
         Subject overlord = subjectManager.getOverlord();
-        cleanupScheduledOperationsForResource(overlord, resourceId);
 
         // delete the resource and all its children
-        log.info("User [" + user + "] is marking resource [" + resource + "] for asychronous deletion");
+        log.info("User [" + user + "] is marking resource [" + resource + "] for asynchronous deletion");
 
         // set agent references null
         // foobar the resourceKeys
@@ -437,45 +436,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             return true; // had errors
         }
         return false;
-    }
-
-    /**
-     * @param overlord
-     * @param resourceId
-     * @return The number of scheduled operations for the resourceId
-     */
-    private int cleanupScheduledOperationsForResource(Subject overlord, int resourceId) {
-
-        int result = 0;
-
-        try {
-            List<ResourceOperationSchedule> schedules = operationManager.findScheduledResourceOperations(overlord,
-                resourceId);
-
-            result = schedules.size();
-
-            for (ResourceOperationSchedule schedule : schedules) {
-                try {
-                    /*
-                     * unscheduleResourceOperation already takes care of ignoring requests to delete unknown schedules,
-                     * which would happen if the following sequence occurs:
-                     *
-                     * - a user tries to delete a resource, gets the list of resource operation schedules - just then, one
-                     * or more of the schedules completes it's last scheduled firing, and is removed - then we try to
-                     * unschedule it here, except that the jobid will no longer be known
-                     */
-                    operationManager.unscheduleResourceOperation(overlord, schedule.getJobId().toString(), resourceId);
-                } catch (UnscheduleException ise) {
-                    log.warn("Failed to unschedule job [" + schedule + "] for a resource being deleted [" + resourceId
-                        + "]", ise);
-                }
-            }
-        } catch (Throwable t) {
-            log.warn("Failed to get jobs for a resource being deleted [" + resourceId
-                + "]; will not attempt to unschedule anything", t);
-        }
-
-        return result;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

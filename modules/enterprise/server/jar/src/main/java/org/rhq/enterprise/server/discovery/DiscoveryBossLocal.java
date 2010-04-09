@@ -45,7 +45,7 @@ import org.rhq.core.domain.util.PageList;
  * The boss interface to the discovery subsystem.
  */
 @Local
-public interface DiscoveryBossLocal {
+public interface DiscoveryBossLocal extends DiscoveryBossRemote {
     /**
      * When agents send up results from their discovery components (which notifies the server about newly discovered
      * resources), this method will eventually be called in order to process those inventory reports.
@@ -71,7 +71,6 @@ public interface DiscoveryBossLocal {
      */
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, PageControl pc);
 
-
     /**
      * Like the above method, but can find ignored, commited or both
      * @param user
@@ -79,7 +78,8 @@ public interface DiscoveryBossLocal {
      * @param pc
      * @return
      */
-    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, EnumSet<InventoryStatus> statuses, PageControl pc);
+    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, EnumSet<InventoryStatus> statuses,
+        PageControl pc);
 
     /**
      * This returns all platform resources that either have the given status themselves or one or more of their child
@@ -176,17 +176,4 @@ public interface DiscoveryBossLocal {
      *         <code>false</code> if the Resource was not in inventory
      */
     boolean updateResourceVersion(int resourceId, String version);
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    void importResources(Subject subject, Integer[] resourceIds);
-
-    void ignoreResources(Subject subject, Integer[] resourceIds);
-
-    void unignoreResources(Subject subject, Integer[] resourceIds);
-
 }

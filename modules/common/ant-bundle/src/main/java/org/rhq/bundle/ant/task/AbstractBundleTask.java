@@ -22,7 +22,25 @@ import org.apache.tools.ant.Task;
 
 import org.rhq.bundle.ant.BundleAntProject;
 
+/**
+ * This is the base class for all custom bundle tasks. It provides all bundle tasks
+ * access to the encompassing bundle ant project object so this task can report back to the 
+ * project object things that the task is doing.
+ *
+ * As new tasks are created by extending this task object, developers must make sure
+ * they add the new tasks to the bundle-ant-tasks.properties file.
+ *  
+ * @author John Mazzitelli
+ */
 public abstract class AbstractBundleTask extends Task {
+
+    /**
+     * Returns the specific {@link BundleAntProject} object that is invoking this task.
+     * This task can call methods on the returned project object to inform the project
+     * of things this task is doing.
+     * 
+     * @return the bundle Ant project object
+     */
     public BundleAntProject getBundleAntProject() {
         return (BundleAntProject) getProject();
     }

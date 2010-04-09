@@ -90,7 +90,7 @@ public class ResourceTreeModelUIBean {
 
         start = System.currentTimeMillis();
         monitorId = HibernatePerformanceMonitor.get().start();
-        rootNode = load(rootResource.getId(), resources, false);
+        rootNode = load(rootResource.getId(), resources, true);
         end = System.currentTimeMillis();
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree tree construction");
         log.debug("Constructed tree in " + (end - start));

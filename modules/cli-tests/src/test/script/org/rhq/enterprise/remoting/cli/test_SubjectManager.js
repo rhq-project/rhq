@@ -30,10 +30,9 @@
 executeTests(['testFindWithFiltering']);
 
 function login() {
-    var host = java.lang.System.getProperty('rhq.server.name');
     var port = 7080;
 
-    rhq.login('rhqadmin', 'rhqadmin', host, port);
+    rhq.login('rhqadmin', 'rhqadmin', rhqServerName, port);
 }
 
 

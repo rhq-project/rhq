@@ -24,9 +24,6 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Scope;
-
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
@@ -46,8 +43,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * Alert sender that triggers an operation on the resource
  * @author Heiko W. Rupp
+ * @author Joseph Marques
  */
-@Scope(value = ScopeType.PAGE)
 public class OperationsSender extends AlertSender {
 
     private final Log log = LogFactory.getLog(OperationsSender.class);
@@ -64,12 +61,13 @@ public class OperationsSender extends AlertSender {
 
         PropertySimple resProp = alertParameters.getSimple(RESOURCE_ID);
         PropertySimple opIdProp = alertParameters.getSimple(OPERATION_ID);
-        if (resProp==null || resProp.getIntegerValue() == null || opIdProp == null || opIdProp.getStringValue() == null)
+        if (resProp == null || resProp.getIntegerValue() == null || opIdProp == null
+            || opIdProp.getStringValue() == null)
             return new SenderResult(ResultState.FAILURE, "Not enough parameters given");
 
         PropertySimple usableProp = alertParameters.getSimple(USABLE);
-        if (usableProp==null || usableProp.getBooleanValue()== null || !usableProp.getBooleanValue())
-            return new SenderResult(ResultState.FAILURE,"Not yet configured");
+        if (usableProp == null || usableProp.getBooleanValue() == null || !usableProp.getBooleanValue())
+            return new SenderResult(ResultState.FAILURE, "Not yet configured");
 
         Integer resourceId = resProp.getIntegerValue();
         Integer opId = opIdProp.getIntegerValue();
@@ -79,9 +77,9 @@ public class OperationsSender extends AlertSender {
         OperationManagerLocal opMgr = LookupUtil.getOperationManager();
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO get real subject?
 
-        List<OperationDefinition> opdefs = opMgr.findSupportedResourceOperations(subject,resourceId,false);
+        List<OperationDefinition> opdefs = opMgr.findSupportedResourceOperations(subject, resourceId, false);
         OperationDefinition opDef = null;
-        for (OperationDefinition tmp : opdefs ) {
+        for (OperationDefinition tmp : opdefs) {
             if (tmp.getId() == opId) {
                 opName = tmp.getName();
                 opDef = tmp;
@@ -89,21 +87,19 @@ public class OperationsSender extends AlertSender {
             }
         }
 
-        if (opName==null) {
+        if (opName == null) {
             return new SenderResult(ResultState.FAILURE, "No operation found ");
         }
 
-
         PropertySimple parameterConfigProp = alertParameters.getSimple(PARAMETERS_CONFIG);
-        Configuration parameters = null ;
-        if (parameterConfigProp!=null) {
+        Configuration parameters = null;
+        if (parameterConfigProp != null) {
             Integer paramId = parameterConfigProp.getIntegerValue();
-            if (paramId!=null) {
+            if (paramId != null) {
                 ConfigurationManagerLocal cmgr = LookupUtil.getConfigurationManager();
-                parameters = cmgr.getConfiguration(subject,paramId);
+                parameters = cmgr.getConfiguration(subject, paramId);
             }
         }
-
 
         String tokenMode = alertParameters.getSimpleValue(TOKEN_MODE, LITERAL);
 
@@ -113,27 +109,26 @@ public class OperationsSender extends AlertSender {
          */
         Configuration theParameters = null;
         try {
-            if (parameters!=null && tokenMode.equals(INTERPRETED)) {
+            if (parameters != null && tokenMode.equals(INTERPRETED)) {
                 // We must not pass the original Config object, as this would mean
                 // our tokens get wiped out.
                 theParameters = parameters.deepCopy(false);
-                Map<String,PropertySimple> propsMap = theParameters.getSimpleProperties();
+                Map<String, PropertySimple> propsMap = theParameters.getSimpleProperties();
                 if (!propsMap.isEmpty()) {
                     ResourceManagerLocal resMgr = LookupUtil.getResourceManager();
-                    Resource targetResource = resMgr.getResource(subject,resourceId);
+                    Resource targetResource = resMgr.getResource(subject, resourceId);
                     AlertTokenReplacer tr = new AlertTokenReplacer(alert, opDef, targetResource);
-                    for (PropertySimple prop  : propsMap.values()) {
+                    for (PropertySimple prop : propsMap.values()) {
                         String tmp = prop.getStringValue();
                         tmp = tr.replaceTokens(tmp);
                         prop.setStringValue(tmp);
                     }
                 }
-            }
-            else {
+            } else {
                 theParameters = parameters;
             }
         } catch (Exception e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            e.printStackTrace(); // TODO: Customise this generated block
         }
 
         /*
@@ -142,16 +137,16 @@ public class OperationsSender extends AlertSender {
         ResourceOperationSchedule sched;
         try {
             sched = opMgr.scheduleResourceOperation(subject, resourceId, opName, 0, 0, 0, 0, theParameters,
-                    "Alert operation for " + alert.getAlertDefinition().getName());
+                "Alert operation for " + alert.getAlertDefinition().getName());
         } catch (ScheduleException e) {
-            return new SenderResult(ResultState.FAILURE, "Scheduling of operation " + opName + " on resource " + resourceId + " failed: " + e.getMessage());
+            return new SenderResult(ResultState.FAILURE, "Scheduling of operation " + opName + " on resource "
+                + resourceId + " failed: " + e.getMessage());
         }
 
         // If op sending was successful
-        return new SenderResult(ResultState.SUCCESS, "Scheduled operation " + opName + " on resource " + resourceId + " with jobId " + sched.getJobId() );
+        return new SenderResult(ResultState.SUCCESS, "Scheduled operation " + opName + " on resource " + resourceId
+            + " with jobId " + sched.getJobId());
 
     }
-
-
 
 }

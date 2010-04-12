@@ -25,12 +25,10 @@ import javax.faces.context.FacesContext;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
-import org.antlr.grammar.v3.ANTLRv3Parser.exceptionGroup_return;
 import org.richfaces.component.UITree;
 import org.richfaces.component.html.HtmlTree;
 import org.richfaces.component.state.TreeState;
 import org.richfaces.component.state.TreeStateAdvisor;
-import org.richfaces.event.NodeSelectedEvent;
 import org.richfaces.model.TreeRowKey;
 
 import org.rhq.core.domain.auth.Subject;

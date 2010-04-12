@@ -647,6 +647,18 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <configuration>
+            <!-- As of v2.4 of this plugin, the default delimiters are @*@ - 
+                 we want the old default of ${*} instead. -->
+            <useDefaultDelimiters>false</useDefaultDelimiters>
+            <delimiters>
+                <delimiter>${*}</delimiter>
+            </delimiters>
+        </configuration>
+      </plugin>
+
       <!-- Ensure all code compiles and runs on Java 5 or later. -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>

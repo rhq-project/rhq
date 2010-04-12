@@ -46,31 +46,65 @@ public class SubjectsSender extends AlertSender {
 
     @Override
     public SenderResult send(Alert alert) {
-
-        SenderResult noSubjects = new SenderResult(ResultState.FAILURE,"No subjects defined");
-
-        PropertySimple subjectIdProp = alertParameters.getSimple("subjectId");
-        if (subjectIdProp==null )
-            return noSubjects;
-
-        String subjectIdString = subjectIdProp.getStringValue();
-        if (subjectIdString==null)
-            return noSubjects;
-
-        String[] subjectIds = subjectIdString.split(",");
-
-        List<String> emails = new ArrayList<String>(subjectIds.length);
-        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
-        for (String subjectId : subjectIds ) {
-            Subject subject = subjectMgr.getSubjectById(Integer.parseInt(subjectId));
-            String emailAddress = subject.getEmailAddress();
-            if (emailAddress!=null)
-                emails.add(emailAddress);
-            else
-                if (log.isDebugEnabled())
-                    log.debug("Subject " + subject.getId() + " has no email associated ");
+        List<Integer> subjectIds = getSubjectIdsFromConfiguration();
+        if (subjectIds == null) {
+            return new SenderResult(ResultState.FAILURE, "No subjects defined");
         }
 
-        return new SenderResult(ResultState.DEFERRED_EMAIL,"Sending to subject ids " + subjectIdString , emails);
+        List<String> emails = getSubjectEmails(subjectIds);
+        List<String> names = getSubjectNames(subjectIds);
+        return new SenderResult(ResultState.DEFERRED_EMAIL, "Sending to subjects: " + names, emails);
+    }
+
+    public String previewConfiguration() {
+        List<Integer> subjectIds = getSubjectIdsFromConfiguration();
+        if (subjectIds == null) {
+            return "<empty>";
+        }
+
+        List<String> names = getSubjectNames(subjectIds);
+        String nameString = names.toString();
+        return nameString.substring(1, nameString.length() - 1);
+    }
+
+    private List<String> getSubjectNames(List<Integer> subjectIds) {
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        List<String> results = new ArrayList<String>();
+        for (Integer nextSubjectId : subjectIds) {
+            Subject nextSubject = subjectManager.getSubjectById(nextSubjectId);
+            results.add(nextSubject.getName());
+        }
+
+        return results;
+    }
+
+    private List<String> getSubjectEmails(List<Integer> subjectIds) {
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        List<String> results = new ArrayList<String>();
+        for (Integer nextSubjectId : subjectIds) {
+            Subject nextSubject = subjectManager.getSubjectById(nextSubjectId);
+            results.add(nextSubject.getEmailAddress());
+        }
+
+        return results;
+    }
+
+    private List<Integer> getSubjectIdsFromConfiguration() {
+        PropertySimple subjectIdProperty = alertParameters.getSimple("subjectId");
+        if (subjectIdProperty == null) {
+            return null;
+        }
+
+        String subjectIdString = subjectIdProperty.getStringValue();
+        if (subjectIdString == null || subjectIdString.trim().equals("")) {
+            return null;
+        }
+
+        String[] subjectIds = subjectIdString.split(",");
+        List<Integer> results = new ArrayList<Integer>(subjectIds.length);
+        for (String nextSubjectId : subjectIds) {
+            results.add(Integer.parseInt(nextSubjectId));
+        }
+        return results;
     }
 }

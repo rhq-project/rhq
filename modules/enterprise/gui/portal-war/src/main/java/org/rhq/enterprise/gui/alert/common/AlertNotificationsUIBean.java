@@ -49,8 +49,6 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 @Name("alertNotificationsUIBean")
 public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
-    private final static String SUCCESS_OUTCOME = "success";
-
     @RequestParameter("nid")
     private Integer notificationId;
     @In
@@ -185,7 +183,7 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
         this.activeNotification = newlyCreated;
         this.selectedNotifications.add(this.activeNotification);
 
-        return SUCCESS_OUTCOME;
+        return OUTCOME_SUCCESS;
     }
 
     public String saveConfiguration() {
@@ -193,7 +191,7 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
             this.alertNotificationManager.updateAlertNotification(this.activeNotification);
         }
 
-        return SUCCESS_OUTCOME;
+        return OUTCOME_SUCCESS;
     }
 
     public String removeSelected() {
@@ -201,8 +199,9 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
         this.alertNotificationStoreUIBean.removeNotifications(getSubject(), toArray(ids));
         this.alertNotifications.removeAll(this.selectedNotifications); // only remove if no errors
+        this.activeNotification = null;
 
-        return SUCCESS_OUTCOME;
+        return OUTCOME_SUCCESS;
     }
 
     public String saveOrder() {
@@ -214,7 +213,7 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
             this.alertNotificationManager.updateAlertNotification(notification);
         }
 
-        return SUCCESS_OUTCOME;
+        return OUTCOME_SUCCESS;
     }
 
     private List<Integer> getSelectedIds(Collection<AlertNotification> notifications) {

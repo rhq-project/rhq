@@ -514,6 +514,7 @@
       </activators>
    </menu-item>
 
+   <!--
    <menu-item
       name="administration.systemConfiguration.notifcationTemplates"
       displayName="Alert Notification Templates"
@@ -525,6 +526,7 @@
                name="MANAGE_SETTINGS"/>
        </activators>
    </menu-item>
+    -->
 
    <!--  Core Menu: administration.content -->
    <menu-item

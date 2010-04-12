@@ -9,43 +9,16 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <body>
-<h:panelGrid columns="3">
-
-    <h:panelGroup>
-        <h:outputText value="Select the roles to add:" />
-        <br/>
-        <h:selectManyListbox id="availableRolesList"
-                             value="#{rolesBean.currentRoles}"
-                             style="width : 100px"
-                             size="3">
-            <f:selectItems value="#{rolesBean.selectableRolesMap}"/>
-        </h:selectManyListbox>
-    </h:panelGroup>
-
-    <h:panelGroup>
-        <br />
-        <h:commandButton id="roles_submit_add"
-                         value="Add Roles"
-                         type="submit"
-                         action="#{rolesBean.addRoles}" />
-        <br />
-        <h:commandButton id="roles_submit_remove"
-                         value="Remove Roles"
-                         type="submit"
-                         action="#{rolesBean.removeRoles}" />
-    </h:panelGroup>
-
-    <h:panelGroup>
-        <h:outputText>Selected roles:</h:outputText>
-        <br/>
-        <h:selectManyListbox id="selectedRolesList"
-                             value="#{rolesBean.rolesToRemove}"
-                             style="width : 100px"
-                             size="3">
-            <f:selectItems value="#{rolesBean.currentRolesMap}"/>
-        </h:selectManyListbox>
-
-    </h:panelGroup>
-</h:panelGrid>
+    <h:form id="rolesForm">
+        <rich:pickList fastMoveControlsVisible="false"
+                       sourceListWidth="200px"
+                       targetListWidth="200px"
+                       copyControlLabel="Add Roles"
+                       removeControlLabel="Remove Roles"
+                       value="#{rolesBean.currentRoles}">
+            <f:selectItems value="#{rolesBean.availableRolesMap}" />
+        </rich:pickList>
+    </h:form>
 </body>
+
 </html>

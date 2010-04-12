@@ -21,9 +21,6 @@ package org.rhq.enterprise.server.plugins.alertSubject;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
@@ -39,10 +36,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * by the system.
  *
  * @author Heiko W. Rupp
+ * @author Joseph Marques
  */
 public class SubjectsSender extends AlertSender {
-
-    private final Log log = LogFactory.getLog(SubjectsSender.class);
 
     @Override
     public SenderResult send(Alert alert) {
@@ -56,6 +52,7 @@ public class SubjectsSender extends AlertSender {
         return new SenderResult(ResultState.DEFERRED_EMAIL, "Sending to subjects: " + names, emails);
     }
 
+    @Override
     public String previewConfiguration() {
         List<Integer> subjectIds = getSubjectIdsFromConfiguration();
         if (subjectIds == null) {
@@ -83,7 +80,10 @@ public class SubjectsSender extends AlertSender {
         List<String> results = new ArrayList<String>();
         for (Integer nextSubjectId : subjectIds) {
             Subject nextSubject = subjectManager.getSubjectById(nextSubjectId);
-            results.add(nextSubject.getEmailAddress());
+            String nextEmail = nextSubject.getEmailAddress();
+            if (nextEmail != null) {
+                results.add(nextEmail);
+            }
         }
 
         return results;

@@ -153,10 +153,11 @@
          <!--
             run the standard tests by default (if any) but exclude ws tests requiring a running server.
          -->
-         <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
+         <!--Commenting out as test suite(like cli tests) depend upon running server data. -->
+         <!--<plugin>
+            <artifactId>maven-surefire-plugin</artifactId>-->
             <!-- Everything but the web service tests, this is the standard test execution -->
-            <configuration>
+         <!--   <configuration>
                <excludes>
                   <exclude>com/**/*.java</exclude>
                </excludes>
@@ -168,7 +169,7 @@
                   </property>
                </systemProperties>
             </configuration>
-         </plugin>
+         </plugin>-->
 
       </plugins>
    </build>

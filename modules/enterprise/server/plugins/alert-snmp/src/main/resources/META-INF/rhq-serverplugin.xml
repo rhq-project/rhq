@@ -11,7 +11,7 @@
         >
 
     <serverplugin:help>
-        This alert sender plugin is used to send notifications via SNMP traps
+        Used to send notifications to SNMP trap receivers.
     </serverplugin:help>
 
 
@@ -65,7 +65,7 @@
     </serverplugin:plugin-configuration>
 
     <!-- How does this sender show up in drop downs etc -->
-    <short-name>SNMP</short-name>
+    <short-name>SNMP Traps</short-name>
 
     <!-- Class that does the actual sending -->
     <plugin-class>SnmpSender</plugin-class>

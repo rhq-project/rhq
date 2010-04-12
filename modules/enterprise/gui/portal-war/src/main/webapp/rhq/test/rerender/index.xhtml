@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Test Dynamic Form Renderering"/>
+   
+    <ui:define name="breadcrumbs"> 
+       <h:outputLink value="/rhq/test/rerender/index.xhtml">
+          <h:outputText value="Dynamic Form Rerendering" />
+       </h:outputLink>
+    </ui:define>
+
+    <ui:define name="body">
+        <h:form id="dynamicForm">
+            <input type="hidden" name="a" value="#{param.a}"/>
+            <input type="hidden" name="b" value="#{param.b}"/>
+            <input type="hidden" name="c" value="#{param.c}"/>
+    
+            <rich:panel id="mainPanel">
+                <f:facet name="header">
+                    <h:outputText value="Main Panel" />
+                </f:facet>
+            
+                <h:selectOneMenu id="dynamicChildrenList" value="#{TestDynamicRenderingUIBean.childPage}">
+                    <f:selectItem itemValue="/rhq/test/rerender/child-1.xhtml" itemLabel="Child 1" />
+                    <f:selectItem itemValue="/rhq/test/rerender/child-2.xhtml" itemLabel="Child 2" />
+                    <f:selectItem itemValue="/rhq/test/rerender/child-3.xhtml" itemLabel="Child 3" />
+                    <a4j:support event="onchange" 
+                                 onsubmit="getElementCrossBrowser('dynamicForm:refreshButton').click()" />
+                </h:selectOneMenu>
+                <h:commandButton id="refreshButton"
+                                 value="refresh" 
+                                 action="#{TestDynamicRenderingUIBean.refresh}"
+                                 style="display: none;" />
+            </rich:panel>
+        </h:form>
+        
+            <rich:panel id="childPanel">
+                <f:facet name="header">
+                    <h:outputText value="Child Panel" />
+                </f:facet>
+
+                <ui:include src="#{TestDynamicRenderingUIBean.childPage}" />
+
+                <ui:remove>
+                <a4j:include id="dynamicChild" viewId="#{TestDynamicRenderingUIBean.childPage}"
+                             rendered="#{not empty TestDynamicRenderingUIBean.childPage}" />
+                </ui:remove>
+            </rich:panel>
+        
+    </ui:define>
+
+</ui:composition>
+
+</html>

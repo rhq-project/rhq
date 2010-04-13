@@ -8,83 +8,71 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
       xmlns:onc="http://jboss.org/on/component" >
 
-<head>
-    <title>Operations sender</title>
-</head>
 <body>
-<h:panelGrid columns="1" style="width:100%" >
-    <h:panelGroup>
-        <rich:panel header="Resource Selection">
-            <h:form id="selectResourceForm">
-            <h:panelGrid columns="3" >
-                <h:outputText value="Select mode:" style="width: 200px;" />
-                <h:selectOneMenu id="resMode" value="#{operationsBean.resMode}">
-                    <f:selectItem itemValue="fixed" itemLabel="Resource ID"/>
-                    <f:selectItem itemValue="deferred" itemLabel="Path to resource"/>
-                </h:selectOneMenu>
-                <rich:spacer />
-            
-                <h:outputText value="Target resource:"/>
-                <h:inputText id="resourceId" title="Target Resource" value="#{operationsBean.resId}"/>
-                <a href="#"
-                   onclick="window.open('/rhq/inventory/resourcePicker.xhtml?formId=customContentForm:selectResourceForm&amp;fieldId=resourceId', 'Pick a resource','width=800;height=500;scrollbars=yes,toolbar=no,resizable=yes,left=100,top=100'); return false;"
-                   class="buttonmed">Pick</a>
-                   
-                <h:commandButton id="resourceIdSubmit"
-                                 value="Select"
-                                 type="submit"
-                                 action="#{operationsBean.selectResource}"
-                                 styleClass="buttonmed" />
-            </h:panelGrid>
-            </h:form>
-        </rich:panel>
-    </h:panelGroup>
-    <h:panelGroup >
-        <rich:panel rendered="#{not empty operationsBean.operationIds}" header="Operations under '#{operationsBean.resourceName}'">
+
+    <rich:panel header="Resource Selection">
+        <h:panelGrid columns="3" >
+            <h:outputText value="Select mode:" style="width: 200px;" />
+            <h:selectOneMenu id="resMode" value="#{operationsBean.resMode}">
+                <f:selectItem itemValue="fixed" itemLabel="Resource ID"/>
+                <f:selectItem itemValue="deferred" itemLabel="Path to resource"/>
+            </h:selectOneMenu>
+            <rich:spacer />
+        
+            <h:outputText value="Target resource:"/>
+            <h:inputText id="resourceId" title="Target Resource" value="#{operationsBean.resId}"/>
+            <a href="#"
+               onclick="window.open('/rhq/inventory/resourcePicker.xhtml?formId=customContentForm:selectResourceForm&amp;fieldId=resourceId', 'Pick a resource','width=800;height=500;scrollbars=yes,toolbar=no,resizable=yes,left=100,top=100'); return false;"
+               class="buttonmed">Pick</a>
+               
+            <h:commandButton id="resourceIdSubmit"
+                             value="Select"
+                             type="submit"
+                             action="#{operationsBean.selectResource}"
+                             styleClass="buttonmed" />
+        </h:panelGrid>
+    </rich:panel>
+
+    <rich:panel rendered="#{not empty operationsBean.operationIds}" header="Operations under '#{operationsBean.resourceName}'">
+        <h:panelGrid columns="3" >
             <h:outputText value="Select operation:" style="width: 200px;" />
             <h:selectOneMenu id="selectOperationMenu" value="#{operationsBean.operationId}">
                 <f:selectItems value="#{operationsBean.operationIds}"/>
             </h:selectOneMenu>
-            <p/>
+            <rich:spacer />
+        
             <h:commandButton id="opNameSubmit"
                              value="Select"
                              type="submit"
                              action="#{operationsBean.selectOperation}"
                              styleClass="buttonmed" />
-        </rich:panel>
-    </h:panelGroup>
-    <h:panelGroup>
-        <h:messages />
-        <rich:panel rendered="#{not empty operationsBean.operationId}" header="Operation details for '#{operationsBean.operationName}'">
-            <ui:remove>Always choose 'interpreted' mode
-            <h:selectOneMenu id="tokenModeMenu" value="#{operationsBean.tokenMode}">
-                <f:selectItem itemValue="literal" itemLabel="Literal"/>
-                <f:selectItem itemValue="interpreted" itemLabel="Interpreted"/>
-            </h:selectOneMenu>
-            </ui:remove>
-            <p/>
-            <onc:config configurationDefinition="#{operationsBean.configurationDefinition}"
-                        configuration="#{operationsBean.configuration}"
-                        nullConfigurationDefinitionMessage="#{operationsBean.nullConfigurationDefinitionMessage}"
-                        nullConfigurationMessage="#{nullConfigurationMessage}"
-                        nullConfigurationStyle="InfoBlock"
-                        readOnly="false" />
-            <p/>
-            <ui:remove>
-            <h:commandButton id="opParamSubmit"
-                             value="Set"
-                             type="submit"
-                             action="#{operationsBean.useConfiguration}"
-                             styleClass="buttonmed" />
-            </ui:remove>
-        </rich:panel>
-    </h:panelGroup>
-</h:panelGrid>
+        </h:panelGrid>
+    </rich:panel>
+
+    <h:messages />
+    <rich:panel rendered="#{not empty operationsBean.operationId}" header="Operation details for '#{operationsBean.operationName}'">
+        <onc:config configurationDefinition="#{operationsBean.configurationDefinition}"
+                    configuration="#{operationsBean.configuration}"
+                    nullConfigurationDefinitionMessage="#{operationsBean.nullConfigurationDefinitionMessage}"
+                    nullConfigurationMessage="#{nullConfigurationMessage}"
+                    nullConfigurationStyle="InfoBlock"
+                    readOnly="false" />
+        <p/>
+        <ui:remove>
+        <h:commandButton id="opParamSubmit"
+                         value="Set"
+                         type="submit"
+                         action="#{operationsBean.useConfiguration}"
+                         styleClass="buttonmed" />
+        </ui:remove>
+    </rich:panel>
 
 <rich:modalPanel id="ResourcePicker">
     <h:outputLink>Hello World</h:outputLink>
     <p/>
     <a onclick="Richfaces.hideModalPanel('ResourcePicker');" href="#">Hide</a>
 </rich:modalPanel>
+
+
 </body>
 </html>

@@ -77,7 +77,7 @@ public class AlertTokenReplacer {
             if (!matcher.find()) {
                 break;
             }
-            String replacement = replaceToken(matcher.group(1)                                                                                                                               );
+            String replacement = replaceToken(matcher.group(1));
             String s = matcher.replaceFirst(replacement);
             work = s;
 
@@ -85,8 +85,6 @@ public class AlertTokenReplacer {
 
         return work;
     }
-
-
 
     /**
      * Replace the token string passed (without the token delimiters ) with the actual value
@@ -102,7 +100,7 @@ public class AlertTokenReplacer {
 
         String tmp = tokenString.substring(0, tokenString.indexOf("."));
         TokenClass tc = TokenClass.getByText(tmp);
-        if (tc==null) {
+        if (tc == null) {
             log.warn("Unknown token class in [" + tokenString + "], not replacing tokens");
             return tokenString;
         }
@@ -114,36 +112,36 @@ public class AlertTokenReplacer {
         }
         String ret = null;
         switch (tc) {
-            case ALERT:
-                ret = replaceAlertToken(token,alert);
+        case ALERT:
+            ret = replaceAlertToken(token, alert);
+            break;
+        case RESOURCE:
+            ret = replaceResourceToken(token, alert.getAlertDefinition().getResource());
+            break;
+        case TARGET_RESOURCE:
+            // Create a "pseudo" token to feed it into the plain resource replacement code
+            String text = "resource." + token.getName();
+            Token tok = Token.getByText(text);
+            ret = replaceResourceToken(tok, targetResource);
+            break;
+        case OPERATION:
+            ret = replaceOperationToken(token);
+            break;
+        case TEST:
+            switch (token) {
+            case TEST_ECHO:
+                ret = tokenString;
                 break;
-            case RESOURCE:
-                ret = replaceResourceToken(token,alert.getAlertDefinition().getResource());
+            case TEST_FIX:
+                ret = THE_QUICK_BROWN_FOX_JUMPS_OVER_THE_LAZY_DOG;
                 break;
-            case TARGET_RESOURCE:
-                // Create a "pseudo" token to feed it into the plain resource replacement code
-                String text = "resource." + token.getName();
-                Token tok = Token.getByText(text);
-                ret = replaceResourceToken(tok, targetResource);
+            case TEST_CAMEL:
+                ret = "camel";
                 break;
-            case OPERATION:
-                ret = replaceOperationToken(token);
-                break;
-            case TEST:
-                switch (token) {
-                case TEST_ECHO:
-                    ret = tokenString;
-                    break;
-                case TEST_FIX:
-                    ret = THE_QUICK_BROWN_FOX_JUMPS_OVER_THE_LAZY_DOG;
-                    break;
-                case TEST_CAMEL:
-                    ret ="camel";
-                    break;
-                default:
-                    ret = NOT_YET_IMPLEMENTED;
-                }
-                break;
+            default:
+                ret = NOT_YET_IMPLEMENTED;
+            }
+            break;
         }
         return ret;
     }
@@ -153,28 +151,27 @@ public class AlertTokenReplacer {
         AlertManagerLocal mgr = LookupUtil.getAlertManager();
 
         switch (token) {
-            case ALERT_ID:
-                return String.valueOf(alert.getId());
-            case ALERT_FIRE_TIME:
-                return new Date(alert.getCtime()).toString(); // TODO use a specific impl here?
-            case ALERT_WILL_RECOVER:
-                return String.valueOf(alert.getAlertDefinition().getWillRecover());
-            case ALERT_WILL_DISABLE:
-                return String.valueOf(mgr.willDefinitionBeDisabled(alert));
-            case ALERT_DEF_NAME:
-                return alert.getAlertDefinition().getName();
-            case ALERT_DEF_DESC:
-                return alert.getAlertDefinition().getDescription();
-            case ALERT_DEF_PRIO:
-                return alert.getAlertDefinition().getPriority().getName();
-            case ALERT_URL:
-                return mgr.prettyPrintAlertURL(alert);
-            case ALERT_CONDITIONS:
-                return mgr.prettyPrintAlertConditions(alert,false);
+        case ALERT_ID:
+            return String.valueOf(alert.getId());
+        case ALERT_FIRE_TIME:
+            return new Date(alert.getCtime()).toString(); // TODO use a specific impl here?
+        case ALERT_WILL_RECOVER:
+            return String.valueOf(alert.getAlertDefinition().getWillRecover());
+        case ALERT_WILL_DISABLE:
+            return String.valueOf(mgr.willDefinitionBeDisabled(alert));
+        case ALERT_DEF_NAME:
+            return alert.getAlertDefinition().getName();
+        case ALERT_DEF_DESC:
+            return alert.getAlertDefinition().getDescription();
+        case ALERT_DEF_PRIO:
+            return alert.getAlertDefinition().getPriority().getName();
+        case ALERT_URL:
+            return mgr.prettyPrintAlertURL(alert);
+        case ALERT_CONDITIONS:
+            return mgr.prettyPrintAlertConditions(alert, false);
 
-
-            default:
-                return NOT_YET_IMPLEMENTED;
+        default:
+            return NOT_YET_IMPLEMENTED;
         }
 
     }
@@ -184,9 +181,9 @@ public class AlertTokenReplacer {
         ResourceManagerLocal mgr = LookupUtil.getResourceManager();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         Resource parent;
-        Resource platform = mgr.getPlaformOfResource(overlord,resource.getId());
-        if (platform==null)
-            platform=resource;
+        Resource platform = mgr.getPlaformOfResource(overlord, resource.getId());
+        if (platform == null)
+            platform = resource;
 
         switch (token) {
         case RESOURCE_ID:
@@ -195,13 +192,13 @@ public class AlertTokenReplacer {
             return resource.getName();
         case RESOURCE_PARENT_ID:
             parent = mgr.getParentResource(resource.getId());
-            if (parent==null)
+            if (parent == null)
                 return "0";
             else
                 return String.valueOf(parent.getId());
         case RESOURCE_PARENT_NAME:
             parent = mgr.getParentResource(resource.getId());
-            if (parent==null)
+            if (parent == null)
                 return "0";
             else
                 return String.valueOf(parent.getId());
@@ -228,7 +225,6 @@ public class AlertTokenReplacer {
             return String.valueOf(operationDefinition.getId());
         case OPERATION_NAME:
             return operationDefinition.getName();
-
 
         default:
             return NOT_YET_IMPLEMENTED;

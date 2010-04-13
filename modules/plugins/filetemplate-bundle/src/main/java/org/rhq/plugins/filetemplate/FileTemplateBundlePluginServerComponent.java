@@ -23,9 +23,9 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
@@ -58,8 +58,8 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
     public BundleDeployResult deployBundle(BundleDeployRequest request) {
         BundleDeployResult result = new BundleDeployResult();
         try {
-            BundleDeployment bundleDeployment = request.getBundleDeployment();
-            BundleDeployDefinition bundleDeployDef = bundleDeployment.getBundleDeployDefinition();
+            BundleResourceDeployment resourceDeployment = request.getResourceDeployment();
+            BundleDeployDefinition bundleDeployDef = resourceDeployment.getBundleDeployDefinition();
             BundleVersion bundleVersion = bundleDeployDef.getBundleVersion();
 
             // process the recipe
@@ -71,7 +71,7 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
 
             request.getBundleManagerProvider()
                 .auditDeployment(
-                    bundleDeployment,
+                    resourceDeployment,
                     BundleDeploymentAction.DEPLOYMENT_STEP,
                     BundleDeploymentStatus.NOCHANGE,
                     "setting replacement variable values using [" + bundleDeployDef.getConfiguration().toString(true)
@@ -80,7 +80,7 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
 
             parser.setReplaceReplacementVariables(true);
 
-            request.getBundleManagerProvider().auditDeployment(bundleDeployment,
+            request.getBundleManagerProvider().auditDeployment(resourceDeployment,
                 BundleDeploymentAction.DEPLOYMENT_STEP, BundleDeploymentStatus.NOCHANGE,
                 "Parsing Recipe using context [" + recipeContext + "]");
             parser.parseRecipe(recipeContext);

@@ -54,29 +54,29 @@ import org.rhq.core.domain.resource.Resource;
  * It also provides the anchor for audit history related to the deployment.
  * 
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
 @Entity
-//@IdClass(BundleDeploymentPK.class)
 @NamedQueries( {
-    @NamedQuery(name = BundleDeployment.QUERY_FIND_BY_DEFINITION_ID_NO_FETCH, query = "SELECT bd FROM BundleDeployment bd WHERE bd.bundleDeployDefinition.id = :id "),
-    @NamedQuery(name = BundleDeployment.QUERY_FIND_BY_RESOURCE_ID_NO_FETCH, query = "SELECT bd FROM BundleDeployment bd WHERE bd.resource.id = :id ") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOY_ID_SEQ")
-@Table(name = "RHQ_BUNDLE_DEPLOY")
+    @NamedQuery(name = BundleResourceDeployment.QUERY_FIND_BY_DEPLOYMENT_ID_NO_FETCH, query = "SELECT brd FROM BundleResourceDeployment brd WHERE brd.bundleDeployment.id = :id "),
+    @NamedQuery(name = BundleResourceDeployment.QUERY_FIND_BY_RESOURCE_ID_NO_FETCH, query = "SELECT brd FROM BundleResourceDeployment brd WHERE brd.resource.id = :id ") })
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_RES_DEPLOY_ID_SEQ")
+@Table(name = "RHQ_BUNDLE_RES_DEPLOY")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BundleDeployment implements Serializable {
+public class BundleResourceDeployment implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_FIND_BY_DEFINITION_ID_NO_FETCH = "BundleDeployment.findByDefinitionIdNoFetch";
-    public static final String QUERY_FIND_BY_RESOURCE_ID_NO_FETCH = "BundleDeployment.findByResourceIdNoFetch";
+    public static final String QUERY_FIND_BY_DEPLOYMENT_ID_NO_FETCH = "BundleResourceDeployment.findByDefinitionIdNoFetch";
+    public static final String QUERY_FIND_BY_RESOURCE_ID_NO_FETCH = "BundleResourceDeployment.findByResourceIdNoFetch";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
     private int id;
 
-    @JoinColumn(name = "BUNDLE_DEPLOY_DEF_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "BUNDLE_DEPLOY_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
-    private BundleDeployDefinition bundleDeployDefinition;
+    private BundleDeployDefinition bundleDeployment;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -84,7 +84,10 @@ public class BundleDeployment implements Serializable {
 
     @JoinColumn(name = "BUNDLE_GROUP_DEPLOY_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
-    private BundleGroupDeployment bundleGroupDeployment;
+    private BundleGroupDeployment groupDeployment;
+
+    @Column(name = "IS_CURRENT")
+    private boolean isCurrent = false;
 
     @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -93,26 +96,26 @@ public class BundleDeployment implements Serializable {
     @Column(name = "CTIME")
     private Long ctime = -1L;
 
-    @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<BundleDeploymentHistory> histories = new ArrayList<BundleDeploymentHistory>();
+    @OneToMany(mappedBy = "resourceDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleResourceDeploymentHistory> histories = new ArrayList<BundleResourceDeploymentHistory>();
 
-    protected BundleDeployment() {
+    protected BundleResourceDeployment() {
     }
 
-    public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource) {
+    public BundleResourceDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource) {
         this(bundleDeploymentDef, resource, null);
     }
 
-    public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource,
-        BundleGroupDeployment bundleGroupDeployment) {
-        this.bundleDeployDefinition = bundleDeploymentDef;
+    public BundleResourceDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource,
+        BundleGroupDeployment groupDeployment) {
+        this.bundleDeployment = bundleDeploymentDef;
         this.resource = resource;
-        this.bundleGroupDeployment = bundleGroupDeployment;
+        this.groupDeployment = groupDeployment;
         this.status = BundleDeploymentStatus.INPROGRESS;
     }
 
     public BundleDeployDefinition getBundleDeployDefinition() {
-        return bundleDeployDefinition;
+        return bundleDeployment;
     }
 
     public int getId() {
@@ -141,28 +144,28 @@ public class BundleDeployment implements Serializable {
     }
 
     public void setBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
-        this.bundleDeployDefinition = bundleDeployDefinition;
+        this.bundleDeployment = bundleDeployDefinition;
     }
 
-    public List<BundleDeploymentHistory> getBundleDeploymentHistories() {
+    public List<BundleResourceDeploymentHistory> getBundleResourceDeploymentHistories() {
         return histories;
     }
 
-    public void setBundleDeploymentHistories(List<BundleDeploymentHistory> histories) {
+    public void setBundleResourceDeploymentHistories(List<BundleResourceDeploymentHistory> histories) {
         this.histories = histories;
     }
 
-    public void addBundleDeploymentHistory(BundleDeploymentHistory history) {
-        history.setBundleDeployment(this);
+    public void addBundleResourceDeploymentHistory(BundleResourceDeploymentHistory history) {
+        history.setResourceDeployment(this);
         this.histories.add(history);
     }
 
-    public BundleGroupDeployment getBundleGroupDeployment() {
-        return bundleGroupDeployment;
+    public BundleGroupDeployment getGroupDeployment() {
+        return groupDeployment;
     }
 
-    public void setBundleGroupDeployment(BundleGroupDeployment bundleGroupDeployment) {
-        this.bundleGroupDeployment = bundleGroupDeployment;
+    public void setGroupDeployment(BundleGroupDeployment groupDeployment) {
+        this.groupDeployment = groupDeployment;
     }
 
     /**
@@ -179,10 +182,18 @@ public class BundleDeployment implements Serializable {
         this.status = status;
     }
 
+    public boolean isCurrent() {
+        return isCurrent;
+    }
+
+    public void setCurrent(boolean isCurrent) {
+        this.isCurrent = isCurrent;
+    }
+
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("BundleDeployment: ");
-        str.append(", bdd=[").append(this.bundleDeployDefinition).append("]");
+        StringBuilder str = new StringBuilder("BundleResourceDeployment: ");
+        str.append(", bdd=[").append(this.bundleDeployment).append("]");
         str.append(", resource=[").append(this.resource).append("]");
         return str.toString();
     }
@@ -190,7 +201,7 @@ public class BundleDeployment implements Serializable {
     @Override
     public int hashCode() {
         int result = 1;
-        result = (31 * result) + ((bundleDeployDefinition == null) ? 0 : bundleDeployDefinition.hashCode());
+        result = (31 * result) + ((bundleDeployment == null) ? 0 : bundleDeployment.hashCode());
         result = (31 * result) + ((resource == null) ? 0 : resource.hashCode());
         return result;
     }
@@ -201,17 +212,17 @@ public class BundleDeployment implements Serializable {
             return true;
         }
 
-        if ((obj == null) || (!(obj instanceof BundleDeployment))) {
+        if ((obj == null) || (!(obj instanceof BundleResourceDeployment))) {
             return false;
         }
 
-        final BundleDeployment other = (BundleDeployment) obj;
+        final BundleResourceDeployment other = (BundleResourceDeployment) obj;
 
-        if (bundleDeployDefinition == null) {
-            if (bundleDeployDefinition != null) {
+        if (bundleDeployment == null) {
+            if (bundleDeployment != null) {
                 return false;
             }
-        } else if (!bundleDeployDefinition.equals(other.bundleDeployDefinition)) {
+        } else if (!bundleDeployment.equals(other.bundleDeployment)) {
             return false;
         }
 

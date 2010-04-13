@@ -29,7 +29,7 @@ import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
-import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.content.PackageVersion;
 
@@ -42,7 +42,7 @@ import org.rhq.core.domain.content.PackageVersion;
 public interface BundleServerService {
 
     @Asynchronous(guaranteedDelivery = true)
-    void addDeploymentHistory(int bundleDeploymentId, BundleDeploymentHistory history);
+    void addDeploymentHistory(int bundleDeploymentId, BundleResourceDeploymentHistory history);
 
     /**
      * Requests that the server download and stream the bits for the specified package version.

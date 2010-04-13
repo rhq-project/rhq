@@ -31,7 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -76,7 +76,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
     public BundleDeployResult deployBundle(BundleDeployRequest request) {
         BundleDeployResult result = new BundleDeployResult();
         try {
-            BundleDeployment bundleDeployment = request.getBundleDeployment();
+            BundleResourceDeployment bundleDeployment = request.getResourceDeployment();
             BundleDeployDefinition bundleDeployDef = bundleDeployment.getBundleDeployDefinition();
             BundleVersion bundleVersion = bundleDeployDef.getBundleVersion();
 

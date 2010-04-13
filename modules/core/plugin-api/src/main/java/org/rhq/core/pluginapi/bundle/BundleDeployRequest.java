@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
 
-import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.content.PackageVersion;
 
 /**
@@ -34,7 +34,7 @@ import org.rhq.core.domain.content.PackageVersion;
 public class BundleDeployRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private BundleDeployment bundleDeployment;
+    private BundleResourceDeployment resourceDeployment;
     private BundleManagerProvider bundleManagerProvider;
     private File bundleFilesLocation;
     private Map<PackageVersion, File> packageVersionFiles;
@@ -70,12 +70,12 @@ public class BundleDeployRequest implements Serializable {
         this.packageVersionFiles = packageVersionFiles;
     }
 
-    public BundleDeployment getBundleDeployment() {
-        return bundleDeployment;
+    public BundleResourceDeployment getResourceDeployment() {
+        return resourceDeployment;
     }
 
-    public void setBundleDeployment(BundleDeployment bundleDeployment) {
-        this.bundleDeployment = bundleDeployment;
+    public void setResourceDeployment(BundleResourceDeployment resourceDeployment) {
+        this.resourceDeployment = resourceDeployment;
     }
 
     public BundleManagerProvider getBundleManagerProvider() {

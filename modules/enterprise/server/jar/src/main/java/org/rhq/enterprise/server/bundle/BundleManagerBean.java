@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -46,12 +45,12 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
-import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -65,8 +64,8 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
+import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -117,16 +116,17 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleDeploymentHistory addBundleDeploymentHistory(Subject subject, int bundleDeploymentId,
-        BundleDeploymentHistory history) throws Exception {
+    public BundleResourceDeploymentHistory addBundleResourceDeploymentHistory(Subject subject, int bundleDeploymentId,
+        BundleResourceDeploymentHistory history) throws Exception {
 
-        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
-        if (null == deployment) {
+        BundleResourceDeployment resourceDeployment = entityManager.find(BundleResourceDeployment.class,
+            bundleDeploymentId);
+        if (null == resourceDeployment) {
             throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
         }
 
-        deployment.addBundleDeploymentHistory(history);
-        this.entityManager.persist(deployment);
+        resourceDeployment.addBundleResourceDeploymentHistory(history);
+        this.entityManager.persist(resourceDeployment);
 
         return history;
     }
@@ -173,8 +173,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleDeployDefinition createBundleDeployDefinition(Subject subject, int bundleVersionId, String name,
-        String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
-        boolean pinToBundle) throws Exception {
+        String description, String installDir, Configuration configuration, boolean enforcePolicy,
+        int enforcementInterval, boolean pinToBundle) throws Exception {
 
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleDeployDefinitionName: " + name);
@@ -195,7 +195,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             }
         }
 
-        BundleDeployDefinition deployDef = new BundleDeployDefinition(bundleVersion, name);
+        BundleDeployDefinition deployDef = new BundleDeployDefinition(bundleVersion, name, installDir);
         deployDef.setDescription(description);
         deployDef.setConfiguration(configuration);
         deployDef.setEnforcePolicy(enforcePolicy);
@@ -439,8 +439,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleFile;
     }
 
-    public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
-        throws Exception {
+    public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeployDefinitionId,
+        int resourceId) throws Exception {
         BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
         if (null == deployDef) {
             throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
@@ -451,20 +451,20 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
         }
 
-        return scheduleBundleDeployment(subject, deployDef, resource, null);
+        return scheduleBundleResourceDeployment(subject, deployDef, resource, null);
     }
 
-    private BundleDeployment scheduleBundleDeployment(Subject subject, BundleDeployDefinition deployDef,
-        Resource resource, BundleGroupDeployment bundleGroupDeployment) throws Exception {
+    private BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject,
+        BundleDeployDefinition deployDef, Resource resource, BundleGroupDeployment groupDeployment) throws Exception {
 
         int resourceId = resource.getId();
         AgentClient agentClient = agentManager.getAgentClient(resourceId);
         BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
 
-        // The BundleDeployment record must exist in the db before the agent request because the agent may try to
+        // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try to
         // add History to it during immediate deployments., so create and persist it (requires a new trans).
-        BundleDeployment deployment = bundleManager.createBundleDeployment(subject, deployDef.getId(), resourceId,
-            (null == bundleGroupDeployment) ? 0 : bundleGroupDeployment.getId());
+        BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeployment(subject, deployDef
+            .getId(), resourceId, (null == groupDeployment) ? 0 : groupDeployment.getId());
 
         // make sure the deployment contains the info required by the schedule service
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, deployDef.getBundleVersion().getId());
@@ -477,19 +477,19 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         bundleVersion.setBundle(bundle);
         deployDef.setBundleVersion(bundleVersion);
         deployDef.setConfiguration(config);
-        deployment.setBundleDeployDefinition(deployDef);
-        deployment.setResource(resource);
+        resourceDeployment.setBundleDeployDefinition(deployDef);
+        resourceDeployment.setResource(resource);
 
         // now scrub the hibernate entity to make it a pojo suitable for sending to the client
-        HibernateDetachUtility.nullOutUninitializedFields(deployment, SerializationType.SERIALIZATION);
+        HibernateDetachUtility.nullOutUninitializedFields(resourceDeployment, SerializationType.SERIALIZATION);
 
-        BundleScheduleRequest request = new BundleScheduleRequest(deployment);
+        BundleScheduleRequest request = new BundleScheduleRequest(resourceDeployment);
 
         // add the deployment request history (in a new trans)
-        BundleDeploymentHistory history = new BundleDeploymentHistory(subject.getName(),
+        BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
             BundleDeploymentAction.DEPLOYMENT_REQUESTED, BundleDeploymentStatus.SUCCESS, "Requested deployment time: "
                 + request.getRequestedDeployTimeAsString());
-        bundleManager.addBundleDeploymentHistory(subject, deployment.getId(), history);
+        bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
 
         // Ask the agent to schedule the request. The agent should add history as needed.
         BundleScheduleResponse response = bundleAgentService.schedule(request);
@@ -499,13 +499,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // Handle Schedule Failures. This may include deployment failures for immediate deployment request
         if (!response.isSuccess()) {
-            history = new BundleDeploymentHistory(subject.getName(), BundleDeploymentAction.DEPLOYMENT,
+            history = new BundleResourceDeploymentHistory(subject.getName(), BundleDeploymentAction.DEPLOYMENT,
                 BundleDeploymentStatus.FAILURE, response.getErrorMessage());
-            bundleManager.setBundleDeploymentStatus(subject, deployment.getId(), BundleDeploymentStatus.FAILURE);
-            bundleManager.addBundleDeploymentHistory(subject, deployment.getId(), history);
+            bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
+                BundleDeploymentStatus.FAILURE);
+            bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
         }
 
-        return deployment;
+        return resourceDeployment;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -526,24 +527,23 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
          * we need to create the group deployment entity in a new transaction before the rest of the
          * processing of this method; the individual deployments need to reference it.
          */
-        BundleGroupDeployment bundleGroupDeployment = new BundleGroupDeployment(subject.getName(), deployDef,
-            resourceGroup);
-        bundleGroupDeployment = bundleManager.createBundleGroupDeployment(bundleGroupDeployment);
+        BundleGroupDeployment groupDeployment = new BundleGroupDeployment(subject.getName(), deployDef, resourceGroup);
+        groupDeployment = bundleManager.createBundleGroupDeployment(groupDeployment);
 
         // Create and persist updates for each of the group members.
         for (Resource resource : resourceGroup.getExplicitResources()) {
-            BundleDeployment bundleDeployment = scheduleBundleDeployment(subject, deployDef, resource,
-                bundleGroupDeployment);
-            bundleGroupDeployment.addBundleDeployment(bundleDeployment);
+            BundleResourceDeployment resourceDeployment = scheduleBundleResourceDeployment(subject, deployDef,
+                resource, groupDeployment);
+            groupDeployment.addResourceDeployment(resourceDeployment);
         }
 
-        return bundleGroupDeployment;
+        return groupDeployment;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleDeployment createBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId,
-        int bundleGroupDeploymentId) throws Exception {
+    public BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeployDefinitionId,
+        int resourceId, int groupDeploymentId) throws Exception {
 
         BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
         if (null == deployDef) {
@@ -554,51 +554,52 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
         }
 
-        BundleGroupDeployment bundleGroupDeployment = (BundleGroupDeployment) entityManager.find(
-            BundleGroupDeployment.class, bundleGroupDeploymentId);
+        BundleGroupDeployment groupDeployment = (BundleGroupDeployment) entityManager.find(BundleGroupDeployment.class,
+            groupDeploymentId);
 
-        BundleDeployment deployment = new BundleDeployment(deployDef, resource, bundleGroupDeployment);
+        BundleResourceDeployment resourceDeployment = new BundleResourceDeployment(deployDef, resource, groupDeployment);
 
-        entityManager.persist(deployment);
-        return deployment;
+        entityManager.persist(resourceDeployment);
+        return resourceDeployment;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleDeployment setBundleDeploymentStatus(Subject subject, int bundleDeploymentId,
+    public BundleResourceDeployment setBundleResourceDeploymentStatus(Subject subject, int resourceDeploymentId,
         BundleDeploymentStatus status) throws Exception {
 
-        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
-        if (null == deployment) {
-            throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
+        BundleResourceDeployment resourceDeployment = entityManager.find(BundleResourceDeployment.class,
+            resourceDeploymentId);
+        if (null == resourceDeployment) {
+            throw new IllegalArgumentException("Invalid bundleDeploymentId: " + resourceDeploymentId);
         }
 
-        deployment.setStatus(status);
-        this.entityManager.persist(deployment);
+        resourceDeployment.setStatus(status);
+        this.entityManager.persist(resourceDeployment);
 
         // If this is part of a group deployment then update the group status, if necessary. 
-        BundleGroupDeployment groupDeployment = deployment.getBundleGroupDeployment();
+        BundleGroupDeployment groupDeployment = resourceDeployment.getGroupDeployment();
         if ((null != groupDeployment) && (BundleDeploymentStatus.INPROGRESS.equals(groupDeployment.getStatus()))) {
             if (BundleDeploymentStatus.FAILURE.equals(status)) {
                 groupDeployment.setStatus(status);
             } else {
-                BundleDeploymentCriteria c = new BundleDeploymentCriteria();
-                c.addFilterBundleGroupDeploymentId(groupDeployment.getId());
+                BundleResourceDeploymentCriteria c = new BundleResourceDeploymentCriteria();
+                c.addFilterGroupDeploymentId(groupDeployment.getId());
                 c.addFilterStatus(BundleDeploymentStatus.INPROGRESS);
-                List<BundleDeployment> inProgressDeployments = findBundleDeploymentsByCriteria(subject, c);
+                List<BundleResourceDeployment> inProgressDeployments = findBundleResourceDeploymentsByCriteria(subject,
+                    c);
                 if (inProgressDeployments.isEmpty()) {
                     groupDeployment.setStatus(BundleDeploymentStatus.SUCCESS);
                 }
             }
         }
 
-        return deployment;
+        return resourceDeployment;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public BundleGroupDeployment createBundleGroupDeployment(BundleGroupDeployment bundleGroupDeployment)
-        throws Exception {
-        entityManager.persist(bundleGroupDeployment);
-        return bundleGroupDeployment;
+    public BundleGroupDeployment createBundleGroupDeployment(BundleGroupDeployment groupDeployment) throws Exception {
+        entityManager.persist(groupDeployment);
+        return groupDeployment;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -641,7 +642,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Map<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception {
+    public HashMap<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception {
 
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
         if (null == bundleVersion) {
@@ -654,7 +655,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             .parseRecipe(bundleType.getName(), bundleVersion.getRecipe());
 
         Set<String> filenames = parseResults.getBundleFileNames();
-        Map<String, Boolean> result = new HashMap<String, Boolean>(filenames.size());
+        HashMap<String, Boolean> result = new HashMap<String, Boolean>(filenames.size());
 
         List<BundleFile> bundleFiles = bundleVersion.getBundleFiles();
         for (String filename : filenames) {
@@ -691,7 +692,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return queryRunner.execute();
     }
 
-    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
+    public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(Subject subject,
+        BundleResourceDeploymentCriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         if (!authorizationManager.isInventoryManager(subject)) {
@@ -704,8 +706,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 subject.getId());
         }
 
-        CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
-            generator, entityManager);
+        CriteriaQueryRunner<BundleResourceDeployment> queryRunner = new CriteriaQueryRunner<BundleResourceDeployment>(
+            criteria, generator, entityManager);
 
         return queryRunner.execute();
     }

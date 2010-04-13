@@ -31,9 +31,9 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -41,8 +41,8 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
+import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.system.ServerVersion;
@@ -126,8 +126,8 @@ public interface BundleManagerRemote {
      * @param name a name for this definition. not null or empty
      * @param description an optional longer description describing this deploy def 
      * @param configuration a Configuration (pojo) to be associated with this deploy def. Although
-     *        it is not enforceable 
-     *        must be that of the associated BundleVersion.
+     *        it is not enforceable must be that of the associated BundleVersion.
+     * @param installDir the root dir for the deployment
      * @param enforcePolicy if true enforce policy on deployments made with this deploy def
      * @param enforceInterval if enforcePolicy is true check policy at this interval (in seconds), otherwise ignored
      * @param pinToBundle if true this deploy def is disabled if a newer BundleVersion is generated for the Bundle
@@ -139,6 +139,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "bundleVersionid") int bundleVersionId, //
         @WebParam(name = "name") String name, //
         @WebParam(name = "description") String description, //
+        @WebParam(name = "installDir") String installDir, //        
         @WebParam(name = "configuration") Configuration configuration, //
         @WebParam(name = "enforcePolicy") boolean enforcePolicy, //
         @WebParam(name = "enforcementInterval") int enforcementInterval, //
@@ -226,9 +227,9 @@ public interface BundleManagerRemote {
         @WebParam(name = "criteria") BundleDeployDefinitionCriteria criteria);
 
     @WebMethod
-    PageList<BundleDeployment> findBundleDeploymentsByCriteria( //
+    PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "BundleDeploymentCriteria") BundleDeploymentCriteria criteria);
+        @WebParam(name = "BundleResourceDeploymentCriteria") BundleResourceDeploymentCriteria criteria);
 
     @WebMethod
     PageList<BundleFile> findBundleFilesByCriteria( //
@@ -284,18 +285,18 @@ public interface BundleManagerRemote {
     /**
      * Deploy the bundle as described in the provided deploy definition to the specified resource.
      * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
-     * returned BundleDeployment can be used to track the history of the deployment.
+     * returned {@link BundleResourceDeployment} can be used to track the history of the deployment.
      * 
      *  TODO: Add the scheduling capability, currently it's Immediate. 
      * 
      * @param subject must be InventoryManager
      * @param bundleDeployDefinitionId the BundleDeployDefinition being used to guide the deployments
      * @param resourceId the target resource (must exist), typically platforms, for the deployments
-     * @return the BundleDeployment created to track the deployment. 
+     * @return the {@link BundleResourceDeployment} created to track the deployment. 
      * @throws Exception
      */
     @WebMethod
-    BundleDeployment scheduleBundleDeployment( //
+    BundleResourceDeployment scheduleBundleResourceDeployment( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleDeployDefinitionId") int bundleDeployDefinitionId, //
         @WebParam(name = "resourceId") int resourceId) throws Exception;

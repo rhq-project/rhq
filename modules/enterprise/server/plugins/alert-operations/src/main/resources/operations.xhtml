@@ -10,6 +10,34 @@
 
 <body>
 
+        <h:panelGrid columns="2">
+        
+            <h:outputText value="Choose the produce type:"/>
+            <h:selectOneMenu value="#{operationsBean.currentType}" >
+                <f:selectItem itemValue="none" itemLabel="Select..." />
+                <f:selectItems value="#{operationsBean.firstList}"/>
+            </h:selectOneMenu>
+            
+            <h:outputText value="Choose concrete product:" rendered="#{!empty operationsBean.secondList}"/>
+            <h:selectOneMenu value="#{operationsBean.currentItem}" 
+                             rendered="#{!empty operationsBean.secondList}" >
+                <f:selectItem itemValue="none" itemLabel="Select..." />
+                <f:selectItems value="#{operationsBean.secondList}"/>
+            </h:selectOneMenu>
+            
+            <h:outputText value="Choose favorite letter:" rendered="#{!empty operationsBean.thirdList}"/>
+            <h:selectOneMenu value="#{operationsBean.favoriteCharacter}"
+                             rendered="#{!empty operationsBean.thirdList}" >
+                <f:selectItem itemValue="none" itemLabel="Select..." />
+                <f:selectItems value="#{operationsBean.thirdList}"/>
+            </h:selectOneMenu>
+            
+            <h:outputText value="Result:" rendered="#{!empty operationsBean.result}"/>
+            <h:outputText value="#{operationsBean.result}" rendered="#{!empty operationsBean.result}"/>
+            
+        </h:panelGrid>
+
+    <ui:remove>
     <rich:panel header="Resource Selection">
         <h:panelGrid columns="3" >
             <h:outputText value="Select mode:" style="width: 200px;" />
@@ -66,6 +94,7 @@
                          styleClass="buttonmed" />
         </ui:remove>
     </rich:panel>
+    </ui:remove>
 
 <rich:modalPanel id="ResourcePicker">
     <h:outputLink>Hello World</h:outputLink>

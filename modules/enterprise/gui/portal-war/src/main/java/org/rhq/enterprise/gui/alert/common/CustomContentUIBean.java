@@ -47,6 +47,7 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
     private CustomAlertSenderBackingBean customBackingBean;
 
     public String getContentUrl() {
+        System.out.println("contentURL -- " + contentUrl);
         return contentUrl;
     }
 
@@ -65,7 +66,12 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
         AlertSenderInfo info = alertNotificationManager.getAlertInfoForSender(senderName);
 
         if (info != null && info.getUiSnippetUrl() != null) {
+            //if (senderName.equals("Resource Operations")) {
+            //    this.contentUrl = "/home/jmarques/dev/repos/rhq/modules/enterprise/server/plugins/alert-operations/src/main/resources/operations.xhtml";
+            //} else {
             this.contentUrl = info.getUiSnippetUrl().toString();
+            //    System.out.println("getContentURL() -> " + this.contentUrl);
+            //}
         }
 
         String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(senderName);

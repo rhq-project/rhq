@@ -152,9 +152,9 @@
                                      rendered="#{empty customContentUIBean.contentUrl}" />
 
                     <!-- Custom plugin UI -->
-                    <c:if test="#{not empty customContentUIBean.contentUrl}">
+                    <h:panelGroup test="#{not empty customContentUIBean.contentUrl}">
                         <ui:include src="#{customContentUIBean.contentUrl}" />
-                    </c:if>
+                    </h:panelGroup>
                     <h:commandButton id="saveCustomButton"
                                        value="SAVE"
                                        action="#{customContentUIBean.saveConfiguration}"

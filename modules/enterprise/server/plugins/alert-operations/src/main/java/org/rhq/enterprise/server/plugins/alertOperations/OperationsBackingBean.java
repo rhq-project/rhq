@@ -18,24 +18,11 @@
  */
 package org.rhq.enterprise.server.plugins.alertOperations;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Backing bean for the operations alert sender
@@ -44,6 +31,244 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
+    private String currentType = "";
+    private String currentItem = "";
+    private String favoriteCharacter = "";
+    private String result;
+
+    public Map<String, String> firstList = new LinkedHashMap<String, String>();
+    public Map<String, String> secondList = new LinkedHashMap<String, String>();
+    public Map<String, String> thirdList = new LinkedHashMap<String, String>();
+
+    private static final String[] FRUITS = { "Banana", "Cranberry", "Blueberry", "Orange" };
+    private static final String[] VEGETABLES = { "Potatoes", "Broccoli", "Garlic", "Carrot" };
+
+    private boolean debug = false;
+
+    @Override
+    public void loadView() {
+        currentType = get("temp-type");
+        currentItem = get("temp-item");
+        favoriteCharacter = get("temp-char");
+
+        // always load first list
+        firstList.put("Fruits", "fruits");
+        firstList.put("Vegetables", "vegetables");
+
+        // load secondList if currentType is selected
+        if (currentType.equals("none")) {
+            return;
+        }
+
+        String[] currentItems;
+        if (currentType.equals("fruits")) {
+            currentItems = FRUITS;
+        } else {
+            currentItems = VEGETABLES;
+        }
+
+        for (int i = 0; i < currentItems.length; i++) {
+            secondList.put(currentItems[i], currentItems[i]);
+        }
+
+        // load thirdList if currentItem is selected
+        if (currentItem.equals("none")) {
+            return;
+        }
+
+        for (char nextChar : currentItem.toCharArray()) {
+            thirdList.put(String.valueOf(nextChar), String.valueOf(nextChar));
+        }
+
+        // load result if favoriteCharacter is selected
+        if (favoriteCharacter.equals("none")) {
+            return;
+        }
+
+        result = getCurrentType() + " : " + getCurrentItem() + " : " + favoriteCharacter;
+    }
+
+    private String get(String propertyName) {
+        return alertParameters.getSimpleValue(propertyName, "none");
+    }
+
+    @Override
+    public void saveView() {
+        boolean changed = set(currentType, "temp-type");
+        changed = set(changed ? "none" : currentItem, "temp-item");
+        changed = set(changed ? "none" : favoriteCharacter, "temp-char");
+        alertParameters = persistConfiguration(alertParameters);
+    }
+
+    private boolean set(String value, String propertyName) {
+        PropertySimple property = alertParameters.getSimple(propertyName);
+        if (property == null) {
+            property = new PropertySimple(propertyName, value);
+            alertParameters.put(property);
+            return true;
+        } else {
+            String oldStringValue = property.getStringValue();
+            property.setStringValue(value);
+            return !oldStringValue.equals(value);
+        }
+    }
+
+    public Map<String, String> getFirstList() {
+        debug("getFirstList() -> " + firstList);
+        return firstList;
+    }
+
+    public Map<String, String> getSecondList() {
+        debug("getSecondList() -> " + secondList);
+        return secondList;
+    }
+
+    public Map<String, String> getThirdList() {
+        debug("getThirdList() -> " + thirdList);
+        return thirdList;
+    }
+
+    /*
+    private boolean noEffect(ValueChangeEvent event) {
+        Object oldValue = event.getOldValue();
+        if (event.getNewValue() == null) {
+            debug("noEffect: nothing selected");
+            return true; // nothing was actually selected, thus no effect
+        }
+
+        Object newValue = event.getNewValue();
+        if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
+            debug("nothing changed");
+            return true; // nothing was changed, thus no effect
+            // NOTE: ValueChangeEvent is sometimes suppressed client-side for no-change events; depends on the component 
+        }
+
+        debug("noEffect: change detected");
+        return false;
+    }
+
+    public void currentTypeChanged(ValueChangeEvent event) {
+        debug("currentTypeChanged: event fired");
+        if (noEffect(event)) {
+            // nothing was change or nothing was selected, so do nothing
+            return;
+        }
+
+        // edit stuff as a result of the change
+        secondList.clear();
+
+        String[] currentItems;
+        String selectedCurrentType = (String) event.getNewValue();
+
+        if (selectedCurrentType.equals("none")) {
+            currentItems = new String[0];
+        } else {
+            secondList.put("none", "Select...");
+            if (selectedCurrentType.equals("fruits")) {
+                currentItems = FRUITS;
+            } else {
+                currentItems = VEGETABLES;
+            }
+        }
+        for (int i = 0; i < currentItems.length; i++) {
+            secondList.put(currentItems[i], currentItems[i]);
+        }
+
+        // clean-up dependent form elements
+        debug("currentTypeChanged: clearing thirdList, nulling-out result");
+        thirdList.clear();
+        result = null;
+    }
+
+    public void currentItemChanged(ValueChangeEvent event) {
+        debug("currentItemChanged: event fired");
+        if (noEffect(event)) {
+            // nothing was change or nothing was selected, so do nothing
+            return;
+        }
+
+        // edit stuff as a result of the change
+        thirdList.clear();
+        thirdList.put("none", "Select...");
+        String selectedCurrentItem = (String) event.getNewValue();
+        if (selectedCurrentItem.equals("none") == false) {
+            for (char nextChar : selectedCurrentItem.toCharArray()) {
+                secondList.put(String.valueOf(nextChar), String.valueOf(nextChar));
+            }
+        }
+
+        // clean-up dependent form elements
+        debug("currentItemChanged: nulling-out result");
+        result = null;
+    }
+
+    public void currentCharChanged(ValueChangeEvent event) {
+        debug("currentCharChanged: event fired");
+        if (noEffect(event)) {
+            // nothing was change or nothing was selected, so do nothing
+            return;
+        }
+
+        // edit stuff as a result of the change
+        // NOTE: calling getFavoriteCharacter results stale data here, because the
+        //       ValueChangeEvent is fired before the setFavoriteCharacter method
+        result = null;
+        String selectedCurrentChar = (String) event.getNewValue();
+        if (selectedCurrentChar.equals("none") == false) {
+            result = getCurrentType() + " : " + getCurrentItem() + " : " + selectedCurrentChar;
+        }
+
+        // no dependent form elements
+    }
+    */
+
+    public String getCurrentType() {
+        debug("getCurrentType() -> " + currentType);
+        return currentType;
+    }
+
+    public void setCurrentType(String currentType) {
+        debug("setCurrentType(" + currentType + ")");
+        this.currentType = currentType;
+    }
+
+    public String getCurrentItem() {
+        debug("getCurrentItem() -> " + currentItem);
+        return currentItem;
+    }
+
+    public void setCurrentItem(String currentItem) {
+        debug("setCurrentItem(" + currentItem + ")");
+        this.currentItem = currentItem;
+    }
+
+    public String getFavoriteCharacter() {
+        debug("getFavoriteCharacter() -> " + favoriteCharacter);
+        return favoriteCharacter;
+    }
+
+    public void setFavoriteCharacter(String favoriteCharacter) {
+        debug("setFavoriteCharacter(" + favoriteCharacter + ")");
+        this.favoriteCharacter = favoriteCharacter;
+    }
+
+    public String getResult() {
+        debug("getResult() -> " + result);
+        return result;
+    }
+
+    public void setResult(String result) {
+        debug("setResult(" + result + ")");
+        this.result = result;
+    }
+
+    private void debug(String message) {
+        if (debug) {
+            System.out.println(message);
+        }
+    }
+
+    /*
     private final Log log = LogFactory.getLog(OperationsBackingBean.class);
 
     private String resMode;
@@ -270,4 +495,5 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     public String getNullConfigurationMessage() {
         return "This operation parameters definition has not been initialized.";
     }
+    */
 }

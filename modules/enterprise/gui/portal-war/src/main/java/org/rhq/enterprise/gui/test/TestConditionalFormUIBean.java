@@ -26,7 +26,7 @@ public class TestConditionalFormUIBean {
     private static final String[] FRUITS = { "Banana", "Cranberry", "Blueberry", "Orange" };
     private static final String[] VEGETABLES = { "Potatoes", "Broccoli", "Garlic", "Carrot" };
 
-    private boolean debug = false;
+    private boolean debug = true;
 
     public TestConditionalFormUIBean() {
         init();

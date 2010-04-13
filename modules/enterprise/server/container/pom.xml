@@ -210,7 +210,7 @@
 
           <execution>
             <id>prepare-release</id>
-            <phase>process-resources</phase>
+            <phase>process-package</phase>
             <configuration>
               <tasks>
                 <echo>Preparing the release at ${project.build.outputDirectory}...</echo>

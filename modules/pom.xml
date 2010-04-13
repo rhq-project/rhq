@@ -80,6 +80,19 @@
          </activation>
       </profile>
 
+      <profile>
+         <id>cli-tests</id>
+	 <activation>
+            <property>
+               <name>cli-tests</name>
+	    </property>
+	 </activation>
+
+	 <modules>
+            <module>cli-tests</module>
+	 </modules>
+      </profile>
+
    </profiles>
 
    <modules>

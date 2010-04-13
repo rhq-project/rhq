@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.navigation.group;
 
 import java.io.IOException;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 import javax.faces.context.FacesContext;
 import javax.faces.application.FacesMessage;
@@ -36,7 +35,6 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.gui.inventory.resource.ResourceUIBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.cluster.ClusterKey;
@@ -48,13 +46,16 @@ import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
 public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
 
     private Integer selectedId;
-    private TreeRowKey selectedKey;
     private ClusterKey selectedClusterKey;
-
+    private TreeState treeState = new TreeState(); 
 
     private ResourceGroup currentGroup;
 
-    public ResourceGroup getCurrentGroup() {
+    public TreeState getTreeState() {
+        return treeState;
+    }
+    
+    private ResourceGroup getCurrentGroup() {
         if (currentGroup == null || currentGroup.getId() != getSelectedGroupId()) {
             this.selectedId = getSelectedGroupId();
             ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
@@ -71,27 +72,65 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
         return Integer.parseInt(groupId);
     }
 
+    public void changeExpandListener(org.richfaces.event.NodeExpandedEvent e) {
+        HtmlTree tree = (HtmlTree) e.getComponent();
+
+        TreeState state = (TreeState) tree.getComponentState();
+        TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
+        
+        //check if we're collapsing a parent of currently selected node.
+        //if we do, change the focus to the parent
+        if (state.getSelectedNode() != null) {
+            boolean closingParent = false;
+            
+            ResourceGroupTreeNode node = (ResourceGroupTreeNode) tree.getRowData(key);
+            ResourceGroupTreeNode selectedNode = (ResourceGroupTreeNode) tree.getRowData(state.getSelectedNode());
+    
+    
+            selectedNode = selectedNode.getParent();        
+            while(selectedNode != null) {
+                if (node.equals(selectedNode)) {
+                    closingParent = true;
+                    break;
+                }
+                selectedNode = selectedNode.getParent();
+            }
+            
+            if (closingParent) {
+                try {
+                    state.setSelected(key);
+                    redirectTo(node);
+                } catch(IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+        
     public Boolean adviseNodeOpened(UITree tree) {
-        TreeRowKey key = (TreeRowKey) tree.getRowKey();
+        TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
 
         if (key != null) {
-
             TreeState state = (TreeState) tree.getComponentState();
-            TreeRowKey selectedKey = state.getSelectedNode();
+            TreeRowKey<?> selectedKey = state.getSelectedNode();
 
-            getCurrentGroup();
-
-            if (preopen((ResourceGroupTreeNode) tree.getRowData(key), this.selectedId)) {
-                return true;
+            if (selectedKey == null) {
+                getCurrentGroup();
+    
+                if (preopen((ResourceGroupTreeNode) tree.getRowData(key), this.selectedClusterKey)) {
+                    return true;
+                }
             }
+            
+            return state.isExpanded(key);
         }
         return null;
     }
 
-    private boolean preopen(ResourceGroupTreeNode resourceTreeNode, int selectedGroupId) {
+    private boolean preopen(ResourceGroupTreeNode resourceTreeNode, ClusterKey selectedClusterKey) {
         ResourceGroup currentGroup = getCurrentGroup();
         if (resourceTreeNode.getData() instanceof ClusterKey) {
-            if (((ClusterKey) resourceTreeNode.getData()).equals(this.selectedClusterKey)) {
+            if (((ClusterKey) resourceTreeNode.getData()).equals(selectedClusterKey)) {
                 return true;
             }
         } else if (resourceTreeNode.getData() instanceof AutoGroupComposite) {
@@ -107,7 +146,7 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
         }
 
         for (ResourceGroupTreeNode child : resourceTreeNode.getChildren()) {
-            if (preopen(child, selectedGroupId)) {
+            if (preopen(child, selectedClusterKey)) {
                 return true;
             }
         }
@@ -120,37 +159,15 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
         TreeState state = (TreeState) ((HtmlTree) tree).getComponentState();
 
         try {
-            tree.queueNodeExpand((TreeRowKey) tree.getRowKey());
-            ResourceGroupTreeNode node = (ResourceGroupTreeNode) tree.getRowData(tree.getRowKey());
+            TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
+            tree.queueNodeExpand(key);
+            ResourceGroupTreeNode node = (ResourceGroupTreeNode) tree.getRowData(key);
 
             if (node != null) {
-                ServletContext context = (ServletContext) FacesContextUtility.getFacesContext().getExternalContext()
-                        .getContext();
-                HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext()
-                        .getExternalContext().getResponse();
-
-                Subject subject = EnterpriseFacesContextUtility.getSubject();
-
-                if (node.getData() instanceof ClusterKey) {
-
-                    ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
-                    ResourceGroup group = clusterManager.createAutoClusterBackingGroup(
-                            subject,
-                            (ClusterKey) node.getData(), true);
-
-                    String path = "/rhq/group/inventory/view.xhtml";
-
-                    response.sendRedirect(path + "?groupId=" + group.getId() + "&parentGroupId=" + ((ClusterKey) node.getData()).getClusterGroupId());
-
-                } else if (node.getData() instanceof AutoGroupComposite) {
+                if (node.getData() instanceof AutoGroupComposite) {
                     state.setSelected(e.getOldSelection());
-                    FacesContext.getCurrentInstance().addMessage("leftNavGroupTreeForm:leftNavGroupTree",
-                        new FacesMessage(FacesMessage.SEVERITY_WARN, "No cluster autogroup views available", null));
-
-                } else if (node.getData() instanceof ResourceGroup) {
-                    String path = "/rhq/group/inventory/view.xhtml";
-                    response.sendRedirect(path + "?groupId=" + ((ResourceGroup)node.getData()).getId());
                 }
+                redirectTo(node);
             }
         } catch (Exception e1) {
             state.setSelected(e.getOldSelection());
@@ -178,4 +195,30 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
         return false;
     }
 
+    private void redirectTo(ResourceGroupTreeNode node) throws IOException {
+        HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext().getExternalContext()
+            .getResponse();
+
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+
+        if (node.getData() instanceof ClusterKey) {
+
+            ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
+            ResourceGroup group = clusterManager.createAutoClusterBackingGroup(
+                    subject,
+                    (ClusterKey) node.getData(), true);
+
+            String path = "/rhq/group/inventory/view.xhtml";
+
+            response.sendRedirect(path + "?groupId=" + group.getId() + "&parentGroupId=" + ((ClusterKey) node.getData()).getClusterGroupId());
+
+        } else if (node.getData() instanceof AutoGroupComposite) {
+            FacesContext.getCurrentInstance().addMessage("leftNavGroupTreeForm:leftNavGroupTree",
+                new FacesMessage(FacesMessage.SEVERITY_WARN, "No cluster autogroup views available", null));
+
+        } else if (node.getData() instanceof ResourceGroup) {
+            String path = "/rhq/group/inventory/view.xhtml";
+            response.sendRedirect(path + "?groupId=" + ((ResourceGroup)node.getData()).getId());
+        }        
+    }
 }

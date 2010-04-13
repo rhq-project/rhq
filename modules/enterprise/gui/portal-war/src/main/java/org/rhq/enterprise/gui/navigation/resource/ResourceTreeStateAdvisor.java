@@ -22,7 +22,6 @@ import java.io.IOException;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
 import org.richfaces.component.UITree;
@@ -65,12 +64,10 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     }
     
     public void changeExpandListener(org.richfaces.event.NodeExpandedEvent e) {
-        Object source = e.getSource();
-
         HtmlTree tree = (HtmlTree) e.getComponent();
 
         TreeState state = (TreeState) tree.getComponentState();
-        TreeRowKey key = (TreeRowKey) tree.getRowKey();
+        TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
         
         //check if we're collapsing a parent of currently selected node.
         //if we do, change the focus to the parent
@@ -106,17 +103,10 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         TreeState state = (TreeState) ((HtmlTree) tree).getComponentState();
 
         try {
-            tree.queueNodeExpand((TreeRowKey) tree.getRowKey());
+            tree.queueNodeExpand((TreeRowKey<?>) tree.getRowKey());
             ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
 
             if (node != null) {
-                ServletContext context = (ServletContext) FacesContextUtility.getFacesContext().getExternalContext()
-                    .getContext();
-                HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext()
-                    .getExternalContext().getResponse();
-
-                Subject subject = EnterpriseFacesContextUtility.getSubject();
-
                 if (node.getData() instanceof LockedResource) {
                     state.setSelected(e.getOldSelection());
 
@@ -162,7 +152,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     }
 
     public Boolean adviseNodeOpened(UITree tree) {
-        TreeRowKey key = (TreeRowKey) tree.getRowKey();
+        TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
 
         if (key != null) {
             TreeState state = (TreeState) tree.getComponentState();
@@ -173,7 +163,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                     return Boolean.TRUE;
             }  
             
-            TreeRowKey selectedKey = state.getSelectedNode();
+            TreeRowKey<?> selectedKey = state.getSelectedNode();
             int selectedId = 0;
             if (selectedKey == null) {
                 String typeId = FacesContextUtility.getOptionalRequestParameter("type");

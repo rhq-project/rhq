@@ -53,6 +53,8 @@ public class ScriptTest {
         args.add("exec");
         args.add("-f");
         args.add(script);
+        args.add("--args-style=named");
+        args.add("rhqServerName=" + System.getProperty("rhq.server.name", "localhost"));
 
         return args;
     }

@@ -160,5 +160,16 @@
        </navigation-case>
 
     </navigation-rule>
+    
+    <navigation-rule>
+       <from-view-id>/rhq/test/rerender/index.xhtml</from-view-id>
+
+        <navigation-case>
+           <from-action>#{TestDynamicRenderingUIBean.refresh}</from-action>
+           <to-view-id>/rhq/test/rerender/index.xhtml?a=#{param.a}&amp;b=#{param.b}&amp;c=#{param.c}&amp;page=#{TestDynamicRenderingUIBean.childPage}</to-view-id>
+           <redirect/>
+        </navigation-case>
+    </navigation-rule>
+    
 
 </faces-config>

@@ -143,6 +143,8 @@ public interface AlertNotificationManagerLocal {
      */
     List<AlertNotificationTemplate> listNotificationTemplates(Subject user);
 
+    AlertNotification getAlertNotification(Subject user, int alertNotificationId);
+
     AlertNotificationTemplate getAlertNotificationTemplate(Subject user, int alertNotificationTemplateId);
 
     /**

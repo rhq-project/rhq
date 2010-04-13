@@ -24,9 +24,11 @@ import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 
+import org.rhq.enterprise.gui.common.framework.EnterpriseFacesContextUIBean;
+
 @Scope(ScopeType.EVENT)
 @Name("AlertNotificationContextUIBean")
-public class AlertNotificationContextUIBean {
+public class AlertNotificationContextUIBean extends EnterpriseFacesContextUIBean {
     private enum Context {
         AlertNotificationTemplate, //
         ResourceAlertDefinition, //

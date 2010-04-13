@@ -22,7 +22,6 @@ import java.io.IOException;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
 import org.richfaces.component.UITree;
@@ -51,10 +50,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
-    private boolean altered = false;
     UITree tree;
-    private TreeRowKey selectedKey;
-    private int selectedId;
+    TreeState treeState = new TreeState();
     private int selecteAGTypeId;
 
     private boolean hasMessages = false;
@@ -62,32 +59,53 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-    public void changeExpandListener(org.richfaces.event.NodeExpandedEvent e) {
-        altered = true;
-        Object source = e.getSource();
-
-        HtmlTree c = (HtmlTree) e.getComponent();
-
-        TreeState state = (TreeState) ((HtmlTree) c).getComponentState();
-        TreeRowKey key = (TreeRowKey) c.getRowKey();
+    public TreeState getTreeState() {
+        return treeState;
     }
+    
+    public void changeExpandListener(org.richfaces.event.NodeExpandedEvent e) {
+        HtmlTree tree = (HtmlTree) e.getComponent();
 
+        TreeState state = (TreeState) tree.getComponentState();
+        TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
+        
+        //check if we're collapsing a parent of currently selected node.
+        //if we do, change the focus to the parent
+        if (state.getSelectedNode() != null) {
+            boolean closingParent = false;
+            
+            ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(key);
+            ResourceTreeNode selectedNode = (ResourceTreeNode) tree.getRowData(state.getSelectedNode());
+    
+    
+            selectedNode = selectedNode.getParent();        
+            while(selectedNode != null) {
+                if (node.equals(selectedNode)) {
+                    closingParent = true;
+                    break;
+                }
+                selectedNode = selectedNode.getParent();
+            }
+            
+            if (closingParent) {
+                try {
+                    state.setSelected(key);
+                    redirectTo(node);
+                } catch(IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+    
     public void nodeSelectListener(org.richfaces.event.NodeSelectedEvent e) {
         HtmlTree tree = (HtmlTree) e.getComponent();
         TreeState state = (TreeState) ((HtmlTree) tree).getComponentState();
 
         try {
-            tree.queueNodeExpand((TreeRowKey) tree.getRowKey());
             ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
 
             if (node != null) {
-                ServletContext context = (ServletContext) FacesContextUtility.getFacesContext().getExternalContext()
-                    .getContext();
-                HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext()
-                    .getExternalContext().getResponse();
-
-                Subject subject = EnterpriseFacesContextUtility.getSubject();
-
                 if (node.getData() instanceof LockedResource) {
                     state.setSelected(e.getOldSelection());
 
@@ -99,50 +117,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                     return;
 
                 } else if (node.getData() instanceof Resource) {
-                    String path = FacesContextUtility.getRequest().getRequestURI();
-
-                    Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData())
-                        .getId());
-                    ResourceFacets facets = this.resourceTypeManager.getResourceFacets(resource.getResourceType()
-                        .getId());
-
-                    String fallbackPath = FunctionTagLibrary.getDefaultResourceTabURL();
-
-                    // Switching from a auto group view... default to monitor page
-                    if (!path.startsWith("/rhq/resource")) {
-                        path = fallbackPath;
-                    } else {
-                        if ((path.startsWith("/rhq/resource/configuration/") && !facets.isConfiguration())
-                            || (path.startsWith("/rhq/resource/content/") && !facets.isContent())
-                            || (path.startsWith("/rhq/resource/operation") && !facets.isOperation())
-                            || (path.startsWith("/rhq/resource/events") && !facets.isEvent())) {
-                            // This resource doesn't support those facets
-                            path = fallbackPath;
-                        } else if ((path.startsWith("/rhq/resource/configuration/view-map.xhtml") ||
-                            path.startsWith("/rhq/resource/configuration/edit-map.xhtml") ||
-                            path.startsWith("/rhq/resource/configuration/add-map.xhtml") ||
-                            path.startsWith("/rhq/resource/configuration/edit.xhtml") && facets.isConfiguration())) {
-                            path = "/rhq/resource/configuration/view.xhtml";
-
-                        } else if (!path.startsWith("/rhq/resource/content/view.xhtml")
-                            && path.startsWith("/rhq/resource/content/") && facets.isContent()) {
-                            path = "/rhq/resource/content/view.xhtml";
-                        } else if (path.startsWith("/rhq/resource/inventory/")
-                            && !(path.startsWith("/rhq/resource/inventory/view.xhtml")
-                                || (facets.isPluginConfiguration() && path
-                                    .startsWith("/rhq/resource/inventory/view-connection.xhtml")) || path
-                                .startsWith("/rhq/resource/inventory/view-agent.xhtml"))) {
-                            path = "/rhq/resource/inventory/view.xhtml";
-                        } else if (path.startsWith("/rhq/resource/operation/resourceOperationHistoryDetails.xhtml")) {
-                            path = "/rhq/resource/operation/resourceOperationHistory.xhtml";
-                        } else if (path.startsWith("/rhq/resource/operation/resourceOperationScheduleDetails.xhtml")) {
-                            path = "/rhq/resource/operation/resourceOperationSchedules.xhtml";
-                        } else if (path.startsWith("/rhq/resource/monitor/response.xhtml") && !facets.isCallTime()) {
-                            path = fallbackPath;
-                        }
-                    }
-
-                    response.sendRedirect(path + "?id=" + ((Resource) node.getData()).getId());
+                    redirectTo(node);
                 } else if (node.getData() instanceof AutoGroupComposite) {
                     AutoGroupComposite ag = (AutoGroupComposite) node.getData();
 
@@ -164,9 +139,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
                             return;
                         } else {
-                            String path = "/rhq/autogroup/monitor/graphs.xhtml?parent="
-                                + ag.getParentResource().getId() + "&type=" + ag.getResourceType().getId();
-                            response.sendRedirect(path);
+                            redirectTo(node);
                         }
                     }
 
@@ -178,18 +151,19 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     }
 
     public Boolean adviseNodeOpened(UITree tree) {
-        TreeRowKey key = (TreeRowKey) tree.getRowKey();
+        TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
 
         if (key != null) {
-            ResourceTreeNode treeNode = ((ResourceTreeNode) tree.getRowData(key));
-
             TreeState state = (TreeState) tree.getComponentState();
 
-            TreeRowKey selectedKey = state.getSelectedNode();
-            if (selectedKey == null) {
-                selectedKey = this.selectedKey;
+            ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(key);
+            
+            if (node.getParent() == null) {
+                return true;
             }
-
+            
+            TreeRowKey<?> selectedKey = state.getSelectedNode();
+            int selectedId = 0;
             if (selectedKey == null) {
                 String typeId = FacesContextUtility.getOptionalRequestParameter("type");
                 this.selecteAGTypeId = ((typeId == null || typeId.length() == 0) ? 0 : Integer.parseInt(typeId));
@@ -197,34 +171,22 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 if (typeId != null) {
                     String id = FacesContextUtility.getOptionalRequestParameter("parent");
                     if (id != null && id.length() != 0) {
-                        this.selectedId = Integer.parseInt(id);
+                        selectedId = Integer.parseInt(id);
                     }
 
                 } else {
                     String id = FacesContextUtility.getOptionalRequestParameter("id");
                     if (id != null && id.length() != 0) {
-                        this.selectedId = Integer.parseInt(id);
+                        selectedId = Integer.parseInt(id);
                     }
                 }
 
-                if (preopen((ResourceTreeNode) tree.getRowData(key), this.selectedId, this.selecteAGTypeId)) {
+                if (preopen((ResourceTreeNode) tree.getRowData(key), selectedId, this.selecteAGTypeId)) {
                     return true;
                 }
             }
-
-            if (selectedKey != null && (key.isSubKey(selectedKey)))
-                return Boolean.TRUE;
-
-            if (altered) {
-                if (state.isExpanded(key))
-                    return Boolean.TRUE;
-            } else {
-                Object data = ((ResourceTreeNode) tree.getRowData(key)).getData();
-                if (data instanceof Resource) {
-                    if (((Resource) data).getResourceType().getCategory() == ResourceCategory.PLATFORM)
-                        return Boolean.TRUE;
-                }
-            }
+            
+            return state.isExpanded(key);
         }
         return null;
     }
@@ -250,7 +212,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
         return false;
     }
-
+    
     public Boolean adviseNodeSelected(UITree tree) {
         TreeState state = (TreeState) ((HtmlTree) tree).getComponentState();
         String id = FacesContextUtility.getOptionalRequestParameter("id");
@@ -285,4 +247,61 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         return hasMessages;
     }
 
+    private void redirectTo(ResourceTreeNode node) throws IOException {
+        HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext()
+            .getExternalContext().getResponse();
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+       
+        if (node.getData() instanceof Resource) {
+            String path = FacesContextUtility.getRequest().getRequestURI();
+
+            Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData())
+                .getId());
+            ResourceFacets facets = this.resourceTypeManager.getResourceFacets(resource.getResourceType()
+                .getId());
+
+            String fallbackPath = FunctionTagLibrary.getDefaultResourceTabURL();
+
+            // Switching from a auto group view... default to monitor page
+            if (!path.startsWith("/rhq/resource")) {
+                path = fallbackPath;
+            } else {
+                if ((path.startsWith("/rhq/resource/configuration/") && !facets.isConfiguration())
+                    || (path.startsWith("/rhq/resource/content/") && !facets.isContent())
+                    || (path.startsWith("/rhq/resource/operation") && !facets.isOperation())
+                    || (path.startsWith("/rhq/resource/events") && !facets.isEvent())) {
+                    // This resource doesn't support those facets
+                    path = fallbackPath;
+                } else if ((path.startsWith("/rhq/resource/configuration/view-map.xhtml") ||
+                    path.startsWith("/rhq/resource/configuration/edit-map.xhtml") ||
+                    path.startsWith("/rhq/resource/configuration/add-map.xhtml") ||
+                    path.startsWith("/rhq/resource/configuration/edit.xhtml") && facets.isConfiguration())) {
+                    path = "/rhq/resource/configuration/view.xhtml";
+
+                } else if (!path.startsWith("/rhq/resource/content/view.xhtml")
+                    && path.startsWith("/rhq/resource/content/") && facets.isContent()) {
+                    path = "/rhq/resource/content/view.xhtml";
+                } else if (path.startsWith("/rhq/resource/inventory/")
+                    && !(path.startsWith("/rhq/resource/inventory/view.xhtml")
+                        || (facets.isPluginConfiguration() && path
+                            .startsWith("/rhq/resource/inventory/view-connection.xhtml")) || path
+                        .startsWith("/rhq/resource/inventory/view-agent.xhtml"))) {
+                    path = "/rhq/resource/inventory/view.xhtml";
+                } else if (path.startsWith("/rhq/resource/operation/resourceOperationHistoryDetails.xhtml")) {
+                    path = "/rhq/resource/operation/resourceOperationHistory.xhtml";
+                } else if (path.startsWith("/rhq/resource/operation/resourceOperationScheduleDetails.xhtml")) {
+                    path = "/rhq/resource/operation/resourceOperationSchedules.xhtml";
+                } else if (path.startsWith("/rhq/resource/monitor/response.xhtml") && !facets.isCallTime()) {
+                    path = fallbackPath;
+                }
+            }
+
+            response.sendRedirect(path + "?id=" + ((Resource) node.getData()).getId());
+        } else if (node.getData() instanceof AutoGroupComposite) {
+            AutoGroupComposite ag = (AutoGroupComposite) node.getData();
+            String path = "/rhq/autogroup/monitor/graphs.xhtml?parent="
+                + ag.getParentResource().getId() + "&type=" + ag.getResourceType().getId();
+            response.sendRedirect(path);
+        }
+    }
 }

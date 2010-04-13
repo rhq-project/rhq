@@ -25,8 +25,8 @@ package org.rhq.core.domain.criteria;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
@@ -48,7 +48,6 @@ public class SubjectCriteria extends Criteria {
 
     private boolean fetchConfiguration;
     private boolean fetchRoles;
-    private boolean fetchSubjectNotifications;
 
     private PageOrdering sortName;
     private PageOrdering sortFirstName;
@@ -108,10 +107,6 @@ public class SubjectCriteria extends Criteria {
 
     public void fetchRoles(boolean fetchRoles) {
         this.fetchRoles = fetchRoles;
-    }
-
-    public void fetchSubjectNotifications(boolean fetchSubjectNotifications) {
-        this.fetchSubjectNotifications = fetchSubjectNotifications;
     }
 
     public void addSortName(PageOrdering sortName) {

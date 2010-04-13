@@ -50,8 +50,11 @@ public class ResourceGroupTreeNode implements Comparable<ResourceGroupTreeNode> 
 
     private String shortPath;
 
-    public ResourceGroupTreeNode(Object level) {
+    private ResourceGroupTreeNode parent;
+    
+    public ResourceGroupTreeNode(Object level, ResourceGroupTreeNode parent) {
         this.level = level;
+        this.parent = parent;
     }
 
     public ClusterKey getClusterKey() {
@@ -84,6 +87,14 @@ public class ResourceGroupTreeNode implements Comparable<ResourceGroupTreeNode> 
 
     public Object getData() {
         return level;
+    }
+
+    public ResourceGroupTreeNode getParent() {
+        return parent;
+    }
+
+    public void setParent(ResourceGroupTreeNode parent) {
+        this.parent = parent;
     }
 
     public String toString() {

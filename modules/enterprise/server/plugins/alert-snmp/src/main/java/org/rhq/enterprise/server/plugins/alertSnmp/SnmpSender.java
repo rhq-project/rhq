@@ -29,7 +29,6 @@ import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.plugins.alertSnmp.SnmpTrapSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -45,44 +44,41 @@ public class SnmpSender extends AlertSender {
     @Override
     public SenderResult send(Alert alert) {
 
-        Date bootTime = null;
-
-
-        String oid = alertParameters.getSimpleValue("OID",null);
-        if (oid==null) {
-            return new SenderResult(ResultState.FAILURE,"no OID given");
+        SnmpInfo info = SnmpInfo.load(alertParameters);
+        if (info.error != null) {
+            return new SenderResult(ResultState.FAILURE, info.error);
         }
-        String host = alertParameters.getSimpleValue("host",null);
-        if (host==null) {
-            return new SenderResult(ResultState.FAILURE,"no host given");
-        }
-        String portS = alertParameters.getSimpleValue("port","162");
-        Integer port = Integer.valueOf(portS);
+        log.debug("Sending SNMP trap to: " + info);
 
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
         SnmpTrapSender snmpTrapSender = new SnmpTrapSender(preferences);
-        log.debug("Sending SNMP trap with OID " + oid + " to SNMP engine "
-            + host + ":" + port + "...");
-        String result;
+
         List<Resource> lineage = resourceManager.getResourceLineage(alert.getAlertDefinition().getResource().getId());
         String platformName = lineage.get(0).getName();
         String conditions = alertManager.prettyPrintAlertConditions(alert, false);
         String alertUrl = alertManager.prettyPrintAlertURL(alert);
 
-        SenderResult res ;
+        String result;
+        SenderResult res;
         try {
-            bootTime = new Date(); // TODO = LookupUtil.getCoreServer().getBootTime();
+            Date bootTime = new Date(); // TODO: want to use LookupUtil.getCoreServer().getBootTime() but ServiceMBean is not visible
             result = snmpTrapSender.sendSnmpTrap(alert, alertParameters, platformName, conditions, bootTime, alertUrl);
-            res = new SenderResult(ResultState.SUCCESS,result);
+            res = new SenderResult(ResultState.SUCCESS, result);
         } catch (Throwable t) {
             result = "failed - cause: " + t;
-            res = new SenderResult(ResultState.FAILURE,result);
+            res = new SenderResult(ResultState.FAILURE, result);
         }
 
         log.debug("Result of sending SNMP trap: " + result);
 
         return res;
+    }
+
+    @Override
+    public String previewConfiguration() {
+        SnmpInfo info = SnmpInfo.load(alertParameters);
+        return info.toString();
     }
 }

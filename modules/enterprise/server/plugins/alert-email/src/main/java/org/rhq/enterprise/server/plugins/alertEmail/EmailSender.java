@@ -19,42 +19,35 @@
 package org.rhq.enterprise.server.plugins.alertEmail;
 
 import java.util.Arrays;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.util.List;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.alert.notification.ResultState;
+import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 
 /**
  * Class to send emails. Actually it does not do the work
  * itself, but just prepares the input which is then passed to
  * @author Heiko W. Rupp
+ * @author Joseph Marques
  */
 public class EmailSender extends AlertSender {
 
-    private final Log log = LogFactory.getLog(EmailSender.class);
-    private static final String SMTP_HOST = "rhq.server.email.smtp-host";
-    private static final String SMTP_PORT = "rhq.server.email.smtp-port";
-    private static final String EMAIL_FROM = "rhq.server.email.from-address";
-
     @Override
     public SenderResult send(Alert alert) {
-
-        String emailAddress = alertParameters.getSimpleValue("emailAddress",null);
-        if (emailAddress==null) {
-            log.warn("Email address was null, should not happen");
-            return new SenderResult(ResultState.FAILURE,"No email address given");
+        String emailAddressString = alertParameters.getSimpleValue("emailAddress", null);
+        if (emailAddressString == null) {
+            return new SenderResult(ResultState.FAILURE, "No email address given");
         }
 
-        // TODO shall we validate the emails here and return failure if they look
-        // invalid? But then do we know what mail setup a user has and what may be
-        // illegal in his case?
+        List<String> emails = Arrays.asList(emailAddressString.split(","));
+        return new SenderResult(ResultState.DEFERRED_EMAIL, "Sending to addresses: " + emails, emails);
+    }
 
-        String[] emails = emailAddress.split(",");
-
-        return new SenderResult(ResultState.DEFERRED_EMAIL, "Emails prepared for sending", Arrays.asList(emails));
+    @Override
+    public String previewConfiguration() {
+        String emailAddressString = alertParameters.getSimpleValue("emailAddress", null);
+        return emailAddressString;
     }
 }

@@ -18,73 +18,70 @@
  */
 package org.rhq.enterprise.server.plugins.alertRoles;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.jboss.seam.annotations.Create;
-
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Backing Bean for the roles sender alert sender plugin custom UI
- * @author Heiko W. Rupp
+ * @author Joseph Marques
  */
-@SuppressWarnings("unused")
 public class RolesBackingBean extends CustomAlertSenderBackingBean {
 
-    private final Log log = LogFactory.getLog(RolesBackingBean.class);
-
-    private List<Role> allRoles;
-
-    private Map<String, String> rolesMap;
+    private Map<String, String> available;
     private List<String> currentRoles;
-    private List<String> rolesToRemove;
     private static final String ROLE_ID = "roleId";
-    private boolean isDebug = false;
 
-    @Create
-    public void init() {
+    @Override
+    public void loadView() {
+        // get available/all subjects
+        List<Role> allRoles = LookupUtil.getRoleManager().findRoles(new PageControl());
+        available = new HashMap<String, String>();
+        for (Role role : allRoles) {
+            String roleId = String.valueOf(role.getId());
+            available.put(role.getName(), roleId);
+        }
 
-        if (log.isDebugEnabled())
-            isDebug = true;
-
-        getAllRoles();
-
-        getSelectableRolesMap();
-        fillRolesFromAlertParameters();
+        // get current subjects
+        String subjectString = alertParameters.getSimpleValue(ROLE_ID, "");
+        String[] subjects = subjectString.split(",");
+        currentRoles = new ArrayList<String>(Arrays.asList(subjects));
     }
 
-    private void getAllRoles() {
-        RoleManagerLocal mgr = LookupUtil.getRoleManager();
-        allRoles = mgr.findRoles(new PageControl());
-    }
+    @Override
+    public void saveView() {
+        StringBuilder builder = new StringBuilder();
+        boolean first = true;
+        for (String subjectId : currentRoles) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(",");
+            }
+            builder.append(subjectId);
+        }
+        String subjectIds = builder.toString();
 
-    private void fillRolesFromAlertParameters() {
-        String rolesString = alertParameters.getSimpleValue(ROLE_ID,"");
-        String[] roles = rolesString.split(",");
-        if (roles.length==0)
-            return;
+        PropertySimple p = alertParameters.getSimple(ROLE_ID);
+        if (p == null) {
+            p = new PropertySimple(ROLE_ID, subjectIds);
+            alertParameters.put(p);
+        } else {
+            p.setStringValue(subjectIds);
+        }
 
-        if (currentRoles==null)
-            currentRoles = new ArrayList<String>();
-        currentRoles.addAll(Arrays.asList(roles));
+        alertParameters = persistConfiguration(alertParameters);
     }
 
     public List<String> getCurrentRoles() {
-        if (currentRoles==null)
-            fillRolesFromAlertParameters();
         return currentRoles;
     }
 
@@ -92,111 +89,7 @@ public class RolesBackingBean extends CustomAlertSenderBackingBean {
         this.currentRoles = currentRoles;
     }
 
-    public List<String> getRolesToRemove() {
-        return rolesToRemove;
-    }
-
-    public void setRolesToRemove(List<String> rolesToRemove) {
-        this.rolesToRemove = rolesToRemove;
-    }
-
-    public Map<String, String> getSelectableRolesMap() {
-
-        if (rolesMap == null) {
-            rolesMap = new HashMap<String, String>();
-
-            if (allRoles==null)
-                getAllRoles();
-
-            if (currentRoles==null)
-                fillRolesFromAlertParameters();
-
-            for (Role role : allRoles) {
-                String roleId = String.valueOf(role.getId());
-                if (currentRoles==null || !currentRoles.contains(roleId))
-                    rolesMap.put(role.getName(), roleId);
-            }
-        }
-        return this.rolesMap;
-    }
-
-    public Map<String, String> getCurrentRolesMap() {
-
-        Map<String,String> ret = new HashMap<String, String>();
-        if (currentRoles==null)
-            return ret;
-
-        for (Role role:allRoles) {
-            String roleId = String.valueOf(role.getId());
-            if (currentRoles.contains(roleId))
-                ret.put(role.getName(), roleId);
-        }
-        return ret;
-
-    }
-
-    public String addRoles() {
-
-        if (isDebug)
-            log.debug("Selected roles:  " + currentRoles );
-        if (currentRoles.isEmpty())
-            return "ALERT_NOTIFICATION";
-
-        String roles="";
-        for (String role : currentRoles) {
-            roles += role;
-            roles += ",";
-        }
-        if (roles.endsWith(","))
-                roles = roles.substring(0,roles.length()-1);
-
-        PropertySimple p = alertParameters.getSimple(ROLE_ID);
-        if (p==null) {
-                p = new PropertySimple(ROLE_ID,roles);
-                alertParameters.put(p);
-        }
-        else
-            p.setStringValue(roles);
-
-        alertParameters = persistConfiguration(alertParameters);
-
-        fillRolesFromAlertParameters();
-
-        return "ALERT_NOTIFICATIONS";
-    }
-
-    public String removeRoles() {
-        if (isDebug)
-            log.debug("In remove roles, " + rolesToRemove);
-
-        String roles ="";
-        List<String> resulting = new ArrayList<String>(currentRoles);
-        resulting.removeAll(rolesToRemove);
-
-        for (String subject : resulting) {
-            roles += subject;
-            roles += ",";
-        }
-
-        if (roles.endsWith(","))
-            roles = roles.substring(0, roles.length()-1);
-
-        PropertySimple p = alertParameters.getSimple(ROLE_ID);
-        if (p==null) {
-            if (!resulting.isEmpty()) {
-                p = new PropertySimple(ROLE_ID, roles);
-                alertParameters.put(p);
-            }
-        }
-        else
-            p.setStringValue(roles);
-
-        alertParameters = persistConfiguration(alertParameters);
-
-        currentRoles = resulting;
-
-        fillRolesFromAlertParameters();
-
-        return "ALERT_NOTIFICATIONS";
+    public Map<String, String> getAvailableRolesMap() {
+        return available;
     }
 }

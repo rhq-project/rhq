@@ -339,7 +339,7 @@ public class WsSubjectTest extends AssertJUnit implements
 		criteria.setFilterName("rhqadmin");
 		criteria.setFetchConfiguration(true);
 		criteria.setFetchRoles(true);
-		criteria.setFetchSubjectNotifications(true);
+//		criteria.setFetchSubjectNotifications(true);
 
 		List<Subject> subjects = WEBSERVICE_REMOTE.findSubjectsByCriteria(
 				subject, criteria);

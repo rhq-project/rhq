@@ -160,27 +160,24 @@
     <navigation-rule>
         <from-view-id>/rhq/common/alert/notification/details.xhtml</from-view-id>
 
-        <!-- catch all for reloading the page, pass through context parameters from calling context -->
+        <!-- refresh *with* notification ID when: -->
+        <!--    1) selecting an alert notification element from the table -->
+        <!--    2) save alert notifications that use a configuration-based rendering schemes -->
+        <!--    3) save alert notifications that use custom rendering schemes -->
         <navigation-case>
-            <from-action>success</from-action>
+            <from-outcome>success</from-outcome>
             <to-view-id>/rhq/common/alert/notification/details.xhtml?context=#{param.context}&amp;contextId=#{param.contextId}&amp;contextSubId=#{param.contextSubId}&amp;nid=#{alertNotificationsUIBean.activeNotification.id}</to-view-id>
 
             <redirect />
         </navigation-case>
         
-
-    </navigation-rule>
-    
-    <navigation-rule>
-        <from-view-id>/rhq/common/alert/notification/customContent.xhtml</from-view-id>
-
+        <!--  clicking remove button should refresh but deselect the active notification -->
         <navigation-case>
-            <from-outcome>ALERT_NOTIFICATIONS</from-outcome>
-            <to-view-id>#{param.redirect}</to-view-id>
+            <from-action>#{alertNotificationsUIBean.removeSelected}</from-action>
+            <to-view-id>/rhq/common/alert/notification/details.xhtml?context=#{param.context}&amp;contextId=#{param.contextId}&amp;contextSubId=#{param.contextSubId}</to-view-id>
 
             <redirect />
         </navigation-case>
-
     </navigation-rule>
 
 </faces-config>

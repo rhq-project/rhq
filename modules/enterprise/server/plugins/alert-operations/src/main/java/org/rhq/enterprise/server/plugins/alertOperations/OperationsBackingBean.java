@@ -26,9 +26,6 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Scope;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -43,25 +40,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * Backing bean for the operations alert sender
  * @author Heiko W. Rupp
+ * @author Joseph Marques
  */
-@Scope(ScopeType.PAGE)
 public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     private final Log log = LogFactory.getLog(OperationsBackingBean.class);
 
     private String resMode;
-    private String tokenMode;
     Integer resId;
     private Integer operationId;
     private Map<String, Integer> operationIds = new HashMap<String, Integer>();
     private String resourceName;
 
-
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
     private static final String ALERT_NOTIFICATIONS = "ALERT_NOTIFICATIONS";
-
-
 
     private String operationName;
 
@@ -69,17 +62,17 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         log.info("new " + hashCode());
     }
 
-
     @Override
     public void internalCleanup() {
         log.info("internalCleanup");
-        PropertySimple parameterConfigProp = alertParameters.getSimple(OperationsSender.PARAMETERS_CONFIG);
-        if (parameterConfigProp!=null) {
+        PropertySimple parameterConfigProp = alertParameters
+            .getSimple(OperationInfo.Constants.PARAMETERS_CONFIG.propertyName);
+        if (parameterConfigProp != null) {
             Integer paramId = parameterConfigProp.getIntegerValue();
-            if (paramId!=null) {
+            if (paramId != null) {
                 ConfigurationManagerLocal cmgr = LookupUtil.getConfigurationManager();
                 cmgr.deleteConfigurations(Arrays.asList(paramId));
-                cleanProperty(alertParameters,OperationsSender.PARAMETERS_CONFIG);
+                cleanProperty(alertParameters, OperationInfo.Constants.PARAMETERS_CONFIG.propertyName);
             }
         }
     }
@@ -89,10 +82,10 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         log.info("In select Resource, resId is " + resId + " resMode is " + resMode);
 
         if (resId != null) {
-            persistProperty(alertParameters, OperationsSender.RESOURCE_ID,resId);
-            cleanProperty(alertParameters,OperationsSender.OPERATION_ID);
-            cleanProperty(alertParameters,OperationsSender.USABLE);
-            operationIds = new HashMap<String,Integer>(); // Clean out operations dropdown
+            persistProperty(alertParameters, OperationInfo.Constants.RESOURCE.propertyName, resId);
+            cleanProperty(alertParameters, OperationInfo.Constants.OPERATION.propertyName);
+            cleanProperty(alertParameters, OperationInfo.Constants.USABLE.propertyName);
+            operationIds = new HashMap<String, Integer>(); // Clean out operations dropdown
             operationId = null;
             operationName = null;
 
@@ -103,13 +96,11 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         return ALERT_NOTIFICATIONS;
     }
 
-
-
     public String selectOperation() {
         log.info("In selectOperation, resId is " + resId + " opName is " + operationId);
 
-        if (operationId != null ) {
-            persistProperty(alertParameters, OperationsSender.OPERATION_ID, operationId);
+        if (operationId != null) {
+            persistProperty(alertParameters, OperationInfo.Constants.OPERATION.propertyName, operationId);
             getOperationNameFromOperationIds();
             lookupConfiguration();
         }
@@ -124,11 +115,9 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
             OperationManagerLocal opMan = LookupUtil.getOperationManager();
             obtainOperationIds();
 
-
-            if (operationId!=null) {
+            if (operationId != null) {
                 OperationDefinition operationDefinition = opMan.getOperationDefinition(webUser, operationId);
                 configurationDefinition = operationDefinition.getParametersConfigurationDefinition();
-
 
                 // call a SLSB method to get around lazy initialization of configDefs and configTemplates
                 ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
@@ -140,33 +129,31 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public String useConfiguration() {
-        log.info("In useConfiguration, Configuration is " + configuration );
+        log.info("In useConfiguration, Configuration is " + configuration);
 
         // COnfiguration should be valid here ...
         super.persistConfiguration(configuration);
-        persistProperty(alertParameters,OperationsSender.PARAMETERS_CONFIG,configuration.getId());
-        persistProperty(alertParameters, OperationsSender.USABLE,true);
+        persistProperty(alertParameters, OperationInfo.Constants.PARAMETERS_CONFIG.propertyName, configuration.getId());
+        persistProperty(alertParameters, OperationInfo.Constants.USABLE.propertyName, true);
 
         return ALERT_NOTIFICATIONS;
     }
 
     private void obtainOperationIds() {
 
-        PropertySimple prop = alertParameters.getSimple(OperationsSender.RESOURCE_ID);
-        if (prop!=null)
+        PropertySimple prop = alertParameters.getSimple(OperationInfo.Constants.RESOURCE.propertyName);
+        if (prop != null)
             resId = prop.getIntegerValue();
 
-        if (resId!=null) {
+        if (resId != null) {
             OperationManagerLocal opMan = LookupUtil.getOperationManager();
 
             List<OperationDefinition> opDefs = opMan.findSupportedResourceOperations(webUser, resId, false);
             for (OperationDefinition def : opDefs) {
-                operationIds.put(def.getDisplayName(),def.getId()); // TODO add more distinctive stuff in display
+                operationIds.put(def.getDisplayName(), def.getId()); // TODO add more distinctive stuff in display
             }
         }
     }
-
-
 
     public String getResMode() {
         return resMode;
@@ -177,9 +164,9 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public Integer getResId() {
-        if (resId==null) {
-            PropertySimple prop = alertParameters.getSimple(OperationsSender.RESOURCE_ID);
-            if (prop!=null)
+        if (resId == null) {
+            PropertySimple prop = alertParameters.getSimple(OperationInfo.Constants.RESOURCE.propertyName);
+            if (prop != null)
                 resId = prop.getIntegerValue();
         }
 
@@ -188,18 +175,18 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     public void setResId(Integer resId) {
         this.resId = resId;
-        if (resId!=null) {
-            persistProperty(alertParameters,OperationsSender.RESOURCE_ID,resId);
+        if (resId != null) {
+            persistProperty(alertParameters, OperationInfo.Constants.RESOURCE.propertyName, resId);
         }
     }
 
     public String getResourceName() {
-        if (resId==null)
+        if (resId == null)
             getResId();
 
-        if (resId!=null) {
+        if (resId != null) {
             ResourceManagerLocal resMgr = LookupUtil.getResourceManager();
-            Resource res = resMgr.getResource(webUser,resId);
+            Resource res = resMgr.getResource(webUser, resId);
 
             resourceName = res.getName() + " (" + res.getResourceType().getName() + ")";
         }
@@ -212,14 +199,14 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     public Integer getOperationId() {
         System.out.println("OperationsBackingBean.getOperationId, operationId=" + operationId);
-        if (operationId ==null) {
-            PropertySimple prop = alertParameters.getSimple(OperationsSender.OPERATION_ID);
-            if (prop!=null)
+        if (operationId == null) {
+            PropertySimple prop = alertParameters.getSimple(OperationInfo.Constants.OPERATION.propertyName);
+            if (prop != null)
                 operationId = prop.getIntegerValue();
 
         }
 
-        if(operationIds==null || operationIds.isEmpty())
+        if (operationIds == null || operationIds.isEmpty())
             obtainOperationIds();
         getOperationNameFromOperationIds();
 
@@ -227,9 +214,9 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     private void getOperationNameFromOperationIds() {
-        for (Map.Entry<String,Integer> ent : operationIds.entrySet()) {
+        for (Map.Entry<String, Integer> ent : operationIds.entrySet()) {
             if (ent.getValue().equals(operationId))
-                operationName=ent.getKey();
+                operationName = ent.getKey();
         }
     }
 
@@ -258,7 +245,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     public ConfigurationDefinition getConfigurationDefinition() {
 
-        if (configurationDefinition==null)
+        if (configurationDefinition == null)
             lookupConfiguration();
 
         return configurationDefinition;
@@ -283,21 +270,4 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     public String getNullConfigurationMessage() {
         return "This operation parameters definition has not been initialized.";
     }
-
-    public String getTokenMode() {
-        if (tokenMode==null) {
-            PropertySimple prop = alertParameters.getSimple(OperationsSender.TOKEN_MODE);
-            if (prop!=null)
-                tokenMode = prop.getStringValue();
-        }
-
-        return tokenMode;
-    }
-
-    public void setTokenMode(String tokenMode) {
-        this.tokenMode = tokenMode;
-
-        persistProperty(alertParameters, OperationsSender.TOKEN_MODE,tokenMode);
-    }
-
 }

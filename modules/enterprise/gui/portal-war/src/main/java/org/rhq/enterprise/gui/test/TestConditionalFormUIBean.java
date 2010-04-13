@@ -26,6 +26,8 @@ public class TestConditionalFormUIBean {
     private static final String[] FRUITS = { "Banana", "Cranberry", "Blueberry", "Orange" };
     private static final String[] VEGETABLES = { "Potatoes", "Broccoli", "Garlic", "Carrot" };
 
+    private boolean debug = false;
+
     public TestConditionalFormUIBean() {
         init();
     }
@@ -37,40 +39,54 @@ public class TestConditionalFormUIBean {
     }
 
     public List<SelectItem> getFirstList() {
-        System.out.println("getFirstList() -> " + firstList);
+        debug("getFirstList() -> " + prettyPrint(firstList));
         return firstList;
     }
 
     public List<SelectItem> getSecondList() {
-        System.out.println("getSecondList() -> " + secondList);
+        debug("getSecondList() -> " + prettyPrint(secondList));
         return secondList;
     }
 
     public List<SelectItem> getThirdList() {
-        System.out.println("getThirdList() -> " + thirdList);
+        debug("getThirdList() -> " + prettyPrint(thirdList));
         return thirdList;
+    }
+
+    private String prettyPrint(List<SelectItem> list) {
+        StringBuilder results = new StringBuilder();
+        boolean first = true;
+        for (SelectItem nextItem : list) {
+            if (first) {
+                first = false;
+            } else {
+                results.append(", ");
+            }
+            results.append(nextItem.getValue() + ":" + nextItem.getLabel());
+        }
+        return results.toString();
     }
 
     private boolean noEffect(ValueChangeEvent event) {
         Object oldValue = event.getOldValue();
         if (event.getNewValue() == null) {
-            System.out.println("noEffect: nothing selected");
+            debug("noEffect: nothing selected");
             return true; // nothing was actually selected, thus no effect
         }
 
         Object newValue = event.getNewValue();
         if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
-            System.out.println("nothing changed");
+            debug("nothing changed");
             return true; // nothing was changed, thus no effect
             // NOTE: ValueChangeEvent is sometimes suppressed client-side for no-change events; depends on the component 
         }
 
-        System.out.println("noEffect: change detected");
+        debug("noEffect: change detected");
         return false;
     }
 
     public void currentTypeChanged(ValueChangeEvent event) {
-        System.out.println("currentTypeChanged: event fired");
+        debug("currentTypeChanged: event fired");
         if (noEffect(event)) {
             // nothing was change or nothing was selected, so do nothing
             return;
@@ -98,13 +114,13 @@ public class TestConditionalFormUIBean {
         }
 
         // clean-up dependent form elements
-        System.out.println("currentTypeChanged: clearing thirdList, nulling-out result");
+        debug("currentTypeChanged: clearing thirdList, nulling-out result");
         thirdList.clear();
         result = null;
     }
 
     public void currentItemChanged(ValueChangeEvent event) {
-        System.out.println("currentItemChanged: event fired");
+        debug("currentItemChanged: event fired");
         if (noEffect(event)) {
             // nothing was change or nothing was selected, so do nothing
             return;
@@ -122,12 +138,12 @@ public class TestConditionalFormUIBean {
         }
 
         // clean-up dependent form elements
-        System.out.println("currentItemChanged: nulling-out result");
+        debug("currentItemChanged: nulling-out result");
         result = null;
     }
 
     public void currentCharChanged(ValueChangeEvent event) {
-        System.out.println("currentCharChanged: event fired");
+        debug("currentCharChanged: event fired");
         if (noEffect(event)) {
             // nothing was change or nothing was selected, so do nothing
             return;
@@ -146,42 +162,48 @@ public class TestConditionalFormUIBean {
     }
 
     public String getCurrentType() {
-        System.out.println("getCurrentType() -> " + currentType);
+        debug("getCurrentType() -> " + currentType);
         return currentType;
     }
 
     public void setCurrentType(String currentType) {
-        System.out.println("setCurrentType(" + currentType + ")");
+        debug("setCurrentType(" + currentType + ")");
         this.currentType = currentType;
     }
 
     public String getCurrentItem() {
-        System.out.println("getCurrentItem() -> " + currentItem);
+        debug("getCurrentItem() -> " + currentItem);
         return currentItem;
     }
 
     public void setCurrentItem(String currentItem) {
-        System.out.println("setCurrentItem(" + currentItem + ")");
+        debug("setCurrentItem(" + currentItem + ")");
         this.currentItem = currentItem;
     }
 
     public String getFavoriteCharacter() {
-        System.out.println("getFavoriteCharacter() -> " + favoriteCharacter);
+        debug("getFavoriteCharacter() -> " + favoriteCharacter);
         return favoriteCharacter;
     }
 
     public void setFavoriteCharacter(String favoriteCharacter) {
-        System.out.println("setFavoriteCharacter(" + favoriteCharacter + ")");
+        debug("setFavoriteCharacter(" + favoriteCharacter + ")");
         this.favoriteCharacter = favoriteCharacter;
     }
 
     public String getResult() {
-        System.out.println("getResult() -> " + result);
+        debug("getResult() -> " + result);
         return result;
     }
 
     public void setResult(String result) {
-        System.out.println("setResult(" + result + ")");
+        debug("setResult(" + result + ")");
         this.result = result;
+    }
+
+    private void debug(String message) {
+        if (debug) {
+            System.out.println(message);
+        }
     }
 }

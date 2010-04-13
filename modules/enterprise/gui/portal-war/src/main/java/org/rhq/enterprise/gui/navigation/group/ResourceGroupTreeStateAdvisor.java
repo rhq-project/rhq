@@ -114,6 +114,12 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
             TreeState state = (TreeState) tree.getComponentState();
             TreeRowKey<?> selectedKey = state.getSelectedNode();
 
+            ResourceGroupTreeNode node = (ResourceGroupTreeNode) tree.getRowData(key);
+            
+            if (node.getParent() == null) {
+                return true;
+            }
+            
             if (selectedKey == null) {
                 getCurrentGroup();
     
@@ -160,7 +166,6 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
 
         try {
             TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
-            tree.queueNodeExpand(key);
             ResourceGroupTreeNode node = (ResourceGroupTreeNode) tree.getRowData(key);
 
             if (node != null) {

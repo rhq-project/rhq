@@ -103,7 +103,6 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         TreeState state = (TreeState) ((HtmlTree) tree).getComponentState();
 
         try {
-            tree.queueNodeExpand((TreeRowKey<?>) tree.getRowKey());
             ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
 
             if (node != null) {
@@ -157,11 +156,11 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         if (key != null) {
             TreeState state = (TreeState) tree.getComponentState();
 
-            Object data = ((ResourceTreeNode) tree.getRowData(key)).getData();
-            if (data instanceof Resource) {
-                if (((Resource) data).getResourceType().getCategory() == ResourceCategory.PLATFORM)
-                    return Boolean.TRUE;
-            }  
+            ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(key);
+            
+            if (node.getParent() == null) {
+                return true;
+            }
             
             TreeRowKey<?> selectedKey = state.getSelectedNode();
             int selectedId = 0;

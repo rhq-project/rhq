@@ -11,12 +11,12 @@
         >
 
     <serverplugin:help>
-        This alert sender plugin is used to send emails when alerts were triggered.
+        Used to send notifications to direct email addresses.
     </serverplugin:help>
 
 
     <!-- How does this sender show up in drop downs etc -->
-    <short-name>Email</short-name>
+    <short-name>Direct Emails</short-name>
 
     <!-- Class that does the actual sending -->
     <plugin-class>EmailSender</plugin-class>

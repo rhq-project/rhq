@@ -153,10 +153,12 @@
          <!--
             run the standard tests by default (if any) but exclude ws tests requiring a running server.
          -->
+         <!--Commenting out as test suite(like cli tests) depend upon running server data. -->
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <!-- Everything but the web service tests, this is the standard test execution -->
             <configuration>
+               <skip>true</skip>
                <excludes>
                   <exclude>com/**/*.java</exclude>
                </excludes>
@@ -174,7 +176,7 @@
    </build>
 
    <profiles>
-      <profile>
+      <!--  <profile>
          <id>test-ws</id>
          <activation>
             <property>
@@ -216,7 +218,7 @@
                </plugin>
             </plugins>
          </build>
-      </profile>
+      </profile> -->
 
       <!--  Add dependencies need for jdk5 builds. Remove when we stop supporting jdk5 -->
       <profile>

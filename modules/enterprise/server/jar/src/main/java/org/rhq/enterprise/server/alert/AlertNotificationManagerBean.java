@@ -524,6 +524,12 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return ret;
     }
 
+    public AlertNotification getAlertNotification(Subject user, int alertNotificationId) {
+        AlertNotification notification = entityManager.find(AlertNotification.class, alertNotificationId);
+        notification.getConfiguration().getProperties().size(); // eager load the alert properties
+        return notification;
+    }
+
     public AlertNotificationTemplate getAlertNotificationTemplate(Subject user, int alertNotificationTemplateId) {
         AlertNotificationTemplate template = entityManager.find(AlertNotificationTemplate.class,
             alertNotificationTemplateId);

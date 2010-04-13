@@ -94,7 +94,7 @@ public class BundleDeployDefinition implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private BundleVersion bundleVersion;
 
-    @OneToMany(mappedBy = "bundleDeployDefinition", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
 
     @OneToMany(mappedBy = "bundleDeployDefinition", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

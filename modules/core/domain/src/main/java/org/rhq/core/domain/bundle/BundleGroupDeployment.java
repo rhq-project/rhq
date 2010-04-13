@@ -60,7 +60,7 @@ public class BundleGroupDeployment implements Serializable {
     @ManyToOne
     private ResourceGroup group;
 
-    @JoinColumn(name = "BUNDLE_DEPLOY_DEF_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "BUNDLE_DEPLOY_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
     protected BundleDeployDefinition bundleDeployDefinition;
 

@@ -138,9 +138,9 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
             // clean up any tests that don't already clean up after themselves
 
-            // remove bundleversions which cascade remove bundlefiles and bundledeploydefs
-            // bundledeploydefs cascade remove bundledeployments and bundlegroupdeployments 
-            // bundledeployments cascade remove bundledeploymenthistory            
+            // remove bundleversions which cascade remove bundlefiles and bundledeployments
+            // bundledeployments cascade remove bundleresourcedeployments and bundlegroupdeployments 
+            // bundleresourcedeployments cascade remove bundleresourcedeploymenthistory            
             q = em.createQuery("SELECT bv FROM BundleVersion bv WHERE bv.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
@@ -154,16 +154,17 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 em.remove(em.getReference(BundleFile.class, ((BundleFile) removeMe).getId()));
             }
             // remove any orphaned deployment history 
-            q = em.createQuery("SELECT brdh FROM BundleResourceDeploymentHistory brdh ");//WHERE bdh.name LIKE '" + TEST_PREFIX + "%'");
+            q = em
+                .createQuery("SELECT brdh FROM BundleResourceDeploymentHistory brdh WHERE brdh.resourceDeployment.bundleDeployment.name LIKE '"
+                    + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleResourceDeploymentHistory.class,
                     ((BundleResourceDeploymentHistory) removeMe).getId()));
             }
             // remove any orphaned bds
-            q = em
-                .createQuery("SELECT brd FROM BundleResourceDeployment brd WHERE brd.bundleDeployDefinition.name LIKE '"
-                    + TEST_PREFIX + "%'");
+            q = em.createQuery("SELECT brd FROM BundleResourceDeployment brd WHERE brd.bundleDeployment.name LIKE '"
+                + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em

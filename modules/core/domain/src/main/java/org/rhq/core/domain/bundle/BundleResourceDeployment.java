@@ -96,7 +96,7 @@ public class BundleResourceDeployment implements Serializable {
     @Column(name = "CTIME")
     private Long ctime = -1L;
 
-    @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "resourceDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleResourceDeploymentHistory> histories = new ArrayList<BundleResourceDeploymentHistory>();
 
     protected BundleResourceDeployment() {

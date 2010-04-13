@@ -31,13 +31,9 @@ public class TestConditionalFormUIBean {
     }
 
     public void init() {
-        SelectItem item = new SelectItem("fruits", "Fruits");
-        firstList.add(item);
-        item = new SelectItem("vegetables", "Vegetables");
-        firstList.add(item);
-        for (int i = 0; i < FRUITS.length; i++) {
-            item = new SelectItem(FRUITS[i]);
-        }
+        firstList.add(new SelectItem("none", "Select..."));
+        firstList.add(new SelectItem("fruits", "Fruits"));
+        firstList.add(new SelectItem("vegetables", "Vegetables"));
     }
 
     public List<SelectItem> getFirstList() {
@@ -56,17 +52,19 @@ public class TestConditionalFormUIBean {
     }
 
     private boolean noEffect(ValueChangeEvent event) {
+        Object oldValue = event.getOldValue();
         if (event.getNewValue() == null) {
             System.out.println("noEffect: nothing selected");
             return true; // nothing was actually selected, thus no effect
         }
-        Object oldValue = event.getOldValue();
+
         Object newValue = event.getNewValue();
         if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
             System.out.println("nothing changed");
             return true; // nothing was changed, thus no effect
             // NOTE: ValueChangeEvent is sometimes suppressed client-side for no-change events; depends on the component 
         }
+
         System.out.println("noEffect: change detected");
         return false;
     }
@@ -80,11 +78,19 @@ public class TestConditionalFormUIBean {
 
         // edit stuff as a result of the change
         secondList.clear();
+
         String[] currentItems;
-        if (((String) event.getNewValue()).equals("fruits")) {
-            currentItems = FRUITS;
+        String selectedCurrentType = (String) event.getNewValue();
+
+        if (selectedCurrentType.equals("none")) {
+            currentItems = new String[0];
         } else {
-            currentItems = VEGETABLES;
+            secondList.add(new SelectItem("none", "Select..."));
+            if (selectedCurrentType.equals("fruits")) {
+                currentItems = FRUITS;
+            } else {
+                currentItems = VEGETABLES;
+            }
         }
         for (int i = 0; i < currentItems.length; i++) {
             SelectItem item = new SelectItem(currentItems[i]);
@@ -106,10 +112,13 @@ public class TestConditionalFormUIBean {
 
         // edit stuff as a result of the change
         thirdList.clear();
+        thirdList.add(new SelectItem("none", "Select..."));
         String selectedCurrentItem = (String) event.getNewValue();
-        for (char nextChar : selectedCurrentItem.toCharArray()) {
-            SelectItem item = new SelectItem(nextChar);
-            thirdList.add(item);
+        if (selectedCurrentItem.equals("none") == false) {
+            for (char nextChar : selectedCurrentItem.toCharArray()) {
+                SelectItem item = new SelectItem(nextChar);
+                thirdList.add(item);
+            }
         }
 
         // clean-up dependent form elements
@@ -127,8 +136,11 @@ public class TestConditionalFormUIBean {
         // edit stuff as a result of the change
         // NOTE: calling getFavoriteCharacter results stale data here, because the
         //       ValueChangeEvent is fired before the setFavoriteCharacter method
+        result = null;
         String selectedCurrentChar = (String) event.getNewValue();
-        result = getCurrentType() + " : " + getCurrentItem() + " : " + selectedCurrentChar;
+        if (selectedCurrentChar.equals("none") == false) {
+            result = getCurrentType() + " : " + getCurrentItem() + " : " + selectedCurrentChar;
+        }
 
         // no dependent form elements
     }

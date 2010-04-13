@@ -28,43 +28,43 @@
         <h:form id="dynamicForm">
         <h:panelGrid columns="2">
             <h:outputText value="Choose the produce type:"/>
-            <rich:inplaceSelect value="#{TestConditionalFormUIBean.currentType}" 
-                                valueChangeListener="#{TestConditionalFormUIBean.currentTypeChanged}" 
-                                defaultLabel="Click here to select">
+            <h:selectOneMenu value="#{TestConditionalFormUIBean.currentType}" 
+                             valueChangeListener="#{TestConditionalFormUIBean.currentTypeChanged}" 
+                             defaultLabel="Click here to select">
                 <f:selectItems value="#{TestConditionalFormUIBean.firstList}"/>
-                <a4j:support event="onviewactivated" 
+                <a4j:support event="onchange" 
                              reRender="items-label, items-value, chars-label, chars-value, result-label, result-value" 
                              ajaxSingle="true"/>
-            </rich:inplaceSelect>
+            </h:selectOneMenu>
             
             <a4j:outputPanel id="items-label">
                 <h:outputText value="Choose concrete product:" rendered="#{!empty TestConditionalFormUIBean.secondList}"/>
             </a4j:outputPanel>  
             <a4j:outputPanel id="items-value">
-                <rich:inplaceSelect value="#{TestConditionalFormUIBean.currentItem}"
-                                    valueChangeListener="#{TestConditionalFormUIBean.currentItemChanged}" 
-                                    rendered="#{!empty TestConditionalFormUIBean.secondList}" 
-                                    defaultLabel="Click here to select">
-                    <f:selectItems value="#{TestConditionalFormUIBean.secondList}"/>
-                   <a4j:support event="onviewactivated" 
+                <h:selectOneMenu value="#{TestConditionalFormUIBean.currentItem}"
+                                 valueChangeListener="#{TestConditionalFormUIBean.currentItemChanged}" 
+                                 rendered="#{!empty TestConditionalFormUIBean.secondList}" 
+                                 defaultLabel="Click here to select">
+                   <f:selectItems value="#{TestConditionalFormUIBean.secondList}"/>
+                   <a4j:support event="onchange" 
                                 reRender="chars-label, chars-value, result-label, result-value" 
                                 ajaxSingle="true"/>
-                </rich:inplaceSelect>
+                </h:selectOneMenu>
             </a4j:outputPanel>
             
             <a4j:outputPanel id="chars-label">
                 <h:outputText value="Choose favorite letter:" rendered="#{!empty TestConditionalFormUIBean.thirdList}"/>
             </a4j:outputPanel>  
             <a4j:outputPanel id="chars-value">
-                <rich:inplaceSelect value="#{TestConditionalFormUIBean.favoriteCharacter}"
-                                    valueChangeListener="#{TestConditionalFormUIBean.currentCharChanged}" 
-                                    rendered="#{!empty TestConditionalFormUIBean.thirdList}" 
-                                    defaultLabel="Click here to select">
+                <h:selectOneMenu value="#{TestConditionalFormUIBean.favoriteCharacter}"
+                                 valueChangeListener="#{TestConditionalFormUIBean.currentCharChanged}" 
+                                 rendered="#{!empty TestConditionalFormUIBean.thirdList}" 
+                                 defaultLabel="Click here to select">
                     <f:selectItems value="#{TestConditionalFormUIBean.thirdList}"/>
-                    <a4j:support event="onviewactivated" 
+                    <a4j:support event="onchange" 
                                  reRender="result-label, result-value" 
                                  ajaxSingle="true"/>
-                </rich:inplaceSelect>
+                </h:selectOneMenu>
             </a4j:outputPanel>
             
             <a4j:outputPanel id="result-label">

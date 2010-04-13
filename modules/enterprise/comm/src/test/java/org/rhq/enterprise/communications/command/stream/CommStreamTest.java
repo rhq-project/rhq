@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
@@ -92,7 +93,11 @@ public class CommStreamTest {
         prefs1.put(ServiceContainerConfigurationConstants.CMDSERVICE_DIRECTORY_DYNAMIC_DISCOVERY, "false");
 
         serviceContainer1 = new ServiceContainer();
-        serviceContainer1.start(prefs1, new ClientCommandSenderConfiguration());
+        try {
+            serviceContainer1.start(prefs1, new ClientCommandSenderConfiguration());
+        } catch (Exception e) {
+            throw new Exception("Failed to bind server socket to 127.0.0.1:" + CommTestConstants.CONNECTOR_BIND_PORT, e);
+        }
 
         // setup the server #2
         Preferences prefs2 = getPrefs1();
@@ -106,7 +111,11 @@ public class CommStreamTest {
         prefs2.put(ServiceContainerConfigurationConstants.CMDSERVICE_DIRECTORY_DYNAMIC_DISCOVERY, "false");
 
         serviceContainer2 = new ServiceContainer();
-        serviceContainer2.start(prefs2, new ClientCommandSenderConfiguration());
+        try {
+            serviceContainer2.start(prefs2, new ClientCommandSenderConfiguration());
+        } catch (BindException e) {
+            throw new Exception("Failed to bind server socket to 127.0.0.1:" + CommTestConstants.CONNECTOR2_BIND_PORT, e);
+        }
 
         Thread.sleep(5000);
 

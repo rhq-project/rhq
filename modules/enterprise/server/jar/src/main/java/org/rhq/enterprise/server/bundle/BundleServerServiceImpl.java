@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.bundle.BundleDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.content.PackageVersion;
@@ -49,10 +49,10 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
 public class BundleServerServiceImpl implements BundleServerService {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public void addDeploymentHistory(int bundleDeploymentId, BundleDeploymentHistory history) {
+    public void addDeploymentHistory(int bundleDeploymentId, BundleResourceDeploymentHistory history) {
         try {
             BundleManagerLocal bm = LookupUtil.getBundleManager();
-            bm.addBundleDeploymentHistory(LookupUtil.getSubjectManager().getOverlord(), bundleDeploymentId, history);
+            bm.addBundleResourceDeploymentHistory(LookupUtil.getSubjectManager().getOverlord(), bundleDeploymentId, history);
         } catch (Exception e) {
             log.error("Failed to add history to deployment id: " + bundleDeploymentId, e);
             throw new WrappedRemotingException(e);
@@ -99,7 +99,7 @@ public class BundleServerServiceImpl implements BundleServerService {
     public void setBundleDeploymentStatus(int bundleDeploymentId, BundleDeploymentStatus status) {
         try {
             BundleManagerLocal bm = LookupUtil.getBundleManager();
-            bm.setBundleDeploymentStatus(LookupUtil.getSubjectManager().getOverlord(), bundleDeploymentId, status);
+            bm.setBundleResourceDeploymentStatus(LookupUtil.getSubjectManager().getOverlord(), bundleDeploymentId, status);
         } catch (Exception e) {
             log.error("Failed to set status for deployment id: " + bundleDeploymentId, e);
             throw new WrappedRemotingException(e);

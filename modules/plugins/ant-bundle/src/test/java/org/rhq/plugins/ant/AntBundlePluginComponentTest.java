@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
@@ -63,6 +63,7 @@ public class AntBundlePluginComponentTest {
         plugin = new AntBundlePluginComponent();
         ResourceType type = new ResourceType("antBundleTestType", "antBundleTestPlugin", ResourceCategory.SERVER, null);
         Resource resource = new Resource("antBundleTestKey", "antBundleTestName", type);
+        @SuppressWarnings("unchecked")
         ResourceContext<?> context = new ResourceContext(resource, null, null,
             SystemInfoFactory.createJavaSystemInfo(), tmpDir, null, "antBundleTestPC", null, null, null, null, null);
         plugin.start(context);
@@ -96,7 +97,7 @@ public class AntBundlePluginComponentTest {
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(tmpDir);
-        request.setBundleDeployment(new BundleDeployment(deployDef, null));
+        request.setResourceDeployment(new BundleResourceDeployment(deployDef, null));
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -133,7 +134,7 @@ public class AntBundlePluginComponentTest {
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(tmpDir);
-        request.setBundleDeployment(new BundleDeployment(deployDef, null));
+        request.setResourceDeployment(new BundleResourceDeployment(deployDef, null));
 
         BundleDeployResult results = plugin.deployBundle(request);
 

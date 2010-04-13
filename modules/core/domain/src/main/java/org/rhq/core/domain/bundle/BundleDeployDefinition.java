@@ -53,12 +53,13 @@ import org.rhq.core.domain.configuration.Configuration;
  * using this def.
  *
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
 @Entity
 @NamedQueries( { @NamedQuery(name = BundleDeployDefinition.QUERY_FIND_ALL, query = "SELECT bdd FROM BundleDeployDefinition bdd") //
 })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOY_DEF_ID_SEQ")
-@Table(name = "RHQ_BUNDLE_DEPLOY_DEF")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOY_ID_SEQ")
+@Table(name = "RHQ_BUNDLE_DEPLOY")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleDeployDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -82,9 +83,27 @@ public class BundleDeployDefinition implements Serializable {
     @Column(name = "MTIME")
     private Long mtime = System.currentTimeMillis();
 
+    @Column(name = "INSTALL_DIR", nullable = false)
+    private String installDir;
+
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private Configuration configuration;
+
+    @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private BundleVersion bundleVersion;
+
+    @OneToMany(mappedBy = "bundleDeployDefinition", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
+
+    @OneToMany(mappedBy = "bundleDeployDefinition", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleGroupDeployment> groupDeployments = new ArrayList<BundleGroupDeployment>();
+
+    // The following are reserved for future policy work 
+    @JoinColumn(name = "BUNDLE_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Bundle bundle;
 
     @Column(name = "ENFORCE_POLICY", nullable = false)
     private boolean enforcePolicy;
@@ -92,27 +111,14 @@ public class BundleDeployDefinition implements Serializable {
     @Column(name = "ENFORCEMENT_INTERVAL", nullable = true)
     private int enforcementInterval;
 
-    @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private BundleVersion bundleVersion;
-
-    @JoinColumn(name = "BUNDLE_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Bundle bundle;
-
-    @OneToMany(mappedBy = "bundleDeployDefinition", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<BundleDeployment> deployments = new ArrayList<BundleDeployment>();
-
-    @OneToMany(mappedBy = "bundleDeployDefinition", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<BundleGroupDeployment> groupDeployments = new ArrayList<BundleGroupDeployment>();
-
     public BundleDeployDefinition() {
         // for JPA use
     }
 
-    public BundleDeployDefinition(BundleVersion bundleVersion, String name) {
+    public BundleDeployDefinition(BundleVersion bundleVersion, String name, String installDir) {
         this.bundleVersion = bundleVersion;
         this.name = name;
+        this.installDir = installDir;
         this.enforcePolicy = false;
     }
 
@@ -162,12 +168,62 @@ public class BundleDeployDefinition implements Serializable {
         this.mtime = mtime;
     }
 
+    public String getInstallDir() {
+        return installDir;
+    }
+
+    public void setInstallDir(String installDir) {
+        this.installDir = installDir;
+    }
+
     public Configuration getConfiguration() {
         return configuration;
     }
 
     public void setConfiguration(Configuration config) {
         this.configuration = config;
+    }
+
+    public BundleVersion getBundleVersion() {
+        return bundleVersion;
+    }
+
+    public void setBundleVersion(BundleVersion bundleVersion) {
+        this.bundleVersion = bundleVersion;
+    }
+
+    public List<BundleResourceDeployment> getResourceDeployments() {
+        return resourceDeployments;
+    }
+
+    public void setResourceDeployments(List<BundleResourceDeployment> resourceDeployments) {
+        this.resourceDeployments = resourceDeployments;
+    }
+
+    public void addResourceDeployment(BundleResourceDeployment resourceDeployment) {
+        this.resourceDeployments.add(resourceDeployment);
+        resourceDeployment.setBundleDeployDefinition(this);
+    }
+
+    public List<BundleGroupDeployment> getGroupDeployments() {
+        return groupDeployments;
+    }
+
+    public void addGroupDeployment(BundleGroupDeployment groupDeployment) {
+        this.groupDeployments.add(groupDeployment);
+        groupDeployment.setBundleDeployDefinition(this);
+    }
+
+    public void setGroupDeployments(List<BundleGroupDeployment> groupDeployments) {
+        this.groupDeployments = groupDeployments;
+    }
+
+    public Bundle getBundle() {
+        return bundle;
+    }
+
+    public void setBundle(Bundle bundle) {
+        this.bundle = bundle;
     }
 
     public boolean isEnforcePolicy() {
@@ -186,48 +242,6 @@ public class BundleDeployDefinition implements Serializable {
         this.enforcementInterval = enforcementInterval;
     }
 
-    public BundleVersion getBundleVersion() {
-        return bundleVersion;
-    }
-
-    public void setBundleVersion(BundleVersion bundleVersion) {
-        this.bundleVersion = bundleVersion;
-    }
-
-    public Bundle getBundle() {
-        return bundle;
-    }
-
-    public void setBundle(Bundle bundle) {
-        this.bundle = bundle;
-    }
-
-    public List<BundleDeployment> getDeployments() {
-        return deployments;
-    }
-
-    public void addDeployment(BundleDeployment bundleDeployment) {
-        this.deployments.add(bundleDeployment);
-        bundleDeployment.setBundleDeployDefinition(this);
-    }
-
-    public void setDeployments(List<BundleDeployment> deployments) {
-        this.deployments = deployments;
-    }
-
-    public List<BundleGroupDeployment> getGroupDeployments() {
-        return groupDeployments;
-    }
-
-    public void addGroupDeployment(BundleGroupDeployment bundleGroupDeployment) {
-        this.groupDeployments.add(bundleGroupDeployment);
-        bundleGroupDeployment.setBundleDeployDefinition(this);
-    }
-
-    public void setGroupDeployments(List<BundleGroupDeployment> groupDeployments) {
-        this.groupDeployments = groupDeployments;
-    }
-
     @Override
     public String toString() {
         return "BundleDeployDefinition[id=" + id + ", name=" + name + "]";
@@ -238,8 +252,9 @@ public class BundleDeployDefinition implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((bundleVersion == null) ? 0 : bundleVersion.hashCode());
-        result = prime * result + ((bundle == null) ? 0 : bundle.hashCode());
+        // result = prime * result + ((bundle == null) ? 0 : bundle.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((installDir == null) ? 0 : installDir.hashCode());
         return result;
     }
 
@@ -262,19 +277,27 @@ public class BundleDeployDefinition implements Serializable {
             return false;
         }
 
-        if (bundle == null) {
-            if (other.bundle != null) {
-                return false;
-            }
-        } else if (!bundle.equals(other.bundle)) {
-            return false;
-        }
+        //        if (bundle == null) {
+        //            if (other.bundle != null) {
+        //                return false;
+        //            }
+        //        } else if (!bundle.equals(other.bundle)) {
+        //            return false;
+        //        }
 
         if (name == null) {
             if (other.name != null) {
                 return false;
             }
         } else if (!name.equals(other.name)) {
+            return false;
+        }
+
+        if (installDir == null) {
+            if (other.installDir != null) {
+                return false;
+            }
+        } else if (!installDir.equals(other.installDir)) {
             return false;
         }
 

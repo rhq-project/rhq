@@ -47,15 +47,15 @@ import javax.xml.bind.annotation.XmlAccessorType;
  * @author Jay Shaughnessy
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = BundleDeploymentHistory.QUERY_FIND_ALL, query = "SELECT bdh FROM BundleDeploymentHistory bdh") //
+@NamedQueries( { @NamedQuery(name = BundleResourceDeploymentHistory.QUERY_FIND_ALL, query = "SELECT brdh FROM BundleResourceDeploymentHistory brdh") //
 })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOY_HIST_ID_SEQ")
-@Table(name = "RHQ_BUNDLE_DEPLOY_HIST")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_RES_DEP_HIST_ID_SEQ")
+@Table(name = "RHQ_BUNDLE_RES_DEP_HIST")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BundleDeploymentHistory implements Serializable {
+public class BundleResourceDeploymentHistory implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_FIND_ALL = "BundleDeploymentHistory.findAll";
+    public static final String QUERY_FIND_ALL = "BundleResourceDeploymentHistory.findAll";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -64,7 +64,7 @@ public class BundleDeploymentHistory implements Serializable {
 
     @JoinColumn(name = "BUNDLE_DEPLOY_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
-    private BundleDeployment bundleDeployment;
+    private BundleResourceDeployment resourceDeployment;
 
     @Column(name = "SUBJECT_NAME", nullable = true)
     protected String subjectName;
@@ -84,10 +84,10 @@ public class BundleDeploymentHistory implements Serializable {
     private String auditMessage;
 
     // required for JPA
-    protected BundleDeploymentHistory() {
+    protected BundleResourceDeploymentHistory() {
     }
 
-    public BundleDeploymentHistory(String subjectName, BundleDeploymentAction auditAction,
+    public BundleResourceDeploymentHistory(String subjectName, BundleDeploymentAction auditAction,
         BundleDeploymentStatus auditStatus, String auditMessage) {
 
         this.subjectName = subjectName;
@@ -102,14 +102,6 @@ public class BundleDeploymentHistory implements Serializable {
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public BundleDeployment getBundleDeployment() {
-        return this.bundleDeployment;
-    }
-
-    public void setBundleDeployment(BundleDeployment bundleDeployment) {
-        this.bundleDeployment = bundleDeployment;
     }
 
     public String getSubjectName() {
@@ -152,11 +144,19 @@ public class BundleDeploymentHistory implements Serializable {
         this.auditMessage = auditMessage;
     }
 
+    public BundleResourceDeployment getResourceDeployment() {
+        return resourceDeployment;
+    }
+
+    public void setResourceDeployment(BundleResourceDeployment resourceDeployment) {
+        this.resourceDeployment = resourceDeployment;
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("BundleDeploymentAudit: ");
         str.append(", time=[").append(this.auditTime).append("]");
-        str.append(", bd=[").append(this.bundleDeployment).append("]");
+        str.append(", rd=[").append(this.resourceDeployment).append("]");
         str.append(", action=[").append(this.auditAction).append("]");
         str.append(", message=[").append(this.auditMessage).append("]");
         return str.toString();

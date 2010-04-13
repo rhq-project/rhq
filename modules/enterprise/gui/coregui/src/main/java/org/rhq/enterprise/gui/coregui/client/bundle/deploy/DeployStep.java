@@ -27,8 +27,8 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -71,7 +71,7 @@ public class DeployStep implements WizardStep {
 
             if (wizard.isNewDefinition()) {
                 bundleServer.createBundleDeployDefinition(wizard.getBundleVersion().getId(), wizard.getName(), wizard
-                    .getDescription(), wizard.getConfig(), false, -1, false, //
+                    .getDescription(), wizard.getInstallDir(), wizard.getConfig(), false, -1, false, //
                     new AsyncCallback<BundleDeployDefinition>() {
                         public void onSuccess(BundleDeployDefinition result) {
                             deployingImage.setSrc("/images/status_complete.gif");
@@ -82,17 +82,17 @@ public class DeployStep implements WizardStep {
                             wizard.setBundleDeployDefinition(result);
 
                             if (wizard.isResourceDeploy()) {
-                                bundleServer.scheduleBundleDeployment(wizard.getBundleDeployDefinition().getId(),
-                                    wizard.getDeployTargetId(), //
-                                    new AsyncCallback<BundleDeployment>() {
-                                        public void onSuccess(BundleDeployment result) {
+                                bundleServer.scheduleBundleResourceDeployment(wizard.getBundleDeployDefinition()
+                                    .getId(), wizard.getDeployTargetId(), //
+                                    new AsyncCallback<BundleResourceDeployment>() {
+                                        public void onSuccess(BundleResourceDeployment result) {
                                             deployingImage.setSrc("/images/status_complete.gif");
                                             deployingMessage.setText("Bundle Deployment Scheduled!");
                                             CoreGUI.getMessageCenter().notify(
                                                 new Message("Schedule bundle deployment ["
                                                     + wizard.getBundleDeployDefinition().getName() + "] resource ["
                                                     + result.getResource() + "]", Severity.Info));
-                                            wizard.setBundleDeployment(result);
+                                            wizard.setResourceDeployment(result);
                                         }
 
                                         public void onFailure(Throwable caught) {
@@ -100,7 +100,7 @@ public class DeployStep implements WizardStep {
                                             deployingMessage.setText("Failed to Schedule Deployment!");
                                             CoreGUI.getErrorHandler().handleError(
                                                 "Failed to schedule deployment: " + caught.getMessage(), caught);
-                                            wizard.setBundleDeployment(null);
+                                            wizard.setResourceDeployment(null);
                                         }
                                     });
                             } else {
@@ -114,7 +114,7 @@ public class DeployStep implements WizardStep {
                                                 new Message("Schedule bundle group deployment ["
                                                     + wizard.getBundleDeployDefinition().getName()
                                                     + "] resource group [" + result.getGroup() + "]", Severity.Info));
-                                            wizard.setBundleGroupDeployment(result);
+                                            wizard.setGroupDeployment(result);
                                         }
 
                                         public void onFailure(Throwable caught) {
@@ -122,7 +122,7 @@ public class DeployStep implements WizardStep {
                                             deployingMessage.setText("Failed to Schedule Group Deployment!");
                                             CoreGUI.getErrorHandler().handleError(
                                                 "Failed to schedule group deployment: " + caught.getMessage(), caught);
-                                            wizard.setBundleGroupDeployment(null);
+                                            wizard.setGroupDeployment(null);
                                         }
                                     });
                             }

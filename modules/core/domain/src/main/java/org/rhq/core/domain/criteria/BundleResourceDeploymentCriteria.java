@@ -22,8 +22,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 
 /**
  * @author Jay Shaughnessy
@@ -31,13 +31,13 @@ import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class BundleDeploymentCriteria extends Criteria {
+public class BundleResourceDeploymentCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
     private Integer filterBundleDeployDefinitionId; // requires override   
     private String filterBundleDeployDefinitionName; // requires override
-    private Integer filterBundleGroupDeploymentId; // requires override    
+    private Integer filterGroupDeploymentId; // requires override    
     private Integer filterResourceId; // requires override
     private String filterResourceName; // requires override
     private BundleDeploymentStatus filterStatus;
@@ -46,17 +46,17 @@ public class BundleDeploymentCriteria extends Criteria {
     private boolean fetchResource;
     private boolean fetchHistories;
 
-    public BundleDeploymentCriteria() {
+    public BundleResourceDeploymentCriteria() {
         filterOverrides.put("bundleDeployDefinitionId", "parentResource.id = ?");
         filterOverrides.put("bundleDeployDefinitionName", "parentResource.name like ?");
-        filterOverrides.put("bundleGroupDeploymentId", "bundleGroupDeployment.id = ?");
+        filterOverrides.put("groupDeploymentId", "groupDeployment.id = ?");
         filterOverrides.put("resourceId", "resource.id = ?");
         filterOverrides.put("resourceName", "resource.name like ?");
     }
 
     @Override
     public Class<?> getPersistentClass() {
-        return BundleDeployment.class;
+        return BundleResourceDeployment.class;
     }
 
     public void addFilterId(Integer filterId) {
@@ -71,8 +71,8 @@ public class BundleDeploymentCriteria extends Criteria {
         this.filterBundleDeployDefinitionName = filterBundleDeployDefinitionName;
     }
 
-    public void addFilterBundleGroupDeploymentId(Integer filterBundleGroupDeploymentId) {
-        this.filterBundleGroupDeploymentId = filterBundleGroupDeploymentId;
+    public void addFilterGroupDeploymentId(Integer filterGroupDeploymentId) {
+        this.filterGroupDeploymentId = filterGroupDeploymentId;
     }
 
     public void addFilterResourceId(Integer filterResourceId) {

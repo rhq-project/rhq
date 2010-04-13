@@ -80,8 +80,8 @@ public class BundleGroupDeployment implements Serializable {
     @Column(name = "MTIME", nullable = false)
     protected long modifiedTime = System.currentTimeMillis();
 
-    @OneToMany(mappedBy = "bundleGroupDeployment", fetch = FetchType.LAZY)
-    private List<BundleDeployment> bundleDeployments = new ArrayList<BundleDeployment>();
+    @OneToMany(mappedBy = "groupDeployment", fetch = FetchType.LAZY)
+    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
 
     // For JPA
     public BundleGroupDeployment() {
@@ -189,17 +189,17 @@ public class BundleGroupDeployment implements Serializable {
         return this.modifiedTime;
     }
 
-    public List<BundleDeployment> getBundleDeployments() {
-        return bundleDeployments;
+    public List<BundleResourceDeployment> getResourceDeployments() {
+        return resourceDeployments;
     }
 
-    public void setBundleDeployments(List<BundleDeployment> bundleDeployments) {
-        this.bundleDeployments = bundleDeployments;
+    public void setResourceDeployments(List<BundleResourceDeployment> resourceDeployments) {
+        this.resourceDeployments = resourceDeployments;
     }
 
-    public void addBundleDeployment(BundleDeployment bundleDeployment) {
-        bundleDeployment.setBundleGroupDeployment(this);
-        this.bundleDeployments.add(bundleDeployment);
+    public void addResourceDeployment(BundleResourceDeployment resourceDeployment) {
+        resourceDeployment.setGroupDeployment(this);
+        this.resourceDeployments.add(resourceDeployment);
     }
 
     /**

@@ -37,12 +37,12 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
-import org.rhq.core.domain.bundle.BundleDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -54,8 +54,8 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
+import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -154,17 +154,20 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 em.remove(em.getReference(BundleFile.class, ((BundleFile) removeMe).getId()));
             }
             // remove any orphaned deployment history 
-            q = em.createQuery("SELECT bdh FROM BundleDeploymentHistory bdh ");//WHERE bdh.name LIKE '" + TEST_PREFIX + "%'");
+            q = em.createQuery("SELECT brdh FROM BundleResourceDeploymentHistory brdh ");//WHERE bdh.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
-                em.remove(em.getReference(BundleDeploymentHistory.class, ((BundleDeploymentHistory) removeMe).getId()));
+                em.remove(em.getReference(BundleResourceDeploymentHistory.class,
+                    ((BundleResourceDeploymentHistory) removeMe).getId()));
             }
             // remove any orphaned bds
-            q = em.createQuery("SELECT bd FROM BundleDeployment bd WHERE bd.bundleDeployDefinition.name LIKE '"
-                + TEST_PREFIX + "%'");
+            q = em
+                .createQuery("SELECT brd FROM BundleResourceDeployment brd WHERE brd.bundleDeployDefinition.name LIKE '"
+                    + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
-                em.remove(em.getReference(BundleDeployment.class, ((BundleDeployment) removeMe).getId()));
+                em.remove(em
+                    .getReference(BundleResourceDeployment.class, ((BundleResourceDeployment) removeMe).getId()));
             }
             // remove any orphaned bgds
             q = em.createQuery("SELECT bgd FROM BundleGroupDeployment bgd WHERE bgd.bundleDeployDefinition.name LIKE '"
@@ -582,13 +585,13 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         Configuration config = new Configuration();
         BundleDeployDefinition bdd1;
         try {
-            bdd1 = createDeployDefinition("one", bv1, config);
+            bdd1 = createDeployDefinition("one", bv1, "/test", config);
             fail("Bad config was accepted");
         } catch (Exception e) {
             // expected due to bad config
         }
         config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
-        bdd1 = createDeployDefinition("one", bv1, config);
+        bdd1 = createDeployDefinition("one", bv1, "/test", config);
         assertNotNull(bdd1);
     }
 
@@ -600,35 +603,36 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bv1);
         Configuration config = new Configuration();
         config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
-        BundleDeployDefinition bdd1 = createDeployDefinition("one", bv1, config);
+        BundleDeployDefinition bdd1 = createDeployDefinition("one", bv1, "/test", config);
         assertNotNull(bdd1);
         Resource platformResource = createTestResource();
-        BundleDeployment bd = bundleManager.scheduleBundleDeployment(overlord, bdd1.getId(), platformResource.getId());
+        BundleResourceDeployment bd = bundleManager.scheduleBundleResourceDeployment(overlord, bdd1.getId(),
+            platformResource.getId());
         assertNotNull(bd);
         assertEquals(bdd1.getId(), bd.getBundleDeployDefinition().getId());
         assertEquals(platformResource.getId(), bd.getResource().getId());
         assertEquals(BundleDeploymentStatus.INPROGRESS, bd.getStatus());
-        BundleDeploymentCriteria c = new BundleDeploymentCriteria();
+        BundleResourceDeploymentCriteria c = new BundleResourceDeploymentCriteria();
         c.addFilterId(bd.getId());
         c.fetchHistories(true);
-        List<BundleDeployment> bds = bundleManager.findBundleDeploymentsByCriteria(overlord, c);
+        List<BundleResourceDeployment> bds = bundleManager.findBundleResourceDeploymentsByCriteria(overlord, c);
         assertEquals(1, bds.size());
         assertEquals(bd.getId(), bds.get(0).getId());
         bd = bds.get(0);
-        assertNotNull(bd.getBundleDeploymentHistories());
-        int size = bd.getBundleDeploymentHistories().size();
+        assertNotNull(bd.getBundleResourceDeploymentHistories());
+        int size = bd.getBundleResourceDeploymentHistories().size();
         assertTrue(size > 0);
         String auditMessage = "BundleTest-Message";
-        bundleManager.addBundleDeploymentHistory(overlord, bd.getId(), new BundleDeploymentHistory(overlord.getName(),
-            BundleDeploymentAction.DEPLOYMENT_STEP, BundleDeploymentStatus.NOCHANGE, auditMessage));
-        bds = bundleManager.findBundleDeploymentsByCriteria(overlord, c);
+        bundleManager.addBundleResourceDeploymentHistory(overlord, bd.getId(), new BundleResourceDeploymentHistory(
+            overlord.getName(), BundleDeploymentAction.DEPLOYMENT_STEP, BundleDeploymentStatus.NOCHANGE, auditMessage));
+        bds = bundleManager.findBundleResourceDeploymentsByCriteria(overlord, c);
         assertEquals(1, bds.size());
         assertEquals(bd.getId(), bds.get(0).getId());
         bd = bds.get(0);
-        assertNotNull(bd.getBundleDeploymentHistories());
-        assertTrue((size + 1) == bd.getBundleDeploymentHistories().size());
-        BundleDeploymentHistory newHistory = null;
-        for (BundleDeploymentHistory h : bd.getBundleDeploymentHistories()) {
+        assertNotNull(bd.getBundleResourceDeploymentHistories());
+        assertTrue((size + 1) == bd.getBundleResourceDeploymentHistories().size());
+        BundleResourceDeploymentHistory newHistory = null;
+        for (BundleResourceDeploymentHistory h : bd.getBundleResourceDeploymentHistories()) {
             if (auditMessage.equals(h.getAuditMessage())) {
                 newHistory = h;
                 break;
@@ -771,7 +775,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     }
 
     @Test(enabled = DISABLED)
-    public void testFindByBundleDeploymentId() throws Exception {
+    public void testFindByBundleResourceDeploymentId() throws Exception {
         assertNotNull(null);
     }
 
@@ -810,11 +814,11 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         return bv;
     }
 
-    private BundleDeployDefinition createDeployDefinition(String name, BundleVersion bv, Configuration config)
-        throws Exception {
+    private BundleDeployDefinition createDeployDefinition(String name, BundleVersion bv, String installDir,
+        Configuration config) throws Exception {
         final String fullName = TEST_PREFIX + "-bundledeploydef-" + name;
         BundleDeployDefinition bdd = bundleManager.createBundleDeployDefinition(overlord, bv.getId(), fullName,
-            fullName, config, false, -1, false);
+            fullName, installDir, config, false, -1, false);
 
         assert bdd.getId() > 0;
         assert bdd.getName().endsWith(fullName);

@@ -20,23 +20,28 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
 
+/**
+ * @author jshaughnessy
+ *
+ */
 public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     // the things we build up in the wizard
     private Bundle bundle;
     private BundleVersion bundleVersion;
     private BundleDeployDefinition bundleDeployDefinition;
-    private BundleDeployment bundleDeployment;
-    private BundleGroupDeployment bundleGroupDeployment;
+    private BundleResourceDeployment resourceDeployment;
+    private BundleGroupDeployment groupDeployment;
     private String name;
     private String description;
+    private String installDir;
     private ConfigurationTemplate template;
     private Configuration config;
     private Integer deployTargetId;
@@ -144,20 +149,28 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
         this.resourceDeploy = resourceDeploy;
     }
 
-    public BundleDeployment getBundleDeployment() {
-        return bundleDeployment;
+    public BundleResourceDeployment getResourceDeployment() {
+        return resourceDeployment;
     }
 
-    public void setBundleDeployment(BundleDeployment bundleDeployment) {
-        this.bundleDeployment = bundleDeployment;
+    public void setResourceDeployment(BundleResourceDeployment resourceDeployment) {
+        this.resourceDeployment = resourceDeployment;
     }
 
-    public BundleGroupDeployment getBundleGroupDeployment() {
-        return bundleGroupDeployment;
+    public BundleGroupDeployment getGroupDeployment() {
+        return groupDeployment;
     }
 
-    public void setBundleGroupDeployment(BundleGroupDeployment bundleGroupDeployment) {
-        this.bundleGroupDeployment = bundleGroupDeployment;
+    public void setGroupDeployment(BundleGroupDeployment groupDeployment) {
+        this.groupDeployment = groupDeployment;
+    }
+
+    public String getInstallDir() {
+        return installDir;
+    }
+
+    public void setInstallDir(String installDir) {
+        this.installDir = installDir;
     }
 
 }

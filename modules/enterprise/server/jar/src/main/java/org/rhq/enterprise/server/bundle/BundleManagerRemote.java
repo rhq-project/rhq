@@ -30,7 +30,7 @@ import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
@@ -40,7 +40,7 @@ import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -51,6 +51,7 @@ import org.rhq.enterprise.server.system.ServerVersion;
  * Remote interface to the manager responsible for creating and managing bundles.
  *  
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService(targetNamespace = ServerVersion.namespace)
@@ -122,19 +123,19 @@ public interface BundleManagerRemote {
 
     /**
      * @param subject must be InventoryManager
-     * @param BundleVersionId the BundleVersion being deployed by this definition
-     * @param name a name for this definition. not null or empty
-     * @param description an optional longer description describing this deploy def 
-     * @param configuration a Configuration (pojo) to be associated with this deploy def. Although
+     * @param BundleVersionId the BundleVersion being deployed by this deployment
+     * @param name a name for this deployment. not null or empty
+     * @param description an optional longer description describing this deployment 
+     * @param configuration a Configuration (pojo) to be associated with this deployment. Although
      *        it is not enforceable must be that of the associated BundleVersion.
      * @param installDir the root dir for the deployment
-     * @param enforcePolicy if true enforce policy on deployments made with this deploy def
+     * @param enforcePolicy if true enforce policy on deployments made with this deployment
      * @param enforceInterval if enforcePolicy is true check policy at this interval (in seconds), otherwise ignored
-     * @param pinToBundle if true this deploy def is disabled if a newer BundleVersion is generated for the Bundle
-     * @return the persisted deploy definition
+     * @param pinToBundle if true this deployment is disabled if a newer BundleVersion is generated for the Bundle
+     * @return the persisted deployment
      * @throws Exception
      */
-    BundleDeployDefinition createBundleDeployDefinition( //
+    BundleDeployment createBundleDeployment( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionid") int bundleVersionId, //
         @WebParam(name = "name") String name, //
@@ -222,9 +223,9 @@ public interface BundleManagerRemote {
         @WebParam(name = "criteria") BundleCriteria criteria);
 
     @WebMethod
-    PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria( //
+    PageList<BundleDeployment> findBundleDeploymentsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") BundleDeployDefinitionCriteria criteria);
+        @WebParam(name = "criteria") BundleDeploymentCriteria criteria);
 
     @WebMethod
     PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria( //
@@ -283,14 +284,14 @@ public interface BundleManagerRemote {
      */
 
     /**
-     * Deploy the bundle as described in the provided deploy definition to the specified resource.
+     * Deploy the bundle as described in the provided deployment to the specified resource.
      * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
      * returned {@link BundleResourceDeployment} can be used to track the history of the deployment.
      * 
      *  TODO: Add the scheduling capability, currently it's Immediate. 
      * 
      * @param subject must be InventoryManager
-     * @param bundleDeployDefinitionId the BundleDeployDefinition being used to guide the deployments
+     * @param bundleDeploymentId the BundleDeployment being used to guide the deployments
      * @param resourceId the target resource (must exist), typically platforms, for the deployments
      * @return the {@link BundleResourceDeployment} created to track the deployment. 
      * @throws Exception
@@ -298,11 +299,11 @@ public interface BundleManagerRemote {
     @WebMethod
     BundleResourceDeployment scheduleBundleResourceDeployment( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleDeployDefinitionId") int bundleDeployDefinitionId, //
+        @WebParam(name = "bundleDeploymentId") int bundleDeploymentId, //
         @WebParam(name = "resourceId") int resourceId) throws Exception;
 
     /**
-     * Deploy the bundle as described in the provided deploy definition to all of the resources in the
+     * Deploy the bundle as described in the provided deployment to all of the resources in the
      * specified resource group.
      * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
      * returned BundleGroupDeployment can be used to track the history of the deployments.
@@ -310,7 +311,7 @@ public interface BundleManagerRemote {
      *  TODO: Add the scheduling capability, currently it's Immediate. 
      * 
      * @param subject must be InventoryManager
-     * @param bundleDeployDefinitionId the BundleDeployDefinition being used to guide the deployments
+     * @param bundleDeploymentId the BundleDeployment being used to guide the deployments
      * @param resourceGroupId the target resourceGroup (must exist), typically platforms, for the deployments
      * @return the BundleGroupDeployment created to track the deployments. 
      * @throws Exception
@@ -318,6 +319,6 @@ public interface BundleManagerRemote {
     @WebMethod
     BundleGroupDeployment scheduleBundleGroupDeployment( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleDeployDefinitionId") int bundleDeployDefinitionId, //
+        @WebParam(name = "bundleDeploymentId") int bundleDeploymentId, //
         @WebParam(name = "resourceGroupId") int resourceGroupId) throws Exception;
 }

@@ -44,7 +44,7 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleFile;
@@ -63,7 +63,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -91,6 +91,7 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
  *
  * @author John Mazzitelli
  * @author Ian Springer
+ * @author Jay Shaughnessy
  */
 @Stateless
 public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemote {
@@ -172,12 +173,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleDeployDefinition createBundleDeployDefinition(Subject subject, int bundleVersionId, String name,
+    public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, String name,
         String description, String installDir, Configuration configuration, boolean enforcePolicy,
         int enforcementInterval, boolean pinToBundle) throws Exception {
 
         if (null == name || "".equals(name.trim())) {
-            throw new IllegalArgumentException("Invalid bundleDeployDefinitionName: " + name);
+            throw new IllegalArgumentException("Invalid bundleDeploymentName: " + name);
         }
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
         if (null == bundleVersion) {
@@ -195,18 +196,18 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             }
         }
 
-        BundleDeployDefinition deployDef = new BundleDeployDefinition(bundleVersion, name, installDir);
-        deployDef.setDescription(description);
-        deployDef.setConfiguration(configuration);
-        deployDef.setEnforcePolicy(enforcePolicy);
-        deployDef.setEnforcementInterval(enforcementInterval);
+        BundleDeployment deployment = new BundleDeployment(bundleVersion, name, installDir);
+        deployment.setDescription(description);
+        deployment.setConfiguration(configuration);
+        deployment.setEnforcePolicy(enforcePolicy);
+        deployment.setEnforcementInterval(enforcementInterval);
         if (pinToBundle) {
-            deployDef.setBundle(bundleVersion.getBundle());
+            deployment.setBundle(bundleVersion.getBundle());
         }
 
-        entityManager.persist(deployDef);
+        entityManager.persist(deployment);
 
-        return deployDef;
+        return deployment;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -439,11 +440,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleFile;
     }
 
-    public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeployDefinitionId,
+    public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeploymentId,
         int resourceId) throws Exception {
-        BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
-        if (null == deployDef) {
-            throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
+        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
+        if (null == deployment) {
+            throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
         }
 
         Resource resource = (Resource) entityManager.find(Resource.class, resourceId);
@@ -451,11 +452,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
         }
 
-        return scheduleBundleResourceDeployment(subject, deployDef, resource, null);
+        return scheduleBundleResourceDeployment(subject, deployment, resource, null);
     }
 
-    private BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject,
-        BundleDeployDefinition deployDef, Resource resource, BundleGroupDeployment groupDeployment) throws Exception {
+    private BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, BundleDeployment deployment,
+        Resource resource, BundleGroupDeployment groupDeployment) throws Exception {
 
         int resourceId = resource.getId();
         AgentClient agentClient = agentManager.getAgentClient(resourceId);
@@ -463,21 +464,21 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try to
         // add History to it during immediate deployments., so create and persist it (requires a new trans).
-        BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeployment(subject, deployDef
+        BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeployment(subject, deployment
             .getId(), resourceId, (null == groupDeployment) ? 0 : groupDeployment.getId());
 
         // make sure the deployment contains the info required by the schedule service
-        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, deployDef.getBundleVersion().getId());
-        Configuration config = entityManager.find(Configuration.class, deployDef.getConfiguration().getId());
+        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, deployment.getBundleVersion().getId());
+        Configuration config = entityManager.find(Configuration.class, deployment.getConfiguration().getId());
         Bundle bundle = entityManager.find(Bundle.class, bundleVersion.getBundle().getId());
         BundleType bundleType = entityManager.find(BundleType.class, bundle.getBundleType().getId());
         ResourceType resourceType = entityManager.find(ResourceType.class, bundleType.getResourceType().getId());
         bundleType.setResourceType(resourceType);
         bundle.setBundleType(bundleType);
         bundleVersion.setBundle(bundle);
-        deployDef.setBundleVersion(bundleVersion);
-        deployDef.setConfiguration(config);
-        resourceDeployment.setBundleDeployDefinition(deployDef);
+        deployment.setBundleVersion(bundleVersion);
+        deployment.setConfiguration(config);
+        resourceDeployment.setBundleDeployment(deployment);
         resourceDeployment.setResource(resource);
 
         // now scrub the hibernate entity to make it a pojo suitable for sending to the client
@@ -510,12 +511,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeployDefinitionId,
+    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeploymentId,
         int resourceGroupId) throws Exception {
 
-        BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
-        if (null == deployDef) {
-            throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
+        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
+        if (null == deployment) {
+            throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
         }
         ResourceGroup resourceGroup = (ResourceGroup) entityManager.find(ResourceGroup.class, resourceGroupId);
         if (null == resourceGroup) {
@@ -527,12 +528,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
          * we need to create the group deployment entity in a new transaction before the rest of the
          * processing of this method; the individual deployments need to reference it.
          */
-        BundleGroupDeployment groupDeployment = new BundleGroupDeployment(subject.getName(), deployDef, resourceGroup);
+        BundleGroupDeployment groupDeployment = new BundleGroupDeployment(subject.getName(), deployment, resourceGroup);
         groupDeployment = bundleManager.createBundleGroupDeployment(groupDeployment);
 
         // Create and persist updates for each of the group members.
         for (Resource resource : resourceGroup.getExplicitResources()) {
-            BundleResourceDeployment resourceDeployment = scheduleBundleResourceDeployment(subject, deployDef,
+            BundleResourceDeployment resourceDeployment = scheduleBundleResourceDeployment(subject, deployment,
                 resource, groupDeployment);
             groupDeployment.addResourceDeployment(resourceDeployment);
         }
@@ -542,12 +543,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeployDefinitionId,
+    public BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId,
         int resourceId, int groupDeploymentId) throws Exception {
 
-        BundleDeployDefinition deployDef = entityManager.find(BundleDeployDefinition.class, bundleDeployDefinitionId);
-        if (null == deployDef) {
-            throw new IllegalArgumentException("Invalid bundleDeployDefinitionId: " + bundleDeployDefinitionId);
+        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
+        if (null == deployment) {
+            throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
         }
         Resource resource = (Resource) entityManager.find(Resource.class, resourceId);
         if (null == resource) {
@@ -557,7 +558,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleGroupDeployment groupDeployment = (BundleGroupDeployment) entityManager.find(BundleGroupDeployment.class,
             groupDeploymentId);
 
-        BundleResourceDeployment resourceDeployment = new BundleResourceDeployment(deployDef, resource, groupDeployment);
+        BundleResourceDeployment resourceDeployment = new BundleResourceDeployment(deployment, resource,
+            groupDeployment);
 
         entityManager.persist(resourceDeployment);
         return resourceDeployment;
@@ -682,13 +684,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return types;
     }
 
-    public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
-        BundleDeployDefinitionCriteria criteria) {
+    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        CriteriaQueryRunner<BundleDeployDefinition> queryRunner = new CriteriaQueryRunner<BundleDeployDefinition>(
-            criteria, generator, entityManager);
+        CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
+            generator, entityManager);
         return queryRunner.execute();
     }
 
@@ -790,7 +791,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             bundleId = bundleVersion.getBundle().getId(); // note that we lazy load this if we never plan to delete the bundle
         }
 
-        // remove the bundle version - cascade remove the deploy defs which will cascade remove the deployments.
+        // remove the bundle version - cascade remove the deployments which will cascade remove the resource deployments.
         this.entityManager.remove(bundleVersion);
 
         if (deleteBundleIfEmpty) {

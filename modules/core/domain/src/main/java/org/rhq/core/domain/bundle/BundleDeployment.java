@@ -56,15 +56,15 @@ import org.rhq.core.domain.configuration.Configuration;
  * @author Jay Shaughnessy
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = BundleDeployDefinition.QUERY_FIND_ALL, query = "SELECT bdd FROM BundleDeployDefinition bdd") //
+@NamedQueries( { @NamedQuery(name = BundleDeployment.QUERY_FIND_ALL, query = "SELECT bd FROM BundleDeployment bd") //
 })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOY_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_DEPLOY")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BundleDeployDefinition implements Serializable {
+public class BundleDeployment implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_FIND_ALL = "BundleDeployDefinition.findAll";
+    public static final String QUERY_FIND_ALL = "BundleDeployment.findAll";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -97,7 +97,7 @@ public class BundleDeployDefinition implements Serializable {
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
 
-    @OneToMany(mappedBy = "bundleDeployDefinition", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleGroupDeployment> groupDeployments = new ArrayList<BundleGroupDeployment>();
 
     // The following are reserved for future policy work 
@@ -111,11 +111,11 @@ public class BundleDeployDefinition implements Serializable {
     @Column(name = "ENFORCEMENT_INTERVAL", nullable = true)
     private int enforcementInterval;
 
-    public BundleDeployDefinition() {
+    public BundleDeployment() {
         // for JPA use
     }
 
-    public BundleDeployDefinition(BundleVersion bundleVersion, String name, String installDir) {
+    public BundleDeployment(BundleVersion bundleVersion, String name, String installDir) {
         this.bundleVersion = bundleVersion;
         this.name = name;
         this.installDir = installDir;
@@ -202,7 +202,7 @@ public class BundleDeployDefinition implements Serializable {
 
     public void addResourceDeployment(BundleResourceDeployment resourceDeployment) {
         this.resourceDeployments.add(resourceDeployment);
-        resourceDeployment.setBundleDeployDefinition(this);
+        resourceDeployment.setBundleDeployment(this);
     }
 
     public List<BundleGroupDeployment> getGroupDeployments() {
@@ -211,7 +211,7 @@ public class BundleDeployDefinition implements Serializable {
 
     public void addGroupDeployment(BundleGroupDeployment groupDeployment) {
         this.groupDeployments.add(groupDeployment);
-        groupDeployment.setBundleDeployDefinition(this);
+        groupDeployment.setBundleDeployment(this);
     }
 
     public void setGroupDeployments(List<BundleGroupDeployment> groupDeployments) {
@@ -244,7 +244,7 @@ public class BundleDeployDefinition implements Serializable {
 
     @Override
     public String toString() {
-        return "BundleDeployDefinition[id=" + id + ", name=" + name + "]";
+        return "BundleDeployment[id=" + id + ", name=" + name + "]";
     }
 
     @Override
@@ -263,11 +263,11 @@ public class BundleDeployDefinition implements Serializable {
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof BundleDeployDefinition)) {
+        if (!(obj instanceof BundleDeployment)) {
             return false;
         }
 
-        BundleDeployDefinition other = (BundleDeployDefinition) obj;
+        BundleDeployment other = (BundleDeployment) obj;
 
         if (bundleVersion == null) {
             if (other.bundleVersion != null) {

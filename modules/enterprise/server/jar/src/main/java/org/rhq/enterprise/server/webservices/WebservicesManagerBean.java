@@ -38,7 +38,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
@@ -75,7 +75,7 @@ import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -342,10 +342,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.createBundle(subject, name, description, bundleTypeId);
     }
 
-    public BundleDeployDefinition createBundleDeployDefinition(Subject subject, int bundleVersionId, String name,
+    public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, String name,
         String description, String installDir, Configuration configuration, boolean enforcePolicy,
         int enforcementInterval, boolean pinToBundle) throws Exception {
-        return bundleManager.createBundleDeployDefinition(subject, bundleVersionId, name, description, installDir,
+        return bundleManager.createBundleDeployment(subject, bundleVersionId, name, description, installDir,
             configuration, enforcePolicy, enforcementInterval, pinToBundle);
     }
 
@@ -369,9 +369,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         bundleManager.deleteBundleVersion(subject, bundleVersionId, deleteBundleIfEmpty);
     }
 
-    public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
-        BundleDeployDefinitionCriteria criteria) {
-        return bundleManager.findBundleDeployDefinitionsByCriteria(subject, criteria);
+    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
+        return bundleManager.findBundleDeploymentsByCriteria(subject, criteria);
     }
 
     public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(Subject subject,
@@ -411,14 +410,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
     */
 
-    public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeployDefinitionId,
+    public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeploymentId,
         int resourceId) throws Exception {
-        return bundleManager.scheduleBundleResourceDeployment(subject, bundleDeployDefinitionId, resourceId);
+        return bundleManager.scheduleBundleResourceDeployment(subject, bundleDeploymentId, resourceId);
     }
 
-    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeployDefinitionId,
+    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeploymentId,
         int resourceGroupId) throws Exception {
-        return bundleManager.scheduleBundleGroupDeployment(subject, bundleDeployDefinitionId, resourceGroupId);
+        return bundleManager.scheduleBundleGroupDeployment(subject, bundleDeploymentId, resourceGroupId);
     }
 
     //BUNDLEMANAGER: END ----------------------------------  

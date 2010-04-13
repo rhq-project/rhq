@@ -49,9 +49,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.rhq.core.domain.resource.Resource;
 
 /**
- * This is the many-to-many entity that correlates a bundle deployment def with a (platform) resource.  It keeps
- * information about the currently installed bundle and assists with enforcing the def's policy on the deployed bundle.
- * It also provides the anchor for audit history related to the deployment.
+ * This is the many-to-many entity that correlates a bundle deployment with a (platform) resource.  It keeps
+ * information about the currently installed bundle and assists with enforcing the deployment's policy on the
+ * deployed bundle. It also provides the anchor for audit history related to the deployment.
  * 
  * @author John Mazzitelli
  * @author Jay Shaughnessy
@@ -66,7 +66,7 @@ import org.rhq.core.domain.resource.Resource;
 public class BundleResourceDeployment implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_FIND_BY_DEPLOYMENT_ID_NO_FETCH = "BundleResourceDeployment.findByDefinitionIdNoFetch";
+    public static final String QUERY_FIND_BY_DEPLOYMENT_ID_NO_FETCH = "BundleResourceDeployment.findByDeploymentIdNoFetch";
     public static final String QUERY_FIND_BY_RESOURCE_ID_NO_FETCH = "BundleResourceDeployment.findByResourceIdNoFetch";
 
     @Column(name = "ID", nullable = false)
@@ -76,7 +76,7 @@ public class BundleResourceDeployment implements Serializable {
 
     @JoinColumn(name = "BUNDLE_DEPLOY_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
-    private BundleDeployDefinition bundleDeployment;
+    private BundleDeployment bundleDeployment;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -102,20 +102,16 @@ public class BundleResourceDeployment implements Serializable {
     protected BundleResourceDeployment() {
     }
 
-    public BundleResourceDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource) {
-        this(bundleDeploymentDef, resource, null);
+    public BundleResourceDeployment(BundleDeployment bundleDeployment, Resource resource) {
+        this(bundleDeployment, resource, null);
     }
 
-    public BundleResourceDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource,
+    public BundleResourceDeployment(BundleDeployment bundleDeployment, Resource resource,
         BundleGroupDeployment groupDeployment) {
-        this.bundleDeployment = bundleDeploymentDef;
+        this.bundleDeployment = bundleDeployment;
         this.resource = resource;
         this.groupDeployment = groupDeployment;
         this.status = BundleDeploymentStatus.INPROGRESS;
-    }
-
-    public BundleDeployDefinition getBundleDeployDefinition() {
-        return bundleDeployment;
     }
 
     public int getId() {
@@ -143,8 +139,12 @@ public class BundleResourceDeployment implements Serializable {
         this.ctime = System.currentTimeMillis();
     }
 
-    public void setBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
-        this.bundleDeployment = bundleDeployDefinition;
+    public BundleDeployment getBundleDeployment() {
+        return bundleDeployment;
+    }
+
+    public void setBundleDeployment(BundleDeployment bundleDeployment) {
+        this.bundleDeployment = bundleDeployment;
     }
 
     public List<BundleResourceDeploymentHistory> getBundleResourceDeploymentHistories() {

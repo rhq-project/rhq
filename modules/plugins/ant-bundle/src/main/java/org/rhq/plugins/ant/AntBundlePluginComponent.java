@@ -30,7 +30,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
@@ -76,9 +76,9 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
     public BundleDeployResult deployBundle(BundleDeployRequest request) {
         BundleDeployResult result = new BundleDeployResult();
         try {
-            BundleResourceDeployment bundleDeployment = request.getResourceDeployment();
-            BundleDeployDefinition bundleDeployDef = bundleDeployment.getBundleDeployDefinition();
-            BundleVersion bundleVersion = bundleDeployDef.getBundleVersion();
+            BundleResourceDeployment resourceDeployment = request.getResourceDeployment();
+            BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
+            BundleVersion bundleVersion = bundleDeployment.getBundleVersion();
 
             String recipe = bundleVersion.getRecipe();
             File recipeFile = File.createTempFile("ant-bundle-recipe", ".xml", request.getBundleFilesLocation());
@@ -91,7 +91,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
                 // get the bundle's configuration values and the global system facts and
                 // add them as ant properties so the ant script can get their values
-                Configuration config = bundleDeployDef.getConfiguration();
+                Configuration config = bundleDeployment.getConfiguration();
                 Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
                 Properties antProps = new Properties();
                 for (Map.Entry<String, String> fact : sysFacts.entrySet()) {

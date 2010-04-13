@@ -33,6 +33,7 @@ import org.rhq.core.domain.bundle.BundleType;
  * Local interface to the manager responsible for creating and managing bundles.
  *  
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
 @Local
 public interface BundleManagerLocal extends BundleManagerRemote {
@@ -70,7 +71,7 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * This is typically not called directly, typically scheduleBundleResourceDeployment() is called externally. This executes
      * in a New Transaction and supports scheduleBundleResourceDeployment. 
      */
-    BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeployDefinitionId,
+    BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId,
         int resourceId, int groupDeploymentId) throws Exception;
 
     /**

@@ -22,7 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
@@ -59,8 +59,8 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
         BundleDeployResult result = new BundleDeployResult();
         try {
             BundleResourceDeployment resourceDeployment = request.getResourceDeployment();
-            BundleDeployDefinition bundleDeployDef = resourceDeployment.getBundleDeployDefinition();
-            BundleVersion bundleVersion = bundleDeployDef.getBundleVersion();
+            BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
+            BundleVersion bundleVersion = bundleDeployment.getBundleVersion();
 
             // process the recipe
             String recipe = bundleVersion.getRecipe();
@@ -69,14 +69,13 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
                 .getPackageVersionFiles(), this.resourceContext.getSystemInformation(), request
                 .getBundleFilesLocation().getAbsolutePath());
 
-            request.getBundleManagerProvider()
-                .auditDeployment(
-                    resourceDeployment,
-                    BundleDeploymentAction.DEPLOYMENT_STEP,
-                    BundleDeploymentStatus.NOCHANGE,
-                    "setting replacement variable values using [" + bundleDeployDef.getConfiguration().toString(true)
-                        + "]");
-            recipeContext.setReplacementVariableValues(bundleDeployDef.getConfiguration());
+            request.getBundleManagerProvider().auditDeployment(
+                resourceDeployment,
+                BundleDeploymentAction.DEPLOYMENT_STEP,
+                BundleDeploymentStatus.NOCHANGE,
+                "setting replacement variable values using [" + bundleDeployment.getConfiguration().toString(true)
+                    + "]");
+            recipeContext.setReplacementVariableValues(bundleDeployment.getConfiguration());
 
             parser.setReplaceReplacementVariables(true);
 

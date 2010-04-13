@@ -64,8 +64,8 @@ function testDeployment() {
    var property = new PropertySimple("bundleTest.deployHome", "/tmp/bundle-test");
    config.put( property );
 
-   // create a deploy def using the above config
-   var testDeployDef = BundleManager.createBundleDeployDefinition(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", config, false, -1, false);
+   // create a deployment using the above config
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config, false, -1, false);
 
    // Find a target platform
    var rc = new ResourceCriteria();
@@ -73,7 +73,7 @@ function testDeployment() {
    var winPlatforms = ResourceManager.findResourcesByCriteria(rc);
    var platformId = winPlatforms.get(0).getId();
    
-   var bd = BundleManager.scheduleBundleDeployment(testDeployDef.getId(), platformId);
+   var bd = BundleManager.scheduleBundleResourceDeployment(testDeployment.getId(), platformId);
    Assert.assertNotNull( bd );   
    
    
@@ -109,8 +109,8 @@ function testGroupDeployment() {
    var property = new PropertySimple("bundleTest.deployHome", "/tmp/bundle-test");
    config.put( property );
 
-   // create a deploy def using the above config
-   var testDeployDef = BundleManager.createBundleDeployDefinition(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", config, false, -1, false);
+   // create a deployment using the above config
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config, false, -1, false);
 
    // Find a target platform group
    var rgc = new ResourceGroupCriteria();
@@ -119,7 +119,7 @@ function testGroupDeployment() {
    Assert.assertTrue( groups.size() > 0 );
    var groupId = groups.get(0).getId();
    
-   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployDef.getId(), groupId);
+   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
    Assert.assertNotNull( bgd );      
    
    // delete the test bundle if it exists (after allowing agent audit messages to complete)

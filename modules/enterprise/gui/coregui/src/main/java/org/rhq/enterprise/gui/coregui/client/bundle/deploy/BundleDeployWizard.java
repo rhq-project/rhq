@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
@@ -33,7 +33,7 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         setBundle(bundle);
 
         steps.add(new SelectBundleVersionStep(this));
-        steps.add(new BundleDeployDefinitionInfoStep(this));
+        steps.add(new BundleDeploymentInfoStep(this));
         steps.add(new SelectTemplateStep(this));
         steps.add(new CreateConfigStep(this));
         steps.add(new DeployOptionsStep(this));
@@ -46,7 +46,7 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         setBundle(bundle);
         setBundleVersion(bundleVersion);
 
-        steps.add(new BundleDeployDefinitionInfoStep(this));
+        steps.add(new BundleDeploymentInfoStep(this));
         steps.add(new SelectTemplateStep(this));
         steps.add(new CreateConfigStep(this));
         steps.add(new DeployOptionsStep(this));
@@ -54,11 +54,11 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         steps.add(new DeployStep(this));
     }
 
-    public BundleDeployWizard(Bundle bundle, BundleVersion bundleVersion, BundleDeployDefinition bundleDeployDefinition) {
+    public BundleDeployWizard(Bundle bundle, BundleVersion bundleVersion, BundleDeployment bundleDeployment) {
         List<WizardStep> steps = init();
         setBundle(bundle);
         setBundleVersion(bundleVersion);
-        setBundleDeployDefinition(bundleDeployDefinition);
+        setBundleDeployment(bundleDeployment);
         setNewDefinition(Boolean.FALSE);
 
         steps.add(new SelectTemplateStep(this));
@@ -78,8 +78,8 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
     }
 
     public void cancel() {
-        BundleDeployDefinition bdd = getBundleDeployDefinition();
-        if (bdd != null && isNewDefinition()) {
+        BundleDeployment bd = getBundleDeployment();
+        if (bd != null && isNewDefinition()) {
             // the user must have created it already after verification step, delete it
             // TODO
         }

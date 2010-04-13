@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleFile;
@@ -171,17 +171,17 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                     .getReference(BundleResourceDeployment.class, ((BundleResourceDeployment) removeMe).getId()));
             }
             // remove any orphaned bgds
-            q = em.createQuery("SELECT bgd FROM BundleGroupDeployment bgd WHERE bgd.bundleDeployDefinition.name LIKE '"
+            q = em.createQuery("SELECT bgd FROM BundleGroupDeployment bgd WHERE bgd.bundleDeployment.name LIKE '"
                 + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleGroupDeployment.class, ((BundleGroupDeployment) removeMe).getId()));
             }
             // remove any orphaned bdds
-            q = em.createQuery("SELECT bdd FROM BundleDeployDefinition bdd WHERE bdd.name LIKE '" + TEST_PREFIX + "%'");
+            q = em.createQuery("SELECT bd FROM BundleDeployment bd WHERE bd.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
-                em.remove(em.getReference(BundleDeployDefinition.class, ((BundleDeployDefinition) removeMe).getId()));
+                em.remove(em.getReference(BundleDeployment.class, ((BundleDeployment) removeMe).getId()));
             }
 
             // remove bundles which cascade remove packageTypes
@@ -578,22 +578,22 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     }
 
     @Test(enabled = TESTS_ENABLED)
-    public void testCreateBundleDeploymentDef() throws Exception {
+    public void testCreateBundleDeployment() throws Exception {
         Bundle b1 = createBundle("one");
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", null, b1);
         assertNotNull(bv1);
         Configuration config = new Configuration();
-        BundleDeployDefinition bdd1;
+        BundleDeployment bd1;
         try {
-            bdd1 = createDeployDefinition("one", bv1, "/test", config);
+            bd1 = createDeployment("one", bv1, "/test", config);
             fail("Bad config was accepted");
         } catch (Exception e) {
             // expected due to bad config
         }
         config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
-        bdd1 = createDeployDefinition("one", bv1, "/test", config);
-        assertNotNull(bdd1);
+        bd1 = createDeployment("one", bv1, "/test", config);
+        assertNotNull(bd1);
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -604,13 +604,13 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bv1);
         Configuration config = new Configuration();
         config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
-        BundleDeployDefinition bdd1 = createDeployDefinition("one", bv1, "/test", config);
-        assertNotNull(bdd1);
+        BundleDeployment bd1 = createDeployment("one", bv1, "/test", config);
+        assertNotNull(bd1);
         Resource platformResource = createTestResource();
-        BundleResourceDeployment bd = bundleManager.scheduleBundleResourceDeployment(overlord, bdd1.getId(),
+        BundleResourceDeployment bd = bundleManager.scheduleBundleResourceDeployment(overlord, bd1.getId(),
             platformResource.getId());
         assertNotNull(bd);
-        assertEquals(bdd1.getId(), bd.getBundleDeployDefinition().getId());
+        assertEquals(bd1.getId(), bd.getBundleDeployment().getId());
         assertEquals(platformResource.getId(), bd.getResource().getId());
         assertEquals(BundleDeploymentStatus.INPROGRESS, bd.getStatus());
         BundleResourceDeploymentCriteria c = new BundleResourceDeploymentCriteria();
@@ -748,7 +748,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         c.addFilterVersion(bv.getVersion());
         c.fetchBundle(true);
         c.fetchDistribution(true);
-        c.fetchBundleDeployDefinitions(true);
+        c.fetchBundleDeployments(true);
         bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
         assertNotNull(bvs);
         assertEquals(1, bvs.size());
@@ -756,8 +756,8 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertEquals(bv2, bv);
         assertEquals(bv.getBundle(), b1);
         assertNull(bv.getDistribution());
-        assertNotNull(bv.getBundleDeployDefinitions());
-        assertTrue(bv.getBundleDeployDefinitions().isEmpty());
+        assertNotNull(bv.getBundleDeployments());
+        assertTrue(bv.getBundleDeployments().isEmpty());
     }
 
     @Test(enabled = DISABLED)
@@ -815,15 +815,15 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         return bv;
     }
 
-    private BundleDeployDefinition createDeployDefinition(String name, BundleVersion bv, String installDir,
-        Configuration config) throws Exception {
-        final String fullName = TEST_PREFIX + "-bundledeploydef-" + name;
-        BundleDeployDefinition bdd = bundleManager.createBundleDeployDefinition(overlord, bv.getId(), fullName,
-            fullName, installDir, config, false, -1, false);
+    private BundleDeployment createDeployment(String name, BundleVersion bv, String installDir, Configuration config)
+        throws Exception {
+        final String fullName = TEST_PREFIX + "-bundledeployment-" + name;
+        BundleDeployment bd = bundleManager.createBundleDeployment(overlord, bv.getId(), fullName, fullName,
+            installDir, config, false, -1, false);
 
-        assert bdd.getId() > 0;
-        assert bdd.getName().endsWith(fullName);
-        return bdd;
+        assert bd.getId() > 0;
+        assert bd.getName().endsWith(fullName);
+        return bd;
     }
 
     private ResourceType createResourceType(String name) throws Exception {

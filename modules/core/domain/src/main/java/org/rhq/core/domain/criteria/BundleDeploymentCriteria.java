@@ -29,7 +29,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class BundleDeployDefinitionCriteria extends Criteria {
+public class BundleDeploymentCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
@@ -42,12 +42,12 @@ public class BundleDeployDefinitionCriteria extends Criteria {
     private boolean fetchDeployments;
     private boolean fetchGroupDeployments;
 
-    public BundleDeployDefinitionCriteria() {
+    public BundleDeploymentCriteria() {
     }
 
     @Override
     public Class<?> getPersistentClass() {
-        return BundleDeployDefinitionCriteria.class;
+        return BundleDeploymentCriteria.class;
     }
 
     public void addFilterId(Integer filterId) {

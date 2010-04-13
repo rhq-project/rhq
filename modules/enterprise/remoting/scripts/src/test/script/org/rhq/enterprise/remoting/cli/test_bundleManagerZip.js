@@ -76,8 +76,8 @@ function testDeployment() {
    var property3 = new PropertySimple("dummy.description", "FLOPPY!!!");
    config.put( property3 );
 
-   // create a deploy def using the above config
-   var testDeployDef = BundleManager.createBundleDeployDefinition(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", config, false, -1, false);
+   // create a deployment using the above config
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", config, false, -1, false);
 
    // Find a target platform
    var rc = new ResourceCriteria();
@@ -85,7 +85,7 @@ function testDeployment() {
    var winPlatforms = ResourceManager.findResourcesByCriteria(rc);
    var platformId = winPlatforms.get(0).getId();
    
-   var bundleScheduleResponse = BundleManager.scheduleBundleDeployment(testDeployDef.getId(), platformId);
+   var bundleScheduleResponse = BundleManager.scheduleBundleResourceDeployment(testDeployment.getId(), platformId);
 }
 
 function getBundleType() {

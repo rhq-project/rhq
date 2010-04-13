@@ -24,7 +24,7 @@ import java.util.HashMap;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
@@ -42,9 +42,9 @@ public interface BundleGWTService extends RemoteService {
     BundleVersion createBundleAndBundleVersion(String bundleName, int bundleTypeId, String name, String version,
         String description, String recipe) throws Exception;
 
-    BundleDeployDefinition createBundleDeployDefinition(int bundleVersionId, String name, String description,
-        String installDir, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
-        boolean pinToBundle) throws Exception;
+    BundleDeployment createBundleDeployment(int bundleVersionId, String name, String description, String installDir,
+        Configuration configuration, boolean enforcePolicy, int enforcementInterval, boolean pinToBundle)
+        throws Exception;
 
     BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
 
@@ -63,9 +63,9 @@ public interface BundleGWTService extends RemoteService {
 
     ArrayList<BundleType> getAllBundleTypes() throws Exception;
 
-    BundleResourceDeployment scheduleBundleResourceDeployment(int bundleDeployDefinitionId, int resourceId)
+    BundleResourceDeployment scheduleBundleResourceDeployment(int bundleDeploymentId, int resourceId)
         throws Exception;
 
-    BundleGroupDeployment scheduleBundleGroupDeployment(int bundleDeployDefinitionId, int resourceGroupId)
+    BundleGroupDeployment scheduleBundleGroupDeployment(int bundleDeploymentId, int resourceGroupId)
         throws Exception;
 }

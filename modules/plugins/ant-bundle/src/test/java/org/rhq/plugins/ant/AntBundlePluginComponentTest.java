@@ -33,7 +33,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -91,13 +91,13 @@ public class AntBundlePluginComponentTest {
         BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
             getRecipeFromFile("simple-build.xml"));
 
-        BundleDeployDefinition deployDef = new BundleDeployDefinition();
-        deployDef.setBundleVersion(bundleVersion);
-        deployDef.setConfiguration(null);
+        BundleDeployment deployment = new BundleDeployment();
+        deployment.setBundleVersion(bundleVersion);
+        deployment.setConfiguration(null);
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(tmpDir);
-        request.setResourceDeployment(new BundleResourceDeployment(deployDef, null));
+        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -123,9 +123,9 @@ public class AntBundlePluginComponentTest {
         config.put(new PropertySimple("custom.prop1", "custom property 1"));
         config.put(new PropertySimple("custom.prop2", "custom property 2"));
 
-        BundleDeployDefinition deployDef = new BundleDeployDefinition();
-        deployDef.setBundleVersion(bundleVersion);
-        deployDef.setConfiguration(config);
+        BundleDeployment deployment = new BundleDeployment();
+        deployment.setBundleVersion(bundleVersion);
+        deployment.setConfiguration(config);
 
         File file1 = new File(tmpDir, "file.txt");
         File file2 = new File(tmpDir, "package.zip");
@@ -134,7 +134,7 @@ public class AntBundlePluginComponentTest {
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(tmpDir);
-        request.setResourceDeployment(new BundleResourceDeployment(deployDef, null));
+        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
 
         BundleDeployResult results = plugin.deployBundle(request);
 

@@ -39,7 +39,7 @@ import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
@@ -106,11 +106,11 @@ public class BundleManager extends AgentService implements BundleAgentService, B
 
         try {
             BundleResourceDeployment resourceDeployment = request.getBundleResourceDeployment();
-            BundleDeployDefinition bundleDeployDef = resourceDeployment.getBundleDeployDefinition();
+            BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
 
             // find the resource that will handle the bundle processing
             InventoryManager im = PluginContainer.getInstance().getInventoryManager();
-            BundleType bundleType = bundleDeployDef.getBundleVersion().getBundle().getBundleType();
+            BundleType bundleType = bundleDeployment.getBundleVersion().getBundle().getBundleType();
             ResourceType resourceType = bundleType.getResourceType();
             Set<Resource> resources = im.getResourcesWithType(resourceType);
             if (resources.isEmpty()) {
@@ -132,7 +132,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                     + bundleType + "]. Ensure it is imported into inventory.");
             }
             File pluginTmpDir = resourceContainer.getResourceContext().getTemporaryDirectory();
-            File bundleFilesDir = new File(pluginTmpDir, "" + bundleDeployDef.getBundleVersion().getId());
+            File bundleFilesDir = new File(pluginTmpDir, "" + bundleDeployment.getBundleVersion().getId());
             Map<PackageVersion, File> downloadedFiles = downloadBundleFiles(resourceDeployment, bundleFilesDir);
 
             // get the bundle facet object that will process the bundle
@@ -140,7 +140,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             BundleFacet bundlePluginComponent = getBundleFacet(bundleHandlerResourceId, facetMethodTimeout);
 
             // deploy the bundle utilizing the bundle facet object
-            String deploymentMessage = "Deployment [" + bundleDeployDef + "] to [" + resourceDeployment.getResource()
+            String deploymentMessage = "Deployment [" + bundleDeployment + "] to [" + resourceDeployment.getResource()
                 + "]";
             auditDeployment(resourceDeployment, BundleDeploymentAction.DEPLOYMENT, BundleDeploymentStatus.INPROGRESS,
                 deploymentMessage);
@@ -176,20 +176,20 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     /**
      * Downloads the bundle's files into the bundle plugin's tmp directory and returns that tmp directory. 
      * 
-     * @param bundleDeployDef bundle deployment information, including what bundle files need to be downloaded
+     * @param resourceDeployment access to deployment information, including what bundle files need to be downloaded
      * @param downloadDir location where the bundle files should be downloaded
      * @return map of the package versions to their files that were downloaded
      * @throws Exception
      */
-    private Map<PackageVersion, File> downloadBundleFiles(BundleResourceDeployment resourceDeployment,
-        File downloadDir) throws Exception {
+    private Map<PackageVersion, File> downloadBundleFiles(BundleResourceDeployment resourceDeployment, File downloadDir)
+        throws Exception {
 
-        BundleDeployDefinition bundleDeployDef = resourceDeployment.getBundleDeployDefinition();
-        BundleVersion bundleVersion = bundleDeployDef.getBundleVersion();
+        BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
+        BundleVersion bundleVersion = bundleDeployment.getBundleVersion();
 
         // download all the bundle files to the bundle plugin's tmp directory
-        auditDeployment(resourceDeployment, BundleDeploymentAction.FILE_DOWNLOAD,
-            BundleDeploymentStatus.INPROGRESS, null);
+        auditDeployment(resourceDeployment, BundleDeploymentAction.FILE_DOWNLOAD, BundleDeploymentStatus.INPROGRESS,
+            null);
 
         Map<PackageVersion, File> packageVersionFiles = new HashMap<PackageVersion, File>();
         List<PackageVersion> packageVersions = getAllBundleVersionPackageVersions(bundleVersion);
@@ -221,8 +221,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             packageVersionFiles.put(packageVersion, packageFile);
         }
 
-        auditDeployment(resourceDeployment, BundleDeploymentAction.FILE_DOWNLOAD, BundleDeploymentStatus.SUCCESS,
-            null);
+        auditDeployment(resourceDeployment, BundleDeploymentAction.FILE_DOWNLOAD, BundleDeploymentStatus.SUCCESS, null);
 
         return packageVersionFiles;
     }

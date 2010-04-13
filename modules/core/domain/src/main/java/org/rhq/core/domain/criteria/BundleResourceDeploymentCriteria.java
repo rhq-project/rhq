@@ -35,20 +35,20 @@ public class BundleResourceDeploymentCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
-    private Integer filterBundleDeployDefinitionId; // requires override   
-    private String filterBundleDeployDefinitionName; // requires override
+    private Integer filterBundleDeploymentId; // requires override   
+    private String filterBundleDeploymentName; // requires override
     private Integer filterGroupDeploymentId; // requires override    
     private Integer filterResourceId; // requires override
     private String filterResourceName; // requires override
     private BundleDeploymentStatus filterStatus;
 
-    private boolean fetchBundleDeployDefinition;
+    private boolean fetchBundleDeployment;
     private boolean fetchResource;
     private boolean fetchHistories;
 
     public BundleResourceDeploymentCriteria() {
-        filterOverrides.put("bundleDeployDefinitionId", "parentResource.id = ?");
-        filterOverrides.put("bundleDeployDefinitionName", "parentResource.name like ?");
+        filterOverrides.put("bundleDeploymentId", "parentResource.id = ?");
+        filterOverrides.put("bundleDeploymentName", "parentResource.name like ?");
         filterOverrides.put("groupDeploymentId", "groupDeployment.id = ?");
         filterOverrides.put("resourceId", "resource.id = ?");
         filterOverrides.put("resourceName", "resource.name like ?");
@@ -63,12 +63,12 @@ public class BundleResourceDeploymentCriteria extends Criteria {
         this.filterId = filterId;
     }
 
-    public void addFilterBundleDeployDefinitionId(Integer filterBundleDeployDefinitionId) {
-        this.filterBundleDeployDefinitionId = filterBundleDeployDefinitionId;
+    public void addFilterBundleDeploymentId(Integer filterBundleDeploymentId) {
+        this.filterBundleDeploymentId = filterBundleDeploymentId;
     }
 
-    public void addFilterBundleDeployDefinitionName(String filterBundleDeployDefinitionName) {
-        this.filterBundleDeployDefinitionName = filterBundleDeployDefinitionName;
+    public void addFilterBundleDeploymentName(String filterBundleDeploymentName) {
+        this.filterBundleDeploymentName = filterBundleDeploymentName;
     }
 
     public void addFilterGroupDeploymentId(Integer filterGroupDeploymentId) {
@@ -87,8 +87,8 @@ public class BundleResourceDeploymentCriteria extends Criteria {
         this.filterStatus = filterStatus;
     }
 
-    public void fetchBundleDeployDefinition(boolean fetchBundleDeployDefinition) {
-        this.fetchBundleDeployDefinition = fetchBundleDeployDefinition;
+    public void fetchBundleDeployment(boolean fetchBundleDeployment) {
+        this.fetchBundleDeployment = fetchBundleDeployment;
     }
 
     /**

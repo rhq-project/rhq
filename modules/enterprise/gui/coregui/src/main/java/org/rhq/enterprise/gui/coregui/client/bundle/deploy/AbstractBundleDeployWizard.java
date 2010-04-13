@@ -19,7 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -28,7 +28,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
 
 /**
- * @author jshaughnessy
+ * @author Jay Shaughnessy
  *
  */
 public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
@@ -36,7 +36,7 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
     // the things we build up in the wizard
     private Bundle bundle;
     private BundleVersion bundleVersion;
-    private BundleDeployDefinition bundleDeployDefinition;
+    private BundleDeployment bundleDeployment;
     private BundleResourceDeployment resourceDeployment;
     private BundleGroupDeployment groupDeployment;
     private String name;
@@ -97,12 +97,12 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
         this.config = config;
     }
 
-    public BundleDeployDefinition getBundleDeployDefinition() {
-        return bundleDeployDefinition;
+    public BundleDeployment getBundleDeployment() {
+        return bundleDeployment;
     }
 
-    public void setBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
-        this.bundleDeployDefinition = bundleDeployDefinition;
+    public void setBundleDeployment(BundleDeployment bundleDeployment) {
+        this.bundleDeployment = bundleDeployment;
     }
 
     public boolean isNewDefinition() {

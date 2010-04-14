@@ -53,15 +53,15 @@ public class RecipeParserTest {
     }
 
     public void testRealizeRecipe() throws Exception {
-        addRecipeCommand("realize --file=<%opt.dir%>/config.ini");
-        addRecipeCommand("realize -f <%opt2.dir%>/config2.ini");
+        addRecipeCommand("realize --file=@@opt.dir@@/config.ini");
+        addRecipeCommand("realize -f @@opt2.dir@@/config2.ini");
         RecipeParser parser = new RecipeParser();
         RecipeContext context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         Set<String> files = context.getRealizedFiles();
         assert files.size() == 2 : files;
-        assert files.contains("<%opt.dir%>/config.ini") : files;
-        assert files.contains("<%opt2.dir%>/config2.ini") : files;
+        assert files.contains("@@opt.dir@@/config.ini") : files;
+        assert files.contains("@@opt2.dir@@/config2.ini") : files;
     }
 
     public void testFileRecipe() throws Exception {
@@ -92,28 +92,28 @@ public class RecipeParserTest {
     }
 
     public void testSimpleRecipeReplacementVariables() throws Exception {
-        addRecipeCommand("# <% ignored.inside.comment %>");
-        addRecipeCommand("deploy -f jboss.tar -d \"<% opt.dir %>/jboss\"");
-        addRecipeCommand("deploy -f tomcat.tar -d <%opt.dir%>/tomcat");
-        addRecipeCommand("deploy -f jboss.zip -d <%rhq.system.hostname%>/opt/tomcat"); // this is ignored, its an agent fact variable
+        addRecipeCommand("# @@ ignored.inside.comment @@");
+        addRecipeCommand("deploy -f jboss.tar -d \"@@ opt.dir @@/jboss\"");
+        addRecipeCommand("deploy -f tomcat.tar -d @@opt.dir@@/tomcat");
+        addRecipeCommand("deploy -f jboss.zip -d @@rhq.system.hostname@@/opt/tomcat"); // this is ignored, its an agent fact variable
         RecipeParser parser = new RecipeParser();
         RecipeContext context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         Map<String, String> files = context.getDeployFiles();
         assert files.containsKey("jboss.tar") : files;
-        assert files.get("jboss.tar").equals("<% opt.dir %>/jboss") : files;
+        assert files.get("jboss.tar").equals("@@ opt.dir @@/jboss") : files;
         assert files.containsKey("tomcat.tar") : files;
-        assert files.get("tomcat.tar").equals("<%opt.dir%>/tomcat") : files;
+        assert files.get("tomcat.tar").equals("@@opt.dir@@/tomcat") : files;
         assert files.containsKey("jboss.zip") : files;
-        assert files.get("jboss.zip").equals("<%rhq.system.hostname%>/opt/tomcat") : files;
+        assert files.get("jboss.zip").equals("@@rhq.system.hostname@@/opt/tomcat") : files;
         assert context.getReplacementVariables().contains("opt.dir") : context.getReplacementVariables();
         assert context.getReplacementVariables().size() == 1 : context.getReplacementVariables();
     }
 
     public void testSimpleRecipeReplaceReplacementVariables() throws Exception {
-        addRecipeCommand("deploy -f jboss.tar -d <% opt.dir %>/jboss");
-        addRecipeCommand("deploy -f jboss2.tar -d <%unknown%>/jboss");
-        addRecipeCommand("deploy -f jboss3.tar -d <% rhq.system.hostname %>/jboss");
+        addRecipeCommand("deploy -f jboss.tar -d @@ opt.dir @@/jboss");
+        addRecipeCommand("deploy -f jboss2.tar -d @@unknown@@/jboss");
+        addRecipeCommand("deploy -f jboss3.tar -d @@ rhq.system.hostname @@/jboss");
         RecipeParser parser = new RecipeParser();
         parser.setReplaceReplacementVariables(true);
         RecipeContext context = new RecipeContext(getRecipe());
@@ -123,7 +123,7 @@ public class RecipeParserTest {
         assert files.containsKey("jboss.tar") : files;
         assert files.get("jboss.tar").equals("/foo/bar/jboss") : files;
         assert files.containsKey("jboss2.tar") : files;
-        assert files.get("jboss2.tar").equals("<%unknown%>/jboss") : files;
+        assert files.get("jboss2.tar").equals("@@unknown@@/jboss") : files;
         assert files.containsKey("jboss3.tar") : files;
         assert files.get("jboss3.tar").equals(SystemInfoFactory.createSystemInfo().getHostname() + "/jboss") : files;
     }
@@ -138,17 +138,17 @@ public class RecipeParserTest {
         }
         */
 
-        addRecipeCommand("deploy -f jboss1.tar -d <%rhq.system.sysprop.java.io.tmpdir%>");
-        addRecipeCommand("deploy -f jboss2.tar -d <%rhq.system.sysprop.file.separator%>");
-        //addRecipeCommand("deploy -f jboss3.tar -d <%rhq.system.sysprop.line.separator%>"); // can't test this here
-        addRecipeCommand("deploy -f jboss4.tar -d <%rhq.system.sysprop.path.separator%>");
-        addRecipeCommand("deploy -f jboss5.tar -d <%rhq.system.sysprop.java.home%>");
-        addRecipeCommand("deploy -f jboss6.tar -d <%rhq.system.sysprop.java.version%>");
-        //addRecipeCommand("deploy -f jboss7.tar -d <%rhq.system.sysprop.user.timezone%>"); // sometimes this is empty
-        //addRecipeCommand("deploy -f jboss8.tar -d <%rhq.system.sysprop.user.region%>"); // sometimes this doesn't exist
-        addRecipeCommand("deploy -f jboss9.tar -d <%rhq.system.sysprop.user.country%>");
-        addRecipeCommand("deploy -f jboss10.tar -d <%rhq.system.sysprop.user.language%>");
-        addRecipeCommand("deploy -f jboss11.tar -d <%rhq.system.sysprop.custom.sysprop%>"); // non-standard sysprop
+        addRecipeCommand("deploy -f jboss1.tar -d @@rhq.system.sysprop.java.io.tmpdir@@");
+        addRecipeCommand("deploy -f jboss2.tar -d @@rhq.system.sysprop.file.separator@@");
+        //addRecipeCommand("deploy -f jboss3.tar -d @@rhq.system.sysprop.line.separator@@"); // can't test this here
+        addRecipeCommand("deploy -f jboss4.tar -d @@rhq.system.sysprop.path.separator@@");
+        addRecipeCommand("deploy -f jboss5.tar -d @@rhq.system.sysprop.java.home@@");
+        addRecipeCommand("deploy -f jboss6.tar -d @@rhq.system.sysprop.java.version@@");
+        //addRecipeCommand("deploy -f jboss7.tar -d @@rhq.system.sysprop.user.timezone@@"); // sometimes this is empty
+        //addRecipeCommand("deploy -f jboss8.tar -d @@rhq.system.sysprop.user.region@@"); // sometimes this doesn't exist
+        addRecipeCommand("deploy -f jboss9.tar -d @@rhq.system.sysprop.user.country@@");
+        addRecipeCommand("deploy -f jboss10.tar -d @@rhq.system.sysprop.user.language@@");
+        addRecipeCommand("deploy -f jboss11.tar -d @@rhq.system.sysprop.custom.sysprop@@"); // non-standard sysprop
         RecipeParser parser = new RecipeParser();
         parser.setReplaceReplacementVariables(true);
         RecipeContext context = new RecipeContext(getRecipe());
@@ -164,7 +164,7 @@ public class RecipeParserTest {
         //assert files.get("jboss8.tar").equals(System.getProperty("user.region")) : files;
         assert files.get("jboss9.tar").equals(System.getProperty("user.country")) : files;
         assert files.get("jboss10.tar").equals(System.getProperty("user.language")) : files;
-        assert files.get("jboss11.tar").equals("<%rhq.system.sysprop.custom.sysprop%>") : files;
+        assert files.get("jboss11.tar").equals("@@rhq.system.sysprop.custom.sysprop@@") : files;
 
         // now set a custom system property and see that it does NOT get replaced - we ignore custom sysprops!
         System.setProperty("custom.sysprop", "MY/CUSTOM/PROPERTY/HERE");
@@ -173,7 +173,7 @@ public class RecipeParserTest {
         context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         files = context.getDeployFiles();
-        assert files.get("jboss11.tar").equals("<%rhq.system.sysprop.custom.sysprop%>") : files;
+        assert files.get("jboss11.tar").equals("@@rhq.system.sysprop.custom.sysprop@@") : files;
     }
 
     public void testSimpleRecipe() throws Exception {

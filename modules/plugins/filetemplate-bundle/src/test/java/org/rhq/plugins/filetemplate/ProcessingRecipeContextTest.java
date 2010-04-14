@@ -61,7 +61,7 @@ public class ProcessingRecipeContextTest {
 
     public void testRealizeRecipe() throws Exception {
         File testDir = getTestDir("testrealize");
-        File file = writeFile("a b c\nhello<% var %>world\na b c\n", testDir, "config.txt");
+        File file = writeFile("a b c\nhello@@ var @@world\na b c\n", testDir, "config.txt");
 
         addRecipeCommand("realize --file=" + file.getPath());
 

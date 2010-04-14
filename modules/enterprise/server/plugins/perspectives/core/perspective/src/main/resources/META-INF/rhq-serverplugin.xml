@@ -514,10 +514,11 @@
       </activators>
    </menu-item>
 
+   <!--
    <menu-item
       name="administration.systemConfiguration.notifcationTemplates"
       displayName="Alert Notification Templates"
-      url="/rhq/resource/alert/notif/notificationTemplates.xhtml">
+      url="/rhq/admin/alert/template/notification/list.xhtml">
        <position name="administration.systemConfiguration.templates"
                  placement="after"/>
        <activators>
@@ -525,6 +526,7 @@
                name="MANAGE_SETTINGS"/>
        </activators>
    </menu-item>
+    -->
 
    <!--  Core Menu: administration.content -->
    <menu-item

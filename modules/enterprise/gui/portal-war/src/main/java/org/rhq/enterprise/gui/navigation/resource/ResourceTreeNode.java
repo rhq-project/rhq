@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.navigation.resource;
 
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -35,18 +34,18 @@ import org.rhq.core.util.sort.HumaneStringComparator;
  */
 public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
 
-    private static ResourceTreeNode[] CHILDREN_ABSENT = new ResourceTreeNode[0];
-
     private Set<ResourceTreeNode> children = new TreeSet<ResourceTreeNode>();
 
     private Object level;
-
+    private ResourceTreeNode parent;
+    
     public ResourceTreeNode(Object level) {
         this.level = level;
     }
 
-    public ResourceTreeNode(Object level, List<Resource> resources) {
+    public ResourceTreeNode(Object level, ResourceTreeNode parent) {
         this.level = level;
+        this.parent = parent;
     }
 
     public Set<ResourceTreeNode> getChildren() {
@@ -55,6 +54,14 @@ public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
 
     public Object getData() {
         return level;
+    }
+
+    public ResourceTreeNode getParent() {
+        return parent;
+    }
+
+    public void setParent(ResourceTreeNode parent) {
+        this.parent = parent;
     }
 
     public String toString() {

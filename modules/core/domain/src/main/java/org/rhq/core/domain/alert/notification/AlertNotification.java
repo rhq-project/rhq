@@ -55,7 +55,7 @@ import org.rhq.core.domain.configuration.Configuration;
 @NamedQueries( {
     @NamedQuery(name = AlertNotification.DELETE_BY_ID, query = "DELETE FROM AlertNotification an WHERE an.id IN ( :ids )"),
     @NamedQuery(name = AlertNotification.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource.id IN ( :resourceIds ) )"),
-    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL AND an.notificationTemplate IS NULL") })
+    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL AND an.alertNotificationTemplate IS NULL") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIFICATION")
 public class AlertNotification implements Serializable {
@@ -82,7 +82,7 @@ public class AlertNotification implements Serializable {
 
     @JoinColumn(name = "NOTIF_TEMPLATE_ID")
     @ManyToOne
-    private NotificationTemplate notificationTemplate;
+    private AlertNotificationTemplate alertNotificationTemplate;
 
     @JoinColumn(name = "ALERT_CONFIG_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
@@ -127,7 +127,6 @@ public class AlertNotification implements Serializable {
         this.alertNotificationId = alertNotificationId;
     }
 
-
     public AlertNotification(String name, String sender) {
         this.name = name;
         this.senderName = sender;
@@ -168,7 +167,7 @@ public class AlertNotification implements Serializable {
     }
 
     protected AlertNotification copy() {
-        return new AlertNotification(this.alertDefinition,this.configuration);
+        return new AlertNotification(this.alertDefinition, this.configuration);
     }
 
     public void prepareForOrphanDelete() {
@@ -207,12 +206,12 @@ public class AlertNotification implements Serializable {
         this.name = name;
     }
 
-    public NotificationTemplate getNotificationTemplate() {
-        return notificationTemplate;
+    public AlertNotificationTemplate getAlertNotificationTemplate() {
+        return alertNotificationTemplate;
     }
 
-    public void setNotificationTemplate(NotificationTemplate notificationTemplate) {
-        this.notificationTemplate = notificationTemplate;
+    public void setAlertNotificationTemplate(AlertNotificationTemplate alertNotificationTemplate) {
+        this.alertNotificationTemplate = alertNotificationTemplate;
     }
 
     public int getAlertDefinitionId() {
@@ -230,7 +229,7 @@ public class AlertNotification implements Serializable {
         sb.append("{alertDefinitionId=").append(alertDefinitionId);
         sb.append(", alertNotificationId=").append(alertNotificationId);
         sb.append(", id=").append(id);
-        sb.append(", notificationTemplate=").append(notificationTemplate);
+        sb.append(", notificationTemplate=").append(alertNotificationTemplate);
         sb.append(", senderName='").append(senderName).append('\'');
         sb.append(", order=").append(order);
         sb.append(", name='").append(name).append('\'');

@@ -18,25 +18,22 @@
  */
 package org.rhq.enterprise.server.plugins.alertOperations;
 
-import java.util.EnumSet;
-
 /**
  * Class a @See{Token} can be in.
  * @author Heiko W. Rupp
  */
 public enum TokenClass {
 
-    ALERT("alert","Information about the alert itself"),
-    RESOURCE("resource","Information about the resource that triggered the alert"),
-    TARGET_RESOURCE("targetResource","Information about the resource the alert is fired on "),
-    OPERATION("operation","Information about the triggered operation"),
-    //
-    TEST("test","Just some dummies for internal testing purposes");
+    ALERT("alert", "Information about the alert itself"), //
+    RESOURCE("resource", "Information about the resource that triggered the alert"), //
+    TARGET_RESOURCE("targetResource", "Information about the resource the alert is fired on "), // 
+    OPERATION("operation", "Information about the triggered operation"), //
+    TEST("test", "Just some dummies for internal testing purposes");
 
     private String text;
     private String description;
 
-    private TokenClass(String text,String description) {
+    private TokenClass(String text, String description) {
         this.text = text;
         this.description = description;
     }
@@ -57,10 +54,10 @@ public enum TokenClass {
      * @return The matching token class or null if not found
      */
     public static TokenClass getByText(String input) {
-        EnumSet<TokenClass> es = EnumSet.allOf(TokenClass.class);
-        for (TokenClass t : es) {
-            if (t.text.equals(input))
+        for (TokenClass t : TokenClass.values()) {
+            if (t.text.equals(input)) {
                 return t;
+            }
         }
         return null;
     }

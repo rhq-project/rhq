@@ -142,6 +142,10 @@ public class SchedulerBean implements SchedulerLocal {
         }
     }
 
+    public void initQuartzScheduler() throws SchedulerException {
+        getSchedulerService().initQuartzScheduler();
+    }
+
     public void startQuartzScheduler() throws SchedulerException {
         getSchedulerService().startQuartzScheduler();
     }

@@ -11,7 +11,7 @@
         >
 
     <serverplugin:help>
-        This alert sender plugin is used to send notifications to RHQ roles
+        Used to send notifications to all users in the selected system roles.
     </serverplugin:help>
 
     <!-- startup & tear down listener, + scheduled jobs
@@ -19,7 +19,7 @@
     -->
 
     <!-- How does this sender show up in drop downs etc -->
-    <short-name>Roles</short-name>
+    <short-name>System Roles</short-name>
 
     <!-- Class that does the actual sending -->
     <plugin-class>RolesSender</plugin-class>

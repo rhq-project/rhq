@@ -85,7 +85,7 @@ import org.jetbrains.annotations.Nullable;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class })
-public class Property implements Serializable, DeepCopyable<Property> {
+public class Property implements Serializable, DeepCopyable<Property>, Comparable<Property> {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_PROPERTY_IDS = "Property.deleteByPropertyIds";
@@ -365,5 +365,10 @@ public class Property implements Serializable, DeepCopyable<Property> {
      */
     protected void appendToStringInternals(StringBuilder str) {
         return;
+    }
+
+    @Override
+    public int compareTo(Property other) {
+        return getName().compareTo(other.getName());
     }
 }

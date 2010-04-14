@@ -38,7 +38,7 @@ import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.alert.notification.NotificationTemplate;
+import org.rhq.core.domain.alert.notification.AlertNotificationTemplate;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -48,9 +48,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.authz.RoleManagerLocal;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
@@ -77,15 +75,9 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
-    private RoleManagerLocal roleManager;
-    @EJB
     private SubjectManagerLocal subjectManager;
     @EJB
-    private ConfigurationMetadataManagerLocal confMeMan;
-    @EJB
     private ServerPluginsLocal serverPluginsBean;
-    @EJB
-    private ConfigurationManagerLocal configManager;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -134,7 +126,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         }
     }
 
-
     public int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
         if ((notificationIds == null) || (notificationIds.length == 0)) {
@@ -156,11 +147,11 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         // Before we delete the notification, check if has a custom backing bean
         // and give it the possibility to clean up
         for (AlertNotification notification : toBeRemoved) {
-            CustomAlertSenderBackingBean bb = getBackingBeanForSender(notification.getSenderName(),notification.getId());
+            CustomAlertSenderBackingBean bb = getBackingBeanForSender(notification.getSenderName(), notification
+                .getId());
             try {
                 bb.internalCleanup();
-            }
-            catch (Throwable t ) {
+            } catch (Throwable t) {
                 LOG.error("removeNotifications, calling backingBean.internalCleanup() resulted in " + t.getMessage());
             }
         }
@@ -177,7 +168,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             return 0;
         }
 
-        NotificationTemplate templ = entityManager.find(NotificationTemplate.class,templateId);
+        AlertNotificationTemplate templ = entityManager.find(AlertNotificationTemplate.class, templateId);
         Set<Integer> notificationIdSet = new HashSet<Integer>(Arrays.asList(notificationIds));
         List<AlertNotification> notifications = templ.getNotifications();
         List<AlertNotification> toBeRemoved = new ArrayList<AlertNotification>();
@@ -222,8 +213,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     public Configuration getAlertPropertiesConfiguration(AlertNotification notification) {
         Configuration config = notification.getConfiguration();
-        if (config!=null)
-                config = config.deepCopy();
+        if (config != null)
+            config = config.deepCopy();
 
         return config;
     }
@@ -237,19 +228,18 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         PluginKey key = senderInfo.getPluginKey();
 
         try {
-            AlertPluginDescriptorType descriptor = (AlertPluginDescriptorType) serverPluginsBean.getServerPluginDescriptor(key);
+            AlertPluginDescriptorType descriptor = (AlertPluginDescriptorType) serverPluginsBean
+                .getServerPluginDescriptor(key);
             //ConfigurationDefinition pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor.getPluginConfiguration());
-            ConfigurationDefinition pluginConfigurationDefinition = ConfigurationMetadataParser.parse("alerts:" + pluginName, descriptor.getAlertConfiguration());
-
+            ConfigurationDefinition pluginConfigurationDefinition = ConfigurationMetadataParser.parse("alerts:"
+                + pluginName, descriptor.getAlertConfiguration());
 
             return pluginConfigurationDefinition;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error(e);
             return null;
         }
     }
-
 
     /**
      * Return a list of all available AlertSenders in the system by their shortname.
@@ -268,7 +258,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return info;
     }
 
-
     /**
      * Return the backing bean for the AlertSender with the passed shortName. If a notificationId is passed,
      * we try to load the configuration for this notification and pass it to the CustomAlertSenderBackingBean instance
@@ -281,17 +270,16 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
         CustomAlertSenderBackingBean bean = pluginmanager.getBackingBeanForSender(shortName);
 
-        if (alertNotificationId!=null) {
+        if (alertNotificationId != null) {
             AlertNotification notification = entityManager.find(AlertNotification.class, alertNotificationId);
-            if (notification!=null && bean != null) {
+            if (notification != null && bean != null) {
                 Configuration config = notification.getConfiguration();
                 Configuration config2 = config.deepCopy(true);
 
                 bean.setAlertParameters(config2);
                 try {
                     bean.internalInit();
-                }
-                catch (Throwable t ) {
+                } catch (Throwable t) {
                     LOG.error("getBackingBean, calling backingBean.internalInit() resulted in " + t.getMessage());
                 }
             }
@@ -307,11 +295,12 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     /**
      * {@inheritDoc}
      */
-    public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, String alertName, Configuration configuration) {
+    public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName,
+        String alertName, Configuration configuration) {
 
-        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
-        if (definition==null) {
-            LOG.error("Did not find definition for id [" + alertDefinitionId+ "]");
+        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user, alertDefinitionId);
+        if (definition == null) {
+            LOG.error("Did not find definition for id [" + alertDefinitionId + "]");
             return null;
         }
 
@@ -338,15 +327,15 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      *
      */
     public List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId) {
-        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
-        if (definition==null) {
-            LOG.error("Did not find definition for id [" + alertDefinitionId+ "]");
+        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user, alertDefinitionId);
+        if (definition == null) {
+            LOG.error("Did not find definition for id [" + alertDefinitionId + "]");
             return new ArrayList<AlertNotification>();
         }
 
         List<AlertNotification> notifications = definition.getAlertNotifications();
         for (AlertNotification notification : notifications) {
-            notification.getConfiguration().getProperties().size();  // eager load
+            notification.getConfiguration().getProperties().size(); // eager load
         }
 
         return notifications;
@@ -368,24 +357,25 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @param alertDefinitionId id of an AlertDefinition on which the template should be applied
      * @param removeOldNotifications Shall old Notifications on the Definition be removed?
      */
-    public void applyNotificationTemplateToAlertDefinition(String templateName, int alertDefinitionId, boolean removeOldNotifications) {
+    public void applyNotificationTemplateToAlertDefinition(String templateName, int alertDefinitionId,
+        boolean removeOldNotifications) {
 
-        NotificationTemplate template = getNotificationTemplateByName(templateName);
+        AlertNotificationTemplate template = getNotificationTemplateByName(templateName);
 
         AlertDefinition definition = getDetachedAlertDefinition(alertDefinitionId);
 
-        applyNotificationTemplateToAlertDefinition(template,definition, removeOldNotifications);
+        applyNotificationTemplateToAlertDefinition(template, definition, removeOldNotifications);
     }
 
-    private NotificationTemplate getNotificationTemplateByName(String templateName) {
-        Query q = entityManager.createNamedQuery(NotificationTemplate.FIND_BY_NAME);
-        q.setParameter("name",templateName);
-        NotificationTemplate template;
+    private AlertNotificationTemplate getNotificationTemplateByName(String templateName) {
+        Query q = entityManager.createNamedQuery(AlertNotificationTemplate.FIND_BY_NAME);
+        q.setParameter("name", templateName);
+        AlertNotificationTemplate template;
         try {
-            template = (NotificationTemplate) q.getSingleResult();
+            template = (AlertNotificationTemplate) q.getSingleResult();
         } catch (NoResultException nre) {
-            LOG.info("There is no alert notification template with name '" + templateName +"'");
-            template = new NotificationTemplate("dummy",null);
+            LOG.info("There is no alert notification template with name '" + templateName + "'");
+            template = new AlertNotificationTemplate("dummy", null);
         }
         return template;
     }
@@ -396,7 +386,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @param def AlertDefinition  to apply the template to
      * @param removeOldNotifications Shall old Notifications on the Definition be removed?
      */
-    public void applyNotificationTemplateToAlertDefinition(NotificationTemplate template, AlertDefinition def, boolean removeOldNotifications) {
+    public void applyNotificationTemplateToAlertDefinition(AlertNotificationTemplate template, AlertDefinition def,
+        boolean removeOldNotifications) {
 
         if (removeOldNotifications)
             def.getAlertNotifications().clear();
@@ -420,31 +411,38 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @throws IllegalArgumentException when a template with the passed name already exists
      */
     @SuppressWarnings("unchecked")
-    public NotificationTemplate createNotificationTemplate(String name, String description,
-                                                           List<AlertNotification> notifications,
-                                                           boolean copyNotifications) throws IllegalArgumentException {
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public AlertNotificationTemplate createNotificationTemplate(String name, String description,
+        List<AlertNotification> notifications, boolean copyNotifications) throws IllegalArgumentException {
 
-        Query q = entityManager.createNamedQuery(NotificationTemplate.FIND_BY_NAME);
-        q.setParameter("name",name);
-        List<NotificationTemplate> tmp = q.getResultList();
-        if (tmp.size()>0) {
-            throw new IllegalArgumentException("NotificationTemplate with name [" + name + "] already exists");
+        Query q = entityManager.createNamedQuery(AlertNotificationTemplate.FIND_BY_NAME);
+        q.setParameter("name", name);
+        List<AlertNotificationTemplate> tmp = q.getResultList();
+        if (tmp.size() > 0) {
+            throw new IllegalArgumentException("AlertNotificationTemplate with name [" + name + "] already exists");
         }
 
-        NotificationTemplate templ = new NotificationTemplate(name,description);
+        AlertNotificationTemplate templ = new AlertNotificationTemplate(name, description);
         entityManager.persist(templ);
         for (AlertNotification n : notifications) {
             if (copyNotifications) {
-//                AlertNotification alNo = n.copyWithAlertDefintion() TODO implement / fix this
-            }
-            else {
-                n.setNotificationTemplate(templ);
+                //                AlertNotification alNo = n.copyWithAlertDefintion() TODO implement / fix this
+            } else {
+                n.setAlertNotificationTemplate(templ);
                 templ.addNotification(n);
                 entityManager.persist(n);
             }
 
         }
         return templ;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void updateNotificationTemplate(Subject subject, int templateId, String newName, String newDescription) {
+        AlertNotificationTemplate template = getAlertNotificationTemplate(subject, templateId);
+        template.setName(newName);
+        template.setDescription(newDescription);
+        entityManager.merge(template);
     }
 
     /**
@@ -454,14 +452,14 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @return number of templates deleted
      */
     public int deleteNotificationTemplates(Subject subject, Integer[] templateIds) {
-        if (templateIds.length==0)
+        if (templateIds.length == 0)
             return 0;
 
-        int num=0;
+        int num = 0;
         for (int id : templateIds) {
-            NotificationTemplate templ = entityManager.find(NotificationTemplate.class, id);
-            if (templ==null) {
-                LOG.warn("No notification template found with id [" + id +"]");
+            AlertNotificationTemplate templ = entityManager.find(AlertNotificationTemplate.class, id);
+            if (templ == null) {
+                LOG.warn("No notification template found with id [" + id + "]");
                 continue;
             }
             entityManager.remove(templ);
@@ -480,14 +478,15 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @param notificationConfiguration the configuration of this AlertNotification
      * @return the new AlertNotification
      */
-    public AlertNotification addAlertNotificationToTemplate(Subject user,String templateName,String sender, String notificationName, Configuration notificationConfiguration) {
+    public AlertNotification addAlertNotificationToTemplate(Subject user, int templateId, String sender,
+        String notificationName, Configuration notificationConfiguration) {
 
-        NotificationTemplate template = getNotificationTemplateByName(templateName);
+        AlertNotificationTemplate template = entityManager.find(AlertNotificationTemplate.class, templateId);
 
         entityManager.persist(notificationConfiguration);
-        AlertNotification alertNotification = new AlertNotification(notificationName,sender);
+        AlertNotification alertNotification = new AlertNotification(notificationName, sender);
         alertNotification.setConfiguration(notificationConfiguration);
-        alertNotification.setNotificationTemplate(template);
+        alertNotification.setAlertNotificationTemplate(template);
         entityManager.persist(alertNotification);
         template.addNotification(alertNotification);
 
@@ -497,15 +496,15 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     public List<AlertNotification> getNotificationsForTemplate(Subject subject, int templateId) {
 
-        NotificationTemplate template = entityManager.find(NotificationTemplate.class,templateId);
-       if (template==null) {
-            LOG.error("DId not find notification template for id [" + templateId+ "]");
+        AlertNotificationTemplate template = entityManager.find(AlertNotificationTemplate.class, templateId);
+        if (template == null) {
+            LOG.error("DId not find notification template for id [" + templateId + "]");
             return new ArrayList<AlertNotification>();
         }
 
         List<AlertNotification> notifications = template.getNotifications();
         for (AlertNotification notification : notifications) {
-            notification.getConfiguration().getProperties().size();  // eager load
+            notification.getConfiguration().getProperties().size(); // eager load
         }
 
         return notifications;
@@ -517,12 +516,25 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @return List of all defined alert notification templates
      */
     @SuppressWarnings("unchecked")
-    public List<NotificationTemplate> listNotificationTemplates(Subject user) {
+    public List<AlertNotificationTemplate> listNotificationTemplates(Subject user) {
 
-        Query q = entityManager.createNamedQuery(NotificationTemplate.FIND_ALL);
-        List<NotificationTemplate> ret = q.getResultList();
+        Query q = entityManager.createNamedQuery(AlertNotificationTemplate.FIND_ALL);
+        List<AlertNotificationTemplate> ret = q.getResultList();
 
         return ret;
+    }
+
+    public AlertNotification getAlertNotification(Subject user, int alertNotificationId) {
+        AlertNotification notification = entityManager.find(AlertNotification.class, alertNotificationId);
+        notification.getConfiguration().getProperties().size(); // eager load the alert properties
+        return notification;
+    }
+
+    public AlertNotificationTemplate getAlertNotificationTemplate(Subject user, int alertNotificationTemplateId) {
+        AlertNotificationTemplate template = entityManager.find(AlertNotificationTemplate.class,
+            alertNotificationTemplateId);
+        template.getNotifications().size(); // eager load the children alert notifications
+        return template;
     }
 
     /**
@@ -536,9 +548,10 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         // Clear out old notifications
         for (AlertNotification n : notifications) {
-            AlertDefinition def = alertDefinitionManager.getAlertDefinitionById(subject,n.getAlertDefinitionId());
-            if (def==null) {
-                LOG.error("Alert Definition with id " + n.getAlertDefinitionId() + "does not exist for notification " + n);
+            AlertDefinition def = alertDefinitionManager.getAlertDefinitionById(subject, n.getAlertDefinitionId());
+            if (def == null) {
+                LOG.error("Alert Definition with id " + n.getAlertDefinitionId() + "does not exist for notification "
+                    + n);
                 continue;
             }
             def.getAlertNotifications().clear();
@@ -546,11 +559,11 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         // add the new ones
         for (AlertNotification n : notifications) {
-            AlertDefinition def = alertDefinitionManager.getAlertDefinitionById(subject,n.getAlertDefinitionId());
-            if (def==null)
+            AlertDefinition def = alertDefinitionManager.getAlertDefinitionById(subject, n.getAlertDefinitionId());
+            if (def == null)
                 continue;
 
-            AlertNotification alNo = new AlertNotification(def,n.getConfiguration());
+            AlertNotification alNo = new AlertNotification(def, n.getConfiguration());
             alNo.setSenderName(n.getSenderName());
             alNo.setName(n.getName());
             alNo.setOrder(n.getOrder());

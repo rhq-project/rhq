@@ -73,8 +73,6 @@ public class ResourceGroupTreeModelUIBean {
             }
         }
 
-        rootNode = new ResourceGroupTreeNode(parentGroup);
-
         long start = System.currentTimeMillis();
         long monitorId = HibernatePerformanceMonitor.get().start();
         List<Resource> resources = resourceManager.findResourcesByCompatibleGroup(EnterpriseFacesContextUtility
@@ -106,7 +104,7 @@ public class ResourceGroupTreeModelUIBean {
             memberNodes.add(ResourceTreeModelUIBean.load(member.intValue(), resources, true));
         }
 
-        ResourceGroupTreeNode root = new ResourceGroupTreeNode(group);
+        ResourceGroupTreeNode root = new ResourceGroupTreeNode(group, null);
         root.setClusterKey(new ClusterKey(group.getId()));
         root.addMembers(memberNodes);
         load(root, memberNodes);
@@ -127,7 +125,7 @@ public class ResourceGroupTreeModelUIBean {
 
                     ResourceGroupTreeNode childGroupNode = children.get(key);
                     if (childGroupNode == null) {
-                        childGroupNode = new ResourceGroupTreeNode(level);
+                        childGroupNode = new ResourceGroupTreeNode(level, parentNode);
                         children.put(key, childGroupNode);
                     }
                     childGroupNode.addMember(node);
@@ -147,7 +145,7 @@ public class ResourceGroupTreeModelUIBean {
                     ResourceGroupTreeNode childGroupNode = children.get(key);
 
                     if (childGroupNode == null) {
-                        childGroupNode = new ResourceGroupTreeNode(key);
+                        childGroupNode = new ResourceGroupTreeNode(key, parentNode);
                         childGroupNode.setClusterKey(key);
                         children.put(key, childGroupNode);
                     }

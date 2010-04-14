@@ -1,0 +1,166 @@
+<project
+   xmlns="http://maven.apache.org/POM/4.0.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>3.0.0-SNAPSHOT</version>
+   </parent>
+
+   <artifactId>rhq-cli-tests</artifactId>
+
+   <name>RHQ CLI Tests</name>
+   <description>RHQ Enterprise Remote Command Line Interface</description>
+
+   <properties>
+      <rhq.server.name>localhost</rhq.server.name>  
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>${groupId}</groupId>
+         <artifactId>rhq-remoting-cli</artifactId>
+         <version>${version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <version>5.8</version>
+         <classifier>jdk15</classifier>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-io</groupId>
+         <artifactId>commons-io</artifactId>
+         <version>1.4</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-lang</groupId>
+         <artifactId>commons-lang</artifactId>
+         <version>2.4</version>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-j2ee</artifactId>
+      </dependency>
+      
+    <dependency>
+      <groupId>oswego-concurrent</groupId>
+      <artifactId>concurrent</artifactId>
+    </dependency>
+      
+   </dependencies>
+
+   <build>
+      <resources>
+         <resource>
+            <directory>src/main/script</directory>
+         </resource>
+      </resources>
+      <testResources>
+         <testResource>
+            <directory>src/test/script</directory>
+         </testResource>
+      </testResources>
+
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skip>true</skip>
+            </configuration>
+         </plugin>
+
+        <plugin>
+           <artifactId>maven-antrun-plugin</artifactId>
+           <executions>
+              <execution>
+                <id>test-scripts</id>
+                <phase>test</phase>
+                <configuration>
+                   <tasks>
+                      <java classname="org.rhq.enterprise.remoting.cli.ScriptTestRunner"
+                            classpathref="maven.test.classpath"
+                            resultproperty="script.tests.failed"
+                            fork="true">
+                         
+                         <sysproperty key="script.dir" value="${basedir}/src/test/script"/>
+                         <sysproperty key="test.output.dir" value="${basedir}/target/surefire-reports"/>
+                         <sysproperty key="test" value="${test}"/>
+                         <sysproperty key="rhq.server.name" value="${rhq.server.name}"/>
+                      </java>
+
+                      <fail message="There were test failures">
+                         <condition>
+                            <isfailure code="${script.tests.failed}"/>
+                         </condition>
+                      </fail>
+                   </tasks>
+                </configuration>
+                <goals>
+                   <goal>run</goal>
+                </goals>
+              </execution>
+           </executions>
+        </plugin>
+      </plugins>
+   </build>
+
+   <profiles>
+
+      <!-- Unlike most of RHQ, this module requires JDK6, so replace the Java 5 bootclasspath that was added to the compiler args by the root POM with a bootclasspath based on the java.home sysprop (which should be Java 6 or later if the enforcer plugin did its job). -->
+      <profile>
+         <id>check-java-api</id>
+
+         <activation>
+            <property>
+               <name>java5.home</name>
+            </property>
+         </activation>
+         
+         <build>
+           <plugins>
+              <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                  <compilerArguments>
+                    <bootclasspath>${java.home}/lib/rt.jar${path.separator}${java.home}/lib/jsse.jar${path.separator}${java.home}/lib/jce.jar</bootclasspath>
+                  </compilerArguments>
+                </configuration>
+              </plugin>
+            </plugins>
+          </build>
+      </profile>
+      
+   </profiles>
+
+   <repositories>
+      <repository>
+         <id>jboss-snapshots</id>
+         <name>JBoss Repository</name>
+         <url>http://snapshots.jboss.org/maven2/</url>
+         <snapshots>
+            <enabled>true</enabled>
+           </snapshots>
+      </repository>
+   </repositories>
+
+   <pluginRepositories>
+      <pluginRepository>
+         <id>jboss-plugins-snapshots</id>
+         <name>JBoss Plugin Repository</name>
+         <url>http://snapshots.jboss.org/maven2/</url>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+      </pluginRepository>
+   </pluginRepositories>
+</project>

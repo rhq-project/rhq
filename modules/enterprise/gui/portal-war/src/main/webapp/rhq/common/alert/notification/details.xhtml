@@ -1,0 +1,271 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Alert Notifications"/>
+   
+    <ui:define name="breadcrumbs">
+       <h:outputText value="Back to " /> 
+       <h:outputLink value="#{AlertNotificationContextUIBean.redirect}">
+          <h:outputText value="#{AlertNotificationContextUIBean.name}" />
+       </h:outputLink>
+    </ui:define>
+
+    <ui:define name="body">
+        <a4j:keepAlive beanName="AlertNotificationContextUIBean" />
+        <a4j:keepAlive beanName="alertNotificationStoreUIBean" />
+        <a4j:keepAlive beanName="alertNotificationsUIBean" />
+        <a4j:keepAlive beanName="customContentUIBean" />
+        <a4j:keepAlive beanName="definitionNotificationsUIBean" />
+        
+        <rich:panel id="existingAlertsPanel">
+        
+            <f:facet name="header">
+                <h:outputText value="Alert Notifications" />
+            </f:facet>
+
+                <h:panelGroup>
+                    <h:form id="notificationListForm">
+                        <input type="hidden" name="context" value="#{param.context}"/>
+                        <input type="hidden" name="contextId" value="#{param.contextId}"/>
+                        <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
+                        <rich:orderingList value="#{alertNotificationsUIBean.alertNotifications}"
+                                           var="alertNotification"
+                                           selection="#{alertNotificationsUIBean.selectedNotifications}"
+                                           activeItem="#{alertNotificationsUIBean.activeNotification}"
+                                           converter="#{alertNotificationsUIBean.notificationConverter}"
+                                           listWidth="750"
+                                           fastOrderControlsVisible="false"
+                                           orderControlsVisible="false"
+                                           id="sendersList">
+                            <rich:column width="20%">
+                                <f:facet name="header">
+                                    <h:outputText value="Name" />
+                                </f:facet>
+                                <h:outputText value="#{alertNotification.name}" />
+                            </rich:column>
+                            <rich:column width="20%">
+                                <f:facet name="header">
+                                    <h:outputText value="Type" />
+                                </f:facet>
+                                <h:outputText value="#{alertNotification.senderName}" />
+                            </rich:column>
+                            <rich:column width="60%">
+                                <f:facet name="header">
+                                    <h:outputText value="Configuration" />
+                                </f:facet>
+                                <h:outputText value="#{onf:getAlertSenderConfigurationPreview(alertNotification)}" />
+                            </rich:column>
+
+                            <a4j:support event="onclick"
+                                         ignoreDupResponses="true"
+                                         requestDelay="25"
+                                         status="commonStatus"
+                                         onsubmit="getElementCrossBrowser('notificationListForm:refreshButton').click();"
+                                          />
+                            <ui:remove>
+                            <a4j:support event="onkeyup"
+                                         ignoreDupResponses="true"
+                                         requestDelay="150"
+                                         status="commonStatus"
+                                         reRender="customContentPanel" />
+                            </ui:remove>
+                            <a4j:support event="onorderchanged"
+                                         ignoreDupResponses="true"
+                                         requestDelay="250"
+                                         oncomplete="getElementCrossBrowser('alertActionButtons:saveAlertOrderButton').click();" />
+                        </rich:orderingList>
+                        <h:commandButton id="refreshButton"
+                                         value="refresh" 
+                                         action="success"
+                                         style="display: none;" />
+                    </h:form>
+
+                    <h:form id="alertActionButtons">
+                        <input type="hidden" name="context" value="#{param.context}"/>
+                        <input type="hidden" name="contextId" value="#{param.contextId}"/>
+                        <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
+
+                        <h:panelGrid columns="4" styleClass="buttons-table" columnClasses="button-cell">
+                           <a4j:commandButton id="saveAlertOrderButton"
+                                              value="Save Order"
+                                              action="#{alertNotificationsUIBean.saveOrder}"
+                                              styleClass="buttonmed"
+                                              style="display: none;"/>
+                           <h:outputLink id="addAlertLink" styleClass="buttonmed" value="#">
+                               <h:outputText value="Add New" />
+                               <rich:componentControl for="addAlertPanel" 
+                                                      attachTo="addAlertLink" 
+                                                      operation="show" 
+                                                      event="onclick" />
+                           </h:outputLink>
+                           <ui:remove>
+                           <h:outputLink id="addAlertTemplateLink" styleClass="buttonmed" value="#" rendered="#{param.context ne 'template'}">
+                               <h:outputText value="Import Templates" />
+                               <rich:componentControl for="addAlertFromTemplatePanel"
+                                                      attachTo="addAlertTemplateLink"
+                                                      operation="show"
+                                                      event="onclick" />
+                           </h:outputLink>
+                           </ui:remove>
+                           <h:commandButton id="removeAlertButton"
+                                            value="Remove Selected"
+                                            action="#{alertNotificationsUIBean.removeSelected}"
+                                            styleClass="buttonmed"/>
+                        </h:panelGrid>
+                    </h:form>
+                </h:panelGroup>
+        </rich:panel>
+        
+        <h:panelGroup id="customContentPanel" rendered="#{not empty alertNotificationsUIBean.activeNotification}">
+            <h:form id="customContentForm">
+                <input type="hidden" name="context" value="#{param.context}"/>
+                <input type="hidden" name="contextId" value="#{param.contextId}"/>
+                <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
+                
+                <rich:panel>
+                    <f:facet name="header">
+                        <h:outputText value="Configuration Details"/>
+                    </f:facet>
+                    
+                    <onc:config configurationDefinition="#{alertNotificationsUIBean.activeConfigDefinition}"
+                                configuration="#{alertNotificationsUIBean.activeNotification.configuration}"
+                                rendered="#{empty customContentUIBean.contentUrl}" />
+                    <br/>
+                    <h:commandButton id="saveConfigButton"
+                                     value="SAVE"
+                                     action="#{alertNotificationsUIBean.saveConfiguration}"
+                                     styleClass="buttonmed"
+                                     rendered="#{empty customContentUIBean.contentUrl}" />
+
+                    <!-- Custom plugin UI -->
+                    <h:panelGroup test="#{not empty customContentUIBean.contentUrl}">
+                        <ui:include src="#{customContentUIBean.contentUrl}" />
+                    </h:panelGroup>
+                    <br/>
+                    <h:commandButton id="saveCustomButton"
+                                       value="SAVE"
+                                       action="#{customContentUIBean.saveConfiguration}"
+                                       styleClass="buttonmed"
+                                       rendered="#{not empty customContentUIBean.contentUrl}" />
+                </rich:panel>
+            </h:form>
+
+        </h:panelGroup>
+
+        <rich:modalPanel id="addAlertPanel" moveable="false" autosized="true">
+            <rich:panel id="addNewAlertPanel">
+                <f:facet name="header">
+                    <h:outputText value="Add New Alert Notifications" style="white-space: nowrap;"/>
+                </f:facet>
+
+                <h:form id="newNotificationForm">
+                    <input type="hidden" name="context" value="#{param.context}"/>
+                    <input type="hidden" name="contextId" value="#{param.contextId}"/>
+                    <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
+                
+                    <div style="height: 100px;">
+                        <h:outputLabel for="alertNameInput" value="Alert Notification Name:" />
+                        <br />
+                        <h:inputText id="alertNameInput"
+                                     value="#{alertNotificationsUIBean.newAlertName}"
+                                     maxlength="100"
+                                     required="true" />
+
+                        <h:message for="alertNameInput"
+                                   infoClass="InfoBlock"
+                                   warnClass="WarnBlock"
+                                   errorClass="ErrorBlock"
+                                   fatalClass="FatalBlock" />
+                        <br /><br />
+
+                        <h:outputLabel for="senderList" value="Alert Sender Type:" />
+                        <br />
+                        <h:selectOneMenu id="senderList" value="#{alertNotificationsUIBean.selectedNewSender}">
+                            <f:selectItems value="#{alertNotificationsUIBean.alertSenders}" />
+                        </h:selectOneMenu>
+                    </div>
+
+                    <h:panelGrid columns="4" styleClass="buttons-table" columnClasses="button-cell">
+                        <a4j:commandButton value="OK" action="#{alertNotificationsUIBean.addAlertSender}"
+                                           styleClass="buttonmed" id="addAlertButton"
+                                           reRender="sendersList">
+                           <rich:componentControl for="addAlertPanel" attachTo="addAlertButton" operation="hide" event="onclick" />
+                        </a4j:commandButton>
+                        <h:outputLink id="notificationCancelLink" styleClass="buttonmed" value="#" style="float: right;">
+                            <h:outputText value="Cancel" />
+                            <rich:componentControl for="addAlertPanel" attachTo="notificationCancelLink" operation="hide" event="onclick" />
+                        </h:outputLink>
+                    </h:panelGrid>
+                </h:form>
+            </rich:panel>
+        </rich:modalPanel>
+        
+        
+        <rich:modalPanel id="addAlertFromTemplatePanel" moveable="false" autosized="true">
+            <rich:panel id="importTemplatesPanel">
+                <f:facet name="header">
+                    <h:outputText value="Import Notifications From Template" style="white-space: nowrap;"/>
+                </f:facet>
+                
+                <h:form id="newNotificationsFromTemplateForm">
+                    <input type="hidden" name="ad" value="#{param.contextId}"/>
+                    <input type="hidden" name="context" value="#{param.context}"/>
+                    <input type="hidden" name="contextId" value="#{param.contextId}"/>
+                    <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
+
+                    <rich:panel rendered="#{definitionNotificationsUIBean.notificationTemplates.size ne 0}">
+                    <div style="height: 100px;">
+                        <h:selectOneMenu id="templateList" value="#{definitionNotificationsUIBean.selectedTemplate}">
+                            <f:selectItems value="#{definitionNotificationsUIBean.notificationTemplates}"/>
+                        </h:selectOneMenu>
+    
+                        <br/>
+    
+                        <h:selectBooleanCheckbox title="clearExisting" value="#{definitionNotificationsUIBean.clearExistingNotifications}"/>
+                        <h:outputText value="Clear existing notifications"/>
+                    </div>
+                    </rich:panel>
+                    
+                    <rich:panel rendered="#{definitionNotificationsUIBean.notificationTemplates.size eq 0}">
+                    <div style="height: 100px;">
+                        No Alert Notification Templates have been defined yet.<br/>
+                        Please create some in Administration -> System Configuration -> Alert Notification Templates
+                    </div>
+                    </rich:panel>
+                    
+                    <h:panelGrid columns="4" styleClass="buttons-table" columnClasses="button-cell">
+                        <a4j:commandButton value="OK" action="#{definitionNotificationsUIBean.addAlertSenderFromTemplate}"
+                                           styleClass="buttonmed" id="addTemplateButton" 
+                                           reRender="sendersList"
+                                           rendered="#{definitionNotificationsUIBean.notificationTemplates.size ne 0}">
+                            <rich:componentControl for="addAlertFromTemplatePanel" attachTo="addTemplateButton" operation="hide" event="onclick" />
+                        </a4j:commandButton>
+                        <h:outputLink id="alertTemplateCancelLink" styleClass="buttonmed" value="#" style="float: right; margin: 10px;">
+                            <h:outputText value="Cancel" />
+                            <rich:componentControl for="addAlertFromTemplatePanel" attachTo="alertTemplateCancelLink" operation="hide" event="onclick" />
+                        </h:outputLink>
+                    </h:panelGrid>
+                </h:form>
+            </rich:panel>
+        </rich:modalPanel>
+
+     </ui:define>
+
+</ui:composition>
+
+</html>

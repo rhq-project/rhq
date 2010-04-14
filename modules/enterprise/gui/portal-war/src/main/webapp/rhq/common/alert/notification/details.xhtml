@@ -145,6 +145,7 @@
                     <onc:config configurationDefinition="#{alertNotificationsUIBean.activeConfigDefinition}"
                                 configuration="#{alertNotificationsUIBean.activeNotification.configuration}"
                                 rendered="#{empty customContentUIBean.contentUrl}" />
+                    <br/>
                     <h:commandButton id="saveConfigButton"
                                      value="SAVE"
                                      action="#{alertNotificationsUIBean.saveConfiguration}"
@@ -155,6 +156,7 @@
                     <h:panelGroup test="#{not empty customContentUIBean.contentUrl}">
                         <ui:include src="#{customContentUIBean.contentUrl}" />
                     </h:panelGroup>
+                    <br/>
                     <h:commandButton id="saveCustomButton"
                                        value="SAVE"
                                        action="#{customContentUIBean.saveConfiguration}"

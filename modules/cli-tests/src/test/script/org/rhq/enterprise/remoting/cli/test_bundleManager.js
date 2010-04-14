@@ -57,7 +57,7 @@ function testDeployment() {
    // add the single bundleFile, the test war file
    var fileBytes = scriptUtil.getFileBytes("./src/test/resources/testBundle.war"); 
    var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "testBundle.war",
-         "1.0", null, fileBytes, false);
+         "1.0", null, fileBytes);
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
@@ -65,7 +65,7 @@ function testDeployment() {
    config.put( property );
 
    // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config, false, -1, false);
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config);
 
    // Find a target platform
    var rc = new ResourceCriteria();
@@ -102,7 +102,7 @@ function testGroupDeployment() {
    // add the single bundleFile, the test war file
    var fileBytes = scriptUtil.getFileBytes("./src/test/resources/testBundle.war"); 
    var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "testBundle.war",
-         "1.0", null, fileBytes, false);
+         "1.0", null, fileBytes);
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
@@ -110,7 +110,7 @@ function testGroupDeployment() {
    config.put( property );
 
    // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config, false, -1, false);
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config);
 
    // Find a target platform group
    var rgc = new ResourceGroupCriteria();

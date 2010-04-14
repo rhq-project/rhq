@@ -44,7 +44,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.content.Distribution;
 
 /**
  * Defines a versioned bundle of content that can be provisioned somewhere.
@@ -110,10 +109,6 @@ public class BundleVersion implements Serializable {
     @JoinColumn(name = "BUNDLE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private Bundle bundle;
-
-    @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Distribution distribution;
 
     @JoinColumn(name = "CONFIG_DEF_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -190,14 +185,6 @@ public class BundleVersion implements Serializable {
 
     public void setBundle(Bundle bundle) {
         this.bundle = bundle;
-    }
-
-    public Distribution getDistribution() {
-        return distribution;
-    }
-
-    public void setDistribution(Distribution distribution) {
-        this.distribution = distribution;
     }
 
     /**

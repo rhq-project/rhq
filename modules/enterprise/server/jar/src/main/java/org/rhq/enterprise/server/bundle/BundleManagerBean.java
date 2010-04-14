@@ -174,8 +174,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, String name,
-        String description, String installDir, Configuration configuration, boolean enforcePolicy,
-        int enforcementInterval, boolean pinToBundle) throws Exception {
+        String description, String installDir, Configuration configuration) throws Exception {
 
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleDeploymentName: " + name);
@@ -199,11 +198,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeployment deployment = new BundleDeployment(bundleVersion, name, installDir);
         deployment.setDescription(description);
         deployment.setConfiguration(configuration);
-        deployment.setEnforcePolicy(enforcePolicy);
-        deployment.setEnforcementInterval(enforcementInterval);
-        if (pinToBundle) {
-            deployment.setBundle(bundleVersion.getBundle());
-        }
 
         entityManager.persist(deployment);
 
@@ -346,7 +340,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
-        Architecture architecture, InputStream fileStream, boolean pinToPackage) throws Exception {
+        Architecture architecture, InputStream fileStream) throws Exception {
 
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleFileName: " + name);
@@ -393,9 +387,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleFile bundleFile = new BundleFile();
         bundleFile.setBundleVersion(bundleVersion);
         bundleFile.setPackageVersion(packageVersion);
-        if (pinToPackage) {
-            bundleFile.setPackage(generalPackage);
-        }
 
         entityManager.persist(bundleFile);
 
@@ -404,15 +395,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleFile addBundleFileViaByteArray(Subject subject, int bundleVersionId, String name, String version,
-        Architecture architecture, byte[] fileBytes, boolean pinToPackage) throws Exception {
+        Architecture architecture, byte[] fileBytes) throws Exception {
 
-        return addBundleFile(subject, bundleVersionId, name, version, architecture,
-            new ByteArrayInputStream(fileBytes), pinToPackage);
+        return addBundleFile(subject, bundleVersionId, name, version, architecture, new ByteArrayInputStream(fileBytes));
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
-        int packageVersionId, boolean pinToPackage) throws Exception {
+        int packageVersionId) throws Exception {
 
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleFileName: " + name);
@@ -431,9 +421,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleFile bundleFile = new BundleFile();
         bundleFile.setBundleVersion(bundleVersion);
         bundleFile.setPackageVersion(packageVersion);
-        if (pinToPackage) {
-            bundleFile.setPackage(packageVersion.getGeneralPackage());
-        }
 
         entityManager.persist(bundleFile);
 

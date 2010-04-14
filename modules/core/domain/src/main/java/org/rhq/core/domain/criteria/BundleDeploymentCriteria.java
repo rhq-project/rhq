@@ -36,7 +36,6 @@ public class BundleDeploymentCriteria extends Criteria {
     private String filterName;
     private String filterDescription;
 
-    private boolean fetchBundle;
     private boolean fetchBundleVersion;
     private boolean fetchConfiguration;
     private boolean fetchDeployments;
@@ -60,10 +59,6 @@ public class BundleDeploymentCriteria extends Criteria {
 
     public void addFilterDescription(String filterDescription) {
         this.filterDescription = filterDescription;
-    }
-
-    public void fetchBundle(boolean fetchBundle) {
-        this.fetchBundle = fetchBundle;
     }
 
     public void fetchBundleVersion(boolean fetchBundleVersion) {

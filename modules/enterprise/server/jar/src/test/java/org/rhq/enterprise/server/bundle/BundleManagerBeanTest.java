@@ -148,7 +148,8 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             }
             em.flush();
             // remove any orphaned bfs
-            q = em.createQuery("SELECT bf FROM BundleFile bf WHERE bf.generalPackage.name LIKE '" + TEST_PREFIX + "%'");
+            q = em.createQuery("SELECT bf FROM BundleFile bf WHERE bf.packageVersion.generalPackage.name LIKE '"
+                + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleFile.class, ((BundleFile) removeMe).getId()));
@@ -306,7 +307,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
         // let's add a bundle file so we can ensure our deletion will also delete the file too
         bundleManager.addBundleFileViaByteArray(overlord, bv2.getId(), "testDeleteBundle", "1.0", new Architecture(
-            "noarch"), "content".getBytes(), false);
+            "noarch"), "content".getBytes());
         BundleFileCriteria bfCriteria = new BundleFileCriteria();
         bfCriteria.addFilterBundleVersionId(bv2.getId());
         bfCriteria.fetchPackageVersion(true);
@@ -335,7 +336,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
         // let's add a bundle file so we can ensure our deletion will also delete the file too
         bundleManager.addBundleFileViaByteArray(overlord, bv2.getId(), "testDeleteBundleVersion", "1.0",
-            new Architecture("noarch"), "content".getBytes(), false);
+            new Architecture("noarch"), "content".getBytes());
         BundleFileCriteria bfCriteria = new BundleFileCriteria();
         bfCriteria.addFilterBundleVersionId(bv2.getId());
         bfCriteria.fetchPackageVersion(true);
@@ -534,9 +535,9 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
         assertNotNull(bv1);
         BundleFile bf1 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-bundlefile-1",
-            "1.0", null, "Test Bundle File # 1".getBytes(), false);
+            "1.0", null, "Test Bundle File # 1".getBytes());
         BundleFile bf2 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-bundlefile-2",
-            "1.0", null, "Test Bundle File # 2".getBytes(), false);
+            "1.0", null, "Test Bundle File # 2".getBytes());
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -548,7 +549,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
         assertNotNull(bv1);
         BundleFile b1f1 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-file1", "1.0",
-            null, "Bundle #1 File # 1".getBytes(), false);
+            null, "Bundle #1 File # 1".getBytes());
 
         // create a second bundle but create file of the same name as above
         Bundle b2 = createBundle("two", bt);
@@ -556,7 +557,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         BundleVersion bv2 = createBundleVersion(b2.getName(), "1.0", b2);
         assertNotNull(bv2);
         BundleFile b2f1 = bundleManager.addBundleFileViaByteArray(overlord, bv2.getId(), TEST_PREFIX + "-file1", "1.0",
-            null, "Bundle #2 File # 1".getBytes(), false);
+            null, "Bundle #2 File # 1".getBytes());
 
         BundleFileCriteria bfc = new BundleFileCriteria();
         bfc.addFilterBundleVersionId(bv1.getId());
@@ -654,12 +655,12 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(filenames);
         assertEquals(2, filenames.size());
         BundleFile bf1 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-bundlefile-1",
-            "1.0", null, "Test Bundle File # 1".getBytes(), false);
+            "1.0", null, "Test Bundle File # 1".getBytes());
         filenames = bundleManager.getBundleVersionFilenames(overlord, bv1.getId(), true);
         assertNotNull(filenames);
         assertEquals(1, filenames.size());
         BundleFile bf2 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-bundlefile-2",
-            "1.0", null, "Test Bundle File # 2".getBytes(), false);
+            "1.0", null, "Test Bundle File # 2".getBytes());
         filenames = bundleManager.getBundleVersionFilenames(overlord, bv1.getId(), true);
         assertNotNull(filenames);
         assertEquals(0, filenames.size());
@@ -747,7 +748,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         c.addFilterBundleName("one");
         c.addFilterVersion(bv.getVersion());
         c.fetchBundle(true);
-        c.fetchDistribution(true);
         c.fetchBundleDeployments(true);
         bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
         assertNotNull(bvs);
@@ -755,7 +755,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         bv = bvs.get(0);
         assertEquals(bv2, bv);
         assertEquals(bv.getBundle(), b1);
-        assertNull(bv.getDistribution());
         assertNotNull(bv.getBundleDeployments());
         assertTrue(bv.getBundleDeployments().isEmpty());
     }
@@ -819,7 +818,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         throws Exception {
         final String fullName = TEST_PREFIX + "-bundledeployment-" + name;
         BundleDeployment bd = bundleManager.createBundleDeployment(overlord, bv.getId(), fullName, fullName,
-            installDir, config, false, -1, false);
+            installDir, config);
 
         assert bd.getId() > 0;
         assert bd.getName().endsWith(fullName);

@@ -28,6 +28,7 @@ import org.jboss.seam.contexts.Context;
 import org.jboss.seam.contexts.Contexts;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.EnterpriseFacesContextUIBean;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
@@ -47,14 +48,11 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
     private CustomAlertSenderBackingBean customBackingBean;
 
     public String getContentUrl() {
-        System.out.println("contentURL -- " + contentUrl);
         return contentUrl;
     }
 
     @Create
     public void init() {
-        System.out.println("customContentUIBean: CREATE");
-
         if (alertNotificationId == null) {
             return;
         }
@@ -66,20 +64,17 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
         AlertSenderInfo info = alertNotificationManager.getAlertInfoForSender(senderName);
 
         if (info != null && info.getUiSnippetUrl() != null) {
-            //if (senderName.equals("Resource Operations")) {
-            //    this.contentUrl = "/home/jmarques/dev/repos/rhq/modules/enterprise/server/plugins/alert-operations/src/main/resources/operations.xhtml";
-            //} else {
             this.contentUrl = info.getUiSnippetUrl().toString();
-            //    System.out.println("getContentURL() -> " + this.contentUrl);
-            //}
         }
 
         String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(senderName);
         customBackingBean = alertNotificationManager.getBackingBeanForSender(senderName, alertNotificationId);
 
         if (backingBeanName != null && customBackingBean != null) {
-            customBackingBean.loadView();
             customBackingBean.setWebUser(getSubject());
+            customBackingBean.setContext(FacesContextUtility.getRequiredRequestParameter("context"));
+            customBackingBean.setContextId(FacesContextUtility.getRequiredRequestParameter("contextId"));
+            customBackingBean.loadView();
             outjectBean(backingBeanName, customBackingBean);
         }
     }
@@ -92,11 +87,7 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
      */
     private void outjectBean(String name, CustomAlertSenderBackingBean bean) {
         Context context = Contexts.getPageContext();
-        //CustomAlertSenderBackingBean csb = (CustomAlertSenderBackingBean) context.get(name);
-
-        //if (csb == null) {
         context.set(name, bean);
-        //}
     }
 
     public String saveConfiguration() {

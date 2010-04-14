@@ -18,482 +18,323 @@
  */
 package org.rhq.enterprise.server.plugins.alertOperations;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Backing bean for the operations alert sender
- * @author Heiko W. Rupp
  * @author Joseph Marques
  */
 public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
-    private String currentType = "";
-    private String currentItem = "";
-    private String favoriteCharacter = "";
-    private String result;
+    private Map<String, String> selectionModeOptions = new LinkedHashMap<String, String>();
+    private Map<String, String> relativeTypeOptions = new LinkedHashMap<String, String>();
+    private Map<String, String> operationNameOptions = new LinkedHashMap<String, String>();
 
-    public Map<String, String> firstList = new LinkedHashMap<String, String>();
-    public Map<String, String> secondList = new LinkedHashMap<String, String>();
-    public Map<String, String> thirdList = new LinkedHashMap<String, String>();
+    private String selectionMode = "";
+    private String resourceId;
+    private String ancestorName;
+    private String ancestorTypeId;
+    private String descendantName;
+    private String descendantTypeId;
+    private String operationDefinitionId;
 
-    private static final String[] FRUITS = { "Banana", "Cranberry", "Blueberry", "Orange" };
-    private static final String[] VEGETABLES = { "Potatoes", "Broccoli", "Garlic", "Carrot" };
+    private String effectiveResourceTypeName;
+    private String effectiveResourceTypeId;
 
-    private boolean debug = false;
+    private ConfigurationDefinition argumentsConfigurationDefinition;
+    private Configuration argumentsConfiguration;
+
+    private Subject overlord;
+
+    private Subject getOverlord() {
+        if (overlord == null) {
+            overlord = LookupUtil.getSubjectManager().getOverlord();
+        }
+        return overlord;
+    }
 
     @Override
     public void loadView() {
-        currentType = get("temp-type");
-        currentItem = get("temp-item");
-        favoriteCharacter = get("temp-char");
+        selectionMode = get("selection-mode", "none");
 
         // always load first list
-        firstList.put("Fruits", "fruits");
-        firstList.put("Vegetables", "vegetables");
+        selectionModeOptions.put("Self", "self");
+        selectionModeOptions.put("Specific Resource", "specific");
+        selectionModeOptions.put("Relative Resource", "relative");
+
+        String argumentsConfigurationId = get("operation-arguments-configuration-id", null);
+        Configuration previousArguments = null;
+        if (argumentsConfigurationId != null && !argumentsConfigurationId.equals("none")) {
+            // look it up and then delete it, because the user may switch options in the conditional form, invalidating this
+            previousArguments = LookupUtil.getConfigurationManager().getConfiguration(getOverlord(),
+                Integer.parseInt(argumentsConfigurationId));
+        }
 
         // load secondList if currentType is selected
-        if (currentType.equals("none")) {
+        if (selectionMode.equals("none")) {
             return;
         }
 
-        String[] currentItems;
-        if (currentType.equals("fruits")) {
-            currentItems = FRUITS;
-        } else {
-            currentItems = VEGETABLES;
-        }
+        if (selectionMode.equals("specific")) {
+            resourceId = get("selection-specific-resource-id", "");
+        } else if (selectionMode.equals("relative")) {
+            ancestorName = get("selection-relative-ancestor-name", "");
+            ancestorTypeId = get("selection-relative-ancestor-type-id", "none");
+            descendantName = get("selection-relative-descendant-name", "");
+            descendantTypeId = get("selection-relative-descendant-type-id", "none");
 
-        for (int i = 0; i < currentItems.length; i++) {
-            secondList.put(currentItems[i], currentItems[i]);
-        }
-
-        // load thirdList if currentItem is selected
-        if (currentItem.equals("none")) {
-            return;
-        }
-
-        for (char nextChar : currentItem.toCharArray()) {
-            thirdList.put(String.valueOf(nextChar), String.valueOf(nextChar));
-        }
-
-        // load result if favoriteCharacter is selected
-        if (favoriteCharacter.equals("none")) {
-            return;
-        }
-
-        result = getCurrentType() + " : " + getCurrentItem() + " : " + favoriteCharacter;
-    }
-
-    private String get(String propertyName) {
-        return alertParameters.getSimpleValue(propertyName, "none");
-    }
-
-    @Override
-    public void saveView() {
-        boolean changed = set(currentType, "temp-type");
-        changed = set(changed ? "none" : currentItem, "temp-item");
-        changed = set(changed ? "none" : favoriteCharacter, "temp-char");
-        alertParameters = persistConfiguration(alertParameters);
-    }
-
-    private boolean set(String value, String propertyName) {
-        PropertySimple property = alertParameters.getSimple(propertyName);
-        if (property == null) {
-            property = new PropertySimple(propertyName, value);
-            alertParameters.put(property);
-            return true;
-        } else {
-            String oldStringValue = property.getStringValue();
-            property.setStringValue(value);
-            return !oldStringValue.equals(value);
-        }
-    }
-
-    public Map<String, String> getFirstList() {
-        debug("getFirstList() -> " + firstList);
-        return firstList;
-    }
-
-    public Map<String, String> getSecondList() {
-        debug("getSecondList() -> " + secondList);
-        return secondList;
-    }
-
-    public Map<String, String> getThirdList() {
-        debug("getThirdList() -> " + thirdList);
-        return thirdList;
-    }
-
-    /*
-    private boolean noEffect(ValueChangeEvent event) {
-        Object oldValue = event.getOldValue();
-        if (event.getNewValue() == null) {
-            debug("noEffect: nothing selected");
-            return true; // nothing was actually selected, thus no effect
-        }
-
-        Object newValue = event.getNewValue();
-        if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
-            debug("nothing changed");
-            return true; // nothing was changed, thus no effect
-            // NOTE: ValueChangeEvent is sometimes suppressed client-side for no-change events; depends on the component 
-        }
-
-        debug("noEffect: change detected");
-        return false;
-    }
-
-    public void currentTypeChanged(ValueChangeEvent event) {
-        debug("currentTypeChanged: event fired");
-        if (noEffect(event)) {
-            // nothing was change or nothing was selected, so do nothing
-            return;
-        }
-
-        // edit stuff as a result of the change
-        secondList.clear();
-
-        String[] currentItems;
-        String selectedCurrentType = (String) event.getNewValue();
-
-        if (selectedCurrentType.equals("none")) {
-            currentItems = new String[0];
-        } else {
-            secondList.put("none", "Select...");
-            if (selectedCurrentType.equals("fruits")) {
-                currentItems = FRUITS;
-            } else {
-                currentItems = VEGETABLES;
-            }
-        }
-        for (int i = 0; i < currentItems.length; i++) {
-            secondList.put(currentItems[i], currentItems[i]);
-        }
-
-        // clean-up dependent form elements
-        debug("currentTypeChanged: clearing thirdList, nulling-out result");
-        thirdList.clear();
-        result = null;
-    }
-
-    public void currentItemChanged(ValueChangeEvent event) {
-        debug("currentItemChanged: event fired");
-        if (noEffect(event)) {
-            // nothing was change or nothing was selected, so do nothing
-            return;
-        }
-
-        // edit stuff as a result of the change
-        thirdList.clear();
-        thirdList.put("none", "Select...");
-        String selectedCurrentItem = (String) event.getNewValue();
-        if (selectedCurrentItem.equals("none") == false) {
-            for (char nextChar : selectedCurrentItem.toCharArray()) {
-                secondList.put(String.valueOf(nextChar), String.valueOf(nextChar));
+            List<ResourceType> types = LookupUtil.getResourceTypeManager().findResourceTypesByCriteria(getOverlord(),
+                new ResourceTypeCriteria());
+            for (ResourceType nextType : types) {
+                relativeTypeOptions.put(nextType.getName(), String.valueOf(nextType.getId()));
             }
         }
 
-        // clean-up dependent form elements
-        debug("currentItemChanged: nulling-out result");
-        result = null;
-    }
+        // compute effectiveResourceTypeId from given info
+        ResourceType type = null;
+        if (selectionMode.equals("self")) {
+            type = computeResourceTypeFromContext();
 
-    public void currentCharChanged(ValueChangeEvent event) {
-        debug("currentCharChanged: event fired");
-        if (noEffect(event)) {
-            // nothing was change or nothing was selected, so do nothing
+        } else if (selectionMode.equals("specific")) {
+            if (resourceId.equals("") == false) {
+                Resource resource = LookupUtil.getResourceManager().getResource(getOverlord(),
+                    Integer.parseInt(resourceId));
+                type = resource.getResourceType();
+            }
+
+        } else if (selectionMode.equals("relative")) {
+            try {
+                if (descendantTypeId.equals("none") == false) {
+                    type = LookupUtil.getResourceTypeManager().getResourceTypeById(getOverlord(),
+                        Integer.parseInt(descendantTypeId));
+                } else if (ancestorTypeId.equals("none") == false) {
+                    type = LookupUtil.getResourceTypeManager().getResourceTypeById(getOverlord(),
+                        Integer.parseInt(ancestorTypeId));
+                }
+            } catch (ResourceTypeNotFoundException rtnfe) {
+                // debugging message
+            }
+        }
+
+        if (type == null) {
             return;
         }
 
-        // edit stuff as a result of the change
-        // NOTE: calling getFavoriteCharacter results stale data here, because the
-        //       ValueChangeEvent is fired before the setFavoriteCharacter method
-        result = null;
-        String selectedCurrentChar = (String) event.getNewValue();
-        if (selectedCurrentChar.equals("none") == false) {
-            result = getCurrentType() + " : " + getCurrentItem() + " : " + selectedCurrentChar;
+        effectiveResourceTypeId = String.valueOf(type.getId());
+        effectiveResourceTypeName = type.getName();
+
+        operationDefinitionId = get("operation-definition-id", "none");
+        List<OperationDefinition> definitions = LookupUtil.getOperationManager().findSupportedResourceTypeOperations(
+            getOverlord(), Integer.valueOf(effectiveResourceTypeId), false);
+        for (OperationDefinition nextDefinition : definitions) {
+            operationNameOptions.put(nextDefinition.getDisplayName(), String.valueOf(nextDefinition.getId()));
         }
 
-        // no dependent form elements
-    }
-    */
-
-    public String getCurrentType() {
-        debug("getCurrentType() -> " + currentType);
-        return currentType;
-    }
-
-    public void setCurrentType(String currentType) {
-        debug("setCurrentType(" + currentType + ")");
-        this.currentType = currentType;
-    }
-
-    public String getCurrentItem() {
-        debug("getCurrentItem() -> " + currentItem);
-        return currentItem;
-    }
-
-    public void setCurrentItem(String currentItem) {
-        debug("setCurrentItem(" + currentItem + ")");
-        this.currentItem = currentItem;
-    }
-
-    public String getFavoriteCharacter() {
-        debug("getFavoriteCharacter() -> " + favoriteCharacter);
-        return favoriteCharacter;
-    }
-
-    public void setFavoriteCharacter(String favoriteCharacter) {
-        debug("setFavoriteCharacter(" + favoriteCharacter + ")");
-        this.favoriteCharacter = favoriteCharacter;
-    }
-
-    public String getResult() {
-        debug("getResult() -> " + result);
-        return result;
-    }
-
-    public void setResult(String result) {
-        debug("setResult(" + result + ")");
-        this.result = result;
-    }
-
-    private void debug(String message) {
-        if (debug) {
-            System.out.println(message);
+        if (operationDefinitionId.equals("none")) {
+            return;
         }
-    }
-
-    /*
-    private final Log log = LogFactory.getLog(OperationsBackingBean.class);
-
-    private String resMode;
-    Integer resId;
-    private Integer operationId;
-    private Map<String, Integer> operationIds = new HashMap<String, Integer>();
-    private String resourceName;
-
-    private ConfigurationDefinition configurationDefinition;
-    private Configuration configuration;
-    private static final String ALERT_NOTIFICATIONS = "ALERT_NOTIFICATIONS";
-
-    private String operationName;
-
-    public OperationsBackingBean() {
-        log.info("new " + hashCode());
-    }
-
-    @Override
-    public void internalCleanup() {
-        log.info("internalCleanup");
-        PropertySimple parameterConfigProp = alertParameters
-            .getSimple(OperationInfo.Constants.PARAMETERS_CONFIG.propertyName);
-        if (parameterConfigProp != null) {
-            Integer paramId = parameterConfigProp.getIntegerValue();
-            if (paramId != null) {
-                ConfigurationManagerLocal cmgr = LookupUtil.getConfigurationManager();
-                cmgr.deleteConfigurations(Arrays.asList(paramId));
-                cleanProperty(alertParameters, OperationInfo.Constants.PARAMETERS_CONFIG.propertyName);
-            }
-        }
-    }
-
-    public String selectResource() {
-
-        log.info("In select Resource, resId is " + resId + " resMode is " + resMode);
-
-        if (resId != null) {
-            persistProperty(alertParameters, OperationInfo.Constants.RESOURCE.propertyName, resId);
-            cleanProperty(alertParameters, OperationInfo.Constants.OPERATION.propertyName);
-            cleanProperty(alertParameters, OperationInfo.Constants.USABLE.propertyName);
-            operationIds = new HashMap<String, Integer>(); // Clean out operations dropdown
-            operationId = null;
-            operationName = null;
-
-        }
-
-        obtainOperationIds();
-
-        return ALERT_NOTIFICATIONS;
-    }
-
-    public String selectOperation() {
-        log.info("In selectOperation, resId is " + resId + " opName is " + operationId);
-
-        if (operationId != null) {
-            persistProperty(alertParameters, OperationInfo.Constants.OPERATION.propertyName, operationId);
-            getOperationNameFromOperationIds();
-            lookupConfiguration();
-        }
-
-        return ALERT_NOTIFICATIONS;
-    }
-
-    private void lookupConfiguration() {
 
         try {
+            OperationDefinition operation = LookupUtil.getOperationManager().getOperationDefinition(getOverlord(),
+                Integer.parseInt(operationDefinitionId));
+            argumentsConfigurationDefinition = operation.getParametersConfigurationDefinition();
 
-            OperationManagerLocal opMan = LookupUtil.getOperationManager();
-            obtainOperationIds();
+            if (argumentsConfigurationDefinition == null) {
+                return;
+            }
 
-            if (operationId != null) {
-                OperationDefinition operationDefinition = opMan.getOperationDefinition(webUser, operationId);
-                configurationDefinition = operationDefinition.getParametersConfigurationDefinition();
-
-                // call a SLSB method to get around lazy initialization of configDefs and configTemplates
-                ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-                configuration = configurationManager.getConfigurationFromDefaultTemplate(configurationDefinition);
+            if (previousArguments == null) {
+                // create it for the first time or if this was previous removed due to switching form options
+                Configuration emptyConfiguration = LookupUtil.getConfigurationManager()
+                    .getConfigurationFromDefaultTemplate(argumentsConfigurationDefinition);
+                argumentsConfiguration = emptyConfiguration.deepCopy(false);
+            } else {
+                argumentsConfiguration = previousArguments;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public String useConfiguration() {
-        log.info("In useConfiguration, Configuration is " + configuration);
+    private ResourceType computeResourceTypeFromContext() {
+        AlertDefinition definition = LookupUtil.getAlertDefinitionManager().getAlertDefinitionById(getOverlord(),
+            Integer.parseInt(contextId));
 
-        // COnfiguration should be valid here ...
-        super.persistConfiguration(configuration);
-        persistProperty(alertParameters, OperationInfo.Constants.PARAMETERS_CONFIG.propertyName, configuration.getId());
-        persistProperty(alertParameters, OperationInfo.Constants.USABLE.propertyName, true);
-
-        return ALERT_NOTIFICATIONS;
+        ResourceType type = null;
+        if (definition.getResource() != null) {
+            type = definition.getResource().getResourceType();
+        } else if (definition.getResourceGroup() != null) {
+            type = definition.getResourceGroup().getResourceType();
+        } else {
+            type = definition.getResourceType();
+        }
+        return type;
     }
 
-    private void obtainOperationIds() {
+    private String get(String propertyName, String defaultValue) {
+        return alertParameters.getSimpleValue(propertyName, defaultValue);
+    }
 
-        PropertySimple prop = alertParameters.getSimple(OperationInfo.Constants.RESOURCE.propertyName);
-        if (prop != null)
-            resId = prop.getIntegerValue();
+    @Override
+    public void saveView() {
+        set(selectionMode, "selection-mode");
+        set(resourceId, "selection-specific-resource-id");
+        set(ancestorName, "selection-relative-ancestor-name");
+        set(ancestorTypeId, "selection-relative-ancestor-type-id");
+        set(descendantName, "selection-relative-descendant-name");
+        set(descendantTypeId, "selection-relative-descendant-type-id");
+        set(operationDefinitionId, "operation-definition-id");
 
-        if (resId != null) {
-            OperationManagerLocal opMan = LookupUtil.getOperationManager();
+        // cleanup previous arguments configuration
+        String previousArgumentsConfigurationId = get("operation-arguments-configuration-id", null);
+        set(null, "operation-arguments-configuration-id");
+        if (previousArgumentsConfigurationId != null && !previousArgumentsConfigurationId.equals("none")) {
+            LookupUtil.getConfigurationManager().deleteConfigurations(
+                Arrays.asList(Integer.parseInt(previousArgumentsConfigurationId)));
+        }
+        // persist new one
+        if (operationDefinitionId != null && !operationDefinitionId.equals("none") && argumentsConfiguration != null) {
+            argumentsConfiguration = persistConfiguration(argumentsConfiguration);
+            set(String.valueOf(argumentsConfiguration.getId()), "operation-arguments-configuration-id");
+        }
 
-            List<OperationDefinition> opDefs = opMan.findSupportedResourceOperations(webUser, resId, false);
-            for (OperationDefinition def : opDefs) {
-                operationIds.put(def.getDisplayName(), def.getId()); // TODO add more distinctive stuff in display
+        alertParameters = persistConfiguration(alertParameters);
+    }
+
+    private boolean set(String value, String propertyName) {
+        if (value == null) {
+            Property previous = alertParameters.remove(propertyName);
+            if (previous == null) {
+                return false; // removing a non-existence property, no change
             }
+            return ((PropertySimple) previous).getStringValue() != null;
+        }
+        PropertySimple property = alertParameters.getSimple(propertyName);
+        if (property == null) {
+            property = new PropertySimple(propertyName, value);
+            alertParameters.put(property);
+            return true; // adding a property that previously didn't exist
+        } else {
+            String oldStringValue = property.getStringValue();
+            property.setStringValue(value);
+            return !value.equals(oldStringValue);
         }
     }
 
-    public String getResMode() {
-        return resMode;
+    public Map<String, String> getSelectionModeOptions() {
+        return selectionModeOptions;
     }
 
-    public void setResMode(String resMode) {
-        this.resMode = resMode;
+    public Map<String, String> getRelativeTypeOptions() {
+        return relativeTypeOptions;
     }
 
-    public Integer getResId() {
-        if (resId == null) {
-            PropertySimple prop = alertParameters.getSimple(OperationInfo.Constants.RESOURCE.propertyName);
-            if (prop != null)
-                resId = prop.getIntegerValue();
-        }
-
-        return resId;
+    public Map<String, String> getOperationNameOptions() {
+        return operationNameOptions;
     }
 
-    public void setResId(Integer resId) {
-        this.resId = resId;
-        if (resId != null) {
-            persistProperty(alertParameters, OperationInfo.Constants.RESOURCE.propertyName, resId);
-        }
+    public String getSelectionMode() {
+        return selectionMode;
     }
 
-    public String getResourceName() {
-        if (resId == null)
-            getResId();
-
-        if (resId != null) {
-            ResourceManagerLocal resMgr = LookupUtil.getResourceManager();
-            Resource res = resMgr.getResource(webUser, resId);
-
-            resourceName = res.getName() + " (" + res.getResourceType().getName() + ")";
-        }
-        return resourceName;
+    public void setSelectionMode(String selectionMode) {
+        this.selectionMode = selectionMode;
     }
 
-    public void setResourceName(String resourceName) {
-        this.resourceName = resourceName;
+    public String getResourceId() {
+        return resourceId;
     }
 
-    public Integer getOperationId() {
-        System.out.println("OperationsBackingBean.getOperationId, operationId=" + operationId);
-        if (operationId == null) {
-            PropertySimple prop = alertParameters.getSimple(OperationInfo.Constants.OPERATION.propertyName);
-            if (prop != null)
-                operationId = prop.getIntegerValue();
-
-        }
-
-        if (operationIds == null || operationIds.isEmpty())
-            obtainOperationIds();
-        getOperationNameFromOperationIds();
-
-        return operationId;
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
     }
 
-    private void getOperationNameFromOperationIds() {
-        for (Map.Entry<String, Integer> ent : operationIds.entrySet()) {
-            if (ent.getValue().equals(operationId))
-                operationName = ent.getKey();
-        }
+    public String getAncestorName() {
+        return ancestorName;
     }
 
-    public void setOperationId(Integer operationId) {
-        this.operationId = operationId;
+    public void setAncestorName(String ancestorName) {
+        this.ancestorName = ancestorName;
     }
 
-    public String getOperationName() {
-        return operationName;
+    public String getAncestorTypeId() {
+        return ancestorTypeId;
     }
 
-    public void setOperationName(String operationName) {
-        this.operationName = operationName;
+    public void setAncestorTypeId(String ancestorTypeId) {
+        this.ancestorTypeId = ancestorTypeId;
     }
 
-    public Map<String, Integer> getOperationIds() {
-
-        obtainOperationIds();
-
-        return operationIds;
+    public String getDescendantName() {
+        return descendantName;
     }
 
-    public void setOperationIds(Map<String, Integer> operationIds) {
-        this.operationIds = operationIds;
+    public void setDescendantName(String descendantName) {
+        this.descendantName = descendantName;
     }
 
-    public ConfigurationDefinition getConfigurationDefinition() {
-
-        if (configurationDefinition == null)
-            lookupConfiguration();
-
-        return configurationDefinition;
+    public String getDescendantTypeId() {
+        return descendantTypeId;
     }
 
-    public void setConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
-        this.configurationDefinition = configurationDefinition;
+    public void setDescendantTypeId(String descendantTypeId) {
+        this.descendantTypeId = descendantTypeId;
     }
 
-    public Configuration getConfiguration() {
-        return configuration;
+    public String getOperationDefinitionId() {
+        return operationDefinitionId;
     }
 
-    public void setConfiguration(Configuration configuration) {
-        this.configuration = configuration;
+    public void setOperationDefinitionId(String operationDefinitionId) {
+        this.operationDefinitionId = operationDefinitionId;
     }
 
-    public String getNullConfigurationDefinitionMessage() {
+    public String getEffectiveResourceTypeId() {
+        return effectiveResourceTypeId;
+    }
+
+    public String getEffectiveResourceTypeName() {
+        return effectiveResourceTypeName;
+    }
+
+    public ConfigurationDefinition getArgumentsConfigurationDefinition() {
+        return argumentsConfigurationDefinition;
+    }
+
+    public void setArgumentsConfigurationDefinition(ConfigurationDefinition argumentsConfigurationDefinition) {
+        this.argumentsConfigurationDefinition = argumentsConfigurationDefinition;
+    }
+
+    public Configuration getArgumentsConfiguration() {
+        return argumentsConfiguration;
+    }
+
+    public void setArgumentsConfiguration(Configuration argumentsConfiguration) {
+        this.argumentsConfiguration = argumentsConfiguration;
+    }
+
+    public String getNoParametersMessage() {
         return "This operation does not take any parameters.";
     }
 
-    public String getNullConfigurationMessage() {
+    public String getNotInitializedMessage() {
         return "This operation parameters definition has not been initialized.";
     }
-    */
 }

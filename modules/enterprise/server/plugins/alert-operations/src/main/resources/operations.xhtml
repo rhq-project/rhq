@@ -11,31 +11,47 @@
 <body>
 
         <h:panelGrid columns="2">
-        
-            <h:outputText value="Choose the produce type:"/>
-            <h:selectOneMenu value="#{operationsBean.currentType}" >
+            <h:outputText value="Selection Mode:" style="width: 150px;" />
+            <h:selectOneMenu value="#{operationsBean.selectionMode}" >
                 <f:selectItem itemValue="none" itemLabel="Select..." />
-                <f:selectItems value="#{operationsBean.firstList}"/>
+                <f:selectItems value="#{operationsBean.selectionModeOptions}" />
             </h:selectOneMenu>
             
-            <h:outputText value="Choose concrete product:" rendered="#{!empty operationsBean.secondList}"/>
-            <h:selectOneMenu value="#{operationsBean.currentItem}" 
-                             rendered="#{!empty operationsBean.secondList}" >
+            <h:outputText value="Resource ID:" rendered="#{operationsBean.selectionMode eq 'specific'}" />
+            <h:inputText  value="#{operationsBean.resourceId}" rendered="#{operationsBean.selectionMode eq 'specific'}" />
+            
+            <h:outputText value="Ancestor Type:" style="width: 200px;" rendered="#{operationsBean.selectionMode eq 'relative'}" />
+            <h:selectOneMenu value="#{operationsBean.ancestorTypeId}" rendered="#{operationsBean.selectionMode eq 'relative'}">
                 <f:selectItem itemValue="none" itemLabel="Select..." />
-                <f:selectItems value="#{operationsBean.secondList}"/>
+                <f:selectItems value="#{operationsBean.relativeTypeOptions}" />
             </h:selectOneMenu>
+            <h:outputText value="Ancestor Name:" rendered="#{operationsBean.selectionMode eq 'relative'}"/>
+            <h:inputText  value="#{operationsBean.ancestorName}" rendered="#{operationsBean.selectionMode eq 'relative'}"/>
             
-            <h:outputText value="Choose favorite letter:" rendered="#{!empty operationsBean.thirdList}"/>
-            <h:selectOneMenu value="#{operationsBean.favoriteCharacter}"
-                             rendered="#{!empty operationsBean.thirdList}" >
+            <h:outputText value="Descendant Type:" style="width: 200px;" rendered="#{operationsBean.selectionMode eq 'relative'}"/>
+            <h:selectOneMenu value="#{operationsBean.descendantTypeId}" rendered="#{operationsBean.selectionMode eq 'relative'}">
                 <f:selectItem itemValue="none" itemLabel="Select..." />
-                <f:selectItems value="#{operationsBean.thirdList}"/>
+                <f:selectItems value="#{operationsBean.relativeTypeOptions}" />
             </h:selectOneMenu>
+            <h:outputText value="Descendant Name:" rendered="#{operationsBean.selectionMode eq 'relative'}"/>
+            <h:inputText  value="#{operationsBean.descendantName}" rendered="#{operationsBean.selectionMode eq 'relative'}"/>
             
-            <h:outputText value="Result:" rendered="#{!empty operationsBean.result}"/>
-            <h:outputText value="#{operationsBean.result}" rendered="#{!empty operationsBean.result}"/>
-            
+            <h:outputText value="Operation Name:" rendered="#{!empty operationsBean.effectiveResourceTypeId}"/>
+            <h:selectOneMenu value="#{operationsBean.operationDefinitionId}" 
+                             rendered="#{!empty operationsBean.effectiveResourceTypeId}" >
+                <f:selectItem itemValue="none" itemLabel="Select..." />
+                <f:selectItems value="#{operationsBean.operationNameOptions}"/>
+            </h:selectOneMenu>
         </h:panelGrid>
+            
+        <h:panelGroup rendered="#{!empty operationsBean.operationDefinitionId and operationsBean.operationDefinitionId ne 'none'}">
+            <onc:config configurationDefinition="#{operationsBean.argumentsConfigurationDefinition}"
+                        configuration="#{operationsBean.argumentsConfiguration}"
+                        nullConfigurationDefinitionMessage="#{operationsBean.noParametersMessage}"
+                        nullConfigurationMessage="#{operationsBean.notInitializedMessage}"
+                        nullConfigurationStyle="InfoBlock"
+                        readOnly="false" />
+        </h:panelGroup>
 
     <ui:remove>
     <rich:panel header="Resource Selection">

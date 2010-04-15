@@ -84,10 +84,6 @@
                                          status="commonStatus"
                                          reRender="customContentPanel" />
                             </ui:remove>
-                            <a4j:support event="onorderchanged"
-                                         ignoreDupResponses="true"
-                                         requestDelay="250"
-                                         oncomplete="getElementCrossBrowser('alertActionButtons:saveAlertOrderButton').click();" />
                         </rich:orderingList>
                         <h:commandButton id="refreshButton"
                                          value="refresh" 
@@ -101,11 +97,6 @@
                         <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
 
                         <h:panelGrid columns="4" styleClass="buttons-table" columnClasses="button-cell">
-                           <a4j:commandButton id="saveAlertOrderButton"
-                                              value="Save Order"
-                                              action="#{alertNotificationsUIBean.saveOrder}"
-                                              styleClass="buttonmed"
-                                              style="display: none;"/>
                            <h:outputLink id="addAlertLink" styleClass="buttonmed" value="#">
                                <h:outputText value="Add New" />
                                <rich:componentControl for="addAlertPanel" 

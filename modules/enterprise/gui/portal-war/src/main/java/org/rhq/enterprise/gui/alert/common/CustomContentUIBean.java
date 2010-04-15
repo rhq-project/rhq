@@ -65,6 +65,7 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
 
         if (info != null && info.getUiSnippetUrl() != null) {
             this.contentUrl = info.getUiSnippetUrl().toString();
+            //this.contentUrl = "rhq/custom/plugin/alert/" + senderName + "/" + info.getUiSnippetShortPath();
         }
 
         String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(senderName);

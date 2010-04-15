@@ -47,9 +47,11 @@ import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -74,7 +76,6 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
     private List<ContentSource> repoContentSources = new ArrayList<ContentSource>();
     private Repo repoToSync;
 
-
     @BeforeMethod
     public void setupBeforeMethod() throws Exception {
 
@@ -87,24 +88,38 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
             tx.begin();
             EntityManager entityManager = getEntityManager();
 
-            ContentSourceManagerLocal contentManager = LookupUtil.getContentSourceManager();
+            ContentManagerLocal contentManager = LookupUtil.getContentManager();
+            ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
             RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+            ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
             Subject overlord = subjectManager.getOverlord();
 
-            // Create a sample content source type that will be used in this test
-            contentSourceType = new ContentSourceType("testType");
-            entityManager.persist(contentSourceType);
-            entityManager.flush();
+            // protect if it aleady exists due to a failed run
+            contentSourceType = contentSourceManager.getContentSourceType("testType");
+            if (null == contentSourceType) {
+                // Create a sample content source type that will be used in this test
+                contentSourceType = new ContentSourceType("testType");
+                entityManager.persist(contentSourceType);
+                entityManager.flush();
+            }
 
-            // A repo sync will query all providers for that repo, so add multiple providers
-            ContentSource cs1 = new ContentSource("contentSource1", contentSourceType);
-            cs1.setDownloadMode(DownloadMode.DATABASE);
-            ContentSource cs2 = new ContentSource("contentSource2", contentSourceType);
-            cs2.setDownloadMode(DownloadMode.DATABASE);
-
-            cs1 = contentManager.simpleCreateContentSource(overlord, cs1);
-            cs2 = contentManager.simpleCreateContentSource(overlord, cs2);
+            // protect if it aleady exists due to a failed run
+            ContentSource cs1 = contentSourceManager.getContentSourceByNameAndType(overlord, "contentSource1",
+                "testType");
+            if (null == cs1) {
+                // A repo sync will query all providers for that repo, so add multiple providers
+                cs1 = new ContentSource("contentSource1", contentSourceType);
+                cs1.setDownloadMode(DownloadMode.DATABASE);
+                cs1 = contentSourceManager.simpleCreateContentSource(overlord, cs1);
+            }
+            ContentSource cs2 = contentSourceManager.getContentSourceByNameAndType(overlord, "contentSource2",
+                "testType");
+            if (null == cs2) {
+                cs2 = new ContentSource("contentSource2", contentSourceType);
+                cs2.setDownloadMode(DownloadMode.DATABASE);
+                cs2 = contentSourceManager.simpleCreateContentSource(overlord, cs2);
+            }
 
             pluginService.associateContentProvider(cs1, contentProvider1);
             pluginService.associateContentProvider(cs2, contentProvider2);
@@ -113,18 +128,34 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
             repoContentSources.add(cs2);
 
             // Create the package type packages will be created against
-            resourceType = new ResourceType(TestContentProvider.RESOURCE_TYPE_NAME,
-                TestContentProvider.RESOURCE_TYPE_PLUGIN_NAME, ResourceCategory.PLATFORM, null);
-            entityManager.persist(resourceType);
+            resourceType = resourceTypeManager.getResourceTypeByNameAndPlugin(TestContentProvider.RESOURCE_TYPE_NAME,
+                TestContentProvider.RESOURCE_TYPE_PLUGIN_NAME);
+            if (null == resourceType) {
+                resourceType = new ResourceType(TestContentProvider.RESOURCE_TYPE_NAME,
+                    TestContentProvider.RESOURCE_TYPE_PLUGIN_NAME, ResourceCategory.PLATFORM, null);
+                entityManager.persist(resourceType);
+                entityManager.flush();
+            }
 
-            packageType = new PackageType(TestContentProvider.PACKAGE_TYPE_NAME, resourceType);
-            entityManager.persist(packageType);
+            List<PackageType> packageTypes = contentManager.findPackageTypes(overlord,
+                TestContentProvider.RESOURCE_TYPE_NAME, TestContentProvider.RESOURCE_TYPE_PLUGIN_NAME);
+            if (!packageTypes.isEmpty()) {
+                packageType = packageTypes.get(0);
+            } else {
+                packageType = new PackageType(TestContentProvider.PACKAGE_TYPE_NAME, resourceType);
+                entityManager.persist(packageType);
+            }
 
-            // Create the repo to be syncced
-            Repo repo = new Repo(TestContentProvider.REPO_WITH_PACKAGES);
-            repo.addContentSource(cs1);
-//        repo.addContentSource(cs2);  Disabled until we implement a second test content source to return new stuff
-            repoToSync = repoManager.createRepo(overlord, repo);
+            // Create the repo to be synced
+            List<Repo> repos = repoManager.getRepoByName(TestContentProvider.REPO_WITH_PACKAGES);
+            if (!repos.isEmpty()) {
+                repoToSync = repos.get(0);
+            } else {
+                Repo repo = new Repo(TestContentProvider.REPO_WITH_PACKAGES);
+                repo.addContentSource(cs1);
+                //        repo.addContentSource(cs2);  Disabled until we implement a second test content source to return new stuff
+                repoToSync = repoManager.createRepo(overlord, repo);
+            }
 
             tx.commit();
         } catch (Throwable t) {
@@ -221,13 +252,14 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
         // --------------------------------------------
 
         // Make sure the proper calls were made into the provider
-        assert contentProvider1.getLogSynchronizePackagesRepos().size() == 1 :
-            "Expected: 1, Found: " + contentProvider1.getLogSynchronizePackagesRepos().size();
+        assert contentProvider1.getLogSynchronizePackagesRepos().size() == 1 : "Expected: 1, Found: "
+            + contentProvider1.getLogSynchronizePackagesRepos().size();
 
-            // Need to add in distro packages being syncced
-        assert contentProvider1.getLogGetInputStreamLocations().size() == TestContentProvider.PACKAGE_COUNT_FOR_BITS :
-            "Expected: " + TestContentProvider.PACKAGE_COUNT_FOR_BITS +
-            ", Found: " + contentProvider1.getLogGetInputStreamLocations().size();
+        // Need to add in distro packages being syncced
+        assert contentProvider1.getLogGetInputStreamLocations().size() == TestContentProvider.PACKAGE_COUNT_FOR_BITS : "Expected: "
+            + TestContentProvider.PACKAGE_COUNT_FOR_BITS
+            + ", Found: "
+            + contentProvider1.getLogGetInputStreamLocations().size();
 
         // Make sure all of the packages were added
         TransactionManager tx = getTransactionManager();
@@ -238,16 +270,16 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
         query.setParameter("repoId", repoToSync.getId());
         List<PackageVersion> repoPackages = query.getResultList();
 
-        assert repoPackages.size() == TestContentProvider.PACKAGES.size() :
-            "Expected: " + TestContentProvider.PACKAGES.size() + ", Found: " + repoPackages.size();
+        assert repoPackages.size() == TestContentProvider.PACKAGES.size() : "Expected: "
+            + TestContentProvider.PACKAGES.size() + ", Found: " + repoPackages.size();
 
         // Make sure all of the distributions were added
         query = entityManager.createNamedQuery(RepoDistribution.QUERY_FIND_BY_REPO_ID);
         query.setParameter("repoId", repoToSync.getId());
         List<RepoDistribution> repoDistributions = query.getResultList();
 
-        assert repoDistributions.size() == TestContentProvider.DISTRIBUTIONS.size() :
-            "Expected: " + TestContentProvider.DISTRIBUTIONS.size() + ", Found: " + repoDistributions.size();
+        assert repoDistributions.size() == TestContentProvider.DISTRIBUTIONS.size() : "Expected: "
+            + TestContentProvider.DISTRIBUTIONS.size() + ", Found: " + repoDistributions.size();
 
         // Make sure each distribution has the correct files associated
         int distro1FileCount = countDistroFiles(entityManager, TestContentProvider.DISTRIBUTION_1_LABEL);
@@ -270,8 +302,7 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
 
         if (distroFiles == null) {
             return 0;
-        }
-        else {
+        } else {
             return distroFiles.size();
         }
     }

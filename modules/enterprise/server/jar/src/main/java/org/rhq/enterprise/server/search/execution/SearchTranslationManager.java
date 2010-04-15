@@ -37,7 +37,7 @@ public class SearchTranslationManager {
     public SearchTranslationManager(SearchSubsystem context) {
         this.context = context;
         this.entity = this.context.getEntityClass().getSimpleName();
-        this.alias = this.entity.substring(0, 1).toLowerCase();
+        this.alias = this.entity.toLowerCase();
     }
 
     public void setExpression(String expression) {

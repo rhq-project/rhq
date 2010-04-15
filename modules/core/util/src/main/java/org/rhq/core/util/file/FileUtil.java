@@ -41,6 +41,54 @@ public class FileUtil {
     private static IntHashMap invalidChars = null;
 
     /**
+     * Creates a temporary directory using the same algorithm as JDK's File.createTempFile.
+     */
+    public static File createTempDirectory(String prefix, String suffix, File parentDirectory) throws IOException {
+        // Let's reuse the algorithm the JDK uses to determine a unique name:
+        // 1) create a temp file to get a unique name using JDK createTempFile
+        // 2) then quickly delete the file and...
+        // 3) convert it to a directory
+
+        File tmpDir = File.createTempFile(prefix, suffix, parentDirectory); // create file with unique name
+        boolean deleteOk = tmpDir.delete(); // delete the tmp file and...
+        boolean mkdirsOk = tmpDir.mkdirs(); // ...convert it to a directory
+
+        if (!deleteOk || !mkdirsOk) {
+            throw new IOException("Failed to create temp directory named [" + tmpDir + "]");
+        }
+
+        return tmpDir;
+    }
+
+    /**
+     * Given a directory, this will recursively purge all child directories and files.
+     * If dir is actually a normal file, it will be deleted but only if deleteIt is true.
+     * 
+     * If deleteIt is true, the directory itself will be deleted, otherwise it will remain (albeit empty).
+     * 
+     * @param dir the directory to purge (if <code>null</code>, this method does nothing and returns normally)
+     * @param deleteIt if <code>true</code> delete the directory itself, otherwise leave it but purge its children
+     */
+    public static void purge(File dir, boolean deleteIt) {
+        if (dir != null) {
+            if (dir.isDirectory()) {
+                File[] doomedFiles = dir.listFiles();
+                if (doomedFiles != null) {
+                    for (File doomedFile : doomedFiles) {
+                        purge(doomedFile, true); // call this method recursively
+                    }
+                }
+            }
+
+            if (deleteIt) {
+                dir.delete();
+            }
+        }
+
+        return;
+    }
+
+    /**
      * Copy a file from one file to another
      */
     public static void copyFile(File inFile, File outFile) throws FileNotFoundException, IOException {
@@ -230,7 +278,7 @@ public class FileUtil {
 
         File tmp = null;
         try {
-            tmp = File.createTempFile("hyperic", null, dir);
+            tmp = File.createTempFile("rhq", null, dir);
             return true;
         } catch (IOException e) {
             return false;

@@ -90,6 +90,9 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
             return true;
         }
 
+        // make sure all parent directories are created
+        entryFile.getParentFile().mkdirs();
+
         if (this.filesToRealize != null && this.filesToRealize.contains(pathname)) {
             // this entry needs to be realized, do it now
             // note: tempateEngine will never be null if we got here

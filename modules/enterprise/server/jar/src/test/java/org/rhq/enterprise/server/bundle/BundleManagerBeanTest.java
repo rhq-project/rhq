@@ -805,7 +805,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
     private BundleVersion createBundleVersion(String name, String version, Bundle bundle) throws Exception {
         final String fullName = TEST_PREFIX + "-bundleversion-" + version + "-" + name;
-        final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d <% test.path %>";
+        final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d @@ test.path @@";
         BundleVersion bv = bundleManager.createBundleVersion(overlord, bundle.getId(), fullName, fullName + "-desc",
             version, recipe);
 

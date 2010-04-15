@@ -55,9 +55,9 @@ function testDeployment() {
    var testBundle = BundleManager.createBundle( bundleName, getBundleType() );
    
    // define the recipe for bundleVersion 1.0 
-   var recipe = "deploy -f dummy.zip -d <%dummy.deployHome%>\n"
-              + "realize -f <%dummy.deployHome%>/dummy/README.txt\n"
-              + "realize -f <%dummy.deployHome%>/dummy/subdirectory/file.txt";
+   var recipe = "deploy -f dummy.zip -d @@dummy.deployHome@@\n"
+              + "realize -f @@dummy.deployHome@@/dummy/README.txt\n"
+              + "realize -f @@dummy.deployHome@@/dummy/subdirectory/file.txt";
 
    // create bundleVersion 1.0
    var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, null, recipe);

@@ -49,7 +49,7 @@ function testDeployment() {
    var testBundle = BundleManager.createBundle( bundleName, bundleName, getBundleType() );
    
    // define the recipe for bundleVersion 1.0 
-   var recipe = "file -s testBundle.war -d <%bundleTest.deployHome%>/testBundle.war"
+   var recipe = "file -s testBundle.war -d @@bundleTest.deployHome@@/testBundle.war"
       
    // create bundleVersion 1.0
    var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, bundleName, null, recipe);
@@ -94,7 +94,7 @@ function testGroupDeployment() {
    var testBundle = BundleManager.createBundle( bundleName, bundleName, getBundleType() );
    
    // define the recipe for bundleVersion 1.0 
-   var recipe = "file -s testBundle.war -d <%bundleTest.deployHome%>/group/testBundle.war"
+   var recipe = "file -s testBundle.war -d @@bundleTest.deployHome@@/group/testBundle.war"
       
    // create bundleVersion 1.0
    var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, bundleName, null, recipe);

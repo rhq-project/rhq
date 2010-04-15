@@ -2,20 +2,20 @@ package org.rhq.core.template;
 
 import java.util.TreeMap;
 
-import org.testng.annotations.Test;
-
 import junit.framework.TestCase;
+
+import org.testng.annotations.Test;
 
 @Test
 public class TemplateEngineTest extends TestCase {
     private static final String IPADDR = "192.168.22.153";
     private static final String SUCCESSTOKEN1 = "successtoken1";
     String noTokens = "This string should come through unchanged";
-    String justOneToken = "<%rhq.token1%>";
-    String oneTokenWhiteSpace = "<% rhq.token1 %>";
-    String multipleLogTokens = "This string has <%rhq.token1%>\n" + "<% rhq.unsettoken %>\n" + "<% nmsqt.token1 %>"
-        + "It also has <%rhq.platform.ethers.eth1.ipaddress %>";
-    String sameTokenTwice = "<%rhq.token1%><%rhq.token1%>";
+    String justOneToken = "@@rhq.token1@@";
+    String oneTokenWhiteSpace = "@@ rhq.token1 @@";
+    String multipleLogTokens = "This string has @@rhq.token1@@\n" + "@@ rhq.unsettoken @@\n" + "@@ nmsqt.token1 @@"
+        + "It also has @@rhq.platform.ethers.eth1.ipaddress @@";
+    String sameTokenTwice = "@@rhq.token1@@@@rhq.token1@@";
 
     TemplateEngine templateEngine;
     TreeMap<String, String> tokens;
@@ -52,8 +52,8 @@ public class TemplateEngineTest extends TestCase {
     }
 
     public void testIgnore() {
-        assertTrue(templateEngine.replaceTokens(multipleLogTokens).indexOf("<% rhq.unsettoken %>") > 0);
-        assertTrue(templateEngine.replaceTokens(multipleLogTokens).indexOf("<% nmsqt.token1 %>") > 0);
+        assertTrue(templateEngine.replaceTokens(multipleLogTokens).indexOf("@@ rhq.unsettoken @@") > 0);
+        assertTrue(templateEngine.replaceTokens(multipleLogTokens).indexOf("@@ nmsqt.token1 @@") > 0);
     }
 
     public void testSameTokenTwice() {

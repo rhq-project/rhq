@@ -90,8 +90,9 @@ public class OperationsSender extends AlertSender {
 
     @Override
     public String previewConfiguration() {
-        OperationInfo info = OperationInfo.load(alertParameters);
-        return info.toString();
+        //OperationInfo info = OperationInfo.load(alertParameters);
+        //return info.toString();
+        return "<no preview available>";
     }
 
 }

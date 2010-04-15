@@ -34,6 +34,8 @@ public class CustomAlertSenderBackingBean {
     /** Configuration from the per alert definition parameters */
     protected Configuration alertParameters;
     protected Subject webUser;
+    protected String context;
+    protected String contextId;
 
     public Configuration getAlertParameters() {
         return alertParameters;
@@ -49,6 +51,22 @@ public class CustomAlertSenderBackingBean {
 
     public void setWebUser(Subject webUser) {
         this.webUser = webUser;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
+    }
+
+    public String getContextId() {
+        return contextId;
+    }
+
+    public void setContextId(String contextId) {
+        this.contextId = contextId;
     }
 
     public void loadView() {

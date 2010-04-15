@@ -47,9 +47,10 @@ public class OperationsSender extends AlertSender {
         }
 
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO get real subject for authz?
-        OperationDefinition operation = info.getOperationDefinition();
 
+        OperationDefinition operation = info.getOperationDefinition();
         Configuration parameters = info.getArguments();
+
         Configuration replacedParameters = null;
         try {
             if (parameters != null) {
@@ -90,9 +91,8 @@ public class OperationsSender extends AlertSender {
 
     @Override
     public String previewConfiguration() {
-        //OperationInfo info = OperationInfo.load(alertParameters);
-        //return info.toString();
-        return "<no preview available>";
+        OperationInfo info = OperationInfo.load(alertParameters);
+        return info.toString();
     }
 
 }

@@ -218,7 +218,7 @@
         <column name="START_TIME" type="LONG" required="true"/>
         <column name="END_TIME" type="LONG" required="false"/>
         <column name="RESULTS" type="LONGVARCHAR" required="false"/>
-        <column name="PERCENT_COMPLETE" type="LONGVARCHAR" required="false"/>
+        <column name="PERCENT_COMPLETE" type="LONG" required="false"/>
         <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
     </table>
     

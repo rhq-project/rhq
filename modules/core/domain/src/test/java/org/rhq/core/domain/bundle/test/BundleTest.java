@@ -34,8 +34,6 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.BundleVersionRepo;
 import org.rhq.core.domain.bundle.BundleVersionRepoPK;
-import org.rhq.core.domain.content.Distribution;
-import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Repo;
@@ -162,24 +160,6 @@ public class BundleTest extends AbstractEJB3Test {
             assert bvFind.getBundle().equals(bv.getBundle());
             assert bvFind.equals(bv);
             assert bvFind.hashCode() == bv.hashCode();
-            assert bvFind.getDistribution() == null;
-
-            // update it with a distro, then null out the distro, checking along the way
-            DistributionType distroType = new DistributionType(name + "-DistroType");
-            Distribution distro = new Distribution(name + "-Distro", "basepathIn", distroType);
-            em.persist(distro);
-            assert distro.getId() > 0;
-            assert distro.getDistributionType().getId() > 0;
-            bvFind.setDistribution(distro);
-            em.flush();
-            bvFind = em.find(BundleVersion.class, id);
-            assert bvFind.getDistribution().equals(distro);
-            bvFind.setDistribution(null);
-            em.flush();
-            bvFind = em.find(BundleVersion.class, id);
-            assert bvFind.getDistribution() == null;
-            em.remove(distro);
-            em.remove(distroType);
 
             // clean up - delete our test entity
             em.close();

@@ -72,7 +72,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
         try {
             BundleDeployment result = bundleManager.createBundleDeployment(getSessionSubject(), bundleVersionId, name,
-                description, installDir, configuration, enforcePolicy, enforcementInterval, pinToBundle);
+                description, installDir, configuration);
 
             return SerialUtility.prepare(result, "createBundleDeployment");
         } catch (Exception e) {

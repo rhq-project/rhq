@@ -321,21 +321,19 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //BUNDLEMANAGER: BEGIN ------------------------------------------
 
     public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
-        Architecture architecture, InputStream fileStream, boolean pinToPackage) throws Exception {
-        return bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture, fileStream,
-            pinToPackage);
+        Architecture architecture, InputStream fileStream) throws Exception {
+        return bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture, fileStream);
     }
 
     public BundleFile addBundleFileViaByteArray(Subject subject, int bundleVersionId, String name, String version,
-        Architecture architecture, byte[] fileBytes, boolean pinToPackage) throws Exception {
-        return bundleManager.addBundleFileViaByteArray(subject, bundleVersionId, name, version, architecture,
-            fileBytes, pinToPackage);
+        Architecture architecture, byte[] fileBytes) throws Exception {
+        return bundleManager
+            .addBundleFileViaByteArray(subject, bundleVersionId, name, version, architecture, fileBytes);
     }
 
     public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
-        int packageVersionId, boolean pinToPackage) throws Exception {
-        return bundleManager.addBundleFileViaPackageVersion(subject, bundleVersionId, name, packageVersionId,
-            pinToPackage);
+        int packageVersionId) throws Exception {
+        return bundleManager.addBundleFileViaPackageVersion(subject, bundleVersionId, name, packageVersionId);
     }
 
     public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
@@ -343,10 +341,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, String name,
-        String description, String installDir, Configuration configuration, boolean enforcePolicy,
-        int enforcementInterval, boolean pinToBundle) throws Exception {
+        String description, String installDir, Configuration configuration) throws Exception {
         return bundleManager.createBundleDeployment(subject, bundleVersionId, name, description, installDir,
-            configuration, enforcePolicy, enforcementInterval, pinToBundle);
+            configuration);
     }
 
     public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,

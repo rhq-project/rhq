@@ -68,8 +68,6 @@ public interface BundleManagerRemote {
      * @param version version of the backing package
      * @param architecture architecture appropriate for the backing package.  Defaults to noarch (i.e. any architecture).
      * @param fileStream the file bits
-     * @param pinToPackage if true a new version of the backing package can trigger automatic creation of a new
-     *        BundleVersion. if false new versions of the backing package have no effect on the BundleFile or its BundleVersion. 
      * @return the new BundleFile
      * @throws Exception
      */
@@ -80,8 +78,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "name") String name, //
         @WebParam(name = "version") String version, //
         @WebParam(name = "architecture") Architecture architecture, //
-        @WebParam(name = "fileStream") InputStream fileStream, //
-        @WebParam(name = "pinToPackage") boolean pinToPackage) throws Exception;
+        @WebParam(name = "fileStream") InputStream fileStream) throws Exception;
 
     /**
      * A convenience method taking a byte array as opposed to a stream for the file bits.
@@ -93,8 +90,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "name") String name, //
         @WebParam(name = "version") String version, //
         @WebParam(name = "architecture") Architecture architecture, //
-        @WebParam(name = "fileBytes") byte[] fileBytes, //
-        @WebParam(name = "pinToPackage") boolean pinToPackage) throws Exception;
+        @WebParam(name = "fileBytes") byte[] fileBytes) throws Exception;
 
     /**
      * A convenience method taking an existing PackageVersion as opposed to a stream for the file bits.
@@ -105,8 +101,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionid") int bundleVersionId, //
         @WebParam(name = "name") String name, //
-        @WebParam(name = "packageVersionId") int packageVersionId, //
-        @WebParam(name = "pinToPackage") boolean pinToPackage) throws Exception;
+        @WebParam(name = "packageVersionId") int packageVersionId) throws Exception;
 
     /**
      * @param subject must be InventoryManager
@@ -129,9 +124,6 @@ public interface BundleManagerRemote {
      * @param configuration a Configuration (pojo) to be associated with this deployment. Although
      *        it is not enforceable must be that of the associated BundleVersion.
      * @param installDir the root dir for the deployment
-     * @param enforcePolicy if true enforce policy on deployments made with this deployment
-     * @param enforceInterval if enforcePolicy is true check policy at this interval (in seconds), otherwise ignored
-     * @param pinToBundle if true this deployment is disabled if a newer BundleVersion is generated for the Bundle
      * @return the persisted deployment
      * @throws Exception
      */
@@ -141,10 +133,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "name") String name, //
         @WebParam(name = "description") String description, //
         @WebParam(name = "installDir") String installDir, //        
-        @WebParam(name = "configuration") Configuration configuration, //
-        @WebParam(name = "enforcePolicy") boolean enforcePolicy, //
-        @WebParam(name = "enforcementInterval") int enforcementInterval, //
-        @WebParam(name = "pinToBundle") boolean pinToBundle) throws Exception;
+        @WebParam(name = "configuration") Configuration configuration) throws Exception;
 
     /**
      * @param subject must be InventoryManager

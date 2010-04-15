@@ -520,7 +520,6 @@
         <column name="ACTION" type="CLOB" required="true"/>
         <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF" />
         <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>
-        <column name="DISTRIBUTION_ID" type="INTEGER" required="false" references="RHQ_DISTRIBUTION"/>
 
         <!--  This index is for constraint, not performance -->    
         <index name="RHQ_BUNDLE_VERSION_UNIQUE" unique="true">
@@ -530,8 +529,8 @@
         </index>
     </table>
 
-    <!-- Many-to-many table that links many repos to a particular bundle version -->
-    <!-- This is not currently used, reserved for future policy work -->
+    <!-- Many-to-many table that links many repos to a particular bundle version. destination platforms -->
+    <!-- would be required to have associations to the specified repos (to access required content -->
     <table name="RHQ_BUNDLE_VERSION_REPO">
         <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
         <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
@@ -549,7 +548,6 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
         <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
-        <column name="PACKAGE_ID" type="INTEGER" required="false" references="RHQ_PACKAGE"/>
     </table>    
 
     <!-- A set of configuration values that are used to customize how a bundle version is installed -->    
@@ -562,10 +560,6 @@
         <column name="INSTALL_DIR" size="256" type="VARCHAR2" required="true"/>
         <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />        
         <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
-        <!-- The following fields are reserved for futue policy work -->        
-        <column name="BUNDLE_ID" type="INTEGER" required="false" references="RHQ_BUNDLE"/>
-        <column name="ENFORCE_POLICY" type="BOOLEAN" required="true"/> 
-        <column name="ENFORCEMENT_INTERVAL" type="INTEGER" required="false"/>
 
         <!--  This index is for constraint, not performance -->    
         <index name="RHQ_BUNDLE_DEPLOY_DEF_UNIQUE" unique="true">

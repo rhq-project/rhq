@@ -100,17 +100,6 @@ public class BundleDeployment implements Serializable {
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleGroupDeployment> groupDeployments = new ArrayList<BundleGroupDeployment>();
 
-    // The following are reserved for future policy work 
-    @JoinColumn(name = "BUNDLE_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Bundle bundle;
-
-    @Column(name = "ENFORCE_POLICY", nullable = false)
-    private boolean enforcePolicy;
-
-    @Column(name = "ENFORCEMENT_INTERVAL", nullable = true)
-    private int enforcementInterval;
-
     public BundleDeployment() {
         // for JPA use
     }
@@ -119,7 +108,6 @@ public class BundleDeployment implements Serializable {
         this.bundleVersion = bundleVersion;
         this.name = name;
         this.installDir = installDir;
-        this.enforcePolicy = false;
     }
 
     public int getId() {
@@ -218,30 +206,6 @@ public class BundleDeployment implements Serializable {
         this.groupDeployments = groupDeployments;
     }
 
-    public Bundle getBundle() {
-        return bundle;
-    }
-
-    public void setBundle(Bundle bundle) {
-        this.bundle = bundle;
-    }
-
-    public boolean isEnforcePolicy() {
-        return enforcePolicy;
-    }
-
-    public void setEnforcePolicy(boolean enforcePolicy) {
-        this.enforcePolicy = enforcePolicy;
-    }
-
-    public int getEnforcementInterval() {
-        return enforcementInterval;
-    }
-
-    public void setEnforcementInterval(int enforcementInterval) {
-        this.enforcementInterval = enforcementInterval;
-    }
-
     @Override
     public String toString() {
         return "BundleDeployment[id=" + id + ", name=" + name + "]";
@@ -252,7 +216,6 @@ public class BundleDeployment implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((bundleVersion == null) ? 0 : bundleVersion.hashCode());
-        // result = prime * result + ((bundle == null) ? 0 : bundle.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((installDir == null) ? 0 : installDir.hashCode());
         return result;
@@ -276,14 +239,6 @@ public class BundleDeployment implements Serializable {
         } else if (!bundleVersion.equals(other.bundleVersion)) {
             return false;
         }
-
-        //        if (bundle == null) {
-        //            if (other.bundle != null) {
-        //                return false;
-        //            }
-        //        } else if (!bundle.equals(other.bundle)) {
-        //            return false;
-        //        }
 
         if (name == null) {
             if (other.name != null) {

@@ -65,7 +65,7 @@ function testDeployment() {
    // add the single bundleFile, the test war file
    var fileBytes = scriptUtil.getFileBytes("./src/test/resources/dummy.zip"); 
    var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "dummy.zip",
-         "1.0", null, fileBytes, false);
+         "1.0", null, fileBytes);
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
@@ -77,7 +77,7 @@ function testDeployment() {
    config.put( property3 );
 
    // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", config, false, -1, false);
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", config);
 
    // Find a target platform
    var rc = new ResourceCriteria();

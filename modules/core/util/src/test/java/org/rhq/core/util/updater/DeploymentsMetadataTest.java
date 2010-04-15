@@ -37,12 +37,15 @@ public class DeploymentsMetadataTest {
         try {
             ZipUtil.unzipFile(new File("target/test-classes/updater-test1.zip"), tmpDir);
             DeploymentsMetadata metadata = new DeploymentsMetadata(tmpDir);
+            assert !metadata.isManaged() : "this should not be managed yet : " + metadata;
+
             DeploymentProperties deploymentProps = new DeploymentProperties();
             int deploymentId = 1;
             deploymentProps.setDeploymentId(deploymentId);
             deploymentProps.setBundleName("test-bundle-name");
             deploymentProps.setBundleVersion("1.0");
             FileHashcodeMap map = metadata.snapshotLiveDeployment(deploymentProps, null);
+            assert metadata.isManaged() : "this should be managed now : " + metadata;
             assert map.size() == 5 : map; // there are 5 files in our test bundle zip
             assert map.containsKey("file0") : map;
             assert map.containsKey("dir1/file1") : map;

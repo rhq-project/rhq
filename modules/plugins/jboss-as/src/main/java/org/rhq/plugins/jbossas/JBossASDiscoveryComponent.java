@@ -223,7 +223,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
         File logDir = new File(configDir, "log");
         File serverLogFile = new File(logDir, "server.log");
         if (serverLogFile.exists() && !serverLogFile.isDirectory()) {
-            PropertyMap serverLogEventSource = new PropertyMap("serverLog");
+            PropertyMap serverLogEventSource = new PropertyMap("logEventSource");
             serverLogEventSource.put(new PropertySimple(
                 LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.LOG_FILE_PATH, serverLogFile));
             serverLogEventSource.put(new PropertySimple(
@@ -308,7 +308,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                 "../logs/rhq-server-log4j.log");
             if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {
                 try {
-                    PropertyMap serverLogEventSource = new PropertyMap("serverLog");
+                    PropertyMap serverLogEventSource = new PropertyMap("logEventSource");
                     serverLogEventSource.put(
                             new PropertySimple(LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.LOG_FILE_PATH,
                             rhqLogFile.getCanonicalPath()));

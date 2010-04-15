@@ -49,6 +49,7 @@ import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.common.Tag;
 import org.rhq.core.domain.common.Taggable;
 import org.rhq.core.domain.resource.Resource;
@@ -89,19 +90,18 @@ import org.rhq.core.domain.resource.Resource;
         + ") "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
-        + "AND c.candidate = false "
-        + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
+        + "AND c.candidate = false " + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
     @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
         + "AND c.candidate = false "),
     @NamedQuery(name = Repo.QUERY_FIND_CANDIDATES_WITH_ONLY_CONTENT_SOURCE, query = "SELECT r FROM Repo r " //
         + "WHERE r.candidate = true " //
-        + "AND (SELECT COUNT(rcs.repo) FROM RepoContentSource rcs " //
+        + "AND 1 = (SELECT COUNT(rcs.repo) FROM RepoContentSource rcs " //
         + "     WHERE rcs.repo.id = r.id " //
-        + "     AND rcs.contentSource.id = :contentSourceId) = 1 " //
-        + "AND (SELECT COUNT(rcs) FROM RepoContentSource rcs" //
-        + "     WHERE rcs.repo.id = r.id) = 1 ") })
+        + "     AND rcs.contentSource.id = :contentSourceId) " //
+        + "AND 1 = (SELECT COUNT(rcs.repo) FROM RepoContentSource rcs" //
+        + "     WHERE rcs.repo.id = r.id) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
 public class Repo implements Serializable, Taggable {

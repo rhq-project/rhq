@@ -50,6 +50,34 @@ public class DeploymentProperties extends Properties {
         return props;
     }
 
+    /**
+     * Creates an empty set of deployment properties. The caller must ensure valid
+     * deployment properties are set later.
+     */
+    public DeploymentProperties() {
+        super();
+    }
+
+    /**
+     * Convienence constructor whose parameters are all the required values that
+     * this object needs.
+     * 
+     * @param deploymentId see {@link #getDeploymentId()}
+     * @param bundleName see {@link #getBundleName()}
+     * @param bundleVersion see {@link #getBundleVersion()}
+     */
+    public DeploymentProperties(int deploymentId, String bundleName, String bundleVersion) {
+        super();
+        setDeploymentId(deploymentId);
+        setBundleName(bundleName);
+        setBundleVersion(bundleVersion);
+        try {
+            validate();
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
     public void saveToFile(File file) throws Exception {
         validate(); // makes sure we never save invaild properties
 
@@ -74,6 +102,9 @@ public class DeploymentProperties extends Properties {
         }
     }
 
+    /**
+     * @return an identifier that uniquely identifies this particular deployment.
+     */
     public int getDeploymentId() {
         String str = getProperty(DEPLOYMENT_ID);
         if (str == null) {
@@ -92,6 +123,9 @@ public class DeploymentProperties extends Properties {
         setProperty(DEPLOYMENT_ID, Integer.toString(id));
     }
 
+    /**
+     * @return the name of the bundle for this deployment
+     */
     public String getBundleName() {
         String str = getProperty(BUNDLE_NAME);
         if (str == null) {
@@ -104,6 +138,9 @@ public class DeploymentProperties extends Properties {
         setProperty(BUNDLE_NAME, name);
     }
 
+    /**
+     * @return the version of the bundle for this deployment
+     */
     public String getBundleVersion() {
         String str = getProperty(BUNDLE_VERSION);
         if (str == null) {

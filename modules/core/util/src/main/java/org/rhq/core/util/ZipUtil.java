@@ -189,7 +189,7 @@ public abstract class ZipUtil {
     /**
      * Used by {@link ZipUtil#walkZipFile(File, ZipEntryVisitor)} to visit zip entries.
      */
-    static interface ZipEntryVisitor {
+    public static interface ZipEntryVisitor {
         /**
          * Visits a specific zip file entry. Implementations can read the entry content from the given stream but
          * must <b>not</b> close the stream - the caller of this method will handle the lifecycle of the stream.

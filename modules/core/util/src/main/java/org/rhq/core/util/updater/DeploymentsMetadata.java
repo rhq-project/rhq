@@ -47,7 +47,15 @@ public class DeploymentsMetadata {
      * @param rootDirectory the location where the bundle deployments will go and where the metadata directory is located
      */
     public DeploymentsMetadata(File rootDirectory) {
+        if (rootDirectory == null) {
+            throw new NullPointerException("rootDirectory == null");
+        }
         this.rootDirectory = rootDirectory;
+    }
+
+    @Override
+    public String toString() {
+        return "DeploymentMetadata [" + getRootDirectory().getAbsolutePath() + "]";
     }
 
     /**
@@ -55,6 +63,30 @@ public class DeploymentsMetadata {
      */
     public File getRootDirectory() {
         return rootDirectory;
+    }
+
+    /**
+     * If this object's {@link #getRootDirectory()} refers to a directory containing managed deployments,
+     * this returns <code>true</code>. If that root location is not managed, <code>false</code> is returned.
+     * 
+     * @return indication if the root directory has deployments that are managed
+     */
+    public boolean isManaged() {
+        File metaDir = getMetadataDirectory();
+        if (!metaDir.isDirectory()) {
+            return false; // there isn't even a top level metadata directory, we can't be managing deployments here
+        }
+
+        try {
+            File currentMetaDir = getCurrentDeploymentMetadataDirectory();
+            if (!currentMetaDir.isDirectory()) {
+                return false; // strange, why is this missing?
+            }
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

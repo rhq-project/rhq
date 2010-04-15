@@ -854,7 +854,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     private static final int UUID_LENGTH = 36;
 
     /**
-     * Helper for {@link #NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL}.
+     * Helper for {@link #NATIVE_QUERY_FIND_MBIGUATION_LEVEL}.
      * We need to guard against concatenation with a NULL value which
      * would yield a NULL result. We don't want that in that query, otherwise
      * we'd get skewed results for combination of resources on different
@@ -920,14 +920,14 @@ public class Resource implements Comparable<Resource>, Serializable {
         + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p4.name") //
         + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p5.name") //
         + " || " + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p6.name") + ")) AS l7_cnt " //
-        + "FROM " + TABLE_NAME + " AS r " //
-        + "JOIN " + ResourceType.TABLE_NAME + " AS t ON r.RESOURCE_TYPE_ID = t.ID " //
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p1 ON r.PARENT_RESOURCE_ID = p1.ID " //
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p2 ON p1.PARENT_RESOURCE_ID = p2.ID " //
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p3 ON p2.PARENT_RESOURCE_ID = p3.ID " //
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p4 ON p3.PARENT_RESOURCE_ID = p4.ID " //
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p5 ON p4.PARENT_RESOURCE_ID = p5.ID " //
-        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p6 ON p5.PARENT_RESOURCE_ID = p6.ID " //
+        + "FROM " + TABLE_NAME + " r " //
+        + "JOIN " + ResourceType.TABLE_NAME + " t ON r.RESOURCE_TYPE_ID = t.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " p1 ON r.PARENT_RESOURCE_ID = p1.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " p2 ON p1.PARENT_RESOURCE_ID = p2.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " p3 ON p2.PARENT_RESOURCE_ID = p3.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " p4 ON p3.PARENT_RESOURCE_ID = p4.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " p5 ON p4.PARENT_RESOURCE_ID = p5.ID " //
+        + "LEFT OUTER JOIN " + TABLE_NAME + " p6 ON p5.PARENT_RESOURCE_ID = p6.ID " //
         + "WHERE r.ID IN (@@RESOURCE_IDS@@)";
 
     private static final long serialVersionUID = 1L;

@@ -49,7 +49,7 @@ import org.rhq.core.util.stream.StreamUtil;
 public class Deployer {
     private final DeploymentProperties deploymentProps;
     private final Set<File> zipFiles;
-    private final Map<File, String> rawFiles;
+    private final Map<File, File> rawFiles;
     private final File destDir;
     private final Pattern filesToRealizeRegex;
     private final TemplateEngine templateEngine;
@@ -62,8 +62,9 @@ public class Deployer {
      * @param deploymentProps metadata about this deployment
      * @param zipFiles the archives containing the content to be deployed
      * @param rawFiles files that are to be copied into the destination directory - the keys are the current
-     *                 locations of the files, the values are where the files should be copied (the values are relative
-     *                 to destDir and can have subdirectories and/or a different filename than what the file is named currently)
+     *                 locations of the files, the values are where the files should be copied (the values may be relative
+     *                 in which case they are relative to destDir and can have subdirectories and/or a different filename
+     *                 than what the file is named currently)
      * @param destDir the root directory where the content is to be deployed
      * @param filesToRealizeRegex the patterns of files (whose paths are relative to destDir) that
      *                            must have replacement variables within them replaced with values
@@ -72,7 +73,7 @@ public class Deployer {
      *                       the values that should replace all replacement variables found in those files
      * @param ignoreRegex the files/directories to ignore when updating an existing deployment
      */
-    public Deployer(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, String> rawFiles, File destDir,
+    public Deployer(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, File> rawFiles, File destDir,
         Pattern filesToRealizeRegex, TemplateEngine templateEngine, Pattern ignoreRegex) {
 
         if (deploymentProps == null) {
@@ -86,7 +87,7 @@ public class Deployer {
             zipFiles = new HashSet<File>();
         }
         if (rawFiles == null) {
-            rawFiles = new HashMap<File, String>();
+            rawFiles = new HashMap<File, File>();
         }
         if ((zipFiles.size() == 0) && (rawFiles.size() == 0)) {
             throw new IllegalArgumentException("zipFiles/rawFiles are empty - nothing to do");
@@ -130,16 +131,19 @@ public class Deployer {
 
         // copy all raw files
         StreamCopyDigest copyDigester = new StreamCopyDigest();
-        for (Map.Entry<File, String> rawFile : this.rawFiles.entrySet()) {
+        for (Map.Entry<File, File> rawFile : this.rawFiles.entrySet()) {
             // determine where the original file is and where it needs to go
             File currentLocationFile = rawFile.getKey();
-            String newLocation = rawFile.getValue();
-            File newLocationFile = new File(this.destDir, newLocation);
+            File newLocationFile = rawFile.getValue();
+            String newLocationPath = rawFile.getValue().getPath();
+            if (!newLocationFile.isAbsolute()) {
+                newLocationFile = new File(this.destDir, newLocationFile.getPath());
+            }
             newLocationFile.getParentFile().mkdirs();
 
             String hashcode;
 
-            if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocation).matches()) {
+            if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocationPath).matches()) {
                 // this entry needs to be realized, do it now
                 // note: tempateEngine will never be null if we got here
                 int contentSize = (int) currentLocationFile.length();
@@ -177,7 +181,11 @@ public class Deployer {
             }
 
             // remember where the file is now and what its hashcode is
-            fileHashcodeMap.put(newLocation, hashcode);
+            if (rawFile.getValue().isAbsolute()) {
+                fileHashcodeMap.put(newLocationFile.getAbsolutePath(), hashcode);
+            } else {
+                fileHashcodeMap.put(newLocationPath, hashcode);
+            }
         }
 
         this.deploymentsMetadata.initializeLiveDeployment(deploymentProps, fileHashcodeMap);

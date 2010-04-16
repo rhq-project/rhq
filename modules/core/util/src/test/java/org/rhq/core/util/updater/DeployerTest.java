@@ -69,9 +69,9 @@ public class DeployerTest {
             Set<File> zipFiles = new HashSet<File>(2);
             zipFiles.add(testZipFile1);
             zipFiles.add(testZipFile2);
-            Map<File, String> rawFiles = new HashMap<File, String>();
-            rawFiles.put(testRawFileA, "dirA/rawA.txt"); // we will _not_ realize this one
-            rawFiles.put(testRawFileB, "dir100/rawB.txt"); // we will realize this one
+            Map<File, File> rawFiles = new HashMap<File, File>();
+            rawFiles.put(testRawFileA, new File("dirA/rawA.txt")); // we will _not_ realize this one
+            rawFiles.put(testRawFileB, new File("dir100/rawB.txt")); // we will realize this one
             File destDir = tmpDir;
             Pattern ignoreRegex = null;
 
@@ -150,7 +150,7 @@ public class DeployerTest {
             DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null);
             Set<File> zipFiles = new HashSet<File>(1);
             zipFiles.add(testZipFile1);
-            Map<File, String> rawFiles = null;
+            Map<File, File> rawFiles = null;
             File destDir = tmpDir;
             Pattern ignoreRegex = null;
 

@@ -30,6 +30,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.updater.DeploymentProperties;
 
 @Test
 public class RecipeParserTest {
@@ -38,6 +39,78 @@ public class RecipeParserTest {
     @BeforeMethod
     public void cleanRecipeBeforeMethod() {
         cleanRecipe();
+    }
+
+    public void testBundleCommand() throws Exception {
+        addRecipeCommand("bundle --name=my-name --version=1.0 \"--description=my description here\"");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        DeploymentProperties props = context.getDeploymentProperties();
+        assert props.getBundleName().equals("my-name");
+        assert props.getBundleVersion().equals("1.0");
+        assert props.getDescription().equals("my description here");
+        assert props.getDeploymentId() == 0;
+
+        // use the "-arg value" notation, as opposed to "--arg=value"
+        cleanRecipe();
+        addRecipeCommand("bundle -n my-name2 -v 2.0 -d \"my description here 2\"");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        props = context.getDeploymentProperties();
+        assert props.getBundleName().equals("my-name2");
+        assert props.getBundleVersion().equals("2.0");
+        assert props.getDescription().equals("my description here 2");
+        assert props.getDeploymentId() == 0;
+
+        // show that you only need name and version but not description
+        cleanRecipe();
+        addRecipeCommand("bundle -n one -v 1.0");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        props = context.getDeploymentProperties();
+        assert props.getBundleName().equals("one");
+        assert props.getBundleVersion().equals("1.0");
+        assert props.getDescription() == null;
+        assert props.getDeploymentId() == 0;
+
+        // show that you need name and version
+        cleanRecipe();
+        addRecipeCommand("bundle -n one");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        try {
+            parser.parseRecipe(context);
+            assert false : "should not have parsed, missing version";
+        } catch (Exception ok) {
+            // expected
+        }
+
+        cleanRecipe();
+        addRecipeCommand("bundle -v 1.0");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        try {
+            parser.parseRecipe(context);
+            assert false : "should not have parsed, missing name";
+        } catch (Exception ok) {
+            // expected
+        }
+
+        // show that you can't have two bundle commands in the same recipe
+        cleanRecipe();
+        addRecipeCommand("bundle -n first -v 1.0");
+        addRecipeCommand("bundle -n second -v 2.0");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        try {
+            parser.parseRecipe(context);
+            assert false : "should not have parsed, not allowed multiple bundle commands";
+        } catch (Exception ok) {
+            // expected
+        }
     }
 
     public void testConfigDefRecipe() throws Exception {

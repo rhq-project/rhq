@@ -44,6 +44,7 @@ public class DeploymentsMetadataTest {
             deploymentProps.setDeploymentId(deploymentId);
             deploymentProps.setBundleName("test-bundle-name");
             deploymentProps.setBundleVersion("1.0");
+            deploymentProps.setDescription("test bundle description");
             FileHashcodeMap map = metadata.snapshotLiveDeployment(deploymentProps, null);
             assert metadata.isManaged() : "this should be managed now : " + metadata;
             assert map.size() == 5 : map; // there are 5 files in our test bundle zip

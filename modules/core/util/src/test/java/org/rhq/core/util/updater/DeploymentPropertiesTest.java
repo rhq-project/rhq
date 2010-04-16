@@ -33,11 +33,13 @@ public class DeploymentPropertiesTest {
         props.setDeploymentId(12345);
         props.setBundleName("test-bundle-name");
         props.setBundleVersion("1.0");
+        props.setDescription("This is a description\nof a bundle");
         File tmpFile = File.createTempFile("deploymentPropertiesTest", ".properties");
         try {
             props.saveToFile(tmpFile);
             DeploymentProperties propsDup = DeploymentProperties.loadFromFile(tmpFile);
             assertSameProperties(props, propsDup);
+            assert propsDup.getDescription().equals("This is a description\nof a bundle"); // sanity check, make sure newline is OK
         } finally {
             tmpFile.delete();
         }
@@ -122,6 +124,7 @@ public class DeploymentPropertiesTest {
         assert props2.getDeploymentId() == props1.getDeploymentId() : props1 + "!=" + props2;
         assert props2.getBundleName().equals(props1.getBundleName()) : props1 + "!=" + props2;
         assert props2.getBundleVersion().equals(props1.getBundleVersion()) : props1 + "!=" + props2;
+        assert props2.getDescription().equals(props1.getDescription()) : props1 + "!=" + props2;
         assert props2.size() == props1.size() : props1 + " is not same size as " + props2;
     }
 

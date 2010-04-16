@@ -33,34 +33,56 @@ import org.rhq.core.domain.configuration.PropertySimple;
  */
 public enum PropertySimpleType {
     /**
-     * Single-line strings
+     * Single-line strings (maximum length is 2000)
      */
-    STRING,
+    STRING("string"),
 
     /**
-     * Multi-line strings
+     * Multi-line strings (maximum length is 2000)
      */
-    LONG_STRING,
+    LONG_STRING("longString"),
 
     /**
-     * Strings where the value is hidden at entry and not redisplayed
+     * Strings where the value is hidden at entry and not redisplayed (maximum length is 2000)
      */
-    PASSWORD,
+    PASSWORD("password"),
 
     /**
      * A boolean value - "true" or "false"
      */
-    BOOLEAN,
+    BOOLEAN("boolean"),
 
-    INTEGER, LONG, FLOAT, DOUBLE,
-
-    /**
-     * The absolute path to a file on the target platform
-     */
-    FILE,
+    INTEGER("integer"),
+    LONG("long"),
+    FLOAT("float"),
+    DOUBLE("double"),
 
     /**
-     * The absolute path to a directory on the target platform
+     * The absolute path to a file on the target platform (maximum length is 2000)
      */
-    DIRECTORY
+    FILE("file"),
+
+    /**
+     * The absolute path to a directory on the target platform (maximum length is 2000)
+     */
+    DIRECTORY("directory");
+
+    private String xmlName;
+
+    PropertySimpleType(String xmlName) {
+        this.xmlName = xmlName;
+    }
+
+    public String xmlName() {
+        return this.xmlName;
+    }
+
+    public static PropertySimpleType fromXmlName(String xmlName) {
+        for (PropertySimpleType type: PropertySimpleType.values()) {
+            if (type.xmlName.equals(xmlName)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException(xmlName);
+    }
 }

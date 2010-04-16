@@ -64,7 +64,6 @@ public class OperationsSender extends AlertSender {
                     temp = replacementEngine.replaceTokens(temp);
                     simpleProperty.setStringValue(temp);
                 }
-
             }
         } catch (Exception e) {
             String message = getResultMessage(operation.getName(), info.resourceId, "failed with " + e.getMessage());
@@ -73,9 +72,10 @@ public class OperationsSender extends AlertSender {
 
         // Now fire off the operation with no delay and no repetition.
         try {
+            Resource targetResource = info.getTargetResource(alert);
             String description = "Alert operation for " + alert.getAlertDefinition().getName();
             ResourceOperationSchedule schedule = LookupUtil.getOperationManager().scheduleResourceOperation(subject,
-                info.resourceId, operation.getName(), 0, 0, 0, 0, replacedParameters, description);
+                targetResource.getId(), operation.getName(), 0, 0, 0, 0, replacedParameters, description);
 
             String message = getResultMessage(operation.getName(), info.resourceId, "jobId was " + schedule.getJobId());
             return new SenderResult(ResultState.SUCCESS, message);

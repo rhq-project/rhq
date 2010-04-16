@@ -2,6 +2,8 @@ package org.rhq.enterprise.server.plugins.alertOperations;
 
 import java.util.List;
 
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -176,8 +178,8 @@ public class OperationInfo {
     }
 
     public OperationDefinition getOperationDefinition() {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        OperationDefinition operation = LookupUtil.getOperationManager().getOperationDefinition(overlord, operationId);
+        OperationDefinition operation = LookupUtil.getOperationManager().getOperationDefinition(getOverlord(),
+            operationId);
         return operation;
     }
 
@@ -188,6 +190,44 @@ public class OperationInfo {
 
         Configuration arguments = LookupUtil.getConfigurationManager().getConfigurationById(argumentsConfigurationId);
         return arguments;
+    }
+
+    public Resource getTargetResource(Alert alert) {
+        if (mode == null) {
+            return null;
+        } else if (mode == ResourceSelectionMode.SELF) {
+            AlertDefinition definition = alert.getAlertDefinition();
+            Resource contextResource = definition.getResource();
+            return contextResource;
+        } else if (mode == ResourceSelectionMode.SPECIFIC) {
+            return LookupUtil.getResourceManager().getResourceById(getOverlord(), resourceId);
+        } else if (mode == ResourceSelectionMode.RELATIVE) {
+            AlertDefinition definition = alert.getAlertDefinition();
+            Resource contextResource = definition.getResource();
+
+            Resource searchFrom = contextResource;
+            if (ancestorTypeId != null) {
+                List<Resource> contextLineage = LookupUtil.getResourceManager().getResourceLineage(
+                    contextResource.getId());
+                for (Resource nextResource : contextLineage) {
+                    if (nextResource.getResourceType().getId() == ancestorTypeId) {
+                        searchFrom = nextResource;
+                        break;
+                    }
+                }
+            }
+
+            Resource targetResource = null;
+            if (descendantTypeId != null) {
+                LookupUtil.getResourceManager().getResourceDescendantsByTypeAndName(getOverlord(), searchFrom.getId(),
+                    descendantTypeId, descendantName);
+            } else {
+                targetResource = searchFrom;
+            }
+            return targetResource;
+        } else {
+            return null;
+        }
     }
 
     private Subject getOverlord() {

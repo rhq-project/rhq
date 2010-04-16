@@ -37,6 +37,7 @@ public class DeploymentProperties extends Properties {
     private static final String DEPLOYMENT_ID = "deployment.id";
     private static final String BUNDLE_NAME = "bundle.name";
     private static final String BUNDLE_VERSION = "bundle.version";
+    private static final String BUNDLE_DESCRIPTION = "bundle.description";
 
     public static DeploymentProperties loadFromFile(File file) throws Exception {
         DeploymentProperties props = new DeploymentProperties();
@@ -65,12 +66,14 @@ public class DeploymentProperties extends Properties {
      * @param deploymentId see {@link #getDeploymentId()}
      * @param bundleName see {@link #getBundleName()}
      * @param bundleVersion see {@link #getBundleVersion()}
+     * @param description see {@link #getDescription()}
      */
-    public DeploymentProperties(int deploymentId, String bundleName, String bundleVersion) {
+    public DeploymentProperties(int deploymentId, String bundleName, String bundleVersion, String description) {
         super();
         setDeploymentId(deploymentId);
         setBundleName(bundleName);
         setBundleVersion(bundleVersion);
+        setDescription(description);
         try {
             validate();
         } catch (Exception e) {
@@ -97,6 +100,7 @@ public class DeploymentProperties extends Properties {
             getDeploymentId();
             getBundleName();
             getBundleVersion();
+            getDescription();
         } catch (Exception e) {
             throw new Exception("Deployment properties are invalid: " + e.getMessage());
         }
@@ -151,5 +155,17 @@ public class DeploymentProperties extends Properties {
 
     public void setBundleVersion(String version) {
         setProperty(BUNDLE_VERSION, version);
+    }
+
+    /**
+     * @return the description of this deployment
+     */
+    public String getDescription() {
+        String str = getProperty(BUNDLE_DESCRIPTION);
+        return str;
+    }
+
+    public void setDescription(String description) {
+        setProperty(BUNDLE_DESCRIPTION, description);
     }
 }

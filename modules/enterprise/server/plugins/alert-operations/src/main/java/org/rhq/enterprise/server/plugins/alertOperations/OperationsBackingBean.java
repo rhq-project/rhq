@@ -132,9 +132,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
                 if (descendantTypeId.equals("none") == false) {
                     type = LookupUtil.getResourceTypeManager().getResourceTypeById(getOverlord(),
                         Integer.parseInt(descendantTypeId));
-                }
-
-                if (ancestorTypeId.equals("none") == false) {
+                } else if (ancestorTypeId.equals("none") == false) {
                     type = LookupUtil.getResourceTypeManager().getResourceTypeById(getOverlord(),
                         Integer.parseInt(ancestorTypeId));
                 }

@@ -42,6 +42,7 @@ public class InMemoryZipFileVisitor implements ZipUtil.ZipEntryVisitor {
     private final FileHashcodeMap fileHashcodeMap = new FileHashcodeMap();
     private final Set<String> filesToRealize;
     private final TemplateEngine templateEngine;
+    private final MessageDigestGenerator hashcodeGenerator;
 
     /**
      * Creates the visitor. When the visitor hits a zip entry whose name matches one in
@@ -63,6 +64,7 @@ public class InMemoryZipFileVisitor implements ZipUtil.ZipEntryVisitor {
         }
         this.filesToRealize = filesToRealize;
         this.templateEngine = templateEngine;
+        this.hashcodeGenerator = new MessageDigestGenerator();
     }
 
     /**
@@ -90,9 +92,9 @@ public class InMemoryZipFileVisitor implements ZipUtil.ZipEntryVisitor {
             ByteArrayOutputStream baos = new ByteArrayOutputStream((contentSize > 0) ? contentSize : 32768);
             StreamUtil.copy(stream, baos, false);
             String content = this.templateEngine.replaceTokens(baos.toString());
-            hashcode = MessageDigestGenerator.getDigestString(content);
+            hashcode = this.hashcodeGenerator.calcDigestString(content);
         } else {
-            hashcode = MessageDigestGenerator.getDigestString(stream);
+            hashcode = this.hashcodeGenerator.calcDigestString(stream);
         }
 
         this.fileHashcodeMap.put(pathname, hashcode);

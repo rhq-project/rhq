@@ -13,8 +13,8 @@ public class OperationInfo {
     public enum Constants {
         SELECTION_MODE("selection-mode"), // self, specific, relative
         SPECIFIC_RESOURCE_ID("selection-specific-resource-id"), // 
-        RELATIVE_ANCESTOR_TYPE_ID("selection-relative-descendant-type-id"), //
-        RELATIVE_DESCENDANT_TYPE_ID("selection-relative-descendant-name"), //
+        RELATIVE_ANCESTOR_TYPE_ID("selection-relative-ancestor-type-id"), //
+        RELATIVE_DESCENDANT_TYPE_ID("selection-relative-descendant-type-id"), //
         RELATIVE_DESCENDANT_NAME("selection-relative-descendant-name"), //
         OPERATION_ID("operation-definition-id"), //
         ARGUMENTS_CONFIG_ID("operation-arguments-configuration-id");
@@ -149,16 +149,24 @@ public class OperationInfo {
 
             StringBuilder builder = new StringBuilder();
             if (descendant != null) {
+                builder.append(" the ");
                 if (descendantName != null) {
+                    builder.append('\'');
                     builder.append(descendantName); // name only relevant if type is chosen
+                    builder.append('\'');
                 }
                 builder.append(' ');
                 builder.append(descendant.getName());
+                builder.append(" resource");
+
+                if (ancestor != null) {
+                    builder.append(" under ");
+                }
             }
 
             if (ancestor != null) {
-                builder.append(" under ");
                 builder.append(ancestor.getName());
+                builder.append(" ancestor");
             }
 
             return builder.toString();

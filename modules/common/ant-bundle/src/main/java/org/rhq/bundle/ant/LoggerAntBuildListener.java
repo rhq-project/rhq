@@ -27,7 +27,7 @@ import org.apache.tools.ant.Target;
 import org.apache.tools.ant.Task;
 
 /**
- * Listens for ANT build events and logs them to a log stream.
+ * Listens for Ant build events and logs them to a log stream.
  *
  * @author John Mazzitelli
  */
@@ -43,7 +43,7 @@ public class LoggerAntBuildListener implements BuildListener {
 
         // start with the date this was started
         this.output.println("======================================");
-        this.output.println("ANT target [" + this.mainTarget + "]");
+        this.output.println("Ant target [" + this.mainTarget + "]");
         this.output.println(new Date().toString());
         this.output.println("======================================");
     }
@@ -95,7 +95,7 @@ public class LoggerAntBuildListener implements BuildListener {
         }
 
         if (task != null) {
-            output.print("[" + task.getTaskName() + "] ");
+            output.print("<" + task.getTaskName() + "> ");
         }
 
         if (message != null) {

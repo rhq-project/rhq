@@ -130,6 +130,7 @@ public class RecipeParser {
         HashMap<String, RecipeCommand> commands = new HashMap<String, RecipeCommand>();
 
         RecipeCommand[] knownCommands = new RecipeCommand[] { new ScriptRecipeCommand(), //
+            new BundleRecipeCommand(), //
             new ConfigDefRecipeCommand(), //
             new CommandRecipeCommand(), //
             new FileRecipeCommand(), //

@@ -188,6 +188,42 @@ public class DeploymentsMetadata {
     }
 
     /**
+     * Call this when you already know the files/hashcodes for the current live deployment and you
+     * want to initialize the metadata for the root deployment location.
+     * This method will also mark this initialized, live deployment as the "current" deployment.
+     * You normally only call this the very first time you deploy a bundle to a given root directory.
+     *
+     * @param deploymentProps identifies the deployment information for the live deployment
+     * @param fileHashcodeMap the files and their hashcodes of the current live deployment
+     * @throws Exception if failed to write out the necessary metadata about the given live data information
+     */
+    public void initializeLiveDeployment(DeploymentProperties deploymentProps, FileHashcodeMap fileHashcodeMap)
+        throws Exception {
+
+        // determine where we need to put the metadata and create its empty directory 
+        // TODO: if the directory exists, it means somehow we are initializing the same deployment again
+        //       for now I'm just purging the old data, but is that the correct thing to do?
+        getMetadataDirectory().mkdirs();
+        File deploymentMetadataDir = getDeploymentMetadataDirectory(deploymentProps.getDeploymentId());
+        FileUtil.purge(deploymentMetadataDir, true);
+        deploymentMetadataDir.mkdirs();
+        if (!deploymentMetadataDir.isDirectory()) {
+            throw new Exception("Failed to create deployment metadata directory: " + deploymentMetadataDir);
+        }
+
+        // store the deployment properties so we know what deployment this metadata belongs to
+        deploymentProps.saveToFile(new File(deploymentMetadataDir, DEPLOYMENT_FILE));
+
+        // write the files/hashcodes data to the proper file
+        fileHashcodeMap.storeToFile(new File(deploymentMetadataDir, HASHCODES_FILE));
+
+        // since we are being told this is the live deployment, this deployment should be considered the current one 
+        deploymentProps.saveToFile(new File(getMetadataDirectory(), CURRENT_DEPLOYMENT_FILE));
+
+        return;
+    }
+
+    /**
      * Looks at the live deployment and takes a snapshot of it and stores its metadata in its appropriate
      * deployment metadata directory. The "live deployment" means the actual files in the root directory.
      * This method will also mark the live deployment as the "current" deployment.
@@ -200,27 +236,9 @@ public class DeploymentsMetadata {
     public FileHashcodeMap snapshotLiveDeployment(DeploymentProperties deploymentProps, Pattern ignoreRegex)
         throws Exception {
 
-        // determine where we need to put the metadata and create its empty directory 
-        // TODO: if the directory exists, it means somehow we are snapshotting the same deployment again
-        //       for now I'm just purging the old data, but is that the correct thing to do?
-        getMetadataDirectory().mkdirs();
-        File metadataDir = getDeploymentMetadataDirectory(deploymentProps.getDeploymentId());
-        FileUtil.purge(metadataDir, true);
-        metadataDir.mkdirs();
-        if (!metadataDir.isDirectory()) {
-            throw new Exception("Failed to create deployment metadata directory: " + metadataDir);
-        }
-
-        // store the deployment properties so we know what deployment this metadata belongs to
-        deploymentProps.saveToFile(new File(metadataDir, DEPLOYMENT_FILE));
-
         // calculate the hashcodes from the live files and write the data to the proper file
         FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(getRootDirectory(), ignoreRegex);
-        map.storeToFile(new File(metadataDir, HASHCODES_FILE));
-
-        // since we are looking at the live data, this deployment should be considered the current one 
-        deploymentProps.saveToFile(new File(getMetadataDirectory(), CURRENT_DEPLOYMENT_FILE));
-
+        initializeLiveDeployment(deploymentProps, map);
         return map;
     }
 

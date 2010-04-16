@@ -24,7 +24,7 @@
 package org.rhq.core.util.updater;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -40,29 +40,31 @@ import org.rhq.core.util.stream.StreamUtil;
  */
 public class InMemoryZipFileVisitor implements ZipUtil.ZipEntryVisitor {
     private final FileHashcodeMap fileHashcodeMap = new FileHashcodeMap();
-    private final Set<String> filesToRealize;
+    private final Pattern filesToRealizeRegex;
     private final TemplateEngine templateEngine;
+    private final MessageDigestGenerator hashcodeGenerator;
 
     /**
-     * Creates the visitor. When the visitor hits a zip entry whose name matches one in
-     * the filesToRealize set, that zip entry will be realized via the template engine prior
+     * Creates the visitor. When the visitor hits a zip entry whose name matches
+     * filesToRealizeRegex, that zip entry will be realized via the template engine prior
      * to its hashcode being computed. In other words the file's hashcode will be computed
      * on the content after its replacement variables have been replaced.
      * If you just want this visitor to walk a zip file without realizing any files, pass in
-     * a null or empty set of files or pass in a null template engine. This will, in effect,
+     * a null pattern or pass in a null template engine. This will, in effect,
      * have this visitor collect all zip file entry names and calculate their hashcodes based on
      * all content within the zip file.
      * 
-     * @param filesToRealize set of files that are to be realized prior to hashcodes being computed
+     * @param filesToRealizeRegex pattern of files that are to be realized prior to hashcodes being computed
      * @param templateEngine the template engine that replaces replacement variables in files to be realized
      */
-    public InMemoryZipFileVisitor(Set<String> filesToRealize, TemplateEngine templateEngine) {
-        if (filesToRealize == null || filesToRealize.size() == 0 || templateEngine == null) {
-            filesToRealize = null;
+    public InMemoryZipFileVisitor(Pattern filesToRealizeRegex, TemplateEngine templateEngine) {
+        if (filesToRealizeRegex == null || templateEngine == null) {
+            filesToRealizeRegex = null;
             templateEngine = null;
         }
-        this.filesToRealize = filesToRealize;
+        this.filesToRealizeRegex = filesToRealizeRegex;
         this.templateEngine = templateEngine;
+        this.hashcodeGenerator = new MessageDigestGenerator();
     }
 
     /**
@@ -83,16 +85,17 @@ public class InMemoryZipFileVisitor implements ZipUtil.ZipEntryVisitor {
         String pathname = entry.getName();
         String hashcode;
 
-        if (this.filesToRealize != null && this.filesToRealize.contains(pathname)) {
+        if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(pathname).matches()) {
             // this entry needs to be realized, do it now, then calc the hashcode 
             // note: tempateEngine will never be null if we got here
             int contentSize = (int) entry.getSize();
             ByteArrayOutputStream baos = new ByteArrayOutputStream((contentSize > 0) ? contentSize : 32768);
             StreamUtil.copy(stream, baos, false);
             String content = this.templateEngine.replaceTokens(baos.toString());
-            hashcode = MessageDigestGenerator.getDigestString(content);
+            baos = null;
+            hashcode = this.hashcodeGenerator.calcDigestString(content);
         } else {
-            hashcode = MessageDigestGenerator.getDigestString(stream);
+            hashcode = this.hashcodeGenerator.calcDigestString(stream);
         }
 
         this.fileHashcodeMap.put(pathname, hashcode);

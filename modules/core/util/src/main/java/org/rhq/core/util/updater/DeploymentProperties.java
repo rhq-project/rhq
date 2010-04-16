@@ -37,6 +37,7 @@ public class DeploymentProperties extends Properties {
     private static final String DEPLOYMENT_ID = "deployment.id";
     private static final String BUNDLE_NAME = "bundle.name";
     private static final String BUNDLE_VERSION = "bundle.version";
+    private static final String BUNDLE_DESCRIPTION = "bundle.description";
 
     public static DeploymentProperties loadFromFile(File file) throws Exception {
         DeploymentProperties props = new DeploymentProperties();
@@ -65,16 +66,32 @@ public class DeploymentProperties extends Properties {
      * @param deploymentId see {@link #getDeploymentId()}
      * @param bundleName see {@link #getBundleName()}
      * @param bundleVersion see {@link #getBundleVersion()}
+     * @param description see {@link #getDescription()}
      */
-    public DeploymentProperties(int deploymentId, String bundleName, String bundleVersion) {
+    public DeploymentProperties(int deploymentId, String bundleName, String bundleVersion, String description) {
         super();
         setDeploymentId(deploymentId);
         setBundleName(bundleName);
         setBundleVersion(bundleVersion);
+        setDescription(description);
         try {
             validate();
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
+        }
+    }
+
+    /**
+     * Returns <code>true</code> if this object has everything required to define a valid deployment.
+     * 
+     * @return true if this is valid
+     */
+    public boolean isValid() {
+        try {
+            validate();
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -97,12 +114,17 @@ public class DeploymentProperties extends Properties {
             getDeploymentId();
             getBundleName();
             getBundleVersion();
+            getDescription();
         } catch (Exception e) {
             throw new Exception("Deployment properties are invalid: " + e.getMessage());
         }
     }
 
     /**
+     * This returns a deployment ID that identifies a known deployment.
+     * If the deployment is not yet known (that is, its going to be a new
+     * deployment added to the system), this will typically return 0.
+     *
      * @return an identifier that uniquely identifies this particular deployment.
      */
     public int getDeploymentId() {
@@ -151,5 +173,21 @@ public class DeploymentProperties extends Properties {
 
     public void setBundleVersion(String version) {
         setProperty(BUNDLE_VERSION, version);
+    }
+
+    /**
+     * @return the description of this deployment
+     */
+    public String getDescription() {
+        String str = getProperty(BUNDLE_DESCRIPTION);
+        return str;
+    }
+
+    public void setDescription(String description) {
+        if (description == null) {
+            remove(BUNDLE_DESCRIPTION);
+        } else {
+            setProperty(BUNDLE_DESCRIPTION, description);
+        }
     }
 }

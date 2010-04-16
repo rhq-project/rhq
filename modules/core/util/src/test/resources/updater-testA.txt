@@ -1,0 +1,4 @@
+this is a test raw file A
+rhq.system.hostname = [@@rhq.system.hostname@@]
+rhq.system.sysprop.java.version = [@@rhq.system.sysprop.java.version@@]
+custom.prop = [@@custom.prop@@]

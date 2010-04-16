@@ -26,7 +26,7 @@ import javax.persistence.Query;
  */
 @Local
 public interface EntityManagerFacadeLocal {
-    Query createQuery(String queryStr);
+    Query createQuery(String queryString);
 
     void clear();
 

@@ -32,6 +32,7 @@ import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.util.updater.DeploymentProperties;
 
 /**
  * Contains information that is gleened from a recipe during and after it is parsed.
@@ -42,6 +43,7 @@ public class RecipeContext {
 
     private RecipeParser parser;
     private final String recipe;
+    private final DeploymentProperties deploymentProperties;
     private final Map<String, String> deployFiles;
     private final Map<String, String> files;
     private final Set<String> realizedFiles;
@@ -61,6 +63,7 @@ public class RecipeContext {
         this.replacementVariables = new HashSet<String>();
         this.scripts = new ArrayList<Script>();
         this.commands = new ArrayList<Command>();
+        this.deploymentProperties = new DeploymentProperties();
     }
 
     /**
@@ -82,6 +85,15 @@ public class RecipeContext {
      */
     public String getRecipe() {
         return this.recipe;
+    }
+
+    /**
+     * Returns the deployment properties as defined in the recipe.
+     * 
+     * @return the deployment properties
+     */
+    public DeploymentProperties getDeploymentProperties() {
+        return deploymentProperties;
     }
 
     /**
@@ -244,6 +256,7 @@ public class RecipeContext {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("RecipeContext:\n");
+        str.append("Deployment Properties: ").append(getDeploymentProperties()).append("\n");
         str.append("Deploy Files: ").append(getDeployFiles()).append("\n");
         str.append("Replacement Vars: ").append(getReplacementVariables()).append("\n");
 

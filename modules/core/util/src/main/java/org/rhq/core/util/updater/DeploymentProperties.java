@@ -81,6 +81,20 @@ public class DeploymentProperties extends Properties {
         }
     }
 
+    /**
+     * Returns <code>true</code> if this object has everything required to define a valid deployment.
+     * 
+     * @return true if this is valid
+     */
+    public boolean isValid() {
+        try {
+            validate();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public void saveToFile(File file) throws Exception {
         validate(); // makes sure we never save invaild properties
 
@@ -107,6 +121,10 @@ public class DeploymentProperties extends Properties {
     }
 
     /**
+     * This returns a deployment ID that identifies a known deployment.
+     * If the deployment is not yet known (that is, its going to be a new
+     * deployment added to the system), this will typically return 0.
+     *
      * @return an identifier that uniquely identifies this particular deployment.
      */
     public int getDeploymentId() {

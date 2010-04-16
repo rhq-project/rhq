@@ -106,7 +106,8 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
             logFile.delete();
         }
 
-        results = new RecipeParseResults(configDef, new HashSet<String>(bundleFiles.values()));
+        // TODO: FOR IPS!
+        results = new RecipeParseResults(null, configDef, new HashSet<String>(bundleFiles.values()));
         return results;
 
     }

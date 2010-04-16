@@ -307,7 +307,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleVersion bundleVersion = new BundleVersion(name, version, bundle, recipe);
         bundleVersion.setVersionOrder(versionOrder);
         bundleVersion.setDescription(description);
-        bundleVersion.setConfigurationDefinition(results.getConfigDef());
+        bundleVersion.setConfigurationDefinition(results.getConfigurationDefinition());
 
         entityManager.persist(bundleVersion);
         return bundleVersion;

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<plugin name="NagiosMonitor"
+        displayName="NagiosMonitorPlugin"
+        package="org.rhq.NagiosMonitor"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+    <server name="NagiosMonitor" discovery="NagiosMonitorDiscovery" class="NagiosMonitorComponent">
+
+            <plugin-configuration>
+                <!-- TODO add your own here -->
+                <c:simple-property name="dummy"/>
+            </plugin-configuration>
+
+        <!-- TODO process scans -->
+            <metric property="execution_time" displayName="execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
+			<metric property="host_execution_time" displayName="host_execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
+			<metric property="host_check_period" displayName="host_check_period" dataType="trait" displayType="summary"/>
+	</server>	
+</plugin>

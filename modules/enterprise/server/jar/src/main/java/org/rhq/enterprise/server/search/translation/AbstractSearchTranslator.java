@@ -12,10 +12,10 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
             return fragment + " LIKE '%" + value + "%'";
 
         } else if (operator == RHQLComparisonOperator.NOT_EQUALS) {
-            return lower(fragment) + " LIKE '%" + value.toLowerCase() + "%'";
+            return lower(fragment) + " NOT LIKE '%" + value.toLowerCase() + "%'";
 
         } else if (operator == RHQLComparisonOperator.NOT_EQUALS_STRICT) {
-            return fragment + " LIKE '%" + value + "%'";
+            return fragment + " NOT LIKE '%" + value + "%'";
 
         } else if (operator == RHQLComparisonOperator.NULL) {
             return fragment + " IS NULL";

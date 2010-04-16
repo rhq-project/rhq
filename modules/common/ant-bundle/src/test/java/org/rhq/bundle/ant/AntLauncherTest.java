@@ -28,6 +28,9 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -42,7 +45,7 @@ public class AntLauncherTest {
         logFile = new File("target/test-ant-log.txt");
         if (logFile.exists()) {
             if (!logFile.delete()) {
-                System.out.println("Failed to clean up test - log file did not delete");
+                System.out.println("Failed to delete log file [" + this.logFile + "] prior to executing test method.");
             }
         }
         return;
@@ -61,9 +64,8 @@ public class AntLauncherTest {
         assert bundleFiles.get("pkg").equals("package.zip") : bundleFiles;
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 2;
-        assert configDef.getPropertyDefinitionSimple("custom.prop1") != null;
-        assert configDef.getPropertyDefinitionSimple("custom.prop2") != null;
+        assert configDef.getPropertyDefinitions().size() == 1;
+        assert configDef.getPropertyDefinitionSimple("listener.port") != null;
     }
 
     public void testSimpleExecTest() throws Exception {
@@ -78,11 +80,14 @@ public class AntLauncherTest {
         assert bundleFiles.get("pkg").equals("package.zip") : bundleFiles;
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 2;
-        assert configDef.getPropertyDefinitionSimple("custom.prop1") != null;
-        assert configDef.getPropertyDefinitionSimple("custom.prop2") != null;
+        assert configDef.getPropertyDefinitions().size() == 1;
+        PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
+        assert propDef != null;
+        assert propDef.getType() == PropertySimpleType.INTEGER;
 
-        System.out.println(project.getConfiguration().toString(true));
+        Configuration config = project.getConfiguration();
+        assert config.getProperties().size() == 1;
+        assert "7080".equals(config.getSimpleValue("listener.port", null));
     }
 
     private Properties createInputProperties() throws IOException {

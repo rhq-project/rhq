@@ -29,10 +29,20 @@ public class BundleTask extends AbstractBundleTask {
     private String description;
 
     @Override
-    public void execute() throws BuildException {
+    public void maybeConfigure() throws BuildException {
+        // The below call will init the attribute fields.
+        super.maybeConfigure();
+        
         validateAttributes();
-        log("Executing Ant script for bundle '" + this.name + "' version " + this.version + "...");        
-        return;
+
+        getProject().setBundleName(this.name);
+        getProject().setBundleVersion(this.version);
+        getProject().setBundleDescription(this.description);
+    }
+
+    @Override
+    public void execute() throws BuildException {        
+        log("Executing Ant script for bundle '" + this.name + "' version " + this.version + "...");
     }
 
     public String getDescription() {
@@ -63,20 +73,21 @@ public class BundleTask extends AbstractBundleTask {
      * Ensure we have a consistent and legal set of attributes, and set
      * any internal flags necessary based on different combinations
      * of attributes.
-     * @exception BuildException if an error occurs
+     *
+     * @throws BuildException if an error occurs
      */
     protected void validateAttributes() throws BuildException {
         if (this.name == null) {
-            throw new BuildException("The name attribute is required.");
+            throw new BuildException("The 'name' attribute is required.");
         }
         if (this.name.length() == 0) {
-            throw new BuildException("The name attribute must have a non-empty value.");
+            throw new BuildException("The 'name' attribute must have a non-empty value.");
         }
         if (this.version == null) {
-            throw new BuildException("The version attribute is required.");
+            throw new BuildException("The 'version' attribute is required.");
         }
         if (this.version.length() == 0) {
-            throw new BuildException("The version attribute must have a non-empty value.");
+            throw new BuildException("The 'version' attribute must have a non-empty value.");
         }
     }
 }

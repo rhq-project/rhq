@@ -43,11 +43,10 @@ import org.apache.tools.ant.helper.ProjectHelper2;
 
 import org.rhq.bundle.ant.task.InputPropertyTask;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 /**
- * 
+ * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class AntLauncher {
     // "out of box" we will provide the antcontrib optional tasks
@@ -127,8 +126,15 @@ public class AntLauncher {
 
             validate(project);
 
+            // TODO: Remove this once rhq:bundlefile and rhq:bundleArchive tasks have been written.
             parseBundleFiles(project);
-            parseBundleConfiguration(project);
+
+            System.out.println("==================== PARSED BUNDLE ANT BUILD FILE ====================");
+            System.out.println(" Bundle Name: " + project.getBundleName());
+            System.out.println(" Bundle Version: " + project.getBundleVersion());
+            System.out.println(" Bundle Description: " + project.getBundleDescription());
+            System.out.println(" Deployment Configuration: " + project.getConfiguration().toString(true));
+            System.out.println("======================================================================");
 
             if (execute) {
                 project.executeTarget((targetName == null) ? project.getDefaultTarget() : targetName);
@@ -155,6 +161,7 @@ public class AntLauncher {
             Target target = (Target) targetObj;
             Task[] tasks = target.getTasks();
             for (Task task : tasks) {
+                // NOTE: For rhq:inputProperty tasks, the below call will add propDefs to the project configDef.
                 task = resolveTask(task);
                 if (task.getTaskName().equals("rhq:bundle")) {
                     if (target.getName().equals("")) {
@@ -180,7 +187,7 @@ public class AntLauncher {
         // NOTE: Don't worry about validating these attributes - let BundleTask.execute() take care of it.
         project.setBundleName((String) attribs.get("name"));
         project.setBundleVersion((String) attribs.get("version"));
-        project.setBundleDescription((String) attribs.get("description"));
+        project.setBundleDescription((String) attribs.get("description"));        
     }
 
     private static Task resolveTask(Task task) {
@@ -220,42 +227,6 @@ public class AntLauncher {
                 }
 
                 project.addBundleFile(name, bundleFilename);
-            }
-        }
-    }
-
-    private void parseBundleConfiguration(BundleAntProject project) {
-        Map<String, ? extends Task> refs = project.getReferences();
-        for (Map.Entry<String, ? extends Task> entry : refs.entrySet()) {
-            String refId = entry.getKey();
-            if (refId.startsWith("_bundleconfig.")) {
-                Hashtable attribs = entry.getValue().getRuntimeConfigurableWrapper().getAttributeMap();
-
-                if (!attribs.containsKey("name")) {
-                    throw new BuildException("Property id=[" + refId + "] must specify the 'name' attribute");
-                }
-                String name = attribs.get("name").toString();
-
-                // allow the bundle author to specify the bundle config prop in one of the standard two ways
-                Object location = attribs.get("location");
-                Object value = attribs.get("value");
-
-                String bundlePropValue;
-                if (location != null) {
-                    bundlePropValue = location.toString();
-                } else if (value != null) {
-                    bundlePropValue = value.toString();
-                } else {
-                    throw new BuildException("Property id=[" + refId + "], name=[" + name
-                        + "] must specify the bundle configuration name in an attribute named 'location' or 'value'");
-                }
-
-                PropertyDefinitionSimple prop = new PropertyDefinitionSimple(name, "Needed by bundle recipe.", false,
-                    PropertySimpleType.STRING);
-                prop.setDisplayName(name);
-                prop.setDefaultValue(bundlePropValue);// TODO: I would like to set this-setDefaultValue is deprecated, how to do this?
-                ConfigurationDefinition configDef = project.getConfigurationDefinition();
-                configDef.put(prop);
             }
         }
     }

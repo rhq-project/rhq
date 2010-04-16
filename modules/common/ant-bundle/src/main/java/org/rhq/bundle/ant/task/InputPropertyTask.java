@@ -11,8 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
+ * * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
@@ -23,8 +22,17 @@ import org.apache.tools.ant.Project;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 /**
+ * An Ant task that defines a basic property that the user provides as input for deployment of a bundle. Typically, the
+ * property will be substituted into configuration files from the bundle during deployment - see ReplaceTask.
+ *
+ * If the deployment script is invoked from the GUI, the user will be prompted for values for any input properties that
+ * are defined via this task. If the script is invoked from the command line, the properties must be passed using the -D
+ * and/or -propertyfile options.
+ *
  * @author Ian Springer
  */
 public class InputPropertyTask extends AbstractBundleTask {
@@ -32,42 +40,41 @@ public class InputPropertyTask extends AbstractBundleTask {
     private String description;
     private boolean required = true;
     private String defaultValue;
-    private String type = PropertyType.STRING.value();
-    private PropertyType propertyType;
+    private String type = PropertySimpleType.STRING.xmlName();
 
     @Override
-    public void execute() throws BuildException {
+    public void maybeConfigure() throws BuildException {
+        // The below call will init the attribute fields.
+        super.maybeConfigure();
+
         validateAttributes();
 
-        if (this.defaultValue == null) {
-            if (!this.required) {
-                log("No default value was specified for optional input property '" + this.name + "'.", Project.MSG_WARN);
-            }
-        }
+        ConfigurationDefinition configDef = getProject().getConfigurationDefinition();
+        PropertySimpleType propSimpleType = PropertySimpleType.fromXmlName(this.type);
+        PropertyDefinitionSimple propDef = new PropertyDefinitionSimple(this.name, this.description, this.required,
+                propSimpleType);
+        configDef.put(propDef);
+    }
+    
+    @Override
+    public void execute() throws BuildException {
         String value = getProject().getProperty(this.name);
         if (value == null) {
-            value = this.defaultValue;            
+            value = this.defaultValue;
         }
         if (value == null && this.required) {
             throw new BuildException("No value was specified for required input property '" + this.name
                       + "', and no default is defined for the property.");
         }
-
         String valueString = (value != null) ? "'" + value + "'" : "<null>";
         log("Initializing input property '" + this.name + " with value " + valueString + "...");
-        PropertySimple prop = new PropertySimple(this.name, value);
 
+        PropertySimple prop = new PropertySimple(this.name, value);
         ConfigurationDefinition configDef = getProject().getConfigurationDefinition();
         Configuration config = getProject().getConfiguration();
         // TODO: validate the config
-
         config.put(prop);
         return;
-    }
-
-    @Override
-    public void maybeConfigure() throws BuildException {
-        super.maybeConfigure();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     public String getDescription() {
@@ -114,7 +121,8 @@ public class InputPropertyTask extends AbstractBundleTask {
      * Ensure we have a consistent and legal set of attributes, and set
      * any internal flags necessary based on different combinations
      * of attributes.
-     * @exception org.apache.tools.ant.BuildException if an error occurs
+     *
+     * @throws org.apache.tools.ant.BuildException if an error occurs
      */
     protected void validateAttributes() throws BuildException {
         if (this.name == null) {
@@ -124,42 +132,14 @@ public class InputPropertyTask extends AbstractBundleTask {
             throw new BuildException("The 'name' attribute must have a non-empty value.");
         }
         try {
-            this.propertyType = PropertyType.fromValue(this.type);
+            PropertySimpleType.fromXmlName(this.type);
         } catch (IllegalArgumentException e) {
             throw new BuildException("Illegal value for 'type' attribute: " + this.type);
         }
-
-    }
-
-    public enum PropertyType {
-        STRING("string"),
-        LONG_STRING("longString"),
-        PASSWORD("password"),
-        BOOLEAN("boolean"),
-        INTEGER("integer"),
-        LONG("long"),
-        FLOAT("float"),
-        DOUBLE("double"),
-        FILE("file"),
-        DIRECTORY("directory");
-
-        private final String value;
-
-        PropertyType(String value) {
-            this.value = value;
-        }
-
-        public String value() {
-            return value;
-        }
-
-        public static PropertyType fromValue(String value) {
-            for (PropertyType c: PropertyType.values()) {
-                if (c.value.equals(value)) {
-                    return c;
-                }
+        if (this.defaultValue == null) {
+            if (!this.required) {
+                log("No default value was specified for optional input property '" + this.name + "'.", Project.MSG_WARN);
             }
-            throw new IllegalArgumentException(value.toString());
         }
     }
 }

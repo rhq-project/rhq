@@ -25,9 +25,8 @@ package org.rhq.core.util.updater;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -95,10 +94,8 @@ public class UpdaterZipTest {
             // now walk the zip and realize some files
 
             FileUtil.purge(tmpDir, false);
-            Set<String> filesToRealize = new HashSet<String>();
-            filesToRealize.add("fileA");
-            filesToRealize.add("dir1/fileB");
-            ExtractorZipFileVisitor visitor = new ExtractorZipFileVisitor(tmpDir, filesToRealize, templateEngine);
+            Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1/fileB)");
+            ExtractorZipFileVisitor visitor = new ExtractorZipFileVisitor(tmpDir, filesToRealizeRegex, templateEngine);
             ZipUtil.walkZipFile(testZipFile, visitor);
 
             FileHashcodeMap map = visitor.getFileHashcodeMap();
@@ -161,10 +158,8 @@ public class UpdaterZipTest {
         assert mapNoRealize.containsKey("dir1/fileB") : mapNoRealize;
         assert mapNoRealize.containsKey("dir2/fileC") : mapNoRealize;
 
-        Set<String> filesToRealize = new HashSet<String>();
-        filesToRealize.add("fileA");
-        filesToRealize.add("dir1/fileB");
-        InMemoryZipFileVisitor visitor = new InMemoryZipFileVisitor(filesToRealize, templateEngine);
+        Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1/fileB)");
+        InMemoryZipFileVisitor visitor = new InMemoryZipFileVisitor(filesToRealizeRegex, templateEngine);
         ZipUtil.walkZipFile(testZipFile, visitor);
 
         FileHashcodeMap map = visitor.getFileHashcodeMap();

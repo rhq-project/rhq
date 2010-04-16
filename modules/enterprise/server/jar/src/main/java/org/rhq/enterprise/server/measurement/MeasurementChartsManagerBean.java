@@ -169,7 +169,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         long begin = rangePreferences.begin;
         long end = rangePreferences.end;
 
-        /* Fiddle the metrics from the | delimited stored ones and only display those. 
+        /* Fiddle the metrics from the | delimited stored ones and only display those.
          * Use the default list as fall back if we don't have them in preferences
          */
         int[] measurementDefinitionIds;
@@ -251,7 +251,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         String viewName) throws MeasurementException {
         List<MeasurementSchedule> scheds;
         /*
-         * Try to get the schedules for this view from the preferences and extract the 
+         * Try to get the schedules for this view from the preferences and extract the
          * schedule ids from it. If this fails, fall back to defaults.
          */
         try {
@@ -513,7 +513,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             MeasurementAggregate aggregate;
             if (scheduleIds.length == 0) {
                 aggregate = new MeasurementAggregate(null, null, null);
-                log.warn("No metric schedules found for def=[" + definition + "] and resources [" + resourceIds
+                log.warn("No metric schedules found for def=[" + definition + "] and resources [" +
+                        Arrays.toString(resourceIds)
                     + "], using empty aggregate");
             } else {
                 aggregate = dataUtil.getAggregateByScheduleIds(begin, end, scheduleIds);
@@ -554,7 +555,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         Map<Integer, MeasurementDefinition> measurementDefinitionsMap = new HashMap<Integer, MeasurementDefinition>(
             definitionIds.length);
 
-        // Eliminate definitions not collecting 
+        // Eliminate definitions not collecting
         List<Integer> collectingDefIdList = new ArrayList<Integer>();
         for (int definitionId : definitionIds) {
             if (isMetricCollecting(subject, resourceIds, definitionId)) {

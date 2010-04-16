@@ -184,6 +184,10 @@ public class DeploymentProperties extends Properties {
     }
 
     public void setDescription(String description) {
-        setProperty(BUNDLE_DESCRIPTION, description);
+        if (description == null) {
+            remove(BUNDLE_DESCRIPTION);
+        } else {
+            setProperty(BUNDLE_DESCRIPTION, description);
+        }
     }
 }

@@ -27,6 +27,7 @@ import java.util.Map;
 
 import org.apache.tools.ant.Project;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 
 /**
@@ -43,8 +44,12 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
  * @author John Mazzitelli
  */
 public class BundleAntProject extends Project {
-    private final Map<String, String> bundleFiles = new HashMap<String, String>();
+    private String bundleName;
+    private String bundleVersion;
+    private String bundleDescription;
     private ConfigurationDefinition configDef;
+    private Configuration config;
+    private final Map<String, String> bundleFiles = new HashMap<String, String>();
 
     public Map<String, String> getBundleFiles() {
         return bundleFiles;
@@ -59,5 +64,36 @@ public class BundleAntProject extends Project {
             configDef = new ConfigurationDefinition("antbundle", null);
         }
         return configDef;
+    }
+
+    public Configuration getConfiguration() {
+        if (config == null) {
+            config = new Configuration();
+        }
+        return config;
+    }
+
+    public String getBundleName() {
+        return bundleName;
+    }
+
+    public void setBundleName(String bundleName) {
+        this.bundleName = bundleName;
+    }
+
+    public String getBundleVersion() {
+        return bundleVersion;
+    }
+
+    public void setBundleVersion(String bundleVersion) {
+        this.bundleVersion = bundleVersion;
+    }
+
+    public String getBundleDescription() {
+        return bundleDescription;
+    }
+
+    public void setBundleDescription(String bundleDescription) {
+        this.bundleDescription = bundleDescription;
     }
 }

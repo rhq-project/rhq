@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+
+<antlib>
+    <taskdef name="bundle" classname="org.rhq.bundle.ant.task.BundleTask"/>
+    <taskdef name="inputProperty" classname="org.rhq.bundle.ant.task.InputPropertyTask"/>
+</antlib>

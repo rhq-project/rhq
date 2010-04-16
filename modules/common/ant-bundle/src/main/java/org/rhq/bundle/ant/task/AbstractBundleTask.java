@@ -33,7 +33,6 @@ import org.rhq.bundle.ant.BundleAntProject;
  * @author John Mazzitelli
  */
 public abstract class AbstractBundleTask extends Task {
-
     /**
      * Returns the specific {@link BundleAntProject} object that is invoking this task.
      * This task can call methods on the returned project object to inform the project
@@ -41,7 +40,8 @@ public abstract class AbstractBundleTask extends Task {
      * 
      * @return the bundle Ant project object
      */
-    public BundleAntProject getBundleAntProject() {
-        return (BundleAntProject) getProject();
+    @Override
+    public BundleAntProject getProject() {
+        return (BundleAntProject) super.getProject();
     }
 }

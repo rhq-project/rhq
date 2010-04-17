@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 
-<project name="simple-bundle-test" xmlns:rhq="antlib:org.rhq.bundle">
-
-    <property id="_bundlefile.1" name="f" location="file.txt" />
+<project name="simple-bundle-test" xmlns:rhq="antlib:org.rhq.bundle">    
 
     <rhq:bundle name="example.com (JBoss EAP 4.3)" version="1.0"
                 description="example.com corporate website hosted on JBoss EAP 4.3"/>
@@ -12,13 +10,20 @@
        description="This is where the product will listen for incoming messages"
        required="true"
        defaultValue="8080"
-       type="integer">
-    </rhq:inputProperty>
+       type="integer"/>    
     
     <target name="first-target">
-        <echo>Hello!!!!!!!!</echo>
-        <property id="_bundlefile.2" name="pkg" value="package.zip" />
-        <echo>World!!!!!!!!</echo>
+        <echo>Hello World!!!!!!!!</echo>
+        <rhq:deploy>
+            <rhq:file name="file.properties" destinationDir="subdir"/>
+            <rhq:archive name="file.zip"/>
+            <rhq:replace>
+                <rhq:fileset includes="**/*.properties"/>
+            </rhq:replace>
+            <rhq:ignore>
+                <rhq:fileset includes="*.log"/>
+            </rhq:ignore>
+        </rhq:deploy>
     </target>
 
 </project>

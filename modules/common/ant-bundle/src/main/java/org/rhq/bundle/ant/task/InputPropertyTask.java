@@ -67,7 +67,7 @@ public class InputPropertyTask extends AbstractBundleTask {
                       + "', and no default is defined for the property.");
         }
         String valueString = (value != null) ? "'" + value + "'" : "<null>";
-        log("Initializing input property '" + this.name + " with value " + valueString + "...");
+        log("Initializing input property '" + this.name + "' with value " + valueString + "...");
 
         PropertySimple prop = new PropertySimple(this.name, value);
         ConfigurationDefinition configDef = getProject().getConfigurationDefinition();

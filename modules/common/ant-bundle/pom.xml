@@ -27,6 +27,23 @@
     <dependencies>
 
         <dependency>
+           <groupId>${project.groupId}</groupId>
+           <artifactId>rhq-core-native-system</artifactId>
+           <version>${project.version}</version>
+           <scope>provided</scope>
+           <exclusions>
+              <exclusion>
+                  <groupId>org.hyperic</groupId>
+                  <artifactId>sigar</artifactId>
+              </exclusion>
+               <exclusion>
+                   <groupId>org.hyperic</groupId>
+                   <artifactId>sigar-dist</artifactId>
+               </exclusion>
+           </exclusions>
+        </dependency>
+        
+        <dependency>
             <groupId>org.apache.ant</groupId>
             <artifactId>ant</artifactId>
             <version>1.8.0</version>

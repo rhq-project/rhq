@@ -139,7 +139,11 @@ public class Deployer {
             if (!newLocationFile.isAbsolute()) {
                 newLocationFile = new File(this.destDir, newLocationFile.getPath());
             }
-            newLocationFile.getParentFile().mkdirs();
+            File newLocationDir = newLocationFile.getParentFile();
+            boolean newLocationDirCreated = newLocationDir.mkdirs();
+            if (!newLocationDirCreated) {
+                throw new IOException("Failed to create directory '" + newLocationDir + "'.");
+            }
 
             String hashcode;
 

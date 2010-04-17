@@ -23,8 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,6 +32,7 @@ import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.core.util.updater.DeploymentProperties;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
@@ -74,8 +74,10 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
 
     public RecipeParseResults parseRecipe(String recipe) throws Exception {
 
-        Map<String, String> bundleFiles = null;
-        ConfigurationDefinition configDef = null;
+        DeploymentProperties deploymentProps;
+        Set<String> bundleFiles;
+        ConfigurationDefinition configDef;
+
         RecipeParseResults results;
 
         File recipeFile = File.createTempFile("ant-bundle-recipe", ".xml", this.tmpDirectory);
@@ -86,12 +88,14 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
             FileOutputStream out = new FileOutputStream(recipeFile);
             StreamUtil.copy(in, out);
 
-            // parse, but do not execute, the ant script
+            // parse, but do not execute, the Ant script
             AntLauncher antLauncher = new AntLauncher();
             BundleAntProject project = antLauncher.startAnt(recipeFile, null, null, null, logFile, false, false);
 
             // obtain the parse results
-            bundleFiles = project.getBundleFiles();
+            deploymentProps = new DeploymentProperties(0, project.getBundleName(),
+                    project.getBundleVersion(), project.getBundleDescription()) ;
+            bundleFiles = project.getBundleFileNames();
             configDef = project.getConfigurationDefinition();
         } catch (Throwable t) {
             if (log.isDebugEnabled()) {
@@ -100,16 +104,14 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
                 } catch (Exception e) {
                 }
             }
-            throw new Exception("Failed to parse the bundle ANT script", t);
+            throw new Exception("Failed to parse the bundle Ant script.", t);
         } finally {
             recipeFile.delete();
             logFile.delete();
         }
 
-        // TODO: FOR IPS!
-        results = new RecipeParseResults(null, configDef, new HashSet<String>(bundleFiles.values()));
+        results = new RecipeParseResults(deploymentProps, configDef, bundleFiles);
         return results;
-
     }
 
     @Override

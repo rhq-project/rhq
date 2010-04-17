@@ -27,9 +27,7 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -118,7 +116,7 @@ public class Deployer {
         }
     }
 
-    private void initialDeployment() throws Exception, FileNotFoundException, IOException {
+    private void initialDeployment() throws Exception {
         FileHashcodeMap fileHashcodeMap = new FileHashcodeMap();
 
         // extract all zip files
@@ -139,10 +137,10 @@ public class Deployer {
             if (!newLocationFile.isAbsolute()) {
                 newLocationFile = new File(this.destDir, newLocationFile.getPath());
             }
-            File newLocationDir = newLocationFile.getParentFile();
-            boolean newLocationDirCreated = newLocationDir.mkdirs();
-            if (!newLocationDirCreated) {
-                throw new IOException("Failed to create directory '" + newLocationDir + "'.");
+            File newLocationParentDir = newLocationFile.getParentFile();
+            newLocationParentDir.mkdirs();
+            if (!newLocationParentDir.isDirectory()) {
+                throw new Exception("Failed to create new parent directory for raw file [" + newLocationFile + "]");
             }
 
             String hashcode;

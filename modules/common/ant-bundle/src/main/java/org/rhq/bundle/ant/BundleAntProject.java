@@ -33,7 +33,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 
 /**
  * This is the Ant project object that is used when processing bundle Ant scripts
- * (aka "Bundle Recipes").
+ * (aka "bundle recipes").
  * 
  * It extends the normal Ant project object by providing additional methods that help
  * collect additional information about the Ant script.

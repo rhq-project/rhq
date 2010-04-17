@@ -25,7 +25,6 @@ package org.rhq.plugins.ant;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.Properties;
 
 import org.rhq.core.util.file.FileUtil;
 import org.testng.annotations.AfterMethod;
@@ -53,7 +52,7 @@ import org.rhq.core.util.stream.StreamUtil;
 
 @Test
 public class AntBundlePluginComponentTest {
-    private static final String HOME_DIR = System.getProperty("user.home");
+    private static final String USER_HOME = System.getProperty("user.home");
 
     private AntBundlePluginComponent plugin;
     private File tmpDir;
@@ -134,7 +133,7 @@ public class AntBundlePluginComponentTest {
         BundleDeployment deployment = new BundleDeployment();
         deployment.setBundleVersion(bundleVersion);
         deployment.setConfiguration(config);
-        deployment.setInstallDir(HOME_DIR + "/jboss");
+        deployment.setInstallDir(USER_HOME + "/jboss");
 
         File file1 = new File(tmpDir, "file.properties");
         File file2 = new File(tmpDir, "package.zip");

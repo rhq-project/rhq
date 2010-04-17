@@ -38,6 +38,8 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 
 @Test
 public class AntLauncherTest {
+    private static final File DEPLOY_DIR = new File("target/test-ant-bundle").getAbsoluteFile();
+
     private File logFile;
 
     @BeforeMethod
@@ -71,7 +73,7 @@ public class AntLauncherTest {
 
     public void testSimpleExecTest() throws Exception {
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
-        FileUtil.purge(new File("/home/ips/jboss"), true);
+        FileUtil.purge(DEPLOY_DIR, true);
         
         AntLauncher ant = new AntLauncher();
         Properties inputProps = createInputProperties();
@@ -102,12 +104,13 @@ public class AntLauncherTest {
         } finally {
             inputStream.close();
         }
+        inputProps.setProperty(AntLauncher.DEPLOY_DIR_PROP, DEPLOY_DIR.getPath());
         return inputProps;
     }
 
     private File getBuildXml(String name) throws Exception {
         File file = new File("target/test-classes", name);
-        assert file.exists() : "the test ant build script doesn't exist: " + file.getAbsolutePath();
+        assert file.exists() : "The test Ant build script doesn't exist: " + file.getAbsolutePath();
         return file;
     }
 }

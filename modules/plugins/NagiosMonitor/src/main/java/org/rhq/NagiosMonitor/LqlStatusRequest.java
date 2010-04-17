@@ -18,7 +18,9 @@ package org.rhq.NagiosMonitor;
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+
 import java.util.ArrayList;
+
 
 /**
  * This class is a concrete implementation of the LQLRequest interface for a status request
@@ -27,17 +29,26 @@ import java.util.ArrayList;
  */
 public class LqlStatusRequest implements LqlRequest 
 {
+	/**
+	 * Strings with the Livestatus Query Language commands necessary to get the required status information 
+	 */
 	private final String GET_STATUS_METRICS = "GET status\n";
 		
-	private String requestType;
+	private NagiosRequestType requestType;
 	private ArrayList<String> requestQuery;
 	
+	/**
+	 * Constructor sets the correct request type and the array list with the commands 
+	 */
 	public LqlStatusRequest()
 	{
-		requestType = NagiosRequestTypes.STATUS_REQUEST;
+		requestType = new NagiosRequestType(NagiosRequestType.NagiosRequestTypes.STATUS_REQUEST);
 		setRequestQuery();
 	}
 	
+	/**
+	 * setter that builds the array list with the lql commands  
+	 */
 	public void setRequestQuery()
 	{
 		requestQuery = new ArrayList<String>();
@@ -49,12 +60,12 @@ public class LqlStatusRequest implements LqlRequest
 		return requestQuery;
 	}
 
-	public String getRequestType() 
+	public NagiosRequestType getRequestType() 
 	{	
 		return requestType;
 	}
 
-	public void setRequestType(String requestType) 
+	public void setRequestType(NagiosRequestType requestType) 
 	{
 		this.requestType = requestType;
 	}

@@ -27,7 +27,9 @@ import java.util.Hashtable;
  */
 public class Service 
 {
-	//Each service has a unique id and at least one metric
+	/**
+	 * Each service has a unique id and at least one metric 
+	 */
 	private String id;
 	private Hashtable<String, Metric> metricTable;
 	

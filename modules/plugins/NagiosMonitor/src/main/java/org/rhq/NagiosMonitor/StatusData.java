@@ -18,16 +18,17 @@ package org.rhq.NagiosMonitor;
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+
+import java.util.Collection;
 import java.util.Hashtable;
 
 /**
- * 
+ * This class implements a status data object that contains the status information of a specific nagios server
  * 
  * @author Alexander Kiefer
  */
 public class StatusData implements NagiosData
 {
-	private String requestType;
 	private Status status;
 	
 	public StatusData()
@@ -45,22 +46,36 @@ public class StatusData implements NagiosData
 		this.status= status;
 	}
 	
+	/**
+	 * Method to find a specific metric for status
+	 * 
+	 * @param ressourceName name of the status, not necessary here because there is only one status, can be null
+	 * @param metricName name of the metric
+	 * @return metric object
+	 * @throws InvalidMetricRequestException if metric was not found
+	 */
 	public Metric getSingleMetricForRessource(String metricName, String ressourceName) throws InvalidMetricRequestException
 	{
 		Metric metric = null; 
-			
-		if(status.getMetricTable().contains(metricName))
+		
+		//check if metric is existent
+		if(status.getMetricTable().containsKey(metricName))
 		{
 			metric = status.getMetricTable().get(metricName);
 		}
 		else
 		{
+			//if emtric is not exisitent
 			throw new InvalidMetricRequestException(metricName);
 		}
 			
 		return metric;
 	}
 	
+	/**
+	 * 
+	 * @return Hashtable with all the metric of the status
+	 */
 	public Hashtable<String, Metric> getAllMetrics()
 	{
 		Hashtable<String, Metric> metricTable = status.getMetricTable();
@@ -68,29 +83,20 @@ public class StatusData implements NagiosData
 		return metricTable;
 	}
 
+	/**
+	 * Method that creates status object and fills it with all the metric data
+	 */
 	public void fillWithData(String[] ressourceNames, String[] metricNames, String[] metricValues)
 	{
 		Hashtable<String , Metric> metricTable = new Hashtable<String, Metric>();	
 		
+		//Create metric object for each metric an write information to it
 		for(int metricCounter = 0; metricCounter < metricNames.length; metricCounter++)
 		{
-			Metric metric = new Metric();
-			metric.setId(metricNames[metricCounter]);
-			metric.setValue(metricValues[metricCounter]);
-				
+			Metric metric = new Metric(metricNames[metricCounter], metricValues[metricCounter]);			
 			metricTable.put(metric.getId(), metric);
 		}
+		//put table with all the metrics to status object
 		status.setMetricTable(metricTable);
-	}
-
-	public String getRequestType() 
-	{
-		return requestType;
-	}
-
-	public void setRequestType() 
-	{
-		requestType = NagiosRequestTypes.STATUS_REQUEST;
-		
 	}
 }

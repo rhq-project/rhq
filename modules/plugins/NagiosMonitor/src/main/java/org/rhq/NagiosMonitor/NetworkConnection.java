@@ -18,6 +18,7 @@ package org.rhq.NagiosMonitor;
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -26,11 +27,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
- * This class implements the methods necessary to communicate with the Nagios system
+ * This class implements the communication interface to mk_livetstatus
  *  
  * @author Alexander Kiefer
  */
@@ -72,6 +71,9 @@ public class NetworkConnection
 		lqlReply = new LqlReply(lqlRequest.getRequestType());
 	}
 	
+	/**
+	 * Default constructor is private because it should not be used
+	 */
 	@SuppressWarnings("unused")
 	private NetworkConnection() 
 	{
@@ -105,7 +107,8 @@ public class NetworkConnection
      
     /**
      * Method sets the query for the requests and gives the request type information to the LqlReply object
-     * This information is necessary to create the right object type after receiving the answer from Nagios
+     * This information is necessary for the Controller class to create the right object type after receiving 
+     * the answer from Nagios
      */
     public void setQueries()
     {	
@@ -119,8 +122,6 @@ public class NetworkConnection
      */
 	public void sendAndReceive() 
     {
-		Log log = LogFactory.getLog(this.getClass());
-		
 		ArrayList<String> resultList = new ArrayList<String>();    	
 		String lineRead = "";
     	
@@ -148,11 +149,11 @@ public class NetworkConnection
 			} 
     		catch (UnknownHostException e) 
     		{
-				log.error(e);
+				//log.error(e);
 			}
     		catch (IOException e) 
     		{
-  			   log.error(e);
+  			   //log.error(e);
 			}
 		}			
 		//Write whole result list to LqlReply object
@@ -160,8 +161,7 @@ public class NetworkConnection
     }
 	
 	/**
-	 * 
-	 * @return LqlReply object 
+	 * @return LqlReply object which contains the answer received via socket   
 	 */
 	public LqlReply getLqlReply()
 	{

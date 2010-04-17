@@ -19,7 +19,7 @@ package org.rhq.NagiosMonitor;
  */
 
 /** 
- *	This class creates the data model to save the nagios data that was requested by mk_livestatus
+ *	This class creates the object instance to save the nagios data that was requested from mk_livestatus
  *	The created model depends on the kind of request that was send to livestatus
  *
  * @author Alexander Kiefer
@@ -36,27 +36,28 @@ public class Controller
 	}
 	
 	/**
-	 * Method creates ServiceData object and gives it to the LqlReplyParser 
-	 * where it is filled with the data received from nagios 
+	 * Method creates object depending on the context of the reply that was created an puts
+	 * it to the LqlReplyParser where it is filled with the data received from nagios 
 	 *	
-	 * @return instance of ServiceData where data has been parsed into
+	 * @return concrete instance of NagiosData where data has been parsed into
 	 */
 	public NagiosData createDataModel()
 	{
 		NagiosData data = null;
 		
-		//TODO instead of if-else use switch
-		if(NagiosRequestTypes.SERVICE_REQUEST.equals(this.lqlReply.getContext()))
+		//each LqlReply gets a context when its created to know later what kind of data it will contain
+		switch(lqlReply.getContext().getNagiosRequestType())
 		{
-			data = new ServiceData();	
-			lqlReplyParser.parseLqlServiceReply(data);
+			case SERVICE_REQUEST:
+				data = new ServiceData();
+				lqlReplyParser.parseLqlServiceReply(data);
+				break;
+			case STATUS_REQUEST:
+				data = new StatusData();
+				lqlReplyParser.parseLqlStatusReply(data);
+				break;
 		}
-		else if(NagiosRequestTypes.STATUS_REQUEST.equals(this.lqlReply.getContext()))
-		{
-			data = new StatusData();
-			lqlReplyParser.parseLqlStatusReply(data);
-		}
-				
+		
 		return data;
 	}
 }

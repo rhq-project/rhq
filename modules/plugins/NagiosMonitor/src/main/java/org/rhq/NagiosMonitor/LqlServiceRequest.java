@@ -26,19 +26,28 @@ import java.util.ArrayList;
  */
 public class LqlServiceRequest implements LqlRequest
 {
+	/**
+	 * Strings with the Livestatus Query Language commands necessary to get the required service information 
+	 */
 	private final String GET_NUMBER_OF_SERVICES = "GET services \nStats: state = 0\n";
 	private final String GET_SERVICE_NAMES = "GET services\nColumns: display_name\n";
 	private final String GET_SERVICE_METRICS = "GET services\n";
 	
-	private String requestType;
+	private NagiosRequestType requestType;
 	private ArrayList<String> requestQuery;
 	
+	/**
+	 * Constructor sets the correct request type and the array list with the commands 
+	 */
 	public LqlServiceRequest()
 	{
-		requestType = NagiosRequestTypes.SERVICE_REQUEST;
+		requestType = new NagiosRequestType(NagiosRequestType.NagiosRequestTypes.SERVICE_REQUEST);
 		setRequestQuery();
 	}
 	
+	/**
+	 * setter that builds the array list with the lql commands  
+	 */
 	public void setRequestQuery()
 	{
 		requestQuery = new ArrayList<String>();
@@ -52,12 +61,12 @@ public class LqlServiceRequest implements LqlRequest
 		return requestQuery;
 	}
 
-	public String getRequestType() 
+	public NagiosRequestType getRequestType() 
 	{
 		return requestType;
 	}
 
-	public void setRequestType(String requestType) 
+	public void setRequestType(NagiosRequestType requestType) 
 	{
 		this.requestType = requestType;
 	}

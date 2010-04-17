@@ -18,40 +18,39 @@ package org.rhq.NagiosMonitor;
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+import java.util.ArrayList;
+
 /**
  * This class implements a reply that is sent by nagios as an answer to a specific request
  * 
  * @author Alexander Kiefer
  */
-import java.util.ArrayList;
 
 public class LqlReply 
 {
 	/**
 	 * Each LQLReply has a context and a Array list with the reply Strings 
 	 */
-	private String context;
+	private NagiosRequestType context;
 	private ArrayList<String> lqlReply;
 	
-	public LqlReply(String context)
+	public LqlReply(NagiosRequestType context)
 	{
 		this.context = context;
-		//TODO ?? 
-		lqlReply = null;
 	}
 	
-	public LqlReply(String context, ArrayList<String> lql_reply)
+	public LqlReply(NagiosRequestType context, ArrayList<String> lql_reply)
 	{
 		this.context = context;
 		this.lqlReply = lql_reply;
 	}
 	
-	public String getContext() 
+	public NagiosRequestType getContext() 
 	{
 		return context;
 	}
 
-	public void setContext(String context) 
+	public void setContext(NagiosRequestType context) 
 	{
 		this.context = context;
 	}

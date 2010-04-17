@@ -18,6 +18,7 @@ package org.rhq.NagiosMonitor;
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+
 import java.util.Hashtable;
 
 /**
@@ -27,12 +28,14 @@ import java.util.Hashtable;
  */
 public class Status 
 {
+	/**
+	 * Each status has a unique id and at least one metric 
+	 */
 	private String id;
 	private Hashtable<String, Metric> metricTable;
 	
 	public Status()
 	{
-		//TODO ??
 		this.id = "Status";
 	}
 	

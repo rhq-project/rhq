@@ -22,15 +22,15 @@ import java.util.ArrayList;
 
 /**
  * Interface with method definition for all kinds of requests that can be sent to Nagios
- * The concrete types have to implement this interface
+ * The concrete types have to implement this interface and implement the methods for their purpose
  * 
  * @author Alexander Kiefer
  */
 
 public interface LqlRequest 
 {
-	String getRequestType();
-	void setRequestType(String requestType);
+	NagiosRequestType getRequestType();
+	void setRequestType(NagiosRequestType requestType);
 	
 	ArrayList<String> getRequestQuery();
 	void setRequestQuery();

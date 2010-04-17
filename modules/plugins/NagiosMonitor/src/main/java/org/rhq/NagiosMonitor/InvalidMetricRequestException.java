@@ -37,7 +37,7 @@ public class InvalidMetricRequestException extends Exception
 	/**
 	 * 
 	 * @param metricName - Name of metric that was called is given to 
-	 * super constructor for more detailed information about error origin
+	 * super constructor to maintain more detailed information in case of error
 	 */
 	public InvalidMetricRequestException(String metricName )
 	{

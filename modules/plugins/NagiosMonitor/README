@@ -1,0 +1,8 @@
+Next steps to follow:
+
+-Put logging in all classes
+-Enlarge data model to be able to store data of a whole nagios system with more than one host (only one able at the moment)
+- put UML and sequence charts to the wiki
+-Change NetworkCommunication class - one socket open/ close operation per request at the moment - should be one for all the requests that have to be done - requires mk_livetstatus configuration - will be dscribed in wiki soon
+-Enlarge xml descriptor to one server with several services and several metrics for each service - Only one server with 3 metrics at the moment - If you have ideas how to handle this in Component class let me know
+-first realisation attempts of dynamic metadata approach - have to read the rhq core code - let me know if you can tell me which classes will be the most important for me to understand the concepts of how it works   

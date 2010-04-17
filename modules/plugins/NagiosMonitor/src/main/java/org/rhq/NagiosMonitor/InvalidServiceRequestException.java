@@ -37,7 +37,7 @@ public class InvalidServiceRequestException extends Exception
 	/**
 	 * 
 	 * @param serviceName - Name of service that was called is given to 
-	 * super constructor for more detailed information about error origin
+	 * super constructor to maintain more detailed information in case of error
 	 */
 	public InvalidServiceRequestException(String serviceName)
 	{

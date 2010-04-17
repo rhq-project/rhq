@@ -31,11 +31,12 @@ public class Metric
 	private String id;
 	private String value;
 	
-	public Metric()
+	/**
+	 * default Constructor is private because it should not be used
+	 */
+	private Metric()
 	{
-		//TODO ??
-		id = null;
-		value = null;
+		
 	}
 	
 	public Metric(String id, String value)

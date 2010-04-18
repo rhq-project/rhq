@@ -43,6 +43,37 @@ public class FileHashcodeMapTest {
         }
     }
 
+    public void testFileSeparator() throws Exception {
+        // today the hashcode files allow either unix or windows file separators (/ or \)
+        File tmpFile = File.createTempFile("fileHashcodeMapTest", ".test");
+        try {
+            PrintWriter writer = new PrintWriter(tmpFile);
+            writer.println("directory1\\file1\tabcdef");
+            writer.println("directory1/file2\tghijkl");
+            writer.close();
+
+            FileHashcodeMap map = FileHashcodeMap.loadFromFile(tmpFile);
+            assert map.get("directory1\\file1").equals("abcdef") : map;
+            assert map.get("directory1/file2").equals("ghijkl") : map;
+            assert map.size() == 2 : map;
+        } finally {
+            tmpFile.delete();
+        }
+
+        FileHashcodeMap map = new FileHashcodeMap();
+        map.put("directory1\\file1", "ABCDEF");
+        map.put("directory1/file2", "GHIJKL");
+
+        tmpFile = File.createTempFile("fileHashcodeMapTest", ".test");
+        try {
+            map.storeToFile(tmpFile);
+            FileHashcodeMap mapDup = FileHashcodeMap.loadFromFile(tmpFile);
+            assertSameMap(map, mapDup);
+        } finally {
+            tmpFile.delete();
+        }
+    }
+
     public void testLoadFile() throws Exception {
         File tmpFile = File.createTempFile("fileHashcodeMapTest", ".test");
         try {

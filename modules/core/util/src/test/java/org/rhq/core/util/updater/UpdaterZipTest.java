@@ -62,19 +62,19 @@ public class UpdaterZipTest {
             ZipUtil.walkZipFile(testZipFile, visitorNoRealize);
             FileHashcodeMap mapRaw = visitorNoRealize.getFileHashcodeMap();
             assert mapRaw.size() == 7 : mapRaw;
-            String f = "dir1/file1";
+            String f = "dir1" + File.separator + "file1";
             assert mapRaw.containsKey(f) : mapRaw;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(mapRaw.get(f));
-            f = "dir1/file2";
+            f = "dir1" + File.separator + "file2";
             assert mapRaw.containsKey(f) : mapRaw;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(mapRaw.get(f));
-            f = "dir2/file3";
+            f = "dir2" + File.separator + "file3";
             assert mapRaw.containsKey(f) : mapRaw;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(mapRaw.get(f));
-            f = "dir3/dir4/file4";
+            f = "dir3" + File.separator + "dir4" + File.separator + "file4";
             assert mapRaw.containsKey(f) : mapRaw;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(mapRaw.get(f));
@@ -82,11 +82,11 @@ public class UpdaterZipTest {
             assert mapRaw.containsKey(f) : mapRaw;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(mapRaw.get(f));
-            f = "dir1/fileB";
+            f = "dir1" + File.separator + "fileB";
             assert mapRaw.containsKey(f) : mapRaw;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(mapRaw.get(f));
-            f = "dir2/fileC";
+            f = "dir2" + File.separator + "fileC";
             assert mapRaw.containsKey(f) : mapRaw;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(mapRaw.get(f));
@@ -94,25 +94,25 @@ public class UpdaterZipTest {
             // now walk the zip and realize some files
 
             FileUtil.purge(tmpDir, false);
-            Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1/fileB)");
+            Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
             ExtractorZipFileVisitor visitor = new ExtractorZipFileVisitor(tmpDir, filesToRealizeRegex, templateEngine);
             ZipUtil.walkZipFile(testZipFile, visitor);
 
             FileHashcodeMap map = visitor.getFileHashcodeMap();
             assert map.size() == 7 : map;
-            f = "dir1/file1";
+            f = "dir1" + File.separator + "file1";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir1/file2";
+            f = "dir1" + File.separator + "file2";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir2/file3";
+            f = "dir2" + File.separator + "file3";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir3/dir4/file4";
+            f = "dir3" + File.separator + "dir4" + File.separator + "file4";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
@@ -120,24 +120,25 @@ public class UpdaterZipTest {
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir1/fileB";
+            f = "dir1" + File.separator + "fileB";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir2/fileC";
+            f = "dir2" + File.separator + "fileC";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
 
             // check that our unrealized files between the two walks are the same
-            assert map.get("dir1/file1").equals(mapRaw.get("dir1/file1"));
-            assert map.get("dir1/file2").equals(mapRaw.get("dir1/file2"));
-            assert map.get("dir2/file3").equals(mapRaw.get("dir2/file3"));
-            assert map.get("dir3/dir4/file4").equals(mapRaw.get("dir3/dir4/file4"));
+            assert map.get("dir1" + File.separator + "file1").equals(mapRaw.get("dir1" + File.separator + "file1"));
+            assert map.get("dir1" + File.separator + "file2").equals(mapRaw.get("dir1" + File.separator + "file2"));
+            assert map.get("dir2" + File.separator + "file3").equals(mapRaw.get("dir2" + File.separator + "file3"));
+            assert map.get("dir3" + File.separator + "dir4" + File.separator + "file4").equals(
+                mapRaw.get("dir3" + File.separator + "dir4" + File.separator + "file4"));
 
             // check that our realized files have different hashcodes from their unrealized forms
             assert !map.get("fileA").equals(mapRaw.get("fileA"));
-            assert !map.get("dir1/fileB").equals(mapRaw.get("dir1/fileB"));
+            assert !map.get("dir1" + File.separator + "fileB").equals(mapRaw.get("dir1" + File.separator + "fileB"));
         } finally {
             FileUtil.purge(tmpDir, true);
         }
@@ -150,44 +151,45 @@ public class UpdaterZipTest {
         ZipUtil.walkZipFile(testZipFile, visitorNoRealize);
         FileHashcodeMap mapNoRealize = visitorNoRealize.getFileHashcodeMap();
         assert mapNoRealize.size() == 7 : mapNoRealize;
-        assert mapNoRealize.containsKey("dir1/file1") : mapNoRealize;
-        assert mapNoRealize.containsKey("dir1/file2") : mapNoRealize;
-        assert mapNoRealize.containsKey("dir2/file3") : mapNoRealize;
-        assert mapNoRealize.containsKey("dir3/dir4/file4") : mapNoRealize;
+        assert mapNoRealize.containsKey("dir1" + File.separator + "file1") : mapNoRealize;
+        assert mapNoRealize.containsKey("dir1" + File.separator + "file2") : mapNoRealize;
+        assert mapNoRealize.containsKey("dir2" + File.separator + "file3") : mapNoRealize;
+        assert mapNoRealize.containsKey("dir3" + File.separator + "dir4" + File.separator + "file4") : mapNoRealize;
         assert mapNoRealize.containsKey("fileA") : mapNoRealize;
-        assert mapNoRealize.containsKey("dir1/fileB") : mapNoRealize;
-        assert mapNoRealize.containsKey("dir2/fileC") : mapNoRealize;
+        assert mapNoRealize.containsKey("dir1" + File.separator + "fileB") : mapNoRealize;
+        assert mapNoRealize.containsKey("dir2" + File.separator + "fileC") : mapNoRealize;
 
-        Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1/fileB)");
+        Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
         InMemoryZipFileVisitor visitor = new InMemoryZipFileVisitor(filesToRealizeRegex, templateEngine);
         ZipUtil.walkZipFile(testZipFile, visitor);
 
         FileHashcodeMap map = visitor.getFileHashcodeMap();
         assert map.size() == 7 : map;
-        assert map.containsKey("dir1/file1") : map;
-        assert map.containsKey("dir1/file2") : map;
-        assert map.containsKey("dir2/file3") : map;
-        assert map.containsKey("dir3/dir4/file4") : map;
+        assert map.containsKey("dir1" + File.separator + "file1") : map;
+        assert map.containsKey("dir1" + File.separator + "file2") : map;
+        assert map.containsKey("dir2" + File.separator + "file3") : map;
+        assert map.containsKey("dir3" + File.separator + "dir4" + File.separator + "file4") : map;
         assert map.containsKey("fileA") : map;
-        assert map.containsKey("dir1/fileB") : map;
-        assert map.containsKey("dir2/fileC") : map;
+        assert map.containsKey("dir1" + File.separator + "fileB") : map;
+        assert map.containsKey("dir2" + File.separator + "fileC") : map;
 
         // check that our unrealized files between the two walks are the same
-        assert map.get("dir1/file1").equals(mapNoRealize.get("dir1/file1"));
-        assert map.get("dir1/file2").equals(mapNoRealize.get("dir1/file2"));
-        assert map.get("dir2/file3").equals(mapNoRealize.get("dir2/file3"));
-        assert map.get("dir3/dir4/file4").equals(mapNoRealize.get("dir3/dir4/file4"));
+        assert map.get("dir1" + File.separator + "file1").equals(mapNoRealize.get("dir1" + File.separator + "file1"));
+        assert map.get("dir1" + File.separator + "file2").equals(mapNoRealize.get("dir1" + File.separator + "file2"));
+        assert map.get("dir2" + File.separator + "file3").equals(mapNoRealize.get("dir2" + File.separator + "file3"));
+        assert map.get("dir3" + File.separator + "dir4" + File.separator + "file4").equals(
+            mapNoRealize.get("dir3" + File.separator + "dir4" + File.separator + "file4"));
 
         // check that our realized files have different hashcodes from their unrealized forms
         assert !map.get("fileA").equals(mapNoRealize.get("fileA"));
-        assert !map.get("dir1/fileB").equals(mapNoRealize.get("dir1/fileB"));
+        assert !map.get("dir1" + File.separator + "fileB").equals(mapNoRealize.get("dir1" + File.separator + "fileB"));
     }
 
     public void testRealize() throws Exception {
         File testZipFile = new File("target/test-classes/updater-test2.zip");
         InMemoryZipEntryRealizer realizer = new InMemoryZipEntryRealizer(testZipFile, templateEngine);
         String fileA = realizer.realize("fileA");
-        String fileB = realizer.realize("dir1/fileB");
+        String fileB = realizer.realize("dir1" + File.separator + "fileB");
         assert fileA != null;
         assert fileB != null;
         assert fileA.contains("this is fileA") : fileA;
@@ -204,7 +206,7 @@ public class UpdaterZipTest {
         File testZipFile = new File("target/test-classes/updater-test2.zip");
         InMemoryZipEntryRealizer realizer = new InMemoryZipEntryRealizer(testZipFile, null); // notice a null template engine
         String fileA = realizer.realize("fileA");
-        String fileB = realizer.realize("dir1/fileB");
+        String fileB = realizer.realize("dir1" + File.separator + "fileB");
         assert fileA != null;
         assert fileB != null;
         assert fileA.contains("this is fileA") : fileA;

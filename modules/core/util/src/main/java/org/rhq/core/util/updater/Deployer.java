@@ -110,13 +110,24 @@ public class Deployer {
         return;
     }
 
-    public void deploy() throws Exception {
+    public FileHashcodeMap deploy() throws Exception {
+        FileHashcodeMap map = null;
+
         if (!this.deploymentsMetadata.isManaged()) {
-            initialDeployment(); // the destination dir has not been used to deploy a bundle yet (i.e. this is the first deployment)
+            // the destination dir has not been used to deploy a bundle yet (i.e. this is the first deployment)
+            map = initialDeployment();
+        }
+
+        return map;
+    }
+
+    public void undeploy() throws Exception {
+        if (!this.deploymentsMetadata.isManaged()) {
+            throw new Exception("There are no managed deployments in [" + this.destDir + "], nothing to undeploy");
         }
     }
 
-    private void initialDeployment() throws Exception {
+    private FileHashcodeMap initialDeployment() throws Exception {
         FileHashcodeMap fileHashcodeMap = new FileHashcodeMap();
 
         // extract all zip files
@@ -191,5 +202,7 @@ public class Deployer {
         }
 
         this.deploymentsMetadata.initializeLiveDeployment(deploymentProps, fileHashcodeMap);
+
+        return fileHashcodeMap;
     }
 }

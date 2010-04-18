@@ -54,6 +54,45 @@ public class DeployerTest {
         templateEngine = new TemplateEngine(tokens);
     }
 
+    public void testDeployRawFileToAbsolutePath() throws Exception {
+        File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
+        File rawFileDestination = new File(System.getProperty("java.io.tmpdir"), "rawB.txt");
+
+        try {
+            File testRawFileA = new File("target/test-classes/updater-testA.txt");
+            File testRawFileB = new File("target/test-classes/updater-testB.txt");
+
+            Pattern filesToRealizeRegex = Pattern.compile(".*rawB.txt");
+
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle2", "2.0.test", null);
+            Set<File> zipFiles = null;
+            Map<File, File> rawFiles = new HashMap<File, File>();
+            rawFiles.put(testRawFileA, new File("rawA.txt")); // we will _not_ realize this one
+            rawFiles.put(testRawFileB, rawFileDestination); // we will realize this one
+            File destDir = tmpDir;
+            Pattern ignoreRegex = null;
+
+            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
+                templateEngine, ignoreRegex);
+            FileHashcodeMap map = deployer.deploy();
+
+            assert map.size() == 2 : map;
+            String f = "rawA.txt";
+            assert map.containsKey(f) : map;
+            assert new File(tmpDir, f).exists();
+            assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert MessageDigestGenerator.getDigestString(testRawFileA).equals(map.get(f)) : "should have same hash, we didn't realize this one";
+            f = rawFileDestination.getAbsolutePath();
+            assert map.containsKey(f) : map;
+            assert new File(f).exists();
+            assert MessageDigestGenerator.getDigestString(new File(f)).equals(map.get(f));
+            assert !MessageDigestGenerator.getDigestString(testRawFileB).equals(map.get(f)) : "should have different hash, we realized this one";
+
+        } finally {
+            FileUtil.purge(tmpDir, true);
+        }
+    }
+
     public void testInitialDeployZipsAndRawFiles() throws Exception {
         File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
         try {
@@ -62,8 +101,9 @@ public class DeployerTest {
             File testRawFileA = new File("target/test-classes/updater-testA.txt");
             File testRawFileB = new File("target/test-classes/updater-testB.txt");
 
+            // '.' in place of file separator to support running test on windows & unix
             Pattern filesToRealizeRegex = Pattern
-                .compile("(fileA)|(dir1/fileB)|(fileAAA)|(dir100/fileBBB)|(dir100/rawB.txt)");
+                .compile("(fileA)|(dir1.fileB)|(fileAAA)|(dir100.fileBBB)|(dir100.rawB.txt)");
 
             DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle2", "2.0.test", null);
             Set<File> zipFiles = new HashSet<File>(2);
@@ -81,19 +121,19 @@ public class DeployerTest {
 
             FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null);
             assert map.size() == 13 : map;
-            String f = "dir1/file1";
+            String f = "dir1" + File.separator + "file1";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir1/file2";
+            f = "dir1" + File.separator + "file2";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir2/file3";
+            f = "dir2" + File.separator + "file3";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir3/dir4/file4";
+            f = "dir3" + File.separator + "dir4" + File.separator + "file4";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
@@ -101,11 +141,11 @@ public class DeployerTest {
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir1/fileB";
+            f = "dir1" + File.separator + "fileB";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir2/fileC";
+            f = "dir2" + File.separator + "fileC";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
@@ -113,24 +153,24 @@ public class DeployerTest {
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir100/file100";
+            f = "dir100" + File.separator + "file100";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir100/file200";
+            f = "dir100" + File.separator + "file200";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir100/fileBBB";
+            f = "dir100" + File.separator + "fileBBB";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dirA/rawA.txt";
+            f = "dirA" + File.separator + "rawA.txt";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert MessageDigestGenerator.getDigestString(testRawFileA).equals(map.get(f)) : "should have same hash, we didn't realize this one";
-            f = "dir100/rawB.txt";
+            f = "dir100" + File.separator + "rawB.txt";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
@@ -145,7 +185,7 @@ public class DeployerTest {
         File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
         try {
             File testZipFile1 = new File("target/test-classes/updater-test2.zip");
-            Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1/fileB)");
+            Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
 
             DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null);
             Set<File> zipFiles = new HashSet<File>(1);
@@ -160,19 +200,19 @@ public class DeployerTest {
 
             FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null);
             assert map.size() == 7 : map;
-            String f = "dir1/file1";
+            String f = "dir1" + File.separator + "file1";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir1/file2";
+            f = "dir1" + File.separator + "file2";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir2/file3";
+            f = "dir2" + File.separator + "file3";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir3/dir4/file4";
+            f = "dir3" + File.separator + "dir4" + File.separator + "file4";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
@@ -180,11 +220,11 @@ public class DeployerTest {
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir1/fileB";
+            f = "dir1" + File.separator + "fileB";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
-            f = "dir2/fileC";
+            f = "dir2" + File.separator + "fileC";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));

@@ -49,10 +49,10 @@ public class DeploymentsMetadataTest {
             assert metadata.isManaged() : "this should be managed now : " + metadata;
             assert map.size() == 5 : map; // there are 5 files in our test bundle zip
             assert map.containsKey("file0") : map;
-            assert map.containsKey("dir1/file1") : map;
-            assert map.containsKey("dir1/file2") : map;
-            assert map.containsKey("dir2/file3") : map;
-            assert map.containsKey("dir3/dir4/file4") : map;
+            assert map.containsKey("dir1" + File.separator + "file1") : map;
+            assert map.containsKey("dir1" + File.separator + "file2") : map;
+            assert map.containsKey("dir2" + File.separator + "file3") : map;
+            assert map.containsKey("dir3" + File.separator + "dir4" + File.separator + "file4") : map;
 
             // make sure we created our metadata
             File metadataDir = new File(tmpDir, DeploymentsMetadata.METADATA_DIR);

@@ -133,24 +133,57 @@ public class DeployerTest {
      * 12) updater-testA.txt is the changed source (d.)
      * 13) updater-testB.txt is the changed source (b.)
      * 
-     * This test does not test ignores or realizing files.
+     * This does not test ignoring files on update nor does it test realizing files
      */
     public void testUpdateDeployZipsAndRawFiles() throws Exception {
-        final String backupExtension = ".rhqbackup";
-        final Pattern ignoreRegex = null;
-        final Pattern filesToRealizeRegex = null;
+        baseUpdateTest(false, false);
+    }
+
+    /**
+     * Same as testUpdateDeployZipsAndRawFiles with the additional testing
+     * of ignoring files and realizing files.
+     */
+    public void testUpdateDeployZipsAndRawFilesWithRealizeAndIgnore() throws Exception {
+        baseUpdateTest(true, true);
+    }
+
+    /**
+     * This is the base test used for both
+     * testUpdateDeployZipsAndRawFiles and testUpdateDeployZipsAndRawFilesWithRealizeAndIgnore. 
+     */
+    private void baseUpdateTest(boolean realize, boolean ignore) throws Exception {
+        Pattern filesToRealizeRegex = realize ? Pattern.compile("fileA") : null;
+        Pattern ignoreRegex = ignore ? Pattern.compile("ignoreme.*") : null;
+        File fileToIgnore = null;
 
         File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
         File tmpDir2 = FileUtil.createTempDirectory("testDeployerTest2", ".dir", null);
+        File testRawFileBChange1 = File.createTempFile("testUpdateDeployZipsAndRawFilesB1", ".txt");
+        File testRawFileBChange2 = File.createTempFile("testUpdateDeployZipsAndRawFilesB2", ".txt");
+        File testRawFileAChange = File.createTempFile("testUpdateDeployZipsAndRawFilesA", ".txt");
+
+        final String backupExtension = ".rhqbackup";
+        final File metadir = new File(tmpDir, ".rhqdeployments");
+
         try {
+            if (ignore) {
+                // create a file that will be retained because we will be ignoring it
+                File ignoreDir = FileUtil.createTempDirectory("ignoreme", ".dir", tmpDir);
+                fileToIgnore = new File(ignoreDir, "some-log.log");
+                StreamUtil.copy(new ByteArrayInputStream("boo".getBytes()), new FileOutputStream(fileToIgnore));
+            }
+
             File testZipFile1 = new File("target/test-classes/updater-test1.zip");
             File testZipFile2 = new File("target/test-classes/updater-test2.zip");
             File testRawFileA = new File("target/test-classes/updater-testA.txt");
             File testRawFileB = new File("target/test-classes/updater-testB.txt");
+            StreamUtil.copy(new ByteArrayInputStream("B1prime".getBytes()), new FileOutputStream(testRawFileBChange1));
+            StreamUtil.copy(new ByteArrayInputStream("B2prime".getBytes()), new FileOutputStream(testRawFileBChange2));
+            StreamUtil.copy(new ByteArrayInputStream("Aprime".getBytes()), new FileOutputStream(testRawFileAChange));
             File updaterAabsolute = new File(tmpDir2, "updater-testA.txt");
             File updaterBabsolute = new File(tmpDir2, "updater-testB.txt");
 
-            DeploymentProperties deploymentProps = new DeploymentProperties(1, "testbundle2", "2.0.test", null);
+            DeploymentProperties deploymentProps = new DeploymentProperties(1, "testbundle2", "1.0.test", null);
             Set<File> zipFiles = new HashSet<File>(1);
             zipFiles.add(testZipFile1);
             Map<File, File> rawFiles = new HashMap<File, File>(1);
@@ -159,6 +192,10 @@ public class DeployerTest {
             Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
                 templateEngine, ignoreRegex);
             deployer.deploy();
+
+            if (ignore) {
+                assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+            }
 
             String file1 = "dir1" + File.separator + "file1";
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, file1)));
@@ -171,7 +208,7 @@ public class DeployerTest {
             String fileB = "dir1" + File.separator + "fileB";
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, fileB)));
 
-            deploymentProps = new DeploymentProperties(1, "testbundle2", "2.0.test", null);
+            deploymentProps = new DeploymentProperties(2, "testbundle2", "2.0.test", null);
             zipFiles = new HashSet<File>(1);
             zipFiles.add(testZipFile2);
             rawFiles = new HashMap<File, File>(1);
@@ -180,20 +217,33 @@ public class DeployerTest {
                 ignoreRegex);
             deployer.deploy();
 
+            if (ignore) {
+                assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+            }
+
             assert !updaterAabsolute.exists() : "updateA.txt should be deleted";
             assert updaterBabsolute.exists() : "updateB.txt should exist now";
             assert !"X".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
-            assert new File(updaterBabsolute.getAbsolutePath() + backupExtension).exists() : "missing updateB.txt backup";
+            String updaterBabsoluteBackup = updaterBabsolute.getAbsolutePath() + backupExtension;
+            assert new File(updaterBabsoluteBackup).exists() : "missing updateB.txt backup";
 
             String file0 = "file0";
             assert !(new File(tmpDir, file0).exists()) : "file0 should be deleted";
             String fileA = "fileA";
             assert new File(tmpDir, fileA).exists() : "fileA should exist";
+            String fileAcontent = new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, fileA))));
+            if (realize) {
+                assert !fileAcontent.contains("@@rhq.system.hostname@@") : "should not have realized in this test: "
+                    + fileAcontent;
+            } else {
+                assert fileAcontent.contains("@@rhq.system.hostname@@") : "should have realized in this test: "
+                    + fileAcontent;
+            }
             assert new File(tmpDir, fileB).exists() : "fileB should exist";
             assert !"X".equals(new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, fileB)))));
-            assert new File(tmpDir, fileB + backupExtension).exists() : "should have fileB backup";
-            assert "X".equals(new String(StreamUtil
-                .slurp(new FileInputStream(new File(tmpDir, fileB + backupExtension)))));
+            File fileBbackupTo1 = new File(metadir, "1/backup/" + fileB);
+            assert fileBbackupTo1.exists() : "should have fileB backed up in deploy 1 backup dir";
+            assert "X".equals(new String(StreamUtil.slurp(new FileInputStream(fileBbackupTo1))));
             String fileC = "dir2" + File.separator + "fileC";
             assert new File(tmpDir, fileC).exists() : "fileC should exist";
             String file4 = "dir3" + File.separator + "dir4" + File.separator + "file4";
@@ -201,13 +251,56 @@ public class DeployerTest {
             assert "X".equals(new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, file1)))));
             assert new File(tmpDir, file2).exists() : "file2 should exist again";
             assert !(new File(tmpDir, file999).exists()) : "file999 should be deleted";
-            assert !(new File(tmpDir, file999 + backupExtension).exists()) : "file999 should not be backed up";
+            File file999backupTo1 = new File(metadir, "1/backup/" + file999); // this actually should never get created
+            assert !file999backupTo1.exists() : "file999 should not be backed up";
             String file3 = "dir2" + File.separator + "file3";
             assert new File(tmpDir, file3).exists() : "file3 should exist";
+
+            StreamUtil.copy(new ByteArrayInputStream("Y".getBytes()), new FileOutputStream(updaterBabsolute));
+
+            deploymentProps = new DeploymentProperties(3, "testbundle2", "3.0.test", null);
+            zipFiles = new HashSet<File>(1);
+            zipFiles.add(testZipFile2);
+            rawFiles = new HashMap<File, File>(2);
+            rawFiles.put(testRawFileA, updaterAabsolute); // source raw file to absolute path
+            rawFiles.put(testRawFileBChange1, updaterBabsolute); // source raw file to absolute path
+            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
+                ignoreRegex);
+            deployer.deploy();
+
+            if (ignore) {
+                assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+            }
+
+            assert new File(updaterBabsoluteBackup).exists() : "updaterB should be backed up";
+            assert "B1prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
+            assert "Y".equals(new String(StreamUtil.slurp(new FileInputStream(new File(updaterBabsoluteBackup)))));
+
+            StreamUtil.copy(new ByteArrayInputStream("Aprime".getBytes()), new FileOutputStream(updaterAabsolute));
+
+            deploymentProps = new DeploymentProperties(4, "testbundle2", "4.0.test", null);
+            zipFiles = new HashSet<File>(1);
+            zipFiles.add(testZipFile2);
+            rawFiles = new HashMap<File, File>(2);
+            rawFiles.put(testRawFileAChange, updaterAabsolute); // source raw file to absolute path
+            rawFiles.put(testRawFileBChange2, updaterBabsolute); // source raw file to absolute path
+            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
+                ignoreRegex);
+            deployer.deploy();
+
+            if (ignore) {
+                assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+            }
+
+            assert "Aprime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterAabsolute))));
+            assert "B2prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
 
         } finally {
             FileUtil.purge(tmpDir, true);
             FileUtil.purge(tmpDir2, true);
+            testRawFileBChange1.delete();
+            testRawFileBChange2.delete();
+            testRawFileAChange.delete();
         }
     }
 

@@ -77,9 +77,12 @@ import org.rhq.core.util.stream.StreamUtil;
  * is when the current file is a modified version of the original and the new file is different
  * from the original; the second is when there was no original file, but there is now a current
  * file on disk and a new file to be installed. In either case, the current file is backed up
- * before the new file is copied over top the current file. Note in the files to be
- * backed up will be copied with the {@link #BACKUP_EXTENSION} extension added to the end
- * of the backup file's filename. 
+ * before the new file is copied over top the current file. Files that need to be
+ * backed up that are located under the destination directory will have its backup copied
+ * to its original deployment's backup metadata directory. If a file that needs to be backed up
+ * is referred to via an absolute path (that is, outside the destination directory), it
+ * will be copied with the {@link #BACKUP_EXTENSION} extension added to the end
+ * of the backup file's filename but in the same directory as its original. 
  * 
  * @author John Mazzitelli
  */
@@ -176,6 +179,8 @@ public class Deployer {
     private FileHashcodeMap performUpdateDeployment() throws Exception {
         debug("Analyzing original, current and new files as part of update deployment");
 
+        DeploymentProperties originalDeploymentProps = this.deploymentsMetadata.getCurrentDeploymentProperties();
+
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
         ChangesFileHashcodeMap current = original.rescan(this.destDir, this.ignoreRegex);
         FileHashcodeMap newFiles = getNewDeploymentFileHashcodeMap();
@@ -211,7 +216,7 @@ public class Deployer {
         newNotFoundByRescan.removeAll(current.keySet());
         for (String newFileNotScanned : newNotFoundByRescan) {
             File newFileNotScannedFile = new File(newFileNotScanned);
-            if (newFileNotScannedFile.isAbsolute()) {
+            if (newFileNotScannedFile.isAbsolute() && newFileNotScannedFile.exists()) {
                 currentFilesToBackup.add(newFileNotScanned);
             }
         }
@@ -233,18 +238,22 @@ public class Deployer {
         // 3. copy all new files in newFiles except for those files that are also in currentFilesToLeaveAlone
 
         // 1. backup the files we want to retain for the admin to review
-        debug("Backing up files as part of update deployment");
-        for (String fileToBackupPath : currentFilesToBackup) {
-            String backupFilePath = fileToBackupPath + BACKUP_EXTENSION;
-            File backupFile = new File(backupFilePath);
-            File fileToBackup;
-            if (!backupFile.isAbsolute()) {
-                backupFile = new File(this.destDir, backupFilePath);
-                fileToBackup = new File(this.destDir, fileToBackupPath);
-            } else {
-                fileToBackup = new File(fileToBackupPath);
+        if (!currentFilesToBackup.isEmpty()) {
+            int deploymentId = originalDeploymentProps.getDeploymentId();
+            File backupDir = this.deploymentsMetadata.getDeploymentBackupDirectory(deploymentId);
+            debug("Backing up files to [" + backupDir + "] as part of update deployment");
+            for (String fileToBackupPath : currentFilesToBackup) {
+                File backupFile;
+                File fileToBackup = new File(fileToBackupPath);
+                if (!fileToBackup.isAbsolute()) {
+                    backupFile = new File(backupDir, fileToBackupPath);
+                    fileToBackup = new File(this.destDir, fileToBackupPath);
+                } else {
+                    backupFile = new File(fileToBackupPath + BACKUP_EXTENSION);
+                }
+                backupFile.getParentFile().mkdirs();
+                FileUtil.copyFile(fileToBackup, backupFile);
             }
-            FileUtil.copyFile(fileToBackup, backupFile);
         }
 
         // 2. delete the obsolete files

@@ -53,17 +53,17 @@ public class AntLauncherTest {
         return;
     }
 
-    public void testSimpleParseTest() throws Exception {
+    public void testParse() throws Exception {
         AntLauncher ant = new AntLauncher();
         
-        Properties inputProps = createInputProperties();
-        BundleAntProject project = ant.startAnt(getBuildXml("simple-build.xml"), "unnecessary-target", null, inputProps,
-            this.logFile, true, false);
+        Properties inputProps = createInputProperties("/test-bundle-v1-input.properties");
+        BundleAntProject project = ant.startAnt(getBuildXml("test-bundle-v1.xml"), "unnecessary-target",
+                null, inputProps, this.logFile, true, false);
         assert project != null;
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
         assert bundleFiles.size() == 2 : bundleFiles;
-        assert bundleFiles.get("f").equals("file.properties") : bundleFiles;
+        assert bundleFiles.get("f").equals("test-v2.properties") : bundleFiles;
         assert bundleFiles.get("pkg").equals("package.zip") : bundleFiles;*/
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
@@ -71,18 +71,18 @@ public class AntLauncherTest {
         assert configDef.getPropertyDefinitionSimple("listener.port") != null;
     }
 
-    public void testSimpleExecTest() throws Exception {
+    public void testInstall() throws Exception {
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
         FileUtil.purge(DEPLOY_DIR, true);
         
         AntLauncher ant = new AntLauncher();
-        Properties inputProps = createInputProperties();
-        BundleAntProject project = ant.startAnt(getBuildXml("simple-build.xml"), "first-target", null, inputProps,
+        Properties inputProps = createInputProperties("/test-bundle-v1-input.properties");
+        BundleAntProject project = ant.startAnt(getBuildXml("test-bundle-v1.xml"), "deploy", null, inputProps,
                 this.logFile, true, true);
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
         assert bundleFiles.size() == 2 : bundleFiles;
-        assert bundleFiles.get("f").equals("file.properties") : bundleFiles;
+        assert bundleFiles.get("f").equals("test-v2.properties") : bundleFiles;
         assert bundleFiles.get("pkg").equals("package.zip") : bundleFiles;*/
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
@@ -93,18 +93,43 @@ public class AntLauncherTest {
 
         Configuration config = project.getConfiguration();
         assert config.getProperties().size() == 1;
-        assert "7080".equals(config.getSimpleValue("listener.port", null));
+        assert "10000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
     }
 
-    private Properties createInputProperties() throws IOException {
+    @Test(dependsOnMethods = "testInstall")
+    public void testUpgrade() throws Exception {
+        // We want to test an upgrade, so do *not* wipe out the deploy dir.
+
+        AntLauncher ant = new AntLauncher();
+        Properties inputProps = createInputProperties("/test-bundle-v2-input.properties");
+        BundleAntProject project = ant.startAnt(getBuildXml("test-bundle-v2.xml"), "deploy", null, inputProps,
+                this.logFile, true, true);
+        /*Map<String, String> bundleFiles = project.getBundleFiles();
+        assert bundleFiles != null;
+        assert bundleFiles.size() == 2 : bundleFiles;
+        assert bundleFiles.get("f").equals("test-v2.properties") : bundleFiles;
+        assert bundleFiles.get("pkg").equals("package.zip") : bundleFiles;*/
+
+        ConfigurationDefinition configDef = project.getConfigurationDefinition();
+        assert configDef.getPropertyDefinitions().size() == 1;
+        PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
+        assert propDef != null;
+        assert propDef.getType() == PropertySimpleType.INTEGER;
+
+        Configuration config = project.getConfiguration();
+        assert config.getProperties().size() == 1;
+        assert "20000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
+    }
+
+    private Properties createInputProperties(String resourcePath) throws IOException {
         Properties inputProps = new Properties();
-        InputStream inputStream = this.getClass().getResourceAsStream("/input.properties");
+        inputProps.setProperty(AntLauncher.DEPLOY_DIR_PROP, DEPLOY_DIR.getPath());
+        InputStream inputStream = this.getClass().getResourceAsStream(resourcePath);
         try {
             inputProps.load(inputStream);
         } finally {
             inputStream.close();
-        }
-        inputProps.setProperty(AntLauncher.DEPLOY_DIR_PROP, DEPLOY_DIR.getPath());
+        }        
         return inputProps;
     }
 

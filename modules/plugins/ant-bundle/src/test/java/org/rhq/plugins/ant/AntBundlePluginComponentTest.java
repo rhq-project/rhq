@@ -93,7 +93,7 @@ public class AntBundlePluginComponentTest {
         PackageType packageType = new PackageType("testSimpleBundle", resourceType);
         Bundle bundle = new Bundle("testSimpleBundle", bundleType, repo, packageType);
         BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
-            getRecipeFromFile("simple-build.xml"));
+            getRecipeFromFile("test-bundle-v1.xml"));
 
         BundleDeployment deployment = new BundleDeployment();
         deployment.setBundleVersion(bundleVersion);
@@ -135,7 +135,7 @@ public class AntBundlePluginComponentTest {
         deployment.setConfiguration(config);
         deployment.setInstallDir(USER_HOME + "/jboss");
 
-        File file1 = new File(tmpDir, "file.properties");
+        File file1 = new File(tmpDir, "test-v2.properties");
         File file2 = new File(tmpDir, "package.zip");
         assert file1.createNewFile() : "could not create our mock bundle file";
         assert file2.createNewFile() : "could not create our mock bundle file";

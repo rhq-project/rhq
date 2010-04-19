@@ -51,10 +51,10 @@ public class FileType extends AbstractFileType {
         return this.destinationFile;
     }
 
-    public void setDestinationFile(File destinationFile) {
+    public void setDestinationFile(String destinationFile) {
         if (getDestinationDir() != null) {
             throw new BuildException("Both 'destinationDir' and 'destinationFile' attributes are defined - only one or the other may be specified.");
         }
-        this.destinationFile = destinationFile;
+        this.destinationFile = new File(destinationFile);
     }
 }

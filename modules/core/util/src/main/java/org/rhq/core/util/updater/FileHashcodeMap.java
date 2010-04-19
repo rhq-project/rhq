@@ -272,6 +272,8 @@ public class FileHashcodeMap extends TreeMap<String, String> {
 
         // if this path is one the caller wants us to ignore, then return immediately
         if (ignoreRegex != null && ignoreRegex.matcher(path).matches()) {
+            // TODO: Change the below to TRACE log message.
+            System.out.println("*** Ignoring " + path + "...");
             return;
         }
 

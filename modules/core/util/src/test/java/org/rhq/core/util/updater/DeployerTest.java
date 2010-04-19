@@ -152,8 +152,6 @@ public class DeployerTest {
      * testUpdateDeployZipsAndRawFiles and testUpdateDeployZipsAndRawFilesWithRealizeAndIgnore. 
      */
     private void baseUpdateTest(boolean realize, boolean ignore) throws Exception {
-        final String backupExtension = ".rhqbackup";
-
         Pattern filesToRealizeRegex = realize ? Pattern.compile("fileA") : null;
         Pattern ignoreRegex = ignore ? Pattern.compile("ignoreme.*") : null;
         File fileToIgnore = null;
@@ -163,6 +161,10 @@ public class DeployerTest {
         File testRawFileBChange1 = File.createTempFile("testUpdateDeployZipsAndRawFilesB1", ".txt");
         File testRawFileBChange2 = File.createTempFile("testUpdateDeployZipsAndRawFilesB2", ".txt");
         File testRawFileAChange = File.createTempFile("testUpdateDeployZipsAndRawFilesA", ".txt");
+
+        final String backupExtension = ".rhqbackup";
+        final File metadir = new File(tmpDir, ".rhqdeployments");
+
         try {
             if (ignore) {
                 // create a file that will be retained because we will be ignoring it
@@ -239,9 +241,9 @@ public class DeployerTest {
             }
             assert new File(tmpDir, fileB).exists() : "fileB should exist";
             assert !"X".equals(new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, fileB)))));
-            assert new File(tmpDir, fileB + backupExtension).exists() : "should have fileB backup";
-            assert "X".equals(new String(StreamUtil
-                .slurp(new FileInputStream(new File(tmpDir, fileB + backupExtension)))));
+            File fileBbackupTo1 = new File(metadir, "1/backup/" + fileB);
+            assert fileBbackupTo1.exists() : "should have fileB backed up in deploy 1 backup dir";
+            assert "X".equals(new String(StreamUtil.slurp(new FileInputStream(fileBbackupTo1))));
             String fileC = "dir2" + File.separator + "fileC";
             assert new File(tmpDir, fileC).exists() : "fileC should exist";
             String file4 = "dir3" + File.separator + "dir4" + File.separator + "file4";
@@ -249,7 +251,8 @@ public class DeployerTest {
             assert "X".equals(new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, file1)))));
             assert new File(tmpDir, file2).exists() : "file2 should exist again";
             assert !(new File(tmpDir, file999).exists()) : "file999 should be deleted";
-            assert !(new File(tmpDir, file999 + backupExtension).exists()) : "file999 should not be backed up";
+            File file999backupTo1 = new File(metadir, "1/backup/" + file999); // this actually should never get created
+            assert !file999backupTo1.exists() : "file999 should not be backed up";
             String file3 = "dir2" + File.separator + "file3";
             assert new File(tmpDir, file3).exists() : "file3 should exist";
 

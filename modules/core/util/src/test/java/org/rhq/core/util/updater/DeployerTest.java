@@ -133,12 +133,30 @@ public class DeployerTest {
      * 12) updater-testA.txt is the changed source (d.)
      * 13) updater-testB.txt is the changed source (b.)
      * 
-     * This test does not test ignores or realizing files.
+     * This does not test ignoring files on update nor does it test realizing files
      */
     public void testUpdateDeployZipsAndRawFiles() throws Exception {
+        baseUpdateTest(false, false);
+    }
+
+    /**
+     * Same as testUpdateDeployZipsAndRawFiles with the additional testing
+     * of ignoring files and realizing files.
+     */
+    public void testUpdateDeployZipsAndRawFilesWithRealizeAndIgnore() throws Exception {
+        baseUpdateTest(true, true);
+    }
+
+    /**
+     * This is the base test used for both
+     * testUpdateDeployZipsAndRawFiles and testUpdateDeployZipsAndRawFilesWithRealizeAndIgnore. 
+     */
+    private void baseUpdateTest(boolean realize, boolean ignore) throws Exception {
         final String backupExtension = ".rhqbackup";
-        final Pattern ignoreRegex = null;
-        final Pattern filesToRealizeRegex = null;
+
+        Pattern filesToRealizeRegex = realize ? Pattern.compile("fileA") : null;
+        Pattern ignoreRegex = ignore ? Pattern.compile("ignoreme.*") : null;
+        File fileToIgnore = null;
 
         File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
         File tmpDir2 = FileUtil.createTempDirectory("testDeployerTest2", ".dir", null);
@@ -146,6 +164,13 @@ public class DeployerTest {
         File testRawFileBChange2 = File.createTempFile("testUpdateDeployZipsAndRawFilesB2", ".txt");
         File testRawFileAChange = File.createTempFile("testUpdateDeployZipsAndRawFilesA", ".txt");
         try {
+            if (ignore) {
+                // create a file that will be retained because we will be ignoring it
+                File ignoreDir = FileUtil.createTempDirectory("ignoreme", ".dir", tmpDir);
+                fileToIgnore = new File(ignoreDir, "some-log.log");
+                StreamUtil.copy(new ByteArrayInputStream("boo".getBytes()), new FileOutputStream(fileToIgnore));
+            }
+
             File testZipFile1 = new File("target/test-classes/updater-test1.zip");
             File testZipFile2 = new File("target/test-classes/updater-test2.zip");
             File testRawFileA = new File("target/test-classes/updater-testA.txt");
@@ -165,6 +190,10 @@ public class DeployerTest {
             Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
                 templateEngine, ignoreRegex);
             deployer.deploy();
+
+            if (ignore) {
+                assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+            }
 
             String file1 = "dir1" + File.separator + "file1";
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, file1)));
@@ -186,6 +215,10 @@ public class DeployerTest {
                 ignoreRegex);
             deployer.deploy();
 
+            if (ignore) {
+                assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+            }
+
             assert !updaterAabsolute.exists() : "updateA.txt should be deleted";
             assert updaterBabsolute.exists() : "updateB.txt should exist now";
             assert !"X".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
@@ -196,6 +229,14 @@ public class DeployerTest {
             assert !(new File(tmpDir, file0).exists()) : "file0 should be deleted";
             String fileA = "fileA";
             assert new File(tmpDir, fileA).exists() : "fileA should exist";
+            String fileAcontent = new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, fileA))));
+            if (realize) {
+                assert !fileAcontent.contains("@@rhq.system.hostname@@") : "should not have realized in this test: "
+                    + fileAcontent;
+            } else {
+                assert fileAcontent.contains("@@rhq.system.hostname@@") : "should have realized in this test: "
+                    + fileAcontent;
+            }
             assert new File(tmpDir, fileB).exists() : "fileB should exist";
             assert !"X".equals(new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, fileB)))));
             assert new File(tmpDir, fileB + backupExtension).exists() : "should have fileB backup";
@@ -224,6 +265,10 @@ public class DeployerTest {
                 ignoreRegex);
             deployer.deploy();
 
+            if (ignore) {
+                assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+            }
+
             assert new File(updaterBabsoluteBackup).exists() : "updaterB should be backed up";
             assert "B1prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
             assert "Y".equals(new String(StreamUtil.slurp(new FileInputStream(new File(updaterBabsoluteBackup)))));
@@ -239,6 +284,10 @@ public class DeployerTest {
             deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
                 ignoreRegex);
             deployer.deploy();
+
+            if (ignore) {
+                assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+            }
 
             assert "Aprime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterAabsolute))));
             assert "B2prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));

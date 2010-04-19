@@ -203,13 +203,29 @@ public class Deployer {
             }
         }
 
-        original = null; // done with this, allow GC to reclaim its memory
+        // the rescan can only find things in the dest dir.
+        // if the new deployment introduced new files with absolute paths ('new' meaning they
+        // were not in the original deployment), we need to see if that new absolute path
+        // already exists; if it does, we need to back that file up.
+        Set<String> newNotFoundByRescan = new HashSet<String>(newFiles.keySet());
+        newNotFoundByRescan.removeAll(current.keySet());
+        for (String newFileNotScanned : newNotFoundByRescan) {
+            File newFileNotScannedFile = new File(newFileNotScanned);
+            if (newFileNotScannedFile.isAbsolute()) {
+                currentFilesToBackup.add(newFileNotScanned);
+            }
+        }
+
+        // done with these, allow GC to reclaim memory
+        newNotFoundByRescan = null;
+        original = null;
 
         // now remove all the new files from the current map - what's left are files that exist that are not in the new deployment
         // thus, those files left in current are those that need to be deleted from disk
         currentFilesToDelete = current.keySet(); // the set is backed by the map, changes to it affect the map
         currentFilesToDelete.removeAll(newFiles.keySet());
         currentFilesToDelete.removeAll(current.getDeletions().keySet()); // these are already deleted, no sense trying to delete them again
+        currentFilesToBackup.removeAll(currentFilesToDelete); // don't bother backing up files that need to be deleted
 
         // we now know what to do:
         // 1. backup the files in currentFilesToBackup

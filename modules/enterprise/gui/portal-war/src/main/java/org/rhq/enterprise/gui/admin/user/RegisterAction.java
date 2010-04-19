@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.admin.user;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,6 +32,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+import org.apache.struts.action.ActionMessage;
+import org.apache.struts.action.ActionMessages;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -42,7 +45,10 @@ import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.exception.LdapCommunicationException;
+import org.rhq.enterprise.server.exception.LdapFilterException;
 import org.rhq.enterprise.server.resource.group.LdapGroupManager;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -111,13 +117,34 @@ public class RegisterAction extends BaseAction {
         HashMap parms = new HashMap(1);
         parms.put(Constants.USER_PARAM, newSubject.getId());
 
-        String provider = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(RHQConstants.JAASProvider);
-        if (RHQConstants.LDAPJAASProvider.equals(provider)) {
-            List<String> groupNames = new ArrayList(LdapGroupManager.getInstance().findAvailableGroupsFor(
-                newSubject.getName()));
-            RoleManagerLocal roleManager = LookupUtil.getRoleManager();
-            roleManager.assignRolesToLdapSubject(newSubject.getId(), groupNames);
+        //BZ-580127: only do group authz check if one or both of group filter fields is set
+        SystemManagerLocal manager = LookupUtil.getSystemManager();
+        Properties options = manager.getSystemConfiguration();
+        String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
+        String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
+        if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {
+            try { //defend against ldap communication runtime difficulties.
+                String provider = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(
+                    RHQConstants.JAASProvider);
+                if (RHQConstants.LDAPJAASProvider.equals(provider)) {
+                    List<String> groupNames = new ArrayList(LdapGroupManager.getInstance().findAvailableGroupsFor(
+                        newSubject.getName()));
+                    RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+                    roleManager.assignRolesToLdapSubject(newSubject.getId(), groupNames);
 
+                }
+            } catch (LdapFilterException lce) {
+                ActionMessages actionMessages = new ActionMessages();
+                actionMessages.add(ActionMessages.GLOBAL_MESSAGE,
+                    new ActionMessage("admin.role.LdapGroupFilterMessage"));
+                saveErrors(request, actionMessages);
+            } catch (LdapCommunicationException lce) {
+                ActionMessages actionMessages = new ActionMessages();
+                String providerUrl = options.getProperty(RHQConstants.LDAPUrl, "(unavailable)");
+                actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
+                    "admin.role.LdapCommunicationMessage", providerUrl));
+                saveErrors(request, actionMessages);
+            }
         }
         return returnSuccess(request, mapping, parms, false);
     }

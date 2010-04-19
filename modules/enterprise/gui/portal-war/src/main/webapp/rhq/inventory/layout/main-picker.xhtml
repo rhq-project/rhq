@@ -16,7 +16,7 @@
 
 <ui:composition template="/rhq/entity/layout/main-wide.xhtml">
 
-<ui:param name="defaultPageTitle" value="Subsystem Views"/>
+<ui:param name="defaultPageTitle" value="Resource Picker"/>
 
    <ui:define name="summary"></ui:define>
    <ui:define name="breadcrumbs"></ui:define>
@@ -33,19 +33,19 @@
       <onc:tabBar id="browserTabBarPanel" selectedTabName="#{selectedTabName}" >
          <onc:tab name="Resources"
                   displayName="Resources #{InventorySummaryUIBean.resourceCount}"
-                  url="/rhq/inventory/resourcePicker.xhtml?subtab=all&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}">
+                  url="/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;subtab=all&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}">
             <onc:subtab name="all"
                         displayName="All"
-                        url="/rhq/inventory/resourcePicker.xhtml?subtab=all&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
+                        url="/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;subtab=all&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
             <onc:subtab name="platform"
                         displayName="Platforms #{InventorySummaryUIBean.platformCount}"
-                        url="/rhq/inventory/resourcePicker.xhtml?subtab=platform&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
+                        url="/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;subtab=platform&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
             <onc:subtab name="server"
                         displayName="Servers #{InventorySummaryUIBean.serverCount}"
-                        url="/rhq/inventory/resourcePicker.xhtml?subtab=server&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
+                        url="/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;subtab=server&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
             <onc:subtab name="service"
                         displayName="Services #{InventorySummaryUIBean.serviceCount}"
-                        url="/rhq/inventory/resourcePicker.xhtml?subtab=service&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
+                        url="/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;subtab=service&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
          </onc:tab>
       </onc:tabBar>
 

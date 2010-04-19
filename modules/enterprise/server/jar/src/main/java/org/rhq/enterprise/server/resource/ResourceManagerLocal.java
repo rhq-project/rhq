@@ -123,6 +123,8 @@ public interface ResourceManagerLocal {
 
     boolean bulkNamedQueryDeleteInNewTransaction(Subject subject, String namedQuery, List<Integer> resourceIds);
 
+    List<Integer> getResourceDescendantsByTypeAndName(Subject user, int resourceId, Integer resourceTypeId, String name);
+
     /**
      * Changes the inventory status of the specified resource and optionally its descendants to the provided inventory
      * status if the user is authorized to do so.
@@ -165,7 +167,6 @@ public interface ResourceManagerLocal {
     @NotNull
     List<Resource> getResourceLineage(int resourceId);
 
-
     /**
      * Returns the lineage of a resource plus all the siblings of the resources in the lineage. This is
      * useful for prepopulating all the resources visible in an expanded tree.
@@ -173,7 +174,6 @@ public interface ResourceManagerLocal {
      * @return resoure lineage and siblings
      */
     List<Resource> getResourceLineageAndSiblings(int resourceId);
-
 
     /**
      * Looks up the root of a subtree in the inventory. This will generally find the platform on which
@@ -450,7 +450,6 @@ public interface ResourceManagerLocal {
 
     Resource getPlaformOfResource(Subject subject, int resourceId);
 
-    
     Resource getParentResource(Subject subject, int resourceId);
 
     /**

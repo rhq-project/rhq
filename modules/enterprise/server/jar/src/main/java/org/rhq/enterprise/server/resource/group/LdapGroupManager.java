@@ -29,6 +29,7 @@ import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
+import javax.naming.directory.InvalidSearchFilterException;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
@@ -37,6 +38,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.exception.LdapCommunicationException;
+import org.rhq.enterprise.server.exception.LdapFilterException;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
@@ -71,8 +74,8 @@ public class LdapGroupManager {
         SystemManagerLocal manager = LookupUtil.getSystemManager();
 
         Properties options = manager.getSystemConfiguration();
-        String groupFilter = (String) options.get(RHQConstants.LDAPGroupFilter);
-        String groupMember = (String) options.get(RHQConstants.LDAPGroupMember);
+        String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
+        String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
         String userDN = getUserDN(options, userName);
         String filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, userDN);
 
@@ -205,8 +208,17 @@ public class LdapGroupManager {
                 }
             }
         } catch (NamingException e) {
-            // TODO Auto-generated catch block
-            throw new RuntimeException(e);
+            if (e instanceof InvalidSearchFilterException) {
+                InvalidSearchFilterException fException = (InvalidSearchFilterException) e;
+                String message = "The ldap group filter defined is invalid ";
+                log.error(message, fException);
+                throw new LdapFilterException(message + " " + fException.getMessage());
+            }
+            //TODO: check for ldap connection/unavailable/etc. exception. 
+            else {
+                log.error("LDAP communication error: " + e.getMessage(), e);
+                throw new LdapCommunicationException(e);
+            }
         }
 
         return ret;

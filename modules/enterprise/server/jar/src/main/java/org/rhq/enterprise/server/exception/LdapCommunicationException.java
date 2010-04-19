@@ -1,3 +1,5 @@
+package org.rhq.enterprise.server.exception;
+
 /*
  * RHQ Management Platform
  * Copyright (C) 2005-2008 Red Hat, Inc.
@@ -16,25 +18,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.common;
 
-import javax.ejb.Local;
-import javax.persistence.Query;
+/*
+* This exception should be used whenever there was an error while trying to communicate 
+* with an ldap server.  
+* @author Simeon Pinder */
 
-/**
- * @author Joseph Marques
- */
-@Local
-public interface EntityManagerFacadeLocal {
-    Query createQuery(String queryString);
+public class LdapCommunicationException extends RuntimeException {
 
-    void clear();
+    private static final long serialVersionUID = 1L;
 
-    void flush();
+    public LdapCommunicationException() {
+        super();
+    }
 
-    void persist(Object o);
+    public LdapCommunicationException(String message) {
+        super(message);
+    }
 
-    <T> T merge(T o);
+    public LdapCommunicationException(Throwable cause) {
+        super(cause);
+    }
 
-    void remove(Object o);
+    public LdapCommunicationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

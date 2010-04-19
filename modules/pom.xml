@@ -91,31 +91,7 @@
 	 <modules>
             <module>cli-tests</module>
 	 </modules>
-
-         <repositories>
-	    <repository>
-               <id>jboss</id>
-               <name>JBoss Repository</name>
-               <url>http://snapshots.jboss.org/maven2/</url>
-               <snapshots> 
-                  <enabled>true</enabled>
-               </snapshots> 
-            </repository>
-         </repositories>
-
-         <pluginRepositories>
-            <pluginRepository> 
-               <id>jboss</id>
-               <name>JBoss Plugin Repository</name>
-               <url>http://snapshots.jboss.org/maven2/</url>
-               <snapshots>
-                  <enabled>true</enabled>
-               </snapshots>
-            </pluginRepository>
-         </pluginRepositories>
-
       </profile>
-
    </profiles>
 
    <modules>

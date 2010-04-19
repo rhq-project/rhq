@@ -84,10 +84,6 @@
                                          status="commonStatus"
                                          reRender="customContentPanel" />
                             </ui:remove>
-                            <a4j:support event="onorderchanged"
-                                         ignoreDupResponses="true"
-                                         requestDelay="250"
-                                         oncomplete="getElementCrossBrowser('alertActionButtons:saveAlertOrderButton').click();" />
                         </rich:orderingList>
                         <h:commandButton id="refreshButton"
                                          value="refresh" 
@@ -101,11 +97,6 @@
                         <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
 
                         <h:panelGrid columns="4" styleClass="buttons-table" columnClasses="button-cell">
-                           <a4j:commandButton id="saveAlertOrderButton"
-                                              value="Save Order"
-                                              action="#{alertNotificationsUIBean.saveOrder}"
-                                              styleClass="buttonmed"
-                                              style="display: none;"/>
                            <h:outputLink id="addAlertLink" styleClass="buttonmed" value="#">
                                <h:outputText value="Add New" />
                                <rich:componentControl for="addAlertPanel" 
@@ -132,7 +123,7 @@
         </rich:panel>
         
         <h:panelGroup id="customContentPanel" rendered="#{not empty alertNotificationsUIBean.activeNotification}">
-            <h:form id="alertConfig">
+            <h:form id="customContentForm">
                 <input type="hidden" name="context" value="#{param.context}"/>
                 <input type="hidden" name="contextId" value="#{param.contextId}"/>
                 <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
@@ -145,6 +136,7 @@
                     <onc:config configurationDefinition="#{alertNotificationsUIBean.activeConfigDefinition}"
                                 configuration="#{alertNotificationsUIBean.activeNotification.configuration}"
                                 rendered="#{empty customContentUIBean.contentUrl}" />
+                    <br/>
                     <h:commandButton id="saveConfigButton"
                                      value="SAVE"
                                      action="#{alertNotificationsUIBean.saveConfiguration}"
@@ -152,9 +144,10 @@
                                      rendered="#{empty customContentUIBean.contentUrl}" />
 
                     <!-- Custom plugin UI -->
-                    <c:if test="#{not empty customContentUIBean.contentUrl}">
+                    <h:panelGroup test="#{not empty customContentUIBean.contentUrl}">
                         <ui:include src="#{customContentUIBean.contentUrl}" />
-                    </c:if>
+                    </h:panelGroup>
+                    <br/>
                     <h:commandButton id="saveCustomButton"
                                        value="SAVE"
                                        action="#{customContentUIBean.saveConfiguration}"

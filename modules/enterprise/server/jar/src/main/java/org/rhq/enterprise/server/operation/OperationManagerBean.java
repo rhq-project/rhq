@@ -735,6 +735,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Configuration parameters = history.getParameters();
         if ((parameters != null) && (parameters.getId() == 0)) {
             entityManager.persist(parameters);
+            history.setParameters(parameters);
         }
 
         history = entityManager.merge(history); // merge will persist if it doesn't exist yet

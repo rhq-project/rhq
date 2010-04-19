@@ -28,6 +28,7 @@ import org.jboss.seam.contexts.Context;
 import org.jboss.seam.contexts.Contexts;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.EnterpriseFacesContextUIBean;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
@@ -52,8 +53,6 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
 
     @Create
     public void init() {
-        System.out.println("customContentUIBean: CREATE");
-
         if (alertNotificationId == null) {
             return;
         }
@@ -66,14 +65,17 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
 
         if (info != null && info.getUiSnippetUrl() != null) {
             this.contentUrl = info.getUiSnippetUrl().toString();
+            //this.contentUrl = "rhq/custom/plugin/alert/" + senderName + "/" + info.getUiSnippetShortPath();
         }
 
         String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(senderName);
         customBackingBean = alertNotificationManager.getBackingBeanForSender(senderName, alertNotificationId);
 
         if (backingBeanName != null && customBackingBean != null) {
-            customBackingBean.loadView();
             customBackingBean.setWebUser(getSubject());
+            customBackingBean.setContext(FacesContextUtility.getRequiredRequestParameter("context"));
+            customBackingBean.setContextId(FacesContextUtility.getRequiredRequestParameter("contextId"));
+            customBackingBean.loadView();
             outjectBean(backingBeanName, customBackingBean);
         }
     }
@@ -86,11 +88,7 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
      */
     private void outjectBean(String name, CustomAlertSenderBackingBean bean) {
         Context context = Contexts.getPageContext();
-        //CustomAlertSenderBackingBean csb = (CustomAlertSenderBackingBean) context.get(name);
-
-        //if (csb == null) {
         context.set(name, bean);
-        //}
     }
 
     public String saveConfiguration() {

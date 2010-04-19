@@ -32,7 +32,14 @@
                     <td>
                         <table>
                             <tr><td>Immediately</td></tr>
-                            <tr><td><rich:calendar id="startDate" value="#{scheduleDetails.startDate}" datePattern="M/d/yyy HH:mm" showApplyButton="true" isDayEnabled="true" disabled="#{readOnly}"/></td></tr>
+                            <tr><td><rich:calendar id="startDate" value="#{scheduleDetails.startDate}"
+                                                   datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
+                                                   showApplyButton="true"
+                                                   joint-point="auto"
+                                                   direction="auto"
+                                                   todayControlMode="select"
+                                                   enableManualInput="false"
+                                                   disabled="#{readOnly}"/></td></tr>
                         </table>
                     </td>
                 </tr>
@@ -98,7 +105,14 @@
                     <td>
                         <table>
                             <tr><td>None</td></tr>
-                            <tr><td><rich:calendar id="endDate" value="#{scheduleDetails.endDate}" datePattern="M/d/yyy HH:mm" showApplyButton="true" isDayEnabled="true" disabled="#{readOnly}"/></td></tr>
+                            <tr><td><rich:calendar id="endDate" value="#{scheduleDetails.endDate}"
+                                                   datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"                                                   
+                                                   showApplyButton="true"
+                                                   joint-point="auto"
+                                                   direction="auto"
+                                                   todayControlMode="select"
+                                                   enableManualInput="false"
+                                                   disabled="#{readOnly}"/></td></tr>
                         </table>
                     </td>
                 </tr>

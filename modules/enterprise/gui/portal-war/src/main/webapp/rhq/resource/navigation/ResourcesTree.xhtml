@@ -70,7 +70,7 @@
                         </a4j:support>
                                      
                         <h:outputText value="#{resourceTreeItem} "
-                                      styleClass="resourceLink" title="Right-click for more options."/>
+                                      styleClass="resourceLink" title="#{resourceTreeItem.data.resourceType == null ? '' : 'Right-click for more options.'}"/>
                     </rich:treeNode>
 
                     <rich:treeNode type="LockedResource"

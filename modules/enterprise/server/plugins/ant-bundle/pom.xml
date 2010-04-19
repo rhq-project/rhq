@@ -102,13 +102,13 @@
                                 </artifactItem>
 
                                 <artifactItem>
-                                    <groupId>ant</groupId>
+                                    <groupId>oeg.apache.ant</groupId>
                                     <artifactId>ant</artifactId>
                                     <version>1.8.0</version>
                                 </artifactItem>
 
                                 <artifactItem>
-                                    <groupId>ant</groupId>
+                                    <groupId>org.apache.ant</groupId>
                                     <artifactId>ant-launcher</artifactId>
                                     <version>1.8.0</version>
                                 </artifactItem>

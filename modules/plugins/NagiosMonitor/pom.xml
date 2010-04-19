@@ -26,7 +26,7 @@
 
     <properties>
         <scm.module.path>modules/plugins/NagiosMonitor</scm.module.path>
-	<rhq.version>3.0.0-SNAPSHOT</rhq.version>
+	    <rhq.version>3.0.0-SNAPSHOT</rhq.version>
     </properties>
 
     <build>
@@ -157,7 +157,6 @@
             <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
-                <version>1.1</version>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>

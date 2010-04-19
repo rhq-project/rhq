@@ -102,7 +102,7 @@
                                 </artifactItem>
 
                                 <artifactItem>
-                                    <groupId>oeg.apache.ant</groupId>
+                                    <groupId>org.apache.ant</groupId>
                                     <artifactId>ant</artifactId>
                                     <version>1.8.0</version>
                                 </artifactItem>

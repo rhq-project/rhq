@@ -90,6 +90,7 @@ public class DeployerTest {
 
         } finally {
             FileUtil.purge(tmpDir, true);
+            rawFileDestination.delete();
         }
     }
 

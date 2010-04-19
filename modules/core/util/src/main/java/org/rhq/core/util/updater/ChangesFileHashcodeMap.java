@@ -35,9 +35,9 @@ import java.util.Map;
 public class ChangesFileHashcodeMap extends FileHashcodeMap {
     private static final long serialVersionUID = 1L;
 
-    private Map<String, String> deletions = new HashMap<String, String>();
-    private Map<String, String> additions = new HashMap<String, String>();
-    private Map<String, String> changes = new HashMap<String, String>();
+    private final Map<String, String> deletions = new HashMap<String, String>();
+    private final Map<String, String> additions = new HashMap<String, String>();
+    private final Map<String, String> changes = new HashMap<String, String>();
 
     /**
      * Creates an file/hashcode map populated with a map of original file data.

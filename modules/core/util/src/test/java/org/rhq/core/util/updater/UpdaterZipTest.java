@@ -25,7 +25,9 @@ package org.rhq.core.util.updater;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.testng.annotations.BeforeClass;
@@ -53,12 +55,40 @@ public class UpdaterZipTest {
         templateEngine = new TemplateEngine(tokens);
     }
 
+    public void testWalkExtractAndSkip() throws Exception {
+        File tmpDir = FileUtil.createTempDirectory("testWalkExtract", ".dir", null);
+        try {
+            File testZipFile = new File("target/test-classes/updater-test2.zip");
+
+            Set<String> skip = new HashSet<String>();
+            skip.add("dir2" + File.separator + "file3");
+            skip.add("dir3" + File.separator + "dir4" + File.separator + "file4");
+            skip.add("fileA");
+            skip.add("dir1" + File.separator + "fileB");
+            skip.add("dir2" + File.separator + "fileC");
+            ExtractorZipFileVisitor visitorNoRealize = new ExtractorZipFileVisitor(tmpDir, null, templateEngine, skip);
+            ZipUtil.walkZipFile(testZipFile, visitorNoRealize);
+            FileHashcodeMap mapRaw = visitorNoRealize.getFileHashcodeMap();
+            assert mapRaw.size() == 2 : mapRaw + ": all but 2 files in test jar should be skipped";
+            String f = "dir1" + File.separator + "file1";
+            assert mapRaw.containsKey(f) : mapRaw;
+            assert new File(tmpDir, f).exists();
+            assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(mapRaw.get(f));
+            f = "dir1" + File.separator + "file2";
+            assert mapRaw.containsKey(f) : mapRaw;
+            assert new File(tmpDir, f).exists();
+            assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(mapRaw.get(f));
+        } finally {
+            FileUtil.purge(tmpDir, true);
+        }
+    }
+
     public void testWalkExtract() throws Exception {
         File tmpDir = FileUtil.createTempDirectory("testWalkExtract", ".dir", null);
         try {
             File testZipFile = new File("target/test-classes/updater-test2.zip");
 
-            ExtractorZipFileVisitor visitorNoRealize = new ExtractorZipFileVisitor(tmpDir, null, templateEngine);
+            ExtractorZipFileVisitor visitorNoRealize = new ExtractorZipFileVisitor(tmpDir, null, templateEngine, null);
             ZipUtil.walkZipFile(testZipFile, visitorNoRealize);
             FileHashcodeMap mapRaw = visitorNoRealize.getFileHashcodeMap();
             assert mapRaw.size() == 7 : mapRaw;
@@ -95,7 +125,8 @@ public class UpdaterZipTest {
 
             FileUtil.purge(tmpDir, false);
             Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
-            ExtractorZipFileVisitor visitor = new ExtractorZipFileVisitor(tmpDir, filesToRealizeRegex, templateEngine);
+            ExtractorZipFileVisitor visitor = new ExtractorZipFileVisitor(tmpDir, filesToRealizeRegex, templateEngine,
+                null);
             ZipUtil.walkZipFile(testZipFile, visitor);
 
             FileHashcodeMap map = visitor.getFileHashcodeMap();

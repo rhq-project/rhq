@@ -222,7 +222,8 @@ public class FileHashcodeMap extends TreeMap<String, String> {
                 String currentHashcode = MessageDigestGenerator.getDigestString(originalFile);
                 current.put(originalFileString, currentHashcode);
 
-                String originalHashcode = entry.getValue(); // use this if we need to know if its different
+                // if file has been changed, mark it as such in our return map
+                String originalHashcode = entry.getValue();
                 if (!currentHashcode.equals(originalHashcode)) {
                     current.getChanges().put(originalFileString, currentHashcode);
                 }
@@ -234,6 +235,7 @@ public class FileHashcodeMap extends TreeMap<String, String> {
         }
 
         // now recursively traverse the root directory and look for new files that aren't in our original map
+        // files that have been added need to be put into our returned map and also marked as added
         FileHashcodeMap newFiles = new FileHashcodeMap();
         lookForNewFilesRecursive(newFiles, rootDir.getAbsolutePath(), 0, rootDir, ignoreRegex);
         current.putAll(newFiles);

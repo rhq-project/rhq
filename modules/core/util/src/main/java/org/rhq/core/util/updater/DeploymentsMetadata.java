@@ -188,16 +188,14 @@ public class DeploymentsMetadata {
     }
 
     /**
-     * Call this when you already know the files/hashcodes for the current live deployment and you
-     * want to initialize the metadata for the root deployment location.
+     * Call this when you already know the properties, and files/hashcodes for the current live deployment.
      * This method will also mark this initialized, live deployment as the "current" deployment.
-     * You normally only call this the very first time you deploy a bundle to a given root directory.
      *
      * @param deploymentProps identifies the deployment information for the live deployment
      * @param fileHashcodeMap the files and their hashcodes of the current live deployment
      * @throws Exception if failed to write out the necessary metadata about the given live data information
      */
-    public void initializeLiveDeployment(DeploymentProperties deploymentProps, FileHashcodeMap fileHashcodeMap)
+    public void setCurrentDeployment(DeploymentProperties deploymentProps, FileHashcodeMap fileHashcodeMap)
         throws Exception {
 
         // determine where we need to put the metadata and create its empty directory 
@@ -238,7 +236,7 @@ public class DeploymentsMetadata {
 
         // calculate the hashcodes from the live files and write the data to the proper file
         FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(getRootDirectory(), ignoreRegex);
-        initializeLiveDeployment(deploymentProps, map);
+        setCurrentDeployment(deploymentProps, map);
         return map;
     }
 

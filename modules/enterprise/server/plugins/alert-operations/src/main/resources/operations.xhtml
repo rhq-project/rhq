@@ -17,22 +17,22 @@
                 <f:selectItems value="#{operationsBean.selectionModeOptions}" />
             </h:selectOneMenu>
             
-            <h:outputText value="Resource ID:" rendered="#{operationsBean.selectionMode eq 'specific'}" />
-            <h:panelGroup rendered="#{operationsBean.selectionMode eq 'specific'}">
+            <h:outputText value="Resource ID:" rendered="#{operationsBean.selectionMode eq 'SPECIFIC'}" />
+            <h:panelGroup rendered="#{operationsBean.selectionMode eq 'SPECIFIC'}">
                 <h:inputText value="#{operationsBean.resourceId}" id="resourceId" />
                 <a href="#"
                    onclick="window.open('/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;fieldId=customContentForm:resourceId', 'Pick a resource','width=800;height=500;scrollbars=yes,toolbar=no,resizable=yes,left=100,top=100'); return false;"
                    class="buttonmed">Pick</a>
             </h:panelGroup>
             
-            <h:outputText value="Start Search From:" style="width: 200px;" rendered="#{operationsBean.selectionMode eq 'relative'}" />
-            <h:selectOneMenu value="#{operationsBean.ancestorTypeId}" rendered="#{operationsBean.selectionMode eq 'relative'}">
+            <h:outputText value="Start Search From:" style="width: 200px;" rendered="#{operationsBean.selectionMode eq 'RELATIVE'}" />
+            <h:selectOneMenu value="#{operationsBean.ancestorTypeId}" rendered="#{operationsBean.selectionMode eq 'RELATIVE'}">
                 <f:selectItem itemValue="none" itemLabel="Select..." />
                 <f:selectItems value="#{operationsBean.ancestorTypeOptions}" />
             </h:selectOneMenu>
             
-            <h:outputText value="Then Filter By:" style="width: 200px;" rendered="#{operationsBean.selectionMode eq 'relative'}"/>
-            <h:panelGroup rendered="#{operationsBean.selectionMode eq 'relative'}">
+            <h:outputText value="Then Filter By:" style="width: 200px;" rendered="#{operationsBean.selectionMode eq 'RELATIVE'}"/>
+            <h:panelGroup rendered="#{operationsBean.selectionMode eq 'RELATIVE'}">
                 <h:selectOneMenu value="#{operationsBean.descendantTypeId}">
                     <f:selectItem itemValue="none" itemLabel="Select..." />
                     <f:selectItems value="#{operationsBean.descendantTypeOptions}" />

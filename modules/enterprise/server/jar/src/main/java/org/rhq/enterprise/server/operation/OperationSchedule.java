@@ -38,6 +38,8 @@ import org.rhq.core.domain.operation.JobId;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class OperationSchedule implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String jobName;
     private String jobGroup;
     private String operationName;

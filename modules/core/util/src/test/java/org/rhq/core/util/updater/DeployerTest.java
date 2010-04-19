@@ -142,15 +142,21 @@ public class DeployerTest {
 
         File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
         File tmpDir2 = FileUtil.createTempDirectory("testDeployerTest2", ".dir", null);
+        File testRawFileBChange1 = File.createTempFile("testUpdateDeployZipsAndRawFilesB1", ".txt");
+        File testRawFileBChange2 = File.createTempFile("testUpdateDeployZipsAndRawFilesB2", ".txt");
+        File testRawFileAChange = File.createTempFile("testUpdateDeployZipsAndRawFilesA", ".txt");
         try {
             File testZipFile1 = new File("target/test-classes/updater-test1.zip");
             File testZipFile2 = new File("target/test-classes/updater-test2.zip");
             File testRawFileA = new File("target/test-classes/updater-testA.txt");
             File testRawFileB = new File("target/test-classes/updater-testB.txt");
+            StreamUtil.copy(new ByteArrayInputStream("B1prime".getBytes()), new FileOutputStream(testRawFileBChange1));
+            StreamUtil.copy(new ByteArrayInputStream("B2prime".getBytes()), new FileOutputStream(testRawFileBChange2));
+            StreamUtil.copy(new ByteArrayInputStream("Aprime".getBytes()), new FileOutputStream(testRawFileAChange));
             File updaterAabsolute = new File(tmpDir2, "updater-testA.txt");
             File updaterBabsolute = new File(tmpDir2, "updater-testB.txt");
 
-            DeploymentProperties deploymentProps = new DeploymentProperties(1, "testbundle2", "2.0.test", null);
+            DeploymentProperties deploymentProps = new DeploymentProperties(1, "testbundle2", "1.0.test", null);
             Set<File> zipFiles = new HashSet<File>(1);
             zipFiles.add(testZipFile1);
             Map<File, File> rawFiles = new HashMap<File, File>(1);
@@ -171,7 +177,7 @@ public class DeployerTest {
             String fileB = "dir1" + File.separator + "fileB";
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, fileB)));
 
-            deploymentProps = new DeploymentProperties(1, "testbundle2", "2.0.test", null);
+            deploymentProps = new DeploymentProperties(2, "testbundle2", "2.0.test", null);
             zipFiles = new HashSet<File>(1);
             zipFiles.add(testZipFile2);
             rawFiles = new HashMap<File, File>(1);
@@ -183,7 +189,8 @@ public class DeployerTest {
             assert !updaterAabsolute.exists() : "updateA.txt should be deleted";
             assert updaterBabsolute.exists() : "updateB.txt should exist now";
             assert !"X".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
-            assert new File(updaterBabsolute.getAbsolutePath() + backupExtension).exists() : "missing updateB.txt backup";
+            String updaterBabsoluteBackup = updaterBabsolute.getAbsolutePath() + backupExtension;
+            assert new File(updaterBabsoluteBackup).exists() : "missing updateB.txt backup";
 
             String file0 = "file0";
             assert !(new File(tmpDir, file0).exists()) : "file0 should be deleted";
@@ -205,9 +212,43 @@ public class DeployerTest {
             String file3 = "dir2" + File.separator + "file3";
             assert new File(tmpDir, file3).exists() : "file3 should exist";
 
+            StreamUtil.copy(new ByteArrayInputStream("Y".getBytes()), new FileOutputStream(updaterBabsolute));
+
+            deploymentProps = new DeploymentProperties(3, "testbundle2", "3.0.test", null);
+            zipFiles = new HashSet<File>(1);
+            zipFiles.add(testZipFile2);
+            rawFiles = new HashMap<File, File>(2);
+            rawFiles.put(testRawFileA, updaterAabsolute); // source raw file to absolute path
+            rawFiles.put(testRawFileBChange1, updaterBabsolute); // source raw file to absolute path
+            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
+                ignoreRegex);
+            deployer.deploy();
+
+            assert new File(updaterBabsoluteBackup).exists() : "updaterB should be backed up";
+            assert "B1prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
+            assert "Y".equals(new String(StreamUtil.slurp(new FileInputStream(new File(updaterBabsoluteBackup)))));
+
+            StreamUtil.copy(new ByteArrayInputStream("Aprime".getBytes()), new FileOutputStream(updaterAabsolute));
+
+            deploymentProps = new DeploymentProperties(4, "testbundle2", "4.0.test", null);
+            zipFiles = new HashSet<File>(1);
+            zipFiles.add(testZipFile2);
+            rawFiles = new HashMap<File, File>(2);
+            rawFiles.put(testRawFileAChange, updaterAabsolute); // source raw file to absolute path
+            rawFiles.put(testRawFileBChange2, updaterBabsolute); // source raw file to absolute path
+            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
+                ignoreRegex);
+            deployer.deploy();
+
+            assert "Aprime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterAabsolute))));
+            assert "B2prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
+
         } finally {
             FileUtil.purge(tmpDir, true);
             FileUtil.purge(tmpDir2, true);
+            testRawFileBChange1.delete();
+            testRawFileBChange2.delete();
+            testRawFileAChange.delete();
         }
     }
 

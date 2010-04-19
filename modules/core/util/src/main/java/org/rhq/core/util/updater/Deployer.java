@@ -211,7 +211,7 @@ public class Deployer {
         newNotFoundByRescan.removeAll(current.keySet());
         for (String newFileNotScanned : newNotFoundByRescan) {
             File newFileNotScannedFile = new File(newFileNotScanned);
-            if (newFileNotScannedFile.isAbsolute()) {
+            if (newFileNotScannedFile.isAbsolute() && newFileNotScannedFile.exists()) {
                 currentFilesToBackup.add(newFileNotScanned);
             }
         }

@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.alert.common;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -181,6 +179,7 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
             this.selectedNewSender, this.newAlertName, newSenderConfig);
         this.alertNotifications.add(newlyCreated); // only add if no errors
         this.activeNotification = newlyCreated;
+        this.selectedNotifications.clear();
         this.selectedNotifications.add(this.activeNotification);
 
         return OUTCOME_SUCCESS;
@@ -195,37 +194,19 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
     }
 
     public String removeSelected() {
-        List<Integer> ids = getSelectedIds(this.selectedNotifications);
-
-        this.alertNotificationStoreUIBean.removeNotifications(getSubject(), toArray(ids));
+        this.alertNotificationStoreUIBean.removeNotifications(getSubject(), getSelectedIds());
         this.alertNotifications.removeAll(this.selectedNotifications); // only remove if no errors
         this.activeNotification = null;
 
         return OUTCOME_SUCCESS;
     }
 
-    public String saveOrder() {
-        int orderIndex = 0;
-        for (AlertNotification notification : this.alertNotifications) {
-            notification.setOrder(orderIndex++);
-
-            // TODO:  Wait and persist these all in a single operation?
-            this.alertNotificationManager.updateAlertNotification(notification);
+    private Integer[] getSelectedIds() {
+        Integer[] results = new Integer[this.selectedNotifications.size()];
+        int i = 0;
+        for (AlertNotification nextNotification : selectedNotifications) {
+            results[i++] = nextNotification.getId();
         }
-
-        return OUTCOME_SUCCESS;
-    }
-
-    private List<Integer> getSelectedIds(Collection<AlertNotification> notifications) {
-        List<Integer> ids = new ArrayList<Integer>(notifications.size());
-        for (AlertNotification notification : notifications) {
-            ids.add(notification.getId());
-        }
-
-        return ids;
-    }
-
-    private Integer[] toArray(List<Integer> intList) {
-        return intList.toArray(new Integer[intList.size()]);
+        return results;
     }
 }

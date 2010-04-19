@@ -104,7 +104,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
             pluginClassByName.put(shortName, className);
 
             // UI snippet path allows the plugin to inject user interface fragments to the alert pages
-            String uiSnippetPath;
+            String uiSnippetPath = null;
             URL uiSnippetUrl = null;
             CustomUi customUI = type.getCustomUi();
             if (customUI != null) {
@@ -144,6 +144,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
 
             AlertSenderInfo info = new AlertSenderInfo(shortName, type.getDescription(), env.getPluginKey());
             info.setUiSnippetUrl(uiSnippetUrl);
+            info.setUiSnippetShortPath(uiSnippetPath);
             senderInfoByName.put(shortName, info);
             pluginEnvByName.put(shortName, env);
         }
@@ -238,6 +239,8 @@ public class AlertSenderPluginManager extends ServerPluginManager {
     public CustomAlertSenderBackingBean getBackingBeanForSender(String shortName) {
         String className = backingBeanByName.get(shortName);
 
+        //className = "Local" + className;
+
         if (className == null) {
             return null;
         }
@@ -251,7 +254,6 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         } catch (Exception e) {
             log.error("Can't instantiate alert sender backing bean [" + className + "]. Cause: " + e.getMessage());
         }
-
 
         return bean;
     }

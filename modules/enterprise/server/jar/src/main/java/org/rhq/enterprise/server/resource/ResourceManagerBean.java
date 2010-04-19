@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.resource;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -116,11 +114,9 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.exception.UnscheduleException;
 import org.rhq.enterprise.server.jaxb.adapter.ResourceListAdapter;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -310,6 +306,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         return toBeDeletedResourceIds;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Integer> getResourceDescendantsByTypeAndName(Subject user, int resourceId, Integer resourceTypeId,
+        String name) {
+        Query descendantQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME);
+        descendantQuery.setParameter("resourceId", resourceId);
+        descendantQuery.setParameter("resourceTypeId", resourceTypeId);
+        descendantQuery.setParameter("name", name);
+        List<Integer> descendants = descendantQuery.getResultList();
+        return descendants;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -619,7 +626,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         return result;
     }
-
 
     @NotNull
     public Resource getRootResourceForResource(int resourceId) {
@@ -2102,9 +2108,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 resourceId = parent.getId();
             }
             parent = getParentResource(resourceId);
-            if (parent==null)
+            if (parent == null)
                 break;
-            if (parent.getResourceType().getCategory().equals(ResourceCategory.PLATFORM)){
+            if (parent.getResourceType().getCategory().equals(ResourceCategory.PLATFORM)) {
                 resource = parent;
                 parent = null;
                 break;
@@ -2189,11 +2195,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             int disambiguationLevel = Resource.MAX_SUPPORTED_RESOURCE_HIERARCHY_DEPTH; //the max we support
 
-            int targetCnt = ((BigInteger) rs[0]).intValue();
-            int typeCnt = ((BigInteger) rs[1]).intValue();
-            int typeAndPluginCnt = ((BigInteger) rs[2]).intValue();
+            Long targetCnt = ((Number) rs[0]).longValue();
+            Long typeCnt = ((Number) rs[1]).longValue();
+            Long typeAndPluginCnt = ((Number) rs[2]).longValue();
             for (i = 1; i <= Resource.MAX_SUPPORTED_RESOURCE_HIERARCHY_DEPTH; ++i) {
-                int levelCnt = ((BigInteger) rs[2 + i]).intValue();
+                Long levelCnt = ((Number) rs[2 + i]).longValue();
                 if (levelCnt == targetCnt) {
                     disambiguationLevel = i - 1;
                     break;
@@ -2204,7 +2210,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 disambiguationLevel = 1;
             }
 
-            typeResolutionNeeded = typeAndPluginCnt > 1;
+            typeResolutionNeeded = typeAndPluginCnt > 1L;
             pluginResolutionNeeded = typeAndPluginCnt > typeCnt;
             parentResolutionNeeded = disambiguationLevel > 0;
 
@@ -2243,7 +2249,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 }
 
                 //update all the reports that correspond to this resourceId
-                for(MutableDisambiguationReport<T> report : reportsByResourceId.get(resourceId)) {
+                for (MutableDisambiguationReport<T> report : reportsByResourceId.get(resourceId)) {
                     report.typeName = typeName;
                     report.pluginName = pluginName;
                     report.parents = parents;

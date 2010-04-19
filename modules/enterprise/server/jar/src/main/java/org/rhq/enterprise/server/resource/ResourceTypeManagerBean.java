@@ -20,12 +20,14 @@ package org.rhq.enterprise.server.resource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.Stack;
 import java.util.TreeSet;
 
 import javax.ejb.EJB;
@@ -430,4 +432,99 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         List<String> results = query.getResultList();
         return results;
     }
+
+    public List<ResourceType> getResourceTypeAncestorsWithOperations(Subject subject, int resourceTypeId) {
+        List<ResourceType> types = getAllResourceTypeAncestors(subject, resourceTypeId);
+        List<ResourceType> results = excludeThoseWithoutOperations(types);
+        return results;
+    }
+
+    public List<ResourceType> getResourceTypeDescendantsWithOperations(Subject subject, int resourceTypeId) {
+        List<ResourceType> types = getAllResourceTypeDescendants(subject, resourceTypeId);
+        List<ResourceType> results = excludeThoseWithoutOperations(types);
+        return results;
+    }
+
+    private List<ResourceType> excludeThoseWithoutOperations(List<ResourceType> types) {
+        List<ResourceType> results = new ArrayList<ResourceType>();
+        for (ResourceType next : types) {
+            if (next.getOperationDefinitions() != null && next.getOperationDefinitions().size() != 0) {
+                results.add(next);
+            }
+        }
+        return results;
+    }
+
+    public List<ResourceType> getAllResourceTypeAncestors(Subject subject, int resourceTypeId) {
+        Set<ResourceType> uniqueTypes = new HashSet<ResourceType>();
+        Stack<ResourceType> toProcess = new Stack<ResourceType>();
+        toProcess.add(entityManager.find(ResourceType.class, resourceTypeId));
+
+        boolean sawTopLevelServer = false;
+        while (toProcess.size() > 0) {
+            ResourceType next = toProcess.pop();
+            Set<ResourceType> parentTypes = next.getParentResourceTypes();
+            if (parentTypes != null && parentTypes.size() != 0) {
+                toProcess.addAll(parentTypes);
+            } else {
+                if (next.getCategory() == ResourceCategory.SERVER) {
+                    sawTopLevelServer = true;
+                }
+            }
+            uniqueTypes.add(next);
+        }
+
+        List<ResourceType> results = new ArrayList<ResourceType>(uniqueTypes);
+
+        if (sawTopLevelServer) {
+            ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+            criteria.addFilterCategory(ResourceCategory.PLATFORM);
+            List<ResourceType> platforms = findResourceTypesByCriteria(subject, criteria);
+            results.addAll(platforms);
+        }
+
+        Collections.sort(results);
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ResourceType> getAllResourceTypeDescendants(Subject subject, int resourceTypeId) {
+        ResourceType first = entityManager.find(ResourceType.class, resourceTypeId);
+
+        if (first.getCategory() == ResourceCategory.PLATFORM) {
+            ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+            List<ResourceType> allResourceTypes = findResourceTypesByCriteria(subject, criteria);
+
+            List<ResourceType> results = new ArrayList<ResourceType>();
+            for (ResourceType nextType : allResourceTypes) {
+                if (nextType.getCategory() != ResourceCategory.PLATFORM) {
+                    results.add(nextType);
+                }
+            }
+            Collections.sort(results);
+            return results;
+        }
+
+        Set<ResourceType> uniqueTypes = new HashSet<ResourceType>();
+        Stack<ResourceType> toProcess = new Stack<ResourceType>();
+        toProcess.add(first);
+
+        Query findChildrenQuery = entityManager.createNamedQuery(ResourceType.FIND_CHILDREN_BY_PARENT);
+        while (toProcess.size() > 0) {
+            ResourceType next = toProcess.pop();
+
+            findChildrenQuery.setParameter("resourceType", Arrays.asList(next));
+            List<ResourceType> childTypes = findChildrenQuery.getResultList();
+
+            if (childTypes != null) {
+                toProcess.addAll(childTypes);
+            }
+            uniqueTypes.add(next);
+        }
+
+        List<ResourceType> results = new ArrayList<ResourceType>(uniqueTypes);
+        Collections.sort(results);
+        return results;
+    }
+
 }

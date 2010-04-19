@@ -311,7 +311,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         query.setParameter("repoId", repoId);
         query.setParameter("filter", QueryUtility.formatSearchParameter(filter));
-        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
 
         List<PackageVersion> results = query.getResultList();
         long count = getPackageVersionCountFromRepo(subject, filter, repoId);
@@ -350,7 +350,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         log.debug("User [" + subject + "] created [" + repo + "].");
 
         // If this repo is imported, schedule the repo sync job.
-        if ( ! repo.isCandidate()) {
+        if (!repo.isCandidate()) {
             try {
                 ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
                 pc.scheduleRepoSyncJob(repo);
@@ -419,10 +419,11 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
 
         if (importedRepoGroups.isEmpty()) {
-            result.append("There are no new repository groups since the last time this content source was synchronized.\n");
+            result
+                .append("There are no new repository groups since the last time this content source was synchronized.\n");
         } else {
-            result.append("Imported the following [").append(importedRepoGroups.size()).append("] repository group(s): ").
-                    append(importedRepoGroups).append('\n');
+            result.append("Imported the following [").append(importedRepoGroups.size()).append(
+                "] repository group(s): ").append(importedRepoGroups).append('\n');
         }
 
         // Hold on to all current candidate repos for the content source. If any were not present in this
@@ -450,8 +451,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                 } catch (Exception e) {
                     if (e instanceof RepoException
                         && ((RepoException) e).getType() == RepoException.RepoExceptionType.NAME_ALREADY_EXISTS) {
-                        result.append("Skipping addition of existing repository [").append(createMe.getName()).append("]")
-                            .append('\n');
+                        result.append("Skipping addition of existing repository [").append(createMe.getName()).append(
+                            "]").append('\n');
                     } else {
                         log.error("Error processing repository [" + createMe + "]", e);
                         result.append("Could not add repository [").append(createMe.getName()).append(
@@ -469,7 +470,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                     if (addCandidateRepo(contentSourceId, createMe, autoImport)) {
                         importedRepos.add(createMe);
                     }
-                    removeRepoFromList(createMe.getName(), candidatesForThisProvider);                    
+                    removeRepoFromList(createMe.getName(), candidatesForThisProvider);
                 } catch (Exception e) {
                     log.error("Error processing repository [" + createMe + "]", e);
                     result.append("Could not add repository [").append(createMe.getName()).append(
@@ -481,8 +482,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         if (importedRepos.isEmpty()) {
             result.append("There are no new repositories since the last time this content source was synchronized.\n");
         } else {
-            result.append("Imported the following ").append(importedRepos.size()).append(" repository(s): ").
-                    append(importedRepos).append('\n');
+            result.append("Imported the following ").append(importedRepos.size()).append(" repository(s): ").append(
+                importedRepos).append('\n');
         }
 
         // Any repos that haven't been removed from candidatesForThisProvider were not returned in this
@@ -491,8 +492,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             for (Repo deleteMe : candidatesForThisProvider) {
                 deleteRepo(subject, deleteMe.getId());
             }
-            result.append("Deleted the following ").append(candidatesForThisProvider.size()).
-                    append(" obsolete repository(s): ").append(candidatesForThisProvider).append('\n');
+            result.append("Deleted the following ").append(candidatesForThisProvider.size()).append(
+                " obsolete repository(s): ").append(candidatesForThisProvider).append('\n');
         }
     }
 
@@ -506,7 +507,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             }
 
             if (!repo.isCandidate()) {
-                throw new RepoException("Unable to import repository with id " + repoId + ", because it is already imported.");
+                throw new RepoException("Unable to import repository with id " + repoId
+                    + ", because it is already imported.");
             }
 
             repo.setCandidate(false);
@@ -781,7 +783,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
         CriteriaQueryRunner<PackageVersion> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
-        
+
         return queryRunner.execute();
     }
 
@@ -1094,7 +1096,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         Query q = entityManager.createNamedQuery(RepoSyncResults.QUERY_GET_INPROGRESS_BY_REPO_ID);
         q.setParameter("repoId", results.getRepo().getId());
 
-        return (RepoSyncResults) helper.persistSyncResults(q, results);
+        RepoSyncResults persistedSyncResults = (RepoSyncResults) helper.persistSyncResults(q, results);
+        return (null != persistedSyncResults) ? persistedSyncResults : results;
     }
 
     @SuppressWarnings("unchecked")

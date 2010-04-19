@@ -29,11 +29,11 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
+import org.rhq.enterprise.server.plugins.alertOperations.OperationInfo.ResourceSelectionMode;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -44,12 +44,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     private Map<String, String> selectionModeOptions = new LinkedHashMap<String, String>();
-    private Map<String, String> relativeTypeOptions = new LinkedHashMap<String, String>();
+    private Map<String, String> ancestorTypeOptions = new LinkedHashMap<String, String>();
+    private Map<String, String> descendantTypeOptions = new LinkedHashMap<String, String>();
     private Map<String, String> operationNameOptions = new LinkedHashMap<String, String>();
 
     private String selectionMode = "";
     private String resourceId;
-    private String ancestorName;
     private String ancestorTypeId;
     private String descendantName;
     private String descendantTypeId;
@@ -72,14 +72,14 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     @Override
     public void loadView() {
-        selectionMode = get("selection-mode", "none");
+        selectionMode = get(OperationInfo.Constants.SELECTION_MODE, "none");
 
         // always load first list
-        selectionModeOptions.put("Self", "self");
-        selectionModeOptions.put("Specific Resource", "specific");
-        selectionModeOptions.put("Relative Resource", "relative");
+        for (ResourceSelectionMode mode : ResourceSelectionMode.values()) {
+            selectionModeOptions.put(mode.displayString, mode.name());
+        }
 
-        String argumentsConfigurationId = get("operation-arguments-configuration-id", null);
+        String argumentsConfigurationId = get(OperationInfo.Constants.OPERATION_ID, null);
         Configuration previousArguments = null;
         if (argumentsConfigurationId != null && !argumentsConfigurationId.equals("none")) {
             // look it up and then delete it, because the user may switch options in the conditional form, invalidating this
@@ -92,34 +92,42 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
             return;
         }
 
-        if (selectionMode.equals("specific")) {
-            resourceId = get("selection-specific-resource-id", "");
-        } else if (selectionMode.equals("relative")) {
-            ancestorName = get("selection-relative-ancestor-name", "");
-            ancestorTypeId = get("selection-relative-ancestor-type-id", "none");
-            descendantName = get("selection-relative-descendant-name", "");
-            descendantTypeId = get("selection-relative-descendant-type-id", "none");
+        if (selectionMode.equals(ResourceSelectionMode.SPECIFIC.name())) {
+            resourceId = get(OperationInfo.Constants.SPECIFIC_RESOURCE_ID, "");
+        } else if (selectionMode.equals(ResourceSelectionMode.RELATIVE.name())) {
+            ancestorTypeId = get(OperationInfo.Constants.RELATIVE_ANCESTOR_TYPE_ID, "none");
+            descendantName = get(OperationInfo.Constants.RELATIVE_DESCENDANT_NAME, "Name (optional)");
+            descendantTypeId = get(OperationInfo.Constants.RELATIVE_DESCENDANT_TYPE_ID, "none");
 
-            List<ResourceType> types = LookupUtil.getResourceTypeManager().findResourceTypesByCriteria(getOverlord(),
-                new ResourceTypeCriteria());
-            for (ResourceType nextType : types) {
-                relativeTypeOptions.put(nextType.getName(), String.valueOf(nextType.getId()));
+            ResourceType contextType = computeResourceTypeFromContext(); // should not be null
+            List<ResourceType> ancestors = LookupUtil.getResourceTypeManager().getResourceTypeAncestorsWithOperations(
+                getOverlord(), contextType.getId());
+            load(ancestorTypeOptions, ancestors);
+
+            if (ancestorTypeId.equals("none") == false) {
+                List<ResourceType> descendants = LookupUtil.getResourceTypeManager()
+                    .getResourceTypeDescendantsWithOperations(getOverlord(), Integer.parseInt(ancestorTypeId));
+                load(descendantTypeOptions, descendants);
+            } else {
+                List<ResourceType> descendants = LookupUtil.getResourceTypeManager()
+                    .getResourceTypeDescendantsWithOperations(getOverlord(), contextType.getId());
+                load(descendantTypeOptions, descendants);
             }
         }
 
         // compute effectiveResourceTypeId from given info
         ResourceType type = null;
-        if (selectionMode.equals("self")) {
+        if (selectionMode.equals(ResourceSelectionMode.SELF.name())) {
             type = computeResourceTypeFromContext();
 
-        } else if (selectionMode.equals("specific")) {
+        } else if (selectionMode.equals(ResourceSelectionMode.SPECIFIC.name())) {
             if (resourceId.equals("") == false) {
                 Resource resource = LookupUtil.getResourceManager().getResource(getOverlord(),
                     Integer.parseInt(resourceId));
                 type = resource.getResourceType();
             }
 
-        } else if (selectionMode.equals("relative")) {
+        } else if (selectionMode.equals(ResourceSelectionMode.RELATIVE.name())) {
             try {
                 if (descendantTypeId.equals("none") == false) {
                     type = LookupUtil.getResourceTypeManager().getResourceTypeById(getOverlord(),
@@ -140,7 +148,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         effectiveResourceTypeId = String.valueOf(type.getId());
         effectiveResourceTypeName = type.getName();
 
-        operationDefinitionId = get("operation-definition-id", "none");
+        operationDefinitionId = get(OperationInfo.Constants.OPERATION_ID, "none");
         List<OperationDefinition> definitions = LookupUtil.getOperationManager().findSupportedResourceTypeOperations(
             getOverlord(), Integer.valueOf(effectiveResourceTypeId), false);
         for (OperationDefinition nextDefinition : definitions) {
@@ -173,6 +181,12 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         }
     }
 
+    private void load(Map<String, String> resourceTypeOptions, List<ResourceType> types) {
+        for (ResourceType nextType : types) {
+            resourceTypeOptions.put(nextType.getName(), String.valueOf(nextType.getId()));
+        }
+    }
+
     private ResourceType computeResourceTypeFromContext() {
         AlertDefinition definition = LookupUtil.getAlertDefinitionManager().getAlertDefinitionById(getOverlord(),
             Integer.parseInt(contextId));
@@ -188,37 +202,48 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         return type;
     }
 
-    private String get(String propertyName, String defaultValue) {
-        return alertParameters.getSimpleValue(propertyName, defaultValue);
+    private String get(OperationInfo.Constants operationInfoConstant, String defaultValue) {
+        return alertParameters.getSimpleValue(operationInfoConstant.propertyName, defaultValue);
+    }
+
+    @Override
+    public void internalCleanup() {
+        cleanupPreviousArguments();
     }
 
     @Override
     public void saveView() {
-        set(selectionMode, "selection-mode");
-        set(resourceId, "selection-specific-resource-id");
-        set(ancestorName, "selection-relative-ancestor-name");
-        set(ancestorTypeId, "selection-relative-ancestor-type-id");
-        set(descendantName, "selection-relative-descendant-name");
-        set(descendantTypeId, "selection-relative-descendant-type-id");
-        set(operationDefinitionId, "operation-definition-id");
+        set(selectionMode, OperationInfo.Constants.SELECTION_MODE);
+        set(resourceId, OperationInfo.Constants.SPECIFIC_RESOURCE_ID);
+        set(ancestorTypeId, OperationInfo.Constants.RELATIVE_ANCESTOR_TYPE_ID);
+        set("Name (optional)".equals(descendantName) ? null : descendantName,
+            OperationInfo.Constants.RELATIVE_DESCENDANT_NAME);
+        set(descendantTypeId, OperationInfo.Constants.RELATIVE_DESCENDANT_TYPE_ID);
+        set(operationDefinitionId, OperationInfo.Constants.OPERATION_ID);
 
         // cleanup previous arguments configuration
-        String previousArgumentsConfigurationId = get("operation-arguments-configuration-id", null);
-        set(null, "operation-arguments-configuration-id");
-        if (previousArgumentsConfigurationId != null && !previousArgumentsConfigurationId.equals("none")) {
-            LookupUtil.getConfigurationManager().deleteConfigurations(
-                Arrays.asList(Integer.parseInt(previousArgumentsConfigurationId)));
-        }
+        cleanupPreviousArguments();
+
         // persist new one
         if (operationDefinitionId != null && !operationDefinitionId.equals("none") && argumentsConfiguration != null) {
             argumentsConfiguration = persistConfiguration(argumentsConfiguration);
-            set(String.valueOf(argumentsConfiguration.getId()), "operation-arguments-configuration-id");
+            set(String.valueOf(argumentsConfiguration.getId()), OperationInfo.Constants.ARGUMENTS_CONFIG_ID);
         }
 
         alertParameters = persistConfiguration(alertParameters);
     }
 
-    private boolean set(String value, String propertyName) {
+    private void cleanupPreviousArguments() {
+        String previousArgumentsConfigurationId = get(OperationInfo.Constants.ARGUMENTS_CONFIG_ID, null);
+        set(null, OperationInfo.Constants.ARGUMENTS_CONFIG_ID);
+        if (previousArgumentsConfigurationId != null && !previousArgumentsConfigurationId.equals("none")) {
+            LookupUtil.getConfigurationManager().deleteConfigurations(
+                Arrays.asList(Integer.parseInt(previousArgumentsConfigurationId)));
+        }
+    }
+
+    private boolean set(String value, OperationInfo.Constants operationInfoConstant) {
+        String propertyName = operationInfoConstant.propertyName;
         if (value == null) {
             Property previous = alertParameters.remove(propertyName);
             if (previous == null) {
@@ -242,8 +267,12 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         return selectionModeOptions;
     }
 
-    public Map<String, String> getRelativeTypeOptions() {
-        return relativeTypeOptions;
+    public Map<String, String> getAncestorTypeOptions() {
+        return ancestorTypeOptions;
+    }
+
+    public Map<String, String> getDescendantTypeOptions() {
+        return descendantTypeOptions;
     }
 
     public Map<String, String> getOperationNameOptions() {
@@ -264,14 +293,6 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
     public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
-    }
-
-    public String getAncestorName() {
-        return ancestorName;
-    }
-
-    public void setAncestorName(String ancestorName) {
-        this.ancestorName = ancestorName;
     }
 
     public String getAncestorTypeId() {

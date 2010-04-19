@@ -20,9 +20,6 @@ package org.rhq.enterprise.server.plugin.pc.alert;
 
 import java.net.URL;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.plugin.PluginKey;
 
 /**
@@ -36,6 +33,7 @@ public class AlertSenderInfo {
     private String pluginName;
     private PluginKey pluginKey;
     private URL uiSnippetUrl;
+    private String uiSnippetShortPath;
 
     public AlertSenderInfo(String shortName, String description, PluginKey key) {
         this.shortName = shortName;
@@ -74,5 +72,13 @@ public class AlertSenderInfo {
 
     public void setUiSnippetUrl(URL uiSnippetUrl) {
         this.uiSnippetUrl = uiSnippetUrl;
+    }
+
+    public String getUiSnippetShortPath() {
+        return uiSnippetShortPath;
+    }
+
+    public void setUiSnippetShortPath(String uiSnippetShortPath) {
+        this.uiSnippetShortPath = uiSnippetShortPath;
     }
 }

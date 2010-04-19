@@ -971,7 +971,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             + "   ( SELECT AVG(avail.availabilityType) FROM resourcegroup.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail,"
             + "   ( SELECT COUNT(avail) FROM resourcegroup.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount,"
             + "   ( SELECT AVG(avail.availabilityType) FROM resourcegroup.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail,"
-            + "   rg ) ";
+            + "   resourcegroup ) ";
         generator.alterProjection(replacementSelectList);
 
         CriteriaQueryRunner<ResourceGroupComposite> queryRunner = new CriteriaQueryRunner<ResourceGroupComposite>(

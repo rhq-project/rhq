@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.template.TemplateEngine;
@@ -56,6 +57,11 @@ public class DeployerTest {
         tokens.put("rhq.system.sysprop.java.version", javaVersion);
 
         templateEngine = new TemplateEngine(tokens);
+    }
+
+    @BeforeMethod
+    public void beforeMethod() {
+        System.out.println("\n\n=============== START OF NEW TEST ===============\n");
     }
 
     /**
@@ -96,7 +102,7 @@ public class DeployerTest {
      * e.        X       Y      Z   New file is installed over current, current is backed up
      * f.     none       ?      ?   New file is installed over current, current is backed up
      * g.        X    none      ?   New file is installed
-     * h.        ?       ?   none   Current file is deleted
+     * h.        ?       ?   none   Current file is backed up and deleted
 
      * This test will be complex. We will initially install updater-test1.zip, updater-testA.txt.
      * Then we:
@@ -118,7 +124,7 @@ public class DeployerTest {
      * 7) dir3/file4 is the same (a.)
      * 7) dir1/file1 is left in the changed state (c.)
      * 8) dir1/file2 is brought back again (g.)
-     * 9) dir1/file999 is deleted (h.)
+     * 9) dir1/file999 is backed up and deleted (h.)
      * 10) dir2/file3 is the same (a.)
      * 
      * We need to do the following afterwards in order to test b, d and e:
@@ -251,8 +257,8 @@ public class DeployerTest {
             assert "X".equals(new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, file1)))));
             assert new File(tmpDir, file2).exists() : "file2 should exist again";
             assert !(new File(tmpDir, file999).exists()) : "file999 should be deleted";
-            File file999backupTo1 = new File(metadir, "1/backup/" + file999); // this actually should never get created
-            assert !file999backupTo1.exists() : "file999 should not be backed up";
+            File file999backupTo1 = new File(metadir, "1/backup/" + file999);
+            assert file999backupTo1.exists() : "file999 should not be backed up";
             String file3 = "dir2" + File.separator + "file3";
             assert new File(tmpDir, file3).exists() : "file3 should exist";
 

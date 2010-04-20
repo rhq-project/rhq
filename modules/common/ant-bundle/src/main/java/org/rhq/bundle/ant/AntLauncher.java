@@ -68,8 +68,8 @@ public class AntLauncher {
      *
      * @throws RuntimeException
      */
-    public BundleAntProject startAnt(File buildFile, String targetName, Set<String> customTaskDefs, Properties properties,
-        File logFile, boolean logStdOut, boolean execute) {
+    public BundleAntProject startAnt(File buildFile, String targetName, Set<String> customTaskDefs,
+        Properties properties, File logFile, boolean logStdOut, boolean execute) {
 
         PrintWriter logFileOutput = null;
 
@@ -120,6 +120,29 @@ public class AntLauncher {
                     true, classLoader));
             }
 
+            class AllOrNothingTarget extends Target {
+                public boolean doNothing = true;
+
+                @Override
+                public void execute() throws BuildException {
+                    if (!doNothing) {
+                        super.execute();
+                    }
+                }
+            }
+            AllOrNothingTarget allOrNothingTarget = new AllOrNothingTarget();
+            allOrNothingTarget.setName("");
+            allOrNothingTarget.setProject(project);
+
+            AntXMLContext context = new AntXMLContext(project);
+            context.setImplicitTarget(allOrNothingTarget);
+            context.getTargets().clear();
+            context.getTargets().addElement(context.getImplicitTarget());
+
+            String REFID_CONTEXT = "ant.parsing.context"; // private constant ProjectHelper2.REFID_CONTEXT value
+            project.addReference(REFID_CONTEXT, context);
+            project.addReference(ProjectHelper2.REFID_TARGETS, context.getTargets());
+
             ProjectHelper2 helper = new ProjectHelper2();
             try {
                 helper.parse(project, buildFile);
@@ -137,6 +160,10 @@ public class AntLauncher {
             System.out.println("======================================================================");
 
             if (execute) {
+                // parse it again, this time, allowing the implicit target to be executed
+                allOrNothingTarget.doNothing = false;
+                helper.parse(project, buildFile);
+
                 String deployDir = properties.getProperty(DEPLOY_DIR_PROP);
                 if (deployDir == null) {
                     throw new BuildException("Required property '" + DEPLOY_DIR_PROP + "' was not specified.");
@@ -144,7 +171,7 @@ public class AntLauncher {
                 File deployDirFile = new File(deployDir);
                 if (!deployDirFile.isAbsolute()) {
                     throw new BuildException("Value of property '" + DEPLOY_DIR_PROP + "' (" + deployDirFile
-                            + ") is not an absolute path.");
+                        + ") is not an absolute path.");
                 }
                 project.setDeployDir(deployDirFile);
                 project.executeTarget((targetName == null) ? project.getDefaultTarget() : targetName);
@@ -186,16 +213,18 @@ public class AntLauncher {
                     }
                     Set<File> archives = deployTask.getArchives();
                     for (File archive : archives) {
-                        project.getBundleFileNames().add(archive.getName());                        
+                        project.getBundleFileNames().add(archive.getName());
                     }
                 }
             }
         }
         if (bundleTaskCount == 0) {
-            throw new InvalidBuildFileException("rhq:bundle task not found - an RHQ bundle Ant build file must contain exactly one rhq:bundle task.");
+            throw new InvalidBuildFileException(
+                "rhq:bundle task not found - an RHQ bundle Ant build file must contain exactly one rhq:bundle task.");
         }
         if (bundleTaskCount > 1) {
-            throw new InvalidBuildFileException("More than one rhq:bundle task found - an RHQ bundle Ant build file must contain exactly one rhq:bundle task.");
+            throw new InvalidBuildFileException(
+                "More than one rhq:bundle task found - an RHQ bundle Ant build file must contain exactly one rhq:bundle task.");
         }
 
         BundleTask bundleTask = (BundleTask) preconfigureTask(unconfiguredBundleTask);
@@ -204,12 +233,12 @@ public class AntLauncher {
     private void abortIfTaskWithinTarget(Target target, Task task) throws InvalidBuildFileException {
         if (!target.getName().equals("")) {
             throw new InvalidBuildFileException(task.getTaskName() + " task found within [" + target.getName()
-                    + "] target - it must be outside of any targets (at the top of the build file).");
+                + "] target - it must be outside of any targets (at the top of the build file).");
         }
     }
 
     private static Task preconfigureTask(Task task) {
-        if (task instanceof UnknownElement) {            
+        if (task instanceof UnknownElement) {
             task.maybeConfigure();
             Task resolvedTask = ((UnknownElement) task).getTask();
             return (resolvedTask != null) ? resolvedTask : task;

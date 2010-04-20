@@ -135,10 +135,19 @@
          </c:group>
       </plugin-configuration>
 
-      <!--  This will pick up any Tomcat process, whether standalone or embedded. We narrow it down further by examining the command line -->
+      <!--  This will pick up Tomcat processes, whether standalone or embedded. We narrow it down further by examining the command line -->
       <process-scan
          name="Tomcat"
          query="process|basename|match=^java.*,arg|org.apache.catalina.startup.Bootstrap|match=.*" />
+
+      <!--
+         On windows EWS uses the tomcat5.exe and tomcat6.exe executables for starting tomcat. Unlike the normal
+         start up scripts, these do specify the command line args for determining catalina.home. See
+         https://bugzilla.redhat.com/show_bug.cgi?id=580931 for more details.
+      -->
+      <process-scan
+         name="WindowsEWSTomcat"
+         query="process|basename|match=^tomcat(5|6)\.exe"/>
 
       <operation
          name="start"

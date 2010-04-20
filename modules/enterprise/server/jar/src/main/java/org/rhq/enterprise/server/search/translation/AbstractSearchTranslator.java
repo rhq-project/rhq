@@ -4,18 +4,39 @@ import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator
 
 public abstract class AbstractSearchTranslator implements SearchTranslator {
 
-    protected String getJPQLForString(String fragment, RHQLComparisonOperator operator, String value) {
+    public enum ValueFilter {
+        STARTS_WITH, //
+        ENDS_WITH, //
+        INDEX_OF, //
+        EXACT_MATCH;
+    }
+
+    private String process(ValueFilter filter, String value) {
+        if (filter == ValueFilter.STARTS_WITH) {
+            return "'" + value + "%'";
+        } else if (filter == ValueFilter.ENDS_WITH) {
+            return "'%" + value + "'";
+        } else if (filter == ValueFilter.INDEX_OF) {
+            return "'%" + value + "%'";
+        } else if (filter == ValueFilter.EXACT_MATCH) {
+            return "'" + value + "'";
+        } else {
+            throw new IllegalArgumentException("Unsupported ValueFilter: " + filter);
+        }
+    }
+
+    private String getJPQLForString(String fragment, RHQLComparisonOperator operator, String value, ValueFilter filter) {
         if (operator == RHQLComparisonOperator.EQUALS) {
-            return lower(fragment) + " LIKE '%" + value.toLowerCase() + "%'";
+            return lower(fragment) + " LIKE " + process(filter, value.toLowerCase());
 
         } else if (operator == RHQLComparisonOperator.EQUALS_STRICT) {
-            return fragment + " LIKE '%" + value + "%'";
+            return fragment + " LIKE " + process(filter, value);
 
         } else if (operator == RHQLComparisonOperator.NOT_EQUALS) {
-            return lower(fragment) + " NOT LIKE '%" + value.toLowerCase() + "%'";
+            return lower(fragment) + " NOT LIKE " + process(filter, value.toLowerCase());
 
         } else if (operator == RHQLComparisonOperator.NOT_EQUALS_STRICT) {
-            return fragment + " NOT LIKE '%" + value + "%'";
+            return fragment + " NOT LIKE " + process(filter, value);
 
         } else if (operator == RHQLComparisonOperator.NULL) {
             return fragment + " IS NULL";
@@ -25,6 +46,23 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
 
         } else {
             throw new IllegalArgumentException("Unsupported operator " + operator);
+        }
+    }
+
+    protected String getJPQLForString(String fragment, RHQLComparisonOperator operator, String value) {
+        int size = value.length();
+        if (value.startsWith("^")) {
+            if (value.endsWith("$")) {
+                return getJPQLForString(fragment, operator, value.substring(1, size - 1), ValueFilter.EXACT_MATCH);
+            } else {
+                return getJPQLForString(fragment, operator, value.substring(1), ValueFilter.STARTS_WITH);
+            }
+        } else {
+            if (value.endsWith("$")) {
+                return getJPQLForString(fragment, operator, value.substring(0, size - 1), ValueFilter.ENDS_WITH);
+            } else {
+                return getJPQLForString(fragment, operator, value, ValueFilter.INDEX_OF);
+            }
         }
     }
 

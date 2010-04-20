@@ -79,7 +79,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
             selectionModeOptions.put(mode.displayString, mode.name());
         }
 
-        String argumentsConfigurationId = get(OperationInfo.Constants.OPERATION_ID, null);
+        String argumentsConfigurationId = get(OperationInfo.Constants.ARGUMENTS_CONFIG_ID, null);
         Configuration previousArguments = null;
         if (argumentsConfigurationId != null && !argumentsConfigurationId.equals("none")) {
             // look it up and then delete it, because the user may switch options in the conditional form, invalidating this
@@ -226,6 +226,7 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
         // persist new one
         if (operationDefinitionId != null && !operationDefinitionId.equals("none") && argumentsConfiguration != null) {
+            argumentsConfiguration.setId(0); // force Hibernate to interpret this configuration as a new one
             argumentsConfiguration = persistConfiguration(argumentsConfiguration);
             set(String.valueOf(argumentsConfiguration.getId()), OperationInfo.Constants.ARGUMENTS_CONFIG_ID);
         }

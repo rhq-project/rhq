@@ -163,7 +163,7 @@ public class DeployerTest {
         File fileToIgnore = null;
 
         File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
-        File tmpDir2 = FileUtil.createTempDirectory("testDeployerTest2", ".dir", null);
+        File tmpDir2 = FileUtil.createTempDirectory("testDeployerTest_External_", ".dir", null); // simulates place outside of dest dir
         File testRawFileBChange1 = File.createTempFile("testUpdateDeployZipsAndRawFilesB1", ".txt");
         File testRawFileBChange2 = File.createTempFile("testUpdateDeployZipsAndRawFilesB2", ".txt");
         File testRawFileAChange = File.createTempFile("testUpdateDeployZipsAndRawFilesA", ".txt");

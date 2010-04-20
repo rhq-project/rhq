@@ -19,7 +19,7 @@
 package org.rhq.bundle.ant;
 
 /**
- * This exception is thrown by {@link AntLauncher} to indicate parsing or validation errors in an RHQ bundle Ant build
+ * This exception is thrown by {@link AntLauncher} to indicate parsing or validation errors for an RHQ bundle Ant build
  * file.
  *
  * @author Ian Springer

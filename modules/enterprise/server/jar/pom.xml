@@ -62,6 +62,12 @@
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-dbutils</artifactId>
          <version>${project.version}</version>
+         <exclusions>
+            <exclusion>
+              <groupId>ant</groupId>
+              <artifactId>ant</artifactId>
+            </exclusion>
+         </exclusions> 
       </dependency>
 
       <dependency>
@@ -79,9 +85,9 @@
       <!-- 3rd Party Deps -->
 
       <dependency>
-         <groupId>ant</groupId>
-         <artifactId>ant</artifactId>
-         <version>1.6.5</version>
+         <groupId>org.antlr</groupId>
+         <artifactId>antlr</artifactId>
+         <version>3.2</version>          
       </dependency>
 
       <!-- Required by a couple APL and Lather classes - TODO: Remove this once APL and Lather have been excised. -->
@@ -103,6 +109,12 @@
          <groupId>commons-httpclient</groupId>
          <artifactId>commons-httpclient</artifactId>
          <version>3.0.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-lang</groupId>
+         <artifactId>commons-lang</artifactId>
+         <version>2.4</version>
       </dependency>
 
       <!-- Required by a couple APL classes - TODO: Remove this once APL has been removed. -->
@@ -315,6 +327,7 @@
          <scope>provided</scope>
       </dependency>
 
+
       <!--================ Test Deps ================-->
 
       <dependency>
@@ -333,12 +346,6 @@
          <scope>test</scope>
       </dependency>
       
-      <dependency>
-        <groupId>commons-lang</groupId>
-         <artifactId>commons-lang</artifactId>
-         <version>2.4</version>
-      </dependency>
-
       <dependency>
          <groupId>hibernate-entitymanager</groupId>
          <artifactId>hibernate-entitymanager</artifactId>
@@ -371,14 +378,9 @@
           <groupId>${groupId}</groupId>
           <artifactId>test-utils</artifactId>
           <version>${version}</version>
+          <scope>test</scope>
        </dependency>
        
-       <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr</artifactId>
-          <version>3.2</version>
-          
-       </dependency>
    </dependencies>
 
    <build>
@@ -446,20 +448,11 @@
                   <exclude>com/**/*.java</exclude>
                </excludes>
                <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-               <systemProperties>
-                  <property>
-                     <name>embeddedDeployment</name>
-                     <value>true</value>
-                  </property>
-                  <property>
-                     <name>deploymentDirectory</name>
-                     <value>target/classes</value>
-                  </property>
-                  <property>
-                     <name>hibernate.dialect</name>
-                     <value>${rhq.test.ds.hibernate-dialect}</value>
-                  </property>
-               </systemProperties>
+               <systemPropertyVariables>
+                  <embeddedDeployment>true</embeddedDeployment>
+                  <deploymentDirectory>target/classes</deploymentDirectory>
+                  <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+               </systemPropertyVariables>
                <additionalClasspathElements>
                   <!-- The below is required for tests to run against Oracle. -->
                   <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>

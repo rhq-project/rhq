@@ -26,6 +26,7 @@ package org.rhq.core.util.updater;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -46,6 +47,7 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
     private final Pattern filesToRealizeRegex;
     private final TemplateEngine templateEngine;
     private final File rootDir;
+    private final Set<String> filesToNotExtract;
     private final StreamCopyDigest copierAndHashcodeGenerator;
 
     /**
@@ -60,8 +62,11 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
      *                In other words, all zip file entries' paths are relative to this directory.
      * @param filesToRealizeRegex pattern of files that are to be realized prior to hashcodes being computed
      * @param templateEngine the template engine that replaces replacement variables in files to be realized
+     * @param filesToNotExtract set of files that are not to be extracted from the zip and stored; these are to be skipped
      */
-    public ExtractorZipFileVisitor(File rootDir, Pattern filesToRealizeRegex, TemplateEngine templateEngine) {
+    public ExtractorZipFileVisitor(File rootDir, Pattern filesToRealizeRegex, TemplateEngine templateEngine,
+        Set<String> filesToNotExtract) {
+
         this.rootDir = rootDir;
 
         if (filesToRealizeRegex == null || templateEngine == null) {
@@ -70,6 +75,11 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
         }
         this.filesToRealizeRegex = filesToRealizeRegex;
         this.templateEngine = templateEngine;
+
+        if (filesToNotExtract != null && filesToNotExtract.size() == 0) {
+            filesToNotExtract = null;
+        }
+        this.filesToNotExtract = filesToNotExtract;
         this.copierAndHashcodeGenerator = new StreamCopyDigest();
     }
 
@@ -85,6 +95,11 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
     public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
 
         String pathname = entry.getName();
+
+        if (this.filesToNotExtract != null && this.filesToNotExtract.contains(pathname)) {
+            return true;
+        }
+
         File entryFile = new File(this.rootDir, pathname);
 
         if (entry.isDirectory()) {

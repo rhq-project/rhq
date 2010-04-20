@@ -38,6 +38,7 @@ public class DeploymentsMetadata {
     public static final String CURRENT_DEPLOYMENT_FILE = "current-deployment.properties";
     public static final String DEPLOYMENT_FILE = "deployment.properties";
     public static final String HASHCODES_FILE = "file-hashcodes.dat";
+    public static final String BACKUP_DIR = "backup";
 
     private final File rootDirectory;
 
@@ -172,6 +173,7 @@ public class DeploymentsMetadata {
      * perform live computations of the file hashcodes, instead it reads the data out of
      * the metadata file for the given deployment.
      *
+     * @param deploymentId the ID of the deployment whose files/hashcodes are to be returned
      * @return map of files/hashcodes when the current deployment was initially deployed
      * 
      * @throws Exception
@@ -183,21 +185,44 @@ public class DeploymentsMetadata {
             FileHashcodeMap map = FileHashcodeMap.loadFromFile(hashcodesFile);
             return map;
         } catch (Exception e) {
-            throw new IllegalStateException("Cannot determine current deployment", e);
+            throw new IllegalStateException("Cannot determine deployment file hashcodes for [" + deploymentId + "]", e);
         }
     }
 
     /**
-     * Call this when you already know the files/hashcodes for the current live deployment and you
-     * want to initialize the metadata for the root deployment location.
+     * Returns a metadata directory that is appropriate to place backup files for the deployment.
+     * 
+     * @param deploymentId the ID of the deployment whose backup directory is to be returned
+     * @return backup directory for the deployment
+     */
+    public File getDeploymentBackupDirectory(int deploymentId) throws Exception {
+        try {
+            File dir = getDeploymentMetadataDirectory(deploymentId);
+            File backupDir = new File(dir, BACKUP_DIR);
+            if (!backupDir.isDirectory()) {
+                if (!backupDir.exists()) {
+                    if (!backupDir.mkdirs()) {
+                        throw new IllegalStateException("Failed to create backup directory: " + backupDir);
+                    }
+                } else {
+                    throw new IllegalStateException("backup is a file but should be a directory: " + backupDir);
+                }
+            }
+            return backupDir;
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot determine deployment backup dir for [" + deploymentId + "]", e);
+        }
+    }
+
+    /**
+     * Call this when you already know the properties, and files/hashcodes for the current live deployment.
      * This method will also mark this initialized, live deployment as the "current" deployment.
-     * You normally only call this the very first time you deploy a bundle to a given root directory.
      *
      * @param deploymentProps identifies the deployment information for the live deployment
      * @param fileHashcodeMap the files and their hashcodes of the current live deployment
      * @throws Exception if failed to write out the necessary metadata about the given live data information
      */
-    public void initializeLiveDeployment(DeploymentProperties deploymentProps, FileHashcodeMap fileHashcodeMap)
+    public void setCurrentDeployment(DeploymentProperties deploymentProps, FileHashcodeMap fileHashcodeMap)
         throws Exception {
 
         // determine where we need to put the metadata and create its empty directory 
@@ -238,7 +263,7 @@ public class DeploymentsMetadata {
 
         // calculate the hashcodes from the live files and write the data to the proper file
         FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(getRootDirectory(), ignoreRegex);
-        initializeLiveDeployment(deploymentProps, map);
+        setCurrentDeployment(deploymentProps, map);
         return map;
     }
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -62,7 +62,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         this.tmpDirectory = new File(context.getTemporaryDirectory(), "ant-bundle-plugin");
         this.tmpDirectory.mkdirs();
         if (!this.tmpDirectory.exists() || !this.tmpDirectory.isDirectory()) {
-            throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process ant bundles");
+            throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process Ant bundles.");
         }
     }
 
@@ -90,13 +90,21 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 StreamUtil.copy(in, out);
 
                 // get the bundle's configuration values and the global system facts and
-                // add them as ant properties so the ant script can get their values
-                Configuration config = bundleDeployment.getConfiguration();
-                Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
+                // add them as Ant properties so the ant script can get their values
                 Properties antProps = new Properties();
+
+                String installDir = bundleDeployment.getInstallDir();
+                if (installDir == null) {
+                    throw new IllegalStateException("Bundle deployment does not specify install dir: " + bundleDeployment);
+                }
+                antProps.setProperty(AntLauncher.DEPLOY_DIR_PROP, installDir);
+
+                Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
                 for (Map.Entry<String, String> fact : sysFacts.entrySet()) {
                     antProps.setProperty(fact.getKey(), fact.getValue());
                 }
+
+                Configuration config = bundleDeployment.getConfiguration();
                 if (config != null) {
                     Map<String, Property> allProperties = config.getAllProperties();
                     for (Map.Entry<String, Property> entry : allProperties.entrySet()) {
@@ -115,7 +123,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
                 // parse & execute, the ant script
                 AntLauncher antLauncher = new AntLauncher();
-                BundleAntProject project = antLauncher.startAnt(recipeFile, null, null, antProps, logFile, false, true);
+                BundleAntProject project = antLauncher.startAnt(recipeFile, null, null, antProps, logFile, true, true);
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {
@@ -123,7 +131,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                     } catch (Exception e) {
                     }
                 }
-                throw new Exception("Failed to parse the bundle ANT script", t);
+                throw new Exception("Failed to parse the bundle Ant script", t);
             } finally {
                 recipeFile.delete();
                 logFile.delete();

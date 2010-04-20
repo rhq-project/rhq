@@ -21,7 +21,9 @@
   </scm>
 
   <properties>
-    <scm.module.path>modules/enterprise/comm/</scm.module.path>
+    <!-- Ports used by unit tests - can be overridden via profiles in settings.xml -->
+    <rhq.comm.test.connectorBindPort>33333</rhq.comm.test.connectorBindPort> 
+    <rhq.comm.test.connector2BindPort>62621</rhq.comm.test.connector2BindPort>
   </properties>
 
   <dependencies>
@@ -143,6 +145,10 @@
           <!--
           <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
           -->
+          <systemPropertyVariables>
+            <rhq.comm.test.connectorBindPort>${rhq.comm.test.connectorBindPort}</rhq.comm.test.connectorBindPort>
+            <rhq.comm.test.connector2BindPort>${rhq.comm.test.connector2BindPort}</rhq.comm.test.connector2BindPort>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
 
@@ -217,3 +223,4 @@
    </profiles>
 
 </project>
+

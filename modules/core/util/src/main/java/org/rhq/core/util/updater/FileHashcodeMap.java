@@ -31,50 +31,37 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * This provides a hashmap that maps a filename to its hashcode value (md5).
  * The key to the map will be filenames; the values are unique hashcodes generated from
  * the content of the files.
+ * Note that the keys can be either relative or absolute paths. If relative, some outside
+ * entity will need to know how to resolve those relative paths (i.e. some outside
+ * entity would need to know the top level root directory for all relative paths).
  * 
  * @author John Mazzitelli
  */
 public class FileHashcodeMap extends TreeMap<String, String> {
     public static final String UNKNOWN_DIR_HASHCODE = "?UNKNOWN_DIR_HASHCODE?";
     public static final String UNKNOWN_FILE_HASHCODE = "?UNKNOWN_FILE_HASHCODE?";
+    public static final String DELETED_FILE_HASHCODE = "?DELETED_FILE_HASHCODE?";
 
     private static final long serialVersionUID = 1L;
     private static final String COLUMN_SEPARATOR = "\t";
 
-    public static FileHashcodeMap loadFromFile(File file) throws Exception {
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        try {
-            FileHashcodeMap map = new FileHashcodeMap();
-            int lineNumber = 1;
-            String line = reader.readLine();
-            while (line != null) {
-                String[] columns = line.split(COLUMN_SEPARATOR);
-                if (columns.length != 2) {
-                    throw new Exception("Format error in [" + file.getAbsolutePath() + "] at line #[" + lineNumber
-                        + "]: " + line);
-                }
-
-                map.put(columns[0], columns[1]);
-
-                lineNumber++;
-                line = reader.readLine();
-            }
-            return map;
-        } finally {
-            reader.close();
-        }
-    }
+    private final Log log = LogFactory.getLog(FileHashcodeMap.class);
 
     /**
      * Given a directory, this will recursively traverse that directory's files/subdirectories and
      * generate the hashcode map for all files it encounters and add that data to the given map.
      * If given a regular file, a single entry is added to the given map.
+     * Note that the returned map will have all relative paths as keys (relative to <code>rootDir</code>).
+     * Also note that <code>ignoreRegex</code> is matched against relative paths.
      * 
      * @param rootDir existing directory to scan and generate hashcodes for all its files
      * @param ignoreRegex a regular expression that indicates which files/directories should be ignored.
@@ -93,11 +80,11 @@ public class FileHashcodeMap extends TreeMap<String, String> {
      * generate the hashcode map for all files it encounters and add that data to the given map.
      * If given a regular file, a single entry is added to the given map.
      * 
+     * @param map         the map where the hashcode data is stored
+     * @param rootPath    the top root directory that is being scanned - all files in the returned map will be relative to this
+     * @param level       the level deep in the file hierarchy currently being processed (0==at top root dir)
      * @param fileOrDir   existing directory to scan and generate hashcodes for all its files, or existing
      *                    file to generate hashcode for
-     * @param rootPath    the top root directory that is being scanned
-     * @param level       the level deep in the file hierarchy currently being processed (0==at top root dir)
-     * @param map         the map where the hashcode data is stored
      * @param ignoreRegex a regular expression that indicates which files/directories should be ignored.
      *                    If a relative file/directory path matches this regex, it will be skipped.
      *
@@ -151,6 +138,37 @@ public class FileHashcodeMap extends TreeMap<String, String> {
     }
 
     /**
+     * Loads in the file that contains file/hashcode map data.
+     *
+     * @param file the file to load
+     * @return map of files/hashcodes found in the file
+     * @throws Exception
+     */
+    public static FileHashcodeMap loadFromFile(File file) throws Exception {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        try {
+            FileHashcodeMap map = new FileHashcodeMap();
+            int lineNumber = 1;
+            String line = reader.readLine();
+            while (line != null) {
+                String[] columns = line.split(COLUMN_SEPARATOR);
+                if (columns.length != 2) {
+                    throw new Exception("Format error in [" + file.getAbsolutePath() + "] at line #[" + lineNumber
+                        + "]: " + line);
+                }
+
+                map.put(columns[0], columns[1]);
+
+                lineNumber++;
+                line = reader.readLine();
+            }
+            return map;
+        } finally {
+            reader.close();
+        }
+    }
+
+    /**
      * Takes all map entries in this object and writes them to the given file such that it can later
      * be loaded in via {@link #loadFromFile(File)}.
      * 
@@ -166,6 +184,130 @@ public class FileHashcodeMap extends TreeMap<String, String> {
         } finally {
             writer.close();
         }
+        return;
+    }
+
+    /**
+     * This rescans a set of files (found in this map) and returns a map with an updated, current set of hashcodes.
+     *
+     * If this original map has relative paths, they will be considered relative to the given
+     * root directory. If a file is not found, it will still be in the returned map but its
+     * hashcode will be {@link #DELETED_FILE_HASHCODE}.
+     * 
+     * The root directory is also scanned for new files that are not in this original
+     * map - if new files are found (and they do not match the ignoreRegex), they are added to the
+     * returned map.
+     *
+     * @param rootDir directory where the relative paths are expected to be
+     * @param ignoreRegex if relative paths of files under rootDir match this, they will be ignored.
+     *                    This will eliminate files/directories from being considered "new" because
+     *                    they aren't in original.
+     * @return a map with current files/hashcodes, including files that were not found in original. 
+     * @throws Exception
+     */
+    public ChangesFileHashcodeMap rescan(File rootDir, Pattern ignoreRegex) throws Exception {
+        ChangesFileHashcodeMap current = new ChangesFileHashcodeMap(this);
+
+        // go through our original files and recalculate their hashcodes
+        for (Map.Entry<String, String> entry : entrySet()) {
+            String originalFileString = entry.getKey();
+
+            // if we are now to ignore this file, don't put it in our current map and skip to the next file
+            if (ignoreRegex != null && ignoreRegex.matcher(originalFileString).matches()) {
+                current.remove(originalFileString);
+                continue;
+            }
+
+            File originalFile = new File(originalFileString);
+            if (!originalFile.isAbsolute()) {
+                originalFile = new File(rootDir, originalFileString);
+            }
+
+            if (originalFile.exists()) {
+                String currentHashcode = MessageDigestGenerator.getDigestString(originalFile);
+                current.put(originalFileString, currentHashcode);
+
+                // if file has been changed, mark it as such in our return map
+                String originalHashcode = entry.getValue();
+                if (!currentHashcode.equals(originalHashcode)) {
+                    current.getChanges().put(originalFileString, currentHashcode);
+                }
+            } else {
+                // file has been deleted! still put an entry in our returned map but mark it as deleted
+                current.put(originalFileString, DELETED_FILE_HASHCODE);
+                current.getDeletions().put(originalFileString, DELETED_FILE_HASHCODE);
+            }
+        }
+
+        // now recursively traverse the root directory and look for new files that aren't in our original map
+        // files that have been added need to be put into our returned map and also marked as added
+        FileHashcodeMap newFiles = new FileHashcodeMap();
+        lookForNewFilesRecursive(newFiles, rootDir.getAbsolutePath(), 0, rootDir, ignoreRegex);
+        current.putAll(newFiles);
+        current.getAdditions().putAll(newFiles);
+
+        return current;
+    }
+
+    /**
+     * This looks for new files under the given fileOrDir and adds them to <code>newFiles</code>.
+     * 
+     * @param newFiles    the map where the new, current file/hashcode data will be stored
+     * @param rootPath    the top root directory that is being scanned
+     * @param level       the level deep in the file hierarchy currently being processed (0==at top root dir)
+     * @param fileOrDir   existing directory/file to rescan
+     * @param ignoreRegex a regular expression that indicates which files/directories should be ignored.
+     *                    If a relative file/directory path matches this regex, it will be skipped.
+     * @throws Exception 
+     */
+    private void lookForNewFilesRecursive(FileHashcodeMap newFiles, String rootPath, int level, File fileOrDir,
+        Pattern ignoreRegex) throws Exception {
+
+        if (fileOrDir == null || !fileOrDir.exists()) {
+            throw new Exception("Non-existent file/directory provided: " + fileOrDir);
+        }
+
+        // get path relative to the top root node
+        String path;
+        if (level == 0) {
+            path = fileOrDir.getName();
+        } else {
+            path = fileOrDir.getAbsolutePath().substring(rootPath.length() + 1);
+        }
+
+        // if this path is one the caller wants us to ignore, then return immediately
+        if (ignoreRegex != null && ignoreRegex.matcher(path).matches()) {
+            if (log.isTraceEnabled()) {
+                log.trace("Ignoring [" + path + "]");
+            }
+            return;
+        }
+
+        if (fileOrDir.isDirectory()) {
+            // we never calculate hashcodes for our own install metadata
+            if (fileOrDir.getName().equals(DeploymentsMetadata.METADATA_DIR)) {
+                return;
+            }
+
+            File[] children = fileOrDir.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    lookForNewFilesRecursive(newFiles, rootPath, level + 1, child, ignoreRegex);
+                }
+            }
+        } else {
+            // if the file is not yet known to us, add it to the map of new files
+            if (!containsKey(path)) {
+                String hashcode;
+                try {
+                    hashcode = MessageDigestGenerator.getDigestString(fileOrDir);
+                } catch (Exception e) {
+                    hashcode = UNKNOWN_FILE_HASHCODE;
+                }
+                newFiles.put(path, hashcode);
+            }
+        }
+
         return;
     }
 

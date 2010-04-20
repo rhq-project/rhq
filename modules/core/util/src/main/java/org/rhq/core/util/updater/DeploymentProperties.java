@@ -60,7 +60,7 @@ public class DeploymentProperties extends Properties {
     }
 
     /**
-     * Convienence constructor whose parameters are all the required values that
+     * Convenience constructor whose parameters are all the required values that
      * this object needs.
      * 
      * @param deploymentId see {@link #getDeploymentId()}

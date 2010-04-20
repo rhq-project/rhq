@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import org.jboss.annotation.IgnoreDependency;
 
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
@@ -337,7 +338,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         };
 
         String[] namedQueriesToExecute = new String[] { //
-            ResourceRepo.DELETE_BY_RESOURCES, //
+        ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
             MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, // traits BEFORE schedules
             CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, // call time data values BEFORE schedules & call time data keys
@@ -356,12 +357,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES, //
             DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, //
             CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, //
-            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0,
-            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first delete the config objects
-            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then the history objects wrapping those configs
-            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0,
-            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first delete the config objects
-            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then the history objects wrapping those configs
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, // orphan parent list or maps (execute only on non selfRefCascade dbs)
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config            
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, // orphan parent list or maps (execute only on non selfRefCascade dbs)
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects            
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
             AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't
             AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
             Alert.QUERY_DELETE_BY_RESOURCES, //                order
@@ -373,6 +376,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         List<Integer> resourceIds = new ArrayList<Integer>();
         resourceIds.add(resourceId);
+        boolean supportsCascade = DatabaseTypeFactory.getDefaultDatabaseType().supportsSelfReferringCascade();
 
         boolean hasErrors = false;
         for (String nativeQueryToExecute : nativeQueriesToExecute) {
@@ -382,6 +386,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
         for (String namedQueryToExecute : namedQueriesToExecute) {
             // execute all in new transactions, continuing on error, but recording whether errors occurred
+
+            // If the db vendor can not support our self-referring cascade delete data model then we may have
+            // to leave some config prop rows orphaned. Only execute the selected queries if you *do*
+            // want to avoid self-referring cascade delete (and leave orphans) 
+            if (supportsCascade && ( //
+                namedQueryToExecute.equals(ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0) || //
+                namedQueryToExecute.equals(PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0))) {
+                continue;
+            }
+
             hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
                 resourceIds);
         }

@@ -155,4 +155,13 @@ public abstract class SQLServerDatabaseType extends DatabaseType {
         String reindexSql = "DBCC DBREINDEX (\"" + table + "\", \" \", 0)";
         executeSql(conn, reindexSql);
     }
+
+    /**  
+     * @return false due to: http://support.microsoft.com/kb/321843 
+     */
+    @Override
+    public boolean supportsSelfReferringCascade() {
+        return false;
+    }
+
 }

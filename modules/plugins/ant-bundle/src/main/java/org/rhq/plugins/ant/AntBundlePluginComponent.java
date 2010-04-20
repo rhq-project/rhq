@@ -62,7 +62,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         this.tmpDirectory = new File(context.getTemporaryDirectory(), "ant-bundle-plugin");
         this.tmpDirectory.mkdirs();
         if (!this.tmpDirectory.exists() || !this.tmpDirectory.isDirectory()) {
-            throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process ant bundles");
+            throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process Ant bundles.");
         }
     }
 
@@ -95,7 +95,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
                 String installDir = bundleDeployment.getInstallDir();
                 if (installDir == null) {
-                    throw new IllegalStateException("Bundel deployment does not specify install dir: " + bundleDeployment);
+                    throw new IllegalStateException("Bundle deployment does not specify install dir: " + bundleDeployment);
                 }
                 antProps.setProperty(AntLauncher.DEPLOY_DIR_PROP, installDir);
 
@@ -131,7 +131,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                     } catch (Exception e) {
                     }
                 }
-                throw new Exception("Failed to parse the bundle ANT script", t);
+                throw new Exception("Failed to parse the bundle Ant script", t);
             } finally {
                 recipeFile.delete();
                 logFile.delete();

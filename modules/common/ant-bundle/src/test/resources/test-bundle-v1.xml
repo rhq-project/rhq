@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<project name="simple-bundle-test" xmlns:rhq="antlib:org.rhq.bundle">    
+<project name="test-bundle" xmlns:rhq="antlib:org.rhq.bundle">    
 
     <rhq:bundle name="example.com (JBoss EAP 4.3)" version="1.0"
                 description="example.com corporate website hosted on JBoss EAP 4.3"/>

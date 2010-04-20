@@ -27,7 +27,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;

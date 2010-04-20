@@ -22,11 +22,10 @@
  */
 package org.rhq.bundle.ant.type;
 
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.taskdefs.Ant;
-import org.apache.tools.ant.types.DataType;
-
 import java.io.File;
+
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.types.DataType;
 
 /**
  * A base class for the functionality shared by {@link FileType} and {@link ArchiveType}.
@@ -43,14 +42,19 @@ public abstract class AbstractFileType extends DataType {
     public void setName(String name) {
         File file = new File(name);
         if (file.isAbsolute()) {
-            throw new BuildException("Path specified by 'file' attribute (" + name + ") is not relative - it must be a relative path, relative to the Ant basedir.");
+            throw new BuildException("Path specified by 'file' attribute (" + name
+                + ") is not relative - it must be a relative path, relative to the Ant basedir.");
         }
         this.source = getProject().resolveFile(name);
+
+        /* TODO: we can't validate this here - we might not be parsing on the same machine where it will be executing
         if (!this.source.exists()) {
             throw new BuildException("Path specified by 'file' attribute (" + name + ") does not exist.");
         }
         if (this.source.isDirectory()) {
             throw new BuildException("Path specified by 'file' attribute (" + name + ") is a directory - it must be a regular file.");
         }
+        */
     }
+
 }

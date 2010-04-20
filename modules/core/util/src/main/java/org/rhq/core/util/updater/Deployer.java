@@ -59,7 +59,7 @@ import org.rhq.core.util.stream.StreamUtil;
  * <tr><td>X</td><td>Y</td><td>Z</td><td>New file is installed over current, current is backed up</td></tr>
  * <tr><td>none</td><td>?</td><td>?</td><td>New file is installed over current, current is backed up</td></tr>
  * <tr><td>X</td><td>none</td><td>?</td><td>New file is installed</td></tr>
- * <tr><td>?</td><td>?</td><td>none</td><td>Current file is deleted</td></tr>
+ * <tr><td>?</td><td>?</td><td>none</td><td>Current file is backed up and deleted</td></tr>
  * </table>
  * (*) denotes that the current file could have been left as-is. If, in the future, we can
  * provide Java with a way to change file permissions or ownership, we would want to
@@ -230,7 +230,6 @@ public class Deployer {
         currentFilesToDelete = current.keySet(); // the set is backed by the map, changes to it affect the map
         currentFilesToDelete.removeAll(newFiles.keySet());
         currentFilesToDelete.removeAll(current.getDeletions().keySet()); // these are already deleted, no sense trying to delete them again
-        currentFilesToBackup.removeAll(currentFilesToDelete); // don't bother backing up files that need to be deleted
 
         // we now know what to do:
         // 1. backup the files in currentFilesToBackup
@@ -241,7 +240,7 @@ public class Deployer {
         if (!currentFilesToBackup.isEmpty()) {
             int deploymentId = originalDeploymentProps.getDeploymentId();
             File backupDir = this.deploymentsMetadata.getDeploymentBackupDirectory(deploymentId);
-            debug("Backing up files to [" + backupDir + "] as part of update deployment");
+            debug("Backing up files to [", backupDir, "] as part of update deployment");
             for (String fileToBackupPath : currentFilesToBackup) {
                 File backupFile;
                 File fileToBackup = new File(fileToBackupPath);
@@ -253,6 +252,7 @@ public class Deployer {
                 }
                 backupFile.getParentFile().mkdirs();
                 FileUtil.copyFile(fileToBackup, backupFile);
+                debug("Backed up file [", fileToBackup, "] to [", backupFile, "]");
             }
         }
 
@@ -264,7 +264,12 @@ public class Deployer {
                 doomedFile = new File(this.destDir, fileToDeletePath);
             }
             boolean deleted = doomedFile.delete();
-            // TODO: what should we do if deleted=false? is it a major failure if we can't remove obsolete files?
+            if (deleted) {
+                debug("Deleted obsolete file [", doomedFile, "]");
+            } else {
+                // TODO: what should we do? is it a major failure if we can't remove obsolete files?                
+                debug("Failed to delete obsolete file [", doomedFile, "]");
+            }
         }
 
         // 3. copy all new files except for those to be kept as-is
@@ -281,7 +286,7 @@ public class Deployer {
         // extract all zip files
         ExtractorZipFileVisitor visitor;
         for (File zipFile : this.zipFiles) {
-            debug("Extracting zip [" + zipFile + "] entries");
+            debug("Extracting zip [", zipFile, "] entries");
             visitor = new ExtractorZipFileVisitor(this.destDir, this.filesToRealizeRegex, this.templateEngine,
                 currentFilesToLeaveAlone);
             ZipUtil.walkZipFile(zipFile, visitor);
@@ -310,7 +315,7 @@ public class Deployer {
             String hashcode;
 
             if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocationPath).matches()) {
-                debug("Realizing file [" + currentLocationFile + "] to [" + newLocationFile + "]");
+                debug("Realizing file [", currentLocationFile, "] to [", newLocationFile, "]");
 
                 // this entry needs to be realized, do it now in-memory (we assume realizable files will not be large)
                 // note: tempateEngine will never be null if we got here
@@ -332,7 +337,7 @@ public class Deployer {
                 hashcodeGenerator.add(bytes);
                 hashcode = hashcodeGenerator.getDigestString();
             } else {
-                debug("Copying raw file [" + currentLocationFile + "] to [" + newLocationFile + "]");
+                debug("Copying raw file [", currentLocationFile, "] to [", newLocationFile, "]");
 
                 FileInputStream in = new FileInputStream(currentLocationFile);
                 try {
@@ -372,7 +377,7 @@ public class Deployer {
         // perform in-memory extraction and calculate hashcodes for all zip files 
         InMemoryZipFileVisitor visitor;
         for (File zipFile : this.zipFiles) {
-            debug("Extracting zip [" + zipFile + "] in-memory to determine hashcodes for all entries");
+            debug("Extracting zip [", zipFile, "] in-memory to determine hashcodes for all entries");
             visitor = new InMemoryZipFileVisitor(this.filesToRealizeRegex, this.templateEngine);
             ZipUtil.walkZipFile(zipFile, visitor);
             fileHashcodeMap.putAll(visitor.getFileHashcodeMap());
@@ -393,7 +398,7 @@ public class Deployer {
             String hashcode;
 
             if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocationPath).matches()) {
-                debug("Realizing file [" + currentLocationFile + "] in-memory to determine its hashcode");
+                debug("Realizing file [", currentLocationFile, "] in-memory to determine its hashcode");
 
                 // this entry needs to be realized, do it now in-memory (we assume realizable files will not be large)
                 // note: tempateEngine will never be null if we got here
@@ -405,7 +410,7 @@ public class Deployer {
                 generator.add(content.getBytes());
                 hashcode = generator.getDigestString();
             } else {
-                debug("Streaming file [" + currentLocationFile + "] in-memory to determine its hashcode");
+                debug("Streaming file [", currentLocationFile, "] in-memory to determine its hashcode");
 
                 BufferedInputStream in = new BufferedInputStream(new FileInputStream(currentLocationFile));
                 try {
@@ -426,7 +431,7 @@ public class Deployer {
         return fileHashcodeMap;
     }
 
-    private void debug(String msg) {
+    private void debug(Object... objs) {
         if (log.isDebugEnabled()) {
             StringBuilder str = new StringBuilder();
             String bundleName = this.deploymentProps.getBundleName();
@@ -434,7 +439,9 @@ public class Deployer {
             int deploymentId = this.deploymentProps.getDeploymentId();
             str.append("Bundle [").append(bundleName).append(" v").append(bundleVersion).append(']');
             str.append("; Deployment [").append(deploymentId).append("]: ");
-            str.append(msg);
+            for (Object o : objs) {
+                str.append(o);
+            }
             log.debug(str.toString());
         }
     }

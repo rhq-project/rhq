@@ -31,6 +31,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.util.MessageDigestGenerator;
 
 /**
@@ -50,6 +53,8 @@ public class FileHashcodeMap extends TreeMap<String, String> {
 
     private static final long serialVersionUID = 1L;
     private static final String COLUMN_SEPARATOR = "\t";
+
+    private final Log log = LogFactory.getLog(FileHashcodeMap.class);
 
     /**
      * Given a directory, this will recursively traverse that directory's files/subdirectories and
@@ -272,8 +277,9 @@ public class FileHashcodeMap extends TreeMap<String, String> {
 
         // if this path is one the caller wants us to ignore, then return immediately
         if (ignoreRegex != null && ignoreRegex.matcher(path).matches()) {
-            // TODO: Change the below to TRACE log message.
-            System.out.println("*** Ignoring " + path + "...");
+            if (log.isTraceEnabled()) {
+                log.trace("Ignoring [" + path + "]");
+            }
             return;
         }
 

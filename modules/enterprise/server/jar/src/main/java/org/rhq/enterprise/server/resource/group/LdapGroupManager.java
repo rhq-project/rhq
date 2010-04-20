@@ -46,7 +46,6 @@ import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 /**
  * @author paji
- *
  */
 public class LdapGroupManager {
     private static final LdapGroupManager INSTANCE = new LdapGroupManager();
@@ -72,12 +71,15 @@ public class LdapGroupManager {
 
     public Set<String> findAvailableGroupsFor(String userName) {
         SystemManagerLocal manager = LookupUtil.getSystemManager();
-
         Properties options = manager.getSystemConfiguration();
         String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
         String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
         String userDN = getUserDN(options, userName);
-        String filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, userDN);
+        //TODO: spinder 4/21/10 put in error/debug logging messages for badly formatted filter combinations
+        String filter = "";
+        //form assumes examples where groupFilter is like 'objecclass=groupOfNames' and groupMember is 'member'
+        // to produce ldaf filter like (&(objecclass=groupOfNames)(member=cn=Administrator,ou=People,dc=test,dc=com))
+        filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, userDN);
 
         Set<Map<String, String>> matched = buildGroup(options, filter);
 

@@ -77,7 +77,6 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationDefinitionUpdateReport;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
@@ -126,9 +125,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private ResourceMetadataManagerLocal resourceMetadataManager; // self
-
-    @EJB
-    private ConfigurationManagerLocal configurationManager;
 
     @SuppressWarnings("unchecked")
     public List<Plugin> getAllPluginsById(List<Integer> pluginIds) {
@@ -280,10 +276,30 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     public void registerPlugin(Subject whoami, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
         boolean forceUpdate) throws Exception {
 
+        // Registering the plugin is performed in a new transaction in order to allow the removal
+        // of obsolete types, in a subsequent transaction.  The register may update types, and that
+        // locks various rows of the database. Those rows must be unlocked before type removal.  Type
+        // removal executes (resource) bulk delete under the covers, in another new trans, and that
+        // trans will will deadlock with the rows locked by the type update (at least in oracle) if that
+        // transaction has not been committed. 
+        boolean typesUpdated = resourceMetadataManager.registerPluginInNewTransaction(whoami, plugin, pluginDescriptor,
+            pluginFile, forceUpdate);
+
+        if (typesUpdated) {
+            resourceMetadataManager.removeObsoleteTypesInNewTransaction(plugin.getName());
+        }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public boolean registerPluginInNewTransaction(Subject whoami, Plugin plugin, PluginDescriptor pluginDescriptor,
+        File pluginFile, boolean forceUpdate) throws Exception {
+
         // TODO GH: Consider how to remove features from plugins in updates without breaking everything
 
         Plugin existingPlugin = null;
         boolean newOrUpdated = false;
+        boolean typesUpdated = false;
+
         try {
             existingPlugin = getPlugin(plugin.getName());
         } catch (NoResultException nre) {
@@ -321,13 +337,15 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             if (newOrUpdated || forceUpdate) {
                 // Only merge the plugin's ResourceTypes into the DB if the plugin is new or updated or we were forced to
                 updateTypes(plugin.getName(), rootResourceTypes);
+                typesUpdated = true;
             }
         }
 
         // TODO GH: JBNADM-1310/JBNADM-1630 - Push updated plugins to running agents and have them reboot their PCs
         // We probably want to be smart about this - perhaps have the agents periodically poll their server to see
         // if there are new plugins and if so download them - this of course would be configurable/disablable
-        return;
+
+        return typesUpdated;
     }
 
     private Plugin updatePluginExceptContent(Plugin plugin) throws Exception {
@@ -404,11 +422,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         for (ResourceType rootResourceType : rootResourceTypes) {
             updateType(rootResourceType);
         }
-        removeObsoleteTypes(pluginName);
     }
 
     @SuppressWarnings("unchecked")
-    private void removeObsoleteTypes(String pluginName) {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void removeObsoleteTypesInNewTransaction(String pluginName) {
+
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN);
         query.setParameter("plugin", pluginName);
         List<ResourceType> existingTypes = query.getResultList();
@@ -429,6 +448,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                         while (resIter.hasNext()) {
                             Resource res = resIter.next();
                             List<Integer> deletedIds = resourceManager.deleteResource(overlord, res.getId());
+                            // do this out of band because the current transaction is locking rows that due to
+                            // updates that may need to get deleted. If you do it here the NewTrans used below
+                            // may deadlock with the current transactions locks.
                             for (Integer deletedResourceId : deletedIds) {
                                 resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
                             }
@@ -757,10 +779,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 existingType.setPluginConfigurationDefinition(resourceType.getPluginConfigurationDefinition());
             } else // update the configuration
             {
-                ConfigurationDefinitionUpdateReport updateReport =
-                    configurationMetadataManager.updateConfigurationDefinition(
-                        resourceType.getPluginConfigurationDefinition(), existingConfigurationDefinition);
-                
+                ConfigurationDefinitionUpdateReport updateReport = configurationMetadataManager
+                    .updateConfigurationDefinition(resourceType.getPluginConfigurationDefinition(),
+                        existingConfigurationDefinition);
+
                 if (updateReport.getNewPropertyDefinitions().size() > 0) {
                     Subject overlord = subjectManager.getOverlord();
                     ResourceCriteria criteria = new ResourceCriteria();
@@ -781,15 +803,14 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    private void updateResourcePluginConfiguration(Resource resource,
-            ConfigurationDefinitionUpdateReport updateReport) {
+    private void updateResourcePluginConfiguration(Resource resource, ConfigurationDefinitionUpdateReport updateReport) {
         Configuration pluginConfiguration = resource.getPluginConfiguration();
         int numberOfProperties = pluginConfiguration.getProperties().size();
         ConfigurationTemplate template = updateReport.getConfigurationDefinition().getDefaultTemplate();
         Configuration templateConfiguration = template.getConfiguration();
 
         for (PropertyDefinition propertyDef : updateReport.getNewPropertyDefinitions()) {
-            if (propertyDef.isRequired() ) {
+            if (propertyDef.isRequired()) {
                 Property templateProperty = templateConfiguration.get(propertyDef.getName());
                 pluginConfiguration.put(templateProperty.deepCopy(false));
             }

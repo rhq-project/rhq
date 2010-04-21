@@ -139,7 +139,6 @@
         <column name="NOTIF_TEMPLATE_ID" required="false" type="INTEGER" references="RHQ_ALERT_NOTIF_TEMPL(ID)"/>
         <column name="ALERT_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
         <column name="ALERT_SENDER_NAME" required="false" size="100" type="VARCHAR2" /> <!-- TODO make required = true -->
-        <column name="ALERT_ORDER" type="INTEGER" />
         <column name="NAME" type="VARCHAR2" size="100" />
     </table>
 

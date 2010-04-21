@@ -35,14 +35,16 @@ public class ResourceParentFlyweight implements Serializable {
     private static final long serialVersionUID = 1L;
     private int parentId;
     private String parentName;
-
+    private String parentResourceTypeName;
+    
     /**
      * @param parentId
      * @param parentName
      */
-    public ResourceParentFlyweight(int parentId, String parentName) {
+    public ResourceParentFlyweight(int parentId, String parentName, String parentResourceTypeName) {
         this.parentId = parentId;
         this.parentName = parentName;
+        this.parentResourceTypeName = parentResourceTypeName;
     }
 
     public int getParentId() {
@@ -53,6 +55,10 @@ public class ResourceParentFlyweight implements Serializable {
         return parentName;
     }
     
+    public String getParentResourceTypeName() {
+        return parentResourceTypeName;
+    }
+
     public String toString() {
         return "ResourceParentFlyweight(id=" + parentId + ", name=" + parentName + ")";
     }

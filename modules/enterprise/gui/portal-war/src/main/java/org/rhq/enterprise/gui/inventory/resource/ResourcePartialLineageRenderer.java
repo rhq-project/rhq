@@ -80,6 +80,9 @@ public class ResourcePartialLineageRenderer extends Renderer {
     
     private void encodeSimple(ResponseWriter writer, ResourceParentFlyweight parent) throws IOException {
         writer.writeText(parent.getParentName(), null);
+        writer.writeText(" (", null);
+        writer.writeText(parent.getParentResourceTypeName(), null);
+        writer.writeText(")", null);
     }
     
     private static String getUrl(ResourceParentFlyweight parent) {

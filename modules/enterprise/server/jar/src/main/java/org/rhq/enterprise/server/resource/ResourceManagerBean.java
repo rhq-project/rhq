@@ -2176,6 +2176,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 int pi = i - 1;
                 selectBuilder.append(", r").append(i).append(".id");
                 selectBuilder.append(", r").append(i).append(".name");
+                selectBuilder.append(", r").append(i).append(".resourceType.name");
                 fromBuilder.append(" left join r").append(pi).append(".parentResource r").append(i);
             }
 
@@ -2193,12 +2194,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 String typeName = (String) parentsResult[1];
                 String pluginName = (String) parentsResult[2];
 
-                for (i = 1; i <= disambiguationLevel; ++i) {
-                    Integer parentId = (Integer) parentsResult[2 * i + 1];
+                for (i = 0; i < disambiguationLevel; ++i) {
+                    Integer parentId = (Integer) parentsResult[3 + 3 * i];
                     if (parentId == null)
                         break;
-                    String parentName = (String) parentsResult[2 * i + 2];
-                    parents.add(new ResourceParentFlyweight(parentId, parentName));
+                    String parentName = (String) parentsResult[3 + 3 * i + 1];
+                    String parentType = (String) parentsResult[3 + 3 * i + 2];
+                    
+                    parents.add(new ResourceParentFlyweight(parentId, parentName, parentType));
                 }
 
                 //update all the reports that correspond to this resourceId

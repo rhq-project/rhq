@@ -65,22 +65,22 @@
                                value="#{pluginConfigUIBean.root}"
                                ajaxSubmitSelection="true"
                                switchType="client"
-                               toggleOnClick="false"
-                               treeNodeVar="node"
                                var="item"
-                               nodeFace="#{node.leaf ? 'plugin' : 'pluginType'}">
+                               toggleOnClick="false"
+                               nodeFace="#{item.class.simpleName}"
+                    >
 
-                        <rich:treeNode type="pluginType" disabled="true">
+                        <rich:treeNode type="String">
                             <h:outputText value="#{item}s" />
                         </rich:treeNode>
-                        <rich:treeNode type="plugin">
+                        <rich:treeNode type="ServerPlugin">
                             <h:outputText value="#{item.displayName}" />
                         </rich:treeNode>
                     </rich:tree>
                 </rich:panel>
 
                 <h:panelGroup id="pluginConfig">
-                    <rich:panel id="detailsLink" 
+                    <rich:panel id="detailsLink"
                                 style="background: #EEEEEE;"
                                 rendered="#{pluginConfigUIBean.plugin != null}" >
                         <h:outputText value="See the " />
@@ -93,13 +93,13 @@
                         <h:outputText value=" for more plugin information." />
                     </rich:panel>
 
-                    <rich:panel id="noConfigMessage" 
+                    <rich:panel id="noConfigMessage"
                                 style="background: #EEEEEE;"
                                 rendered="#{not pluginConfigUIBean.editable and pluginConfigUIBean.plugin != null}" >
                         <h:outputText escape="true" value="Plugin '#{pluginConfigUIBean.plugin.displayName}' has no configuration." />
                     </rich:panel>
 
-                    <rich:panel id="pluginButtonsTopPanel" rendered="#{pluginConfigUIBean.editable}"> 
+                    <rich:panel id="pluginButtonsTopPanel" rendered="#{pluginConfigUIBean.editable}">
                         <h:panelGroup id="pluginButtonsTop">
                             <h:outputLink value="/rhq/admin/plugin/plugin-edit.xhtml" styleClass="buttonmed">
                                 <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>

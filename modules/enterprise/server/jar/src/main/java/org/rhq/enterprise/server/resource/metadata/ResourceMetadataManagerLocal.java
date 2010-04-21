@@ -50,6 +50,8 @@ public interface ResourceMetadataManagerLocal {
      * of the file will be streamed to the database. Note that if you provide a non-null file, you must ensure
      * its MD5 matches that of the file (i.e. this method will not attempt to recompute the file's MD5, it will assume
      * the caller has already done that and provided the proper MD5 in <code>plugin</code>).
+     * <br/><br/>
+     * NOTE ** This call will register the plugin in a new transaction.
      * 
      * @param plugin   The plugin object being deployed
      * @param metadata The plugin descriptor file
@@ -79,4 +81,11 @@ public interface ResourceMetadataManagerLocal {
      * @throws NoResultException when no plugin with that name exists
      */
     Plugin getPlugin(String name);
+
+    /** Exists only to have code execute within its own transaction. Not for general consumption. */
+    boolean registerPluginInNewTransaction(Subject whoami, Plugin plugin, PluginDescriptor pluginDescriptor,
+        File pluginFile, boolean forceUpdate) throws Exception;
+
+    /** Exists only to have code execute within its own transaction. Not for general consumption. */
+    void removeObsoleteTypesInNewTransaction(String pluginName);
 }

@@ -25,16 +25,16 @@ package org.rhq.plugins.ant;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.Properties;
 
+import org.rhq.core.util.file.FileUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
@@ -52,35 +52,40 @@ import org.rhq.core.util.stream.StreamUtil;
 
 @Test
 public class AntBundlePluginComponentTest {
+    private static final String USER_HOME = System.getProperty("user.home");
 
     private AntBundlePluginComponent plugin;
     private File tmpDir;
 
+    @BeforeClass
+    public void initTempDir() throws Exception {
+        this.tmpDir = new File("target/antbundletest");
+        FileUtil.purge(this.tmpDir, true);
+    }
+
     @BeforeMethod
     public void beforeMethod() throws Exception {
-        tmpDir = new File("target/antbundletest");
-        tmpDir.mkdirs();
-        plugin = new AntBundlePluginComponent();
+        if (!this.tmpDir.mkdirs()) {
+            throw new IllegalStateException("Failed to create temp dir '" + this.tmpDir + "'.");
+        }
+        this.plugin = new AntBundlePluginComponent();
         ResourceType type = new ResourceType("antBundleTestType", "antBundleTestPlugin", ResourceCategory.SERVER, null);
         Resource resource = new Resource("antBundleTestKey", "antBundleTestName", type);
+        @SuppressWarnings("unchecked")
         ResourceContext<?> context = new ResourceContext(resource, null, null,
             SystemInfoFactory.createJavaSystemInfo(), tmpDir, null, "antBundleTestPC", null, null, null, null, null);
-        plugin.start(context);
+        this.plugin.start(context);
     }
 
-    @BeforeClass
     @AfterMethod
     public void cleanTmpDir() {
-        if (tmpDir != null) {
-            File[] files = tmpDir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    file.delete();
-                }
-            }
-        }
+        FileUtil.purge(this.tmpDir, true);
     }
 
+    @Test(enabled = false)
+    /**
+     * Test a simple Ant script that contains no RHQ tasks other than rhq:bundle.
+     */
     public void testSimpleBundle() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
@@ -88,15 +93,15 @@ public class AntBundlePluginComponentTest {
         PackageType packageType = new PackageType("testSimpleBundle", resourceType);
         Bundle bundle = new Bundle("testSimpleBundle", bundleType, repo, packageType);
         BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
-            getRecipeFromFile("simple-build.xml"));
+            getRecipeFromFile("test-bundle-v1.xml"));
 
-        BundleDeployDefinition deployDef = new BundleDeployDefinition();
-        deployDef.setBundleVersion(bundleVersion);
-        deployDef.setConfiguration(null);
+        BundleDeployment deployment = new BundleDeployment();
+        deployment.setBundleVersion(bundleVersion);
+        deployment.setConfiguration(null);
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(tmpDir);
-        request.setBundleDeployment(new BundleDeployment(deployDef, null));
+        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -105,10 +110,13 @@ public class AntBundlePluginComponentTest {
         // our ant script wrote some output that we should verify to make sure we ran it
         File outputFile = new File(tmpDir, "output.1");
         String output = new String(StreamUtil.slurp(new FileInputStream(outputFile)));
-        assert output.equals("HELLO WORLD") : output;
+        assert output.equals("Hello World!!") : output;
 
     }
 
+    /**
+     * Test a Ant script that includes all of the RHQ tasks.
+     */    
     public void testAntBundle() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
@@ -122,35 +130,23 @@ public class AntBundlePluginComponentTest {
         config.put(new PropertySimple("custom.prop1", "custom property 1"));
         config.put(new PropertySimple("custom.prop2", "custom property 2"));
 
-        BundleDeployDefinition deployDef = new BundleDeployDefinition();
-        deployDef.setBundleVersion(bundleVersion);
-        deployDef.setConfiguration(config);
+        BundleDeployment deployment = new BundleDeployment();
+        deployment.setBundleVersion(bundleVersion);
+        deployment.setConfiguration(config);
+        deployment.setInstallDir(USER_HOME + "/jboss");
 
-        File file1 = new File(tmpDir, "file.txt");
+        File file1 = new File(tmpDir, "test-v2.properties");
         File file2 = new File(tmpDir, "package.zip");
         assert file1.createNewFile() : "could not create our mock bundle file";
         assert file2.createNewFile() : "could not create our mock bundle file";
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(tmpDir);
-        request.setBundleDeployment(new BundleDeployment(deployDef, null));
+        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
 
         BundleDeployResult results = plugin.deployBundle(request);
 
-        assertResultsSuccess(results);
-
-        // our ant script wrote some output that we should verify to make sure we ran it
-        File outputFile = new File(tmpDir, "output.2");
-        Properties props = new Properties();
-        props.load(new FileInputStream(outputFile));
-        assert props.getProperty("prop1").equals("custom property 1") : props;
-        assert props.getProperty("prop2").equals("custom property 2") : props;
-        assert props.getProperty("f.exists").equals("true") : props;
-        assert props.getProperty("pkg.exists").equals("true") : props;
-        assert props.getProperty("hostname").equals(SystemInfoFactory.createSystemInfo().getHostname()) : props;
-        String javaIoTmpDir = System.getProperty("java.io.tmpdir");
-        String val = props.getProperty("tmpdir");
-        assert val.equals(javaIoTmpDir) : props;
+        assertResultsSuccess(results);        
     }
 
     private void assertResultsSuccess(BundleDeployResult results) {

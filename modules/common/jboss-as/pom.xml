@@ -44,6 +44,13 @@
          <version>1.6.1</version>
       </dependency>
 
+       <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-core-plugin-api</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope> <!-- by PC -->
+       </dependency>
+
    </dependencies>
 
 <!-- Because this library is a helper only used by other libraries, it doesn't make

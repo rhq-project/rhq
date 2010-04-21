@@ -114,6 +114,7 @@
       </plugins>
    </build>
 
+
    <profiles>
 
       <!-- Unlike most of RHQ, this module requires JDK6, so replace the Java 5 bootclasspath that was added to the compiler args by the root POM with a bootclasspath based on the java.home sysprop (which should be Java 6 or later if the enforcer plugin did its job). -->
@@ -142,25 +143,4 @@
       
    </profiles>
 
-   <repositories>
-      <repository>
-         <id>jboss-snapshots</id>
-         <name>JBoss Repository</name>
-         <url>http://snapshots.jboss.org/maven2/</url>
-         <snapshots>
-            <enabled>true</enabled>
-           </snapshots>
-      </repository>
-   </repositories>
-
-   <pluginRepositories>
-      <pluginRepository>
-         <id>jboss-plugins-snapshots</id>
-         <name>JBoss Plugin Repository</name>
-         <url>http://snapshots.jboss.org/maven2/</url>
-         <snapshots>
-            <enabled>true</enabled>
-         </snapshots>
-      </pluginRepository>
-   </pluginRepositories>
 </project>

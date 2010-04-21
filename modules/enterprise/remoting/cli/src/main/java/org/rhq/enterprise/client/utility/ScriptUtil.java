@@ -100,6 +100,10 @@ public class ScriptUtil {
         return bytes;
     }
 
+    public String getFileString(String fileName) {
+        return new String(getFileBytes(fileName));
+    }
+
     public void sleep(long millis) {
         try {
             Thread.sleep(millis);

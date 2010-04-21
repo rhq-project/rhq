@@ -118,7 +118,23 @@ public class MessageDigestGenerator {
     }
 
     /**
-     * After all the data has been added to the message digest via {@link #add(InputStream)}, this method is used to
+     * Use this to add more data to the set of data used to calculate the hash. Once all data has been added, call
+     * {@link #getDigest()} to get the final digest value.
+     *
+     * <p>If <code>bytes</code> is <code>null</code>, this method is a no-op and simply returns.</p>
+     *
+     * @param bytes data to be part of the set of data from which the digest is to be calculated
+     * @param offset the offset to start from in the array of bytes
+     * @param length the number of bytes to use, starting at offset
+     */
+    public void add(byte[] bytes, int offset, int length) {
+        if (bytes != null) {
+            messageDigest.update(bytes, offset, length);
+        }
+    }
+
+    /**
+     * After all the data has been added to the message digest via add methods, this method is used to
      * finalize the digest calcualation and return the digest. You can get the String form of this digest if
      * you call {@link #getDigestString()} instead.
      *
@@ -129,7 +145,7 @@ public class MessageDigestGenerator {
     }
 
     /**
-     * After all the data has been added to the message digest via {@link #add(InputStream)} or {@link #add(byte[])}
+     * After all the data has been added to the message digest via add methods,
      * this method is used to finalize the digest calcualation and return the digest as a String. You can get the
      * actual bytes of the digest if you call {@link #getDigest()} instead.
      *
@@ -141,7 +157,7 @@ public class MessageDigestGenerator {
 
     /**
      * Returns the digest for the data found in the given stream. The digest is returned as a byte array; if you want
-     * the digest as a String, call {@link #getDigestString(InputStream)} instead.
+     * the digest as a String, call getDigestString methods instead.
      *
      * @param  is the stream whose data is to be used to calculate the digest
      *

@@ -407,7 +407,7 @@ public class ResourceGroup extends Group {
     @OneToMany(mappedBy = "group", cascade = { CascadeType.REMOVE })
     @OrderBy
     // by primary key which will also put the bundle deployments in chronological order
-    private List<BundleGroupDeployment> bundleGroupDeployments = new ArrayList<BundleGroupDeployment>();
+    private List<BundleGroupDeployment> groupDeployments = new ArrayList<BundleGroupDeployment>();
 
     @JoinColumn(name = "GROUP_DEFINITION_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
@@ -554,12 +554,12 @@ public class ResourceGroup extends Group {
         this.configurationUpdates = configurationUpdates;
     }
 
-    public List<BundleGroupDeployment> getBundleGroupDeployments() {
-        return bundleGroupDeployments;
+    public List<BundleGroupDeployment> getGroupDeployments() {
+        return groupDeployments;
     }
 
-    public void setBundleGroupDeployments(List<BundleGroupDeployment> bundleGroupDeployments) {
-        this.bundleGroupDeployments = bundleGroupDeployments;
+    public void setGroupDeployments(List<BundleGroupDeployment> groupDeployments) {
+        this.groupDeployments = groupDeployments;
     }
 
     public GroupDefinition getGroupDefinition() {

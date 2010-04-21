@@ -45,6 +45,9 @@ import javax.persistence.Table;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
+/**
+ * @author Jay Shaughnessy
+ */
 @Entity
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_GROUP_DEPLOY_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_GROUP_DEPLOY")
@@ -60,9 +63,9 @@ public class BundleGroupDeployment implements Serializable {
     @ManyToOne
     private ResourceGroup group;
 
-    @JoinColumn(name = "BUNDLE_DEPLOY_DEF_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "BUNDLE_DEPLOY_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
-    protected BundleDeployDefinition bundleDeployDefinition;
+    protected BundleDeployment bundleDeployment;
 
     @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -80,16 +83,16 @@ public class BundleGroupDeployment implements Serializable {
     @Column(name = "MTIME", nullable = false)
     protected long modifiedTime = System.currentTimeMillis();
 
-    @OneToMany(mappedBy = "bundleGroupDeployment", fetch = FetchType.LAZY)
-    private List<BundleDeployment> bundleDeployments = new ArrayList<BundleDeployment>();
+    @OneToMany(mappedBy = "groupDeployment", fetch = FetchType.LAZY)
+    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
 
     // For JPA
     public BundleGroupDeployment() {
     }
 
-    public BundleGroupDeployment(String subjectName, BundleDeployDefinition bundleDeployDefinition, ResourceGroup group) {
+    public BundleGroupDeployment(String subjectName, BundleDeployment bundleDeployment, ResourceGroup group) {
         this.subjectName = subjectName;
-        this.bundleDeployDefinition = bundleDeployDefinition;
+        this.bundleDeployment = bundleDeployment;
         this.group = group;
         this.status = BundleDeploymentStatus.INPROGRESS;
     }
@@ -124,12 +127,12 @@ public class BundleGroupDeployment implements Serializable {
         this.group = group;
     }
 
-    public BundleDeployDefinition getBundleDeployDefinition() {
-        return bundleDeployDefinition;
+    public BundleDeployment getBundleDeployment() {
+        return bundleDeployment;
     }
 
-    public void setBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
-        this.bundleDeployDefinition = bundleDeployDefinition;
+    public void setBundleDeployment(BundleDeployment bundleDeployment) {
+        this.bundleDeployment = bundleDeployment;
     }
 
     /**
@@ -189,17 +192,17 @@ public class BundleGroupDeployment implements Serializable {
         return this.modifiedTime;
     }
 
-    public List<BundleDeployment> getBundleDeployments() {
-        return bundleDeployments;
+    public List<BundleResourceDeployment> getResourceDeployments() {
+        return resourceDeployments;
     }
 
-    public void setBundleDeployments(List<BundleDeployment> bundleDeployments) {
-        this.bundleDeployments = bundleDeployments;
+    public void setResourceDeployments(List<BundleResourceDeployment> resourceDeployments) {
+        this.resourceDeployments = resourceDeployments;
     }
 
-    public void addBundleDeployment(BundleDeployment bundleDeployment) {
-        bundleDeployment.setBundleGroupDeployment(this);
-        this.bundleDeployments.add(bundleDeployment);
+    public void addResourceDeployment(BundleResourceDeployment resourceDeployment) {
+        resourceDeployment.setGroupDeployment(this);
+        this.resourceDeployments.add(resourceDeployment);
     }
 
     /**
@@ -274,7 +277,7 @@ public class BundleGroupDeployment implements Serializable {
         str.append("id=").append(this.id);
         str.append(", status=").append(this.status);
         str.append(", resourceGroup=").append(this.group);
-        str.append(", deployDef=").append(this.getBundleDeployDefinition());
+        str.append(", deployment=").append(this.getBundleDeployment());
         str.append(", subjectName=").append(this.subjectName);
         str.append(", createdTime=").append(this.createdTime);
         str.append(", modifiedTime=").append(this.modifiedTime);

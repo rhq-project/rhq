@@ -44,12 +44,12 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.content.Distribution;
 
 /**
  * Defines a versioned bundle of content that can be provisioned somewhere.
  *
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
 @Entity
 @NamedQueries( {
@@ -110,16 +110,12 @@ public class BundleVersion implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private Bundle bundle;
 
-    @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Distribution distribution;
-
     @JoinColumn(name = "CONFIG_DEF_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ConfigurationDefinition configurationDefinition;
 
     @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<BundleDeployDefinition> bundleDeployDefinitions = new ArrayList<BundleDeployDefinition>();
+    private List<BundleDeployment> bundleDeployments = new ArrayList<BundleDeployment>();
 
     @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleFile> bundleFiles = new ArrayList<BundleFile>();
@@ -191,19 +187,11 @@ public class BundleVersion implements Serializable {
         this.bundle = bundle;
     }
 
-    public Distribution getDistribution() {
-        return distribution;
-    }
-
-    public void setDistribution(Distribution distribution) {
-        this.distribution = distribution;
-    }
-
     /**
      * Returns the metadata that describes the configuration that must be set in order for this
      * bundle to be properly deployed. Think of this as "the questions that the user must answer"
      * in order to provide values that are needed to deploy the content. This definition
-     * describes the {@link BundleDeployDefinition#getConfiguration() bundle config data}.
+     * describes the {@link BundleDeployment#getConfiguration() bundle config data}.
      *
      * @return defines the values that must be set in order for this bundle to be deployed properly
      */
@@ -215,17 +203,17 @@ public class BundleVersion implements Serializable {
         this.configurationDefinition = configurationDefinition;
     }
 
-    public List<BundleDeployDefinition> getBundleDeployDefinitions() {
-        return bundleDeployDefinitions;
+    public List<BundleDeployment> getBundleDeployments() {
+        return bundleDeployments;
     }
 
-    public void addBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
-        this.bundleDeployDefinitions.add(bundleDeployDefinition);
-        bundleDeployDefinition.setBundleVersion(this);
+    public void setBundleDeployments(List<BundleDeployment> bundleDeployments) {
+        this.bundleDeployments = bundleDeployments;
     }
 
-    public void setBundleDeployDefinitions(List<BundleDeployDefinition> bundleDeployDefinitions) {
-        this.bundleDeployDefinitions = bundleDeployDefinitions;
+    public void addBundleDeployment(BundleDeployment bundleDeployment) {
+        this.bundleDeployments.add(bundleDeployment);
+        bundleDeployment.setBundleVersion(this);
     }
 
     public List<BundleFile> getBundleFiles() {

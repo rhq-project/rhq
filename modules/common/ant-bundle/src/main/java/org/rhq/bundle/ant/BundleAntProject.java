@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,16 +22,18 @@
  */
 package org.rhq.bundle.ant;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.tools.ant.Project;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 
 /**
  * This is the Ant project object that is used when processing bundle Ant scripts
- * (aka "Bundle Recipes").
+ * (aka "bundle recipes").
  * 
  * It extends the normal Ant project object by providing additional methods that help
  * collect additional information about the Ant script.
@@ -43,21 +45,70 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
  * @author John Mazzitelli
  */
 public class BundleAntProject extends Project {
-    private final Map<String, String> bundleFiles = new HashMap<String, String>();
+    private String bundleName;
+    private String bundleVersion;
+    private String bundleDescription;
     private ConfigurationDefinition configDef;
+    private Configuration config;
+    private File deployDir;
+    private final Set<String> bundleFileNames = new HashSet<String>();
+    private int deploymentId;
 
-    public Map<String, String> getBundleFiles() {
-        return bundleFiles;
-    }
-
-    public void addBundleFile(String name, String filename) {
-        bundleFiles.put(name, filename);
+    public Set<String> getBundleFileNames() {
+        return bundleFileNames;
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
         if (configDef == null) {
-            configDef = new ConfigurationDefinition("antbundle", null);
+            configDef = new ConfigurationDefinition("Ant Bundle Deployment", null);
         }
         return configDef;
+    }
+
+    public Configuration getConfiguration() {
+        if (config == null) {
+            config = new Configuration();
+        }
+        return config;
+    }
+
+    public String getBundleName() {
+        return bundleName;
+    }
+
+    public void setBundleName(String bundleName) {
+        this.bundleName = bundleName;
+    }
+
+    public String getBundleVersion() {
+        return bundleVersion;
+    }
+
+    public void setBundleVersion(String bundleVersion) {
+        this.bundleVersion = bundleVersion;
+    }
+
+    public String getBundleDescription() {
+        return bundleDescription;
+    }
+
+    public void setBundleDescription(String bundleDescription) {
+        this.bundleDescription = bundleDescription;
+    }
+
+    public File getDeployDir() {
+        return deployDir;
+    }
+
+    public void setDeployDir(File deployDir) {
+        this.deployDir = deployDir;
+    }
+
+    public int getDeploymentId() {
+        return deploymentId;
+    }
+
+    public void setDeploymentId(int deploymentId) {
+        this.deploymentId = deploymentId;
     }
 }

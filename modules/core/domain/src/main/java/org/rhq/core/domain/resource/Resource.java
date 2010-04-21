@@ -1111,7 +1111,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     private ProductVersion productVersion;
 
     //    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    //    private List<BundleDeployment> deployments = new ArrayList<BundleDeployment>();
+    //    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
 
     public Resource() {
 

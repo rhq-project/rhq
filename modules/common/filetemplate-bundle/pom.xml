@@ -32,6 +32,22 @@
             <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
         </dependency>
 
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-core-native-system</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.hyperic</groupId>
+                    <artifactId>sigar</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.hyperic</groupId>
+                    <artifactId>sigar-dist</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
 </project>

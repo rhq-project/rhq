@@ -36,7 +36,6 @@ public class BundleFileCriteria extends Criteria {
 
     private Integer filterId;
     private Integer filterBundleVersionId; // needs override
-    private Integer filterPackageId; // needs override
     private Integer filterPackageVersionId; // needs override    
 
     private boolean fetchBundleVersion;
@@ -62,10 +61,6 @@ public class BundleFileCriteria extends Criteria {
 
     public void addFilterBundleVersionId(Integer filterBundleVersionId) {
         this.filterBundleVersionId = filterBundleVersionId;
-    }
-
-    public void addFilterPackageId(Integer filterPackageId) {
-        this.filterPackageId = filterPackageId;
     }
 
     public void addFilterPackageVersionId(Integer filterPackageVersionId) {

@@ -191,9 +191,11 @@
       </dependency>
 
       <dependency>
-         <groupId>javax.mail</groupId>
-         <artifactId>mail</artifactId>
-         <version>1.3.1</version>
+         <groupId>org.apache.geronimo.specs</groupId>
+         <artifactId>geronimo-javamail_1.3.1_spec</artifactId>
+         <!-- The Sun javamail jar isn't available from a public repo due to licensing issues,
+              so use the Geronimo one instead. -->
+         <version>1.3</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -587,6 +589,20 @@
          <url>http://download.java.net/maven/1/</url>
          <layout>legacy</layout>
       </repository>
+
+        <!-- This is needed for the org.jvnet:inflector dep. 
+             TODO: Publish the inflector artifact to the JBoss 3rd party repo. -->
+        <repository>
+          <id>jboss-deprecated-repository</id>
+          <name>JBoss Deprecated Maven Repository</name>
+          <url>https://repository.jboss.org/nexus/content/repositories/deprecated/</url>
+          <layout>default</layout>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+          </releases>
+        </repository>
+
    </repositories>
 
 </project>

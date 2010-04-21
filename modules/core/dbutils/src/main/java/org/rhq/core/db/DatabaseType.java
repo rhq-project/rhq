@@ -573,4 +573,14 @@ public abstract class DatabaseType {
 
         return (null == result) ? "\\" : result;
     }
+
+    /**
+     * Most vendors support foreign keys to itself that in fact perform cascade delete. But some do not and
+     * that currently affects our data model. (see rhq_config_property in content-schema.xml).
+     *  
+     * @return true unless overriden to return false.
+     */
+    public boolean supportsSelfReferringCascade() {
+        return true;
+    }
 }

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.bundle;
 
 import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
@@ -86,11 +87,25 @@ public interface BundleManagerRemote {
      * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
      */
     BundleFile addBundleFileViaByteArray( //
-        @WebParam(name = "subject") Subject subject, @WebParam(name = "bundleVersionid") int bundleVersionId, //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleVersionid") int bundleVersionId, //
         @WebParam(name = "name") String name, //
         @WebParam(name = "version") String version, //
         @WebParam(name = "architecture") Architecture architecture, //
         @WebParam(name = "fileBytes") byte[] fileBytes) throws Exception;
+
+    /**
+     * A convenience method taking a URL whose content will be streamed to the server and used for the file bits.
+     * 
+     * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
+     */
+    BundleFile addBundleFileViaURL( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleVersionid") int bundleVersionId, //
+        @WebParam(name = "name") String name, //
+        @WebParam(name = "version") String version, //
+        @WebParam(name = "architecture") Architecture architecture, //
+        @WebParam(name = "url") URL url) throws Exception;
 
     /**
      * A convenience method taking an existing PackageVersion as opposed to a stream for the file bits.

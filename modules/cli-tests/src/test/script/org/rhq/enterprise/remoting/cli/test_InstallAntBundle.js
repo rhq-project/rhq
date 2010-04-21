@@ -93,9 +93,9 @@ function testDeployment() {
    // create bundleVersion 2.0
    testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, "my fake bundle version", v2, recipe);
 
-   // add the single bundleFile, the test war file
-   fileBytes = scriptUtil.getFileBytes("./src/test/resources/test-ant-bundle-v2.zip");
-   bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "test-ant-bundle-v2.zip", v2, null, fileBytes);
+   // add the second bundleFile using the ViaURL API
+   var fileUrl = new java.io.File("./src/test/resources/test-ant-bundle-v2.zip").toURI().toURL();
+   bundleFile = BundleManager.addBundleFileViaURL(testBundleVersion.getId(), "test-ant-bundle-v2.zip", v2, null, fileUrl);
 
    // create a deployment using the a different config as before
    // create the config, setting the required properties from the recipe

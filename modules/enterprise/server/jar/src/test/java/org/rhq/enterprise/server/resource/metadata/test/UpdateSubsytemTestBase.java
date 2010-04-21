@@ -33,10 +33,6 @@ import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -44,6 +40,8 @@ import org.testng.annotations.BeforeSuite;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -51,9 +49,11 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
@@ -63,18 +63,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    private EntityManager entityManager;
-
     @EJB
     protected ResourceManagerLocal resMgr;
 
     protected TestServerCommunicationsService agentServiceContainer;
 
     protected int agentId;
-    protected int server2id;
     protected int plugin1Id;
 
     protected static final String PLUGIN_NAME = "ResourceMetaDataManagerBeanTest";
+    protected static final String AGENT_NAME = "-dummy agent-";
     protected static final String COMMON_PATH_PREFIX = "./test/metadata/";
 
     protected static ResourceMetadataManagerLocal metadataManager;
@@ -107,7 +105,6 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         unprepareScheduler();
     }
 
-    @SuppressWarnings("unchecked")
     protected ResourceType getResourceType(String typeName) {
         return getResourceType(typeName, PLUGIN_NAME);
     }
@@ -121,17 +118,19 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
         resourceTypeCriteria.fetchPluginConfigurationDefinition(true);
         resourceTypeCriteria.fetchResourceConfigurationDefinition(true);
+        resourceTypeCriteria.fetchMetricDefinitions(true);
+
         // TODO: Fetch everything else.
 
-        PageList<ResourceType> results = this.resourceTypeManager.findResourceTypesByCriteria(overlord,
-                resourceTypeCriteria);
+        PageList<ResourceType> results = resourceTypeManager
+            .findResourceTypesByCriteria(overlord, resourceTypeCriteria);
         if (results.size() == 0) {
             return null;
         } else if (results.size() == 1) {
             return results.get(0);
         } else {
             throw new IllegalStateException("Found more than one resourceType with name " + typeName + " from plugin "
-                    + pluginName + ".");
+                + pluginName + ".");
         }
     }
 
@@ -155,7 +154,6 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         }
         metadataManager.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null,
             false);
-        getEntityManager().flush();
     }
 
     protected void registerPlugin(String pathToDescriptor) throws Exception {
@@ -202,9 +200,22 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         }
     }
 
+    protected int getAgentId(EntityManager entityManager) {
+        Agent existingAgent;
+        try {
+            existingAgent = (Agent) entityManager.createNamedQuery(Agent.QUERY_FIND_BY_NAME).setParameter("name",
+                AGENT_NAME).getSingleResult();
+            agentId = existingAgent.getId();
+            return agentId;
+        } catch (NoResultException nre) {
+            throw nre;
+        }
+    }
+
     protected void setUpAgent(EntityManager entityManager, Resource testResource) {
-        Agent agent = new Agent("-dummy agent-", "localhost", 12345, "http://localhost:12345/", "-dummy token-");
+        Agent agent = new Agent(AGENT_NAME, "localhost", 12345, "http://localhost:12345/", "-dummy token-");
         entityManager.persist(agent);
+
         testResource.setAgent(agent);
         agentServiceContainer.addStartedAgent(agent);
         agentId = agent.getId();

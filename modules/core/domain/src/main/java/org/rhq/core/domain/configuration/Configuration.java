@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -560,8 +560,13 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
         if (verbose) {
             builder.append(", properties[");
+            boolean first = true;
             for (Property property : this.getMap().values()) {
-                builder.append(", ");
+                if (!first) {
+                    builder.append(", ");
+                } else {
+                    first = false;
+                }
                 builder.append(property.getName());
                 builder.append("=");
                 if (property instanceof PropertySimple) {

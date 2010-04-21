@@ -39,7 +39,6 @@ import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageVersion;
 
 /**
@@ -70,10 +69,6 @@ public class BundleFile implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private BundleVersion bundleVersion;
 
-    @JoinColumn(name = "PACKAGE_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Package generalPackage;
-
     @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private PackageVersion packageVersion;
@@ -98,14 +93,6 @@ public class BundleFile implements Serializable {
         this.bundleVersion = bundleVersion;
     }
 
-    public Package getPackage() {
-        return generalPackage;
-    }
-
-    public void setPackage(Package pkg) {
-        this.generalPackage = pkg;
-    }
-
     public PackageVersion getPackageVersion() {
         return packageVersion;
     }
@@ -124,7 +111,6 @@ public class BundleFile implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((bundleVersion == null) ? 0 : bundleVersion.hashCode());
-        result = prime * result + ((generalPackage == null) ? 0 : generalPackage.hashCode());
         result = prime * result + ((packageVersion == null) ? 0 : packageVersion.hashCode());
         return result;
     }
@@ -145,14 +131,6 @@ public class BundleFile implements Serializable {
                 return false;
             }
         } else if (!bundleVersion.equals(other.bundleVersion)) {
-            return false;
-        }
-
-        if (generalPackage == null) {
-            if (other.generalPackage != null) {
-                return false;
-            }
-        } else if (!generalPackage.equals(other.generalPackage)) {
             return false;
         }
 

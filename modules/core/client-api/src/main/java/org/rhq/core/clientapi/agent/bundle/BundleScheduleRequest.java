@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.text.DateFormat;
 import java.util.Date;
 
-import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 
 /**
  * @author John Mazzitelli
@@ -35,15 +35,15 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 public class BundleScheduleRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private BundleDeployment bundleDeployment;
+    private BundleResourceDeployment resourceDeployment;
     private long requestedDeployTime = System.currentTimeMillis();
 
-    public BundleScheduleRequest(BundleDeployment deployment) {
-        this.bundleDeployment = deployment;
+    public BundleScheduleRequest(BundleResourceDeployment resourceDeployment) {
+        this.resourceDeployment = resourceDeployment;
     }
 
-    public BundleDeployment getBundleDeployment() {
-        return bundleDeployment;
+    public BundleResourceDeployment getBundleResourceDeployment() {
+        return resourceDeployment;
     }
 
     /** In ms */
@@ -58,7 +58,7 @@ public class BundleScheduleRequest implements Serializable {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder(this.getClass() + ": ");
-        str.append(bundleDeployment.toString());
+        str.append(resourceDeployment.toString());
         return str.toString();
     }
 }

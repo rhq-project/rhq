@@ -49,9 +49,9 @@ import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.BundleVersionRepo;
@@ -95,6 +95,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 
+@SuppressWarnings("unchecked")
 public class QueryAllTest extends AbstractEJB3Test {
     protected SessionFactoryImplementor sessionFactory;
 
@@ -149,8 +150,8 @@ public class QueryAllTest extends AbstractEJB3Test {
 
         // bundle stuff
         BundleType.class.getSimpleName(), Bundle.class.getSimpleName(), BundleVersion.class.getSimpleName(),
-        BundleVersionRepo.class.getSimpleName(), BundleDeployDefinition.class.getSimpleName(), BundleFile.class.getSimpleName(),
-        BundleDeployment.class.getSimpleName(),
+        BundleVersionRepo.class.getSimpleName(), BundleDeployment.class.getSimpleName(),
+        BundleFile.class.getSimpleName(), BundleResourceDeployment.class.getSimpleName(),
 
         // group stuff
         GroupDefinition.class.getSimpleName(), ResourceGroup.class.getSimpleName(),

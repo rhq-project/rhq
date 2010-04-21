@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,8 +29,6 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -40,79 +38,76 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.configuration.Configuration;
 
 /**
- * This is the many-to-many entity that correlates a bundle deployment def with a (platform) resource.  It keeps
- * information about the currently installed bundle and assists with enforcing the def's policy on the deployed bundle.
- * It also provides the anchor for audit history related to the deployment.
- * 
+ * Defines a set of configuration values that can be used to deploy a bundle version somewhere. Once set the
+ * configuration should not be changed.  Also stores any other deployment settings to be applied to deployments
+ * using this def.
+ *
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
 @Entity
-//@IdClass(BundleDeploymentPK.class)
-@NamedQueries( {
-    @NamedQuery(name = BundleDeployment.QUERY_FIND_BY_DEFINITION_ID_NO_FETCH, query = "SELECT bd FROM BundleDeployment bd WHERE bd.bundleDeployDefinition.id = :id "),
-    @NamedQuery(name = BundleDeployment.QUERY_FIND_BY_RESOURCE_ID_NO_FETCH, query = "SELECT bd FROM BundleDeployment bd WHERE bd.resource.id = :id ") })
+@NamedQueries( { @NamedQuery(name = BundleDeployment.QUERY_FIND_ALL, query = "SELECT bd FROM BundleDeployment bd") //
+})
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOY_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_DEPLOY")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleDeployment implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_FIND_BY_DEFINITION_ID_NO_FETCH = "BundleDeployment.findByDefinitionIdNoFetch";
-    public static final String QUERY_FIND_BY_RESOURCE_ID_NO_FETCH = "BundleDeployment.findByResourceIdNoFetch";
+    public static final String QUERY_FIND_ALL = "BundleDeployment.findAll";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
     private int id;
 
-    @JoinColumn(name = "BUNDLE_DEPLOY_DEF_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private BundleDeployDefinition bundleDeployDefinition;
+    @Column(name = "NAME", nullable = false)
+    private String name;
 
-    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Resource resource;
-
-    @JoinColumn(name = "BUNDLE_GROUP_DEPLOY_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne
-    private BundleGroupDeployment bundleGroupDeployment;
-
-    @Column(name = "STATUS", nullable = false)
-    @Enumerated(EnumType.STRING)
-    protected BundleDeploymentStatus status;
+    @Column(name = "DESCRIPTION", nullable = true)
+    private String description;
 
     @Column(name = "CTIME")
-    private Long ctime = -1L;
+    private Long ctime = System.currentTimeMillis();
+
+    @Column(name = "MTIME")
+    private Long mtime = System.currentTimeMillis();
+
+    @Column(name = "INSTALL_DIR", nullable = false)
+    private String installDir;
+
+    @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
+    private Configuration configuration;
+
+    @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private BundleVersion bundleVersion;
 
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<BundleDeploymentHistory> histories = new ArrayList<BundleDeploymentHistory>();
+    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
 
-    protected BundleDeployment() {
+    @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleGroupDeployment> groupDeployments = new ArrayList<BundleGroupDeployment>();
+
+    public BundleDeployment() {
+        // for JPA use
     }
 
-    public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource) {
-        this(bundleDeploymentDef, resource, null);
-    }
-
-    public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource,
-        BundleGroupDeployment bundleGroupDeployment) {
-        this.bundleDeployDefinition = bundleDeploymentDef;
-        this.resource = resource;
-        this.bundleGroupDeployment = bundleGroupDeployment;
-        this.status = BundleDeploymentStatus.INPROGRESS;
-    }
-
-    public BundleDeployDefinition getBundleDeployDefinition() {
-        return bundleDeployDefinition;
+    public BundleDeployment(BundleVersion bundleVersion, String name, String installDir) {
+        this.bundleVersion = bundleVersion;
+        this.name = name;
+        this.installDir = installDir;
     }
 
     public int getId() {
@@ -123,75 +118,106 @@ public class BundleDeployment implements Serializable {
         this.id = id;
     }
 
-    public Resource getResource() {
-        return resource;
+    public String getName() {
+        return name;
     }
 
-    public void setResource(Resource resource) {
-        this.resource = resource;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public Long getCtime() {
-        return ctime;
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public long getCtime() {
+        return this.ctime;
     }
 
     @PrePersist
     void onPersist() {
-        this.ctime = System.currentTimeMillis();
-    }
-
-    public void setBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
-        this.bundleDeployDefinition = bundleDeployDefinition;
-    }
-
-    public List<BundleDeploymentHistory> getBundleDeploymentHistories() {
-        return histories;
-    }
-
-    public void setBundleDeploymentHistories(List<BundleDeploymentHistory> histories) {
-        this.histories = histories;
-    }
-
-    public void addBundleDeploymentHistory(BundleDeploymentHistory history) {
-        history.setBundleDeployment(this);
-        this.histories.add(history);
-    }
-
-    public BundleGroupDeployment getBundleGroupDeployment() {
-        return bundleGroupDeployment;
-    }
-
-    public void setBundleGroupDeployment(BundleGroupDeployment bundleGroupDeployment) {
-        this.bundleGroupDeployment = bundleGroupDeployment;
+        this.mtime = this.ctime = System.currentTimeMillis();
     }
 
     /**
-     * The status of the request which indicates that the request is either still in progress, or it has completed and
-     * either succeeded or failed.
+     * The time that any part of this entity was updated in the database.
      *
-     * @return the request status
+     * @return entity modified time
      */
-    public BundleDeploymentStatus getStatus() {
-        return status;
+    public long getMtime() {
+        return this.mtime;
     }
 
-    public void setStatus(BundleDeploymentStatus status) {
-        this.status = status;
+    public void setMtime(long mtime) {
+        this.mtime = mtime;
+    }
+
+    public String getInstallDir() {
+        return installDir;
+    }
+
+    public void setInstallDir(String installDir) {
+        this.installDir = installDir;
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(Configuration config) {
+        this.configuration = config;
+    }
+
+    public BundleVersion getBundleVersion() {
+        return bundleVersion;
+    }
+
+    public void setBundleVersion(BundleVersion bundleVersion) {
+        this.bundleVersion = bundleVersion;
+    }
+
+    public List<BundleResourceDeployment> getResourceDeployments() {
+        return resourceDeployments;
+    }
+
+    public void setResourceDeployments(List<BundleResourceDeployment> resourceDeployments) {
+        this.resourceDeployments = resourceDeployments;
+    }
+
+    public void addResourceDeployment(BundleResourceDeployment resourceDeployment) {
+        this.resourceDeployments.add(resourceDeployment);
+        resourceDeployment.setBundleDeployment(this);
+    }
+
+    public List<BundleGroupDeployment> getGroupDeployments() {
+        return groupDeployments;
+    }
+
+    public void addGroupDeployment(BundleGroupDeployment groupDeployment) {
+        this.groupDeployments.add(groupDeployment);
+        groupDeployment.setBundleDeployment(this);
+    }
+
+    public void setGroupDeployments(List<BundleGroupDeployment> groupDeployments) {
+        this.groupDeployments = groupDeployments;
     }
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("BundleDeployment: ");
-        str.append(", bdd=[").append(this.bundleDeployDefinition).append("]");
-        str.append(", resource=[").append(this.resource).append("]");
-        return str.toString();
+        return "BundleDeployment[id=" + id + ", name=" + name + "]";
     }
 
     @Override
     public int hashCode() {
+        final int prime = 31;
         int result = 1;
-        result = (31 * result) + ((bundleDeployDefinition == null) ? 0 : bundleDeployDefinition.hashCode());
-        result = (31 * result) + ((resource == null) ? 0 : resource.hashCode());
+        result = prime * result + ((bundleVersion == null) ? 0 : bundleVersion.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((installDir == null) ? 0 : installDir.hashCode());
         return result;
     }
 
@@ -200,26 +226,33 @@ public class BundleDeployment implements Serializable {
         if (this == obj) {
             return true;
         }
-
-        if ((obj == null) || (!(obj instanceof BundleDeployment))) {
+        if (!(obj instanceof BundleDeployment)) {
             return false;
         }
 
-        final BundleDeployment other = (BundleDeployment) obj;
+        BundleDeployment other = (BundleDeployment) obj;
 
-        if (bundleDeployDefinition == null) {
-            if (bundleDeployDefinition != null) {
+        if (bundleVersion == null) {
+            if (other.bundleVersion != null) {
                 return false;
             }
-        } else if (!bundleDeployDefinition.equals(other.bundleDeployDefinition)) {
+        } else if (!bundleVersion.equals(other.bundleVersion)) {
             return false;
         }
 
-        if (resource == null) {
-            if (resource != null) {
+        if (name == null) {
+            if (other.name != null) {
                 return false;
             }
-        } else if (!resource.equals(other.resource)) {
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+
+        if (installDir == null) {
+            if (other.installDir != null) {
+                return false;
+            }
+        } else if (!installDir.equals(other.installDir)) {
             return false;
         }
 

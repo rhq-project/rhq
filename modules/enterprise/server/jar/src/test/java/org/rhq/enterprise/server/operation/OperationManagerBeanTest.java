@@ -593,7 +593,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         simulatedOperation_Timeout = false;
         simulatedOperation_Sleep = 0L;
 
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", 1, 3000L);
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", 1, 2000L);
         GroupOperationSchedule schedule = operationManager.scheduleGroupOperation(overlord, newGroup.getId(),
             new int[] { newResource.getId() }, true, "testOp", null, trigger, "desc");
         assert schedule != null;

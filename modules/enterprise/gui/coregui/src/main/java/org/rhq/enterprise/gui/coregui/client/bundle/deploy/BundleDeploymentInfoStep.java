@@ -27,19 +27,23 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
-public class BundleDeployDefinitionInfoStep implements WizardStep {
+/**
+ * @author Jay Shaughnessy
+ *
+ */
+public class BundleDeploymentInfoStep implements WizardStep {
 
     private DynamicForm form;
     private final BundleDeployWizard wizard;
 
     // private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
-    public BundleDeployDefinitionInfoStep(BundleDeployWizard bundleDeployWizard) {
+    public BundleDeploymentInfoStep(BundleDeployWizard bundleDeployWizard) {
         this.wizard = bundleDeployWizard;
     }
 
     public String getName() {
-        return "Provide Deploy Information";
+        return "Provide Deployment Information";
     }
 
     public Canvas getCanvas() {

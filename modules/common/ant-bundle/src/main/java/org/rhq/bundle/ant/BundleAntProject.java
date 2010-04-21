@@ -52,6 +52,7 @@ public class BundleAntProject extends Project {
     private Configuration config;
     private File deployDir;
     private final Set<String> bundleFileNames = new HashSet<String>();
+    private int deploymentId;
 
     public Set<String> getBundleFileNames() {
         return bundleFileNames;
@@ -101,5 +102,13 @@ public class BundleAntProject extends Project {
 
     public void setDeployDir(File deployDir) {
         this.deployDir = deployDir;
+    }
+
+    public int getDeploymentId() {
+        return deploymentId;
+    }
+
+    public void setDeploymentId(int deploymentId) {
+        this.deploymentId = deploymentId;
     }
 }

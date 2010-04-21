@@ -95,9 +95,13 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
                 String installDir = bundleDeployment.getInstallDir();
                 if (installDir == null) {
-                    throw new IllegalStateException("Bundle deployment does not specify install dir: " + bundleDeployment);
+                    throw new IllegalStateException("Bundle deployment does not specify install dir: "
+                        + bundleDeployment);
                 }
                 antProps.setProperty(AntLauncher.DEPLOY_DIR_PROP, installDir);
+
+                int deploymentId = bundleDeployment.getId();
+                antProps.setProperty(AntLauncher.DEPLOY_ID_PROP, Integer.toString(deploymentId));
 
                 Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
                 for (Map.Entry<String, String> fact : sysFacts.entrySet()) {

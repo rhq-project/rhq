@@ -17,7 +17,17 @@
  */
 package org.rhq.bundle.ant.task;
 
+import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 import org.apache.tools.ant.BuildException;
+
+import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.type.ArchiveType;
 import org.rhq.bundle.ant.type.FileSet;
 import org.rhq.bundle.ant.type.FileType;
@@ -29,14 +39,6 @@ import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.template.TemplateEngine;
 import org.rhq.core.util.updater.Deployer;
 import org.rhq.core.util.updater.DeploymentProperties;
-
-import java.io.File;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * An Ant task for deploying a bundle or previewing the deployment.
@@ -54,24 +56,24 @@ public class DeployTask extends AbstractBundleTask {
     public void maybeConfigure() throws BuildException {
         // The below call will init the attribute fields.
         super.maybeConfigure();
-        
     }
 
     @Override
     public void execute() throws BuildException {
-        DeploymentProperties deploymentProps = new DeploymentProperties(0, getProject().getBundleName(),
-                getProject().getBundleVersion(), getProject().getBundleDescription());
+        int deploymentId = getDeploymentId();
+        DeploymentProperties deploymentProps = new DeploymentProperties(deploymentId, getProject().getBundleName(),
+            getProject().getBundleVersion(), getProject().getBundleDescription());
         File deployDir = getProject().getDeployDir();
         TemplateEngine templateEngine = createTemplateEngine();
         log("Deploying files " + this.files + "...");
         log("Deploying archives " + this.archives + "...");
         Deployer deployer = new Deployer(deploymentProps, this.archives, this.files, deployDir, this.replacePattern,
-                templateEngine, this.ignorePattern);
+            templateEngine, this.ignorePattern);
         try {
             deployer.deploy();
         } catch (Exception e) {
             throw new BuildException("Failed to deploy bundle '" + getProject().getBundleName() + "' version "
-                    + getProject().getBundleVersion() + ".", e);
+                + getProject().getBundleVersion() + ".", e);
         }
         return;
     }
@@ -113,6 +115,14 @@ public class DeployTask extends AbstractBundleTask {
     public void addConfigured(ReplaceType replace) {
         List<FileSet> fileSets = replace.getFileSets();
         this.replacePattern = getPattern(fileSets);
+    }
+
+    private int getDeploymentId() {
+        String deploymentIdStr = getProject().getProperty(AntLauncher.DEPLOY_ID_PROP);
+        if (deploymentIdStr == null) {
+            return 0;
+        }
+        return Integer.parseInt(deploymentIdStr);
     }
 
     private TemplateEngine createTemplateEngine() {

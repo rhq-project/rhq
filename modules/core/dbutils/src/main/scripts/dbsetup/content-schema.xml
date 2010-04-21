@@ -260,15 +260,15 @@
         </constraint>
     </table>
 
-    <table name="RHQ_REPO_REPO_GRP_MAP">
+    <table name="RHQ_REPO_REPO_GROUP_MAP">
         <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
-        <column name="REPO_GRP_ID" type="INTEGER" required="true" references="RHQ_REPO_GROUP"/>
+        <column name="REPO_GROUP_ID" type="INTEGER" required="true" references="RHQ_REPO_GROUP"/>
         <column name="CTIME" type="LONG" required="true"/>
 
-        <constraint name="RHQ_REPO_REPO_GRP_MAP_KEY">
+        <constraint name="RHQ_REPO_REPO_GROUP_MAP_KEY">
             <primaryKey>
                 <field ref="REPO_ID"/>
-                <field ref="REPO_GRP_ID"/>
+                <field ref="REPO_GROUP_ID"/>
             </primaryKey>
         </constraint>
     </table>

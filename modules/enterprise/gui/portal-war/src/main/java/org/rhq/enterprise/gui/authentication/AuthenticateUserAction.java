@@ -150,7 +150,7 @@ public class AuthenticateUserAction extends TilesAction {
                 // because the view no longer exists, and will blow up.
                 // instead, redirect back to the last saved URL
                 url = webUser.getWebPreferences().getLastVisitedURL(2);
-                System.out.println("Bypassing partial-page with " + url);
+                log.info("Bypassing partial-page with " + url);
             }
 
             af = new ActionForward(url);

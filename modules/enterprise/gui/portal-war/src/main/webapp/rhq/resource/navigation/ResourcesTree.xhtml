@@ -45,7 +45,9 @@
                            nodeSelectListener="#{ResourceTreeStateAdvisor.nodeSelectListener}"
                            ajaxSubmitSelection="true"
                            showConnectingLines="false"
-                           nodeFace="#{treeNode.data.class.simpleName}">
+                           nodeFace="#{treeNode.data.class.simpleName}"
+                           eventsQueue="resourceTreeQueue"
+                           ignoreDupResponses="true">
                     <rich:recursiveTreeNodesAdaptor roots="#{ResourceTreeModelUIBean.roots}"
                                                     var="resourceTreeItem"
                                                     nodes="#{resourceTreeItem.children}" />

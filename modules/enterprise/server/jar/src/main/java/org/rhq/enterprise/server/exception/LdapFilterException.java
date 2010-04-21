@@ -1,3 +1,5 @@
+package org.rhq.enterprise.server.exception;
+
 /*
  * RHQ Management Platform
  * Copyright (C) 2005-2008 Red Hat, Inc.
@@ -16,25 +18,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.common;
 
-import javax.ejb.Local;
-import javax.persistence.Query;
+/*
+* This exception should be used whenever there was an error with the ldap filters
+* defined.  
+* @author Simeon Pinder */
+public class LdapFilterException extends LdapCommunicationException {
+    private static final long serialVersionUID = 1L;
 
-/**
- * @author Joseph Marques
- */
-@Local
-public interface EntityManagerFacadeLocal {
-    Query createQuery(String queryString);
+    public LdapFilterException() {
+        super();
+    }
 
-    void clear();
+    public LdapFilterException(String message) {
+        super(message);
+    }
 
-    void flush();
+    public LdapFilterException(Throwable cause) {
+        super(cause);
+    }
 
-    void persist(Object o);
+    public LdapFilterException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    <T> T merge(T o);
-
-    void remove(Object o);
 }

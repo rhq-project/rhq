@@ -49,7 +49,7 @@
                                    usingSuggestObjects="true"
                                    eventsQueue="resourceSearchSuggestions"
                                    ignoreDupResponses="true"
-                                   rendered="false"> <!-- disable until auto-completer is added -->
+                                   rendered="true">
                    <h:column>
                       <h:outputText value="#{suggestItem.label}" />
                    </h:column>
@@ -72,7 +72,7 @@
                             value="#{browseResourcesDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 5%, 20%, 20%, 5%, 10%, 10%, 25%, 4%"
+                            columnsWidth="1%, 20%, 20%, 10%, 10%, 10%, 25%, 4%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -89,15 +89,6 @@
 
                   <onc:select name="selectedItems"
                               value="#{item.original.resource.id}" />
-               </rich:column>
-
-               <rich:column>
-                  <onc:quickNav>
-                     <f:param name="id" value="#{item.original.resource.id}"/>
-
-                     <!--  Is this necessary? It's being passed for all quick nav urls. -->
-                     <f:param name="mode" value="list"/>
-                  </onc:quickNav>
                </rich:column>
 
                <rich:column>
@@ -170,7 +161,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="9" width="100%">
+                     <rich:column colspan="8" width="100%">
                          <onc:selectCommandButton action="#"
                                                   value="Pick selected" target="selectedItems"
                                                   styleClass="on-pager-button buttonsmall"
@@ -194,7 +185,7 @@
 
        <script type="text/javascript">
            function pick() {
-               var targetField = opener.document.getElementById('#{param.formId}:#{param.fieldId}');
+               var targetField = opener.document.getElementById('#{param.fieldId}');
 
                var theVal = -1;
                var selectedCheckboxes = document.getElementsByName('selectedItems');
@@ -206,13 +197,10 @@
                }
 
                if (theVal &gt; -1) {
-
                     targetField.value = theVal + "\n";
-
                     window.close();
                }
            }
-
        </script>
 
    </ui:define>

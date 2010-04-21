@@ -675,6 +675,19 @@ import org.rhq.core.domain.util.Summary;
         + "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource.parentResource = r) "
         + "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource.parentResource.parentResource = r) "
         + "  )"), //
+    @NamedQuery(name = Resource.QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME, query = "" //
+        + "SELECT r.id " //
+        + "  FROM Resource r " //
+        + " WHERE ( r.resourceType.id = :resourceTypeId OR :resourceTypeId IS NULL ) " //
+        + "   AND ( LOWER(r.name) like :name OR :name IS NULL ) " //
+        + "   AND ( r.id = :resourceId " //
+        + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.id = :resourceId) "
+        + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.id = :resourceId) "
+        + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.id = :resourceId) "
+        + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.id = :resourceId) "
+        + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.parentResource.id = :resourceId) "
+        + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.parentResource.parentResource.id = :resourceId) "
+        + "      ) "),
     @NamedQuery(name = Resource.QUERY_FIND_DESCENDENTS, query = "" //
         + "SELECT r.id " //
         + "  FROM Resource r " //
@@ -840,6 +853,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public static final String QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE = "Resource.findRootPlatformOfResource";
 
+    public static final String QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME = "Resource.findDescendentsByTypeAndName";
     public static final String QUERY_FIND_DESCENDENTS = "Resource.findDescendents";
     public static final String QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION = "Resource.markResourcesForAsyncDeletion";
     public static final String QUERY_FIND_RESOURCES_MARKED_FOR_ASYNC_DELETION = "Resource.findResourcesMarkedForAsyncDeletion";

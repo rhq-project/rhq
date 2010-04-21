@@ -32,7 +32,6 @@ import org.richfaces.model.TreeRowKey;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.LockedResource;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
@@ -62,106 +61,99 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     public TreeState getTreeState() {
         return treeState;
     }
-    
+
     public void changeExpandListener(org.richfaces.event.NodeExpandedEvent e) {
         HtmlTree tree = (HtmlTree) e.getComponent();
-
         TreeState state = (TreeState) tree.getComponentState();
-        TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
-        
+
         //check if we're collapsing a parent of currently selected node.
         //if we do, change the focus to the parent
         if (state.getSelectedNode() != null) {
             boolean closingParent = false;
-            
+
+            TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
             ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(key);
             ResourceTreeNode selectedNode = (ResourceTreeNode) tree.getRowData(state.getSelectedNode());
-    
-    
-            selectedNode = selectedNode.getParent();        
-            while(selectedNode != null) {
+
+            selectedNode = selectedNode.getParent();
+            while (selectedNode != null) {
                 if (node.equals(selectedNode)) {
                     closingParent = true;
                     break;
                 }
                 selectedNode = selectedNode.getParent();
             }
-            
+
             if (closingParent) {
-                try {
-                    state.setSelected(key);
-                    redirectTo(node);
-                } catch(IOException ex) {
-                    ex.printStackTrace();
-                }
+                state.setSelected(key);
+                redirectTo(node); // node state irrelevant if redirect was successful
             }
+
         }
     }
-    
+
     public void nodeSelectListener(org.richfaces.event.NodeSelectedEvent e) {
         HtmlTree tree = (HtmlTree) e.getComponent();
         TreeState state = (TreeState) ((HtmlTree) tree).getComponentState();
 
-        try {
-            ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
+        ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
 
-            if (node != null) {
-                if (node.getData() instanceof LockedResource) {
+        if (node != null) {
+            if (node.getData() instanceof LockedResource) {
+                state.setSelected(e.getOldSelection());
+
+                FacesContext.getCurrentInstance().addMessage(
+                    "leftNavTreeForm:leftNavTree",
+                    new FacesMessage(FacesMessage.SEVERITY_WARN,
+                        "You have not been granted view access to this resource", null));
+
+                return;
+
+            } else if (node.getData() instanceof Resource) {
+                if (redirectTo(node) == false) { // upon redirect failure, reselect previous node
                     state.setSelected(e.getOldSelection());
+                }
+            } else if (node.getData() instanceof AutoGroupComposite) {
+                AutoGroupComposite ag = (AutoGroupComposite) node.getData();
 
-                    FacesContext.getCurrentInstance().addMessage(
-                        "leftNavTreeForm:leftNavTree",
-                        new FacesMessage(FacesMessage.SEVERITY_WARN,
-                            "You have not been granted view access to this resource", null));
+                if (ag.getSubcategory() != null) {
+                    state.setSelected(e.getOldSelection());
+                    // this is a subcategory or subsubcategory, no page to display right now
+                    FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
+                        new FacesMessage(FacesMessage.SEVERITY_WARN, "No subcategory pages exist", null));
 
                     return;
-
-                } else if (node.getData() instanceof Resource) {
-                    redirectTo(node);
-                } else if (node.getData() instanceof AutoGroupComposite) {
-                    AutoGroupComposite ag = (AutoGroupComposite) node.getData();
-
-                    if (ag.getSubcategory() != null) {
+                } else {
+                    if (ag.getMemberCount() != node.getChildren().size()) {
+                        // you don't have access to every autogroup resource
                         state.setSelected(e.getOldSelection());
-                        // this is a subcategory or subsubcategory, no page to display right now
-                        FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
-                            new FacesMessage(FacesMessage.SEVERITY_WARN, "No subcategory pages exist", null));
+                        FacesContext.getCurrentInstance().addMessage(
+                            "leftNavTreeForm:leftNavTree",
+                            new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                "You must have view access to all resources in an autogroup to view it", null));
 
                         return;
                     } else {
-                        if (ag.getMemberCount() != node.getChildren().size()) {
-                            // you don't have access to every autogroup resource
+                        if (redirectTo(node) == false) { // upon redirect failure, reselect previous node
                             state.setSelected(e.getOldSelection());
-                            FacesContext.getCurrentInstance().addMessage(
-                                "leftNavTreeForm:leftNavTree",
-                                new FacesMessage(FacesMessage.SEVERITY_WARN,
-                                    "You must have view access to all resources in an autogroup to view it", null));
-
-                            return;
-                        } else {
-                            redirectTo(node);
                         }
                     }
-
                 }
+
             }
-        } catch (IOException e1) {
-            e1.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
     }
 
     public Boolean adviseNodeOpened(UITree tree) {
         TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
-
         if (key != null) {
-            TreeState state = (TreeState) tree.getComponentState();
 
             ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(key);
-            
             if (node.getParent() == null) {
                 return true;
             }
-            
+
+            TreeState state = (TreeState) tree.getComponentState();
             TreeRowKey<?> selectedKey = state.getSelectedNode();
             int selectedId = 0;
             if (selectedKey == null) {
@@ -185,7 +177,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                     return true;
                 }
             }
-            
+
             return state.isExpanded(key);
         }
         return null;
@@ -212,7 +204,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
         return false;
     }
-    
+
     public Boolean adviseNodeSelected(UITree tree) {
         TreeState state = (TreeState) ((HtmlTree) tree).getComponentState();
         String id = FacesContextUtility.getOptionalRequestParameter("id");
@@ -247,18 +239,20 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         return hasMessages;
     }
 
-    private void redirectTo(ResourceTreeNode node) throws IOException {
-        HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext()
-            .getExternalContext().getResponse();
+    /**
+     * @return false if there was an error redirecting to the target location
+     */
+    private boolean redirectTo(ResourceTreeNode node) {
+        HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext().getExternalContext()
+            .getResponse();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-       
-        if (node.getData() instanceof Resource) {
-            String path = FacesContextUtility.getRequest().getRequestURI();
 
-            Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData())
-                .getId());
-            ResourceFacets facets = this.resourceTypeManager.getResourceFacets(resource.getResourceType()
-                .getId());
+        String path = "";
+        if (node.getData() instanceof Resource) {
+            path = FacesContextUtility.getRequest().getRequestURI();
+
+            Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData()).getId());
+            ResourceFacets facets = this.resourceTypeManager.getResourceFacets(resource.getResourceType().getId());
 
             String fallbackPath = FunctionTagLibrary.getDefaultResourceTabURL();
 
@@ -272,10 +266,11 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                     || (path.startsWith("/rhq/resource/events") && !facets.isEvent())) {
                     // This resource doesn't support those facets
                     path = fallbackPath;
-                } else if ((path.startsWith("/rhq/resource/configuration/view-map.xhtml") ||
-                    path.startsWith("/rhq/resource/configuration/edit-map.xhtml") ||
-                    path.startsWith("/rhq/resource/configuration/add-map.xhtml") ||
-                    path.startsWith("/rhq/resource/configuration/edit.xhtml") && facets.isConfiguration())) {
+                } else if ((path.startsWith("/rhq/resource/configuration/view-map.xhtml")
+                    || path.startsWith("/rhq/resource/configuration/edit-map.xhtml")
+                    || path.startsWith("/rhq/resource/configuration/add-map.xhtml") || path
+                    .startsWith("/rhq/resource/configuration/edit.xhtml")
+                    && facets.isConfiguration())) {
                     path = "/rhq/resource/configuration/view.xhtml";
 
                 } else if (!path.startsWith("/rhq/resource/content/view.xhtml")
@@ -296,12 +291,23 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 }
             }
 
-            response.sendRedirect(path + "?id=" + ((Resource) node.getData()).getId());
+            path += ("?id=" + ((Resource) node.getData()).getId());
         } else if (node.getData() instanceof AutoGroupComposite) {
             AutoGroupComposite ag = (AutoGroupComposite) node.getData();
-            String path = "/rhq/autogroup/monitor/graphs.xhtml?parent="
-                + ag.getParentResource().getId() + "&type=" + ag.getResourceType().getId();
-            response.sendRedirect(path);
+            path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId() + "&type="
+                + ag.getResourceType().getId();
+
         }
+
+        try {
+            response.sendRedirect(path);
+            return true; // all is well in the land
+        } catch (IOException ioe) {
+            FacesContext.getCurrentInstance().addMessage(
+                "leftNavTreeForm:leftNavTree",
+                new FacesMessage(FacesMessage.SEVERITY_WARN, "Unable to browse to selected resource view: "
+                    + ioe.getMessage(), null));
+        }
+        return false; // IO errors from redirect
     }
 }

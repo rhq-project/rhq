@@ -10,62 +10,63 @@
 
 <body>
 
-    <rich:panel header="Resource Selection">
-        <h:panelGrid columns="3" >
-            <h:outputText value="Select mode:" style="width: 200px;" />
-            <h:selectOneMenu id="resMode" value="#{operationsBean.resMode}">
-                <f:selectItem itemValue="fixed" itemLabel="Resource ID"/>
-                <f:selectItem itemValue="deferred" itemLabel="Path to resource"/>
+        <h:panelGrid columns="2">
+            <h:outputText value="Resource Selection Mode:" style="width: 150px;" />
+            <h:selectOneMenu value="#{operationsBean.selectionMode}" >
+                <f:selectItem itemValue="none" itemLabel="Select..." />
+                <f:selectItems value="#{operationsBean.selectionModeOptions}" />
             </h:selectOneMenu>
-            <rich:spacer />
-        
-            <h:outputText value="Target resource:"/>
-            <h:inputText id="resourceId" title="Target Resource" value="#{operationsBean.resId}"/>
-            <a href="#"
-               onclick="window.open('/rhq/inventory/resourcePicker.xhtml?formId=customContentForm:selectResourceForm&amp;fieldId=resourceId', 'Pick a resource','width=800;height=500;scrollbars=yes,toolbar=no,resizable=yes,left=100,top=100'); return false;"
-               class="buttonmed">Pick</a>
-               
-            <h:commandButton id="resourceIdSubmit"
-                             value="Select"
-                             type="submit"
-                             action="#{operationsBean.selectResource}"
-                             styleClass="buttonmed" />
-        </h:panelGrid>
-    </rich:panel>
-
-    <rich:panel rendered="#{not empty operationsBean.operationIds}" header="Operations under '#{operationsBean.resourceName}'">
-        <h:panelGrid columns="3" >
-            <h:outputText value="Select operation:" style="width: 200px;" />
-            <h:selectOneMenu id="selectOperationMenu" value="#{operationsBean.operationId}">
-                <f:selectItems value="#{operationsBean.operationIds}"/>
+            
+            <h:outputText value="Resource ID:" rendered="#{operationsBean.selectionMode eq 'SPECIFIC'}" />
+            <h:panelGroup rendered="#{operationsBean.selectionMode eq 'SPECIFIC'}">
+                <h:inputText value="#{operationsBean.resourceId}" id="resourceId" />
+                <a href="#"
+                   onclick="window.open('/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;fieldId=customContentForm:resourceId', 'Pick a resource','width=800;height=500;scrollbars=yes,toolbar=no,resizable=yes,left=100,top=100'); return false;"
+                   class="buttonmed">Pick</a>
+            </h:panelGroup>
+            
+            <h:outputText value="Start Search From:" style="width: 200px;" rendered="#{operationsBean.selectionMode eq 'RELATIVE'}" />
+            <h:selectOneMenu value="#{operationsBean.ancestorTypeId}" rendered="#{operationsBean.selectionMode eq 'RELATIVE'}">
+                <f:selectItem itemValue="none" itemLabel="Select..." />
+                <f:selectItems value="#{operationsBean.ancestorTypeOptions}" />
             </h:selectOneMenu>
-            <rich:spacer />
-        
-            <h:commandButton id="opNameSubmit"
-                             value="Select"
-                             type="submit"
-                             action="#{operationsBean.selectOperation}"
-                             styleClass="buttonmed" />
+            
+            <h:outputText value="Then Filter By:" style="width: 200px;" rendered="#{operationsBean.selectionMode eq 'RELATIVE'}"/>
+            <h:panelGroup rendered="#{operationsBean.selectionMode eq 'RELATIVE'}">
+                <h:selectOneMenu value="#{operationsBean.descendantTypeId}">
+                    <f:selectItem itemValue="none" itemLabel="Select..." />
+                    <f:selectItems value="#{operationsBean.descendantTypeOptions}" />
+                </h:selectOneMenu>
+                <h:inputText value="#{operationsBean.descendantName}" id="nameFilter" 
+                             onfocus="if (this.value == 'Name (optional)') { this.value = ''; this.style.color = 'black'; } "
+                             onblur="if (this.value == '') { this.value = 'Name (optional)'; this.style.color = 'gray'; } "/>
+            </h:panelGroup>
+            
+            <h:outputText value="Operation Name:" rendered="#{!empty operationsBean.effectiveResourceTypeId}"/>
+            <h:selectOneMenu value="#{operationsBean.operationDefinitionId}" 
+                             rendered="#{!empty operationsBean.effectiveResourceTypeId}" >
+                <f:selectItem itemValue="none" itemLabel="Select..." />
+                <f:selectItems value="#{operationsBean.operationNameOptions}"/>
+            </h:selectOneMenu>
         </h:panelGrid>
-    </rich:panel>
+            
+        <h:panelGroup rendered="#{!empty operationsBean.operationDefinitionId and operationsBean.operationDefinitionId ne 'none'}">
+            <onc:config configurationDefinition="#{operationsBean.argumentsConfigurationDefinition}"
+                        configuration="#{operationsBean.argumentsConfiguration}"
+                        nullConfigurationDefinitionMessage="#{operationsBean.noParametersMessage}"
+                        nullConfigurationMessage="#{operationsBean.notInitializedMessage}"
+                        nullConfigurationStyle="InfoBlock"
+                        readOnly="false" />
+        </h:panelGroup>
 
-    <h:messages />
-    <rich:panel rendered="#{not empty operationsBean.operationId}" header="Operation details for '#{operationsBean.operationName}'">
-        <onc:config configurationDefinition="#{operationsBean.configurationDefinition}"
-                    configuration="#{operationsBean.configuration}"
-                    nullConfigurationDefinitionMessage="#{operationsBean.nullConfigurationDefinitionMessage}"
-                    nullConfigurationMessage="#{nullConfigurationMessage}"
-                    nullConfigurationStyle="InfoBlock"
-                    readOnly="false" />
-        <p/>
-        <ui:remove>
-        <h:commandButton id="opParamSubmit"
-                         value="Set"
-                         type="submit"
-                         action="#{operationsBean.useConfiguration}"
-                         styleClass="buttonmed" />
-        </ui:remove>
-    </rich:panel>
+        <script>
+            addWindowOnLoadEvent(function() {
+                var nameFilterElement = getElementCrossBrowser('customContentForm:nameFilter')
+                if (nameFilterElement.value == 'Name (optional)') {
+                    nameFilterElement.style.color = 'gray';
+                }
+            });
+        </script>
 
 <rich:modalPanel id="ResourcePicker">
     <h:outputLink>Hello World</h:outputLink>

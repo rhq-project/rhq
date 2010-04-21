@@ -50,7 +50,9 @@
                                ajaxSubmitSelection="true"
                                status="commonStatus"
                                icon="/images/icons/Platform_16.png"
-                               nodeFace="#{treeNode.data.class.simpleName}">
+                               nodeFace="#{treeNode.data.class.simpleName}"
+                               eventsQueue="groupTreeQueue"
+                               ignoreDupResponses="true">
 
                         <rich:recursiveTreeNodesAdaptor roots="#{ResourceGroupTreeModelUIBean.roots}"
                                                         var="groupTreeItem"

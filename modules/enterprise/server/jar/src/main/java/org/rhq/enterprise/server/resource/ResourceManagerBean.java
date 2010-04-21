@@ -309,6 +309,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return toBeDeletedResourceIds;
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Integer> getResourceDescendantsByTypeAndName(Subject user, int resourceId, Integer resourceTypeId,
+        String name) {
+        Query descendantQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME);
+        descendantQuery.setParameter("resourceId", resourceId);
+        descendantQuery.setParameter("resourceTypeId", resourceTypeId);
+        descendantQuery.setParameter("name", name);
+        List<Integer> descendants = descendantQuery.getResultList();
+        return descendants;
+    }
+
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void deleteSingleResourceInNewTransaction(Subject user, int resourceId) {
         if (!authorizationManager.isOverlord(user)) {

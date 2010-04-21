@@ -19,8 +19,11 @@
 package org.rhq.enterprise.server.core.jaas;
 
 import java.security.acl.Group;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import javax.naming.Context;
@@ -36,6 +39,14 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.security.SimpleGroup;
 import org.jboss.security.auth.spi.UsernamePasswordLoginModule;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.group.LdapGroup;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.resource.group.LdapGroupManager;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 /**
@@ -190,7 +201,45 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
                 ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, inputPassword);
                 ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
 
+                //if successful then verified that user and pw are valid ldap credentials
                 ctx.reconnect(null);
+
+                //if group auth enabled and user acct already exists then insert authorization check 
+                String groupFilter = (String) options.get("GroupFilter");
+                String groupMember = (String) options.get("GroupMemberFilter");
+                SubjectManagerLocal sManager = LookupUtil.getSubjectManager();
+                Subject ldapSubject = sManager.getSubjectByName(getUsername());
+
+                //if (user id already exists) && (groupFilter defined) && (groupMember defined)
+                if (ldapSubject != null && ((groupFilter != null) && !groupFilter.trim().isEmpty())
+                    && ((groupMember != null) && !groupMember.trim().isEmpty())) {
+                    //check authorized groups to see if this user is authorized via ldap
+                    //BUT still must always return true as authz is handled by RHQ if roles/groups correct
+
+                    //retrieve all ldap groups that this user is authorized for based on ldap group filter and group member settings
+                    Set<String> authorizedLdapGroups = LdapGroupManager.getInstance().findAvailableGroupsFor(userName);
+                    RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+
+                    //find all currently mapped ldap groups
+                    PageList<LdapGroup> allCurrentLdapGroupsRegistered = roleManager.findLdapGroups(PageControl
+                        .getUnlimitedInstance());
+
+                    //find all roles for currently mapped ldap groups.
+                    //empty current user from all groups -synch
+                    for (LdapGroup gp : allCurrentLdapGroupsRegistered) {
+                        if (gp.getRole() != null) {
+                            gp.getRole().removeSubject(ldapSubject);
+                        }
+                    }
+                    if (authorizedLdapGroups.isEmpty()) {
+                        return true; //bailing out as now correctly authorized correctly.
+                    }
+
+                    //else add this subject back to all AuthoriziedLdapGroups
+                    //lookup all roles that map to the authorizedLdapGroup names
+                    List authorizedList = new ArrayList(authorizedLdapGroups);
+                    roleManager.assignRolesToLdapSubject(ldapSubject.getId(), authorizedList);
+                }
                 return true;
             }
 

@@ -100,6 +100,20 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         return new PageList<LdapGroup>(role.getLdapGroups(), role.getLdapGroups().size(), pageControl);
     }
 
+    public PageList<LdapGroup> findLdapGroups(PageControl pc) {
+
+        pc.initDefaultOrderingField("g.name");
+
+        String queryName = LdapGroup.QUERY_FIND_ALL;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+
+        long count = (Long) queryCount.getSingleResult();
+        //        List<Role> roles = query.getResultList();
+        List<LdapGroup> groups = query.getResultList();
+        return new PageList<LdapGroup>(groups, (int) count, pc);
+    }
+
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRoles(PageControl)
      */

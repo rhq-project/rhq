@@ -42,6 +42,9 @@ function testDeployment() {
       return;
    }
    
+   var v1 = "1.0";
+   var v2 = "2.0";
+
    // delete the test bundle if it exists
    var bc = new BundleCriteria();
    bc.addFilterName( bundleName );
@@ -58,12 +61,11 @@ function testDeployment() {
    var recipe = scriptUtil.getFileString("./src/test/resources/test-ant-bundle-v1.xml"); 
 
    // create bundleVersion 1.0
-   var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, "my fake bundle version", "1.0", recipe);
+   var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, "my fake bundle version", v1, recipe);
 
    // add the single bundleFile, the test war file
    var fileBytes = scriptUtil.getFileBytes("./src/test/resources/test-ant-bundle-v1.zip");
-   var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "test-ant-bundle-v1.zip",
-         "1.0", null, fileBytes);
+   var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "test-ant-bundle-v1.zip", v1, null, fileBytes);
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();
@@ -71,15 +73,39 @@ function testDeployment() {
    config.put( new PropertySimple("https.port", "8443") );
 
    // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Test Ant Bundle Deployment", "my fakse bundle deployment", config);
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Test Ant Bundle Deployment", "my fake bundle deployment", "/tmp/antbundletest", config);
 
    // Find a target platform
    var rc = new ResourceCriteria();
    rc.addFilterResourceTypeName("in"); // wINdows, lINux
-   var winPlatforms = ResourceManager.findResourcesByCriteria(rc);
-   var platformId = winPlatforms.get(0).getId();
+   var platforms = ResourceManager.findResourcesByCriteria(rc);
+   var platformId = platforms.get(0).getId();
    
    var bundleScheduleResponse = BundleManager.scheduleBundleResourceDeployment(testDeployment.getId(), platformId);
+   
+   //
+   // UPGRADE IT NOW
+   //
+   
+   // define the recipe for bundleVersion 2.0
+   recipe = scriptUtil.getFileString("./src/test/resources/test-ant-bundle-v2.xml"); 
+
+   // create bundleVersion 2.0
+   testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, "my fake bundle version", v2, recipe);
+
+   // add the second bundleFile using the ViaURL API
+   var fileUrl = new java.io.File("./src/test/resources/test-ant-bundle-v2.zip").toURI().toURL();
+   bundleFile = BundleManager.addBundleFileViaURL(testBundleVersion.getId(), "test-ant-bundle-v2.zip", v2, null, fileUrl);
+
+   // create a deployment using the a different config as before
+   // create the config, setting the required properties from the recipe
+   var config2 = new Configuration();
+   config2.put( new PropertySimple("http.port", "9090") );
+   config2.put( new PropertySimple("https.port", "9443") );
+   testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Test Ant Bundle Deployment 2", "my fake bundle deployment 2", "/tmp/antbundletest", config2);
+
+   // deploy to the same platform as before
+   var bundleScheduleResponse = BundleManager.scheduleBundleResourceDeployment(testDeployment.getId(), platformId);   
 }
 
 function getBundleType() {

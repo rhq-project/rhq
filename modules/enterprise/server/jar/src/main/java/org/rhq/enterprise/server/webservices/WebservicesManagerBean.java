@@ -331,6 +331,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
             .addBundleFileViaByteArray(subject, bundleVersionId, name, version, architecture, fileBytes);
     }
 
+    public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
+        Architecture architecture, URL url) throws Exception {
+        return bundleManager.addBundleFileViaURL(subject, bundleVersionId, name, version, architecture, url);
+    }
+
     public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
         int packageVersionId) throws Exception {
         return bundleManager.addBundleFileViaPackageVersion(subject, bundleVersionId, name, packageVersionId);

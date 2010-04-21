@@ -32,6 +32,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
@@ -45,14 +47,23 @@ import org.rhq.bundle.ant.task.DeployTask;
 import org.rhq.bundle.ant.task.InputPropertyTask;
 
 /**
+ * This object enables you to invoke an Ant script within the running VM. You can fully run the script
+ * or you can ask that the script just be parsed but no tasks execute.
+ * 
  * @author John Mazzitelli
  * @author Ian Springer
  */
 public class AntLauncher {
+    // system property that should always be available to ant scripts - its the location where the deployment should be installed
     public static final String DEPLOY_DIR_PROP = "rhq.deploy.dir";
+
+    // system property that should always be available to ant scripts - its ID of the bundle deployment
+    public static final String DEPLOY_ID_PROP = "rhq.deploy.id";
 
     // "out of box" we will provide the antcontrib optional tasks
     private static final String ANTCONTRIB_ANT_TASKS = "net/sf/antcontrib/antcontrib.properties";
+
+    private final Log log = LogFactory.getLog(AntLauncher.class);
 
     /**
      * Launches Ant and parses the given build file and optionally executes it.
@@ -152,28 +163,44 @@ public class AntLauncher {
 
             validateAndPreprocess(project);
 
-            System.out.println("==================== PARSED BUNDLE ANT BUILD FILE ====================");
-            System.out.println(" Bundle Name: " + project.getBundleName());
-            System.out.println(" Bundle Version: " + project.getBundleVersion());
-            System.out.println(" Bundle Description: " + project.getBundleDescription());
-            System.out.println(" Deployment Configuration: " + project.getConfiguration().toString(true));
-            System.out.println("======================================================================");
+            log.debug("==================== PARSED BUNDLE ANT BUILD FILE ====================");
+            log.debug(" Bundle Name: " + project.getBundleName());
+            log.debug(" Bundle Version: " + project.getBundleVersion());
+            log.debug(" Bundle Description: " + project.getBundleDescription());
+            log.debug(" Deployment Configuration: " + project.getConfiguration().toString(true));
+            log.debug("======================================================================");
 
             if (execute) {
                 // parse it again, this time, allowing the implicit target to be executed
                 allOrNothingTarget.doNothing = false;
                 helper.parse(project, buildFile);
 
+                // make sure the requires system properties are defined and valid
                 String deployDir = properties.getProperty(DEPLOY_DIR_PROP);
                 if (deployDir == null) {
-                    throw new BuildException("Required property '" + DEPLOY_DIR_PROP + "' was not specified.");
+                    throw new BuildException("Required property [" + DEPLOY_DIR_PROP + "] was not specified.");
                 }
                 File deployDirFile = new File(deployDir);
                 if (!deployDirFile.isAbsolute()) {
-                    throw new BuildException("Value of property '" + DEPLOY_DIR_PROP + "' (" + deployDirFile
+                    throw new BuildException("Value of property [" + DEPLOY_DIR_PROP + "] (" + deployDirFile
                         + ") is not an absolute path.");
                 }
                 project.setDeployDir(deployDirFile);
+
+                String deploymentIdStr = properties.getProperty(DEPLOY_ID_PROP);
+                if (deploymentIdStr == null) {
+                    throw new BuildException("Required property [" + DEPLOY_ID_PROP + "] was not specified.");
+                }
+                int deploymentId;
+                try {
+                    deploymentId = Integer.parseInt(deploymentIdStr);
+                } catch (Exception e) {
+                    throw new BuildException("Value of property [" + DEPLOY_ID_PROP + "] (" + deploymentIdStr
+                        + ") is not valid.", e);
+                }
+                project.setDeploymentId(deploymentId);
+
+                // now we can execute the ant script
                 project.executeTarget((targetName == null) ? project.getDefaultTarget() : targetName);
             }
 

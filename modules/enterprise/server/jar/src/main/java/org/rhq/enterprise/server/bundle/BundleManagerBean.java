@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.bundle;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -398,6 +399,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         Architecture architecture, byte[] fileBytes) throws Exception {
 
         return addBundleFile(subject, bundleVersionId, name, version, architecture, new ByteArrayInputStream(fileBytes));
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
+        Architecture architecture, URL url) throws Exception {
+
+        return addBundleFile(subject, bundleVersionId, name, version, architecture, url.openStream());
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

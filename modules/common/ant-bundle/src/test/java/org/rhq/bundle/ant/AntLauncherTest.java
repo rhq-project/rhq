@@ -27,14 +27,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-import org.rhq.core.util.file.FileUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.util.file.FileUtil;
 
 @Test
 public class AntLauncherTest {
@@ -55,10 +55,10 @@ public class AntLauncherTest {
 
     public void testParse() throws Exception {
         AntLauncher ant = new AntLauncher();
-        
+
         Properties inputProps = createInputProperties("/test-bundle-v1-input.properties");
-        BundleAntProject project = ant.startAnt(getBuildXml("test-bundle-v1.xml"), "unnecessary-target",
-                null, inputProps, this.logFile, true, false);
+        BundleAntProject project = ant.startAnt(getBuildXml("test-bundle-v1.xml"), "unnecessary-target", null,
+            inputProps, this.logFile, true, false);
         assert project != null;
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
@@ -74,11 +74,11 @@ public class AntLauncherTest {
     public void testInstall() throws Exception {
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
         FileUtil.purge(DEPLOY_DIR, true);
-        
+
         AntLauncher ant = new AntLauncher();
         Properties inputProps = createInputProperties("/test-bundle-v1-input.properties");
         BundleAntProject project = ant.startAnt(getBuildXml("test-bundle-v1.xml"), "deploy", null, inputProps,
-                this.logFile, true, true);
+            this.logFile, true, true);
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
         assert bundleFiles.size() == 2 : bundleFiles;
@@ -103,7 +103,7 @@ public class AntLauncherTest {
         AntLauncher ant = new AntLauncher();
         Properties inputProps = createInputProperties("/test-bundle-v2-input.properties");
         BundleAntProject project = ant.startAnt(getBuildXml("test-bundle-v2.xml"), "deploy", null, inputProps,
-                this.logFile, true, true);
+            this.logFile, true, true);
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
         assert bundleFiles.size() == 2 : bundleFiles;
@@ -124,12 +124,13 @@ public class AntLauncherTest {
     private Properties createInputProperties(String resourcePath) throws IOException {
         Properties inputProps = new Properties();
         inputProps.setProperty(AntLauncher.DEPLOY_DIR_PROP, DEPLOY_DIR.getPath());
+        inputProps.setProperty(AntLauncher.DEPLOY_ID_PROP, "100");
         InputStream inputStream = this.getClass().getResourceAsStream(resourcePath);
         try {
             inputProps.load(inputStream);
         } finally {
             inputStream.close();
-        }        
+        }
         return inputProps;
     }
 

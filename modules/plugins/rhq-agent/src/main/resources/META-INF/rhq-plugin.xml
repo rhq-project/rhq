@@ -613,8 +613,6 @@
             </c:simple-property>
          </c:group>
       </resource-configuration>
-      
-      <support/>
 
       <server name="RHQ Agent JVM"
               description="JVM of the Management Agent"

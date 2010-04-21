@@ -555,15 +555,7 @@
          <xs:element ref="rhq:event" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:content" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element name="resource-configuration" type="config:configuration" minOccurs="0"/>
-         <xs:element name="support" type="rhq:support" minOccurs="0" maxOccurs="1">
-            <xs:annotation>
-               <xs:documentation>
-                  Declares that the resource component implements the SupportFacet.
-               </xs:documentation>
-            </xs:annotation>   
-         </xs:element>
          <xs:element ref="rhq:help" minOccurs="0" maxOccurs="1" />
-         
       </xs:sequence>
       <xs:attribute name="name" use="required" type="xs:string"/>
       <xs:attribute name="singleton" use="optional" type="xs:boolean" default="false">
@@ -645,8 +637,6 @@
       <xs:attribute name="type" type="xs:string"/>
    </xs:complexType>
 
-   <xs:complexType name="support">
-   </xs:complexType>
 
    <!-- PLATFORM -->
 

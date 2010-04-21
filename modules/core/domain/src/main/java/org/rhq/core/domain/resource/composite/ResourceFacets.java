@@ -67,7 +67,7 @@ public class ResourceFacets implements Serializable {
     }
 
     public ResourceFacets(int resourceTypeId, Number measurement, Number event, Number pluginConfiguration,
-        Number configuration, Number operation, Number content, Number callTime, boolean support) {
+        Number configuration, Number operation, Number content, Number callTime, Number support) {
         this.resourceTypeId = resourceTypeId;
         this.measurement = measurement.intValue() != 0;
         this.event = event.intValue() != 0;
@@ -76,7 +76,7 @@ public class ResourceFacets implements Serializable {
         this.operation = operation.intValue() != 0;
         this.content = content.intValue() != 0;
         this.callTime = callTime.intValue() != 0;
-        this.support = support;
+        this.support = support.intValue() != 0;
         initEnum();
     }
 

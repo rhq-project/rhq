@@ -22,6 +22,10 @@
  */
 package org.rhq.core.domain.resource;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -173,7 +177,7 @@ import org.rhq.core.domain.util.Summary;
         + "         (SELECT COUNT(operationDef) FROM rt.operationDefinitions operationDef)," // operation
         + "         (SELECT COUNT(packageType) FROM rt.packageTypes packageType)," // content
         + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)," // calltime
-        + "         rt.supportsSupportFacet" // support 
+        + "         (SELECT COUNT(propDef) FROM rt.pluginConfigurationDefinition pluginConfig JOIN pluginConfig.propertyDefinitions propDef WHERE propDef.name = 'snapshotLogEnabled')" // support 
         + "       ) " //
         + "  FROM ResourceType rt " //
         + " WHERE ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )"),
@@ -301,9 +305,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @Column(name = "SUPPORTS_MANUAL_ADD", nullable = false)
     private boolean supportsManualAdd;
-
-    @Column(name = "SUPPORTS_SUPPORT_FACET", nullable = false)
-    private boolean supportsSupportFacet;
 
     @Column(name = "SINGLETON", nullable = false)
     private boolean singleton;
@@ -511,14 +512,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setSupportsManualAdd(boolean supportsManualAdd) {
         this.supportsManualAdd = supportsManualAdd;
-    }
-
-    public boolean isSupportsSupportFacet() {
-        return supportsSupportFacet;
-    }
-
-    public void setSupportsSupportFacet(boolean supportsSupportFacet) {
-        this.supportsSupportFacet = supportsSupportFacet;
     }
 
     public String getDescription() {
@@ -817,86 +810,87 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
             + this.plugin + /*", parents=" + parents +*/"]";
     }
 
-    /*
-    TODO: GWT
-        public void writeExternal(ObjectOutput out) throws IOException {
-            ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
-            out.writeChar(strategy.id());
 
-            if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
-                writeExternalRemote(out);
-            } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
-                EntitySerializer.writeExternalRemote(this, out);
-            } else {
-                writeExternalAgent(out);
-            }
-        }
+/*
+TODO: GWT
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+        out.writeChar(strategy.id());
 
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            char c = in.readChar();
-            if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
-                readExternalRemote(in);
-            } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
-                EntitySerializer.readExternalRemote(this, in);
-            } else {
-                readExternalAgent(in);
-            }
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
+            writeExternalRemote(out);
+        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
+            EntitySerializer.writeExternalRemote(this, out);
+        } else {
+            writeExternalAgent(out);
         }
+    }
 
-        public void writeExternalAgent(ObjectOutput out) throws IOException {
-            out.writeUTF(this.name);
-            out.writeUTF(this.plugin);
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        char c = in.readChar();
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
+            readExternalRemote(in);
+        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
+            EntitySerializer.readExternalRemote(this, in);
+        } else {
+            readExternalAgent(in);
         }
+    }
 
-        public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
-            this.name = in.readUTF();
-            this.plugin = in.readUTF();
-        }
+    public void writeExternalAgent(ObjectOutput out) throws IOException {
+        out.writeUTF(this.name);
+        out.writeUTF(this.plugin);
+    }
 
-        public void writeExternalRemote(ObjectOutput out) throws IOException {
-            out.writeInt(this.id);
-            out.writeUTF(this.name);
-            out.writeUTF((null == this.description) ? "" : this.description);
-            out.writeObject(this.category);
-            out.writeObject(this.creationDataType);
-            out.writeObject(this.createDeletePolicy);
-            out.writeBoolean(this.supportsManualAdd);
-            out.writeBoolean(this.singleton);
-            out.writeUTF(this.plugin);
-            out.writeLong(this.ctime);
-            out.writeLong(this.mtime);
-            out.writeObject(this.subCategory);
-            out.writeObject(this.bundleType);
-            out.writeObject((null == childResourceTypes) ? null : new LinkedHashSet<ResourceType>(childResourceTypes));
-            out.writeObject((null == parentResourceTypes) ? null : new LinkedHashSet<ResourceType>(parentResourceTypes));
-            out.writeObject(pluginConfigurationDefinition);
-            out.writeObject(resourceConfigurationDefinition);
-            out.writeObject((null == metricDefinitions) ? null
-                : new LinkedHashSet<MeasurementDefinition>(metricDefinitions));
-            out.writeObject((null == eventDefinitions) ? null : new LinkedHashSet<EventDefinition>(eventDefinitions));
-            out.writeObject((null == operationDefinitions) ? null : new LinkedHashSet<OperationDefinition>(
-                operationDefinitions));
-            out.writeObject((null == processScans) ? null : new LinkedHashSet<ProcessScan>(processScans));
-            out.writeObject((null == packageTypes) ? null : new LinkedHashSet<PackageType>(packageTypes));
-            out.writeObject((null == subCategories) ? null : new LinkedHashSet<ResourceSubCategory>(subCategories));
-            out.writeObject((null == resources) ? null : new LinkedHashSet<Resource>(resources));
-            out.writeObject((null == productVersions) ? null : new LinkedHashSet<ProductVersion>(productVersions));
-            // not supplied by remote: helpText
-        }
+    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
+        this.name = in.readUTF();
+        this.plugin = in.readUTF();
+    }
 
-        public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-            this.id = in.readInt();
-            this.name = in.readUTF();
-            this.description = in.readUTF();
-            this.category = (ResourceCategory) in.readObject();
-            this.creationDataType = (ResourceCreationDataType) in.readObject();
-            this.createDeletePolicy = (CreateDeletePolicy) in.readObject();
-            this.supportsManualAdd = in.readBoolean();
-            this.singleton = in.readBoolean();
-            this.plugin = in.readUTF();
-            this.ctime = in.readLong();
-            this.mtime = in.readLong();
-        }
-    */
+    public void writeExternalRemote(ObjectOutput out) throws IOException {
+        out.writeInt(this.id);
+        out.writeUTF(this.name);
+        out.writeUTF((null == this.description) ? "" : this.description);
+        out.writeObject(this.category);
+        out.writeObject(this.creationDataType);
+        out.writeObject(this.createDeletePolicy);
+        out.writeBoolean(this.supportsManualAdd);
+        out.writeBoolean(this.singleton);
+        out.writeUTF(this.plugin);
+        out.writeLong(this.ctime);
+        out.writeLong(this.mtime);
+        out.writeObject(this.subCategory);
+        out.writeObject(this.bundleType);
+        out.writeObject((null == childResourceTypes) ? null : new LinkedHashSet<ResourceType>(childResourceTypes));
+        out.writeObject((null == parentResourceTypes) ? null : new LinkedHashSet<ResourceType>(parentResourceTypes));
+        out.writeObject(pluginConfigurationDefinition);
+        out.writeObject(resourceConfigurationDefinition);
+        out.writeObject((null == metricDefinitions) ? null
+            : new LinkedHashSet<MeasurementDefinition>(metricDefinitions));
+        out.writeObject((null == eventDefinitions) ? null : new LinkedHashSet<EventDefinition>(eventDefinitions));
+        out.writeObject((null == operationDefinitions) ? null : new LinkedHashSet<OperationDefinition>(
+            operationDefinitions));
+        out.writeObject((null == processScans) ? null : new LinkedHashSet<ProcessScan>(processScans));
+        out.writeObject((null == packageTypes) ? null : new LinkedHashSet<PackageType>(packageTypes));
+        out.writeObject((null == subCategories) ? null : new LinkedHashSet<ResourceSubCategory>(subCategories));
+        out.writeObject((null == resources) ? null : new LinkedHashSet<Resource>(resources));
+        out.writeObject((null == productVersions) ? null : new LinkedHashSet<ProductVersion>(productVersions));
+        // not supplied by remote: helpText
+    }
+
+    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
+        this.id = in.readInt();
+        this.name = in.readUTF();
+        this.description = in.readUTF();
+        this.category = (ResourceCategory) in.readObject();
+        this.creationDataType = (ResourceCreationDataType) in.readObject();
+        this.createDeletePolicy = (CreateDeletePolicy) in.readObject();
+        this.supportsManualAdd = in.readBoolean();
+        this.singleton = in.readBoolean();
+        this.plugin = in.readUTF();
+        this.ctime = in.readLong();
+        this.mtime = in.readLong();
+    }
+*/
 
 }

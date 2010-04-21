@@ -13,7 +13,6 @@
         <column name="CREATE_DELETE_POLICY" type="VARCHAR2" size="16" required="true"/>
         <column name="SINGLETON" type="BOOLEAN" required="true"/>
         <column name="SUPPORTS_MANUAL_ADD" type="BOOLEAN" required="true"/>
-        <column name="SUPPORTS_SUPPORT_FACET" type="BOOLEAN" required="true"/>        
         <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
         <column name="PLUGIN" type="VARCHAR2" size="100"/>
         <column name="CTIME" type="LONG"/>

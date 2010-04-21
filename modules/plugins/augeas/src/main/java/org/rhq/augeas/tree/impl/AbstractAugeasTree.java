@@ -165,7 +165,7 @@ public abstract class AbstractAugeasTree implements AugeasTree {
 
     public String summarizeAugeasError() {
         String nodePrefix = "/augeas/files";
-        List<String> str = moduleConfig.getIncludedGlobs();
+        List<String> str = moduleConfig.getConfigFiles();
         StringBuilder builder = new StringBuilder();
 
         for (String path : str) {

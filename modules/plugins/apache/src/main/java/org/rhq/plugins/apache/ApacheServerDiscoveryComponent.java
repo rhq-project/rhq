@@ -159,6 +159,10 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 
                 if (vhostsGlobInclude != null) {
                     pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, vhostsGlobInclude));
+                }else
+                {
+                    if (serverConfigFile.exists())
+                    pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, serverConfigFile.getParent()+File.separator+"*"));
                 }
                 
                 discoveredResources.add(createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),

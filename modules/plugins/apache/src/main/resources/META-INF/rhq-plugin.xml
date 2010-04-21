@@ -72,14 +72,17 @@
 '>
 
 <!ENTITY DirectoryIndex '
-    <c:simple-property name="DirectoryIndex" required="false" default="index.html">
+    <c:list-property name="DirectoryIndex" required="false">
         <c:description>
             Sets the list of resources to look for, when the client requests an index of the directory by specifying a / at the end of the directory name.
             Note that the documents do not need to be relative to the directory.
         </c:description>
-    </c:simple-property>
-'>
-
+        <c:map-property name="DirectoryIndex">
+            <c:simple-property name="host"/>
+            <c:simple-property name="_index"  required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+        </c:map-property>
+    </c:list-property>
+'>   
 <!ENTITY DocumentRoot '
     <c:simple-property name="DocumentRoot">
         <c:description>
@@ -174,9 +177,9 @@
         <c:map-property name="Options">
             <c:simple-property name="Mode">
                 <c:property-options>
-                    <c:option value="" name="Set"/>
-                    <c:option value="+" name="Add"/>
-                    <c:option value="-" name="Remove"/>
+                    <c:option value="Set" default="true"/>
+                    <c:option value="Add"/>
+                    <c:option value="Remove"/>
                 </c:property-options>
             </c:simple-property>
             <c:simple-property name="Option">

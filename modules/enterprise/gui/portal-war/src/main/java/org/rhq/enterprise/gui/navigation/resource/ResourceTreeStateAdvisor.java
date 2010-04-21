@@ -75,19 +75,23 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(key);
             ResourceTreeNode selectedNode = (ResourceTreeNode) tree.getRowData(state.getSelectedNode());
 
-            selectedNode = selectedNode.getParent();
-            while (selectedNode != null) {
-                if (node.equals(selectedNode)) {
+            ResourceTreeNode traverseCheckNode = selectedNode.getParent();
+            while (traverseCheckNode != null) {
+                if (node.equals(traverseCheckNode)) {
                     closingParent = true;
                     break;
                 }
-                selectedNode = selectedNode.getParent();
+                traverseCheckNode = traverseCheckNode.getParent();
             }
 
             if (closingParent) {
-                state.setSelected(key);
-                redirectTo(node); // node state irrelevant if redirect was successful
-            }
+                if (redirectTo(node)) {
+                    state.setSelected(key);
+                } else if (!redirectTo(selectedNode)) {
+                    FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree", 
+                        new FacesMessage(FacesMessage.SEVERITY_WARN, "Failed to re-expand node that shouldn't be collapsed.", null));                    
+                }
+            } 
 
         }
     }
@@ -146,41 +150,44 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
     public Boolean adviseNodeOpened(UITree tree) {
         TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
-        if (key != null) {
-
-            ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(key);
-            if (node.getParent() == null) {
-                return true;
-            }
-
-            TreeState state = (TreeState) tree.getComponentState();
-            TreeRowKey<?> selectedKey = state.getSelectedNode();
-            int selectedId = 0;
-            if (selectedKey == null) {
-                String typeId = FacesContextUtility.getOptionalRequestParameter("type");
-                this.selecteAGTypeId = ((typeId == null || typeId.length() == 0) ? 0 : Integer.parseInt(typeId));
-
-                if (typeId != null) {
-                    String id = FacesContextUtility.getOptionalRequestParameter("parent");
-                    if (id != null && id.length() != 0) {
-                        selectedId = Integer.parseInt(id);
-                    }
-
-                } else {
-                    String id = FacesContextUtility.getOptionalRequestParameter("id");
-                    if (id != null && id.length() != 0) {
-                        selectedId = Integer.parseInt(id);
-                    }
-                }
-
-                if (preopen((ResourceTreeNode) tree.getRowData(key), selectedId, this.selecteAGTypeId)) {
-                    return true;
-                }
-            }
-
-            return state.isExpanded(key);
+        
+        //don't bother continuing if there's nothing to check against...
+        if (key == null) {
+            return null;
         }
-        return null;
+
+        ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(key);
+        
+        //always expand root
+        if (node.getParent() == null) {
+            return true;
+        }
+
+        //make sure that the node refered to in the request parameters is visible
+        int selectedId = 0;
+        String typeId = FacesContextUtility.getOptionalRequestParameter("type");
+        this.selecteAGTypeId = ((typeId == null || typeId.length() == 0) ? 0 : Integer.parseInt(typeId));
+
+        if (typeId != null) {
+            String id = FacesContextUtility.getOptionalRequestParameter("parent");
+            if (id != null && id.length() != 0) {
+                selectedId = Integer.parseInt(id);
+            }
+
+        } else {
+            String id = FacesContextUtility.getOptionalRequestParameter("id");
+            if (id != null && id.length() != 0) {
+                selectedId = Integer.parseInt(id);
+            }
+        }
+
+        if (preopen((ResourceTreeNode) tree.getRowData(key), selectedId, this.selecteAGTypeId)) {
+            return true;
+        }
+        
+        //ok, in this case return whatever the last open state was
+        TreeState state = (TreeState) tree.getComponentState();
+        return state.isExpanded(key);
     }
 
     private boolean preopen(ResourceTreeNode resourceTreeNode, int selectedResourceId, int selectedAGTypeId) {
@@ -294,9 +301,16 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             path += ("?id=" + ((Resource) node.getData()).getId());
         } else if (node.getData() instanceof AutoGroupComposite) {
             AutoGroupComposite ag = (AutoGroupComposite) node.getData();
-            path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId() + "&type="
-                + ag.getResourceType().getId();
-
+            if (ag.getResourceType() == null) {
+                //XXX this is a temporary measure. The subcategories will get the content page in the end.
+                FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree", 
+                    new FacesMessage(FacesMessage.SEVERITY_WARN, "No subcategory page exists.", null));
+                
+                return false;
+            } else {
+                path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId() + "&type="
+                    + ag.getResourceType().getId();
+            }
         }
 
         try {

@@ -310,7 +310,12 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public ContentSourceType getContentSourceType(String name) {
         Query q = entityManager.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME_WITH_CONFIG_DEF);
         q.setParameter("name", name);
-        ContentSourceType type = (ContentSourceType) q.getSingleResult();
+        ContentSourceType type = null;
+        try {
+            type = (ContentSourceType) q.getSingleResult();
+        } catch (NoResultException e) {
+            type = null;
+        }
         return type;
     }
 

@@ -90,7 +90,7 @@ public class ResourceTreeModelUIBean {
 
         start = System.currentTimeMillis();
         monitorId = HibernatePerformanceMonitor.get().start();
-        rootNode = load(rootResource.getId(), resources, false);
+        rootNode = load(rootResource.getId(), resources, true);
         end = System.currentTimeMillis();
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree tree construction");
         log.debug("Constructed tree in " + (end - start));
@@ -171,7 +171,7 @@ public class ResourceTreeModelUIBean {
                         agc = new AutoGroupComposite(avail, parentResource, (ResourceType) rsc, entries.size(),
                             isDupResourceTypeName);
                     }
-                    ResourceTreeNode node = new ResourceTreeNode(agc);
+                    ResourceTreeNode node = new ResourceTreeNode(agc, parentNode);
                     load(node, alwaysGroup);
 
                     if (!recursivelyLocked(node)) {
@@ -180,7 +180,7 @@ public class ResourceTreeModelUIBean {
                 } else {
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
-                        ResourceTreeNode node = new ResourceTreeNode(res);
+                        ResourceTreeNode node = new ResourceTreeNode(res, parentNode);
 
                         load(node, alwaysGroup);
                         if (!recursivelyLocked(node)) {
@@ -259,7 +259,7 @@ public class ResourceTreeModelUIBean {
                         agc = new AutoGroupComposite(avail, compositeParent.getParentResource(), (ResourceType) rsc,
                             entries.size(), false);
                     }
-                    ResourceTreeNode node = new ResourceTreeNode(agc);
+                    ResourceTreeNode node = new ResourceTreeNode(agc, parentNode);
                     load(node, alwaysGroup);
                     if (!recursivelyLocked(node)) {
                         parentNode.getChildren().add(node);
@@ -267,7 +267,7 @@ public class ResourceTreeModelUIBean {
                 } else {
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
-                        ResourceTreeNode node = new ResourceTreeNode(res);
+                        ResourceTreeNode node = new ResourceTreeNode(res, parentNode);
                         load(node, alwaysGroup);
                         if (!recursivelyLocked(node)) {
                             parentNode.getChildren().add(node);

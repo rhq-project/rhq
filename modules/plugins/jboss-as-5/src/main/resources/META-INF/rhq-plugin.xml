@@ -940,7 +940,8 @@
             classLoader="instance"
             class="ApplicationServerComponent"
             discovery="ApplicationServerDiscoveryComponent"
-            description="JBoss Application Server (AS) or Enterprise Application Platform (EAP) 5.x">
+            description="JBoss Application Server (AS) or Enterprise Application Platform (EAP) 5.x"
+            supportsManualAdd="true">
 
         <subcategories>
             <subcategory name="Resources"

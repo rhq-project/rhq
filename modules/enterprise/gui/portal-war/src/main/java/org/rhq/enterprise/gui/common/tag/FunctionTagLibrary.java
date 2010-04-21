@@ -224,9 +224,9 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     /**
      * This method is akin to {@link #contextFragmentURL()} but produces a correct fragment
      * for the indicators chart action (/resource/common/monitor/visibility/IndicatorCharts.do).
-     * 
+     *
      * This legacy struts action expects a "ctype" parameter where the new UI uses "type".
-     * 
+     *
      * @return context fragment of the URL based on the current entity.
      */
     public static String contextFragmentURLForIndicatorsChart() {
@@ -247,9 +247,9 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
 
     /**
      * Elides given string using an ellipsis character.
-     * 
+     *
      * The mode is one of "left", "right", "middle" (case insensitive).
-     * 
+     *
      * @see #elideStringCustom(String, int, String, String)
      */
     public static String elideString(String str, int numChars, String mode) {
@@ -257,10 +257,10 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     }
 
     /**
-     * Elides given string using the specified ellipsis. 
+     * Elides given string using the specified ellipsis.
      * The mode is one of "left", "right", "middle" (case insensitive).
      * The resulting string has at most numChars characters.
-     * 
+     *
      * @param str the string to elide
      * @param numChars the length of the elided string
      * @param mode the elide mode
@@ -361,7 +361,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
             throw new IllegalArgumentException("No availability icon for size " + size);
         }
         if (type == null) {
-            return (size == 16) ? "/images/icons/availability_geay_16.png" : "/images/icons/availability_grey_24.png";
+            return (size == 16) ? "/images/icons/availability_grey_16.png" : "/images/icons/availability_grey_24.png";
         } else if (type == AvailabilityType.UP) {
             return (size == 16) ? "/images/icons/availability_green_16.png" : "/images/icons/availability_green_24.png";
         } else if (type == AvailabilityType.DOWN) {

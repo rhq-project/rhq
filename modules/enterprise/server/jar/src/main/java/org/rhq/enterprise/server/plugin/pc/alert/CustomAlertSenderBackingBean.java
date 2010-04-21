@@ -34,6 +34,8 @@ public class CustomAlertSenderBackingBean {
     /** Configuration from the per alert definition parameters */
     protected Configuration alertParameters;
     protected Subject webUser;
+    protected String context;
+    protected String contextId;
 
     public Configuration getAlertParameters() {
         return alertParameters;
@@ -51,17 +53,41 @@ public class CustomAlertSenderBackingBean {
         this.webUser = webUser;
     }
 
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
+    }
+
+    public String getContextId() {
+        return contextId;
+    }
+
+    public void setContextId(String contextId) {
+        this.contextId = contextId;
+    }
+
+    public void loadView() {
+    }
+
+    public void saveView() {
+    }
+
     /**
      * This method is called after constructing the bean and injecting the
      * #alertParameters
      */
-    public void internalInit() {}
+    public void internalInit() {
+    }
 
     /**
      * This method is called when the alert notification that uses this backing bean
      * is removed, so that the backing bean can do some cleanup work
      */
-    public void internalCleanup() {}
+    public void internalCleanup() {
+    }
 
     /**
      * Persist the passed configuration object. This can be a new object or one
@@ -72,7 +98,7 @@ public class CustomAlertSenderBackingBean {
      */
     protected Configuration persistConfiguration(Configuration config) {
 
-        if (config==null)
+        if (config == null)
             return null;
 
         ConfigurationManagerLocal mgr = LookupUtil.getConfigurationManager();
@@ -94,10 +120,9 @@ public class CustomAlertSenderBackingBean {
 
         PropertySimple prop = config.getSimple(propertyName);
         if (prop == null) {
-            prop = new PropertySimple(propertyName,value);
+            prop = new PropertySimple(propertyName, value);
             config.put(prop);
-        }
-        else {
+        } else {
             prop.setValue(value);
         }
         Configuration ret = persistConfiguration(config);
@@ -115,7 +140,7 @@ public class CustomAlertSenderBackingBean {
 
         Configuration ret = config;
         PropertySimple prop = config.getSimple(propertyName);
-        if (prop!=null) {
+        if (prop != null) {
             config.remove(propertyName);
             ret = persistConfiguration(config);
         }

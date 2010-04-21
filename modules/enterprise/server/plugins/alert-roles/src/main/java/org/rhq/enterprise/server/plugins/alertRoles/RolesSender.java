@@ -20,10 +20,6 @@ package org.rhq.enterprise.server.plugins.alertRoles;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.ResultState;
@@ -41,46 +37,77 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * later delivery by the system.
  *
  * @author Heiko W. Rupp
+ * @author Joseph Marques
  */
 public class RolesSender extends AlertSender {
 
-    private final Log log = LogFactory.getLog(RolesSender.class);
-
     @Override
     public SenderResult send(Alert alert) {
+        List<Integer> roleIds = getRoleIdsFromConfiguration();
+        if (roleIds == null) {
+            return new SenderResult(ResultState.FAILURE, "No roles defined");
+        }
 
-        SenderResult noRecipients = new SenderResult(ResultState.FAILURE, "No recipient roles defined");
+        List<String> emails = getRoleEmails(roleIds);
+        List<String> names = getRoleNames(roleIds);
+        return new SenderResult(ResultState.DEFERRED_EMAIL, "Sending to roles: " + names, emails);
+    }
 
-        PropertySimple rolesIdProp = alertParameters.getSimple("roleId");
-        if (rolesIdProp==null)
-            return noRecipients;
+    @Override
+    public String previewConfiguration() {
+        List<Integer> roleIds = getRoleIdsFromConfiguration();
+        if (roleIds == null) {
+            return "<empty>";
+        }
 
-        String rolesIds = rolesIdProp.getStringValue();
-        if (rolesIds==null)
-            return noRecipients;
+        List<String> names = getRoleNames(roleIds);
+        String nameString = names.toString();
+        return nameString.substring(1, nameString.length() - 1);
+    }
 
-        String[] roles = rolesIds.split(",");
-        if (roles.length==0)
-            return noRecipients;
-
-        List<String> emails = new ArrayList<String>();
+    private List<String> getRoleNames(List<Integer> roleIds) {
         RoleManagerLocal roleManager = LookupUtil.getRoleManager();
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        List<String> results = new ArrayList<String>();
+        for (Integer nextRoleId : roleIds) {
+            Role nextRole = roleManager.getRoleById(nextRoleId);
+            results.add(nextRole.getName());
+        }
 
-        for (String r: roles) {
+        return results;
+    }
 
-            Role role = roleManager.getRole(overlord,Integer.parseInt(r));
-            Set<Subject> subjects = role.getSubjects();
-            for (Subject subject : subjects) {
-                String email = subject.getEmailAddress();
-                if (email!=null)
-                    emails.add(email);
-                else
-                if (log.isDebugEnabled())
-                    log.debug("Subject " + subject.getId() + " has no email associated ");
+    private List<String> getRoleEmails(List<Integer> roleIds) {
+        RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+        List<String> results = new ArrayList<String>();
+        for (Integer nextRoleId : roleIds) {
+            Role nextRole = roleManager.getRoleById(nextRoleId);
+            for (Subject nextSubject : nextRole.getSubjects()) {
+                String nextEmail = nextSubject.getEmailAddress();
+                if (nextEmail != null) {
+                    results.add(nextEmail);
+                }
             }
         }
 
-        return new SenderResult(ResultState.DEFERRED_EMAIL,"Sending to roles " + rolesIds,emails);
+        return results;
+    }
+
+    private List<Integer> getRoleIdsFromConfiguration() {
+        PropertySimple roleIdProperty = alertParameters.getSimple("roleId");
+        if (roleIdProperty == null) {
+            return null;
+        }
+
+        String roleIdString = roleIdProperty.getStringValue();
+        if (roleIdString == null || roleIdString.trim().equals("")) {
+            return null;
+        }
+
+        String[] roleIds = roleIdString.split(",");
+        List<Integer> results = new ArrayList<Integer>(roleIds.length);
+        for (String nextRoleId : roleIds) {
+            results.add(Integer.parseInt(nextRoleId));
+        }
+        return results;
     }
 }

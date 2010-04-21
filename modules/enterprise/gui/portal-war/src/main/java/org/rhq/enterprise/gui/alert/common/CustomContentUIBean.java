@@ -27,28 +27,25 @@ import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.contexts.Context;
 import org.jboss.seam.contexts.Contexts;
 
-import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.framework.EnterpriseFacesContextUIBean;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 
 @Scope(ScopeType.EVENT)
 @Name("customContentUIBean")
-public class CustomContentUIBean {
-
-    @RequestParameter
-    private String senderName;
+public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
 
     @RequestParameter("nid")
-    private Integer notificationId;
+    private Integer alertNotificationId;
 
     @In
     private AlertNotificationManagerLocal alertNotificationManager;
 
-    @In("#{webUser.subject}")
-    private Subject subject;
-
     private String contentUrl;
+    private CustomAlertSenderBackingBean customBackingBean;
 
     public String getContentUrl() {
         return contentUrl;
@@ -56,19 +53,30 @@ public class CustomContentUIBean {
 
     @Create
     public void init() {
-        AlertSenderInfo info = alertNotificationManager.getAlertInfoForSender(this.senderName);
+        if (alertNotificationId == null) {
+            return;
+        }
+
+        AlertNotification activeNotification = alertNotificationManager.getAlertNotification(getSubject(),
+            alertNotificationId);
+        String senderName = activeNotification.getSenderName();
+
+        AlertSenderInfo info = alertNotificationManager.getAlertInfoForSender(senderName);
 
         if (info != null && info.getUiSnippetUrl() != null) {
             this.contentUrl = info.getUiSnippetUrl().toString();
+            //this.contentUrl = "rhq/custom/plugin/alert/" + senderName + "/" + info.getUiSnippetShortPath();
         }
 
-        String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(this.senderName);
-        CustomAlertSenderBackingBean backingBean = alertNotificationManager.getBackingBeanForSender(this.senderName, // TODO notificationId may be stale after removal of notification
-            notificationId);
+        String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(senderName);
+        customBackingBean = alertNotificationManager.getBackingBeanForSender(senderName, alertNotificationId);
 
-        if (backingBeanName != null && backingBean != null) {
-            backingBean.setWebUser(subject);
-            outjectBean(backingBeanName, backingBean);
+        if (backingBeanName != null && customBackingBean != null) {
+            customBackingBean.setWebUser(getSubject());
+            customBackingBean.setContext(FacesContextUtility.getRequiredRequestParameter("context"));
+            customBackingBean.setContextId(FacesContextUtility.getRequiredRequestParameter("contextId"));
+            customBackingBean.loadView();
+            outjectBean(backingBeanName, customBackingBean);
         }
     }
 
@@ -79,12 +87,13 @@ public class CustomContentUIBean {
      * name of bean, but this class is not an "official" seam component.
      */
     private void outjectBean(String name, CustomAlertSenderBackingBean bean) {
+        Context context = Contexts.getPageContext();
+        context.set(name, bean);
+    }
 
-        Context context = Contexts.getSessionContext();
+    public String saveConfiguration() {
+        customBackingBean.saveView();
 
-        CustomAlertSenderBackingBean csb = (CustomAlertSenderBackingBean) context.get(name);
-        if (csb == null)
-            context.set(name, bean);
-
+        return OUTCOME_SUCCESS;
     }
 }

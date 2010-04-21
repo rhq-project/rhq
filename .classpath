@@ -26,6 +26,8 @@
 	<classpathentry kind="src" path="modules/plugins/jboss-cache-v3/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/perspectives/sample-perspective/app/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/target/generated-sources/antlr3"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-subject/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-operations/src/main/java"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/integration/jboss-profileservice-spi/5.1.0.SP1/jboss-profileservice-spi-5.1.0.SP1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-managed/2.1.1.GA/jboss-managed-2.1.1.GA.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.1.GA/jboss-metatype-2.1.1.GA.jar"/>

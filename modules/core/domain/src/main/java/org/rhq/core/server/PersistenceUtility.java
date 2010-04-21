@@ -22,11 +22,6 @@
  */
 package org.rhq.core.server;
 
-import org.rhq.core.domain.util.OrderingField;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,6 +49,11 @@ import org.hibernate.type.CustomType;
 import org.hibernate.type.EntityType;
 import org.hibernate.type.PrimitiveType;
 import org.hibernate.type.Type;
+
+import org.rhq.core.domain.util.OrderingField;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * Various persistence utility methods - mostly Hibernate-specific.
@@ -94,7 +94,7 @@ public class PersistenceUtility {
                 return result.toString();
             }
         }
-        return hibernateType.getName();
+        return hibernateType == null ? "" : hibernateType.getName();
     }
 
     @SuppressWarnings("unchecked")

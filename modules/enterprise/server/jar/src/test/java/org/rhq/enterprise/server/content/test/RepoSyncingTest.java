@@ -156,7 +156,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
 
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLED)
     public void testCancelSync() throws Exception {
         getTransactionManager().commit();
         p1 = new TestContentProvider();

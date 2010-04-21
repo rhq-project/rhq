@@ -52,23 +52,23 @@
             <f:facet name="header">
                General Properties
             </f:facet>
-            <table>
+            <table width="100%">
               <tr>
-                <td align="right" width="20%"><b>Name<span class="required-marker-text">*</span>:</b></td>
+                <td align="right" style="white-space: no-wrap;"><b>Name<span class="required-marker-text">*</span>:</b></td>
                 <td align="left">
                    <h:inputText rendered="${mode eq 'edit'}" value="#{AlertNotificationTemplateDetailsUIBean.template.name}" /> 
                    <h:outputText rendered="${mode ne 'edit'}" value="#{AlertNotificationTemplateDetailsUIBean.template.name}" />
                 </td>
               </tr>
               <tr>
-                <td align="right"><b>Description:</b></td>
+                <td align="right" style="white-space: no-wrap;"><b>Description:</b></td>
                 <td align="left">
                    <h:inputText rendered="${mode eq 'edit'}" value="#{AlertNotificationTemplateDetailsUIBean.template.description}" /> 
                    <h:outputText rendered="${mode ne 'edit'}" value="#{AlertNotificationTemplateDetailsUIBean.template.description}" />
                 </td>
               </tr>
               <tr>
-                <td align="right"><b>Date Created:</b></td>
+                <td align="right" style="white-space: no-wrap;"><b>Date Created:</b></td>
                 <td align="left"> 
                    <h:outputText value="#{AlertNotificationTemplateDetailsUIBean.template.ctime}">
                       <f:converter converterId="UserDateTimeConverter" />
@@ -76,7 +76,7 @@
                 </td>
               </tr>
               <tr>
-                <td align="right"><b>Last Modified:</b></td>
+                <td align="right" style="white-space: no-wrap;"><b>Last Modified:</b></td>
                 <td align="left"> 
                    <h:outputText value="#{AlertNotificationTemplateDetailsUIBean.template.mtime}">
                       <f:converter converterId="UserDateTimeConverter" />
@@ -103,9 +103,9 @@
             <f:facet name="header">
                Notification Actions
             </f:facet>
-            <table>
+            <table width="100%">
               <tr>
-                <td align="right" width="20%"><b>Sender Info:</b></td>
+                <td align="right" style="white-space: no-wrap;" width="20%"><b>Sender Info:</b></td>
                 <td align="left"> 
                    <h:outputText value="#{AlertNotificationTemplateDetailsUIBean.notificationCount} " />
                    <h:outputText value="${msg['alert.current.detail.notify.Message']}" />

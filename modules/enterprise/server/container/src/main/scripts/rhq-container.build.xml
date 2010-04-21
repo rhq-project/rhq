@@ -856,7 +856,7 @@ rhq.autoinstall.public-endpoint-address=
 
    <target name="undeploy-alert-cache-service" unless="predeploy">
       <echo>Preparing for release - undeploying Alert Cache Service...</echo>
-      <move file="${jboss.deploy.dir}/alert-cache-service.xml" tofile="${jboss.deploy.dir}/alert-cache-service.xml.rej" />
+      <move file="${jboss.deploy.dir}/alert-cache-service.xml" tofile="${jboss.deploy.dir}/alert-cache-service.xml.rej" failonerror="false" />
    </target>
 
    <target name="undeploy-embedded-agent" unless="predeploy">

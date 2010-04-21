@@ -19,285 +19,344 @@
 package org.rhq.enterprise.server.plugins.alertOperations;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Scope;
-
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.plugins.alertOperations.OperationInfo.ResourceSelectionMode;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Backing bean for the operations alert sender
- * @author Heiko W. Rupp
+ * @author Joseph Marques
  */
-@Scope(ScopeType.PAGE)
 public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
-    private final Log log = LogFactory.getLog(OperationsBackingBean.class);
+    private Map<String, String> selectionModeOptions = new LinkedHashMap<String, String>();
+    private Map<String, String> ancestorTypeOptions = new LinkedHashMap<String, String>();
+    private Map<String, String> descendantTypeOptions = new LinkedHashMap<String, String>();
+    private Map<String, String> operationNameOptions = new LinkedHashMap<String, String>();
 
-    private String resMode;
-    private String tokenMode;
-    Integer resId;
-    private Integer operationId;
-    private Map<String, Integer> operationIds = new HashMap<String, Integer>();
-    private String resourceName;
+    private String selectionMode = "";
+    private String resourceId;
+    private String ancestorTypeId;
+    private String descendantName;
+    private String descendantTypeId;
+    private String operationDefinitionId;
 
+    private String effectiveResourceTypeName;
+    private String effectiveResourceTypeId;
 
-    private ConfigurationDefinition configurationDefinition;
-    private Configuration configuration;
-    private static final String ALERT_NOTIFICATIONS = "ALERT_NOTIFICATIONS";
+    private ConfigurationDefinition argumentsConfigurationDefinition;
+    private Configuration argumentsConfiguration;
 
+    private Subject overlord;
 
-
-    private String operationName;
-
-    public OperationsBackingBean() {
-        log.info("new " + hashCode());
+    private Subject getOverlord() {
+        if (overlord == null) {
+            overlord = LookupUtil.getSubjectManager().getOverlord();
+        }
+        return overlord;
     }
-
 
     @Override
-    public void internalCleanup() {
-        log.info("internalCleanup");
-        PropertySimple parameterConfigProp = alertParameters.getSimple(OperationsSender.PARAMETERS_CONFIG);
-        if (parameterConfigProp!=null) {
-            Integer paramId = parameterConfigProp.getIntegerValue();
-            if (paramId!=null) {
-                ConfigurationManagerLocal cmgr = LookupUtil.getConfigurationManager();
-                cmgr.deleteConfigurations(Arrays.asList(paramId));
-                cleanProperty(alertParameters,OperationsSender.PARAMETERS_CONFIG);
+    public void loadView() {
+        selectionMode = get(OperationInfo.Constants.SELECTION_MODE, "none");
+
+        // always load first list
+        for (ResourceSelectionMode mode : ResourceSelectionMode.values()) {
+            selectionModeOptions.put(mode.displayString, mode.name());
+        }
+
+        String argumentsConfigurationId = get(OperationInfo.Constants.ARGUMENTS_CONFIG_ID, null);
+        Configuration previousArguments = null;
+        if (argumentsConfigurationId != null && !argumentsConfigurationId.equals("none")) {
+            // look it up and then delete it, because the user may switch options in the conditional form, invalidating this
+            previousArguments = LookupUtil.getConfigurationManager().getConfiguration(getOverlord(),
+                Integer.parseInt(argumentsConfigurationId));
+        }
+
+        // load secondList if currentType is selected
+        if (selectionMode.equals("none")) {
+            return;
+        }
+
+        if (selectionMode.equals(ResourceSelectionMode.SPECIFIC.name())) {
+            resourceId = get(OperationInfo.Constants.SPECIFIC_RESOURCE_ID, "");
+        } else if (selectionMode.equals(ResourceSelectionMode.RELATIVE.name())) {
+            ancestorTypeId = get(OperationInfo.Constants.RELATIVE_ANCESTOR_TYPE_ID, "none");
+            descendantName = get(OperationInfo.Constants.RELATIVE_DESCENDANT_NAME, "Name (optional)");
+            descendantTypeId = get(OperationInfo.Constants.RELATIVE_DESCENDANT_TYPE_ID, "none");
+
+            ResourceType contextType = computeResourceTypeFromContext(); // should not be null
+            List<ResourceType> ancestors = LookupUtil.getResourceTypeManager().getResourceTypeAncestorsWithOperations(
+                getOverlord(), contextType.getId());
+            load(ancestorTypeOptions, ancestors);
+
+            if (ancestorTypeId.equals("none") == false) {
+                List<ResourceType> descendants = LookupUtil.getResourceTypeManager()
+                    .getResourceTypeDescendantsWithOperations(getOverlord(), Integer.parseInt(ancestorTypeId));
+                load(descendantTypeOptions, descendants);
+            } else {
+                List<ResourceType> descendants = LookupUtil.getResourceTypeManager()
+                    .getResourceTypeDescendantsWithOperations(getOverlord(), contextType.getId());
+                load(descendantTypeOptions, descendants);
             }
         }
-    }
 
-    public String selectResource() {
+        // compute effectiveResourceTypeId from given info
+        ResourceType type = null;
+        if (selectionMode.equals(ResourceSelectionMode.SELF.name())) {
+            type = computeResourceTypeFromContext();
 
-        log.info("In select Resource, resId is " + resId + " resMode is " + resMode);
+        } else if (selectionMode.equals(ResourceSelectionMode.SPECIFIC.name())) {
+            if (resourceId.equals("") == false) {
+                Resource resource = LookupUtil.getResourceManager().getResource(getOverlord(),
+                    Integer.parseInt(resourceId));
+                type = resource.getResourceType();
+            }
 
-        if (resId != null) {
-            persistProperty(alertParameters, OperationsSender.RESOURCE_ID,resId);
-            cleanProperty(alertParameters,OperationsSender.OPERATION_ID);
-            cleanProperty(alertParameters,OperationsSender.USABLE);
-            operationIds = new HashMap<String,Integer>(); // Clean out operations dropdown
-            operationId = null;
-            operationName = null;
-
+        } else if (selectionMode.equals(ResourceSelectionMode.RELATIVE.name())) {
+            try {
+                if (descendantTypeId.equals("none") == false) {
+                    type = LookupUtil.getResourceTypeManager().getResourceTypeById(getOverlord(),
+                        Integer.parseInt(descendantTypeId));
+                } else if (ancestorTypeId.equals("none") == false) {
+                    type = LookupUtil.getResourceTypeManager().getResourceTypeById(getOverlord(),
+                        Integer.parseInt(ancestorTypeId));
+                }
+            } catch (ResourceTypeNotFoundException rtnfe) {
+                // debugging message
+            }
         }
 
-        obtainOperationIds();
-
-        return ALERT_NOTIFICATIONS;
-    }
-
-
-
-    public String selectOperation() {
-        log.info("In selectOperation, resId is " + resId + " opName is " + operationId);
-
-        if (operationId != null ) {
-            persistProperty(alertParameters, OperationsSender.OPERATION_ID, operationId);
-            getOperationNameFromOperationIds();
-            lookupConfiguration();
+        if (type == null) {
+            return;
         }
 
-        return ALERT_NOTIFICATIONS;
-    }
+        effectiveResourceTypeId = String.valueOf(type.getId());
+        effectiveResourceTypeName = type.getName();
 
-    private void lookupConfiguration() {
+        operationDefinitionId = get(OperationInfo.Constants.OPERATION_ID, "none");
+        List<OperationDefinition> definitions = LookupUtil.getOperationManager().findSupportedResourceTypeOperations(
+            getOverlord(), Integer.valueOf(effectiveResourceTypeId), false);
+        for (OperationDefinition nextDefinition : definitions) {
+            operationNameOptions.put(nextDefinition.getDisplayName(), String.valueOf(nextDefinition.getId()));
+        }
+
+        if (operationDefinitionId.equals("none")) {
+            return;
+        }
 
         try {
+            OperationDefinition operation = LookupUtil.getOperationManager().getOperationDefinition(getOverlord(),
+                Integer.parseInt(operationDefinitionId));
+            argumentsConfigurationDefinition = operation.getParametersConfigurationDefinition();
 
-            OperationManagerLocal opMan = LookupUtil.getOperationManager();
-            obtainOperationIds();
+            if (argumentsConfigurationDefinition == null) {
+                return;
+            }
 
-
-            if (operationId!=null) {
-                OperationDefinition operationDefinition = opMan.getOperationDefinition(webUser, operationId);
-                configurationDefinition = operationDefinition.getParametersConfigurationDefinition();
-
-
-                // call a SLSB method to get around lazy initialization of configDefs and configTemplates
-                ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-                configuration = configurationManager.getConfigurationFromDefaultTemplate(configurationDefinition);
+            if (previousArguments == null) {
+                // create it for the first time or if this was previous removed due to switching form options
+                Configuration emptyConfiguration = LookupUtil.getConfigurationManager()
+                    .getConfigurationFromDefaultTemplate(argumentsConfigurationDefinition);
+                argumentsConfiguration = emptyConfiguration.deepCopy(false);
+            } else {
+                argumentsConfiguration = previousArguments;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public String useConfiguration() {
-        log.info("In useConfiguration, Configuration is " + configuration );
-
-        // COnfiguration should be valid here ...
-        super.persistConfiguration(configuration);
-        persistProperty(alertParameters,OperationsSender.PARAMETERS_CONFIG,configuration.getId());
-        persistProperty(alertParameters, OperationsSender.USABLE,true);
-
-        return ALERT_NOTIFICATIONS;
+    private void load(Map<String, String> resourceTypeOptions, List<ResourceType> types) {
+        for (ResourceType nextType : types) {
+            resourceTypeOptions.put(nextType.getName(), String.valueOf(nextType.getId()));
+        }
     }
 
-    private void obtainOperationIds() {
+    private ResourceType computeResourceTypeFromContext() {
+        AlertDefinition definition = LookupUtil.getAlertDefinitionManager().getAlertDefinitionById(getOverlord(),
+            Integer.parseInt(contextId));
 
-        PropertySimple prop = alertParameters.getSimple(OperationsSender.RESOURCE_ID);
-        if (prop!=null)
-            resId = prop.getIntegerValue();
+        ResourceType type = null;
+        if (definition.getResource() != null) {
+            type = definition.getResource().getResourceType();
+        } else if (definition.getResourceGroup() != null) {
+            type = definition.getResourceGroup().getResourceType();
+        } else {
+            type = definition.getResourceType();
+        }
+        return type;
+    }
 
-        if (resId!=null) {
-            OperationManagerLocal opMan = LookupUtil.getOperationManager();
+    private String get(OperationInfo.Constants operationInfoConstant, String defaultValue) {
+        return alertParameters.getSimpleValue(operationInfoConstant.propertyName, defaultValue);
+    }
 
-            List<OperationDefinition> opDefs = opMan.findSupportedResourceOperations(webUser, resId, false);
-            for (OperationDefinition def : opDefs) {
-                operationIds.put(def.getDisplayName(),def.getId()); // TODO add more distinctive stuff in display
+    @Override
+    public void internalCleanup() {
+        cleanupPreviousArguments();
+    }
+
+    @Override
+    public void saveView() {
+        set(selectionMode, OperationInfo.Constants.SELECTION_MODE);
+        set(resourceId, OperationInfo.Constants.SPECIFIC_RESOURCE_ID);
+        set(ancestorTypeId, OperationInfo.Constants.RELATIVE_ANCESTOR_TYPE_ID);
+        set("Name (optional)".equals(descendantName) ? null : descendantName,
+            OperationInfo.Constants.RELATIVE_DESCENDANT_NAME);
+        set(descendantTypeId, OperationInfo.Constants.RELATIVE_DESCENDANT_TYPE_ID);
+        set(operationDefinitionId, OperationInfo.Constants.OPERATION_ID);
+
+        // cleanup previous arguments configuration
+        cleanupPreviousArguments();
+
+        // persist new one
+        if (operationDefinitionId != null && !operationDefinitionId.equals("none") && argumentsConfiguration != null) {
+            argumentsConfiguration.setId(0); // force Hibernate to interpret this configuration as a new one
+            argumentsConfiguration = persistConfiguration(argumentsConfiguration);
+            set(String.valueOf(argumentsConfiguration.getId()), OperationInfo.Constants.ARGUMENTS_CONFIG_ID);
+        }
+
+        alertParameters = persistConfiguration(alertParameters);
+    }
+
+    private void cleanupPreviousArguments() {
+        String previousArgumentsConfigurationId = get(OperationInfo.Constants.ARGUMENTS_CONFIG_ID, null);
+        set(null, OperationInfo.Constants.ARGUMENTS_CONFIG_ID);
+        if (previousArgumentsConfigurationId != null && !previousArgumentsConfigurationId.equals("none")) {
+            LookupUtil.getConfigurationManager().deleteConfigurations(
+                Arrays.asList(Integer.parseInt(previousArgumentsConfigurationId)));
+        }
+    }
+
+    private boolean set(String value, OperationInfo.Constants operationInfoConstant) {
+        String propertyName = operationInfoConstant.propertyName;
+        if (value == null) {
+            Property previous = alertParameters.remove(propertyName);
+            if (previous == null) {
+                return false; // removing a non-existence property, no change
             }
+            return ((PropertySimple) previous).getStringValue() != null;
+        }
+        PropertySimple property = alertParameters.getSimple(propertyName);
+        if (property == null) {
+            property = new PropertySimple(propertyName, value);
+            alertParameters.put(property);
+            return true; // adding a property that previously didn't exist
+        } else {
+            String oldStringValue = property.getStringValue();
+            property.setStringValue(value);
+            return !value.equals(oldStringValue);
         }
     }
 
-
-
-    public String getResMode() {
-        return resMode;
+    public Map<String, String> getSelectionModeOptions() {
+        return selectionModeOptions;
     }
 
-    public void setResMode(String resMode) {
-        this.resMode = resMode;
+    public Map<String, String> getAncestorTypeOptions() {
+        return ancestorTypeOptions;
     }
 
-    public Integer getResId() {
-        if (resId==null) {
-            PropertySimple prop = alertParameters.getSimple(OperationsSender.RESOURCE_ID);
-            if (prop!=null)
-                resId = prop.getIntegerValue();
-        }
-
-        return resId;
+    public Map<String, String> getDescendantTypeOptions() {
+        return descendantTypeOptions;
     }
 
-    public void setResId(Integer resId) {
-        this.resId = resId;
-        if (resId!=null) {
-            persistProperty(alertParameters,OperationsSender.RESOURCE_ID,resId);
-        }
+    public Map<String, String> getOperationNameOptions() {
+        return operationNameOptions;
     }
 
-    public String getResourceName() {
-        if (resId==null)
-            getResId();
-
-        if (resId!=null) {
-            ResourceManagerLocal resMgr = LookupUtil.getResourceManager();
-            Resource res = resMgr.getResource(webUser,resId);
-
-            resourceName = res.getName() + " (" + res.getResourceType().getName() + ")";
-        }
-        return resourceName;
+    public String getSelectionMode() {
+        return selectionMode;
     }
 
-    public void setResourceName(String resourceName) {
-        this.resourceName = resourceName;
+    public void setSelectionMode(String selectionMode) {
+        this.selectionMode = selectionMode;
     }
 
-    public Integer getOperationId() {
-        System.out.println("OperationsBackingBean.getOperationId, operationId=" + operationId);
-        if (operationId ==null) {
-            PropertySimple prop = alertParameters.getSimple(OperationsSender.OPERATION_ID);
-            if (prop!=null)
-                operationId = prop.getIntegerValue();
-
-        }
-
-        if(operationIds==null || operationIds.isEmpty())
-            obtainOperationIds();
-        getOperationNameFromOperationIds();
-
-        return operationId;
+    public String getResourceId() {
+        return resourceId;
     }
 
-    private void getOperationNameFromOperationIds() {
-        for (Map.Entry<String,Integer> ent : operationIds.entrySet()) {
-            if (ent.getValue().equals(operationId))
-                operationName=ent.getKey();
-        }
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
     }
 
-    public void setOperationId(Integer operationId) {
-        this.operationId = operationId;
+    public String getAncestorTypeId() {
+        return ancestorTypeId;
     }
 
-    public String getOperationName() {
-        return operationName;
+    public void setAncestorTypeId(String ancestorTypeId) {
+        this.ancestorTypeId = ancestorTypeId;
     }
 
-    public void setOperationName(String operationName) {
-        this.operationName = operationName;
+    public String getDescendantName() {
+        return descendantName;
     }
 
-    public Map<String, Integer> getOperationIds() {
-
-        obtainOperationIds();
-
-        return operationIds;
+    public void setDescendantName(String descendantName) {
+        this.descendantName = descendantName;
     }
 
-    public void setOperationIds(Map<String, Integer> operationIds) {
-        this.operationIds = operationIds;
+    public String getDescendantTypeId() {
+        return descendantTypeId;
     }
 
-    public ConfigurationDefinition getConfigurationDefinition() {
-
-        if (configurationDefinition==null)
-            lookupConfiguration();
-
-        return configurationDefinition;
+    public void setDescendantTypeId(String descendantTypeId) {
+        this.descendantTypeId = descendantTypeId;
     }
 
-    public void setConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
-        this.configurationDefinition = configurationDefinition;
+    public String getOperationDefinitionId() {
+        return operationDefinitionId;
     }
 
-    public Configuration getConfiguration() {
-        return configuration;
+    public void setOperationDefinitionId(String operationDefinitionId) {
+        this.operationDefinitionId = operationDefinitionId;
     }
 
-    public void setConfiguration(Configuration configuration) {
-        this.configuration = configuration;
+    public String getEffectiveResourceTypeId() {
+        return effectiveResourceTypeId;
     }
 
-    public String getNullConfigurationDefinitionMessage() {
+    public String getEffectiveResourceTypeName() {
+        return effectiveResourceTypeName;
+    }
+
+    public ConfigurationDefinition getArgumentsConfigurationDefinition() {
+        return argumentsConfigurationDefinition;
+    }
+
+    public void setArgumentsConfigurationDefinition(ConfigurationDefinition argumentsConfigurationDefinition) {
+        this.argumentsConfigurationDefinition = argumentsConfigurationDefinition;
+    }
+
+    public Configuration getArgumentsConfiguration() {
+        return argumentsConfiguration;
+    }
+
+    public void setArgumentsConfiguration(Configuration argumentsConfiguration) {
+        this.argumentsConfiguration = argumentsConfiguration;
+    }
+
+    public String getNoParametersMessage() {
         return "This operation does not take any parameters.";
     }
 
-    public String getNullConfigurationMessage() {
+    public String getNotInitializedMessage() {
         return "This operation parameters definition has not been initialized.";
     }
-
-    public String getTokenMode() {
-        if (tokenMode==null) {
-            PropertySimple prop = alertParameters.getSimple(OperationsSender.TOKEN_MODE);
-            if (prop!=null)
-                tokenMode = prop.getStringValue();
-        }
-
-        return tokenMode;
-    }
-
-    public void setTokenMode(String tokenMode) {
-        this.tokenMode = tokenMode;
-
-        persistProperty(alertParameters, OperationsSender.TOKEN_MODE,tokenMode);
-    }
-
 }

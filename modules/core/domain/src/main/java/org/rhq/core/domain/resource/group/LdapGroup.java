@@ -45,6 +45,7 @@ import org.rhq.core.domain.authz.Role;
 @Entity
 @NamedQueries( {
     @NamedQuery(name = LdapGroup.DELETE_BY_ID, query = "DELETE FROM LdapGroup an WHERE an.id IN ( :ids )"),
+    @NamedQuery(name = LdapGroup.QUERY_FIND_ALL, query = "SELECT g FROM LdapGroup AS g"), //
     @NamedQuery(name = LdapGroup.FIND_BY_ROLES_GROUP_NAMES, query = "SELECT distinct l.role FROM LdapGroup l WHERE l.name in (:names)") })
 @Table(name = "RHQ_ROLE_LDAP_GROUP")
 @SequenceGenerator(name = "id", sequenceName = "RHQ_ROLE_LDAP_GROUP_ID_SEQ", allocationSize = 100)
@@ -52,6 +53,7 @@ import org.rhq.core.domain.authz.Role;
 public class LdapGroup implements Serializable {
     private static final long serialVersionUID = 1L;
     public static final String DELETE_BY_ID = "LdapGroup.deleteById";
+    public static final String QUERY_FIND_ALL = "LdapGroup.findAll";
     public static final String FIND_BY_ROLES_GROUP_NAMES = "LdapGroup.findRolesByGroupNames";
     @Id
     @Column(name = "ID", nullable = false)

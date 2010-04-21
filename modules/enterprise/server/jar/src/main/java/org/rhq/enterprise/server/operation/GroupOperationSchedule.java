@@ -24,6 +24,8 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 public class GroupOperationSchedule extends OperationSchedule {
+    private static final long serialVersionUID = 1L;
+
     private ResourceGroup group;
     private List<Resource> executionOrder;
     private boolean haltOnFailure = false; // default to not stop on error

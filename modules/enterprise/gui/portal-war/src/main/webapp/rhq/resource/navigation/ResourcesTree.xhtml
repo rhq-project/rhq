@@ -33,6 +33,7 @@
                 <a4j:keepAlive beanName="ResourceTreeModelUIBean" />
 
                 <rich:tree style="width: 100%; height: 100%; min-width: 100%; min-height: 100%" switchType="ajax"
+                           componentState="#{ResourceTreeStateAdvisor.treeState}"
                            stateAdvisor="#{ResourceTreeStateAdvisor}"
                            status="commonStatus"
                            var="treeNode"
@@ -44,7 +45,9 @@
                            nodeSelectListener="#{ResourceTreeStateAdvisor.nodeSelectListener}"
                            ajaxSubmitSelection="true"
                            showConnectingLines="false"
-                           nodeFace="#{treeNode.data.class.simpleName}">
+                           nodeFace="#{treeNode.data.class.simpleName}"
+                           eventsQueue="resourceTreeQueue"
+                           ignoreDupResponses="true">
                     <rich:recursiveTreeNodesAdaptor roots="#{ResourceTreeModelUIBean.roots}"
                                                     var="resourceTreeItem"
                                                     nodes="#{resourceTreeItem.children}" />
@@ -69,7 +72,7 @@
                         </a4j:support>
                                      
                         <h:outputText value="#{resourceTreeItem} "
-                                      styleClass="resourceLink"/>
+                                      styleClass="resourceLink" title="#{resourceTreeItem.data.resourceType == null ? '' : 'Right-click for more options.'}"/>
                     </rich:treeNode>
 
                     <rich:treeNode type="LockedResource"
@@ -100,7 +103,7 @@
                             </rich:componentControl>
                         </a4j:support>
                         <h:outputText value="#{resourceTreeItem}"
-                                      styleClass="resourceLink"/>
+                                      styleClass="resourceLink" title="Right-click for more options."/>
                     </rich:treeNode>
                 </rich:tree>
 

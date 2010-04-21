@@ -89,7 +89,8 @@
                                     <tr>
                                         <td>From:</td>
                                         <td>
-                                            <rich:calendar id="fromDate" datePattern="dd/MMM/yyyy HH:mm"
+                                            <rich:calendar id="fromDate"
+                                                           datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
                                                            value="#{AdvancedMetricSettingsUIBean.fromTime}"
                                                            showApplyButton="true"
                                                            onchange="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
@@ -100,7 +101,8 @@
                                             To:
                                         </td>
                                         <td>
-                                            <rich:calendar id="toDate" datePattern="dd/MMM/yyyy HH:mm"
+                                            <rich:calendar id="toDate"
+                                                           datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
                                                            value="#{AdvancedMetricSettingsUIBean.toTime}"
                                                            showApplyButton="true"
                                                            onchange="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>

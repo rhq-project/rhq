@@ -42,13 +42,17 @@
                     <rich:tree style="width: 100%; height: 100%" switchType="ajax"
                                id="leftNavGroupTree"
                                var="treeNode"
+                               componentState="#{ResourceGroupTreeStateAdvisor.treeState}"
                                stateAdvisor="#{ResourceGroupTreeStateAdvisor}"
                                nodeSelectListener="#{ResourceGroupTreeStateAdvisor.nodeSelectListener}"
+                               changeExpandListener="#{ResourceGroupTreeStateAdvisor.changeExpandListener}"
                                adviseNodeSelected="#{ResourceGroupTreeStateAdvisor.adviseNodeSelected}"
                                ajaxSubmitSelection="true"
                                status="commonStatus"
                                icon="/images/icons/Platform_16.png"
-                               nodeFace="#{treeNode.data.class.simpleName}">
+                               nodeFace="#{treeNode.data.class.simpleName}"
+                               eventsQueue="groupTreeQueue"
+                               ignoreDupResponses="true">
 
                         <rich:recursiveTreeNodesAdaptor roots="#{ResourceGroupTreeModelUIBean.roots}"
                                                         var="groupTreeItem"
@@ -76,7 +80,7 @@
                                 </rich:componentControl>
                             </a4j:support>
 
-                            <h:outputText value="#{groupTreeItem.data.name}"/>
+                            <h:outputText value="#{groupTreeItem.data.name}" title="Right-click for more options."/>
 
                         </rich:treeNode>
 
@@ -107,10 +111,10 @@
                                 </rich:componentControl>
                             </a4j:support>
 
-                            <h:outputText value="#{groupTreeItem.members[0]}"/>
+                            <h:outputText value="#{groupTreeItem.members[0]}" title="Right-click for more options."/>
                             <h:outputText value=" (#{groupTreeItem.members.size} / #{clusterSize})"
                                           rendered="#{groupTreeItem.members.size lt clusterSize}"
-                                    style="color: red;"/>
+                                    style="color: red;" title="Right-click for more options."/>
 
                         </rich:treeNode>
 

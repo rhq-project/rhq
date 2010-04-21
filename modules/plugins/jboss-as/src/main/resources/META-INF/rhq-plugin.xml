@@ -240,6 +240,8 @@
          </configuration>
       </content>
 
+      <support/>
+      
       <help>
       <![CDATA[
         <h3>Binding to IP addresses</h3>

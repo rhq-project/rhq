@@ -46,6 +46,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
@@ -108,6 +109,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     public static final String EWS_TOMCAT_5 = "tomcat5";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
+        log.warn("DEBUG DEPLOYMENT....");
         log.debug("Discovering Tomcat servers...");
 
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
@@ -231,13 +233,25 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
                 + Arrays.toString(commandLine));
             return null;
         }
-        if (!isStandalone(commandLine)) {
+
+        if (!isStandalone(commandLine) && !isWindows(context)) {
             log.debug("Ignoring embedded Tomcat instance (catalina.home not found) with following command line: "
                 + Arrays.toString(commandLine));
             return null;
         }
 
         String catalinaHome = determineCatalinaHome(commandLine);
+
+        if (catalinaHome == null && isWindows(context)) {
+            log.debug("catalina.home not found. Checking to see if this is an EWS installation.");
+            // On Windows EWS uses the tomcat5.exe and tomcat6.exe executables to start tomcat. They currently do
+            // not provide the command line args that we get with the normal start up scripts that are used to
+            // determine catalina.home. See https://bugzilla.redhat.com/show_bug.cgi?id=580931 for more information.
+            //
+            // jsanda - 04/20/2010
+            catalinaHome = determineCatalinaHomeOnWindows(processInfo);
+        }
+
         if (null == catalinaHome) {
             log.error("Ignoring Tomcat instance due to invalid setting of catalina.home in command line: "
                 + Arrays.toString(commandLine));
@@ -273,6 +287,10 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
             resourceName, resourceVersion, productDescription, pluginConfiguration, processInfo);
 
         return resource;
+    }
+
+    private boolean isWindows(ResourceDiscoveryContext context) {
+        return context.getSystemInformation().getOperatingSystemType() == OperatingSystemType.WINDOWS;
     }
 
     /**
@@ -322,6 +340,20 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         }
 
         return result;
+    }
+
+    private String determineCatalinaHomeOnWindows(ProcessInfo processInfo) {
+        File exePath = new File(processInfo.getName());
+        File parentDir = exePath.getParentFile();
+        File ewsDir = parentDir.getParentFile();
+        File tomcatDir = new File(ewsDir, "share/apache-tomcat-6.0.24");
+
+        if (tomcatDir.exists()) {
+            log.debug("Detected EWS installation. catalina.home found at " + tomcatDir.getAbsolutePath());
+            return tomcatDir.getAbsolutePath();
+        }
+
+        return null;
     }
 
     /**

@@ -442,6 +442,7 @@ public class PluginMetadataParser {
         // 8) Artifacts
         // 9) Child subcategories
         // 10) Bundle Type
+        // 11) SupportFacet
 
         String classLoaderTypeString = resourceDescriptor.getClassLoader();
         if (classLoaderTypeString == null) {
@@ -526,6 +527,8 @@ public class PluginMetadataParser {
                 String typeName = bundle.getType();
                 resourceType.setBundleType(new BundleType(typeName, resourceType));
             }
+
+            resourceType.setSupportsSupportFacet(resourceDescriptor.getSupport() != null);
 
         } catch (InvalidPluginDescriptorException e) {
             // TODO: Should we be storing these for viewing in server? Breaking deployment? What?

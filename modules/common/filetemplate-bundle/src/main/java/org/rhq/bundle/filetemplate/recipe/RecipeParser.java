@@ -130,6 +130,7 @@ public class RecipeParser {
         HashMap<String, RecipeCommand> commands = new HashMap<String, RecipeCommand>();
 
         RecipeCommand[] knownCommands = new RecipeCommand[] { new ScriptRecipeCommand(), //
+            new BundleRecipeCommand(), //
             new ConfigDefRecipeCommand(), //
             new CommandRecipeCommand(), //
             new FileRecipeCommand(), //
@@ -243,7 +244,7 @@ public class RecipeParser {
     private void setupReplacementPatterns() {
         // note that we use the same as the core util's template engine
         // the native system replacement variable prefix is used by the agent-side fact variable names
-        this.replacementVariableDeclarationPattern = Pattern.compile("<%\\s*(\\w+\\.?)+\\s*%>");
+        this.replacementVariableDeclarationPattern = Pattern.compile("@@\\s*(\\w+\\.?)+\\s*@@");
         this.replacementVariableNamePattern = Pattern.compile("(\\w+\\.?)+");
         this.systemReplacementVariablePrefix = SystemInfoFactory.TOKEN_PREFIX;
     }

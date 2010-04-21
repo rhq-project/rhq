@@ -50,7 +50,6 @@ public class ProcessingRecipeContext extends RecipeContext {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private final Map<PackageVersion, File> packageVersionFiles;
     private final SystemInfo systemInfo;
     private String baseWorkingDirectory;
 
@@ -58,7 +57,6 @@ public class ProcessingRecipeContext extends RecipeContext {
         String baseWorkingDirectory) {
 
         super(recipe);
-        this.packageVersionFiles = packageVersionFiles;
         this.systemInfo = systemInfo;
         this.baseWorkingDirectory = baseWorkingDirectory; // the directory that existing bundle filenames will be relative to
     }

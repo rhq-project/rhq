@@ -35,6 +35,7 @@ import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.updater.DeploymentProperties;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
@@ -201,6 +202,9 @@ public class TestBundleServerPluginService extends ServerPluginService implement
 
             ConfigurationDefinition configDef;
             Set<String> bundleFileNames;
+            DeploymentProperties metadata;
+
+            metadata = new DeploymentProperties(0, "bundletest", "1.0", "bundle test description");
 
             configDef = new ConfigurationDefinition("bundletest-configdef", "Test Config Def for testing BundleVersion");
             configDef.put(new PropertyDefinitionSimple("bundletest.property",
@@ -210,7 +214,7 @@ public class TestBundleServerPluginService extends ServerPluginService implement
             bundleFileNames.add("bundletest-bundlefile-1");
             bundleFileNames.add("bundletest-bundlefile-2");
 
-            return new RecipeParseResults(configDef, bundleFileNames);
+            return new RecipeParseResults(metadata, configDef, bundleFileNames);
         }
     }
 }

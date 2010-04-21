@@ -127,6 +127,9 @@ import org.rhq.core.domain.resource.Resource;
         + "      AND (cu.createdTime > :startTime OR :startTime IS NULL) " //
         + "      AND (cu.modifiedTime < :endTime OR :endTime IS NULL) " //
         + "      AND (cu.status LIKE :status OR :status IS NULL) "),
+    // This query is currently used by bulk delete only if the db vendor can't support
+    // self-referential cascade. Instead, we have to orphan the properties that can't be deleted by
+    // the foreign key reference.
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, query = "" //
         + "UPDATE Property p " //
         + "   SET p.parentMap = NULL, " //
@@ -136,12 +139,18 @@ import org.rhq.core.domain.resource.Resource;
         + "                             WHERE rcu.resource.id IN ( :resourceIds ) " //
         + "                           AND NOT rcu.configuration = rcu.resource.resourceConfiguration )"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, query = "" //
+        + "DELETE FROM RawConfiguration rc " //
+        + " WHERE rc.configuration IN ( SELECT rcu.configuration " //
+        + "                FROM ResourceConfigurationUpdate rcu " //
+        + "               WHERE rcu.resource.id IN ( :resourceIds ) " //
+        + "                AND NOT rcu.configuration = rcu.resource.resourceConfiguration )"),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = "" //
         + "DELETE FROM Configuration c " //
         + " WHERE c IN ( SELECT rcu.configuration " //
         + "                FROM ResourceConfigurationUpdate rcu " //
         + "               WHERE rcu.resource.id IN ( :resourceIds ) " //
         + "                AND NOT rcu.configuration = rcu.resource.resourceConfiguration )"),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = ""
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, query = ""
         + "DELETE FROM ResourceConfigurationUpdate rcu " //
         + " WHERE rcu.resource.id IN ( :resourceIds )"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_GROUP_UPDATE, query = "" //
@@ -177,6 +186,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_DELETE_BY_RESOURCES_0 = "ResourceConfigurationUpdate.deleteByResources0";
     public static final String QUERY_DELETE_BY_RESOURCES_1 = "ResourceConfigurationUpdate.deleteByResources1";
     public static final String QUERY_DELETE_BY_RESOURCES_2 = "ResourceConfigurationUpdate.deleteByResources2";
+    public static final String QUERY_DELETE_BY_RESOURCES_3 = "ResourceConfigurationUpdate.deleteByResources3";
     public static final String QUERY_DELETE_GROUP_UPDATE = "ResourceConfigurationUpdate.deleteGroupUpdate";
     public static final String QUERY_DELETE_GROUP_UPDATES_FOR_GROUP = "ResourceConfigurationUpdate.deleteGroupUpdatesForGroup";
 

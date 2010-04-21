@@ -22,9 +22,9 @@ package org.rhq.core.pluginapi.bundle;
 import java.io.OutputStream;
 import java.util.List;
 
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.PackageVersion;
 
@@ -41,8 +41,8 @@ public interface BundleManagerProvider {
      * @return the bundle files that are associated with the given bundle
      * @throws Exception
      */
-    void auditDeployment(BundleDeployment deployment, BundleDeploymentAction action, BundleDeploymentStatus status,
-        String message) throws Exception;
+    void auditDeployment(BundleResourceDeployment deployment, BundleDeploymentAction action,
+        BundleDeploymentStatus status, String message) throws Exception;
 
     /**
      * Bundle plugins call back into this manager to obtain the bundle files that belong to a given bundle version.

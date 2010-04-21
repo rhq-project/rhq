@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,8 +30,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -62,7 +62,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         this.tmpDirectory = new File(context.getTemporaryDirectory(), "ant-bundle-plugin");
         this.tmpDirectory.mkdirs();
         if (!this.tmpDirectory.exists() || !this.tmpDirectory.isDirectory()) {
-            throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process ant bundles");
+            throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process Ant bundles.");
         }
     }
 
@@ -76,9 +76,9 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
     public BundleDeployResult deployBundle(BundleDeployRequest request) {
         BundleDeployResult result = new BundleDeployResult();
         try {
-            BundleDeployment bundleDeployment = request.getBundleDeployment();
-            BundleDeployDefinition bundleDeployDef = bundleDeployment.getBundleDeployDefinition();
-            BundleVersion bundleVersion = bundleDeployDef.getBundleVersion();
+            BundleResourceDeployment resourceDeployment = request.getResourceDeployment();
+            BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
+            BundleVersion bundleVersion = bundleDeployment.getBundleVersion();
 
             String recipe = bundleVersion.getRecipe();
             File recipeFile = File.createTempFile("ant-bundle-recipe", ".xml", request.getBundleFilesLocation());
@@ -90,13 +90,25 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 StreamUtil.copy(in, out);
 
                 // get the bundle's configuration values and the global system facts and
-                // add them as ant properties so the ant script can get their values
-                Configuration config = bundleDeployDef.getConfiguration();
-                Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
+                // add them as Ant properties so the ant script can get their values
                 Properties antProps = new Properties();
+
+                String installDir = bundleDeployment.getInstallDir();
+                if (installDir == null) {
+                    throw new IllegalStateException("Bundle deployment does not specify install dir: "
+                        + bundleDeployment);
+                }
+                antProps.setProperty(AntLauncher.DEPLOY_DIR_PROP, installDir);
+
+                int deploymentId = bundleDeployment.getId();
+                antProps.setProperty(AntLauncher.DEPLOY_ID_PROP, Integer.toString(deploymentId));
+
+                Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
                 for (Map.Entry<String, String> fact : sysFacts.entrySet()) {
                     antProps.setProperty(fact.getKey(), fact.getValue());
                 }
+
+                Configuration config = bundleDeployment.getConfiguration();
                 if (config != null) {
                     Map<String, Property> allProperties = config.getAllProperties();
                     for (Map.Entry<String, Property> entry : allProperties.entrySet()) {
@@ -115,7 +127,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
                 // parse & execute, the ant script
                 AntLauncher antLauncher = new AntLauncher();
-                BundleAntProject project = antLauncher.startAnt(recipeFile, null, null, antProps, logFile, false, true);
+                BundleAntProject project = antLauncher.startAnt(recipeFile, null, null, antProps, logFile, true, true);
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {
@@ -123,7 +135,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                     } catch (Exception e) {
                     }
                 }
-                throw new Exception("Failed to parse the bundle ANT script", t);
+                throw new Exception("Failed to parse the bundle Ant script", t);
             } finally {
                 recipeFile.delete();
                 logFile.delete();

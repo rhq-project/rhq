@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,43 +27,60 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Vector;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Target;
 import org.apache.tools.ant.Task;
+import org.apache.tools.ant.UnknownElement;
+import org.apache.tools.ant.helper.AntXMLContext;
 import org.apache.tools.ant.helper.ProjectHelper2;
 
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.bundle.ant.task.BundleTask;
+import org.rhq.bundle.ant.task.DeployTask;
+import org.rhq.bundle.ant.task.InputPropertyTask;
 
+/**
+ * This object enables you to invoke an Ant script within the running VM. You can fully run the script
+ * or you can ask that the script just be parsed but no tasks execute.
+ * 
+ * @author John Mazzitelli
+ * @author Ian Springer
+ */
 public class AntLauncher {
+    // system property that should always be available to ant scripts - its the location where the deployment should be installed
+    public static final String DEPLOY_DIR_PROP = "rhq.deploy.dir";
 
-    // currently, the bundle plugins don't need custom ant tasks, but there is an ant task stubbed for future use here
-    private static final String BUNDLE_ANT_TASKS = "bundle-ant-tasks.properties";
+    // system property that should always be available to ant scripts - its ID of the bundle deployment
+    public static final String DEPLOY_ID_PROP = "rhq.deploy.id";
 
     // "out of box" we will provide the antcontrib optional tasks
     private static final String ANTCONTRIB_ANT_TASKS = "net/sf/antcontrib/antcontrib.properties";
 
+    private final Log log = LogFactory.getLog(AntLauncher.class);
+
     /**
-     * Launches ANT and parses the given build file and optionally executes it.
+     * Launches Ant and parses the given build file and optionally executes it.
      *
-     * @param buildFile      the build file that ANT will run
-     * @param target         the target to run, <code>null</code> will run the default target
+     * @param buildFile      the build file that Ant will run
+     * @param targetName     the target to run, <code>null</code> will run the default target
      * @param customTaskDefs the properties files found in classloader that contains all the taskdef definitions
-     * @param properties     set of properties to set for the ANT task to access
-     * @param logFile        where ANT messages will be logged
+     * @param properties     set of properties to set for the Ant task to access
+     * @param logFile        where Ant messages will be logged
      * @param logStdOut      if <code>true</code>, log messages will be sent to stdout as well as the log file
-     * @param execute        if <code>true</code> the ant script will be parsed and executed; otherwise, it will only be parsed
+     * @param execute        if <code>true</code> the Ant script will be parsed and executed; otherwise, it will only be
+     *                       parsed and validated
      *
      * @throws RuntimeException
      */
-    public BundleAntProject startAnt(File buildFile, String target, Set<String> customTaskDefs, Properties properties,
-        File logFile, boolean logStdOut, boolean execute) {
+    public BundleAntProject startAnt(File buildFile, String targetName, Set<String> customTaskDefs,
+        Properties properties, File logFile, boolean logStdOut, boolean execute) {
 
         PrintWriter logFileOutput = null;
 
@@ -75,7 +92,6 @@ public class AntLauncher {
             if (customTaskDefs == null) {
                 customTaskDefs = new HashSet<String>(1);
             }
-            customTaskDefs.add(BUNDLE_ANT_TASKS); // these are our required tasks
             customTaskDefs.add(ANTCONTRIB_ANT_TASKS); // we always want to provide these
 
             Properties taskDefs = new Properties();
@@ -104,10 +120,10 @@ public class AntLauncher {
 
             // notice we are adding the listener after we set the properties - we do not want the
             // the properties echoed out in the log (in case they contain sensitive passwords)
-            project.addBuildListener(new LoggerAntBuildListener(target, logFileOutput, Project.MSG_DEBUG));
+            project.addBuildListener(new LoggerAntBuildListener(targetName, logFileOutput, Project.MSG_DEBUG));
             if (logStdOut) {
                 PrintWriter stdout = new PrintWriter(System.out);
-                project.addBuildListener(new LoggerAntBuildListener(target, stdout, Project.MSG_INFO));
+                project.addBuildListener(new LoggerAntBuildListener(targetName, stdout, Project.MSG_INFO));
             }
 
             for (Map.Entry<Object, Object> taskDef : taskDefs.entrySet()) {
@@ -115,20 +131,83 @@ public class AntLauncher {
                     true, classLoader));
             }
 
-            ProjectHelper2 helper = new ProjectHelper2();
-            helper.parse(project, buildFile);
+            class AllOrNothingTarget extends Target {
+                public boolean doNothing = true;
 
-            parseBundleFiles(project);
-            parseBundleConfiguration(project);
+                @Override
+                public void execute() throws BuildException {
+                    if (!doNothing) {
+                        super.execute();
+                    }
+                }
+            }
+            AllOrNothingTarget allOrNothingTarget = new AllOrNothingTarget();
+            allOrNothingTarget.setName("");
+            allOrNothingTarget.setProject(project);
+
+            AntXMLContext context = new AntXMLContext(project);
+            context.setImplicitTarget(allOrNothingTarget);
+            context.getTargets().clear();
+            context.getTargets().addElement(context.getImplicitTarget());
+
+            String REFID_CONTEXT = "ant.parsing.context"; // private constant ProjectHelper2.REFID_CONTEXT value
+            project.addReference(REFID_CONTEXT, context);
+            project.addReference(ProjectHelper2.REFID_TARGETS, context.getTargets());
+
+            ProjectHelper2 helper = new ProjectHelper2();
+            try {
+                helper.parse(project, buildFile);
+            } catch (BuildException e) {
+                throw new InvalidBuildFileException("Failed to parse bundle Ant build file.", e);
+            }
+
+            validateAndPreprocess(project);
+
+            log.debug("==================== PARSED BUNDLE ANT BUILD FILE ====================");
+            log.debug(" Bundle Name: " + project.getBundleName());
+            log.debug(" Bundle Version: " + project.getBundleVersion());
+            log.debug(" Bundle Description: " + project.getBundleDescription());
+            log.debug(" Deployment Configuration: " + project.getConfiguration().toString(true));
+            log.debug("======================================================================");
 
             if (execute) {
-                project.executeTarget((target == null) ? project.getDefaultTarget() : target);
+                // parse it again, this time, allowing the implicit target to be executed
+                allOrNothingTarget.doNothing = false;
+                helper.parse(project, buildFile);
+
+                // make sure the requires system properties are defined and valid
+                String deployDir = properties.getProperty(DEPLOY_DIR_PROP);
+                if (deployDir == null) {
+                    throw new BuildException("Required property [" + DEPLOY_DIR_PROP + "] was not specified.");
+                }
+                File deployDirFile = new File(deployDir);
+                if (!deployDirFile.isAbsolute()) {
+                    throw new BuildException("Value of property [" + DEPLOY_DIR_PROP + "] (" + deployDirFile
+                        + ") is not an absolute path.");
+                }
+                project.setDeployDir(deployDirFile);
+
+                String deploymentIdStr = properties.getProperty(DEPLOY_ID_PROP);
+                if (deploymentIdStr == null) {
+                    throw new BuildException("Required property [" + DEPLOY_ID_PROP + "] was not specified.");
+                }
+                int deploymentId;
+                try {
+                    deploymentId = Integer.parseInt(deploymentIdStr);
+                } catch (Exception e) {
+                    throw new BuildException("Value of property [" + DEPLOY_ID_PROP + "] (" + deploymentIdStr
+                        + ") is not valid.", e);
+                }
+                project.setDeploymentId(deploymentId);
+
+                // now we can execute the ant script
+                project.executeTarget((targetName == null) ? project.getDefaultTarget() : targetName);
             }
 
             return project;
 
         } catch (Exception e) {
-            throw new RuntimeException("Cannot run ANT on script [" + buildFile + "]. Cause: " + e, e);
+            throw new RuntimeException("Cannot run Ant on build file [" + buildFile + "]. Cause: " + e, e);
         } finally {
             if (logFileOutput != null) {
                 logFileOutput.close();
@@ -136,70 +215,62 @@ public class AntLauncher {
         }
     }
 
-    private void parseBundleFiles(BundleAntProject project) {
-        Map<String, ? extends Task> refs = project.getReferences();
-        for (Map.Entry<String, ? extends Task> entry : refs.entrySet()) {
-            String refId = entry.getKey();
-            if (refId.startsWith("_bundlefile.")) {
-                Hashtable attribs = entry.getValue().getRuntimeConfigurableWrapper().getAttributeMap();
-
-                if (!attribs.containsKey("name")) {
-                    throw new BuildException("Property id=[" + refId + "] must specify the 'name' attribute");
+    private void validateAndPreprocess(BundleAntProject project) throws InvalidBuildFileException {
+        AntXMLContext antParsingContext = (AntXMLContext) project.getReference("ant.parsing.context");
+        Vector targets = antParsingContext.getTargets();
+        int bundleTaskCount = 0;
+        Task unconfiguredBundleTask = null;
+        for (Object targetObj : targets) {
+            Target target = (Target) targetObj;
+            Task[] tasks = target.getTasks();
+            for (Task task : tasks) {
+                // NOTE: For rhq:inputProperty tasks, the below call will add propDefs to the project configDef.
+                if (task.getTaskName().equals("rhq:bundle")) {
+                    abortIfTaskWithinTarget(target, task);
+                    bundleTaskCount++;
+                    unconfiguredBundleTask = task;
+                } else if (task.getTaskName().equals("rhq:inputProperty")) {
+                    abortIfTaskWithinTarget(target, task);
+                    InputPropertyTask inputPropertyTask = (InputPropertyTask) preconfigureTask(task);
+                } else if (task.getTaskName().equals("rhq:deploy")) {
+                    DeployTask deployTask = (DeployTask) preconfigureTask(task);
+                    Map<File, File> files = deployTask.getFiles();
+                    for (File file : files.values()) {
+                        project.getBundleFileNames().add(file.getName());
+                    }
+                    Set<File> archives = deployTask.getArchives();
+                    for (File archive : archives) {
+                        project.getBundleFileNames().add(archive.getName());
+                    }
                 }
-                String name = attribs.get("name").toString();
-
-                // allow the bundle author to specify the bundle file in one of the standard two ways
-                Object location = attribs.get("location");
-                Object value = attribs.get("value");
-
-                String bundleFilename;
-                if (location != null) {
-                    bundleFilename = location.toString();
-                } else if (value != null) {
-                    bundleFilename = value.toString();
-                } else {
-                    throw new BuildException("Property id=[" + refId + "], name=[" + name
-                        + "] must specify the bundle file name in an attribute named 'location' or 'value'");
-                }
-
-                project.addBundleFile(name, bundleFilename);
             }
+        }
+        if (bundleTaskCount == 0) {
+            throw new InvalidBuildFileException(
+                "rhq:bundle task not found - an RHQ bundle Ant build file must contain exactly one rhq:bundle task.");
+        }
+        if (bundleTaskCount > 1) {
+            throw new InvalidBuildFileException(
+                "More than one rhq:bundle task found - an RHQ bundle Ant build file must contain exactly one rhq:bundle task.");
+        }
+
+        BundleTask bundleTask = (BundleTask) preconfigureTask(unconfiguredBundleTask);
+    }
+
+    private void abortIfTaskWithinTarget(Target target, Task task) throws InvalidBuildFileException {
+        if (!target.getName().equals("")) {
+            throw new InvalidBuildFileException(task.getTaskName() + " task found within [" + target.getName()
+                + "] target - it must be outside of any targets (at the top of the build file).");
         }
     }
 
-    private void parseBundleConfiguration(BundleAntProject project) {
-        Map<String, ? extends Task> refs = project.getReferences();
-        for (Map.Entry<String, ? extends Task> entry : refs.entrySet()) {
-            String refId = entry.getKey();
-            if (refId.startsWith("_bundleconfig.")) {
-                Hashtable attribs = entry.getValue().getRuntimeConfigurableWrapper().getAttributeMap();
-
-                if (!attribs.containsKey("name")) {
-                    throw new BuildException("Property id=[" + refId + "] must specify the 'name' attribute");
-                }
-                String name = attribs.get("name").toString();
-
-                // allow the bundle author to specify the bundle config prop in one of the standard two ways
-                Object location = attribs.get("location");
-                Object value = attribs.get("value");
-
-                String bundlePropValue;
-                if (location != null) {
-                    bundlePropValue = location.toString();
-                } else if (value != null) {
-                    bundlePropValue = value.toString();
-                } else {
-                    throw new BuildException("Property id=[" + refId + "], name=[" + name
-                        + "] must specify the bundle configuration name in an attribute named 'location' or 'value'");
-                }
-
-                PropertyDefinitionSimple prop = new PropertyDefinitionSimple(name, "Needed by bundle recipe.", false,
-                    PropertySimpleType.STRING);
-                prop.setDisplayName(name);
-                prop.setDefaultValue(bundlePropValue);// TODO: I would like to set this-setDefaultValue is deprecated, how to do this?
-                ConfigurationDefinition configDef = project.getConfigurationDefinition();
-                configDef.put(prop);
-            }
+    private static Task preconfigureTask(Task task) {
+        if (task instanceof UnknownElement) {
+            task.maybeConfigure();
+            Task resolvedTask = ((UnknownElement) task).getTask();
+            return (resolvedTask != null) ? resolvedTask : task;
+        } else {
+            return task;
         }
     }
 }

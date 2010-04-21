@@ -26,9 +26,7 @@ import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.international.StatusMessage;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleVersion;
-import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -43,8 +41,8 @@ import java.util.List;
 
 /**
  * Provides details about a particular {@link org.rhq.core.domain.bundle.BundleVersion version} of a provisioning
- * bundle, including CRUD operations on the {@link org.rhq.core.domain.bundle.BundleDeployDefinition deployment
- * definition}s defined for that bundle version. The backing bean for bundleVersionDetails.xhtml.
+ * bundle, including CRUD operations on the {@link org.rhq.core.domain.bundle.BundleDeployment deployment}s defined
+ * for that bundle version. The backing bean for bundleVersionDetails.xhtml.
  *
  * @author Ian Springer
  */
@@ -52,7 +50,7 @@ import java.util.List;
 @Scope(ScopeType.EVENT)
 @KeepAlive
 public class BundleVersionDetailsUIBean extends AbstractPerspectivePagedDataUIBean {
-    private List<BundleDeployDefinition> selectedBundleDeployDefinitions;
+    private List<BundleDeployment> selectedBundleDeployments;
 
     @RequestParameter
     private int bundleVersionId;
@@ -75,15 +73,15 @@ public class BundleVersionDetailsUIBean extends AbstractPerspectivePagedDataUIBe
         return new DataModel(this);
     }
 
-    public List<BundleDeployDefinition> getSelectedBundleDeployDefinitions() {
-        return this.selectedBundleDeployDefinitions;
+    public List<BundleDeployment> getselectedBundleDeployments() {
+        return this.selectedBundleDeployments;
     }
 
-    public void setSelectedBundleDeployDefinitions(List<BundleDeployDefinition> selectedBundleDeployDefinitions) {
-        this.selectedBundleDeployDefinitions = selectedBundleDeployDefinitions;
+    public void setselectedBundleDeployments(List<BundleDeployment> selectedBundleDeployments) {
+        this.selectedBundleDeployments = selectedBundleDeployments;
     }
 
-    public void deleteSelectedBundleDeployDefinitions() throws Exception {
+    public void deleteselectedBundleDeployments() throws Exception {
         RemoteClient remoteClient;
         Subject subject;
         try {
@@ -97,17 +95,15 @@ public class BundleVersionDetailsUIBean extends AbstractPerspectivePagedDataUIBe
         // ***NOTE***: The javassist.NotFoundException stack traces that are logged by this call can be ignored.
         BundleManagerRemote bundleManager = remoteClient.getBundleManagerRemote();
 
-        int[] selectedBundleDeployDefinitionIds = new int[this.selectedBundleDeployDefinitions.size()];
-        for (int i = 0, selectedBundlesSize = this.selectedBundleDeployDefinitions.size(); i < selectedBundlesSize; i++) {
-            BundleDeployDefinition selectedBundleDeployDefinition = this.selectedBundleDeployDefinitions.get(i);
-            selectedBundleDeployDefinitionIds[i] = selectedBundleDeployDefinition.getId();
+        int[] selectedBundleDeploymentIds = new int[this.selectedBundleDeployments.size()];
+        for (int i = 0, selectedBundlesSize = this.selectedBundleDeployments.size(); i < selectedBundlesSize; i++) {
+            BundleDeployment selectedBundleDeployment = this.selectedBundleDeployments.get(i);
+            selectedBundleDeploymentIds[i] = selectedBundleDeployment.getId();
         }
 
-        //bundleManager.deleteBundleDeploymentDefinitions(subject, selectedBundleDeploymentDefinitionsIds);
-
         // Add message to tell the user the uninventory was a success.
-        String pluralizer = (this.selectedBundleDeployDefinitions.size() == 1) ? "" : "s";
-        this.facesMessages.add("Deleted " + this.selectedBundleDeployDefinitions.size() + " bundle deployment definition" + pluralizer + ".");
+        String pluralizer = (this.selectedBundleDeployments.size() == 1) ? "" : "s";
+        this.facesMessages.add("Deleted " + this.selectedBundleDeployments.size() + " bundle deployment" + pluralizer + ".");
 
         // Reset the data model, so the current page will get refreshed to reflect the Resources we just uninventoried.
         // This is essential, since we are CONVERSATION-scoped and will live on beyond this request.
@@ -132,13 +128,13 @@ public class BundleVersionDetailsUIBean extends AbstractPerspectivePagedDataUIBe
         return bundleVersions.get(0);
     }
 
-    private class DataModel extends PagedListDataModel<BundleDeployDefinition> {
+    private class DataModel extends PagedListDataModel<BundleDeployment> {
         private DataModel(AbstractPagedDataUIBean pagedDataBean) {
             super(pagedDataBean);
         }
 
         @Override
-        public PageList<BundleDeployDefinition> fetchPage(PageControl pageControl) {
+        public PageList<BundleDeployment> fetchPage(PageControl pageControl) {
             PerspectiveClientUIBean perspectiveClient = BundleVersionDetailsUIBean.this.perspectiveClient;
             BundleManagerRemote bundleManager;
             Subject subject;
@@ -149,15 +145,15 @@ public class BundleVersionDetailsUIBean extends AbstractPerspectivePagedDataUIBe
                 throw new RuntimeException(e);
             }
 
-            BundleDeployDefinitionCriteria bundleDeployDefinitionCriteria = new BundleDeployDefinitionCriteria();
-            bundleDeployDefinitionCriteria.setPageControl(pageControl);
+            BundleDeploymentCriteria bundleDeploymentCriteria = new BundleDeploymentCriteria();
+            bundleDeploymentCriteria.setPageControl(pageControl);
             // TODO
-            //bundleDeployDefinitionCriteria.addFilterVersionId(BundleVersionDetailsUIBean.this.bundleVersionId);
-            bundleDeployDefinitionCriteria.fetchBundle(true);
+            //bundleDeploymentCriteria.addFilterVersionId(BundleVersionDetailsUIBean.this.bundleVersionId);
+            bundleDeploymentCriteria.fetchBundle(true);
             // TODO: Implement user-specified filters.
-            PageList<BundleDeployDefinition> bundleDeployDefinitions = bundleManager.findBundleDeployDefinitionsByCriteria(subject,
-                    bundleDeployDefinitionCriteria);
-            return bundleDeployDefinitions;
+            PageList<BundleDeployment> bundleDeployments = bundleManager.findBundleDeploymentsByCriteria(subject,
+                    bundleDeploymentCriteria);
+            return bundleDeployments;
         }
     }
 }

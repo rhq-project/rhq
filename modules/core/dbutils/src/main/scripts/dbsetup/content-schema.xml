@@ -500,8 +500,8 @@
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>        
         <column name="BUNDLE_TYPE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_TYPE"/>
+        <column name="PACKAGE_TYPE_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_TYPE"/>
         <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>        
-        <column name="PACKAGE_TYPE_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_TYPE"/>        
 
         <!--  This index is for constraint, not performance -->    
         <index name="RHQ_BUNDLE_UNIQUE" unique="true">
@@ -520,7 +520,6 @@
         <column name="ACTION" type="CLOB" required="true"/>
         <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF" />
         <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>
-        <column name="DISTRIBUTION_ID" type="INTEGER" required="false" references="RHQ_DISTRIBUTION"/>
 
         <!--  This index is for constraint, not performance -->    
         <index name="RHQ_BUNDLE_VERSION_UNIQUE" unique="true">
@@ -530,7 +529,8 @@
         </index>
     </table>
 
-    <!-- Many-to-many table that links many repos to a particular bundle version -->
+    <!-- Many-to-many table that links many repos to a particular bundle version. destination platforms -->
+    <!-- would be required to have associations to the specified repos (to access required content -->
     <table name="RHQ_BUNDLE_VERSION_REPO">
         <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
         <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
@@ -548,33 +548,31 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
         <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
-        <column name="PACKAGE_ID" type="INTEGER" required="false" references="RHQ_PACKAGE"/>
     </table>    
 
-    <!-- A set of configuration values that are used to customize how a bundle version is installed -->
-    <table name="RHQ_BUNDLE_DEPLOY_DEF">
+    <!-- A set of configuration values that are used to customize how a bundle version is installed -->    
+    <table name="RHQ_BUNDLE_DEPLOY">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
         <column name="CTIME" type="LONG" required="true"/>
         <column name="MTIME" type="LONG" required="true"/>        
+        <column name="INSTALL_DIR" size="256" type="VARCHAR2" required="true"/>
         <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />        
-        <column name="ENFORCE_POLICY" type="BOOLEAN" required="true"/> 
-        <column name="ENFORCEMENT_INTERVAL" type="INTEGER" required="false"/>
         <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
-        <column name="BUNDLE_ID" type="INTEGER" required="false" references="RHQ_BUNDLE"/>
 
         <!--  This index is for constraint, not performance -->    
         <index name="RHQ_BUNDLE_DEPLOY_DEF_UNIQUE" unique="true">
             <field ref="BUNDLE_VERSION_ID"/>
             <field ref="NAME"/>
+            <field ref="INSTALL_DIR"/>            
         </index>
     </table>
 
     <table name="RHQ_BUNDLE_GROUP_DEPLOY">
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
         <column name="GROUP_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_GROUP"/>
-        <column name="BUNDLE_DEPLOY_DEF_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOY_DEF" />        
+        <column name="BUNDLE_DEPLOY_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOY" />        
         <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
         <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
         <column name="SUBJECT_NAME" type="VARCHAR2" required="true" size="255"/>
@@ -583,23 +581,24 @@
     </table>
     
     <!-- Represents a bundle version that is deployed on a platform resource -->
-    <table name="RHQ_BUNDLE_DEPLOY">
+    <table name="RHQ_BUNDLE_RES_DEPLOY">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>    
-        <column name="BUNDLE_DEPLOY_DEF_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOY_DEF" />
+        <column name="BUNDLE_DEPLOY_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOY" />
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE" />
+        <column name="IS_CURRENT" type="BOOLEAN" required="true"/>
         <column name="STATUS" type="VARCHAR2" required="true" size="16"/>        
         <column name="CTIME" type="LONG" required="true"/>
         <column name="BUNDLE_GROUP_DEPLOY_ID" type="INTEGER" required="false" references="RHQ_BUNDLE_GROUP_DEPLOY"/>                
 
         <index name="RHQ_DEPLOY_DEF_RESOURCE_IDX" unique="true">
-            <field ref="BUNDLE_DEPLOY_DEF_ID"/>
+            <field ref="BUNDLE_DEPLOY_ID"/>
             <field ref="RESOURCE_ID"/>
         </index>
     </table>
     
-    <table name="RHQ_BUNDLE_DEPLOY_HIST">
+    <table name="RHQ_BUNDLE_RES_DEP_HIST">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="BUNDLE_DEPLOY_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOY" />        
+        <column name="BUNDLE_RES_DEPLOY_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_RES_DEPLOY" />        
         <column name="SUBJECT_NAME" required="false" size="255" type="VARCHAR2"/>
         <column name="AUDIT_TIME" required="true" type="LONG"/>
         <column name="AUDIT_ACTION" required="true" size="50" type="VARCHAR2"/>

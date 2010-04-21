@@ -49,7 +49,7 @@ function testDeployment() {
    var testBundle = BundleManager.createBundle( bundleName, bundleName, getBundleType() );
    
    // define the recipe for bundleVersion 1.0 
-   var recipe = "file -s testBundle.war -d <%bundleTest.deployHome%>/testBundle.war"
+   var recipe = "file -s testBundle.war -d @@bundleTest.deployHome@@/testBundle.war"
       
    // create bundleVersion 1.0
    var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, bundleName, null, recipe);
@@ -57,15 +57,15 @@ function testDeployment() {
    // add the single bundleFile, the test war file
    var fileBytes = scriptUtil.getFileBytes("./src/test/resources/testBundle.war"); 
    var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "testBundle.war",
-         "1.0", null, fileBytes, false);
+         "1.0", null, fileBytes);
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
    var property = new PropertySimple("bundleTest.deployHome", "/tmp/bundle-test");
    config.put( property );
 
-   // create a deploy def using the above config
-   var testDeployDef = BundleManager.createBundleDeployDefinition(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", config, false, -1, false);
+   // create a deployment using the above config
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config);
 
    // Find a target platform
    var rc = new ResourceCriteria();
@@ -73,7 +73,7 @@ function testDeployment() {
    var winPlatforms = ResourceManager.findResourcesByCriteria(rc);
    var platformId = winPlatforms.get(0).getId();
    
-   var bd = BundleManager.scheduleBundleDeployment(testDeployDef.getId(), platformId);
+   var bd = BundleManager.scheduleBundleResourceDeployment(testDeployment.getId(), platformId);
    Assert.assertNotNull( bd );   
    
    
@@ -94,7 +94,7 @@ function testGroupDeployment() {
    var testBundle = BundleManager.createBundle( bundleName, bundleName, getBundleType() );
    
    // define the recipe for bundleVersion 1.0 
-   var recipe = "file -s testBundle.war -d <%bundleTest.deployHome%>/group/testBundle.war"
+   var recipe = "file -s testBundle.war -d @@bundleTest.deployHome@@/group/testBundle.war"
       
    // create bundleVersion 1.0
    var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, bundleName, null, recipe);
@@ -102,15 +102,15 @@ function testGroupDeployment() {
    // add the single bundleFile, the test war file
    var fileBytes = scriptUtil.getFileBytes("./src/test/resources/testBundle.war"); 
    var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "testBundle.war",
-         "1.0", null, fileBytes, false);
+         "1.0", null, fileBytes);
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
    var property = new PropertySimple("bundleTest.deployHome", "/tmp/bundle-test");
    config.put( property );
 
-   // create a deploy def using the above config
-   var testDeployDef = BundleManager.createBundleDeployDefinition(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", config, false, -1, false);
+   // create a deployment using the above config
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config);
 
    // Find a target platform group
    var rgc = new ResourceGroupCriteria();
@@ -119,7 +119,7 @@ function testGroupDeployment() {
    Assert.assertTrue( groups.size() > 0 );
    var groupId = groups.get(0).getId();
    
-   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployDef.getId(), groupId);
+   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
    Assert.assertNotNull( bgd );      
    
    // delete the test bundle if it exists (after allowing agent audit messages to complete)

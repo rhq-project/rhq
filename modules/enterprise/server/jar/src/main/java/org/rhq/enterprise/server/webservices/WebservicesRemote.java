@@ -66,6 +66,5 @@ public interface WebservicesRemote extends //
     RoleManagerRemote,//
     SubjectManagerRemote,//
     SupportManagerRemote,//
-    SystemManagerRemote, //
-    RegistrationManagerRemote {
+    SystemManagerRemote {
 }

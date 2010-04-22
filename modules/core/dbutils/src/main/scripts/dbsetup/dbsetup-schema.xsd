@@ -65,6 +65,7 @@
                         <xs:enumeration value="VARCHAR2"/>
                         <xs:enumeration value="DOUBLE"/>
                         <xs:enumeration value="TIMESTAMP"/>
+                        <xs:enumeration value="LONGVARCHAR"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>

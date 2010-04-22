@@ -25,6 +25,7 @@ package org.rhq.core.domain.bundle;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -34,6 +35,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -46,6 +48,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.tagging.Tag;
 
 /**
  * Defines a bundle of content that can be versioned.
@@ -96,6 +99,10 @@ public class Bundle implements Serializable {
 
     @OneToMany(mappedBy = "bundle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleVersion> bundleVersions = new ArrayList<BundleVersion>();
+
+    @ManyToMany(mappedBy = "bundles", fetch = FetchType.LAZY)
+    private Set<Tag> tags;
+
 
     public Bundle() {
         // for JPA use
@@ -167,6 +174,14 @@ public class Bundle implements Serializable {
 
     public void setBundleVersions(List<BundleVersion> bundleVersions) {
         this.bundleVersions = bundleVersions;
+    }
+
+    public Set<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
     }
 
     @Override

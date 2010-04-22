@@ -2706,10 +2706,18 @@
                 </schema-directSQL>
             </schemaSpec>
 
+<<<<<<< HEAD
             <schemaSpec version="2.83"> 
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_SUBJECT_ROLE_LDAP_MAP">
                         CREATE TABLE RHQ_SUBJECT_ROLE_LDAP_MAP ( SUBJECT_ID INTEGER, ROLE_ID INTEGER )
+=======
+			<schemaSpec version="2.83">
+				<!-- The following constraint change shortens the constraint name < 30 chars for Oracle. -->
+				<schema-directSQL>
+                    <statement targetDBVendor="postgresql" desc="Dropping RHQ_SUBJECT_ROLE_LDAP_MAP constraint RHQ_SUBJECT_ROLE_LDAP_MAPPING_KEY.">
+                        ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP DROP CONSTRAINT RHQ_SUBJECT_ROLE_LDAP_MAPPING_KEY;
+>>>>>>> New tag system for bundle system
                     </statement>
                     <statement desc="Creating composite PK for RHQ_SUBJECT_ROLE_LDAP_MAP">
                         ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP 
@@ -2731,6 +2739,245 @@
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="SUBJECT_ID" nullable="FALSE" />
                 <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="ROLE_ID"  nullable="FALSE" />
+            </schemaSpec>
+
+
+
+            <!-- Remove the old tagging system -->
+            <schemaSpec version="2.84">
+                <schema-dropTable table="RHQ_REPO_TAG_MAP"/>
+                <schema-dropTable table="RHQ_TAG"/>
+            </schemaSpec>
+
+            <!-- The new tagging system -->
+            <schemaSpec version="2.85">
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_TAGGING">
+                        CREATE TABLE RHQ_TAGGING ( ID INTEGER PRIMARY KEY)
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_TAGGING" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_TAGGING_ID_SEQ" initial="10001" />
+                <schema-addColumn table="RHQ_TAGGING" column="NAMESPACE" columnType="VARCHAR2" precision="20" />
+                <schema-alterColumn table="RHQ_TAGGING" column="NAMESPACE" nullable="TRUE" />
+                <schema-addColumn table="RHQ_TAGGING" column="SEMANTIC" columnType="VARCHAR2" precision="50" />
+                <schema-alterColumn table="RHQ_TAGGING" column="SEMANTIC" nullable="TRUE" />
+                <schema-addColumn table="RHQ_TAGGING" column="NAME" columnType="VARCHAR2" precision="100" />
+                <schema-alterColumn table="RHQ_TAGGING" column="NAME" nullable="FALSE" />
+
+
+
+
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_TAGGING_RESOURCE_MAP ( RESOURCE_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_TAGGING_RESOURCE_MAP" column="RESOURCE_ID" nullable="false" />
+                <schema-addColumn table="RHQ_TAGGING_RESOURCE_MAP" column="TAG_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_TAGGING_RESOURCE_MAP" column="TAG_ID" nullable="false" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_TAGGING_RESOURCE_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_RESOURCE_MAP_KEY
+                        PRIMARY KEY ( RESOURCE_ID, TAG_ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_TAGGING_RESOURCE_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_RESOURCE_MAP_RESOURCE_ID_FKEY
+                        FOREIGN KEY ( RESOURCE_ID )
+                        REFERENCES RHQ_RESOURCE ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_TAGGING_RESOURCE_MAP
+                        ADD FOREIGN KEY ( RESOURCE_ID )
+                        REFERENCES RHQ_RESOURCE ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_TAGGING_RESOURCE_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_RESOURCE_MAP_TAG_ID_FKEY
+                        FOREIGN KEY ( TAG_ID )
+                        REFERENCES RHQ_TAGGING ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_TAGGING_RESOURCE_MAP
+                        ADD FOREIGN KEY ( TAG_ID )
+                        REFERENCES RHQ_TAGGING ( ID )
+                    </statement>
+                </schema-directSQL>
+
+
+
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_TAGGING_RES_GRP_MAP ( RESOURCE_GROUP_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_TAGGING_RES_GRP_MAP" column="RESOURCE_GROUP_ID" nullable="false" />
+                <schema-addColumn table="RHQ_TAGGING_RES_GRP_MAP" column="TAG_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_TAGGING_RES_GRP_MAP" column="TAG_ID" nullable="false" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_TAGGING_RES_GRP_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_RES_GRP_MAP_KEY
+                        PRIMARY KEY ( RESOURCE_GROUP_ID, TAG_ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_TAGGING_RES_GRP_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_RES_GRP_MAP_RESOURCE_GROUP_ID_FKEY
+                        FOREIGN KEY ( RESOURCE_GROUP_ID )
+                        REFERENCES RHQ_RESOURCE ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_TAGGING_RES_GRP_MAP
+                        ADD FOREIGN KEY ( RESOURCE_GROUP_ID )
+                        REFERENCES RHQ_RESOURCE ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_TAGGING_RES_GRP_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_RES_GRP_MAP_TAG_ID_FKEY
+                        FOREIGN KEY ( TAG_ID )
+                        REFERENCES RHQ_TAGGING ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_TAGGING_RES_GRP_MAP
+                        ADD FOREIGN KEY ( TAG_ID )
+                        REFERENCES RHQ_TAGGING ( ID )
+                    </statement>
+                </schema-directSQL>
+
+
+
+
+                 <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_TAGGING_BUNDLE_MAP ( BUNDLE_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_TAGGING_BUNDLE_MAP" column="BUNDLE_ID" nullable="false" />
+                <schema-addColumn table="RHQ_TAGGING_BUNDLE_MAP" column="TAG_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_TAGGING_BUNDLE_MAP" column="TAG_ID" nullable="false" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_TAGGING_BUNDLE_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_BUNDLE_MAP_KEY
+                        PRIMARY KEY ( BUNDLE_ID, TAG_ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_TAGGING_BUNDLE_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_BUNDLE_MAP_BUNDLE_ID_FKEY
+                        FOREIGN KEY ( BUNDLE_ID )
+                        REFERENCES RHQ_RESOURCE ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_TAGGING_BUNDLE_MAP
+                        ADD FOREIGN KEY ( BUNDLE_ID )
+                        REFERENCES RHQ_RESOURCE ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_TAGGING_BUNDLE_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_BUNDLE_MAP_TAG_ID_FKEY
+                        FOREIGN KEY ( TAG_ID )
+                        REFERENCES RHQ_TAGGING ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_TAGGING_BUNDLE_MAP
+                        ADD FOREIGN KEY ( TAG_ID )
+                        REFERENCES RHQ_TAGGING ( ID )
+                    </statement>
+                </schema-directSQL>
+
+
+
+
+
+
+
+                  <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_TAGGING_BND_VER_MAP ( BUNDLE_VERSION_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_TAGGING_BND_VER_MAP" column="BUNDLE_VERSION_ID" nullable="false" />
+                <schema-addColumn table="RHQ_TAGGING_BND_VER_MAP" column="TAG_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_TAGGING_BND_VER_MAP" column="TAG_ID" nullable="false" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_TAGGING_BND_VER_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_BND_VER_MAP_KEY
+                        PRIMARY KEY ( BUNDLE_VERSION_ID, TAG_ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_TAGGING_BND_VER_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_BND_VER_MAP_BUNDLE_VERSION_ID_FKEY
+                        FOREIGN KEY ( BUNDLE_VERSION_ID )
+                        REFERENCES RHQ_RESOURCE ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_TAGGING_BND_VER_MAP
+                        ADD FOREIGN KEY ( BUNDLE_VERSION_ID )
+                        REFERENCES RHQ_RESOURCE ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_TAGGING_BND_VER_MAP
+                        ADD CONSTRAINT RHQ_TAGGING_BND_VER_MAP_TAG_ID_FKEY
+                        FOREIGN KEY ( TAG_ID )
+                        REFERENCES RHQ_TAGGING ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_TAGGING_BND_VER_MAP
+                        ADD FOREIGN KEY ( TAG_ID )
+                        REFERENCES RHQ_TAGGING ( ID )
+                    </statement>
+                </schema-directSQL>
+
+
+
+
+                <schema-directSQL>
+                  <statement>
+                      CREATE TABLE RHQ_TAGGING_BND_DEP_MAP ( BUNDLE_DEPLOYMENT_ID INTEGER )
+                  </statement>
+              </schema-directSQL>
+              <schema-alterColumn table="RHQ_TAGGING_BND_DEP_MAP" column="BUNDLE_DEPLOYMENT_ID" nullable="false" />
+              <schema-addColumn table="RHQ_TAGGING_BND_DEP_MAP" column="TAG_ID" columnType="INTEGER" />
+              <schema-alterColumn table="RHQ_TAGGING_BND_DEP_MAP" column="TAG_ID" nullable="false" />
+              <schema-directSQL>
+                  <statement>
+                      ALTER TABLE RHQ_TAGGING_BND_DEP_MAP
+                      ADD CONSTRAINT RHQ_TAGGING_BND_DEP_MAP_KEY
+                      PRIMARY KEY ( BUNDLE_DEPLOYMENT_ID, TAG_ID )
+                  </statement>
+                  <statement targetDBVendor="postgresql">
+                      ALTER TABLE RHQ_TAGGING_BND_DEP_MAP
+                      ADD CONSTRAINT RHQ_TAGGING_BND_DEP_MAP_BUNDLE_DEPLOYMENT_ID_FKEY
+                      FOREIGN KEY ( BUNDLE_DEPLOYMENT_ID )
+                      REFERENCES RHQ_RESOURCE ( ID )
+                  </statement>
+                  <statement targetDBVendor="oracle">
+                      ALTER TABLE RHQ_TAGGING_BND_DEP_MAP
+                      ADD FOREIGN KEY ( BUNDLE_DEPLOYMENT_ID )
+                      REFERENCES RHQ_RESOURCE ( ID )
+                  </statement>
+                  <statement targetDBVendor="postgresql">
+                      ALTER TABLE RHQ_TAGGING_BND_DEP_MAP
+                      ADD CONSTRAINT RHQ_TAGGING_BND_DEP_MAP_TAG_ID_FKEY
+                      FOREIGN KEY ( TAG_ID )
+                      REFERENCES RHQ_TAGGING ( ID )
+                  </statement>
+                  <statement targetDBVendor="oracle">
+                      ALTER TABLE RHQ_TAGGING_BND_DEP_MAP
+                      ADD FOREIGN KEY ( TAG_ID )
+                      REFERENCES RHQ_TAGGING ( ID )
+                  </statement>
+              </schema-directSQL>
+
+
+
+
+
+
+
             </schemaSpec>
 
         </dbupgrade>

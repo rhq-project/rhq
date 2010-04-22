@@ -48,10 +48,6 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.jetbrains.annotations.NotNull;
-
-import org.rhq.core.domain.common.Tag;
-import org.rhq.core.domain.common.Taggable;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -104,7 +100,7 @@ import org.rhq.core.domain.resource.Resource;
         + "     WHERE rcs.repo.id = r.id) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
-public class Repo implements Serializable, Taggable {
+public class Repo implements Serializable {
 
     // Constants  --------------------------------------------
 
@@ -167,10 +163,6 @@ public class Repo implements Serializable, Taggable {
     @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoRepoRelationship> repoRepoRelationships;
-
-    @XmlTransient
-    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
-    private Set<RepoTag> repoTags;
 
     @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
@@ -759,97 +751,6 @@ public class Repo implements Serializable, Taggable {
         this.lastModifiedDate = System.currentTimeMillis();
     }
 
-    public Set<RepoTag> getRepoTags() {
-        return repoTags;
-    }
-
-    public void setRepoTags(Set<RepoTag> tags) {
-        this.repoTags = tags;
-    }
-
-    public boolean hasTag(Tag tag) {
-        if ((this.repoTags == null) || (tag == null)) {
-            return false;
-        }
-
-        for (RepoTag rt : this.repoTags) {
-            if (tag.equals(rt.getRepoTagPK().getTag())) {
-                return true;
-            }
-        }
-        return false;
-
-    }
-
-    /**
-     * The tags associated with this repo.
-     */
-    public Set<Tag> getTags() {
-        HashSet<Tag> tags = new HashSet<Tag>();
-
-        if (repoTags != null) {
-            for (RepoTag rt : repoTags) {
-                tags.add(rt.getRepoTagPK().getTag());
-            }
-        }
-
-        return tags;
-    }
-
-    /**
-     * Add a tag association with this repo.
-     *
-     * @param tag
-     */
-    public void addTag(Tag tag) {
-        if (this.repoTags == null) {
-            this.repoTags = new HashSet<RepoTag>();
-        }
-
-        RepoTag mapping = new RepoTag(this, tag);
-        this.repoTags.add(mapping);
-    }
-
-    /**
-     * Set tag associations with this repo.
-     *
-     * @param tags
-     */
-    public void setTags(Set<Tag> tags) {
-        if (this.repoTags == null) {
-            this.repoTags = new HashSet<RepoTag>();
-        } else {
-            this.repoTags.clear();
-        }
-
-        for (Tag t : tags) {
-            RepoTag mapping = new RepoTag(this, t);
-            this.repoTags.add(mapping);
-        }
-
-    }
-
-    /**
-     * Removes association with a tag, if it exists.
-     */
-    public void removeTag(Tag tag) {
-        if ((this.repoTags == null) || (tag == null)) {
-            return;
-        }
-
-        RepoTag doomed = null;
-
-        for (RepoTag rt : this.repoTags) {
-            if (tag.equals(rt.getRepoTagPK().getTag())) {
-                doomed = rt;
-                break;
-            }
-        }
-
-        if (doomed != null) {
-            this.repoTags.remove(doomed);
-        }
-    }
 
     /**
      * Set the sync status for this repo.

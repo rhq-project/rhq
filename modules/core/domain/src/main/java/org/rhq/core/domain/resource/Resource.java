@@ -75,6 +75,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.Summary;
 
 /**
@@ -868,7 +869,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     private static final int UUID_LENGTH = 36;
 
     /**
-     * Helper for {@link #NATIVE_QUERY_FIND_MBIGUATION_LEVEL}.
+     * Helper for {@link #NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL}.
      * We need to guard against concatenation with a NULL value which
      * would yield a NULL result. We don't want that in that query, otherwise
      * we'd get skewed results for combination of resources on different
@@ -1112,6 +1113,10 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     //    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     //    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
+
+
+    @ManyToMany(mappedBy = "resources", fetch = FetchType.LAZY)
+    private Set<Tag> tags;
 
     public Resource() {
 
@@ -1686,6 +1691,14 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void setProductVersion(ProductVersion productVersion) {
         this.productVersion = productVersion;
+    }
+
+    public Set<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
     }
 
     public int compareTo(Resource that) {

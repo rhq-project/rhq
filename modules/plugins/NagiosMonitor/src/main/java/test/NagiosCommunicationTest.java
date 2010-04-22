@@ -30,10 +30,8 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-
 /**
- * Interface with method definition for all kinds of requests that can be sent to Nagios
- * The concrete types have to implement this interface and implement the methods for their purpose
+ * Simple Test class that works without rhq, uses implemented classes  
  * 
  * @author Alexander Kiefer
  */

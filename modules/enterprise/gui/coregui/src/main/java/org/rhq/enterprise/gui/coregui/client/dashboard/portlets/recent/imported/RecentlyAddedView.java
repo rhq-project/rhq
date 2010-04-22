@@ -21,16 +21,24 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets;
+package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported;
 
-import com.smartgwt.client.data.DataSource;
+import com.google.gwt.core.client.GWT;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.dashboard.PortletView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
+import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
 
-public class RecentlyAddedView extends VLayout {
+public class RecentlyAddedView extends VLayout implements PortletView {
+
+
+    public static final String KEY = "Recently Added Portlet";
 
 
     @Override
@@ -49,8 +57,29 @@ public class RecentlyAddedView extends VLayout {
         treeGrid.setFields(resourceNameField, timestampField);
 
 
+        addMember(new HeaderLabel("Recently Added Resources"));
+
         addMember(treeGrid);
 
     }
 
+    public void configure(StoredPortlet storedPortlet) {
+
+    }
+
+    public Canvas getHelpCanvas() {
+        return new HTMLFlow("This portlet displays resources that have recently been imported into the inventory.");
+    }
+
+    public Canvas getSettingsCanvas() {
+        return null;
+    }
+
+    public static final class Factory implements PortletViewFactory {
+        public static PortletViewFactory INSTANCE = new Factory();
+
+        public final PortletView getInstance() {
+            return GWT.create(RecentlyAddedView.class);
+        }
+    }
 }

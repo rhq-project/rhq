@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,19 +16,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.enterprise.gui.coregui.client.dashboard;
+
+import com.smartgwt.client.widgets.Canvas;
+
+import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
 
 /**
- * TODO
- *
- * @author Ian Springer
+ * @author Greg Hinkle
  */
-public interface ViewRenderer {
-    /**
-     * TODO
-     *
-     * @param viewId
-     * @param lastNode  @throws UnknownViewException
-     */
-    View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException;
+public interface PortletView {
+
+    void configure(StoredPortlet storedPortlet);
+
+    Canvas getHelpCanvas();
+
+    Canvas getSettingsCanvas();
+
 }

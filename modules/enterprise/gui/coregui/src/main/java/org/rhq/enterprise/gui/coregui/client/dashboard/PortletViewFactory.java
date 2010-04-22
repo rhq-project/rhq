@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,18 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 /**
- * TODO
- *
- * @author Ian Springer
+ * @author Greg Hinkle
  */
-public class UnknownViewException extends Exception {
-    public UnknownViewException() {
-    }
+public interface PortletViewFactory {
 
-    public UnknownViewException(String message) {
-        super(message);
-    }
+    PortletView getInstance();
+
 }

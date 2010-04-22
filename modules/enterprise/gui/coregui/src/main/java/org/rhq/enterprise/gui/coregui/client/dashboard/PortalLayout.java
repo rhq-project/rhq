@@ -49,4 +49,14 @@ public class PortalLayout extends HLayout {
         fewestPortletsColumn.addMember(portlet);
         return fewestPortletsColumn;
     }
+
+
+    public PortalColumn addPortlet(Portlet portlet, int column) {
+        PortalColumn fewestPortletsColumn = (PortalColumn) getMember(column);
+
+        fewestPortletsColumn.addMember(portlet);
+
+        return fewestPortletsColumn;
+    }
+
 }

@@ -10,6 +10,7 @@
     <server name="NagiosMonitor" discovery="NagiosMonitorDiscovery" class="NagiosMonitorComponent"
             description="Interface to Nagios monitoring system. Nagios needs to be equipped with
             mk_livestatus module for this plugin to work"
+            supportsManualAdd="true"
             >
 
             <plugin-configuration>

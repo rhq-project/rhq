@@ -1,4 +1,4 @@
-<plugin name="BZ_573034_test_plugin" displayName="Bug 573034 Test Plugin" package="org.rhq.plugins.mock.jboss"
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Bug 573034 Test Plugin" package="org.rhq.plugins.mock.jboss"
         version="1.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"

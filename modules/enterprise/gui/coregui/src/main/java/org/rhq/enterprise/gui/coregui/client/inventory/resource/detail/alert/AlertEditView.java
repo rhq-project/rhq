@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.FormItemIfFunction;
 import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.fields.BlurbItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
@@ -72,6 +73,7 @@ public class AlertEditView extends VLayout {
 
         addMember(buildEditForm());
 
+        addMember(buildConditionSection(0));
 
     }
 
@@ -119,12 +121,6 @@ public class AlertEditView extends VLayout {
         conditionsHeader.setValue("Alert Conditions");
 
 
-        CanvasItem conditionOne = new CanvasItem("condition0");
-        conditionOne.setShowTitle(false);
-        conditionOne.setColSpan(4);
-        conditionOne.setCanvas(buildConditionSection(0));
-
-
 /*
         LinkedHashMap valuesMap = new LinkedHashMap();
         valuesMap.put("Metric", buildMetricSectionCavans(vm));
@@ -134,7 +130,7 @@ public class AlertEditView extends VLayout {
         RadioGroupWithComponentsItem conditionGroup = new RadioGroupWithComponentsItem("radioTest", "Test", valuesMap, form);
 */
 
-        form.setItems(alertPropertiesHeader, alertName, priority, description, active, conditionsHeader, conditionOne);
+        form.setItems(alertPropertiesHeader, alertName, priority, description, active, conditionsHeader);
 
 
         return form;
@@ -152,22 +148,26 @@ public class AlertEditView extends VLayout {
     ALERT("Alert Fired"), //
     RESOURCE_CONFIG("Resource Configuration Property Value Change"), //
     EVENT("Log Event");
+    */
 
-     */
 
+    private DynamicForm buildConditionSection(final int ci) {
 
-    private DynamicForm buildConditionSection(int ci) {
+        final DynamicForm form = new DynamicForm();
 
-        DynamicForm form = new DynamicForm();
+        ValuesManager vm = new ValuesManager();
+        form.setValuesManager(vm);
+
         form.setNumCols(3);
         form.setColWidths("30","120","*");
         ArrayList<FormItem> items = new ArrayList<FormItem>();
 
 
-//
-//        RadioGroupItem conditionType = new RadioGroupItem("conditionType" + ci, "Condition Type");
-//        conditionType.setImageURLPrefix("subsystems/");
-//        conditionType.setImageURLSuffix("_16.png");
+
+        RadioGroupItem conditionType = new RadioGroupItem("conditionType" + ci, "Condition Type");
+        conditionType.setImageURLPrefix("subsystems/");
+        conditionType.setImageURLSuffix("_16.png");
+        items.add(conditionType);
 
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
         valueMap.put(AlertConditionCategory.AVAILABILITY.name(), AlertConditionCategory.AVAILABILITY.getDisplayName());
@@ -175,7 +175,7 @@ public class AlertEditView extends VLayout {
         valueMap.put(AlertConditionCategory.TRAIT.name(), AlertConditionCategory.TRAIT.getDisplayName());
         valueMap.put(AlertConditionCategory.CONTROL.name(), AlertConditionCategory.CONTROL.getDisplayName());
         valueMap.put(AlertConditionCategory.EVENT.name(), AlertConditionCategory.EVENT.getDisplayName());
-//        conditionType.setValueMap(valueMap);
+        conditionType.setValueMap(valueMap);
 
 
         LinkedHashMap<String, String> iconMap = new LinkedHashMap<String, String>();
@@ -185,11 +185,12 @@ public class AlertEditView extends VLayout {
         iconMap.put(AlertConditionCategory.CONTROL.name(), "control/Operation");
         iconMap.put(AlertConditionCategory.EVENT.name(), "event/Events_error");
 
-//        conditionType.setValueIcons(iconMap);
-////        conditionType.setValueIconSize(24);http://localhost:7080/coregui/images/availability/availability_red
-//        conditionType.setShowIcons(true);
+        conditionType.setValueIcons(iconMap);
+        conditionType.setValue(AlertConditionCategory.AVAILABILITY.name());
+//        conditionType.setValueIconSize(24);http://localhost:7080/coregui/images/availability/availability_red
+        conditionType.setShowIcons(true);
 
-
+/*
         for (final String key : valueMap.keySet()) {
             BlurbItem icon = new BlurbItem();
             icon.setColSpan(1);
@@ -204,6 +205,7 @@ public class AlertEditView extends VLayout {
             radio.setStartRow(false);
             radio.setShowTitle(false);
             radio.setValueMap(valueMap.get(key));
+            radio.setRedrawOnChange(true);
             items.add(radio);
 
             icon.addClickHandler(new ClickHandler() {
@@ -212,8 +214,24 @@ public class AlertEditView extends VLayout {
                 }
             });
 
-        }
+        }*/
 
+        CanvasItem metricCanvas = buildMetricSectionCavans(vm);
+        metricCanvas.setShowIfCondition(new FormItemIfFunction() {
+            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+                return "metric".equals(form.getValue("conditionType" + ci));
+            }
+        });
+        items.add(metricCanvas);
+
+
+        CanvasItem propertyCanvas = buildInventoryPropertySectionCavans(vm);
+        propertyCanvas.setShowIfCondition(new FormItemIfFunction() {
+            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+                return AlertConditionCategory.AVAILABILITY.name().equals(form.getValue("conditionType" + ci));
+            }
+        });
+        items.add(propertyCanvas);
 
 
         form.setItems(items.toArray(new FormItem[items.size()]));
@@ -221,7 +239,7 @@ public class AlertEditView extends VLayout {
     }
 
 
-    private DynamicForm buildMetricSectionCavans(ValuesManager vm) {
+    private CanvasItem buildMetricSectionCavans(ValuesManager vm) {
 
         DynamicForm form = new DynamicForm();
         form.setTitleSuffix("");
@@ -281,11 +299,16 @@ public class AlertEditView extends VLayout {
         metricConditionType.setShowTitle(false);
 
         form.setItems(metricSelect, new SpacerItem(), metricConditionType);
-        return form;
+
+        CanvasItem canvasItem = new CanvasItem("metricConditionCanvas");
+        canvasItem.setShowTitle(false);
+        canvasItem.setCanvas(form);
+
+        return canvasItem;
     }
 
 
-    private DynamicForm buildInventoryPropertySectionCavans(ValuesManager vm) {
+    private CanvasItem buildInventoryPropertySectionCavans(ValuesManager vm) {
         DynamicForm form = new DynamicForm();
         form.setValuesManager(vm);
 
@@ -297,6 +320,10 @@ public class AlertEditView extends VLayout {
         form.setItems(inventoryProperty);
 
 
-        return form;
+        CanvasItem canvasItem = new CanvasItem("inventoryPropertyCanvas");
+        canvasItem.setShowTitle(false);
+        canvasItem.setCanvas(form);
+
+        return canvasItem;
     }
 }

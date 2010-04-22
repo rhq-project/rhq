@@ -82,7 +82,8 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
         PageControl pca = WebUtility.getPageControl(request, "a");
         PageControl pcp = WebUtility.getPageControl(request, "p");
 
-        //BZ-580127 Refactor so that all lists are initialized regardless of ldap server availability or state of filter params
+        //BZ-580127 Refactor so that all lists are initialized regardless of ldap server 
+        // availability or state of filter params
         List<String> pendingGroupIds = new ArrayList<String>();
         Set<Map<String, String>> allGroups = new HashSet<Map<String, String>>();
         PageList<LdapGroup> assignedList = new PageList<LdapGroup>();

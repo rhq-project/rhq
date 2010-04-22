@@ -25,6 +25,7 @@ import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
@@ -83,6 +84,7 @@ public class Table extends VLayout {
     ;
 
     private ArrayList<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
+    private ArrayList<Canvas> extraWidgets = new ArrayList<Canvas>();
 
     public Table() {
         this(null, null, null, null, true);
@@ -146,8 +148,9 @@ public class Table extends VLayout {
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
+
 
         // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
         //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
@@ -189,6 +192,12 @@ public class Table extends VLayout {
             tableAction.actionButton = button;
             footer.addMember(button);
         }
+
+        for (Canvas extraWidgetCanvas : extraWidgets) {
+            footer.addMember(extraWidgetCanvas);
+        }
+
+
         footer.addMember(new LayoutSpacer());
 
         IButton refreshButton = new IButton("Refresh");
@@ -326,6 +335,12 @@ public class Table extends VLayout {
         info.confirmMessage = confirmation;
         tableActions.add(info);
     }
+
+    public void addExtraWidget(Canvas canvas) {
+        this.extraWidgets.add(canvas);
+    }
+
+
 
     private void refreshTableInfo() {
         int count = this.listGrid.getSelection().length;

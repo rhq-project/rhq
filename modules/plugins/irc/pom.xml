@@ -6,15 +6,15 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-   <parent>
+    <parent>
          <artifactId>rhq-plugins-parent</artifactId>
          <groupId>org.rhq</groupId>
          <version>3.0.0-SNAPSHOT</version>
-   </parent>
+    </parent>
  
-   <groupId>org.rhq</groupId>
-   <artifactId>rhq-irc-plugin</artifactId>
-   <packaging>jar</packaging>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-irc-plugin</artifactId>
+    <packaging>jar</packaging>
  
     <name>RHQ IRC Server Plugin</name>
     <description>Remote monitoring of IRC repos</description>
@@ -33,8 +33,6 @@
                     <target>1.5</target>
                 </configuration>
             </plugin>
-
-
 
       <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
@@ -150,30 +148,6 @@
     </profiles>
 
 
-        <repositories>
-            <repository>
-                <snapshots>
-                    <enabled>false</enabled>
-                </snapshots>
-                <id>jboss</id>
-                <name>JBoss Repository</name>
-                <url>http://repository.jboss.org/maven2/</url>
-            </repository>
-            <!-- TODO add your own maven repositories here (if needed) -->
-        </repositories>
-
-        <pluginRepositories>
-            <pluginRepository>
-                <snapshots>
-                    <enabled>false</enabled>
-                </snapshots>
-                <id>jboss</id>
-                <name>JBoss Plugin Repository</name>
-                <url>http://repository.jboss.org/maven2/</url>
-            </pluginRepository>
-        </pluginRepositories>
-
-
         <dependencies>
             <dependency>
                 <groupId>commons-logging</groupId>
@@ -183,29 +157,28 @@
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-domain</artifactId>
-                <version>${rhq.version}</version>
+                <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-plugin-api</artifactId>
-                <version>${rhq.version}</version>
+                <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-native-system</artifactId>
-                <version>${rhq.version}</version>
+                <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
 
          
-            <!-- TODO add your dependencies here -->
             <dependency>
                 <groupId>pircbot</groupId>
                 <artifactId>pircbot</artifactId>
                 <version>1.4.2</version>
-            </dependency>
-         
+            </dependency>         
         </dependencies>
+
 </project>

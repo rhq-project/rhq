@@ -42,9 +42,8 @@ public class BundleVersionCriteria extends Criteria {
     private String filterBundleName; // needs override    
 
     private boolean fetchBundle;
-    private boolean fetchBundleDeployDefinitions;
+    private boolean fetchBundleDeployments;
     private boolean fetchBundleFiles;
-    private boolean fetchDistribution;
     private boolean fetchConfigurationDefinition;
 
     public BundleVersionCriteria() {
@@ -53,7 +52,7 @@ public class BundleVersionCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<?> getPersistentClass() {
         return BundleVersion.class;
     }
 
@@ -85,8 +84,8 @@ public class BundleVersionCriteria extends Criteria {
         this.fetchBundle = fetchBundle;
     }
 
-    public void fetchBundleDeployDefinitions(boolean fetchBundleDeployDefinitions) {
-        this.fetchBundleDeployDefinitions = fetchBundleDeployDefinitions;
+    public void fetchBundleDeployments(boolean fetchBundleDeployments) {
+        this.fetchBundleDeployments = fetchBundleDeployments;
     }
 
     public void fetchBundleFiles(boolean fetchBundleFiles) {
@@ -96,9 +95,4 @@ public class BundleVersionCriteria extends Criteria {
     public void fetchConfigurationDefinition(boolean fetchConfigurationDefinition) {
         this.fetchConfigurationDefinition = fetchConfigurationDefinition;
     }
-
-    public void fetchDistribution(boolean fetchDistribution) {
-        this.fetchDistribution = fetchDistribution;
-    }
-
 }

@@ -90,12 +90,18 @@ import org.rhq.core.domain.resource.Resource;
         + "                             WHERE pcu.resource.id IN ( :resourceIds ) " //
         + "                           AND NOT pcu.configuration = pcu.resource.pluginConfiguration )"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, query = "" //
+        + "DELETE FROM RawConfiguration rc " //
+        + " WHERE rc.configuration IN ( SELECT pcu.configuration " //
+        + "                FROM PluginConfigurationUpdate pcu " //
+        + "               WHERE pcu.resource.id IN ( :resourceIds ) " //
+        + "                AND NOT pcu.configuration = pcu.resource.resourceConfiguration )"),
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = "" //
         + "DELETE FROM Configuration c " //
         + " WHERE c IN ( SELECT pcu.configuration " //
         + "                FROM PluginConfigurationUpdate pcu " //
         + "               WHERE pcu.resource.id IN ( :resourceIds ) " //
         + "                 AND NOT pcu.configuration = pcu.resource.pluginConfiguration )"),
-    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = "" //
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, query = "" //
         + "DELETE FROM PluginConfigurationUpdate pcu " //
         + " WHERE pcu.resource.id IN ( :resourceIds )"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP, query = "" //
@@ -127,6 +133,7 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
     public static final String QUERY_DELETE_BY_RESOURCES_0 = "PluginConfigurationUpdate.deleteByResources0";
     public static final String QUERY_DELETE_BY_RESOURCES_1 = "PluginConfigurationUpdate.deleteByResources1";
     public static final String QUERY_DELETE_BY_RESOURCES_2 = "PluginConfigurationUpdate.deleteByResources2";
+    public static final String QUERY_DELETE_BY_RESOURCES_3 = "PluginConfigurationUpdate.deleteByResources3";
     public static final String QUERY_DELETE_GROUP_UPDATES_FOR_GROUP = "pluginConfigurationUpdate.deleteGroupUpdatesForGroup";
     public static final String QUERY_DELETE_GROUP_UPDATE = "pluginConfigurationUpdate.deleteGroupUpdate";
 

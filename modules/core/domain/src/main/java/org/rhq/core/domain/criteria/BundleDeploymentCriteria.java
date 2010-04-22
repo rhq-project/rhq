@@ -16,14 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package org.rhq.core.domain.criteria;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 
 /**
  * @author Jay Shaughnessy
@@ -35,80 +33,48 @@ public class BundleDeploymentCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
-    private Integer filterBundleDeployDefinitionId; // requires override   
-    private String filterBundleDeployDefinitionName; // requires override
-    private Integer filterBundleGroupDeploymentId; // requires override    
-    private Integer filterResourceId; // requires override
-    private String filterResourceName; // requires override
-    private BundleDeploymentStatus filterStatus;
+    private String filterName;
+    private String filterDescription;
 
-    private boolean fetchBundleDeployDefinition;
-    private boolean fetchResource;
-    private boolean fetchHistories;
+    private boolean fetchBundleVersion;
+    private boolean fetchConfiguration;
+    private boolean fetchDeployments;
+    private boolean fetchGroupDeployments;
 
     public BundleDeploymentCriteria() {
-        filterOverrides.put("bundleDeployDefinitionId", "parentResource.id = ?");
-        filterOverrides.put("bundleDeployDefinitionName", "parentResource.name like ?");
-        filterOverrides.put("bundleGroupDeploymentId", "bundleGroupDeployment.id = ?");
-        filterOverrides.put("resourceId", "resource.id = ?");
-        filterOverrides.put("resourceName", "resource.name like ?");
     }
 
     @Override
     public Class<?> getPersistentClass() {
-        return BundleDeployment.class;
+        return BundleDeploymentCriteria.class;
     }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }
 
-    public void addFilterBundleDeployDefinitionId(Integer filterBundleDeployDefinitionId) {
-        this.filterBundleDeployDefinitionId = filterBundleDeployDefinitionId;
+    public void addFilterName(String filterName) {
+        this.filterName = filterName;
     }
 
-    public void addFilterBundleDeployDefinitionName(String filterBundleDeployDefinitionName) {
-        this.filterBundleDeployDefinitionName = filterBundleDeployDefinitionName;
+    public void addFilterDescription(String filterDescription) {
+        this.filterDescription = filterDescription;
     }
 
-    public void addFilterBundleGroupDeploymentId(Integer filterBundleGroupDeploymentId) {
-        this.filterBundleGroupDeploymentId = filterBundleGroupDeploymentId;
+    public void fetchBundleVersion(boolean fetchBundleVersion) {
+        this.fetchBundleVersion = fetchBundleVersion;
     }
 
-    public void addFilterResourceId(Integer filterResourceId) {
-        this.filterResourceId = filterResourceId;
+    public void fetchConfiguration(boolean fetchConfiguration) {
+        this.fetchConfiguration = fetchConfiguration;
     }
 
-    public void addFilterResourceName(String filterResourceName) {
-        this.filterResourceName = filterResourceName;
+    public void fetchDeployments(boolean fetchDeployments) {
+        this.fetchDeployments = fetchDeployments;
     }
 
-    public void addFilterStatus(BundleDeploymentStatus filterStatus) {
-        this.filterStatus = filterStatus;
-    }
-
-    public void fetchBundleDeployDefinition(boolean fetchBundleDeployDefinition) {
-        this.fetchBundleDeployDefinition = fetchBundleDeployDefinition;
-    }
-
-    /**
-     * Requires MANAGE_INVENTORY
-     *
-     * @param fetchResource
-     */
-    public void fetchResource(boolean fetchResource) {
-        this.fetchResource = fetchResource;
-    }
-
-    public void fetchHistories(boolean fetchHistories) {
-        this.fetchHistories = fetchHistories;
-    }
-
-    /**
-     * subclasses should override as necessary
-     */
-    public boolean isInventoryManagerRequired() {
-        return (this.fetchResource);
+    public void fetchGroupDeployments(boolean fetchGroupDeployments) {
+        this.fetchGroupDeployments = fetchGroupDeployments;
     }
 
 }

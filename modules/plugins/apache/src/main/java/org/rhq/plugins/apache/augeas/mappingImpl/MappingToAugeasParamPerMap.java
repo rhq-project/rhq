@@ -48,7 +48,7 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
                         AugeasNode listNode, int seq) throws AugeasRhqException {
                 
               String propertyName = propDef.getName();
-              PropertyDefinition memberPropDef = propDef.getMemberDefinition();
+              PropertyDefinitionMap memberPropDef = (PropertyDefinitionMap)propDef.getMemberDefinition();
           
               List<AugeasNode> nodes = tree.matchRelative(listNode, propertyName);
               
@@ -91,9 +91,12 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
         StringBuffer param= new StringBuffer();
         for (List<PropertyMap> directive: map){
                 for (PropertyMap propMap : directive){
-                        for (Property propVal : propMap.getMap().values()){
-                                if (!propVal.getName().equals("_index")){
-                                        param.append(" "+((PropertySimple) propVal).getStringValue());
+                       for (String propDefMap : memberPropDef.getPropertyDefinitions().keySet())
+                       {//for (Property propVal : propMap.getMap().values()){
+                          Property propVal = propMap.get(propDefMap);
+                          if (propVal!=null)
+                             if (!propVal.getName().equals("_index")){
+                                  param.append(" "+((PropertySimple) propVal).getStringValue());
                                 }
                         }
                             

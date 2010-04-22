@@ -38,10 +38,10 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -75,9 +75,9 @@ import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
+import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.EventCriteria;
@@ -318,32 +318,34 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //BUNDLEMANAGER: BEGIN ------------------------------------------
 
     public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
-        Architecture architecture, InputStream fileStream, boolean pinToPackage) throws Exception {
-        return bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture, fileStream,
-            pinToPackage);
+        Architecture architecture, InputStream fileStream) throws Exception {
+        return bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture, fileStream);
     }
 
     public BundleFile addBundleFileViaByteArray(Subject subject, int bundleVersionId, String name, String version,
-        Architecture architecture, byte[] fileBytes, boolean pinToPackage) throws Exception {
-        return bundleManager.addBundleFileViaByteArray(subject, bundleVersionId, name, version, architecture,
-            fileBytes, pinToPackage);
+        Architecture architecture, byte[] fileBytes) throws Exception {
+        return bundleManager
+            .addBundleFileViaByteArray(subject, bundleVersionId, name, version, architecture, fileBytes);
+    }
+
+    public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
+        Architecture architecture, URL url) throws Exception {
+        return bundleManager.addBundleFileViaURL(subject, bundleVersionId, name, version, architecture, url);
     }
 
     public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
-        int packageVersionId, boolean pinToPackage) throws Exception {
-        return bundleManager.addBundleFileViaPackageVersion(subject, bundleVersionId, name, packageVersionId,
-            pinToPackage);
+        int packageVersionId) throws Exception {
+        return bundleManager.addBundleFileViaPackageVersion(subject, bundleVersionId, name, packageVersionId);
     }
 
     public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
         return bundleManager.createBundle(subject, name, description, bundleTypeId);
     }
 
-    public BundleDeployDefinition createBundleDeployDefinition(Subject subject, int bundleVersionId, String name,
-        String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
-        boolean pinToBundle) throws Exception {
-        return bundleManager.createBundleDeployDefinition(subject, bundleVersionId, name, description, configuration,
-            enforcePolicy, enforcementInterval, pinToBundle);
+    public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, String name,
+        String description, String installDir, Configuration configuration) throws Exception {
+        return bundleManager.createBundleDeployment(subject, bundleVersionId, name, description, installDir,
+            configuration);
     }
 
     public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
@@ -366,13 +368,13 @@ public class WebservicesManagerBean implements WebservicesRemote {
         bundleManager.deleteBundleVersion(subject, bundleVersionId, deleteBundleIfEmpty);
     }
 
-    public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
-        BundleDeployDefinitionCriteria criteria) {
-        return bundleManager.findBundleDeployDefinitionsByCriteria(subject, criteria);
-    }
-
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
         return bundleManager.findBundleDeploymentsByCriteria(subject, criteria);
+    }
+
+    public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(Subject subject,
+        BundleResourceDeploymentCriteria criteria) {
+        return bundleManager.findBundleResourceDeploymentsByCriteria(subject, criteria);
     }
 
     public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
@@ -407,14 +409,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
     */
 
-    public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeployDefinitionId, int resourceId)
-        throws Exception {
-        return bundleManager.scheduleBundleDeployment(subject, bundleDeployDefinitionId, resourceId);
+    public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeploymentId,
+        int resourceId) throws Exception {
+        return bundleManager.scheduleBundleResourceDeployment(subject, bundleDeploymentId, resourceId);
     }
 
-    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeployDefinitionId,
+    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeploymentId,
         int resourceGroupId) throws Exception {
-        return bundleManager.scheduleBundleGroupDeployment(subject, bundleDeployDefinitionId, resourceGroupId);
+        return bundleManager.scheduleBundleGroupDeployment(subject, bundleDeploymentId, resourceGroupId);
     }
 
     //BUNDLEMANAGER: END ----------------------------------  

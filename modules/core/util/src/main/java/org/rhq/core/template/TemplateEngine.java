@@ -6,31 +6,26 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TemplateEngine implements Serializable {
-    /**
-     * 
-     */
     private static final long serialVersionUID = -6490715202402123042L;
 
     private final Map<String, String> tokens;
 
-    /**
-     * In English, the open delimiter <%
-     * zero or more white space characters
-     * The following pattern at least once:
-     *      one or more word characters followed by an optional period
-     * zero or more white space characters
-     * The closing delimiter %>
-     *  Thus  <% rhq.system %> and <%rhq.system%> are equivalent
-     *  <% rhq.platform.ip_address %> is Valid.
-     *  <% & %> is not a valid token
-     *  
-     */
+    // In English, the open delimiter @@
+    // zero or more white space characters
+    // The following pattern at least once:
+    //    one or more word characters followed by an optional period
+    // zero or more white space characters
+    // The closing delimiter @@
+    // 
+    // Thus @@ rhq.system @@ and @@rhq.system@@ are equivalent.
+    // @@ rhq.platform.ip_address @@ is valid.
+    // @@ & @@ is not a valid.
 
-    static String tokenRegex = "<%\\s*(\\w+\\.?)+\\s*%>";
-    static String keyRegex = "(\\w+\\.?)+";
+    private static String tokenRegex = "@@\\s*(\\w+\\.?)+\\s*@@";
+    private static String keyRegex = "(\\w+\\.?)+";
 
-    static Pattern tokenPattern = Pattern.compile(tokenRegex);
-    static Pattern keyPattern = Pattern.compile(keyRegex);
+    private static Pattern tokenPattern = Pattern.compile(tokenRegex);
+    private static Pattern keyPattern = Pattern.compile(keyRegex);
 
     public TemplateEngine(Map<String, String> tokens) {
         super();

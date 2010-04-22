@@ -52,11 +52,10 @@ public class BundleFileUploadServlet extends FileUploadServlet {
             String version = getFormField(formFields, "version", "1.0");
             Architecture architecture = new Architecture(getFormField(formFields, "arch", "noarch"));
             InputStream fileStream = new FileInputStream(file);
-            boolean pinToPackage = Boolean.parseBoolean(getFormField(formFields, "pinToPackage", "false"));
 
             BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
             BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture,
-                fileStream, pinToPackage);
+                fileStream);
             successMsg = "success [" + bundleFile.getId() + "]";
         } catch (Exception e) {
             writeExceptionResponse(response, "Failed to upload bundle file", e); // clients will look for this string!

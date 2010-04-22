@@ -55,9 +55,9 @@ function testDeployment() {
    var testBundle = BundleManager.createBundle( bundleName, getBundleType() );
    
    // define the recipe for bundleVersion 1.0 
-   var recipe = "deploy -f dummy.zip -d <%dummy.deployHome%>\n"
-              + "realize -f <%dummy.deployHome%>/dummy/README.txt\n"
-              + "realize -f <%dummy.deployHome%>/dummy/subdirectory/file.txt";
+   var recipe = "deploy -f dummy.zip -d @@dummy.deployHome@@\n"
+              + "realize -f @@dummy.deployHome@@/dummy/README.txt\n"
+              + "realize -f @@dummy.deployHome@@/dummy/subdirectory/file.txt";
 
    // create bundleVersion 1.0
    var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, null, recipe);
@@ -65,7 +65,7 @@ function testDeployment() {
    // add the single bundleFile, the test war file
    var fileBytes = scriptUtil.getFileBytes("./src/test/resources/dummy.zip"); 
    var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "dummy.zip",
-         "1.0", null, fileBytes, false);
+         "1.0", null, fileBytes);
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
@@ -76,8 +76,8 @@ function testDeployment() {
    var property3 = new PropertySimple("dummy.description", "FLOPPY!!!");
    config.put( property3 );
 
-   // create a deploy def using the above config
-   var testDeployDef = BundleManager.createBundleDeployDefinition(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", config, false, -1, false);
+   // create a deployment using the above config
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", config);
 
    // Find a target platform
    var rc = new ResourceCriteria();
@@ -85,7 +85,7 @@ function testDeployment() {
    var winPlatforms = ResourceManager.findResourcesByCriteria(rc);
    var platformId = winPlatforms.get(0).getId();
    
-   var bundleScheduleResponse = BundleManager.scheduleBundleDeployment(testDeployDef.getId(), platformId);
+   var bundleScheduleResponse = BundleManager.scheduleBundleResourceDeployment(testDeployment.getId(), platformId);
 }
 
 function getBundleType() {

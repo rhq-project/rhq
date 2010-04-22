@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.bundle;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.util.updater.DeploymentProperties;
 
 /**
  * This class is general to all Bundle handling server side plugins.  It is returned by the SSP when parsing
@@ -31,18 +32,31 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
  */
 public class RecipeParseResults {
 
+    /** information about the bundle, including name, version and description */
+    private DeploymentProperties bundleMetadata;
+
     /** The configuration definition parsed out of, or expcitly provided by, the recipe */
     private ConfigurationDefinition configDef;
 
     /** The set of bundle files that make up the bundle (version) as specified in the recipe commands */
     private Set<String> bundleFileNames;
 
-    public RecipeParseResults(ConfigurationDefinition configDef, Set<String> bundleFileNames) {
+    public RecipeParseResults(DeploymentProperties bundleMetadata, ConfigurationDefinition configDef,
+        Set<String> bundleFileNames) {
+        this.bundleMetadata = bundleMetadata;
         this.configDef = configDef;
         this.bundleFileNames = bundleFileNames;
     }
 
-    public ConfigurationDefinition getConfigDef() {
+    public DeploymentProperties getBundleMetadata() {
+        return bundleMetadata;
+    }
+
+    public void setBundleMetadata(DeploymentProperties bundleMetadata) {
+        this.bundleMetadata = bundleMetadata;
+    }
+
+    public ConfigurationDefinition getConfigurationDefinition() {
         return configDef;
     }
 

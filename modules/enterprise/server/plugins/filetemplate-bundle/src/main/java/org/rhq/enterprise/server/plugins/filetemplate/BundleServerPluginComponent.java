@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.util.updater.DeploymentProperties;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
@@ -73,6 +74,8 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
         RecipeContext recipeContext = new RecipeContext(recipe);
         parser.parseRecipe(recipeContext);
 
+        DeploymentProperties bundleMetadata = recipeContext.getDeploymentProperties();
+
         Set<String> bundleFileNames = new HashSet<String>();
         Map<String, String> deployFiles = recipeContext.getDeployFiles();
         bundleFileNames.addAll(deployFiles.keySet());
@@ -92,7 +95,7 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
             }
         }
 
-        RecipeParseResults results = new RecipeParseResults(configDef, bundleFileNames);
+        RecipeParseResults results = new RecipeParseResults(bundleMetadata, configDef, bundleFileNames);
         return results;
 
     }

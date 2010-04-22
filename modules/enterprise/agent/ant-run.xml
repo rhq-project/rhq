@@ -127,8 +127,10 @@ ANT Script that provides ways to package the agent.
          </fileset>
       </move>
       <move file="${agent.distro.dir}/lib/sigar.jar" tofile="${agent.distro.dir}/lib/sigar-${sigar.version}.jar"
-            overwrite="false"/>
-      <delete dir="${agent.distro.dir}/lib/hyperic-sigar-${sigar.version}" />
+            overwrite="false"/> 
+      <delete failonerror="false" includeEmptyDirs="true" verbose="true">
+          <fileset dir="${agent.distro.dir}/lib" includes="hyperic-sigar-*/"/>
+      </delete>       
       <chmod dir="${agent.distro.dir}/lib" perm="ug+rx" includes="*.so,*.sl,*.dylib"/>
 
       <copy todir="${agent.distro.dir}/bin">

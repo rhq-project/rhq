@@ -2085,7 +2085,7 @@ public class AgentMain {
                         LOG.warn(AgentI18NResourceKeys.NATIVE_SYSINFO_UNAVAILABLE);
                     }
                     this.loggedNativeSystemInfoUnavailableWarning = true;
-                }                
+                }
             } else {
                 this.loggedNativeSystemInfoUnavailableWarning = false;
             }
@@ -2722,6 +2722,7 @@ public class AgentMain {
         String config_file_name = null;
         boolean clean_config = false;
         boolean purge_data = false;
+        AgentInputReaderFactory.ConsoleType console_type = null;
 
         Getopt getopt = new Getopt("agent", args, sopts, lopts);
         int code;
@@ -2804,7 +2805,7 @@ public class AgentMain {
             }
 
             case 'e': {
-                AgentInputReaderFactory.setConsoleType(getopt.getOptarg());
+                console_type = AgentInputReaderFactory.ConsoleType.valueOf(getopt.getOptarg()); // throws IllegalArgumentException if invalid
                 break;
             }
 
@@ -2847,6 +2848,12 @@ public class AgentMain {
                 m_disableNativeSystem = true;
             }
             }
+        }
+
+        if (m_daemonMode) {
+            AgentInputReaderFactory.setConsoleType(AgentInputReaderFactory.ConsoleType.java); // don't use native libs, no need and jline causes problems            
+        } else if (console_type != null) {
+            AgentInputReaderFactory.setConsoleType(console_type);
         }
 
         // now that all the arguments were processed, let's load in our config (this allows the -p to come after -c)

@@ -33,12 +33,6 @@
          <scope>provided</scope> <!-- by PC -->
       </dependency>
 
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>rhq-core-plugin-api</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope> <!-- by PC -->
-      </dependency>
 
       <!--
          TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes.

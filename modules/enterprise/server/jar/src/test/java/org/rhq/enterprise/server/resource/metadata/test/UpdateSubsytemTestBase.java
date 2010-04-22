@@ -20,12 +20,14 @@ package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.io.FileNotFoundException;
 import java.net.URL;
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.transaction.Status;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -36,17 +38,20 @@ import javax.xml.validation.SchemaFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
 
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -105,6 +110,13 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         unprepareScheduler();
     }
 
+    @BeforeTest
+    public void beforeTest() throws Exception {
+        startTest();
+        // cleanup anything left over from a previous, interrupted run.
+        cleanupTest();
+    }
+
     protected ResourceType getResourceType(String typeName) {
         return getResourceType(typeName, PLUGIN_NAME);
     }
@@ -116,11 +128,8 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         resourceTypeCriteria.addFilterName(typeName);
         resourceTypeCriteria.addFilterPluginName(pluginName);
 
-        resourceTypeCriteria.fetchPluginConfigurationDefinition(true);
-        resourceTypeCriteria.fetchResourceConfigurationDefinition(true);
+        // used in UpdateMeasurementSubsystemTest
         resourceTypeCriteria.fetchMetricDefinitions(true);
-
-        // TODO: Fetch everything else.
 
         PageList<ResourceType> results = resourceTypeManager
             .findResourceTypesByCriteria(overlord, resourceTypeCriteria);
@@ -250,6 +259,99 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         public Set<Integer> getMeasurementScheduleIdsForResource(int resourceId) {
             return null;
         }
+    }
 
+    protected void cleanupTest() throws Exception {
+        try {
+            cleanupResourceType("testServer1");
+            cleanupResourceType("testServer2");
+            cleanupResourceType("myPlatform5");
+            //cleanupResourceType("myPlatform6");
+            cleanupResourceType("myPlatform7");
+            cleanupResourceType("TestServer");
+            cleanupResourceType("constraintPlatform");
+            cleanupResourceType("groupDeletedPlatform");
+            cleanupResourceType("groupPropDeletedPlatform");
+            cleanupResourceType("groupPropMovedPlatform");
+
+            getTransactionManager().begin();
+            EntityManager entityManager = getEntityManager();
+
+            try {
+                agentId = getAgentId(entityManager);
+                Agent agent = entityManager.getReference(Agent.class, agentId);
+                if (null != agent) {
+                    entityManager.remove(agent);
+                }
+            } catch (Exception e) {
+                // ignore, agent does not exist
+            }
+
+            try {
+                plugin1Id = getPluginId(entityManager);
+                Plugin plugin1 = entityManager.getReference(Plugin.class, plugin1Id);
+                if (null != plugin1) {
+                    entityManager.remove(plugin1);
+                }
+            } catch (Exception e) {
+                // ignore, plugin1 does not exist
+            }
+        } finally {
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().commit();
+            }
+        }
+    }
+
+    protected void cleanupResourceType(String rtName) throws Exception {
+        try {
+            ResourceType rt = getResourceType(rtName);
+
+            if (null != rt) {
+                Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+                ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+
+                // delete any resources first
+                ResourceCriteria c = new ResourceCriteria();
+                c.addFilterResourceTypeId(rt.getId());
+                c.addFilterInventoryStatus(InventoryStatus.NEW);
+                List<Resource> doomedResources = resourceManager.findResourcesByCriteria(overlord, c);
+                c.addFilterInventoryStatus(InventoryStatus.DELETED);
+                doomedResources.addAll(resourceManager.findResourcesByCriteria(overlord, c));
+                c.addFilterInventoryStatus(InventoryStatus.UNINVENTORIED);
+                doomedResources.addAll(resourceManager.findResourcesByCriteria(overlord, c));
+                // invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
+                // perform in-band and out-of-band work in quick succession
+                for (Resource doomed : doomedResources) {
+                    List<Integer> deletedIds = resourceManager.deleteResource(overlord, doomed.getId());
+                    for (Integer deletedResourceId : deletedIds) {
+                        resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                    }
+                }
+
+                // Measurement defs go away via cascade remove
+
+                getTransactionManager().begin();
+                EntityManager em = getEntityManager();
+
+                rt = em.find(ResourceType.class, rt.getId());
+                ResourceType parent = rt.getParentResourceTypes().isEmpty() ? null : rt.getParentResourceTypes()
+                    .iterator().next();
+                em.remove(rt);
+                if (null != parent) {
+                    em.remove(parent);
+                }
+            }
+        } catch (Exception e) {
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            System.out.println("CANNOT CLEAN UP TEST (cleanupResourceType): " + e);
+            throw e;
+        } finally {
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().commit();
+            }
+        }
     }
 }

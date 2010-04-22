@@ -56,24 +56,7 @@ id - the id of the Resource being accessed
                         <ui:insert name="content"><p>Default Entity Content</p></ui:insert>
                     </div>
                 </div>
-            </div>
-            
-    <!-- Define context menu outside of the tree form so rerendering this doesn't cause tree rerendering/reloading --> 
-    <h:form>
-       <rich:contextMenu attached="false" id="resourceMenu" 
-                         binding="#{ResourceTreeContextMenuUIBean.menu}"
-                         disableDefaultMenu="false" style="z-index: 50;" 
-                         submitMode="ajax" rendered="#{not empty param.id or not empty param.parent}" />
-       <rich:contextMenu attached="false" id="autoGroupMenu" 
-                         binding="#{AutoGroupTreeContextMenuUIBean.menu}"
-                         disableDefaultMenu="false" style="z-index: 50;" 
-                         submitMode="ajax" rendered="#{not empty param.id or not empty param.parent}" />
-       <rich:contextMenu attached="false" id="groupMenu" 
-                         binding="#{ResourceGroupTreeContextMenuUIBean.menu}"
-                         disableDefaultMenu="false" style="z-index: 50;" 
-                         submitMode="ajax" rendered="#{not empty param.groupId}" />
-    </h:form>
-    
+            </div>    
         </div>
 
         <a4j:region renderRegionOnly="true" selfRendered="true">

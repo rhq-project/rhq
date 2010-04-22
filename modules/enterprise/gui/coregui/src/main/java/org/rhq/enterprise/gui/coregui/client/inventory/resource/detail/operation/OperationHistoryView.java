@@ -18,19 +18,31 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation;
 
+import java.util.EnumSet;
+
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail.OperationDetailsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.Menu;
+import com.smartgwt.client.widgets.menu.MenuButton;
+import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.ClickHandler;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 /**
  * @author Greg Hinkle
@@ -38,6 +50,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 public class OperationHistoryView extends VLayout {
 
     Table table;
+    Resource resource;
     Criteria criteria;
 
     @Override
@@ -50,8 +63,9 @@ public class OperationHistoryView extends VLayout {
     public OperationHistoryView() {
     }
 
-    public OperationHistoryView(Criteria criteria) {
-        this.criteria = criteria;
+    public OperationHistoryView(Resource resource) {
+        this.resource = resource;
+        this.criteria = new Criteria("resourceId", String.valueOf(resource.getId()));
     }
 
     @Override
@@ -95,13 +109,35 @@ public class OperationHistoryView extends VLayout {
         });
 
 
+        final Menu operationMenu = new Menu();
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                resource.getResourceType().getId(),
+                EnumSet.of(ResourceTypeRepository.MetadataType.operations),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    public void onTypesLoaded(ResourceType type) {
+                        for (final OperationDefinition od : type.getOperationDefinitions()) {
+                            MenuItem menuItem = new MenuItem(od.getDisplayName());
+                            operationMenu.addItem(menuItem);
+                            menuItem.addClickHandler(new ClickHandler() {
+                                public void onClick(MenuItemClickEvent event) {
+                                    new OperationCreateWizard(resource, od).startOperationWizard();
+                                }
+                            });
+                        }
+                    }
+                });
+
+        MenuButton operationsButton = new MenuButton("Run Operation",operationMenu);
+        operationsButton.setShowMenuBelow(false);
+        table.addExtraWidget(operationsButton);
+
+
         addMember(table);
     }
 
 
-    public static OperationHistoryView getResourceHistoryView(int resourceId) {
-        Criteria criteria = new Criteria("resourceId", String.valueOf(resourceId));
+    public static OperationHistoryView getResourceHistoryView(Resource resource) {
 
-        return new OperationHistoryView(criteria);
+        return new OperationHistoryView(resource);
     }
 }

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<plugin name="NagiosMonitor"
+        displayName="NagiosMonitorPlugin"
+        package="org.rhq.NagiosMonitor"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+    <server name="NagiosMonitor" discovery="NagiosMonitorDiscovery" class="NagiosMonitorComponent"
+            description="Interface to Nagios monitoring system. Nagios needs to be equipped with
+            mk_livestatus module for this plugin to work"
+            supportsManualAdd="true"
+            >
+
+            <plugin-configuration>
+                <c:simple-property name="nagiosHost" default="localhost" required="true"
+                                   description="Hostname of where the Nagios mk_livestatus is listening" />
+                <c:simple-property name="nagiosPort" default="6557" required="true"
+                        description="Port on which mk_livestatus is listening"/>
+            </plugin-configuration>
+
+        <!-- TODO process scans -->
+            <metric property="execution_time" displayName="execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
+			<metric property="host_execution_time" displayName="host_execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
+			<metric property="host_check_period" displayName="host_check_period" dataType="trait" displayType="summary"/>
+	</server>
+</plugin>

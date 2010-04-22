@@ -355,18 +355,4 @@
         </plugins>
     </build>
 
-    <repositories>
-<!--
-        <repository>
-            <id>jboss-snapshots</id>
-            <name>JBoss Snapshot Repository</name>
-            <url>http://snapshots.jboss.org/maven2/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
--->
-    </repositories>
-
 </project>

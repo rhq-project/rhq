@@ -153,9 +153,11 @@
       </dependency>
 
       <dependency>
-         <groupId>javax.mail</groupId>
-         <artifactId>mail</artifactId>
-         <version>1.3.1</version>
+         <groupId>org.apache.geronimo.specs</groupId>
+         <artifactId>geronimo-javamail_1.3.1_spec</artifactId>
+         <!-- The Sun javamail jar isn't available from a public repo due to licensing issues,
+              so use the Geronimo one instead. -->
+         <version>1.3</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 

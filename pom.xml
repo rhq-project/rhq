@@ -817,6 +817,7 @@
     </plugins>
 
     <!-- To allow deploying release artifacts to SVN and snapshot artifacts to HTTP/Dav. -->
+<!--
     <extensions>
       <extension>
         <groupId>org.apache.maven.wagon</groupId>
@@ -839,44 +840,61 @@
          <version>1.0-beta-2</version>
       </extension>
    </extensions>
-
+-->
   </build>
 
   <repositories>
-    <repository>
-      <id>jboss</id>
-      <name>JBoss Repository</name>
-      <url>http://repository.jboss.org/maven2/</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
+        <repository>
+          <id>jboss-public-repository-group</id>
+          <name>JBoss Public Maven Repository Group</name>
+          <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+          <layout>default</layout>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+          </releases>
+<!--
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+          </snapshots>
+-->
+        </repository>
   </repositories>
 
   <pluginRepositories>
-    <pluginRepository>
-      <id>jboss</id>
-      <name>JBoss Plugin Repository</name>
-      <url>http://repository.jboss.org/maven2/</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
+        <pluginRepository>
+          <id>jboss-public-repository-group</id>
+          <name>JBoss Public Maven Repository Group</name>
+          <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+          <layout>default</layout>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+          </releases>
+<!--
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+          </snapshots>
+-->
+        </pluginRepository>
   </pluginRepositories>
 
   <distributionManagement>
-    <repository>
-      <!-- Copy the distribution jar file to a local checkout of the JBoss repository.
-           This variable can be set in ~/.m2/settings.xml or $M2_HOME/conf/settings.xml. -->
-      <id>repository.jboss.org</id>
-      <url>file://${maven.repository.root}</url>
-    </repository>
 
     <snapshotRepository>
-      <id>jboss-snapshots</id>
-      <name>JBoss Snapshot Repository</name>
-      <url>dav:https://snapshots.jboss.org/maven2/</url>
+      <id>jboss-snapshots-repository</id>
+      <name>JBoss Snapshots Repository</name>
+      <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
     </snapshotRepository>
+
+    <repository>
+      <id>jboss-releases-repository</id>
+      <name>JBoss Releases Repository</name>
+      <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</url>
+    </repository>
+
   </distributionManagement>
 
   <modules>

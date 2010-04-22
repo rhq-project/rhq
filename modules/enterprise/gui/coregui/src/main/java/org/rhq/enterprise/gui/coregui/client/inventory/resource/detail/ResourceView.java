@@ -18,33 +18,30 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.layout.HLayout;
+
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
-import org.rhq.enterprise.gui.coregui.client.UnknownViewException;
-import org.rhq.enterprise.gui.coregui.client.View;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
-import org.rhq.enterprise.gui.coregui.client.ViewRenderer;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.layout.HLayout;
-
 /**
  * @author Greg Hinkle
  */
-public class ResourceView extends HLayout implements ViewRenderer {
+public class ResourceView extends HLayout implements BookmarkableView {
 
     private Canvas contentCanvas;
 
-    private Resource selectedResource;
+    private Resource currentResource;
     //private Resource resourcePlatform;
 
     private ResourceTreeView treeView;
@@ -57,12 +54,6 @@ public class ResourceView extends HLayout implements ViewRenderer {
 
     }
 
-    public ResourceView(Resource selectedResource) {
-        this.selectedResource = selectedResource;
-
-        System.out.println("Displaying Resource: " + selectedResource);
-    }
-
     @Override
     protected void onInit() {
         super.onInit();
@@ -71,7 +62,7 @@ public class ResourceView extends HLayout implements ViewRenderer {
         setHeight100();
 
 
-        treeView = new ResourceTreeView(selectedResource);
+        treeView = new ResourceTreeView();
         addMember(treeView);
 
         contentCanvas = new Canvas();
@@ -88,7 +79,7 @@ public class ResourceView extends HLayout implements ViewRenderer {
 
     }
 
-    public void setSelectedResource(final int resourceId, final View view) {
+    public void setSelectedResource(final int resourceId, final ViewPath view) {
         Resource resource = this.treeView.getResource(resourceId);
         if (resource != null) {
             setSelectedResource(resource, view);
@@ -117,15 +108,9 @@ public class ResourceView extends HLayout implements ViewRenderer {
         }
     }
 
-    private void setSelectedResource(Resource resource, View view) {
-        view.getBreadcrumb().setDisplayName(resource.getName());
-        CoreGUI.refreshBreadCrumbTrail();
-        setSelectedResource(resource);
-    }
-
-    public void setSelectedResource(Resource resource) {
-        this.selectedResource = resource;
-        this.treeView.setSelectedResource(resource);
+    private void setSelectedResource(Resource resource, ViewPath viewPath) {
+        this.currentResource = resource;
+        this.treeView.setSelectedResource(resource, viewPath.getCurrent());
         this.detailView.onResourceSelected(resource);
     }
 
@@ -136,28 +121,27 @@ public class ResourceView extends HLayout implements ViewRenderer {
         contentCanvas.markForRedraw();
     }
 
-    public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {
-            String parentPath = viewId.getParent().getPath();
-        if (!parentPath.equals("Resource")) {
-            throw new UnknownViewException();
-        }
-        int resourceId;
-        try {
-            resourceId = Integer.parseInt(viewId.getName());
-        } catch (NumberFormatException e) {
-            // not a valid Resource id - nothing for us to do
-            throw new UnknownViewException("Invalid Resource id [" + viewId + "]");
+
+    public void renderView(ViewPath viewPath) {
+        if (viewPath.isEnd()) {
+            // default detail view
+            viewPath.getViewPath().add(new ViewId("Summary"));
+            viewPath.getViewPath().add(new ViewId("Overview"));
         }
 
-        // Use "..." as temporary display name for breadcrumb. If the Resource is fetched successfully, the display name
-        // will be updated to be the Resource's name.
-        Breadcrumb breadcrumb = new Breadcrumb(viewId.getName(), "...");
+        Integer resourceId = Integer.parseInt(viewPath.getCurrent().getPath());
 
-        View view = new View(viewId, detailView, breadcrumb);
-        if (this.selectedResource == null || this.selectedResource.getId() != resourceId) {
-            setSelectedResource(resourceId, view);
+        if (currentResource == null || currentResource.getId() != resourceId) {
+
+            setSelectedResource(resourceId, viewPath);
+
+            this.treeView.renderView(viewPath);
+
+            viewPath.next();
+
+            this.detailView.renderView(viewPath);
+
         }
-
-        return view;
     }
+
 }

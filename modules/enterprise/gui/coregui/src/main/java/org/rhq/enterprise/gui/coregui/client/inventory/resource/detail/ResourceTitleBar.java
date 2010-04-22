@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
@@ -54,6 +55,7 @@ public class ResourceTitleBar extends HLayout {
         setWidth100();
         setHeight(30);
         setPadding(5);
+        setMembersMargin(5);
     }
 
     @Override
@@ -96,7 +98,9 @@ public class ResourceTitleBar extends HLayout {
                 "_24.png");
 
         String category = this.resource.getResourceType().getCategory().getDisplayName();
-        String avail = resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase();
+
+        String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability().getAvailabilityType() != null)
+                ? (resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
         badge.setSrc("types/" + category + "_" + avail + "_24.png");
 
         markForRedraw();

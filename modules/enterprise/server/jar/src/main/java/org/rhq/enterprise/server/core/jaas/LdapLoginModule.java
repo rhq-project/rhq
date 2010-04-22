@@ -184,7 +184,8 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
             String[] baseDNs = baseDN.split(BASEDN_DELIMITER);
             for (int x = 0; x < baseDNs.length; x++) {
                 NamingEnumeration answer = ctx.search(baseDNs[x], filter, searchControls);
-                if (!answer.hasMore()) {
+                boolean ldapApiNpeFound = false;
+                if (!answer.hasMoreElements()) {//BZ:582471- ldap api bug
                     log.debug("User " + userName + " not found for BaseDN " + baseDNs[x]);
 
                     // Nothing found for this DN, move to the next one if we have one.
@@ -295,7 +296,7 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
         env.setProperty(Context.PROVIDER_URL, providerUrl);
 
         // Follow referrals automatically
-        env.setProperty(Context.REFERRAL, "follow");
+        env.setProperty(Context.REFERRAL, "ignore");//BZ:582471- active directory query change
 
         return env;
     }

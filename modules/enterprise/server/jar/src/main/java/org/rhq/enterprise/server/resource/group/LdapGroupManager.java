@@ -136,7 +136,7 @@ public class LdapGroupManager {
             String[] baseDNs = baseDN.split(BASEDN_DELIMITER);
             for (int x = 0; x < baseDNs.length; x++) {
                 NamingEnumeration answer = ctx.search(baseDNs[x], filter, searchControls);
-                if (!answer.hasMore()) {
+                if (!answer.hasMoreElements()) { //BZ:582471- ldap api bug change
                     log.debug("User " + userName + " not found for BaseDN " + baseDNs[x]);
                     // Nothing found for this DN, move to the next one if we have one.
                     continue;
@@ -196,9 +196,16 @@ public class LdapGroupManager {
 
             for (int x = 0; x < baseDNs.length; x++) {
                 NamingEnumeration answer = ctx.search(baseDNs[x], filter, searchControls);
-                while (answer.hasMore()) {
+                boolean ldapApiEnumerationBugEncountered = false;
+                while ((!ldapApiEnumerationBugEncountered) && answer.hasMoreElements()) {//BZ:582471- ldap api bug change
                     // We use the first match
-                    SearchResult si = (SearchResult) answer.next();
+                    SearchResult si = null;
+                    try {
+                        si = (SearchResult) answer.next();
+                    } catch (NullPointerException npe) {
+                        ldapApiEnumerationBugEncountered = true;
+                        break;
+                    }
                     Map<String, String> entry = new HashMap<String, String>();
                     String name = (String) si.getAttributes().get("cn").get();
                     Attribute desc = si.getAttributes().get("description");
@@ -216,7 +223,7 @@ public class LdapGroupManager {
                 log.error(message, fException);
                 throw new LdapFilterException(message + " " + fException.getMessage());
             }
-            //TODO: check for ldap connection/unavailable/etc. exception. 
+            //TODO: check for ldap connection/unavailable/etc. exceptions. 
             else {
                 log.error("LDAP communication error: " + e.getMessage(), e);
                 throw new LdapCommunicationException(e);
@@ -258,7 +265,7 @@ public class LdapGroupManager {
         env.setProperty(Context.PROVIDER_URL, providerUrl);
 
         // Follow referrals automatically
-        env.setProperty(Context.REFERRAL, "follow");
+        env.setProperty(Context.REFERRAL, "ignore"); //BZ:582471- active directory query change
 
         return env;
     }

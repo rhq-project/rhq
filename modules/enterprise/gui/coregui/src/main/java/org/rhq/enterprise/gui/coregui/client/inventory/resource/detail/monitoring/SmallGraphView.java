@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 
 import ca.nanometrics.gflot.client.Axis;
@@ -38,6 +40,7 @@ import ca.nanometrics.gflot.client.options.PointsSeriesOptions;
 import ca.nanometrics.gflot.client.options.TickFormatter;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -52,9 +55,19 @@ import com.smartgwt.client.widgets.events.MouseOutHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
  * @author Greg Hinkle
@@ -71,12 +84,21 @@ public class SmallGraphView extends VLayout {
     private final Label hoverLabel = new Label();
 
     private int resourceId;
+
+    private int definitionId;
+
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> data;
 
 
     public SmallGraphView() {
         super();
+    }
+
+
+    public SmallGraphView(int resourceId, int definitionId) {
+        this.resourceId = resourceId;
+        this.definitionId = definitionId;
     }
 
     public SmallGraphView(int resourceId, MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
@@ -102,7 +124,59 @@ public class SmallGraphView extends VLayout {
             c.destroy();
         }
 
-        drawGraph();
+        if (this.definition == null) {
+
+
+            ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+
+            ResourceCriteria resourceCriteria = new ResourceCriteria();
+            resourceCriteria.addFilterId(resourceId);
+            resourceService.findResourcesByCriteria(resourceCriteria, new AsyncCallback<PageList<Resource>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to find resource for graph", caught);
+                }
+
+                public void onSuccess(PageList<Resource> result) {
+                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                            result.get(0).getResourceType().getId(), EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                            new ResourceTypeRepository.TypeLoadedCallback() {
+                                public void onTypesLoaded(final ResourceType type) {
+
+                                    for (MeasurementDefinition def : type.getMetricDefinitions()) {
+                                        if (def.getId() == definitionId) {
+                                            SmallGraphView.this.definition = def;
+
+
+                                            GWTServiceLookup.getMeasurementDataService().findDataForResource(
+                                                    resourceId,
+                                                    new int[]{definitionId},
+                                                    System.currentTimeMillis() - (1000L * 60 * 60 * 8),
+                                                    System.currentTimeMillis(),
+                                                    60,
+                                                    new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                        public void onFailure(Throwable caught) {
+                                                            CoreGUI.getErrorHandler().handleError("Failed to load data for graph", caught);
+                                                        }
+
+                                                        public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
+                                                            SmallGraphView.this.data = result.get(0);
+
+
+                                                            drawGraph();
+                                                        }
+                                                    });
+                                        }
+                                    }
+                                }
+                            });
+                }
+            });
+
+
+        } else {
+
+            drawGraph();
+        }
     }
 
 
@@ -209,7 +283,7 @@ public class SmallGraphView extends VLayout {
             liveGraphLink.setContents("Live Graph");
             liveGraphLink.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    LiveGraphView.displayAsDialog(resourceId,definition);
+                    LiveGraphView.displayAsDialog(resourceId, definition);
                 }
             });
             titleLayout.addMember(liveGraphLink);

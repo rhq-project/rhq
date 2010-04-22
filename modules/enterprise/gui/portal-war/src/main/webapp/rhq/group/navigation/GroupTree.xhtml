@@ -16,6 +16,13 @@
 
 <f:subview id="navigationTreeView">
     <ui:composition>
+    <!-- Define context menu outside of the tree form so rerendering this doesn't cause tree rerendering/reloading --> 
+    <h:form>
+       <rich:contextMenu attached="false" id="groupMenu" 
+                         binding="#{ResourceGroupTreeContextMenuUIBean.menu}"
+                         disableDefaultMenu="false" style="z-index: 50;" 
+                         submitMode="ajax" />
+    </h:form>
 
         <h:form id="leftNavGroupTreeForm"> <!-- datascroll tag wants a form to be present -->
             <h:panelGroup id="leftTreeHolder">
@@ -68,16 +75,10 @@
 
                             <a4j:support event="oncontextmenu" reRender="groupMenu" timeout="5000"
                                          disableDefault="true" status="commonStatus" limitToList="true"
-                                         ajaxSingle="true">
+                                         ajaxSingle="true" oncomplete="#{rich:component('groupMenu')}.show(event, {})">
 
                                 <f:param name="contextGroupId" value="#{groupTreeItem.data.id}"/>
                                 <f:param name="contextParentGroupId" value="#{groupTreeItem.data.id}"/>
-
-
-                                <rich:componentControl disableDefault="true" event="oncomplete" for="groupMenu"
-                                                       operation="show">
-                                    <f:param name="contextGroupId" value="#{groupTreeItem.data.id}"/>
-                                </rich:componentControl>
                             </a4j:support>
 
                             <h:outputText value="#{groupTreeItem.data.name}" title="Right-click for more options."/>
@@ -100,15 +101,10 @@
 
                             <a4j:support event="oncontextmenu" reRender="groupMenu" timeout="5000"
                                          disableDefault="true" status="commonStatus" limitToList="true"
-                                         ajaxSingle="true">
+                                         ajaxSingle="true" oncomplete="#{rich:component('groupMenu')}.show(event, {})">
 
                                 <f:param name="contextClusterKey" value="#{groupTreeItem.data.key}"/>
                                 <f:param name="contextParentGroupId" value="#{param.parentGroupId == null ? param.groupId : param.parentGroupId}"/>
-
-                                <rich:componentControl disableDefault="true" event="oncomplete" for="groupMenu"
-                                                       operation="show">
-                                    <f:param name="clusterKey" value="#{groupTreeItem.data}"/>
-                                </rich:componentControl>
                             </a4j:support>
 
                             <h:outputText value="#{groupTreeItem.members[0]}" title="Right-click for more options."/>

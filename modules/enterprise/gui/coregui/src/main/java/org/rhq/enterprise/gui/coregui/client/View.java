@@ -29,7 +29,7 @@ package org.rhq.enterprise.gui.coregui.client;
  */
 public class View {
     private ViewId id;
-    private ViewRenderer descendantViewRenderer;
+    private BookmarkableView descendantViewRenderer;
     private Breadcrumb breadcrumb;
     private View parent;
 
@@ -37,7 +37,7 @@ public class View {
         this(id, null, null);
     }
 
-    public View(ViewId id, ViewRenderer descendantViewRenderer) {
+    public View(ViewId id, BookmarkableView descendantViewRenderer) {
         this(id, descendantViewRenderer, null);
     }
 
@@ -45,18 +45,18 @@ public class View {
         this(id, null, breadcrumb);
     }
 
-    public View(ViewId id, ViewRenderer descendantViewRenderer, Breadcrumb breadcrumb) {
+    public View(ViewId id, BookmarkableView descendantViewRenderer, Breadcrumb breadcrumb) {
         if (id == null) {
             throw new IllegalArgumentException("Id is null.");
         }
         this.id = id;
         if (breadcrumb != null) {
-            if (!breadcrumb.getName().equals(id.getName())) {
+            if (!breadcrumb.getName().equals(id.getPath())) {
                 throw new IllegalArgumentException("Breadcrumb name is not equal to id name.");
             }
             this.breadcrumb = breadcrumb;
         } else {
-            this.breadcrumb = new Breadcrumb(id.getName());
+            this.breadcrumb = new Breadcrumb(id.getPath());
         }
         this.descendantViewRenderer = descendantViewRenderer;
     }
@@ -79,7 +79,7 @@ public class View {
      *         the view renderer that rendered this view should also be used to render
      *         descendant views
      */
-    public ViewRenderer getDescendantViewRenderer() {
+    public BookmarkableView getDescendantViewRenderer() {
         if (this.descendantViewRenderer != null) {
             return this.descendantViewRenderer;
         } else if (this.parent != null) {

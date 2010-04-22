@@ -34,7 +34,6 @@ import java.util.List;
  */
 public class BreadcrumbTrailPane extends HTMLPane {
 
-    private List<Breadcrumb> breadcrumbs = new ArrayList<Breadcrumb>();
 
     public BreadcrumbTrailPane() {
         setHeight(28);
@@ -45,21 +44,17 @@ public class BreadcrumbTrailPane extends HTMLPane {
         setOverflow(Overflow.CLIP_V);
     }
 
-    public List<Breadcrumb> getBreadcrumbs() {
-        return this.breadcrumbs;
-    }
 
-    public void setBreadcrumbs(List<Breadcrumb> breadcrumbs) {
-        this.breadcrumbs = breadcrumbs;
-    }
-
-    public void refresh() {
+    public void refresh(ViewPath viewPath) {
         try {
+
             boolean first = true;
             StringBuilder path = new StringBuilder();
             StringBuilder content = new StringBuilder();
             content.append("<div class=\"BreadCrumb\">");
-            for (int i = 0, trailSize = this.breadcrumbs.size(); i < trailSize; i++) {
+
+            for (ViewId viewId : viewPath.getViewPath()) {
+
                 if (!first) {
                     path.append("/");
                     content.append(" > ");
@@ -67,21 +62,30 @@ public class BreadcrumbTrailPane extends HTMLPane {
                     first = false;
                 }
 
-                Breadcrumb breadcrumb = breadcrumbs.get(i);
-                path.append(breadcrumb.getName());
+                boolean firstBC = true;
+                for (Breadcrumb breadcrumb : viewId.getBreadcrumbs()) {
+//                    path.append(breadcrumb.getName());
 
-                if ((i == (trailSize - 1) || !breadcrumb.isHyperlink())) {
-                    // last item in trail is the current page and so should not be a link
-                    content.append(breadcrumb.getDisplayName());
-                } else {
-                    content.append("<a href=\"#");
-                    // NOTE: We have to call toString() below, because GWT chokes if you try to append a StringBuilder.                           
-                    content.append(path.toString());
-                    content.append("\">");
-                    content.append(breadcrumb.getDisplayName());
-                    content.append("</a>");
+                    if (!firstBC) {
+                        content.append(" > ");
+                    } else {
+                        firstBC = false;
+                    }
+
+                    if (!breadcrumb.isHyperlink()) {
+                        // last item in trail is the current page and so should not be a link
+                        content.append(breadcrumb.getDisplayName());
+                    } else {
+                        content.append("<a href=\"#");
+                        // NOTE: We have to call toString() below, because GWT chokes if you try to append a StringBuilder.
+                        content.append(path.toString() + breadcrumb.getName());
+                        content.append("\">");
+                        content.append(breadcrumb.getDisplayName());
+                        content.append("</a>");
+                    }
+                    content.append("\n");
                 }
-                content.append("\n");
+                path.append(viewId.getPath());
             }
             content.append("</div>");
 
@@ -91,19 +95,12 @@ public class BreadcrumbTrailPane extends HTMLPane {
         }
 
         String title = "RHQ";
-        if (!breadcrumbs.isEmpty()) {
-            title += ": " + this.breadcrumbs.get(this.breadcrumbs.size() - 1);
+        if (!viewPath.getViewPath().isEmpty()) {
+            title += ": " + viewPath.getViewPath().get(viewPath.getViewPath().size()-1).getBreadcrumbs().get(0).getDisplayName();
+
         }
         Window.setTitle(title);
 
         redraw();
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder result = new StringBuilder("BreadCrumb[");
-        result.append(this.breadcrumbs);
-        result.append("]");
-        return result.toString();
     }
 }

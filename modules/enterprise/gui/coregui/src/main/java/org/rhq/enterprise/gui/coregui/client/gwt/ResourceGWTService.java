@@ -51,6 +51,8 @@ public interface ResourceGWTService extends RemoteService {
 
     List<Integer> deleteResources(int[] resourceIds);
 
+    void updateResource(Resource resource);
+
     void createResource(int parentResourceId, int newResourceTypeId, String newResourceName, Configuration newResourceConfiguration);
 
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc);

@@ -48,6 +48,8 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.resource.Resource;
 
 /**

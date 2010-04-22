@@ -162,6 +162,10 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                 "ResourceService.deleteResources");
     }
 
+    public void updateResource(Resource resource) {
+        resourceManager.updateResource(getSessionSubject(), resource);
+    }
+
 
     public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName, Configuration newResourceConfiguration) {
 

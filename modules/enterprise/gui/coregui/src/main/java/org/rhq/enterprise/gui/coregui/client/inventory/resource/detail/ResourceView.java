@@ -86,6 +86,7 @@ public class ResourceView extends HLayout implements BookmarkableView {
         } else {
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterId(resourceId);
+            criteria.fetchTags(true);
             //criteria.fetchParentResource(true);
             resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
                 public void onFailure(Throwable caught) {

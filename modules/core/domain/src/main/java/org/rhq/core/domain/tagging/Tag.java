@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.Set;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -47,7 +48,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 /**
  * @author Greg Hinkle
  */
-@SequenceGenerator(name = "id", sequenceName = "RHQ_TAGGING_ID_SEQ")
+@Entity
+@SequenceGenerator(name = "RHQ_TAGGING_SEQ", sequenceName = "RHQ_TAGGING_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_TAGGING")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Tag implements Serializable {
@@ -56,7 +58,7 @@ public class Tag implements Serializable {
 
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_TAGGING_ID_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_TAGGING_SEQ")
     @Id
     private int id;
 
@@ -73,7 +75,6 @@ public class Tag implements Serializable {
     @JoinTable(name = "RHQ_TAGGING_RESOURCE_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "RESOURCE_ID") })
     @ManyToMany
     private Set<Resource> resources;
-
 
     @JoinTable(name = "RHQ_TAGGING_RES_GRP_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "RESOURCE_GROUP_ID") })
     @ManyToMany

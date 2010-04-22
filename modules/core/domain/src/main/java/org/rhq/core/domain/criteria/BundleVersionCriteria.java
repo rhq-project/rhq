@@ -45,6 +45,7 @@ public class BundleVersionCriteria extends Criteria {
     private boolean fetchBundleDeployments;
     private boolean fetchBundleFiles;
     private boolean fetchConfigurationDefinition;
+    private boolean fetchTags;
 
     public BundleVersionCriteria() {
         filterOverrides.put("bundleId", "bundle.id = ?");
@@ -95,4 +96,10 @@ public class BundleVersionCriteria extends Criteria {
     public void fetchConfigurationDefinition(boolean fetchConfigurationDefinition) {
         this.fetchConfigurationDefinition = fetchConfigurationDefinition;
     }
+
+    public void fetchTags(boolean fetchTags) {
+        this.fetchTags = fetchTags;
+    }
+
+
 }

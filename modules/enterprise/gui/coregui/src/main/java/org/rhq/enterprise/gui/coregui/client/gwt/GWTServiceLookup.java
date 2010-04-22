@@ -88,6 +88,10 @@ public class GWTServiceLookup {
         return secure(AvailabilityGWTServiceAsync.Util.getInstance());
     }
 
+    public static TagGWTServiceAsync getTagService() {
+        return secure(TagGWTServiceAsync.Util.getInstance());
+    }
+
 
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget))

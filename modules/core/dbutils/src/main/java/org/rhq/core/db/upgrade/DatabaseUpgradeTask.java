@@ -30,5 +30,5 @@ import org.rhq.core.db.ant.dbupgrade.SST_JavaTask;
  * @author Joseph Marques
  */
 public interface DatabaseUpgradeTask {
-    public void execute(Connection connection, DatabaseType type) throws SQLException;
+    public void execute(DatabaseType type, Connection connection) throws SQLException;
 }

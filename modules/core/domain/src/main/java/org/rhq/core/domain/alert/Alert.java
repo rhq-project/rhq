@@ -45,7 +45,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
-import org.rhq.core.domain.auth.Subject;
 
 /**
  * @author Joseph Marques
@@ -113,10 +112,10 @@ import org.rhq.core.domain.auth.Subject;
         + " WHERE condition.measurementDefinition.id = :measurementDefinitionId " //
         + "   AND definition.resource.id = ( :resourceId ) " //
         + "   AND ( a.ctime BETWEEN :startDate AND :endDate )"),
-    @NamedQuery(name = Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES, query = "SELECT sched.id, count(*) " +
-            "  FROM Alert AS a JOIN a.alertDefinition aDef  JOIN aDef.conditions condition " +
-            "  JOIN aDef.resource res  JOIN condition.measurementDefinition mDef   JOIN mDef.schedules sched" +
-            " WHERE sched.definition = mDef.id   AND sched.resource = res    AND sched.id IN (:schedIds) "
+    @NamedQuery(name = Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES, query = "SELECT sched.id, count(*) "
+        + "  FROM Alert AS a JOIN a.alertDefinition aDef  JOIN aDef.conditions condition "
+        + "  JOIN aDef.resource res  JOIN condition.measurementDefinition mDef   JOIN mDef.schedules sched"
+        + " WHERE sched.definition = mDef.id   AND sched.resource = res    AND sched.id IN (:schedIds) "
         + "   AND (a.ctime BETWEEN :startDate AND :endDate)" + "GROUP BY sched.id"),
     @NamedQuery(name = Alert.QUERY_FIND_BY_RESOURCE_DATED, //
     query = "SELECT a " //
@@ -258,12 +257,11 @@ public class Alert implements Serializable {
     @Column(name = "WILL_RECOVER", nullable = false)
     private boolean willRecover;
 
-    @Column(name ="ACK_TIME")
-    private long ackTime = -1;
+    @Column(name = "ACK_TIME")
+    private long acknowledgeTime = -1;
 
-    @JoinColumn(name = "ACK_BY_ID", referencedColumnName = "ID")
-    @ManyToOne
-    private Subject ackBy;
+    @Column(name = "ACK_SUBJECT")
+    private String acknowledgingSubject;
 
     /**
      * Creates a new alert. (required by EJB3 spec, but not used)
@@ -335,20 +333,20 @@ public class Alert implements Serializable {
         this.triggeredOperation = triggeredOperation;
     }
 
-    public long getAckTime() {
-        return ackTime;
+    public long getAcknowledgeTime() {
+        return acknowledgeTime;
     }
 
-    public void setAckTime(long ackTime) {
-        this.ackTime = ackTime;
+    public void setAcknowledgeTime(long acknowledgeTime) {
+        this.acknowledgeTime = acknowledgeTime;
     }
 
-    public Subject getAckBy() {
-        return ackBy;
+    public String getAcknowledgingSubject() {
+        return acknowledgingSubject;
     }
 
-    public void setAckBy(Subject ackBy) {
-        this.ackBy = ackBy;
+    public void setAcknowledgingSubject(String acknowledgingSubject) {
+        this.acknowledgingSubject = acknowledgingSubject;
     }
 
     public boolean getWillRecover() {

@@ -74,9 +74,6 @@ public class SST_JavaTask extends SchemaSpecTask {
         validateAttributes();
 
         try {
-            DatabaseType db_type = getDatabaseType();
-            Connection conn = getConnection();
-
             if (className.indexOf(".") == -1) {
                 className = "org.rhq.core.db.upgrade." + className;
             }
@@ -85,7 +82,11 @@ public class SST_JavaTask extends SchemaSpecTask {
 
             Class<?> javaTaskClass = Class.forName(className);
             DatabaseUpgradeTask javaTask = (DatabaseUpgradeTask) javaTaskClass.newInstance();
-            javaTask.execute(conn, db_type);
+
+            DatabaseType db_type = getDatabaseType();
+            Connection conn = getConnection();
+
+            javaTask.execute(db_type, conn);
         } catch (Exception e) {
             throw new BuildException(MSG.getMsg(DbAntI18NResourceKeys.JAVA_TASK_ERROR, e), e);
         }

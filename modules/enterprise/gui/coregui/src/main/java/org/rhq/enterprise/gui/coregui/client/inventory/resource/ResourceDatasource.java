@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import java.util.List;
+
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -29,6 +32,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
@@ -38,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -49,6 +54,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     public ResourceDatasource() {
+        super();
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
@@ -84,7 +90,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        final long start = System.currentTimeMillis();
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));
@@ -121,19 +126,48 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
             public void onSuccess(PageList<Resource> result) {
 
-                System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
 
-                ListGridRecord[] records = buildRecords(result);
-                response.setData(records);
-                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
-                processResponse(request.getRequestId(), response);
+                dataRetrieved(result, response, request);
             }
         });
     }
 
     @Override
+    protected void executeRemove(final DSRequest request, final DSResponse response) {
+        JavaScriptObject data = request.getData();
+        final ListGridRecord rec = new ListGridRecord(data);
+        final Resource resourceToDelete  = copyValues(rec);
+
+
+        final int resourceId = resourceToDelete.getId();
+        resourceService.deleteResources(new int[]{resourceId}, new AsyncCallback<List<Integer>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to uninventory resource " + resourceId, caught);
+                response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
+
+            public void onSuccess(List<Integer> result) {
+                CoreGUI.getMessageCenter().notify(new Message("Resource [" + resourceId + "] successfully uninventoried.", Message.Severity.Info));
+                response.setStatus(DSResponse.STATUS_SUCCESS);
+                processResponse(request.getRequestId(), response);
+            }
+        });
+
+
+    }
+
+    protected void dataRetrieved(PageList<Resource> result, DSResponse response, DSRequest request) {
+        ListGridRecord[] records = buildRecords(result);
+        response.setData(records);
+        response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+        processResponse(request.getRequestId(), response);
+    }
+
+
+    @Override
     public Resource copyValues(ListGridRecord from) {
-        return null; // TODO: Implement this method.
+        return new Resource(from.getAttributeAsInt("id"));
     }
 
     @Override

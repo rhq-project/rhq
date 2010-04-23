@@ -136,7 +136,7 @@
                 <rich:suggestionbox id="resourceSelectBox" for="selectedResource" tokens=",[]"
                                     ajaxSingle="true" immediate="true"
                                     suggestionAction="#{ResourceSelectUIBean.autocomplete}"
-                                    var="result" data="foo" fetchValue="#{result.resource.id}"
+                                    var="result" data="foo" fetchValue="#{result.original.resource.id}"
                                     nothingLabel="No matching resources found"
                                     style="background-color: #cccccc;"
                                     onselect="document.location.href='#{onf:getDefaultResourceTabURL()}?id=' + #{rich:element('selectedResource')}.value"
@@ -144,15 +144,15 @@
                     <h:column>
                         <f:facet name="header">Avail</f:facet>
                         <h:graphicImage
-                                value="/images/icons/availability_#{result.availability == 'UP' ? 'green' : 'red'}_16.png"/>
+                                value="/images/icons/availability_#{result.original.availability == 'UP' ? 'green' : 'red'}_16.png"/>
                     </h:column>
                     <h:column>
                         <f:facet name="header">Resource</f:facet>
-                        <h:outputText value="#{result.resource.name}"/>
+                        <h:outputText value="#{result.original.resource.name}"/>
                     </h:column>
                     <h:column>
                         <f:facet name="header">Parent</f:facet>
-                        <h:outputText value="#{result.parent.name}"/>
+                        <h:outputText value="#{result.original.parent.name}"/>
                     </h:column>
                 </rich:suggestionbox>
             </h:panelGroup>

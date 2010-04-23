@@ -46,7 +46,7 @@ public class SubcategoryTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testAddDeleteDefaultTemplate");
+                    + ".testAddResourcTypeWithKnownSubCategory");
             }
         }
     }

@@ -45,12 +45,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
 
+    static final boolean ENABLED = true;
+
     @Override
     protected String getSubsystemDirectory() {
         return "events";
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testCreateDeleteEvent() throws Exception {
         System.out.println("= testCreateDeleteEvent");
         try {
@@ -124,7 +126,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
      * Simulate just redeploying the plugin with no change in descriptor.
      * @throws Exception
      */
-    @Test
+    @Test(enabled = ENABLED)
     public void testNoOpChange() throws Exception {
         System.out.println("= testNoOpChange");
         try {
@@ -172,7 +174,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testDeleteEventStuff() throws Exception {
         System.out.println("= testDeleteEvent");
         EventManagerLocal eventManager = LookupUtil.getEventManager();
@@ -186,8 +188,6 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
             registerPlugin("event1-2.xml");
             getTransactionManager().begin();
             entityManager = getEntityManager();
-            getPluginId(entityManager);
-
             platform = getResourceType("events");
 
             testResource = new Resource("-test-", "-test resource", platform);
@@ -198,13 +198,13 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
 
             getTransactionManager().begin();
             entityManager = getEntityManager();
-            //platform = getResourceType("events");
             platform = entityManager.find(ResourceType.class, platform.getId());
             testResource = entityManager.find(Resource.class, testResource.getId());
             Set<EventDefinition> eDefs = platform.getEventDefinitions();
             assert eDefs.size() == 2 : "Did not find the expected 2 eventDefinitions, but " + eDefs.size();
             Iterator<EventDefinition> eIter = eDefs.iterator();
             boolean found = false;
+            Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>(1);
             while (eIter.hasNext()) {
                 EventDefinition def = eIter.next();
                 if (def.getName().equals("hans")) {
@@ -212,18 +212,17 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
                     // We got the definition that will vanish later, so attach some stuff to it
                     EventSource source = new EventSource("test location", def, testResource);
                     entityManager.persist(source);
+
                     Event ev = new Event(def.getName(), source.getLocation(), System.currentTimeMillis(),
                         EventSeverity.INFO, "This is a test");
-                    //                    entityManager.persist(ev);  // We can't do this, as Event.source does not get filled this way :(
-                    Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>(1);
                     Set<Event> evSet = new HashSet<Event>(1);
                     evSet.add(ev);
                     events.put(source, evSet);
-                    eventManager.addEventData(events);
                 }
             }
             assert found : "Hans was not found";
             getTransactionManager().commit();
+            eventManager.addEventData(events);
 
             /*
              * --- done with the setup ---

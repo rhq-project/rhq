@@ -1,0 +1,130 @@
+
+.dojoHtmlFisheyeListBar {
+  cursor:pointer;
+  margin: 0;
+  width: 300px;
+  text-align: right;
+}
+
+.outerbar {
+  background-color: white;
+  text-align: left;
+  width: 300px;
+}
+
+.editText {
+ height:25;
+ font-size:18px;
+ font-weight: bold;
+ font-family: Arial;
+}
+
+.plainText {
+  height:25;
+  font-size:20px;
+  font-weight: bold;
+  font-family: Arial
+}
+
+.plainTextSelect {
+  height:25;
+  font-size:20px;
+  font-weight: bold;
+  font-family: Arial;
+  background: red
+}
+
+.smallText {
+  height:15;
+  font-size:13px;
+  font-weight: bold;
+  font-family: Arial
+}
+
+.banner {
+  height:35;
+  font-size:35;
+  font-weight: bold;
+  font-family: Arial
+}
+
+
+.menuItem {
+  background: white;
+  color: black;
+  text-decoration: none;
+  font-size: 1.4em;
+}
+
+.menuLink {
+  cursor:pointer;
+  color: black;
+  text-decoration: none;
+  font-size: 1.3em;
+}
+
+.menuLinkHover {
+  cursor:pointer;
+  color: black;
+  font-size: 1.3em;
+  text-decoration: underline;
+}
+
+.autocomplete {
+  position:absolute;
+}
+
+.autocompleteTable {
+  padding:0;
+  visibility: hidden;
+  border-spacing: 0;
+  border-width:1px;
+  border-style:solid;
+  border-color:black;
+}
+
+.popupRowHover {
+  color: #FFFAFA;
+  cursor:pointer;
+  padding-left:3;
+  padding-right:3;
+  border-spacing: 0;
+  border-width:0px;
+  background: #7A8AFF;
+}
+
+.popupRow {
+  padding-left:3;
+  padding-right:3;
+  border-spacing: 0;
+  border-width:0px;
+  background: #FFFAFA;
+}
+
+.popupRowEven {
+  padding-left:3;
+  padding-right:3;
+  border-spacing: 0;
+  border-width:0px;
+  background: #FFFADA;
+}
+
+.popupItem {
+  background: #FFFAFA;
+  color: #000000;
+  text-decoration: none;
+  font-size: 1.2em;
+}
+
+.shadow {
+  top:0px;
+  left:0px;
+  position: absolute;
+  visibility: hidden;
+  width:0;
+  height:0;
+  z-index:0;
+  background:gray;
+  opacity: .5;
+}
+

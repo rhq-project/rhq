@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.rhq.sample</groupId>
+  <artifactId>rhq-sample-bundle</artifactId>  
+  <version>2.0</version>  
+  <packaging>pom</packaging>
+  
+  <name>RHQ Sample Bundle</name>
+  <description>a sample bundle consisting of JBossAS 6.0 running the Java Petstore application</description>
+
+  <scm>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/modules/sample-bundle/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/modules/sample-bundle/</developerConnection>
+  </scm>
+
+  <properties>
+    <!-- dependency versions -->
+    <derbyclient.version>10.5.3.0_1</derbyclient.version>
+  </properties>
+
+  <dependencies>
+
+    <!-- Derby JDBC driver -->
+    <dependency>
+      <groupId>org.apache.derby</groupId>
+      <artifactId>derbyclient</artifactId>
+      <version>${derbyclient.version}</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+  
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>prepare-bundle</id>
+            <phase>process-resources</phase>
+            <configuration>
+              <tasks>
+                <echo>settings.localRepository=${settings.localRepository}</echo>
+                <echo>project.build.outputDirectory=${project.build.outputDirectory}</echo>
+                <ant antfile="src/main/scripts/build.xml">
+                  <property name="settings.localRepository" value="${settings.localRepository}"/>
+                  <property name="project.version" value="${project.version}"/>
+                  <property name="project.build.outputDirectory" value="${project.build.outputDirectory}"/>
+                  <property name="derbyclient.version" value="${derbyclient.version}"/>
+                </ant>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/scripts/assembly.xml</descriptor>
+          </descriptors>
+          <finalName>${project.build.finalName}</finalName>
+        </configuration>
+        <executions>
+          <execution>
+            <id>assemble-bundle</id>
+            <phase>package</phase>
+            <goals>
+              <goal>attached</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>
+

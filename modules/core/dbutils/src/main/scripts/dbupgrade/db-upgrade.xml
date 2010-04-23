@@ -2066,7 +2066,7 @@
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_ALERT_NOTIFICATION
-                        ADD CONSTRAINT RHQ_ALERT_NOTIFICATION_SENDER_CONFIG_ID_FK
+                        ADD CONSTRAINT RHQ_AN_SENDER_CONFIG_ID_FK
                         FOREIGN KEY (SENDER_CONFIG_ID)
                         REFERENCES RHQ_CONFIG (ID)
                     </statement>
@@ -2094,7 +2094,7 @@
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_ALERT_NOTIFICATION
-                        ADD CONSTRAINT RHQ_ALERT_NOTIFICATION_TEMPLATE_ID_FK
+                        ADD CONSTRAINT RHQ_AN_TEMPLATE_ID_FK
                         FOREIGN KEY (TEMPLATE_ID)
                         REFERENCES RHQ_ALERT_NOTIF_TEMPL (ID)
                     </statement>

@@ -2668,14 +2668,11 @@
             <schemaSpec version="2.82">
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_SAVED_SEARCH">
-                        CREATE TABLE RHQ_SAVED_SEARCH ( ID INTEGER )
+                        CREATE TABLE RHQ_SAVED_SEARCH ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-directSQL>
-                    <statement desc="Creating primary key for RHQ_SAVED_SEARCH">
-                        ALTER TABLE RHQ_SAVED_SEARCH ADD PRIMARY KEY ( ID )
-                    </statement>
-                </schema-directSQL>
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="ID" nullable="FALSE" />
+
                 <schema-addColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" columnType="VARCHAR2" precision="25" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" nullable="FALSE" />
 

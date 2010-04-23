@@ -147,7 +147,7 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
             // buffer will be 0 the very first time, since definitionId is initially -1
             int configId = persistConfiguration("operation-definition-id", operationDefinitionId, "selection-mode",
                 "SELF");
-            persistNotification(alertDefinitionId, configId, "Resource Operations", "Operational ");
+            persistNotification(alertDefinitionId, configId, "Resource Operations", "Operation Invocation");
         }
     }
 
@@ -165,13 +165,18 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
                     persistNotification(definitionId, configId, sender, name);
                 }
                 buffer = new StringBuilder(); // reset for the next definitionId
-            } else {
-                if (buffer.length() != 0) {
-                    // elements are already in the list
-                    buffer.append(',');
-                }
-                buffer.append(nextData);
             }
+
+            if (buffer.length() != 0) {
+                // elements are already in the list
+                buffer.append(',');
+            }
+            buffer.append(nextData);
+        }
+
+        if (buffer.length() != 0) {
+            int configId = persistConfiguration(propertyName, buffer.toString());
+            persistNotification(definitionId, configId, sender, name);
         }
     }
 

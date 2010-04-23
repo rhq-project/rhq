@@ -156,34 +156,76 @@ public class Deployer {
         return;
     }
 
-    public FileHashcodeMap deploy() throws Exception {
+    public FileHashcodeMap deploy(DeployDifferences diff) throws Exception {
         FileHashcodeMap map = null;
 
         if (!this.deploymentsMetadata.isManaged()) {
             // the destination dir has not been used to deploy a bundle yet, therefore, this is the first deployment
-            map = performInitialDeployment();
+            map = performInitialDeployment(diff);
         } else {
             // we have metadata in the destination directory, therefore, this deployment is updating a current one
-            map = performUpdateDeployment();
+            map = performUpdateDeployment(diff);
         }
 
         return map;
     }
 
-    private FileHashcodeMap performInitialDeployment() throws Exception {
-        FileHashcodeMap newFileHashcodeMap = extractZipAndRawFiles(null);
+    private FileHashcodeMap performInitialDeployment(DeployDifferences diff) throws Exception {
+        FileHashcodeMap newFileHashcodeMap = extractZipAndRawFiles(new HashMap<String, String>(0), diff);
+
+        // this is an initial deployment, so we know every file is new - tell our diff about them all
+        if (diff != null) {
+            diff.getAddedFiles().addAll(newFileHashcodeMap.keySet());
+        }
+
         debug("Initial deployment finished.");
         return newFileHashcodeMap;
     }
 
-    private FileHashcodeMap performUpdateDeployment() throws Exception {
+    private FileHashcodeMap performUpdateDeployment(DeployDifferences diff) throws Exception {
         debug("Analyzing original, current and new files as part of update deployment");
+
+        // NOTE: remember that data that goes in diff are only things affecting the current file set such as:
+        //       * if a current file will change
+        //       * if a current file will be deleted
+        //       * if a new file is added to the filesystem
+        //       * if a current file is ignored in the latest rescan
+        //       * if a file is realized on the filesystem before its stored on the file system
+        //       * if a current file is backed up
 
         DeploymentProperties originalDeploymentProps = this.deploymentsMetadata.getCurrentDeploymentProperties();
 
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
         ChangesFileHashcodeMap current = original.rescan(this.destDir, this.ignoreRegex);
         FileHashcodeMap newFiles = getNewDeploymentFileHashcodeMap();
+
+        if (current.getUnknownContent() != null) {
+            throw new Exception("Failed to properly rescan the current deployment: " + current.getUnknownContent());
+        }
+
+        if (diff != null) {
+            diff.getIgnoredFiles().addAll(current.getIgnored());
+            for (Map.Entry<String, String> entry : current.entrySet()) {
+                String currentPath = entry.getKey();
+                String currentHashcode = entry.getValue();
+                if (currentHashcode.equals(FileHashcodeMap.DELETED_FILE_HASHCODE)) {
+                    if (newFiles.containsKey(currentPath)) {
+                        diff.addAddedFile(currentPath);
+                    }
+                } else if (!newFiles.containsKey(currentPath)) {
+                    diff.addDeletedFile(currentPath);
+                } else if (!newFiles.get(currentPath).equals(currentHashcode)) {
+                    if (!newFiles.get(currentPath).equals(original.get(currentPath))) {
+                        diff.addChangedFile(currentPath);
+                    }
+                }
+            }
+            for (Map.Entry<String, String> entry : newFiles.entrySet()) {
+                if (!current.containsKey(entry.getKey())) {
+                    diff.addAddedFile(entry.getKey());
+                }
+            }
+        }
 
         // backup the current file if either of these are true:
         // * if there is a current file but there was no original file (current.getAdditions())
@@ -192,21 +234,34 @@ public class Deployer {
         // do nothing (do not backup the current file and do not copy the new file to disk) if:
         // * the original file is not the same as the current file (current.getChanges()) but is the same as the new file
         Set<String> currentFilesToBackup = new HashSet<String>(current.getAdditions().keySet());
-        Set<String> currentFilesToLeaveAlone = new HashSet<String>();
+        Map<String, String> currentFilesToLeaveAlone = new HashMap<String, String>();
         Set<String> currentFilesToDelete;
 
         for (Map.Entry<String, String> changed : current.getChanges().entrySet()) {
             String changedFilePath = changed.getKey();
             String newHashcode = newFiles.get(changedFilePath);
             if (newHashcode != null) {
-                // remember, original hash will never be the same as the changed hash (that's why it is considered changed!)
-                if (newHashcode.equals(original.get(changedFilePath))) {
-                    currentFilesToLeaveAlone.add(changedFilePath);
-                } else if (!newHashcode.equals(changed.getValue())) {
+                // Remember, original hash will never be the same as the changed hash (that's why it is considered changed!).
+                // If the new file hash is the same as the original, it means the user changed the file but that change
+                // should be compatible with the new deployment (this is assumed, but if the new file didn't alter the original file,
+                // presumably the new software is backward compatible and should accept the changed original as a valid file).
+                // Now however in this case we mark the changed file path with the *original* hashcode - in effect, we continue
+                // along the knowlege of the original hashcode (which is the same as the new) thus continuing the knowledge
+                // that a file is different from the deployment distribution.
+                // If the new is different from the original and if the new is different than the current, we need to backup the
+                // current because we will be overwriting the current file with the new.
+                String changedFileHashcode = changed.getValue();
+                String originalFileHashcode = original.get(changedFilePath);
+                if (newHashcode.equals(originalFileHashcode)) {
+                    currentFilesToLeaveAlone.put(changedFilePath, originalFileHashcode);
+                } else if (!newHashcode.equals(changedFileHashcode)) {
                     currentFilesToBackup.add(changedFilePath);
                 }
             }
         }
+
+        // done with this, allow GC to reclaim memory
+        original = null;
 
         // the rescan can only find things in the dest dir.
         // if the new deployment introduced new files with absolute paths ('new' meaning they
@@ -216,14 +271,19 @@ public class Deployer {
         newNotFoundByRescan.removeAll(current.keySet());
         for (String newFileNotScanned : newNotFoundByRescan) {
             File newFileNotScannedFile = new File(newFileNotScanned);
-            if (newFileNotScannedFile.isAbsolute() && newFileNotScannedFile.exists()) {
-                currentFilesToBackup.add(newFileNotScanned);
+            if (newFileNotScannedFile.isAbsolute()) {
+                if (newFileNotScannedFile.exists()) {
+                    currentFilesToBackup.add(newFileNotScanned);
+                    if (diff != null) {
+                        diff.getAddedFiles().remove(newFileNotScanned);
+                        diff.addChangedFile(newFileNotScanned);
+                    }
+                }
             }
         }
 
-        // done with these, allow GC to reclaim memory
+        // done with this, allow GC to reclaim memory
         newNotFoundByRescan = null;
-        original = null;
 
         // now remove all the new files from the current map - what's left are files that exist that are not in the new deployment
         // thus, those files left in current are those that need to be deleted from disk
@@ -252,6 +312,9 @@ public class Deployer {
                 }
                 backupFile.getParentFile().mkdirs();
                 FileUtil.copyFile(fileToBackup, backupFile);
+                if (diff != null) {
+                    diff.addBackedUpFile(fileToBackupPath, backupFile.getAbsolutePath());
+                }
                 debug("Backed up file [", fileToBackup, "] to [", backupFile, "]");
             }
         }
@@ -269,18 +332,25 @@ public class Deployer {
             } else {
                 // TODO: what should we do? is it a major failure if we can't remove obsolete files?                
                 debug("Failed to delete obsolete file [", doomedFile, "]");
+                if (diff != null) {
+                    diff.addError(fileToDeletePath, "File [" + doomedFile.getAbsolutePath() + "] did not delete");
+                }
             }
         }
 
         // 3. copy all new files except for those to be kept as-is
         debug("Copying new files as part of update deployment");
-        FileHashcodeMap newFileHashCodeMap = extractZipAndRawFiles(currentFilesToLeaveAlone);
+        FileHashcodeMap newFileHashCodeMap = extractZipAndRawFiles(currentFilesToLeaveAlone, diff);
 
         debug("Update deployment finished.");
         return newFileHashCodeMap;
     }
 
-    private FileHashcodeMap extractZipAndRawFiles(Set<String> currentFilesToLeaveAlone) throws Exception {
+    private FileHashcodeMap extractZipAndRawFiles(Map<String, String> currentFilesToLeaveAlone, DeployDifferences diff)
+        throws Exception {
+
+        // NOTE: right now, this only adds to the "realized" set of files is diff, no need to track "added" or "changed" here
+
         FileHashcodeMap newFileHashCodeMap = new FileHashcodeMap();
 
         // extract all zip files
@@ -288,7 +358,7 @@ public class Deployer {
         for (File zipFile : this.zipFiles) {
             debug("Extracting zip [", zipFile, "] entries");
             visitor = new ExtractorZipFileVisitor(this.destDir, this.filesToRealizeRegex, this.templateEngine,
-                currentFilesToLeaveAlone);
+                currentFilesToLeaveAlone.keySet(), diff);
             ZipUtil.walkZipFile(zipFile, visitor);
             newFileHashCodeMap.putAll(visitor.getFileHashcodeMap());
         }
@@ -300,7 +370,7 @@ public class Deployer {
             File currentLocationFile = rawFile.getKey();
             File newLocationFile = rawFile.getValue();
             String newLocationPath = rawFile.getValue().getPath();
-            if (currentFilesToLeaveAlone != null && currentFilesToLeaveAlone.contains(newLocationPath)) {
+            if (currentFilesToLeaveAlone != null && currentFilesToLeaveAlone.containsKey(newLocationPath)) {
                 continue;
             }
             if (!newLocationFile.isAbsolute()) {
@@ -322,6 +392,10 @@ public class Deployer {
                 FileInputStream in = new FileInputStream(currentLocationFile);
                 byte[] rawFileContent = StreamUtil.slurp(in);
                 String content = this.templateEngine.replaceTokens(new String(rawFileContent));
+
+                if (diff != null) {
+                    diff.addRealizedFile(newLocationPath, content);
+                }
 
                 // now write the realized content to the filesystem
                 byte[] bytes = content.getBytes();
@@ -359,6 +433,8 @@ public class Deployer {
                 newFileHashCodeMap.put(newLocationPath, hashcode);
             }
         }
+
+        newFileHashCodeMap.putAll(currentFilesToLeaveAlone); // remember that these are still there
 
         this.deploymentsMetadata.setCurrentDeployment(deploymentProps, newFileHashCodeMap);
         return newFileHashCodeMap;

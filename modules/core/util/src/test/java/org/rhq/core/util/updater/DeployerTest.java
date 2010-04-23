@@ -103,17 +103,36 @@ public class DeployerTest {
      * f.     none       ?      ?   New file is installed over current, current is backed up
      * g.        X    none      ?   New file is installed
      * h.        ?       ?   none   Current file is backed up and deleted
-
-     * This test will be complex. We will initially install updater-test1.zip, updater-testA.txt.
+     *
+     * (*) means the new and current files will actually be the same content
+     *
+     * This test will be complex. We will initially install updater-test1.zip, updater-testA.txt:
+     *    dir1/file1
+     *    dir1/file2
+     *    dir2/file3
+     *    dir3/dir4/file4
+     *    file0
+     *    /ABSOLUTE/updater-testA.txt
      * Then we:
-     *   change dir1/file1
-     *   change updater-testA.txt
-     *   add updater-testB.txt
-     *   add fileB.txt
-     *   delete dir1/file2
-     *   add dir1/file999
-     * Then the deployment is updated with updater-test2.zip, updater-testB.txt.
-     * 
+     *    - change dir1/file1
+     *    - change updater-testA.txt
+     *    - add updater-testB.txt
+     *    - add fileB.txt
+     *    - delete dir1/file2
+     *    - add dir1/file999
+     * Then the deployment is updated with updater-test2.zip, updater-testB.txt:
+     *    dir1/file1 (we changed this and remains as we changed it)
+     *    dir1/file2 (we deleted it but it comes back from updater-test2.zip)
+     *    dir1/fileB (added from updater-test2.zip, our own current copy is backed up)
+     *    dir2/file3
+     *    dir2/fileC (added from updater-test2.zip)
+     *    dir3/dir4/file4
+     *    --file0-- (this is deleted, its no longer in our deployment zip)
+     *    fileA (added from updater-test2.zip) 
+     *    --/ABSOLUTE/updater-testA.txt-- (should be deleted, no longer in our deployment)
+     *    /ABSOLUTE/updater-testB.txt (added from our deployment, own current copy is backed up)
+     *    --dir1/file999-- (should be deleted, not in our deployment - but is backed up)
+     *    
      * This means after the update the following will tested:
      * 1) deleted updater-testA.txt (h.)
      * 2) added updater-testB.txt, backed up our (absolute file) current (f.)
@@ -121,21 +140,44 @@ public class DeployerTest {
      * 4) added fileA, no backups (f.)
      * 5) added dir1/fileB, backed up our (relative file) current (f.)
      * 6) added dir2/fileC (f.)
-     * 7) dir3/file4 is the same (a.)
+     * 7) dir3/dir4/file4 is the same (a.)
      * 7) dir1/file1 is left in the changed state (c.)
      * 8) dir1/file2 is brought back again (g.)
      * 9) dir1/file999 is backed up and deleted (h.)
      * 10) dir2/file3 is the same (a.)
      * 
      * We need to do the following afterwards in order to test b, d and e:
-     *   change updater-testB.txt
-     *   change the source updater-testB.txt
-     *   install updater-test2.zip, updater-testB.txt, updater-testA.txt
+     *    - change updater-testB.txt
+     *    - change the source updater-testB.txt
+     * Then the deployment is updated with updater-test2.zip, updater-testB.txt, updater-testA.txt:
+     *    dir1/file1
+     *    dir1/file2
+     *    dir1/fileB
+     *    dir2/file3
+     *    dir2/fileC
+     *    dir3/dir4/file4
+     *    fileA
+     *    /ABSOLUTE/updater-testA.txt (added from our deployment)
+     *    /ABSOLUTE/updater-testB.txt (changed - own current copy is backed up)
+     * 
+     * This means after the update the following will be tested:
      * 11) updater-testB.txt is the changed source, backed up our current (e.)
-     *   change the source updater-testA.txt
-     *   change the source updater-testB.txt
-     *   change updater-testA.txt to the new changed source updater-testA.txt
-     *   install updater-test2.zip, updater-testB.txt, updater-testA.txt
+     *
+     * Next we do this:
+     *    - change the source updater-testA.txt
+     *    - change the source updater-testB.txt
+     *    - change updater-testA.txt to the new changed source updater-testA.txt
+     * Then the deployment is updated with updater-test2.zip, updater-testB.txt, updater-testA.txt:
+     *    dir1/file1
+     *    dir1/file2
+     *    dir1/fileB
+     *    dir2/file3
+     *    dir2/fileC
+     *    dir3/dir4/file4
+     *    fileA
+     *    /ABSOLUTE/updater-testA.txt (the content won't change, left as is)
+     *    /ABSOLUTE/updater-testB.txt (changed but no backed up)
+     * This means after the update the following will be tested:
      * 12) updater-testA.txt is the changed source (d.)
      * 13) updater-testB.txt is the changed source (b.)
      * 
@@ -158,18 +200,30 @@ public class DeployerTest {
      * testUpdateDeployZipsAndRawFiles and testUpdateDeployZipsAndRawFilesWithRealizeAndIgnore. 
      */
     private void baseUpdateTest(boolean realize, boolean ignore) throws Exception {
-        Pattern filesToRealizeRegex = realize ? Pattern.compile("fileA") : null;
-        Pattern ignoreRegex = ignore ? Pattern.compile("ignoreme.*") : null;
+        DeployDifferences listener;
+
+        final Pattern filesToRealizeRegex = realize ? Pattern.compile("fileA") : null;
+        final Pattern ignoreRegex = ignore ? Pattern.compile("ignoreme.*") : null;
         File fileToIgnore = null;
 
-        File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
-        File tmpDir2 = FileUtil.createTempDirectory("testDeployerTest_External_", ".dir", null); // simulates place outside of dest dir
-        File testRawFileBChange1 = File.createTempFile("testUpdateDeployZipsAndRawFilesB1", ".txt");
-        File testRawFileBChange2 = File.createTempFile("testUpdateDeployZipsAndRawFilesB2", ".txt");
-        File testRawFileAChange = File.createTempFile("testUpdateDeployZipsAndRawFilesA", ".txt");
+        final File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
+        final File tmpDir2 = FileUtil.createTempDirectory("testDeployerTest_External_", ".dir", null); // simulates place outside of dest dir
+        final File testRawFileBChange1 = File.createTempFile("testUpdateDeployZipsAndRawFilesB1", ".txt");
+        final File testRawFileBChange2 = File.createTempFile("testUpdateDeployZipsAndRawFilesB2", ".txt");
+        final File testRawFileAChange = File.createTempFile("testUpdateDeployZipsAndRawFilesA", ".txt");
 
         final String backupExtension = ".rhqbackup";
         final File metadir = new File(tmpDir, ".rhqdeployments");
+
+        final String file0 = "file0";
+        final String file1 = "dir1" + File.separator + "file1";
+        final String file2 = "dir1" + File.separator + "file2";
+        final String file3 = "dir2" + File.separator + "file3";
+        final String file4 = "dir3" + File.separator + "dir4" + File.separator + "file4";
+        final String fileA = "fileA";
+        final String fileB = "dir1" + File.separator + "fileB";
+        final String fileC = "dir2" + File.separator + "fileC";
+        final String file999 = "dir1" + File.separator + "file999";
 
         try {
             if (ignore) {
@@ -197,21 +251,24 @@ public class DeployerTest {
             File destDir = tmpDir;
             Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
                 templateEngine, ignoreRegex);
-            deployer.deploy();
+            listener = new DeployDifferences();
+            deployer.deploy(listener);
 
             if (ignore) {
                 assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+                assert listener.getIgnoredFiles().size() == 0 : "this was an initial deploy - nothing to ignore (ignore is only for updates)";
             }
+            assert listener.getAddedFiles().size() == 6 : listener;
+            assert listener.getDeletedFiles().size() == 0 : listener;
+            assert listener.getChangedFiles().size() == 0 : listener;
+            assert listener.getRealizedFiles().size() == 0 : "No fileA to realize in this deployment: " + listener;
+            assert listener.getBackedUpFiles().size() == 0 : "No fileA to realize in this deployment: " + listener;
 
-            String file1 = "dir1" + File.separator + "file1";
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, file1)));
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(updaterAabsolute));
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(updaterBabsolute));
-            String file2 = "dir1" + File.separator + "file2";
             assert new File(tmpDir, file2).delete() : "could not delete file2 for test";
-            String file999 = "dir1" + File.separator + "file999";
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, file999)));
-            String fileB = "dir1" + File.separator + "fileB";
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, fileB)));
 
             deploymentProps = new DeploymentProperties(2, "testbundle2", "2.0.test", null);
@@ -221,10 +278,13 @@ public class DeployerTest {
             rawFiles.put(testRawFileB, updaterBabsolute); // raw file to absolute path
             deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
                 ignoreRegex);
-            deployer.deploy();
+            listener = new DeployDifferences();
+            deployer.deploy(listener);
 
             if (ignore) {
                 assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+                assert listener.getIgnoredFiles().size() == 1;
+                assert listener.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
             }
 
             assert !updaterAabsolute.exists() : "updateA.txt should be deleted";
@@ -233,9 +293,7 @@ public class DeployerTest {
             String updaterBabsoluteBackup = updaterBabsolute.getAbsolutePath() + backupExtension;
             assert new File(updaterBabsoluteBackup).exists() : "missing updateB.txt backup";
 
-            String file0 = "file0";
             assert !(new File(tmpDir, file0).exists()) : "file0 should be deleted";
-            String fileA = "fileA";
             assert new File(tmpDir, fileA).exists() : "fileA should exist";
             String fileAcontent = new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, fileA))));
             if (realize) {
@@ -250,20 +308,40 @@ public class DeployerTest {
             File fileBbackupTo1 = new File(metadir, "1/backup/" + fileB);
             assert fileBbackupTo1.exists() : "should have fileB backed up in deploy 1 backup dir";
             assert "X".equals(new String(StreamUtil.slurp(new FileInputStream(fileBbackupTo1))));
-            String fileC = "dir2" + File.separator + "fileC";
             assert new File(tmpDir, fileC).exists() : "fileC should exist";
-            String file4 = "dir3" + File.separator + "dir4" + File.separator + "file4";
             assert new File(tmpDir, file4).exists() : "file4 should exist";
             assert "X".equals(new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, file1)))));
             assert new File(tmpDir, file2).exists() : "file2 should exist again";
             assert !(new File(tmpDir, file999).exists()) : "file999 should be deleted";
             File file999backupTo1 = new File(metadir, "1/backup/" + file999);
             assert file999backupTo1.exists() : "file999 should not be backed up";
-            String file3 = "dir2" + File.separator + "file3";
             assert new File(tmpDir, file3).exists() : "file3 should exist";
+            assert listener.getAddedFiles().size() == 3 : listener;
+            assert listener.getAddedFiles().contains(file2) : listener;
+            assert listener.getAddedFiles().contains(fileC) : listener;
+            assert listener.getAddedFiles().contains(fileA) : listener;
+            assert listener.getDeletedFiles().size() == 3 : listener;
+            assert listener.getDeletedFiles().contains(file0) : listener;
+            assert listener.getDeletedFiles().contains(updaterAabsolute.getAbsolutePath()) : listener;
+            assert listener.getDeletedFiles().contains(file999) : listener;
+            assert listener.getChangedFiles().size() == 2 : listener;
+            assert listener.getChangedFiles().contains(updaterBabsolute.getAbsolutePath()) : listener;
+            assert listener.getChangedFiles().contains(fileB) : listener;
+            assert listener.getBackedUpFiles().size() == 3 : listener;
+            assert listener.getBackedUpFiles().containsKey(updaterBabsolute.getAbsolutePath()) : listener;
+            assert listener.getBackedUpFiles().get(updaterBabsolute.getAbsolutePath()).equals(updaterBabsoluteBackup) : listener;
+            assert listener.getBackedUpFiles().containsKey(fileB) : listener;
+            assert listener.getBackedUpFiles().get(fileB).equals(fileBbackupTo1.getAbsolutePath()) : listener;
+            assert listener.getBackedUpFiles().containsKey(file999) : listener;
+            assert listener.getBackedUpFiles().get(file999).equals(file999backupTo1.getAbsolutePath()) : listener;
+            if (realize) {
+                assert listener.getRealizedFiles().size() == 1 : listener;
+                assert listener.getRealizedFiles().containsKey(fileA) : listener;
+            } else {
+                assert listener.getRealizedFiles().size() == 0 : listener;
+            }
 
             StreamUtil.copy(new ByteArrayInputStream("Y".getBytes()), new FileOutputStream(updaterBabsolute));
-
             deploymentProps = new DeploymentProperties(3, "testbundle2", "3.0.test", null);
             zipFiles = new HashSet<File>(1);
             zipFiles.add(testZipFile2);
@@ -272,15 +350,33 @@ public class DeployerTest {
             rawFiles.put(testRawFileBChange1, updaterBabsolute); // source raw file to absolute path
             deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
                 ignoreRegex);
-            deployer.deploy();
+            listener = new DeployDifferences();
+            deployer.deploy(listener);
 
             if (ignore) {
                 assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+                assert listener.getIgnoredFiles().size() == 1;
+                assert listener.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
             }
 
             assert new File(updaterBabsoluteBackup).exists() : "updaterB should be backed up";
             assert "B1prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
             assert "Y".equals(new String(StreamUtil.slurp(new FileInputStream(new File(updaterBabsoluteBackup)))));
+
+            assert listener.getAddedFiles().size() == 1 : listener;
+            assert listener.getAddedFiles().contains(updaterAabsolute.getAbsolutePath()) : listener;
+            assert listener.getDeletedFiles().size() == 0 : listener;
+            assert listener.getChangedFiles().size() == 1 : listener;
+            assert listener.getChangedFiles().contains(updaterBabsolute.getAbsolutePath()) : listener;
+            assert listener.getBackedUpFiles().size() == 1 : listener;
+            assert listener.getBackedUpFiles().containsKey(updaterBabsolute.getAbsolutePath()) : listener;
+            assert listener.getBackedUpFiles().get(updaterBabsolute.getAbsolutePath()).equals(updaterBabsoluteBackup) : listener;
+            if (realize) {
+                assert listener.getRealizedFiles().size() == 1 : listener;
+                assert listener.getRealizedFiles().containsKey(fileA) : listener;
+            } else {
+                assert listener.getRealizedFiles().size() == 0 : listener;
+            }
 
             StreamUtil.copy(new ByteArrayInputStream("Aprime".getBytes()), new FileOutputStream(updaterAabsolute));
 
@@ -292,15 +388,29 @@ public class DeployerTest {
             rawFiles.put(testRawFileBChange2, updaterBabsolute); // source raw file to absolute path
             deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
                 ignoreRegex);
-            deployer.deploy();
+            listener = new DeployDifferences();
+            deployer.deploy(listener);
 
             if (ignore) {
                 assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
+                assert listener.getIgnoredFiles().size() == 1;
+                assert listener.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
             }
 
             assert "Aprime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterAabsolute))));
             assert "B2prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
 
+            assert listener.getAddedFiles().size() == 0 : listener;
+            assert listener.getDeletedFiles().size() == 0 : listener;
+            assert listener.getChangedFiles().size() == 1 : listener;
+            assert listener.getChangedFiles().contains(updaterBabsolute.getAbsolutePath()) : listener;
+            assert listener.getBackedUpFiles().size() == 0 : listener;
+            if (realize) {
+                assert listener.getRealizedFiles().size() == 1 : listener;
+                assert listener.getRealizedFiles().containsKey(fileA) : listener;
+            } else {
+                assert listener.getRealizedFiles().size() == 0 : listener;
+            }
         } finally {
             FileUtil.purge(tmpDir, true);
             FileUtil.purge(tmpDir2, true);
@@ -330,7 +440,12 @@ public class DeployerTest {
 
             Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
                 templateEngine, ignoreRegex);
-            FileHashcodeMap map = deployer.deploy();
+            DeployDifferences listener = new DeployDifferences();
+            FileHashcodeMap map = deployer.deploy(listener);
+
+            assert listener.getAddedFiles().size() == 2 : listener;
+            assert listener.getAddedFiles().contains("rawA.txt") : listener;
+            assert listener.getAddedFiles().contains(rawFileDestination.getAbsolutePath()) : listener;
 
             assert map.size() == 2 : map;
             String f = "rawA.txt";
@@ -374,64 +489,79 @@ public class DeployerTest {
 
             Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
                 templateEngine, ignoreRegex);
-            deployer.deploy();
+            DeployDifferences listener = new DeployDifferences();
+            deployer.deploy(listener);
 
-            FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null);
+            FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null, null);
             assert map.size() == 13 : map;
+            assert listener.getAddedFiles().size() == 13 : listener;
             String f = "dir1" + File.separator + "file1";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir1" + File.separator + "file2";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir2" + File.separator + "file3";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir3" + File.separator + "dir4" + File.separator + "file4";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "fileA";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir1" + File.separator + "fileB";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir2" + File.separator + "fileC";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "fileAAA";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir100" + File.separator + "file100";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir100" + File.separator + "file200";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir100" + File.separator + "fileBBB";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dirA" + File.separator + "rawA.txt";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert MessageDigestGenerator.getDigestString(testRawFileA).equals(map.get(f)) : "should have same hash, we didn't realize this one";
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir100" + File.separator + "rawB.txt";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert !MessageDigestGenerator.getDigestString(testRawFileB).equals(map.get(f)) : "should have different hash, we realized this one";
+            assert listener.getAddedFiles().contains(f) : listener;
 
         } finally {
             FileUtil.purge(tmpDir, true);
@@ -453,38 +583,47 @@ public class DeployerTest {
 
             Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
                 templateEngine, ignoreRegex);
-            deployer.deploy();
+            DeployDifferences listener = new DeployDifferences();
+            deployer.deploy(listener);
 
-            FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null);
+            FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null, null);
             assert map.size() == 7 : map;
+            assert listener.getAddedFiles().size() == 7 : listener;
             String f = "dir1" + File.separator + "file1";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir1" + File.separator + "file2";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir2" + File.separator + "file3";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir3" + File.separator + "dir4" + File.separator + "file4";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "fileA";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir1" + File.separator + "fileB";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
             f = "dir2" + File.separator + "fileC";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            assert listener.getAddedFiles().contains(f) : listener;
 
         } finally {
             FileUtil.purge(tmpDir, true);

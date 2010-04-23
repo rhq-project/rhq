@@ -37,6 +37,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.template.TemplateEngine;
+import org.rhq.core.util.updater.DeployDifferences;
 import org.rhq.core.util.updater.Deployer;
 import org.rhq.core.util.updater.DeploymentProperties;
 
@@ -70,7 +71,8 @@ public class DeployTask extends AbstractBundleTask {
         Deployer deployer = new Deployer(deploymentProps, this.archives, this.files, deployDir, this.replacePattern,
             templateEngine, this.ignorePattern);
         try {
-            deployer.deploy();
+            DeployDifferences diff = null;
+            deployer.deploy(diff);
         } catch (Exception e) {
             throw new BuildException("Failed to deploy bundle '" + getProject().getBundleName() + "' version "
                 + getProject().getBundleVersion() + ".", e);

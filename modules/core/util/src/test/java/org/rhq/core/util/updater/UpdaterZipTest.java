@@ -66,7 +66,8 @@ public class UpdaterZipTest {
             skip.add("fileA");
             skip.add("dir1" + File.separator + "fileB");
             skip.add("dir2" + File.separator + "fileC");
-            ExtractorZipFileVisitor visitorNoRealize = new ExtractorZipFileVisitor(tmpDir, null, templateEngine, skip);
+            ExtractorZipFileVisitor visitorNoRealize = new ExtractorZipFileVisitor(tmpDir, null, templateEngine, skip,
+                null);
             ZipUtil.walkZipFile(testZipFile, visitorNoRealize);
             FileHashcodeMap mapRaw = visitorNoRealize.getFileHashcodeMap();
             assert mapRaw.size() == 2 : mapRaw + ": all but 2 files in test jar should be skipped";
@@ -88,8 +89,13 @@ public class UpdaterZipTest {
         try {
             File testZipFile = new File("target/test-classes/updater-test2.zip");
 
-            ExtractorZipFileVisitor visitorNoRealize = new ExtractorZipFileVisitor(tmpDir, null, templateEngine, null);
+            DeployDifferences diff = new DeployDifferences();
+            ExtractorZipFileVisitor visitorNoRealize = new ExtractorZipFileVisitor(tmpDir, null, templateEngine, null,
+                diff);
             ZipUtil.walkZipFile(testZipFile, visitorNoRealize);
+
+            assert diff.getRealizedFiles().size() == 0 : diff;
+
             FileHashcodeMap mapRaw = visitorNoRealize.getFileHashcodeMap();
             assert mapRaw.size() == 7 : mapRaw;
             String f = "dir1" + File.separator + "file1";
@@ -125,9 +131,14 @@ public class UpdaterZipTest {
 
             FileUtil.purge(tmpDir, false);
             Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
+            diff = new DeployDifferences();
             ExtractorZipFileVisitor visitor = new ExtractorZipFileVisitor(tmpDir, filesToRealizeRegex, templateEngine,
-                null);
+                null, diff);
             ZipUtil.walkZipFile(testZipFile, visitor);
+
+            assert diff.getRealizedFiles().size() == 2 : diff;
+            assert diff.getRealizedFiles().containsKey("fileA") : diff;
+            assert diff.getRealizedFiles().containsKey("dir1" + File.separator + "fileB") : diff;
 
             FileHashcodeMap map = visitor.getFileHashcodeMap();
             assert map.size() == 7 : map;

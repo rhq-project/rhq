@@ -24,6 +24,7 @@
 package org.rhq.core.util.updater;
 
 import java.io.File;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.rhq.core.util.file.FileUtil;
@@ -255,14 +256,15 @@ public class DeploymentsMetadata {
      *
      * @param deploymentProps identifies the deployment information for the live data
      * @param ignoreRegex the live files/directories to ignore
+     * @param ignored a set that will contain those files/directories that were ignored while scanning the deployment
      * @return the map of the files/hashcodes
      * @throws Exception if failed to calculate and store the metadata
      */
-    public FileHashcodeMap snapshotLiveDeployment(DeploymentProperties deploymentProps, Pattern ignoreRegex)
-        throws Exception {
+    public FileHashcodeMap snapshotLiveDeployment(DeploymentProperties deploymentProps, Pattern ignoreRegex,
+        Set<String> ignored) throws Exception {
 
         // calculate the hashcodes from the live files and write the data to the proper file
-        FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(getRootDirectory(), ignoreRegex);
+        FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(getRootDirectory(), ignoreRegex, ignored);
         setCurrentDeployment(deploymentProps, map);
         return map;
     }

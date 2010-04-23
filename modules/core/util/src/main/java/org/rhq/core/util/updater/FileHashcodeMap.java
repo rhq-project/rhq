@@ -27,12 +27,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.MessageDigestGenerator;
 
@@ -54,8 +53,6 @@ public class FileHashcodeMap extends TreeMap<String, String> {
     private static final long serialVersionUID = 1L;
     private static final String COLUMN_SEPARATOR = "\t";
 
-    private final Log log = LogFactory.getLog(FileHashcodeMap.class);
-
     /**
      * Given a directory, this will recursively traverse that directory's files/subdirectories and
      * generate the hashcode map for all files it encounters and add that data to the given map.
@@ -66,12 +63,21 @@ public class FileHashcodeMap extends TreeMap<String, String> {
      * @param rootDir existing directory to scan and generate hashcodes for all its files
      * @param ignoreRegex a regular expression that indicates which files/directories should be ignored.
      *                    If a relative file/directory path matches this regex, it will be skipped.
+     * @param ignored a set that will contain those files/directories that were ignored while scanning the root dir 
      * @returns the map containing all files found and their generated hashcodes
      * @throws Exception if failed to generate hashcode for the directory
      */
-    public static FileHashcodeMap generateFileHashcodeMap(File rootDir, Pattern ignoreRegex) throws Exception {
+    public static FileHashcodeMap generateFileHashcodeMap(File rootDir, Pattern ignoreRegex, Set<String> ignored)
+        throws Exception {
+
+        if (ignored == null) {
+            ignored = new HashSet<String>();
+        } else {
+            ignored.clear(); // start fresh, in case caller left some old data around
+        }
+
         FileHashcodeMap map = new FileHashcodeMap();
-        generateFileHashcodeMapRecursive(map, rootDir.getAbsolutePath(), 0, rootDir, ignoreRegex);
+        generateFileHashcodeMapRecursive(map, rootDir.getAbsolutePath(), 0, rootDir, ignoreRegex, ignored);
         return map;
     }
 
@@ -87,11 +93,12 @@ public class FileHashcodeMap extends TreeMap<String, String> {
      *                    file to generate hashcode for
      * @param ignoreRegex a regular expression that indicates which files/directories should be ignored.
      *                    If a relative file/directory path matches this regex, it will be skipped.
+     * @param ignored a set that will contain those files/directories that were ignored while scanning the root dir 
      *
      * @throws Exception if failed to generate hashcode for the file/directory
      */
     private static void generateFileHashcodeMapRecursive(FileHashcodeMap map, String rootPath, int level,
-        File fileOrDir, Pattern ignoreRegex) throws Exception {
+        File fileOrDir, Pattern ignoreRegex, Set<String> ignored) throws Exception {
 
         if (fileOrDir == null || !fileOrDir.exists()) {
             throw new Exception("Non-existent file/directory provided: " + fileOrDir);
@@ -107,6 +114,7 @@ public class FileHashcodeMap extends TreeMap<String, String> {
 
         // if this path is one the caller wants us to ignore, then return immediately
         if (ignoreRegex != null && ignoreRegex.matcher(path).matches()) {
+            ignored.add(path);
             return;
         }
 
@@ -119,7 +127,7 @@ public class FileHashcodeMap extends TreeMap<String, String> {
             File[] children = fileOrDir.listFiles();
             if (children != null) {
                 for (File child : children) {
-                    generateFileHashcodeMapRecursive(map, rootPath, level + 1, child, ignoreRegex);
+                    generateFileHashcodeMapRecursive(map, rootPath, level + 1, child, ignoreRegex, ignored);
                 }
             } else {
                 map.put(path, UNKNOWN_DIR_HASHCODE);
@@ -203,6 +211,8 @@ public class FileHashcodeMap extends TreeMap<String, String> {
      *                    This will eliminate files/directories from being considered "new" because
      *                    they aren't in original.
      * @return a map with current files/hashcodes, including files that were not found in original. 
+     *         the returned object also has additional info such as those files that were added,
+     *         deleted, changed from this original. It also indicates what was ignored during the rescan. 
      * @throws Exception
      */
     public ChangesFileHashcodeMap rescan(File rootDir, Pattern ignoreRegex) throws Exception {
@@ -215,6 +225,7 @@ public class FileHashcodeMap extends TreeMap<String, String> {
             // if we are now to ignore this file, don't put it in our current map and skip to the next file
             if (ignoreRegex != null && ignoreRegex.matcher(originalFileString).matches()) {
                 current.remove(originalFileString);
+                current.getIgnored().add(originalFileString);
                 continue;
             }
 
@@ -242,7 +253,7 @@ public class FileHashcodeMap extends TreeMap<String, String> {
         // now recursively traverse the root directory and look for new files that aren't in our original map
         // files that have been added need to be put into our returned map and also marked as added
         FileHashcodeMap newFiles = new FileHashcodeMap();
-        lookForNewFilesRecursive(newFiles, rootDir.getAbsolutePath(), 0, rootDir, ignoreRegex);
+        lookForNewFilesRecursive(newFiles, rootDir.getAbsolutePath(), 0, rootDir, ignoreRegex, current.getIgnored());
         current.putAll(newFiles);
         current.getAdditions().putAll(newFiles);
 
@@ -258,10 +269,11 @@ public class FileHashcodeMap extends TreeMap<String, String> {
      * @param fileOrDir   existing directory/file to rescan
      * @param ignoreRegex a regular expression that indicates which files/directories should be ignored.
      *                    If a relative file/directory path matches this regex, it will be skipped.
+     * @param ignored a set that will contain those files/directories that were ignored while scanning the root dir 
      * @throws Exception 
      */
     private void lookForNewFilesRecursive(FileHashcodeMap newFiles, String rootPath, int level, File fileOrDir,
-        Pattern ignoreRegex) throws Exception {
+        Pattern ignoreRegex, Set<String> ignored) throws Exception {
 
         if (fileOrDir == null || !fileOrDir.exists()) {
             throw new Exception("Non-existent file/directory provided: " + fileOrDir);
@@ -277,9 +289,7 @@ public class FileHashcodeMap extends TreeMap<String, String> {
 
         // if this path is one the caller wants us to ignore, then return immediately
         if (ignoreRegex != null && ignoreRegex.matcher(path).matches()) {
-            if (log.isTraceEnabled()) {
-                log.trace("Ignoring [" + path + "]");
-            }
+            ignored.add(path);
             return;
         }
 
@@ -292,7 +302,7 @@ public class FileHashcodeMap extends TreeMap<String, String> {
             File[] children = fileOrDir.listFiles();
             if (children != null) {
                 for (File child : children) {
-                    lookForNewFilesRecursive(newFiles, rootPath, level + 1, child, ignoreRegex);
+                    lookForNewFilesRecursive(newFiles, rootPath, level + 1, child, ignoreRegex, ignored);
                 }
             }
         } else {

@@ -2090,7 +2090,7 @@
             </schemaSpec>
             <schemaSpec version="2.70.2">
                 <!-- add structures for alert notification templates -->
-                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIF_TEMPLATE_ID" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="TEMPLATE_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_ALERT_NOTIFICATION
@@ -2734,18 +2734,30 @@
             </schemaSpec>
 
             <schemaSpec version="2.83"> 
-                <!-- The following constraint change shortens the constraint name < 30 chars for Oracle. -->
-                <schema-directSQL>                    
-                    <statement targetDBVendor="postgresql" desc="Dropping RHQ_SUBJECT_ROLE_LDAP_MAP constraint RHQ_SUBJECT_ROLE_LDAP_MAPPING_KEY.">
-                        ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP DROP CONSTRAINT RHQ_SUBJECT_ROLE_LDAP_MAPPING_KEY;
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_SUBJECT_ROLE_LDAP_MAP">
+                        CREATE TABLE RHQ_SUBJECT_ROLE_LDAP_MAP ( SUBJECT_ID INTEGER, ROLE_ID INTEGER )
                     </statement>
-                    <!-- There is no PL/SQL update for ora dbs as the problematic statement could never be created on oracle, so nothing to fix. -->
-                    <statement targetDBVendor="postgresql" desc="Creating new RHQ_SUBJECT_ROLE_LDAP_MAP constraint RHQ_SUBJECT_ROLE_LDAP_MAP_KEY">
+                    <statement desc="Creating composite PK for RHQ_SUBJECT_ROLE_LDAP_MAP">
                         ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP 
-                        ADD CONSTRAINT RHQ_SUBJECT_ROLE_LDAP_MAP_KEY 
+                        ADD CONSTRAINT RHQ_SUBJECT_ROLE_LDAP_MAP_PK 
                         PRIMARY KEY ( SUBJECT_ID, ROLE_ID )
                     </statement>
+                    <statement desc="Creating FK relation to RHQ_SUBJECT table for SUBJECT_ID column">
+                        ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP
+                        ADD CONSTRAINT RHQ_SRLM_SUBJECT_ID_FK
+                        FOREIGN KEY (SUBJECT_ID)
+                        REFERENCES RHQ_SUBJECT (ID)
+                    </statement>
+                    <statement desc="Creating FK relation to RHQ_ROLE table for ROLE_ID column">
+                        ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP
+                        ADD CONSTRAINT RHQ_SRLM_ROLE_ID_FK
+                        FOREIGN KEY (ROLE_ID)
+                        REFERENCES RHQ_ROLE (ID)
+                    </statement>
                 </schema-directSQL>
+                <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="SUBJECT_ID" nullable="FALSE" />
+                <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="ROLE_ID"  nullable="FALSE" />
             </schemaSpec>
 
         </dbupgrade>

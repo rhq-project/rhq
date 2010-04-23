@@ -130,6 +130,8 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
         // used in UpdateMeasurementSubsystemTest
         resourceTypeCriteria.fetchMetricDefinitions(true);
+        // used in several UpdateResourceSubsystemTest tests
+        resourceTypeCriteria.fetchSubCategory(true);
 
         PageList<ResourceType> results = resourceTypeManager
             .findResourceTypesByCriteria(overlord, resourceTypeCriteria);
@@ -263,16 +265,19 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     protected void cleanupTest() throws Exception {
         try {
-            cleanupResourceType("testServer1");
-            cleanupResourceType("testServer2");
-            cleanupResourceType("myPlatform5");
-            //cleanupResourceType("myPlatform6");
-            cleanupResourceType("myPlatform7");
-            cleanupResourceType("TestServer");
             cleanupResourceType("constraintPlatform");
             cleanupResourceType("groupDeletedPlatform");
             cleanupResourceType("groupPropDeletedPlatform");
             cleanupResourceType("groupPropMovedPlatform");
+            cleanupResourceType("myPlatform5");
+            //cleanupResourceType("myPlatform6");
+            cleanupResourceType("myPlatform7");
+            cleanupResourceType("testApp1");
+            cleanupResourceType("testServer1");
+            cleanupResourceType("testServer2");
+            cleanupResourceType("testService1");
+            cleanupResourceType("testService2");
+            cleanupResourceType("TestServer");
 
             getTransactionManager().begin();
             EntityManager entityManager = getEntityManager();

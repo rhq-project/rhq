@@ -1,0 +1,48 @@
+.bpui_petstorelist_dataDiv {
+    border-style: groove;
+    overflow: auto;
+    width: 600px;
+    height: 500px;
+    padding: 10px;
+}
+
+.bpui_petstorelist_pageDiv {
+}
+
+
+.bpui_petstorelist_table {
+}
+
+.bpui_petstorelist_cell {
+    padding: 5px;
+    vertical-align: top;
+}
+
+.bpui_petstorelist_row {
+    border-bottom: dotted;
+}
+
+.bpui_petstorelist_hr {
+    width: 90%;
+}
+
+.bpui_petstorelist_image {
+}
+
+.bpui_petstorelist_link{
+}
+
+.bpui_petstorelist_name{
+}
+
+.bpui_petstorelist_description{
+}
+
+.bpui_petstorelist_price {
+}
+
+.bpui_petstorelist_previous {
+}
+
+.bpui_petstorelist_next {
+}

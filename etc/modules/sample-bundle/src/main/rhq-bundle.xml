@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<project name="petstore" default="deploy"
+         xmlns:rhq="antlib:org.rhq.bundle">
+
+    <rhq:bundle name="Java Petstore" version="2.0"
+                description="a sample bundle consisting of JBossAS 6.0 running the Java Petstore application"/>
+
+    <rhq:inputProperty
+       name="http.port"
+       description="the HTTP port the JBoss AS server should listen on"
+       required="true"
+       type="integer"/>
+
+    <rhq:inputProperty
+       name="https.port"
+       description="the HTTPS port the JBoss AS server should listen on"
+       required="true"
+       type="integer"/>
+
+    <target name="deploy">
+        <echo>Deploying Java Petstore v2.0 to ${rhq.deploy.dir}...</echo>
+        <rhq:deploy>
+            <rhq:archive name="jbossas-petstore.zip"/>
+            <rhq:replace>
+                <!-- If no 'dir' attribute is specified, rhq:fileset defaults to ${rhq.deploy.dir}. -->
+                <rhq:fileset includes="**/*.properties"/>
+            </rhq:replace>
+
+            <!-- the files that should be ignored during upgrades -->
+            <rhq:ignore>
+                <rhq:fileset>
+                   <include name="server/default/data/**"/>
+                   <include name="server/default/logs/**"/>
+                   <include name="server/default/tmp/**"/>
+                   <include name="server/default/work/**"/>
+                </rhq:fileset>
+            </rhq:ignore>
+        </rhq:deploy>
+    </target>
+
+</project>
+

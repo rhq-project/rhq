@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9 http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+    <changeSet author="ips (generated)" id="1272025063915-1">
+        <createTable schemaName="APP" tableName="ADDRESS">
+            <column name="ADDRESSID" type="VARCHAR(10)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="SQL100422173635960"/>
+            </column>
+            <column name="STREET1" type="VARCHAR(55)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="STREET2" type="VARCHAR(55)"/>
+            <column name="CITY" type="VARCHAR(55)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="STATE" type="VARCHAR(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ZIP" type="VARCHAR(5)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LATITUDE" type="DECIMAL(14,10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LONGITUDE" type="DECIMAL(14,10)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-2">
+        <createTable schemaName="APP" tableName="CATEGORY">
+            <column name="CATEGORYID" type="VARCHAR(10)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="SQL100422173635550"/>
+            </column>
+            <column name="NAME" type="VARCHAR(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DESCRIPTION" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="IMAGEURL" type="VARCHAR(55)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-3">
+        <createTable schemaName="APP" tableName="ID_GEN">
+            <column name="GEN_KEY" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="SQL100422173636590"/>
+            </column>
+            <column name="GEN_VALUE" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-4">
+        <createTable schemaName="APP" tableName="ITEM">
+            <column name="ITEMID" type="VARCHAR(10)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="SQL100422173636230"/>
+            </column>
+            <column name="PRODUCTID" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DESCRIPTION" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="IMAGEURL" type="VARCHAR(55)"/>
+            <column name="IMAGETHUMBURL" type="VARCHAR(55)"/>
+            <column name="PRICE" type="DECIMAL(14,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ADDRESS_ADDRESSID" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CONTACTINFO_CONTACTINFOID" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TOTALSCORE" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NUMBEROFVOTES" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DISABLED" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-5">
+        <createTable schemaName="APP" tableName="PRODUCT">
+            <column name="PRODUCTID" type="VARCHAR(10)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="SQL100422173635740"/>
+            </column>
+            <column name="CATEGORYID" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DESCRIPTION" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="IMAGEURL" type="VARCHAR(55)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-6">
+        <createTable schemaName="APP" tableName="SELLERCONTACTINFO">
+            <column name="CONTACTINFOID" type="VARCHAR(10)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="SQL100422173636080"/>
+            </column>
+            <column name="LASTNAME" type="VARCHAR(24)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FIRSTNAME" type="VARCHAR(24)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="EMAIL" type="VARCHAR(24)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-7">
+        <createTable schemaName="APP" tableName="TAG">
+            <column name="TAGID" type="INT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="SQL100422173636830"/>
+            </column>
+            <column name="TAG" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="REFCOUNT" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-8">
+        <createTable schemaName="APP" tableName="TAG_ITEM">
+            <column name="TAGID" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ITEMID" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-9">
+        <createTable schemaName="APP" tableName="ZIPLOCATION">
+            <column name="ZIPCODE" type="INT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="SQL100422173636710"/>
+            </column>
+            <column name="CITY" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="STATE" type="VARCHAR(2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-10">
+        <createIndex indexName="SQL100422173636831" schemaName="APP" tableName="TAG" unique="true">
+            <column name="TAG"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-11">
+        <createIndex indexName="SQL100422173637010" schemaName="APP" tableName="TAG_ITEM" unique="true">
+            <column name="TAGID"/>
+            <column name="ITEMID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-12">
+        <addForeignKeyConstraint baseColumnNames="ADDRESS_ADDRESSID" baseTableName="ITEM" baseTableSchemaName="APP" constraintName="SQL100422173636231" deferrable="false" initiallyDeferred="false" referencedColumnNames="ADDRESSID" referencedTableName="ADDRESS" referencedTableSchemaName="APP"/>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-13">
+        <addForeignKeyConstraint baseColumnNames="CONTACTINFO_CONTACTINFOID" baseTableName="ITEM" baseTableSchemaName="APP" constraintName="SQL100422173636233" deferrable="false" initiallyDeferred="false" referencedColumnNames="CONTACTINFOID" referencedTableName="SELLERCONTACTINFO" referencedTableSchemaName="APP"/>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-14">
+        <addForeignKeyConstraint baseColumnNames="PRODUCTID" baseTableName="ITEM" baseTableSchemaName="APP" constraintName="SQL100422173636232" deferrable="false" initiallyDeferred="false" referencedColumnNames="PRODUCTID" referencedTableName="PRODUCT" referencedTableSchemaName="APP"/>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-15">
+        <addForeignKeyConstraint baseColumnNames="CATEGORYID" baseTableName="PRODUCT" baseTableSchemaName="APP" constraintName="SQL100422173635741" deferrable="false" initiallyDeferred="false" referencedColumnNames="CATEGORYID" referencedTableName="CATEGORY" referencedTableSchemaName="APP"/>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-16">
+        <addForeignKeyConstraint baseColumnNames="ITEMID" baseTableName="TAG_ITEM" baseTableSchemaName="APP" constraintName="SQL100422173637011" deferrable="false" initiallyDeferred="false" referencedColumnNames="ITEMID" referencedTableName="ITEM" referencedTableSchemaName="APP"/>
+    </changeSet>
+    <changeSet author="ips (generated)" id="1272025063915-17">
+        <addForeignKeyConstraint baseColumnNames="TAGID" baseTableName="TAG_ITEM" baseTableSchemaName="APP" constraintName="SQL100422173637012" deferrable="false" initiallyDeferred="false" referencedColumnNames="TAGID" referencedTableName="TAG" referencedTableSchemaName="APP"/>
+    </changeSet>
+</databaseChangeLog>

@@ -86,7 +86,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testSingleSubCategoryAddFromEmpty");
             }
         }
     }
@@ -114,7 +114,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testSingleSubCategoryAddSibling");
             }
         }
     }
@@ -139,7 +139,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testSingleSubCategoryReplace");
             }
         }
     }
@@ -164,7 +164,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testSingleSubCategoryRemoveOneFromTwo");
             }
         }
     }
@@ -189,7 +189,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testSingleSubCategoryUpdate");
             }
         }
     }
@@ -213,7 +213,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testSingleSubCategoryRemove");
             }
         }
     }
@@ -239,7 +239,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryReplace");
             }
         }
     }
@@ -265,7 +265,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryAddFromEmpty");
             }
         }
     }
@@ -291,7 +291,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryRemoveOneFromTwo");
             }
         }
     }
@@ -317,7 +317,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryAddSibling");
             }
         }
     }
@@ -344,7 +344,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryRemoveChild");
             }
         }
     }
@@ -371,7 +371,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryAddChild");
             }
         }
     }
@@ -398,7 +398,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryUpdate");
             }
         }
     }
@@ -425,7 +425,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryAdd");
             }
         }
     }
@@ -451,7 +451,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryCreate");
             }
         }
     }
@@ -475,7 +475,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryRemoveAll");
             }
         }
     }
@@ -505,7 +505,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryCreateWithServices");
             }
         }
     }
@@ -535,7 +535,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryCreateWithServices2");
             }
         }
     }
@@ -601,7 +601,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testNestedSubCategoryUpdateWithServices");
             }
         }
     }
@@ -626,8 +626,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             try {
                 cleanupTest();
             } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testRemoveService");
             }
         }
     }
@@ -665,7 +664,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testSimpleSubCategoryCreate");
             }
         }
     }
@@ -717,7 +716,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testSimpleSubCategoryUpdate");
             }
         }
     }
@@ -742,7 +741,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testAddIllegalSubcategory1");
             }
         }
     }
@@ -765,7 +764,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
+                    + ".testReferenceToUndefinedChildSubCategory");
             }
         }
     }

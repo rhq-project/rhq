@@ -21,12 +21,19 @@ package org.rhq.enterprise.server.resource.metadata.test;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.persistence.EntityManager;
+import javax.transaction.Status;
+
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 
+/**
+ * Note, plugins are registered in new transactions. for tests, this means
+ * you can't do everything in a trans and roll back at the end. You must clean up manually.
+ */
 public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
 
     @Override
@@ -41,10 +48,13 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
      */
     @Test
     public void testResourceTypeDeletion() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("update4-v1_0.xml");
             ResourceType platform1 = getResourceType("myPlatform4");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            platform1 = em.find(ResourceType.class, platform1.getId());
+
             Set<ResourceType> servers1 = platform1.getChildResourceTypes();
             assert servers1.size() == 2 : "Expected to find 2 servers in v1";
             int found = 0;
@@ -59,18 +69,28 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             }
 
             assert found == 2 : "I did not find the expected servers in v1";
+            getTransactionManager().rollback();
 
             registerPlugin("update4-v2_0.xml");
             ResourceType platform2 = getResourceType("myPlatform4");
+            getTransactionManager().begin();
+            em = getEntityManager();
+            platform2 = em.find(ResourceType.class, platform2.getId());
+
             Set<ResourceType> servers2 = platform2.getChildResourceTypes();
             assert servers2.size() == 1 : "Expected to find 1 servers in v2";
             ResourceType server2 = servers2.iterator().next();
             assert server2.getName().equals("testServer1");
             Set<MeasurementDefinition> mdef = server2.getMetricDefinitions();
             assert mdef.size() == 1 : "Expected one MeasurementDefinition in v2";
+            getTransactionManager().rollback();
 
             registerPlugin("update4-v1_0.xml", "3.0");
             ResourceType platform3 = getResourceType("myPlatform4");
+            getTransactionManager().begin();
+            em = getEntityManager();
+            platform3 = em.find(ResourceType.class, platform3.getId());
+
             Set<ResourceType> servers3 = platform3.getChildResourceTypes();
             assert servers3.size() == 2 : "Expected to find 2 servers in v1/2";
             found = 0;
@@ -85,8 +105,17 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             }
 
             assert found == 2 : "I did not find the expected servers in v1/2";
+
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testResourceTypeDeletion");
+            }
         }
     }
 
@@ -94,10 +123,13 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
     //@Test
     public void testMoveResoureType() throws Exception {
         System.out.println("testUpdatePlugin2 --- start");
-        getTransactionManager().begin();
         try {
             registerPlugin("update2-v1_0.xml");
             ResourceType platform1 = getResourceType("myPlatform");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            platform1 = em.find(ResourceType.class, platform1.getId());
+
             assert platform1 != null : "I did not find myPlatform";
             Set<MeasurementDefinition> defs = platform1.getMetricDefinitions();
             assert defs.size() == 1 : "I was expecting 1 definition at platform level in v1";
@@ -115,8 +147,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             assert nestedDefs.size() == 1 : "Expected 1 definition within 'nestedService' in v1";
             MeasurementDefinition defThree = nestedDefs.iterator().next();
             int definitionId = defThree.getId(); // get the id of the definition "Three" and save it for later use
-
-            getEntityManager().flush();
+            getTransactionManager().rollback();
 
             System.out.println("testUpdatePlugin2 -- done with the first plugin version");
 
@@ -125,6 +156,10 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
              */
             registerPlugin("update2-v2_0.xml");
             ResourceType platform2 = getResourceType("myPlatform");
+            getTransactionManager().begin();
+            em = getEntityManager();
+            platform2 = em.find(ResourceType.class, platform2.getId());
+
             assert platform2 != null : "I did not find myPlatform";
             Set<MeasurementDefinition> defs2 = platform2.getMetricDefinitions();
             assert defs2.size() == 1 : "I was expecting 1 definition at platform level in v2";
@@ -164,11 +199,18 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
                     assert true == false : "We found an unknown type with name " + typeName;
                 }
             }
-        }
 
-        // TODO now that we're done here, apply v1 again to also test the other direction
-        finally {
-            getTransactionManager().rollback();
+            // TODO now that we're done here, apply v1 again to also test the other direction
+        } finally {
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out
+                    .println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testMoveResoureType");
+            }
         }
 
         System.out.println("testUpdatePlugin2 --- end");
@@ -177,17 +219,23 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
     @Test
     public void testDuplicateResourceType() throws Exception {
         System.out.println("= testDuplicateResourceType");
-        getTransactionManager().begin();
         try {
             System.out.println(" A stack trace coming out of this is expected");
-            System.out.flush();
             registerPlugin("duplicateResourceType.xml");
             getResourceType("ops");
             assert false : "We should not have hit this line";
         } catch (Exception e) {
             ; // We expect an exception to come out of the ResourceMetadataManager
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testDuplicateResourceType");
+            }
         }
     }
 }

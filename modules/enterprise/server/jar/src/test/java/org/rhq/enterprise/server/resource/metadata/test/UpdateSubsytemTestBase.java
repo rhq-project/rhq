@@ -266,12 +266,17 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected void cleanupTest() throws Exception {
         try {
             cleanupResourceType("constraintPlatform");
+            cleanupResourceType("events");
             cleanupResourceType("groupDeletedPlatform");
             cleanupResourceType("groupPropDeletedPlatform");
             cleanupResourceType("groupPropMovedPlatform");
+            cleanupResourceType("myPlatform");
+            cleanupResourceType("myPlatform3");
+            cleanupResourceType("myPlatform4");
             cleanupResourceType("myPlatform5");
             //cleanupResourceType("myPlatform6");
             cleanupResourceType("myPlatform7");
+            cleanupResourceType("ops");
             cleanupResourceType("testApp1");
             cleanupResourceType("testServer1");
             cleanupResourceType("testServer2");

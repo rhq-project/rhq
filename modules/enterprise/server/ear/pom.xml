@@ -80,13 +80,6 @@
          <type>war</type>
       </dependency>
 
-      <dependency>
-          <groupId>org.rhq.helpers</groupId>
-          <artifactId>alert-migration</artifactId>
-          <version>${project.version}</version>
-          <type>war</type>
-      </dependency>
-
       <!-- ** SARs -->
       <!--
          <dependency> <groupId>org.rhq</groupId> <artifactId>rhq-enterprise-server-agent-sar</artifactId>
@@ -191,13 +184,6 @@
                      <excluded>${exclude-content_http}</excluded>
                      <bundleFileName>rhq-content_http.war</bundleFileName>
                      <contextRoot>/content</contextRoot>
-                  </webModule>
-
-                  <webModule>
-                      <groupId>org.rhq.helpers</groupId>
-                      <artifactId>alert-migration</artifactId>
-                      <bundleFileName>alert-migration.war</bundleFileName>
-                      <contextRoot>/alert-migration</contextRoot>
                   </webModule>
 
                   <!-- ** EJB-JARs -->

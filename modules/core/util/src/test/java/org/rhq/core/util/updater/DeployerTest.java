@@ -102,7 +102,7 @@ public class DeployerTest {
      * e.        X       Y      Z   New file is installed over current, current is backed up
      * f.     none       ?      ?   New file is installed over current, current is backed up
      * g.        X    none      ?   New file is installed
-     * h.        ?       ?   none   Current file is backed up and deleted
+     * h.        ?       ?   none   Current file is deleted, if it changed from original, its backed up
      *
      * (*) means the new and current files will actually be the same content
      *
@@ -129,7 +129,7 @@ public class DeployerTest {
      *    dir3/dir4/file4
      *    --file0-- (this is deleted, its no longer in our deployment zip)
      *    fileA (added from updater-test2.zip) 
-     *    --/ABSOLUTE/updater-testA.txt-- (should be deleted, no longer in our deployment)
+     *    --/ABSOLUTE/updater-testA.txt-- (should be deleted, no longer in our deployment, but it was changed from original, so its backed up)
      *    /ABSOLUTE/updater-testB.txt (added from our deployment, own current copy is backed up)
      *    --dir1/file999-- (should be deleted, not in our deployment - but is backed up)
      *    
@@ -292,6 +292,8 @@ public class DeployerTest {
             assert !"X".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
             String updaterBabsoluteBackup = updaterBabsolute.getAbsolutePath() + backupExtension;
             assert new File(updaterBabsoluteBackup).exists() : "missing updateB.txt backup";
+            String updaterAabsoluteBackup = updaterAabsolute.getAbsolutePath() + backupExtension;
+            assert new File(updaterAabsoluteBackup).exists() : "missing updateA.txt backup";
 
             assert !(new File(tmpDir, file0).exists()) : "file0 should be deleted";
             assert new File(tmpDir, fileA).exists() : "fileA should exist";
@@ -327,7 +329,9 @@ public class DeployerTest {
             assert listener.getChangedFiles().size() == 2 : listener;
             assert listener.getChangedFiles().contains(updaterBabsolute.getAbsolutePath()) : listener;
             assert listener.getChangedFiles().contains(fileB) : listener;
-            assert listener.getBackedUpFiles().size() == 3 : listener;
+            assert listener.getBackedUpFiles().size() == 4 : listener;
+            assert listener.getBackedUpFiles().containsKey(updaterAabsolute.getAbsolutePath()) : listener;
+            assert listener.getBackedUpFiles().get(updaterAabsolute.getAbsolutePath()).equals(updaterAabsoluteBackup) : listener;
             assert listener.getBackedUpFiles().containsKey(updaterBabsolute.getAbsolutePath()) : listener;
             assert listener.getBackedUpFiles().get(updaterBabsolute.getAbsolutePath()).equals(updaterBabsoluteBackup) : listener;
             assert listener.getBackedUpFiles().containsKey(fileB) : listener;

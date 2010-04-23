@@ -257,6 +257,10 @@ public class Deployer {
                 } else if (!newHashcode.equals(changedFileHashcode)) {
                     currentFilesToBackup.add(changedFilePath);
                 }
+            } else {
+                // the current file is a changed version of original, but there is no new file
+                // we should back this up since it will be deleted but was changed from the original for some reason
+                currentFilesToBackup.add(changedFilePath);
             }
         }
 
@@ -290,6 +294,9 @@ public class Deployer {
         currentFilesToDelete = current.keySet(); // the set is backed by the map, changes to it affect the map
         currentFilesToDelete.removeAll(newFiles.keySet());
         currentFilesToDelete.removeAll(current.getDeletions().keySet()); // these are already deleted, no sense trying to delete them again
+
+        // don't use this anymore - its underlying key set has been altered and this no longer is the full current files
+        current = null;
 
         // we now know what to do:
         // 1. backup the files in currentFilesToBackup

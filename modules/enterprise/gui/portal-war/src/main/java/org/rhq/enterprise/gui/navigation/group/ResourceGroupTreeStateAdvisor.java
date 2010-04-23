@@ -19,6 +19,9 @@
 package org.rhq.enterprise.gui.navigation.group;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
@@ -35,6 +38,7 @@ import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.navigation.resource.ResourceTreeNode;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.cluster.ClusterKey;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
@@ -46,30 +50,31 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
 
-    private Integer selectedId;
-    private ClusterKey selectedClusterKey;
-    private TreeState treeState = new TreeState();
-
-    private ResourceGroup currentGroup;
-
-    public TreeState getTreeState() {
-        return treeState;
+    private static class CurrentSelection {
+        public ResourceGroup resourceGroup;
+        public ClusterKey clusterKey;
     }
+    
+    private CurrentSelection currentSelection;
 
-    private ResourceGroup getCurrentGroup() {
-        if (currentGroup == null || currentGroup.getId() != getSelectedGroupId()) {
-            this.selectedId = getSelectedGroupId();
+    private Set<ResourceGroupTreeNode> openNodes = new HashSet<ResourceGroupTreeNode>();
+    
+    private CurrentSelection getCurrentSelection() {
+        int selectedGroupId = getSelectedGroupId();
+        if (currentSelection == null || currentSelection.resourceGroup.getId() != selectedGroupId) {
             ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
-            currentGroup = groupManager.getResourceGroupById(EnterpriseFacesContextUtility.getSubject(),
-                this.selectedId, null);
-            if (!currentGroup.isVisible()) {
-                this.selectedClusterKey = ClusterKey.valueOf(currentGroup.getClusterKey());
+            currentSelection = new CurrentSelection();
+            currentSelection.resourceGroup = groupManager.getResourceGroupById(EnterpriseFacesContextUtility.getSubject(),
+                selectedGroupId, null);
+            if (!currentSelection.resourceGroup.isVisible()) {
+                currentSelection.clusterKey = ClusterKey.valueOf(currentSelection.resourceGroup.getClusterKey());
             }
         }
-        return currentGroup;
+        
+        return currentSelection;
     }
 
-    private int getSelectedGroupId() {
+    private static int getSelectedGroupId() {
         String groupId = FacesContextUtility.getOptionalRequestParameter("groupId");
         return Integer.parseInt(groupId);
     }
@@ -87,18 +92,35 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
             ResourceGroupTreeNode node = (ResourceGroupTreeNode) tree.getRowData(key);
             ResourceGroupTreeNode selectedNode = (ResourceGroupTreeNode) tree.getRowData(state.getSelectedNode());
 
-            selectedNode = selectedNode.getParent();
-            while (selectedNode != null) {
-                if (node.equals(selectedNode)) {
+            ResourceGroupTreeNode traverseCheckNode = selectedNode.getParent();
+            while (traverseCheckNode != null) {
+                if (node.equals(traverseCheckNode)) {
                     closingParent = true;
                     break;
                 }
-                selectedNode = selectedNode.getParent();
+                traverseCheckNode = traverseCheckNode.getParent();
             }
 
             if (closingParent) {
-                state.setSelected(key);
-                redirectTo(node); // node state irrelevant if redirect was successful
+                if (redirectTo(node)) {
+                    state.setSelected(key);
+                    openNodes.remove(node);
+                    
+                    //this is nasty hack. We need some kind of flag that would persist only for the remainder
+                    //of this request to advertise that no more open/closed states should be made in this request. 
+                    //The tree is request scoped, so setting this flag will not persist to the next request. 
+                    //In the case of the tree, setting this to true in this listener has no side-effects.
+                    tree.setBypassUpdates(true);
+                } else if (!redirectTo(selectedNode)) {
+                    FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree", 
+                        new FacesMessage(FacesMessage.SEVERITY_WARN, "Failed to re-expand node that shouldn't be collapsed.", null));                    
+                }
+            } else {
+                if (openNodes.contains(node)) {
+                    openNodes.remove(node);
+                } else {
+                    openNodes.add(node);
+                }
             }
         }
     }
@@ -112,46 +134,56 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
                 return true;
             }
 
-            TreeState state = (TreeState) tree.getComponentState();
-            TreeRowKey<?> selectedKey = state.getSelectedNode();
-            if (selectedKey == null) {
-                getCurrentGroup();
-
-                if (preopen((ResourceGroupTreeNode) tree.getRowData(key), this.selectedClusterKey)) {
-                    return true;
-                }
+            CurrentSelection currentSelection = getCurrentSelection();
+            
+            //only update the state of open nodes in the preopen check
+            //if we're not finishing the request in which a parent
+            //of currently selected node was requested to close.
+            //If we did update the open node states in the "remainder"
+            //of such request the redirect that results from it would
+            //get wrong information and the parent wouldn't appear closed
+            //(because it'd had been re-opened in the below preopen call).
+            //@see changeExpandListener for more nasty details.
+            boolean setOpenStates = !tree.isBypassUpdates();
+            
+            if (preopen(node, currentSelection, setOpenStates)) {
+                return true;
             }
 
-            return state.isExpanded(key);
+            return openNodes.contains(node);
         }
         return null;
     }
 
-    private boolean preopen(ResourceGroupTreeNode resourceTreeNode, ClusterKey selectedClusterKey) {
-        ResourceGroup currentGroup = getCurrentGroup();
-        if (resourceTreeNode.getData() instanceof ClusterKey) {
-            if (((ClusterKey) resourceTreeNode.getData()).equals(selectedClusterKey)) {
-                return true;
-            }
-        } else if (resourceTreeNode.getData() instanceof AutoGroupCompositeFlyweight) {
-            ClusterKey key = resourceTreeNode.getClusterKey();
-            AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) resourceTreeNode.getData();
-            if (key.equals(selectedClusterKey)) {
-                return true;
-            }
-        } else if (resourceTreeNode.getData() instanceof ResourceGroup) {
-            if (currentGroup.getId() == ((ResourceGroup) resourceTreeNode.getData()).getId()) {
-                return true;
-            }
-        }
-
+    private boolean preopen(ResourceGroupTreeNode resourceTreeNode, CurrentSelection currentSelection, boolean setOpenState) {
+        ResourceGroup currentGroup = currentSelection.resourceGroup;
+        ClusterKey selectedClusterKey = currentSelection.clusterKey;
+        
+        boolean ret = false;
         for (ResourceGroupTreeNode child : resourceTreeNode.getChildren()) {
-            if (preopen(child, selectedClusterKey)) {
-                return true;
+            if (child.getData() instanceof ClusterKey) {
+                if (((ClusterKey) child.getData()).equals(selectedClusterKey)) {
+                    ret = true;
+                    break;
+                }
+            } else if (child.getData() instanceof ResourceGroup) {
+                if (currentGroup.getId() == ((ResourceGroup) child.getData()).getId()) {
+                    ret = true;
+                    break;
+                }
+            }
+            
+            if (preopen(child, currentSelection, setOpenState)) {
+                ret = true;
+                break;
             }
         }
 
-        return false;
+        if (setOpenState && ret) {
+            openNodes.add(resourceTreeNode);
+        }
+        
+        return ret;
     }
 
     public void nodeSelectListener(org.richfaces.event.NodeSelectedEvent e) {
@@ -168,15 +200,15 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
 
     public Boolean adviseNodeSelected(UITree tree) {
 
-        ResourceGroup currentGroup = getCurrentGroup();
+        CurrentSelection currentSelection = getCurrentSelection();
         ResourceGroupTreeNode node = (ResourceGroupTreeNode) tree.getRowData(tree.getRowKey());
 
         if (node.getData() instanceof ResourceGroup) {
-            return (this.selectedId == ((ResourceGroup) node.getData()).getId());
+            return (currentSelection.resourceGroup.getId() == ((ResourceGroup) node.getData()).getId());
         } else if (node.getData() instanceof ClusterKey) {
             ClusterKey key = (ClusterKey) node.getData();
 
-            if (currentGroup.getClusterKey() != null && currentGroup.getClusterKey().equals(key.getKey())) {
+            if (currentSelection.clusterKey != null && currentSelection.clusterKey.equals(key)) {
                 return true;
             }
         }

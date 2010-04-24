@@ -33,7 +33,10 @@ import java.util.Set;
  * have been added, deleted, etc. The calls to these methods
  * don't necessarily come at a time when a file has actually been 
  * added, deleted, etc - these are only called when it has been determined
- * that a file is going to be added, deleted, etc.
+ * that a file is going to be added, deleted, etc. In other words, don't
+ * use this as a realtime listener of events happening during a live
+ * deployment; instead, use this as a final report of what happened
+ * after a deployment has been completed.
  * 
  * @author John Mazzitelli
  */

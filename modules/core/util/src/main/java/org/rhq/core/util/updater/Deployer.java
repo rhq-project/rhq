@@ -327,20 +327,22 @@ public class Deployer {
         }
 
         // 2. delete the obsolete files
-        debug("Deleting obsolete files as part of update deployment");
-        for (String fileToDeletePath : currentFilesToDelete) {
-            File doomedFile = new File(fileToDeletePath);
-            if (!doomedFile.isAbsolute()) {
-                doomedFile = new File(this.destDir, fileToDeletePath);
-            }
-            boolean deleted = doomedFile.delete();
-            if (deleted) {
-                debug("Deleted obsolete file [", doomedFile, "]");
-            } else {
-                // TODO: what should we do? is it a major failure if we can't remove obsolete files?                
-                debug("Failed to delete obsolete file [", doomedFile, "]");
-                if (diff != null) {
-                    diff.addError(fileToDeletePath, "File [" + doomedFile.getAbsolutePath() + "] did not delete");
+        if (!currentFilesToDelete.isEmpty()) {
+            debug("Deleting obsolete files as part of update deployment");
+            for (String fileToDeletePath : currentFilesToDelete) {
+                File doomedFile = new File(fileToDeletePath);
+                if (!doomedFile.isAbsolute()) {
+                    doomedFile = new File(this.destDir, fileToDeletePath);
+                }
+                boolean deleted = doomedFile.delete();
+                if (deleted) {
+                    debug("Deleted obsolete file [", doomedFile, "]");
+                } else {
+                    // TODO: what should we do? is it a major failure if we can't remove obsolete files?                
+                    debug("Failed to delete obsolete file [", doomedFile, "]");
+                    if (diff != null) {
+                        diff.addError(fileToDeletePath, "File [" + doomedFile.getAbsolutePath() + "] did not delete");
+                    }
                 }
             }
         }

@@ -48,24 +48,25 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 /**
  * Plugin Component Class
  * To make it work you have to change the ip adress and port for your purpose
- * The metric-, service- and hostnames depend on your nagios system, please make 
+ * The metric-, service- and hostnames depend on your nagios system, please make
  * it sure that they exist and change the plugin descriptor too
- * 
+ *
  * @author Alexander Kiefer
  */
 public class NagiosMonitorComponent implements ResourceComponent, MeasurementFacet
 {
 	private final Log log = LogFactory.getLog(this.getClass());
-    
-    private final String NAGIOSIP = "127.0.0.1";
-    private final int NAGIOSPORT = 6557;
-        
+
+    public static final String NAGIOSIP = "127.0.0.1";
+    public static final String NAGIOSPORT = "6557";
+
     private NagiosManagementInterface nagiosManagementInterface;
-    /**
+
+   /**
      * Return availability of this resource
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
-    public AvailabilityType getAvailability() 
+    public AvailabilityType getAvailability()
     {
         // TODO supply real implementation
         return AvailabilityType.UP;
@@ -75,14 +76,16 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
      * Start the resource connection
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
      */
-    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception 
+    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception
     {
-        @SuppressWarnings("unused")
-		Configuration conf = context.getPluginConfiguration();	
-        
-        //Interface class to the nagios system 
-        nagiosManagementInterface = new NagiosManagementInterface(NAGIOSIP, NAGIOSPORT);
-        	
+		Configuration conf = context.getPluginConfiguration();
+       String nagiosHost = conf.getSimpleValue("nagiosHost", NAGIOSIP);
+       String tmp = conf.getSimpleValue("nagiosPort",NAGIOSPORT);
+       int nagiosPort = Integer.parseInt(tmp);
+
+        //Interface class to the nagios system
+        nagiosManagementInterface = new NagiosManagementInterface(nagiosHost, nagiosPort);
+
 		log.info("NagiosMonitor Plugin started");
     }
 
@@ -91,9 +94,9 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
      * Tear down the rescource connection
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
      */
-    public void stop() 
+    public void stop()
     {
-    			
+
     }
 
     /**
@@ -103,53 +106,53 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics)
     {
     	NagiosSystemData nagiosSystemData = null;
-	
-    	try 
-		{	
+
+    	try
+		{
 			nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
-			
-			
+
+
 			log.info(nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue());
 	    	log.info(nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue());
 	    	log.info(nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue());
-	    	
-			
-			for (MeasurementScheduleRequest req : metrics) 
-	         {    
-				if("execution_time".equals(req.getName()) ) 
-				{      
+
+
+			for (MeasurementScheduleRequest req : metrics)
+	         {
+				if("execution_time".equals(req.getName()) )
+				{
 		    		String value = nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue();
 					MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
 	    			report.addData(res);
 				}
-				else if("host_check_period".equals(req.getName()) ) 
-				{   
+				else if("host_check_period".equals(req.getName()) )
+				{
 					String value = nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue();
 					MeasurementDataTrait res = new MeasurementDataTrait(req, value);
 					report.addData(res);
 				}
-				else if("host_execution_time".equals(req.getName()) ) 
-				{   
+				else if("host_execution_time".equals(req.getName()) )
+				{
 					String value = nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue();
 					MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
-					report.addData(res);					
+					report.addData(res);
 				}
 	     	}
-			
-		} 
-		catch (InvalidReplyTypeException e) 
+
+		}
+		catch (InvalidReplyTypeException e)
 		{
 			log.error(e);
 		}
-		catch (InvalidMetricRequestException e) 
+		catch (InvalidMetricRequestException e)
 		{
 			log.error(e);
-		} 
-		catch (InvalidServiceRequestException e) 
+		}
+		catch (InvalidServiceRequestException e)
 		{
 			log.error(e);
-		} 
-		catch (InvalidHostRequestException e) 
+		}
+		catch (InvalidHostRequestException e)
 		{
 			log.error(e);
 		}

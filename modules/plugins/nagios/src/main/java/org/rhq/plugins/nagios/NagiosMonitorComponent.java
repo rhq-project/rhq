@@ -52,8 +52,8 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
 {
 	private final Log log = LogFactory.getLog(this.getClass());
 
-    public static final String NAGIOSIP = "127.0.0.1";
-    public static final String NAGIOSPORT = "6557";
+    public static final String DEFAULT_NAGIOSIP = "127.0.0.1";
+    public static final String DEFAULT_NAGIOSPORT = "6557";
 
     private NagiosManagementInterface nagiosManagementInterface;
 
@@ -74,8 +74,8 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
     public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception
     {
 		Configuration conf = context.getPluginConfiguration();
-       String nagiosHost = conf.getSimpleValue("nagiosHost", NAGIOSIP);
-       String tmp = conf.getSimpleValue("nagiosPort",NAGIOSPORT);
+       String nagiosHost = conf.getSimpleValue("nagiosHost", DEFAULT_NAGIOSIP);
+       String tmp = conf.getSimpleValue("nagiosPort", DEFAULT_NAGIOSPORT);
        int nagiosPort = Integer.parseInt(tmp);
 
         //Interface class to the nagios system

@@ -50,8 +50,8 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
    public DiscoveredResourceDetails discoverResource(Configuration configuration,
                                                      ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException {
 
-      String nagiosHost = configuration.getSimpleValue("nagiosHost",NagiosMonitorComponent.NAGIOSIP);
-      String nagiosPort = configuration.getSimpleValue("nagiosPort",NagiosMonitorComponent.NAGIOSPORT);
+      String nagiosHost = configuration.getSimpleValue("nagiosHost",NagiosMonitorComponent.DEFAULT_NAGIOSIP);
+      String nagiosPort = configuration.getSimpleValue("nagiosPort",NagiosMonitorComponent.DEFAULT_NAGIOSPORT);
 
 
         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(

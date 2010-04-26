@@ -307,7 +307,7 @@ public class SimpleDeployerRawFileTest {
         assert contentHash[1].equals(newHashcode);
 
         assert this.diff.getAddedFiles().size() == 1 : this.diff;
-        assert this.diff.getAddedFiles().contains(newDestRawFile.getAbsolutePath()) : this.diff;
+        assert this.diff.getAddedFiles().contains(this.diff.convertPath(newDestRawFile.getAbsolutePath())) : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;
         assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
@@ -354,9 +354,9 @@ public class SimpleDeployerRawFileTest {
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().size() == 1 : this.diff;
-        assert this.diff.getChangedFiles().contains(newDestRawFile.getAbsolutePath()) : this.diff;
+        assert this.diff.getChangedFiles().contains(this.diff.convertPath(newDestRawFile.getAbsolutePath())) : this.diff;
         assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
-        assert this.diff.getBackedUpFiles().containsKey(newDestRawFile.getAbsolutePath()) : this.diff;
+        assert this.diff.getBackedUpFiles().containsKey(this.diff.convertPath(newDestRawFile.getAbsolutePath())) : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
         assert this.diff.getErrors().isEmpty() : this.diff;
@@ -365,7 +365,8 @@ public class SimpleDeployerRawFileTest {
         assert this.metadata.getCurrentDeploymentFileHashcodes().equals(newFileHashcodeMap);
 
         // verify the backup copy
-        File backupFile = new File(this.diff.getBackedUpFiles().get(newDestRawFile.getAbsolutePath()));
+        File backupFile = new File(this.diff.getBackedUpFiles().get(
+            this.diff.convertPath(newDestRawFile.getAbsolutePath())));
         assert readFile(backupFile).equals(inTheWayContent) : "did not backup the correct file?";
     }
 
@@ -422,7 +423,7 @@ public class SimpleDeployerRawFileTest {
         assert contentHash[1].equals(newHashcode);
 
         assert this.diff.getAddedFiles().size() == 1 : this.diff;
-        assert this.diff.getAddedFiles().contains(newDestRawFile.getAbsolutePath()) : this.diff;
+        assert this.diff.getAddedFiles().contains(this.diff.convertPath(newDestRawFile.getAbsolutePath())) : this.diff;
         assert this.diff.getDeletedFiles().size() == 1 : this.diff;
         assert this.diff.getDeletedFiles().contains(currentAbsPath) : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;
@@ -465,7 +466,7 @@ public class SimpleDeployerRawFileTest {
         assert contentHash[1].equals(newHashcode);
 
         assert this.diff.getAddedFiles().size() == 1 : this.diff;
-        assert this.diff.getAddedFiles().contains(newDestRawFile.getAbsolutePath()) : this.diff;
+        assert this.diff.getAddedFiles().contains(this.diff.convertPath(newDestRawFile.getAbsolutePath())) : this.diff;
         assert this.diff.getDeletedFiles().size() == 1 : this.diff;
         assert this.diff.getDeletedFiles().contains(currentAbsPath) : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;

@@ -80,7 +80,10 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
                     + next.getPattern() + "']");
             }
         }
-        LOG.info("Statistics: updated " + updated + " in " + totalMillis + " ms (" + errors + " errors)");
+        if (updated > 0) {
+            // only print non-zero stats
+            LOG.info("Statistics: updated " + updated + " in " + totalMillis + " ms (" + errors + " errors)");
+        }
     }
 
     private List<SavedSearch> getSavedSearchesNeedingRecomputation() {

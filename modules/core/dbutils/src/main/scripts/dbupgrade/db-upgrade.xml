@@ -2060,7 +2060,6 @@
                 <schema-addColumn table="RHQ_ALERT" column="ACK_TIME" columnType="LONG" />
                 <!-- TODO:  this needs to change to ack_subject_name -->
                 <schema-addColumn table="RHQ_ALERT" column="ACK_SUBJECT" precision="100" columnType="VARCHAR2" />
-                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="DISPLAY_NAME" precision="100" columnType="VARCHAR2" />
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" precision="100" columnType="VARCHAR2" />
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_CONFIG_ID" columnType="INTEGER" />
                 <schema-directSQL>

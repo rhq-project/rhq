@@ -79,7 +79,7 @@ public class AlertNotification implements Serializable {
     private AlertNotificationTemplate alertNotificationTemplate;
 
     @JoinColumn(name = "SENDER_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     private Configuration configuration;
 
     @Column(name = "SENDER_NAME")
@@ -106,6 +106,17 @@ public class AlertNotification implements Serializable {
 
         this.alertDefinition = alertDefinition;
         this.configuration = config.deepCopy();
+    }
+
+    public AlertNotification(AlertNotification source, boolean copyIds) {
+        if (copyIds) {
+            this.id = source.id;
+            this.configuration = source.configuration;
+        } else {
+            this.configuration = source.configuration.deepCopy(false);
+        }
+        this.displayName = source.displayName;
+        this.senderName = source.senderName;
     }
 
     /**
@@ -136,29 +147,20 @@ public class AlertNotification implements Serializable {
         this.alertDefinition = alertDefinition;
     }
 
-    public AlertNotification copy(boolean copyIds) {
-        AlertNotification results = copy();
-        if (copyIds) {
-            results.id = this.id;
-        }
-        return results;
-    }
-
-    public AlertNotification copyWithAlertDefintion(AlertDefinition alertDefinition, boolean cloneConfiguration) {
+    public AlertNotification copyWithAlertDefintion(AlertDefinition alertDefinition, boolean copyIds) {
         Configuration config;
-        if (cloneConfiguration) {
-            config = this.configuration.deepCopy(false);
-        } else {
+        if (copyIds) {
             config = this.configuration;
+        } else {
+            config = this.configuration.deepCopy(false);
         }
         AlertNotification notification = new AlertNotification(alertDefinition, config);
+        if (copyIds) {
+            notification.id = this.id;
+        }
         notification.setDisplayName(this.displayName);
         notification.setSenderName(this.senderName);
         return notification;
-    }
-
-    protected AlertNotification copy() {
-        return new AlertNotification(this.alertDefinition, this.configuration);
     }
 
     public void prepareForOrphanDelete() {

@@ -56,9 +56,7 @@ public class AntLauncherTest {
     public void testParse() throws Exception {
         AntLauncher ant = new AntLauncher();
 
-        Properties inputProps = createInputProperties("/test-bundle-v1-input.properties");
-        BundleAntProject project = ant.startAnt(getBuildXml("test-bundle-v1.xml"), "unnecessary-target", null,
-            inputProps, this.logFile, true, false);
+        BundleAntProject project = ant.parseBundleDeployFile(getBuildXml("test-bundle-v1.xml"));
         assert project != null;
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
@@ -77,8 +75,8 @@ public class AntLauncherTest {
 
         AntLauncher ant = new AntLauncher();
         Properties inputProps = createInputProperties("/test-bundle-v1-input.properties");
-        BundleAntProject project = ant.startAnt(getBuildXml("test-bundle-v1.xml"), "deploy", null, inputProps,
-            this.logFile, true, true);
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v1.xml"), "deploy", inputProps,
+            this.logFile, true);
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
         assert bundleFiles.size() == 2 : bundleFiles;
@@ -92,7 +90,7 @@ public class AntLauncherTest {
         assert propDef.getType() == PropertySimpleType.INTEGER;
 
         Configuration config = project.getConfiguration();
-        assert config.getProperties().size() == 1;
+        assert config.getProperties().size() == 1 : config.getProperties();
         assert "10000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
     }
 
@@ -102,8 +100,8 @@ public class AntLauncherTest {
 
         AntLauncher ant = new AntLauncher();
         Properties inputProps = createInputProperties("/test-bundle-v2-input.properties");
-        BundleAntProject project = ant.startAnt(getBuildXml("test-bundle-v2.xml"), "deploy", null, inputProps,
-            this.logFile, true, true);
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v2.xml"), "deploy", inputProps,
+            this.logFile, true);
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
         assert bundleFiles.size() == 2 : bundleFiles;

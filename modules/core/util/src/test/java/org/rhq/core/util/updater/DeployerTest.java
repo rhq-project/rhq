@@ -45,6 +45,11 @@ import org.rhq.core.util.stream.StreamUtil;
 @Test
 public class DeployerTest {
 
+    // earlier we supported windows separators in the  map, but i think we want to always support /
+    // this constant is here in case I want to move back to supporting windows paths explicitly
+    // we'd do this by "fileSeparator = File.separator;"
+    private static final String fileSeparator = "/";
+
     private TemplateEngine templateEngine;
     private String javaVersion;
 
@@ -215,14 +220,14 @@ public class DeployerTest {
         final File metadir = new File(tmpDir, ".rhqdeployments");
 
         final String file0 = "file0";
-        final String file1 = "dir1" + File.separator + "file1";
-        final String file2 = "dir1" + File.separator + "file2";
-        final String file3 = "dir2" + File.separator + "file3";
-        final String file4 = "dir3" + File.separator + "dir4" + File.separator + "file4";
+        final String file1 = "dir1" + fileSeparator + "file1";
+        final String file2 = "dir1" + fileSeparator + "file2";
+        final String file3 = "dir2" + fileSeparator + "file3";
+        final String file4 = "dir3" + fileSeparator + "dir4" + fileSeparator + "file4";
         final String fileA = "fileA";
-        final String fileB = "dir1" + File.separator + "fileB";
-        final String fileC = "dir2" + File.separator + "fileC";
-        final String file999 = "dir1" + File.separator + "file999";
+        final String fileB = "dir1" + fileSeparator + "fileB";
+        final String fileC = "dir2" + fileSeparator + "fileC";
+        final String file999 = "dir1" + fileSeparator + "file999";
 
         try {
             if (ignore) {
@@ -292,19 +297,47 @@ public class DeployerTest {
 
             // TODO if this test is running on windows, we need to FileUtil.stripDriveLetter from the updater?absolute vars
             boolean isWindows = File.separatorChar == '\\';
-            String updaterBabsoluteBackupTo1 = new File(metadir, "1/ext-backup/" + updaterBabsolute.getAbsolutePath())
-                .getAbsolutePath();
-            String updaterBabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + updaterBabsolute.getAbsolutePath())
-                .getAbsolutePath();
+            String updaterBabsoluteBackupTo1;
+            String updaterBabsoluteBackupTo2;
             if (!isWindows) {
+                updaterBabsoluteBackupTo1 = new File(metadir, "1/ext-backup/" + updaterBabsolute.getAbsolutePath())
+                    .getAbsolutePath();
+                updaterBabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + updaterBabsolute.getAbsolutePath())
+                    .getAbsolutePath();
                 assert new File(updaterBabsoluteBackupTo1).exists() : "missing updateB.txt backup";
+            } else {
+                StringBuilder str = new StringBuilder(updaterBabsolute.getAbsolutePath());
+                String driveLetter = FileUtil.stripDriveLetter(str);
+                if (driveLetter != null) {
+                    driveLetter = "_" + driveLetter + fileSeparator;
+                } else {
+                    driveLetter = "";
+                }
+                updaterBabsoluteBackupTo1 = new File(metadir, "1/ext-backup/" + driveLetter + str.toString())
+                    .getAbsolutePath();
+                updaterBabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + driveLetter + str.toString())
+                    .getAbsolutePath();
             }
-            String updaterAabsoluteBackupTo1 = new File(metadir, "1/ext-backup/" + updaterAabsolute.getAbsolutePath())
-                .getAbsolutePath();
-            String updaterAabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + updaterAabsolute.getAbsolutePath())
-                .getAbsolutePath();
+            String updaterAabsoluteBackupTo1;
+            String updaterAabsoluteBackupTo2;
             if (!isWindows) {
+                updaterAabsoluteBackupTo1 = new File(metadir, "1/ext-backup/" + updaterAabsolute.getAbsolutePath())
+                    .getAbsolutePath();
+                updaterAabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + updaterAabsolute.getAbsolutePath())
+                    .getAbsolutePath();
                 assert new File(updaterAabsoluteBackupTo1).exists() : "missing updateA.txt backup";
+            } else {
+                StringBuilder str = new StringBuilder(updaterAabsolute.getAbsolutePath());
+                String driveLetter = FileUtil.stripDriveLetter(str);
+                if (driveLetter != null) {
+                    driveLetter = "_" + driveLetter + fileSeparator;
+                } else {
+                    driveLetter = "";
+                }
+                updaterAabsoluteBackupTo1 = new File(metadir, "1/ext-backup/" + driveLetter + str.toString())
+                    .getAbsolutePath();
+                updaterAabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + driveLetter + str.toString())
+                    .getAbsolutePath();
             }
 
             assert !(new File(tmpDir, file0).exists()) : "file0 should be deleted";
@@ -514,22 +547,22 @@ public class DeployerTest {
             FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null, null);
             assert map.size() == 13 : map;
             assert listener.getAddedFiles().size() == 13 : listener;
-            String f = "dir1" + File.separator + "file1";
+            String f = "dir1" + fileSeparator + "file1";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir1" + File.separator + "file2";
+            f = "dir1" + fileSeparator + "file2";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir2" + File.separator + "file3";
+            f = "dir2" + fileSeparator + "file3";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir3" + File.separator + "dir4" + File.separator + "file4";
+            f = "dir3" + fileSeparator + "dir4" + fileSeparator + "file4";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
@@ -539,12 +572,12 @@ public class DeployerTest {
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir1" + File.separator + "fileB";
+            f = "dir1" + fileSeparator + "fileB";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir2" + File.separator + "fileC";
+            f = "dir2" + fileSeparator + "fileC";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
@@ -554,28 +587,28 @@ public class DeployerTest {
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir100" + File.separator + "file100";
+            f = "dir100" + fileSeparator + "file100";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir100" + File.separator + "file200";
+            f = "dir100" + fileSeparator + "file200";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir100" + File.separator + "fileBBB";
+            f = "dir100" + fileSeparator + "fileBBB";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dirA" + File.separator + "rawA.txt";
+            f = "dirA" + fileSeparator + "rawA.txt";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert MessageDigestGenerator.getDigestString(testRawFileA).equals(map.get(f)) : "should have same hash, we didn't realize this one";
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir100" + File.separator + "rawB.txt";
+            f = "dir100" + fileSeparator + "rawB.txt";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
@@ -608,22 +641,22 @@ public class DeployerTest {
             FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null, null);
             assert map.size() == 7 : map;
             assert listener.getAddedFiles().size() == 7 : listener;
-            String f = "dir1" + File.separator + "file1";
+            String f = "dir1" + fileSeparator + "file1";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir1" + File.separator + "file2";
+            f = "dir1" + fileSeparator + "file2";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir2" + File.separator + "file3";
+            f = "dir2" + fileSeparator + "file3";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir3" + File.separator + "dir4" + File.separator + "file4";
+            f = "dir3" + fileSeparator + "dir4" + fileSeparator + "file4";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
@@ -633,12 +666,12 @@ public class DeployerTest {
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir1" + File.separator + "fileB";
+            f = "dir1" + fileSeparator + "fileB";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
             assert listener.getAddedFiles().contains(f) : listener;
-            f = "dir2" + File.separator + "fileC";
+            f = "dir2" + fileSeparator + "fileC";
             assert map.containsKey(f) : map;
             assert new File(tmpDir, f).exists();
             assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));

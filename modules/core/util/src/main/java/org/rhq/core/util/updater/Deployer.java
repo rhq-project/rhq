@@ -277,7 +277,7 @@ public class Deployer {
                 if (newFileNotScannedFile.exists()) {
                     currentFilesToBackup.add(newFileNotScanned);
                     if (diff != null) {
-                        diff.getAddedFiles().remove(diff.convertPath(newFileNotScanned));
+                        diff.removeAddedFile(newFileNotScanned);
                         diff.addChangedFile(newFileNotScanned);
                     }
                 }

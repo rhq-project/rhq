@@ -287,6 +287,8 @@ public class FileHashcodeMap extends TreeMap<String, String> {
             path = fileOrDir.getAbsolutePath().substring(rootPath.length() + 1);
         }
 
+        path = convertPath(path);
+
         // if this path is one the caller wants us to ignore, then return immediately
         if (ignoreRegex != null && ignoreRegex.matcher(path).matches()) {
             ignored.add(path);
@@ -343,5 +345,42 @@ public class FileHashcodeMap extends TreeMap<String, String> {
         }
 
         return unknowns;
+    }
+
+    @Override
+    public String put(String key, String value) {
+        return super.put(convertPath(key), value);
+    }
+
+    @Override
+    public String get(Object key) {
+        return super.get(convertPath((String) key));
+    }
+
+    @Override
+    public String remove(Object key) {
+        return super.remove(convertPath((String) key));
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        return super.containsKey(convertPath((String) key));
+    }
+
+    /**
+     * Converts the path to the form that will be stored internally.
+     * 
+     * @param path a filepath to be converted
+     * 
+     * @return the converted path that is to be used to store in the internal sets.
+     */
+    public String convertPath(String path) {
+        if (File.separatorChar != '/') {
+            if (path != null) {
+                path = path.replace(File.separatorChar, '/');
+            }
+        }
+
+        return path;
     }
 }

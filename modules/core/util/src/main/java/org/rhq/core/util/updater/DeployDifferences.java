@@ -61,6 +61,14 @@ public class DeployDifferences {
         }
     }
 
+    public void removeIgnoredFile(String path) {
+        this.ignoredFiles.remove(convertPath(path));
+    }
+
+    public boolean containsIgnoredFile(String path) {
+        return this.ignoredFiles.contains(convertPath(path));
+    }
+
     public void addDeletedFile(String path) {
         this.deletedFiles.add(convertPath(path));
     }
@@ -69,6 +77,14 @@ public class DeployDifferences {
         for (String path : paths) {
             addDeletedFile(path);
         }
+    }
+
+    public void removeDeletedFile(String path) {
+        this.deletedFiles.remove(convertPath(path));
+    }
+
+    public boolean containsDeletedFile(String path) {
+        return this.deletedFiles.contains(convertPath(path));
     }
 
     public void addAddedFile(String path) {
@@ -81,6 +97,14 @@ public class DeployDifferences {
         }
     }
 
+    public void removeAddedFile(String path) {
+        this.addedFiles.remove(convertPath(path));
+    }
+
+    public boolean containsAddedFile(String path) {
+        return this.addedFiles.contains(convertPath(path));
+    }
+
     public void addChangedFile(String path) {
         this.changedFiles.add(convertPath(path));
     }
@@ -89,6 +113,14 @@ public class DeployDifferences {
         for (String path : paths) {
             addChangedFile(path);
         }
+    }
+
+    public void removeChangedFile(String path) {
+        this.changedFiles.remove(convertPath(path));
+    }
+
+    public boolean containsChangedFile(String path) {
+        return this.changedFiles.contains(convertPath(path));
     }
 
     public void addBackedUpFile(String originalPath, String backupPath) {
@@ -199,6 +231,11 @@ public class DeployDifferences {
      * @return the converted path that is to be used to store in the internal sets.
      */
     public String convertPath(String path) {
-        return new File(path).getPath(); // makes sure e.g. the file separators are correct for this platform
+        if (File.separatorChar != '/') {
+            if (path != null) {
+                path = path.replace(File.separatorChar, '/');
+            }
+        }
+        return path;
     }
 }

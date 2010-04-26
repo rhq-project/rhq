@@ -24,6 +24,7 @@
 package org.rhq.core.util.updater;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -54,16 +55,40 @@ public class DeployDifferences {
         this.ignoredFiles.add(convertPath(path));
     }
 
+    public void addIgnoredFiles(Collection<String> paths) {
+        for (String path : paths) {
+            addIgnoredFile(path);
+        }
+    }
+
     public void addDeletedFile(String path) {
         this.deletedFiles.add(convertPath(path));
+    }
+
+    public void addDeletedFiles(Collection<String> paths) {
+        for (String path : paths) {
+            addDeletedFile(path);
+        }
     }
 
     public void addAddedFile(String path) {
         this.addedFiles.add(convertPath(path));
     }
 
+    public void addAddedFiles(Collection<String> paths) {
+        for (String path : paths) {
+            addAddedFile(path);
+        }
+    }
+
     public void addChangedFile(String path) {
         this.changedFiles.add(convertPath(path));
+    }
+
+    public void addChangedFiles(Collection<String> paths) {
+        for (String path : paths) {
+            addChangedFile(path);
+        }
     }
 
     public void addBackedUpFile(String originalPath, String backupPath) {
@@ -166,7 +191,14 @@ public class DeployDifferences {
         return str.toString();
     }
 
-    private String convertPath(String path) {
+    /**
+     * Converts the path to the form that will be stored internally.
+     * 
+     * @param path a filepath to be converted
+     * 
+     * @return the converted path that is to be used to store in the internal sets.
+     */
+    public String convertPath(String path) {
         return new File(path).getPath(); // makes sure e.g. the file separators are correct for this platform
     }
 }

@@ -58,5 +58,6 @@
     <servlet path="/ResourceBossGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl"/>
     <servlet path="/AuthorizationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AuthorizationGWTServiceImpl"/>
     <servlet path="/AvailabilityGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl"/>
+    <servlet path="/TagGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl"/>
 
 </module>

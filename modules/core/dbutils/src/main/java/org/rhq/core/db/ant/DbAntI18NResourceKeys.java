@@ -202,6 +202,16 @@ public interface DbAntI18NResourceKeys {
         @I18NMessage(value = "Konnte die Spalte nicht verändern. Grund: {0}", locale = "de") })
     String ALTER_COLUMN_ERROR = "SchemaSpecTask.altercolumn.error";
 
+    @I18NMessages( {
+        @I18NMessage("Executing Java Task: class=[{0}]"),
+        @I18NMessage(value = "Führe die Java-Aufgabe: class=[{0}]", locale = "de") })
+    String JAVA_TASK_EXECUTING = "SchemaSpecTask.javaTask.executing";
+
+    @I18NMessages( {
+        @I18NMessage("Java Task Error: class=[{0}]"),
+        @I18NMessage(value = "Fehler beim Ausführen der Aufgabe [{0}]", locale = "de") })
+    String JAVA_TASK_ERROR = "SchemaSpecTask.javaTask.error";
+    
     @I18NMessages( { @I18NMessage("No 'jdbcUrl' attribute specified."),
         @I18NMessage(value = "Es ist kein 'jdbcUrl' Attribut angegeben", locale = "de") })
     String DBUPGRADE_NO_JDBC_URL = "DBUpgrader.no-jdbc-url";

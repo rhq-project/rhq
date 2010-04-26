@@ -23,6 +23,8 @@ import java.util.TreeSet;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
+import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
+import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.util.sort.HumaneStringComparator;
 
@@ -64,17 +66,32 @@ public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
         this.parent = parent;
     }
 
+    public String getNodeType() {
+        if (level instanceof AutoGroupCompositeFlyweight) {
+            return "AutoGroupComposite";
+        } else if (level instanceof ResourceFlyweight) {
+            return ((ResourceFlyweight)level).isLocked() ? "LockedResource" : "Resource";
+        } else {
+            return level.getClass().getSimpleName();
+        }
+    }
+    
     public String toString() {
         if (level == null) {
             return "";
         }
-        if (level instanceof AutoGroupComposite) {
-            AutoGroupComposite composite = ((AutoGroupComposite) level);
+        if (level instanceof AutoGroupCompositeFlyweight) {
+            AutoGroupCompositeFlyweight composite = ((AutoGroupCompositeFlyweight) level);
             return composite.getName();
         } else if (level instanceof ResourceWithAvailability) {
             return ((ResourceWithAvailability) level).getResource().getName();
-        } else if (level instanceof Resource) {
-            return ((Resource) level).getName();
+        } else if (level instanceof ResourceFlyweight) {
+            ResourceFlyweight fly = (ResourceFlyweight) level;
+            String name = fly.getName();
+            if (fly.isLocked()) {
+                name += " (locked)";
+            }
+            return name;
         }
         return level.toString();
     }

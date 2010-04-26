@@ -57,6 +57,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
+import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -68,9 +69,9 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.StringUtils;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.server.PersistenceUtility;
-import org.rhq.core.domain.util.StringUtils;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -87,13 +88,11 @@ import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
-
 
 /**
  * @author Joseph Marques
@@ -130,7 +129,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
 
-
     /**
      * Persist a detached alert.
      *
@@ -148,27 +146,31 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     /**
      * Remove the alerts with the specified id's.
      * @param user caller
-     * @param ids primary keys of the alerts to delete
+     * @param alertIds primary keys of the alerts to delete
      * @return number of alerts deleted
      */
-    public int deleteAlerts(Subject user, Integer[] ids) {
-        if (!authorizationManager.hasGlobalPermission(user,Permission.MANAGE_ALERTS))
-             throw new PermissionException("User [" + user.getName() + "] does not have permissions to delete alerts ");
-
-        int i = 0;
-        for (Integer id : ids) {
-            Alert alert = entityManager.find(Alert.class, id);
+    public int deleteAlerts(Subject user, Integer[] alertIds) {
+        int count = 0;
+        for (Integer nextAlertId : alertIds) {
+            Alert alert = entityManager.find(Alert.class, nextAlertId);
             if (alert != null) {
-//                AlertNotificationLog anl = alert.getAlertNotificationLog();  TODO is that all?
-//                entityManager.remove(anl);
+                //                AlertNotificationLog anl = alert.getAlertNotificationLog();  TODO is that all?
+                //                entityManager.remove(anl);
+                Resource resource = alert.getAlertDefinition().getResource();
+                if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resource.getId())) {
+                    throw new PermissionException("User [" + user.getName()
+                        + "] does not have permissions to delete alerts: " + Arrays.asList(alertIds));
+                }
+
                 entityManager.remove(alert); // condition logs will be removed with entity cascading
             }
-            i++;
+            count++;
         }
-        return i;
+        return count;
     }
 
-    public void deleteResourceAlerts(Subject user, Integer[] alertIds) {
+    @SuppressWarnings("unchecked")
+    private void checkAlertsPermission(Subject user, Integer[] alertIds) {
         Query q = entityManager.createNamedQuery(Alert.QUERY_FIND_RESOURCES);
         q.setParameter("alertIds", Arrays.asList(alertIds));
         List<Resource> resources = q.getResultList();
@@ -180,9 +182,13 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             }
         }
         if (!forbiddenResources.isEmpty()) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permissions to delete alerts "
-                    + "for the following Resource(s): " + forbiddenResources);
+            throw new PermissionException("User [" + user.getName() + "] does not have permissions to manage alerts "
+                + "for the following Resource(s): " + forbiddenResources);
         }
+    }
+
+    public void deleteResourceAlerts(Subject user, Integer[] alertIds) {
+        checkAlertsPermission(user, alertIds);
 
         deleteAlerts(user, alertIds);
     }
@@ -568,48 +574,33 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     /**
-     * Mark the matching alert as acknowledged by the user
-     * @param alertId Id of the alert to acknowledge
-     * @param user user who acknowledged the alert
-     */
-    public void acknowledgeAlert(int alertId, Subject user) {
-        Alert alert = entityManager.find(Alert.class,alertId);
-        if (alert==null) {
-            log.warn("Alert [ " + alertId + " ] to acknowledge was not found ");
-            return;
-        }
-        alert.setAckBy(user);
-        alert.setAckTime(System.currentTimeMillis());
-    }
-
-    /**
-     * Acknowledge the alerts (that got fired) so that admins know who is working
-     * on fixing the situation.
+     * Acknowledge the alerts (that got fired) so that admins know who is working on fixing the situation.
+     * 
      * @param user calling user
-     * @param alertIds PKs of the alerts to ack
+     * @param alertIds PKs of the alerts to acknowledge
      * @return number of alerts acknowledged
      */
     public int acknowledgeAlerts(Subject user, Integer[] alertIds) {
-        if (!authorizationManager.hasGlobalPermission(user, Permission.MANAGE_ALERTS)) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permissions to acknowledge alerts ");
-        }
-
-        int i=0;
-        if (alertIds==null || alertIds.length==0) {
+        if (alertIds == null || alertIds.length == 0) {
             log.debug("acknowledgeAlerts: no alertIds passed");
-            return -1;
+            return 0;
         }
 
-        for (int id : alertIds) {
-            acknowledgeAlert(id,user);
-            i++;
-            if (i % 50 == 0) {
-                entityManager.flush();
-                entityManager.clear();
+        checkAlertsPermission(user, alertIds);
+
+        int count = 0;
+        final long NOW = System.currentTimeMillis();
+        for (int nextAlertId : alertIds) {
+            Alert alert = entityManager.find(Alert.class, nextAlertId);
+            if (alert == null) {
+                continue;
+            } else {
+                count++;
             }
-
+            alert.setAcknowledgingSubject(user.getName());
+            alert.setAcknowledgeTime(NOW);
         }
-        return i;
+        return count;
     }
 
     public void fireAlert(int alertDefinitionId) {
@@ -634,8 +625,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         this.createAlert(newAlert);
         log.debug("New alert identifier=" + newAlert.getId());
 
-//        AlertNotificationLog alertNotifLog = new AlertNotificationLog(newAlert);  TODO - is that all?
-//        entityManager.persist(alertNotifLog);
+        //        AlertNotificationLog alertNotifLog = new AlertNotificationLog(newAlert);  TODO - is that all?
+        //        entityManager.persist(alertNotifLog);
 
         List<AlertConditionLog> unmatchedConditionLogs = alertConditionLogManager
             .getUnmatchedLogsByAlertDefinitionId(alertDefinitionId);
@@ -694,7 +685,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
                 // Send over the new AlertSender plugins
                 String senderName = alertNotification.getSenderName();
-                if (senderName ==null) {
+                if (senderName == null) {
                     log.error("Alert notification " + alertNotification + " has no sender name defined");
                     continue;
                 }
@@ -707,9 +698,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                         SenderResult result = sender.send(alert);
 
                         if (result == null) {
-                            log.warn("- !! -- sender [" + senderName +
-                                    "] did not return a SenderResult. Please fix this -- !! - ");
-                            alNoLo = new AlertNotificationLog(alert,senderName);
+                            log.warn("- !! -- sender [" + senderName
+                                + "] did not return a SenderResult. Please fix this -- !! - ");
+                            alNoLo = new AlertNotificationLog(alert, senderName);
                             alNoLo.setMessage("Sender did not return a SenderResult, assuming failure");
 
                         } else if (result.getState() == ResultState.DEFERRED_EMAIL) {
@@ -722,20 +713,16 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                             alNoLo = new AlertNotificationLog(alert, senderName, result);
                         }
                         log.info(result);
-                    }
-                    catch (Throwable t) {
+                    } catch (Throwable t) {
                         log.error("Sender failed: " + t.getMessage());
                         if (log.isDebugEnabled())
                             log.debug("Sender " + sender.toString() + "failed: \n", t);
-                        alNoLo  = new AlertNotificationLog(alert, senderName,
-                                ResultState.FAILURE,
-                                "Failed with exception: " + t.getMessage());
+                        alNoLo = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
+                            "Failed with exception: " + t.getMessage());
                     }
-                }
-                else {
-                    alNoLo = new AlertNotificationLog(alert, senderName,
-                            ResultState.FAILURE,
-                            "Failed to obtain a sender with given name");
+                } else {
+                    alNoLo = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
+                        "Failed to obtain a sender with given name");
                 }
                 entityManager.persist(alNoLo);
                 alert.addAlertNotificatinLog(alNoLo);
@@ -758,22 +745,19 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                             badList.add(badOne);
                         }
                     }
-                    if (anl.getResultState()==ResultState.FAILED_EMAIL)
-                        anl.setBadEmails(StringUtils.getListAsString(badList,","));
-                    if (anl.getResultState()==ResultState.DEFERRED_EMAIL && badList.isEmpty())
+                    if (anl.getResultState() == ResultState.FAILED_EMAIL)
+                        anl.setBadEmails(StringUtils.getListAsString(badList, ","));
+                    if (anl.getResultState() == ResultState.DEFERRED_EMAIL && badList.isEmpty())
                         anl.setResultState(ResultState.SUCCESS);
                 }
-            }
-            else { // No bad addresses
+            } else { // No bad addresses
                 // Only set the result state to success for email sending notifications
                 // We must not set them if the notification failed.
                 for (AlertNotificationLog anl : alert.getAlertNotificationLogs()) {
-                    if (anl.getResultState()==ResultState.DEFERRED_EMAIL)
+                    if (anl.getResultState() == ResultState.DEFERRED_EMAIL)
                         anl.setResultState(ResultState.SUCCESS);
                 }
             }
-
-
 
         } catch (Exception e) {
             log.error("Failed to send all notifications for " + alert.toSimpleString(), e);
@@ -897,13 +881,11 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 format = AlertI18NResourceKeys.ALERT_EMAIL_CONDITION_LOG_FORMAT;
             SimpleDateFormat dateFormat;
             if (shortVersion)
-                dateFormat= new SimpleDateFormat(
-                        "yy/MM/dd HH:mm:ss z");
+                dateFormat = new SimpleDateFormat("yy/MM/dd HH:mm:ss z");
             else
-                dateFormat= new SimpleDateFormat(
-                        "yyyy/MM/dd HH:mm:ss z");
-            builder.append(AlertI18NFactory.getMessage(format,
-                conditionCounter, prettyPrintAlertCondition(aLog.getCondition(), shortVersion), dateFormat.format(new Date(aLog.getCtime())), formattedValue));
+                dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss z");
+            builder.append(AlertI18NFactory.getMessage(format, conditionCounter, prettyPrintAlertCondition(aLog
+                .getCondition(), shortVersion), dateFormat.format(new Date(aLog.getCtime())), formattedValue));
             conditionCounter++;
         }
 
@@ -928,7 +910,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 builder.append(condition.getName()).append(' ');
             }
         } else {
-            if (category.getName()!=null) // this is null for e.g. availability
+            if (category.getName() != null) // this is null for e.g. availability
                 builder.append(condition.getName()).append(' ');
         }
 
@@ -961,7 +943,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             || (category == AlertConditionCategory.TRAIT)) {
 
             if (shortVersion)
-                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CURRENT_LIST_VALUE_CHANGED_SHORT));
+                builder.append(AlertI18NFactory
+                    .getMessage(AlertI18NResourceKeys.ALERT_CURRENT_LIST_VALUE_CHANGED_SHORT));
             else
                 builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CURRENT_LIST_VALUE_CHANGED));
 
@@ -973,21 +956,20 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 else
                     propsCbEventSeverityRegexMatch = AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH;
 
-                builder.append(AlertI18NFactory.getMessage(
-                        propsCbEventSeverityRegexMatch, condition.getName(),
+                builder.append(AlertI18NFactory.getMessage(propsCbEventSeverityRegexMatch, condition.getName(),
                     condition.getOption()));
             } else {
                 if (shortVersion)
-                    builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_SHORT,
-                            condition.getName()));
+                    builder.append(AlertI18NFactory.getMessage(
+                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_SHORT, condition.getName()));
                 else
-                    builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY,
-                        condition.getName()));
+                    builder.append(AlertI18NFactory.getMessage(
+                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY, condition.getName()));
             }
         } else if (category == AlertConditionCategory.AVAILABILITY) {
             if (shortVersion)
-                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_AVAILABILITY_SHORT,
-                    condition.getOption()));
+                builder.append(AlertI18NFactory.getMessage(
+                    AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_AVAILABILITY_SHORT, condition.getOption()));
             else
                 builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_AVAILABILITY,
                     condition.getOption()));
@@ -1014,7 +996,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         return builder.toString();
     }
-
 
     private void processRecovery(AlertDefinition firedDefinition) {
         Subject overlord = subjectManager.getOverlord();
@@ -1087,7 +1068,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
         return false; // Default is not to disable the definition
     }
-
 
     @SuppressWarnings("unchecked")
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {

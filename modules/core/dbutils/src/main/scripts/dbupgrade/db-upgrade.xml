@@ -2059,28 +2059,27 @@
             <schemaSpec version="2.70">
                 <schema-addColumn table="RHQ_ALERT" column="ACK_TIME" columnType="LONG" />
                 <!-- TODO:  this needs to change to ack_subject_name -->
-                <schema-addColumn table="RHQ_ALERT" column="ACK_BY_ID" columnType="INTEGER" />
-
-                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_SENDER_NAME" columnType="VARCHAR2" precision="100"/>
-                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_CONFIG_ID" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_ALERT" column="ACK_SUBJECT" precision="100" columnType="VARCHAR2" />
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="DISPLAY_NAME" precision="100" columnType="VARCHAR2" />
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" precision="100" columnType="VARCHAR2" />
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_CONFIG_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_ALERT_NOTIFICATION
-                        ADD CONSTRAINT RHQ_AN_ALERT_CONFIG_ID_FK
-                        FOREIGN KEY (ALERT_CONFIG_ID)
+                        ADD CONSTRAINT RHQ_AN_SENDER_CONFIG_ID_FK
+                        FOREIGN KEY (SENDER_CONFIG_ID)
                         REFERENCES RHQ_CONFIG (ID)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
-
             <schemaSpec version="2.70.1">
                 <schema-createSequence name="RHQ_ALERT_NOTIF_TEMPL_ID_SEQ" initial="10001" />
                 <schema-directSQL>
-                    <statement>
+                    <statement desc="Creating table RHQ_ALERT_NOTIF_TEMPL">
                         CREATE TABLE RHQ_ALERT_NOTIF_TEMPL ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_ALERT_NOTIF_TEMPL" column="ID" nullable="false" />                
+                <schema-alterColumn table="RHQ_ALERT_NOTIF_TEMPL" column="ID" nullable="false" />
                 <schema-addColumn   table="RHQ_ALERT_NOTIF_TEMPL" column="CTIME" columnType="LONG" />
                 <schema-alterColumn table="RHQ_ALERT_NOTIF_TEMPL" column="CTIME" nullable="false" />
                 <schema-addColumn   table="RHQ_ALERT_NOTIF_TEMPL" column="MTIME" columnType="LONG" />
@@ -2088,6 +2087,61 @@
                 <schema-addColumn   table="RHQ_ALERT_NOTIF_TEMPL" column="NAME" precision="100" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_ALERT_NOTIF_TEMPL" column="NAME" nullable="false" />
                 <schema-addColumn   table="RHQ_ALERT_NOTIF_TEMPL" column="DESCRIPTION" precision="250" columnType="VARCHAR2" />
+            </schemaSpec>
+            <schemaSpec version="2.70.2">
+                <!-- add structures for alert notification templates -->
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="TEMPLATE_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ALERT_NOTIFICATION
+                        ADD CONSTRAINT RHQ_AN_TEMPLATE_ID_FK
+                        FOREIGN KEY (TEMPLATE_ID)
+                        REFERENCES RHQ_ALERT_NOTIF_TEMPL (ID)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+            <schemaSpec version="2.70.3">
+                <!-- turn first-class notification data into configuration objects for custom alert senders -->
+                <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIFICATION_TYPE" nullable="TRUE" />
+                <schema-javaTask className="CustomAlertSenderUpgradeTask" />
+                <schema-directSQL>
+                    <statement desc="Removing obsolete alert notifications">
+                        DELETE FROM RHQ_ALERT_NOTIFICATION WHERE NOTIFICATION_TYPE IS NOT NULL
+                    </statement>
+                </schema-directSQL>
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIFICATION_TYPE" />
+            </schemaSpec>
+            <schemaSpec version="2.70.4">
+                <!-- remove first-class alert notification structures from definition side of the model-->
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_host" />
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_port" />
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_oid" />
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="email_address" />
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="role_id" />
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="subject_id" />
+                <schema-deleteColumn table="RHQ_ALERT_DEFINITION" column="operation_def_id" />
+            </schemaSpec>
+            <schemaSpec version="2.70.5">
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="roles" />
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="subjects" />
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="emails" />
+            </schemaSpec>
+            <schemaSpec version="2.70.6">
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4000" />
+            </schemaSpec>
+            <schemaSpec version="2.70.7">
+                <schema-directSQL>
+                    <statement>
+                        DROP INDEX RHQ_ALERT_IDX_ALERT
+                    </statement>
+                    <statement>
+                        CREATE INDEX RHQ_ALERT_IDX_ALERT ON RHQ_ALERT_NOTIF_LOG (alert_id)
+                    </statement>
+                </schema-directSQL>
             </schemaSpec>
 
             <!-- RHQ Advisory Representation -->
@@ -2294,47 +2348,6 @@
             <schemaSpec version="2.76">
                 <schema-addColumn table="RHQ_CONFIG_PROP_DEF" column="DYNAMIC_TYPE" columnType="VARCHAR2" precision="20" />
                 <schema-addColumn table="RHQ_CONFIG_PROP_DEF" column="DYNAMIC_KEY" columnType="VARCHAR2" precision="128" />
-            </schemaSpec>
-
-            <schemaSpec version="2.77">
-                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIF_TEMPLATE_ID" columnType="INTEGER" />
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_ALERT_NOTIFICATION
-                        ADD CONSTRAINT RHQ_CPD_NOTIF_TEMPLATE_ID_FK
-                        FOREIGN KEY (NOTIF_TEMPLATE_ID)
-                        REFERENCES RHQ_ALERT_NOTIF_TEMPL(ID)
-                    </statement>
-                </schema-directSQL>
-            </schemaSpec>
-            <schemaSpec version="2.77.1">
-                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_host" />
-                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_port" />
-                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_oid" />
-                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="email_address" />
-                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="role_id" />
-                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="subject_id" />
-            </schemaSpec>
-            <schemaSpec version="2.77.2">
-                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="roles" />
-                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="subjects" />
-                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="emails" />
-
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="255" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4000" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4000" />
-            </schemaSpec>
-            <schemaSpec version="2.77.3">
-                <schema-directSQL>
-                    <statement>
-                        DROP INDEX RHQ_ALERT_IDX_ALERT
-                    </statement>
-                    <statement>
-                        CREATE INDEX RHQ_ALERT_IDX_ALERT ON RHQ_ALERT_NOTIF_LOG (alert_id)
-                    </statement>
-                </schema-directSQL>
             </schemaSpec>
 
             <schemaSpec version="2.78">
@@ -2652,17 +2665,35 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.81">
+                <!-- fix for postgres not properly streaming blobs to JDBC clients -->
+                <schema-directSQL targetDBVendor="postgresql">
+                    <statement desc="Change bytea column to oid in postgres.">
+                        ALTER TABLE RHQ_PACKAGE_BITS ADD COLUMN NEWOID OID
+                    </statement>
+                    <statement desc="Change bytea column to oid in postgres.">
+                        UPDATE RHQ_PACKAGE_BITS t SET NEWOID = (
+                        SELECT oid FROM (
+                          SELECT oid, lowrite(lo_open(oid, 131072), t.bits)
+                          FROM lo_create(0) o(oid)) x)
+                    </statement>
+                    <statement desc="Change bytea column to oid in postgres.">
+                        ALTER TABLE RHQ_PACKAGE_BITS DROP COLUMN BITS
+                    </statement>
+                    <statement desc="Change bytea column to oid in postgres.">
+                        ALTER TABLE RHQ_PACKAGE_BITS RENAME COLUMN NEWOID TO BITS  
+                     </statement>
+                </schema-directSQL>
+            </schemaSpec>
+            
             <schemaSpec version="2.82">
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_SAVED_SEARCH">
-                        CREATE TABLE RHQ_SAVED_SEARCH ( ID INTEGER )
+                        CREATE TABLE RHQ_SAVED_SEARCH ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-directSQL>
-                    <statement desc="Creating primary key for RHQ_SAVED_SEARCH">
-                        ALTER TABLE RHQ_SAVED_SEARCH ADD PRIMARY KEY ( ID )
-                    </statement>
-                </schema-directSQL>
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="ID" nullable="FALSE" />
+
                 <schema-addColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" columnType="VARCHAR2" precision="25" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" nullable="FALSE" />
 
@@ -2701,40 +2732,35 @@
                         VALUES (2, 'Resource', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, 1)
                     </statement>
                 </schema-directSQL>
-                <schema-directSQL targetDBVendor="postgresql">
-                    <statement desc="Change bytea column to oid in postgres.">
-                        ALTER TABLE RHQ_PACKAGE_BITS ADD COLUMN NEWOID OID
-                    </statement>
-                    <statement desc="Change bytea column to oid in postgres.">
-                        UPDATE RHQ_PACKAGE_BITS t SET NEWOID = (
-                        SELECT oid FROM (
-                          SELECT oid, lowrite(lo_open(oid, 131072), t.bits)
-                          FROM lo_create(0) o(oid)) x)
-                    </statement>
-                    <statement desc="Change bytea column to oid in postgres.">
-                        ALTER TABLE RHQ_PACKAGE_BITS DROP COLUMN BITS
-                    </statement>
-                    <statement desc="Change bytea column to oid in postgres.">
-                        ALTER TABLE RHQ_PACKAGE_BITS RENAME COLUMN NEWOID TO BITS  
-                     </statement>
-                </schema-directSQL>
             </schemaSpec>
 
             <schemaSpec version="2.83"> 
-                <!-- The following constraint change shortens the constraint name < 30 chars for Oracle. -->
-                <schema-directSQL>                    
-                    <statement targetDBVendor="postgresql" desc="Dropping RHQ_SUBJECT_ROLE_LDAP_MAP constraint RHQ_SUBJECT_ROLE_LDAP_MAPPING_KEY.">
-                        ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP DROP CONSTRAINT RHQ_SUBJECT_ROLE_LDAP_MAPPING_KEY;
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_SUBJECT_ROLE_LDAP_MAP">
+                        CREATE TABLE RHQ_SUBJECT_ROLE_LDAP_MAP ( SUBJECT_ID INTEGER, ROLE_ID INTEGER )
                     </statement>
-                    <!-- There is no PL/SQL update for ora dbs as the problematic statement could never be created on oracle, so nothing to fix. -->
-                    <statement targetDBVendor="postgresql" desc="Creating new RHQ_SUBJECT_ROLE_LDAP_MAP constraint RHQ_SUBJECT_ROLE_LDAP_MAP_KEY">
+                    <statement desc="Creating composite PK for RHQ_SUBJECT_ROLE_LDAP_MAP">
                         ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP 
-                        ADD CONSTRAINT RHQ_SUBJECT_ROLE_LDAP_MAP_KEY 
+                        ADD CONSTRAINT RHQ_SUBJECT_ROLE_LDAP_MAP_PK 
                         PRIMARY KEY ( SUBJECT_ID, ROLE_ID )
                     </statement>
+                    <statement desc="Creating FK relation to RHQ_SUBJECT table for SUBJECT_ID column">
+                        ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP
+                        ADD CONSTRAINT RHQ_SRLM_SUBJECT_ID_FK
+                        FOREIGN KEY (SUBJECT_ID)
+                        REFERENCES RHQ_SUBJECT (ID)
+                    </statement>
+                    <statement desc="Creating FK relation to RHQ_ROLE table for ROLE_ID column">
+                        ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP
+                        ADD CONSTRAINT RHQ_SRLM_ROLE_ID_FK
+                        FOREIGN KEY (ROLE_ID)
+                        REFERENCES RHQ_ROLE (ID)
+                    </statement>
                 </schema-directSQL>
+                <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="SUBJECT_ID" nullable="FALSE" />
+                <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="ROLE_ID"  nullable="FALSE" />
             </schemaSpec>
-            
+
         </dbupgrade>
     </target>
 </project>

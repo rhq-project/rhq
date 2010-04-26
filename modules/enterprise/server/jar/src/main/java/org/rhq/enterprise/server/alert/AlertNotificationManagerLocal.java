@@ -113,15 +113,6 @@ public interface AlertNotificationManagerLocal {
     String getBackingBeanNameForSender(String shortName);
 
     /**
-     * Add the passed 'transient' notifications onto the alert definitions contained. The old
-     * notifications are removed.
-     * This method is mainly used when migrating alerts from an old format to the current.
-     * @param subject Subject of the caller
-     * @param notifications list of AlertNotifications that have the alert definition id encoded in a transient field
-     */
-    void mergeTransientAlertNotifications(Subject subject, List<AlertNotification> notifications);
-
-    /**
      * Create a new NotificationTemplate from the passed parameters. The passed AlertNotification objects need to have the
      * name and sender and any configuration properties already set; alert definitions must not be set.
      * @param name name of this notification template. Must be unique

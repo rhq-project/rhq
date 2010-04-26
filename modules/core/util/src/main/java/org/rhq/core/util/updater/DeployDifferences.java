@@ -231,6 +231,11 @@ public class DeployDifferences {
      * @return the converted path that is to be used to store in the internal sets.
      */
     public String convertPath(String path) {
-        return new File(path).getPath(); // makes sure e.g. the file separators are correct for this platform
+        if (File.separatorChar != '/') {
+            if (path != null) {
+                path = path.replace(File.separatorChar, '/');
+            }
+        }
+        return path;
     }
 }

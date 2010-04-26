@@ -40,6 +40,7 @@ public class DeploymentsMetadata {
     public static final String DEPLOYMENT_FILE = "deployment.properties";
     public static final String HASHCODES_FILE = "file-hashcodes.dat";
     public static final String BACKUP_DIR = "backup";
+    public static final String EXT_BACKUP_DIR = "ext-backup";
 
     private final File rootDirectory;
 
@@ -192,6 +193,8 @@ public class DeploymentsMetadata {
 
     /**
      * Returns a metadata directory that is appropriate to place backup files for the deployment.
+     * Files placed here are files found in the deployment directory that needed to be backed up
+     * before being overwritten or deleted.
      * 
      * @param deploymentId the ID of the deployment whose backup directory is to be returned
      * @return backup directory for the deployment
@@ -212,6 +215,34 @@ public class DeploymentsMetadata {
             return backupDir;
         } catch (Exception e) {
             throw new IllegalStateException("Cannot determine deployment backup dir for [" + deploymentId + "]", e);
+        }
+    }
+
+    /**
+     * Returns a metadata directory that is appropriate to place backup files for the deployment.
+     * Files placed here are files found in external directories (i.e. outside the deployment directory)
+     * that needed to be backed up before being overwritten or deleted.
+     * 
+     * @param deploymentId the ID of the deployment whose backup directory is to be returned
+     * @return backup directory for the deployment's external files
+     */
+    public File getDeploymentExternalBackupDirectory(int deploymentId) throws Exception {
+        try {
+            File dir = getDeploymentMetadataDirectory(deploymentId);
+            File backupDir = new File(dir, EXT_BACKUP_DIR);
+            if (!backupDir.isDirectory()) {
+                if (!backupDir.exists()) {
+                    if (!backupDir.mkdirs()) {
+                        throw new IllegalStateException("Failed to create external backup directory: " + backupDir);
+                    }
+                } else {
+                    throw new IllegalStateException("ext backup is a file but should be a directory: " + backupDir);
+                }
+            }
+            return backupDir;
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot determine deployment external backup dir for [" + deploymentId
+                + "]", e);
         }
     }
 

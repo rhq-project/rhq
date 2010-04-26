@@ -212,7 +212,6 @@ public class DeployerTest {
         final File testRawFileBChange2 = File.createTempFile("testUpdateDeployZipsAndRawFilesB2", ".txt");
         final File testRawFileAChange = File.createTempFile("testUpdateDeployZipsAndRawFilesA", ".txt");
 
-        final String backupExtension = ".rhqbackup";
         final File metadir = new File(tmpDir, ".rhqdeployments");
 
         final String file0 = "file0";
@@ -290,10 +289,23 @@ public class DeployerTest {
             assert !updaterAabsolute.exists() : "updateA.txt should be deleted";
             assert updaterBabsolute.exists() : "updateB.txt should exist now";
             assert !"X".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
-            String updaterBabsoluteBackup = updaterBabsolute.getAbsolutePath() + backupExtension;
-            assert new File(updaterBabsoluteBackup).exists() : "missing updateB.txt backup";
-            String updaterAabsoluteBackup = updaterAabsolute.getAbsolutePath() + backupExtension;
-            assert new File(updaterAabsoluteBackup).exists() : "missing updateA.txt backup";
+
+            // TODO if this test is running on windows, we need to FileUtil.stripDriveLetter from the updater?absolute vars
+            boolean isWindows = File.separatorChar == '\\';
+            String updaterBabsoluteBackupTo1 = new File(metadir, "1/ext-backup/" + updaterBabsolute.getAbsolutePath())
+                .getAbsolutePath();
+            String updaterBabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + updaterBabsolute.getAbsolutePath())
+                .getAbsolutePath();
+            if (!isWindows) {
+                assert new File(updaterBabsoluteBackupTo1).exists() : "missing updateB.txt backup";
+            }
+            String updaterAabsoluteBackupTo1 = new File(metadir, "1/ext-backup/" + updaterAabsolute.getAbsolutePath())
+                .getAbsolutePath();
+            String updaterAabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + updaterAabsolute.getAbsolutePath())
+                .getAbsolutePath();
+            if (!isWindows) {
+                assert new File(updaterAabsoluteBackupTo1).exists() : "missing updateA.txt backup";
+            }
 
             assert !(new File(tmpDir, file0).exists()) : "file0 should be deleted";
             assert new File(tmpDir, fileA).exists() : "fileA should exist";
@@ -331,9 +343,11 @@ public class DeployerTest {
             assert listener.getChangedFiles().contains(fileB) : listener;
             assert listener.getBackedUpFiles().size() == 4 : listener;
             assert listener.getBackedUpFiles().containsKey(updaterAabsolute.getAbsolutePath()) : listener;
-            assert listener.getBackedUpFiles().get(updaterAabsolute.getAbsolutePath()).equals(updaterAabsoluteBackup) : listener;
+            assert listener.getBackedUpFiles().get(updaterAabsolute.getAbsolutePath())
+                .equals(updaterAabsoluteBackupTo1) : listener;
             assert listener.getBackedUpFiles().containsKey(updaterBabsolute.getAbsolutePath()) : listener;
-            assert listener.getBackedUpFiles().get(updaterBabsolute.getAbsolutePath()).equals(updaterBabsoluteBackup) : listener;
+            assert listener.getBackedUpFiles().get(updaterBabsolute.getAbsolutePath())
+                .equals(updaterBabsoluteBackupTo1) : listener;
             assert listener.getBackedUpFiles().containsKey(fileB) : listener;
             assert listener.getBackedUpFiles().get(fileB).equals(fileBbackupTo1.getAbsolutePath()) : listener;
             assert listener.getBackedUpFiles().containsKey(file999) : listener;
@@ -363,9 +377,9 @@ public class DeployerTest {
                 assert listener.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
             }
 
-            assert new File(updaterBabsoluteBackup).exists() : "updaterB should be backed up";
+            assert new File(updaterBabsoluteBackupTo2).exists() : "updaterB should be backed up";
             assert "B1prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
-            assert "Y".equals(new String(StreamUtil.slurp(new FileInputStream(new File(updaterBabsoluteBackup)))));
+            assert "Y".equals(new String(StreamUtil.slurp(new FileInputStream(new File(updaterBabsoluteBackupTo2)))));
 
             assert listener.getAddedFiles().size() == 1 : listener;
             assert listener.getAddedFiles().contains(updaterAabsolute.getAbsolutePath()) : listener;
@@ -374,7 +388,8 @@ public class DeployerTest {
             assert listener.getChangedFiles().contains(updaterBabsolute.getAbsolutePath()) : listener;
             assert listener.getBackedUpFiles().size() == 1 : listener;
             assert listener.getBackedUpFiles().containsKey(updaterBabsolute.getAbsolutePath()) : listener;
-            assert listener.getBackedUpFiles().get(updaterBabsolute.getAbsolutePath()).equals(updaterBabsoluteBackup) : listener;
+            assert listener.getBackedUpFiles().get(updaterBabsolute.getAbsolutePath())
+                .equals(updaterBabsoluteBackupTo2) : listener;
             if (realize) {
                 assert listener.getRealizedFiles().size() == 1 : listener;
                 assert listener.getRealizedFiles().containsKey(fileA) : listener;

@@ -89,8 +89,6 @@ import org.rhq.core.util.stream.StreamUtil;
 public class Deployer {
     private final Log log = LogFactory.getLog(Deployer.class);
 
-    private static final String BACKUP_EXTENSION = ".rhqbackup";
-
     private final DeploymentProperties deploymentProps;
     private final Set<File> zipFiles;
     private final Map<File, File> rawFiles;
@@ -306,23 +304,9 @@ public class Deployer {
         // 1. backup the files we want to retain for the admin to review
         if (!currentFilesToBackup.isEmpty()) {
             int deploymentId = originalDeploymentProps.getDeploymentId();
-            File backupDir = this.deploymentsMetadata.getDeploymentBackupDirectory(deploymentId);
-            debug("Backing up files to [", backupDir, "] as part of update deployment");
+            debug("Backing up files as part of update deployment");
             for (String fileToBackupPath : currentFilesToBackup) {
-                File backupFile;
-                File fileToBackup = new File(fileToBackupPath);
-                if (!fileToBackup.isAbsolute()) {
-                    backupFile = new File(backupDir, fileToBackupPath);
-                    fileToBackup = new File(this.destDir, fileToBackupPath);
-                } else {
-                    backupFile = new File(fileToBackupPath + BACKUP_EXTENSION);
-                }
-                backupFile.getParentFile().mkdirs();
-                FileUtil.copyFile(fileToBackup, backupFile);
-                if (diff != null) {
-                    diff.addBackedUpFile(fileToBackupPath, backupFile.getAbsolutePath());
-                }
-                debug("Backed up file [", fileToBackup, "] to [", backupFile, "]");
+                backupFile(diff, deploymentId, fileToBackupPath);
             }
         }
 
@@ -353,6 +337,54 @@ public class Deployer {
 
         debug("Update deployment finished.");
         return newFileHashCodeMap;
+    }
+
+    private void backupFile(DeployDifferences diff, int deploymentId, final String fileToBackupPath) throws Exception {
+        File bakFile;
+
+        // we need to play some games if we are on windows and a drive letter is specified
+        boolean isWindows = (File.separatorChar == '\\');
+        StringBuilder fileToBackupPathNoDriveLetter = null;
+        String driveLetter = null;
+
+        if (isWindows) {
+            fileToBackupPathNoDriveLetter = new StringBuilder(fileToBackupPath);
+            driveLetter = FileUtil.stripDriveLetter(fileToBackupPathNoDriveLetter);
+        }
+
+        File fileToBackup = new File(fileToBackupPath);
+        if (fileToBackup.isAbsolute()) {
+            File backupDir = this.deploymentsMetadata.getDeploymentExternalBackupDirectory(deploymentId);
+            if (isWindows && driveLetter != null) {
+                backupDir = new File(backupDir, "_" + driveLetter.toUpperCase());
+                bakFile = new File(backupDir, fileToBackupPathNoDriveLetter.toString());
+            } else {
+                bakFile = new File(backupDir, fileToBackupPath);
+            }
+        } else {
+            File backupDir = this.deploymentsMetadata.getDeploymentBackupDirectory(deploymentId);
+            if (isWindows && driveLetter != null) {
+                StringBuilder destDirAbsPathBuilder = new StringBuilder(this.destDir.getAbsolutePath());
+                String destDirDriveLetter = FileUtil.stripDriveLetter(destDirAbsPathBuilder);
+                if (destDirDriveLetter == null || driveLetter.equals(destDirDriveLetter)) {
+                    bakFile = new File(backupDir, fileToBackupPath);
+                    fileToBackup = new File(this.destDir, fileToBackupPathNoDriveLetter.toString());
+                } else {
+                    throw new Exception("Cannot backup relative path [" + fileToBackupPath
+                        + "] whose drive letter is different than the destination directory ["
+                        + this.destDir.getAbsolutePath() + "]");
+                }
+            } else {
+                bakFile = new File(backupDir, fileToBackupPath);
+                fileToBackup = new File(this.destDir, fileToBackupPath);
+            }
+        }
+        bakFile.getParentFile().mkdirs();
+        FileUtil.copyFile(fileToBackup, bakFile);
+        if (diff != null) {
+            diff.addBackedUpFile(fileToBackupPath, bakFile.getAbsolutePath());
+        }
+        debug("Backed up file [", fileToBackup, "] to [", bakFile, "]");
     }
 
     private FileHashcodeMap extractZipAndRawFiles(Map<String, String> currentFilesToLeaveAlone, DeployDifferences diff)

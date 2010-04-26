@@ -67,7 +67,6 @@ public class AntLauncher {
     public BundleAntProject executeBundleDeployFile(File buildFile, String targetName, Properties properties,
                                                     File logFile, boolean logStdOut)
             throws InvalidBuildFileException {
-
         parseBundleDeployFile(buildFile);
                 
         BundleAntProject project = new BundleAntProject();
@@ -75,12 +74,6 @@ public class AntLauncher {
         project.setCoreLoader(classLoader);
         project.init();
         project.setBaseDir(buildFile.getParentFile());
-
-        project.setUserProperty(MagicNames.ANT_FILE,
-                                buildFile.getAbsolutePath());
-        project.setUserProperty(MagicNames.ANT_FILE_TYPE,
-                                MagicNames.ANT_FILE_TYPE_FILE);        
-        ProjectHelper.configureProject(project, buildFile);
 
         PrintWriter logFileOutput = null;
         try {
@@ -90,10 +83,15 @@ public class AntLauncher {
                 for (Map.Entry<Object, Object> property : properties.entrySet()) {
                     // On the assumption that these properties will be slurped in via Properties.load we
                     // need to escape backslashes to have them treated as literals
-                    project.setProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
+                    project.setUserProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
                         "\\\\"));
                 }
             }
+            project.setUserProperty(MagicNames.ANT_FILE,
+                                buildFile.getAbsolutePath());
+            project.setUserProperty(MagicNames.ANT_FILE_TYPE,
+                                    MagicNames.ANT_FILE_TYPE_FILE);
+            ProjectHelper.configureProject(project, buildFile);
 
             // notice we are adding the listener after we set the properties - we do not want the
             // the properties echoed out in the log (in case they contain sensitive passwords)
@@ -172,7 +170,6 @@ public class AntLauncher {
     }
 
     private Properties buildTaskDefProperties(ClassLoader classLoader) throws IOException {
-
         Set<String> customTaskDefs = new HashSet<String>(1);
 
         customTaskDefs.add(ANTCONTRIB_ANT_TASKS);

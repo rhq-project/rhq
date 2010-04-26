@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
+import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -58,15 +59,17 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
     private File tmpDirectory;
 
     public void start(ResourceContext context) throws Exception {
-        resourceContext = context;
+        this.resourceContext = context;
         this.tmpDirectory = new File(context.getTemporaryDirectory(), "ant-bundle-plugin");
         this.tmpDirectory.mkdirs();
         if (!this.tmpDirectory.exists() || !this.tmpDirectory.isDirectory()) {
             throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process Ant bundles.");
         }
+        return;
     }
 
     public void stop() {
+        return;
     }
 
     public AvailabilityType getAvailability() {
@@ -98,10 +101,10 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                     throw new IllegalStateException("Bundle deployment does not specify install dir: "
                         + bundleDeployment);
                 }
-                antProps.setProperty(AntLauncher.DEPLOY_DIR_PROP, installDir);
+                antProps.setProperty(DeployPropertyNames.DEPLOY_DIR, installDir);
 
                 int deploymentId = bundleDeployment.getId();
-                antProps.setProperty(AntLauncher.DEPLOY_ID_PROP, Integer.toString(deploymentId));
+                antProps.setProperty(DeployPropertyNames.DEPLOY_ID, Integer.toString(deploymentId));
 
                 Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
                 for (Map.Entry<String, String> fact : sysFacts.entrySet()) {
@@ -125,9 +128,10 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                     }
                 }
 
-                // parse & execute, the ant script
+                // parse & execute the Ant script
                 AntLauncher antLauncher = new AntLauncher();
-                BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, null, antProps, logFile, true);
+                BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, antProps, logFile,
+                        true);
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {

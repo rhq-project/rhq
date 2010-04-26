@@ -121,8 +121,8 @@ public class AntLauncherTest {
 
     private Properties createInputProperties(String resourcePath) throws IOException {
         Properties inputProps = new Properties();
-        inputProps.setProperty(AntLauncher.DEPLOY_DIR_PROP, DEPLOY_DIR.getPath());
-        inputProps.setProperty(AntLauncher.DEPLOY_ID_PROP, "100");
+        inputProps.setProperty(DeployPropertyNames.DEPLOY_DIR, DEPLOY_DIR.getPath());
+        inputProps.setProperty(DeployPropertyNames.DEPLOY_ID, "100");
         InputStream inputStream = this.getClass().getResourceAsStream(resourcePath);
         try {
             inputProps.load(inputStream);

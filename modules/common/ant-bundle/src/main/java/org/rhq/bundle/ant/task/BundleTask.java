@@ -20,6 +20,7 @@ package org.rhq.bundle.ant.task;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
+import org.rhq.bundle.ant.DeployPropertyNames;
 
 import java.io.File;
 import java.util.Hashtable;
@@ -28,12 +29,6 @@ import java.util.Hashtable;
  * @author Ian Springer
  */
 public class BundleTask extends AbstractBundleTask {
-    // System property that should always be available to ant scripts - it's the location where the deployment should be installed
-    public static final String DEPLOY_DIR_PROP = "rhq.deploy.dir";
-
-    // System property that should always be available to ant scripts - it's the ID of the bundle deployment
-    public static final String DEPLOY_ID_PROP = "rhq.deploy.id";
-
     private String name;
     private String version;
     private String description;
@@ -55,34 +50,33 @@ public class BundleTask extends AbstractBundleTask {
         Hashtable projectProps = getProject().getProperties();
 
         // Make sure the requires System properties are defined and valid.
-        String deployDir = (String) projectProps.get(DEPLOY_DIR_PROP);
+        String deployDir = (String) projectProps.get(DeployPropertyNames.DEPLOY_DIR);
         if (deployDir == null) {
-            throw new BuildException("Required property [" + DEPLOY_DIR_PROP + "] was not specified.");
+            throw new BuildException("Required property [" + DeployPropertyNames.DEPLOY_DIR + "] was not specified.");
         }
         File deployDirFile = new File(deployDir);
         if (!deployDirFile.isAbsolute()) {
-            throw new BuildException("Value of property [" + DEPLOY_DIR_PROP + "] (" + deployDirFile
+            throw new BuildException("Value of property [" + DeployPropertyNames.DEPLOY_DIR + "] (" + deployDirFile
                 + ") is not an absolute path.");
         }
         getProject().setDeployDir(deployDirFile);
-        log(DEPLOY_DIR_PROP + "=\"" + deployDir + "\"", Project.MSG_DEBUG);
+        log(DeployPropertyNames.DEPLOY_DIR + "=\"" + deployDir + "\"", Project.MSG_DEBUG);
 
-        String deploymentIdStr = (String) projectProps.get(DEPLOY_ID_PROP);
+        String deploymentIdStr = (String) projectProps.get(DeployPropertyNames.DEPLOY_ID);
         if (deploymentIdStr == null) {
-            throw new BuildException("Required property [" + DEPLOY_ID_PROP + "] was not specified.");
+            throw new BuildException("Required property [" + DeployPropertyNames.DEPLOY_ID + "] was not specified.");
         }
         int deploymentId;
         try {
             deploymentId = Integer.parseInt(deploymentIdStr);
         } catch (Exception e) {
-            throw new BuildException("Value of property [" + DEPLOY_ID_PROP + "] (" + deploymentIdStr
+            throw new BuildException("Value of property [" + DeployPropertyNames.DEPLOY_ID + "] (" + deploymentIdStr
                 + ") is not valid.", e);
         }
         getProject().setDeploymentId(deploymentId);
-        log(DEPLOY_ID_PROP + "=\"" + deploymentId + "\"", Project.MSG_DEBUG);
+        log(DeployPropertyNames.DEPLOY_ID + "=\"" + deploymentId + "\"", Project.MSG_DEBUG);
 
         log("Executing Ant script for bundle '" + this.name + "' version " + this.version + "...");
-
     }
 
     public String getDescription() {

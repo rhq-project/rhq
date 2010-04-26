@@ -16,6 +16,17 @@
 
 <f:subview id="navigationTreeView">
 <ui:composition>
+    <!-- Define context menu outside of the tree form so rerendering this doesn't cause tree rerendering/reloading --> 
+    <h:form>
+       <rich:contextMenu attached="false" id="resourceMenu" 
+                         binding="#{ResourceTreeContextMenuUIBean.menu}"
+                         disableDefaultMenu="false" style="z-index: 50;" 
+                         submitMode="ajax" />
+       <rich:contextMenu attached="false" id="autoGroupMenu" 
+                         binding="#{AutoGroupTreeContextMenuUIBean.menu}"
+                         disableDefaultMenu="false" style="z-index: 50;" 
+                         submitMode="ajax" />
+    </h:form>
 
     <h:form id="leftNavTreeForm"> <!-- tree needs a form to be present -->
         <h:panelGroup id="leftTreeHolder">
@@ -45,7 +56,7 @@
                            nodeSelectListener="#{ResourceTreeStateAdvisor.nodeSelectListener}"
                            ajaxSubmitSelection="true"
                            showConnectingLines="false"
-                           nodeFace="#{treeNode.data.class.simpleName}"
+                           nodeFace="#{treeNode.nodeType}"
                            eventsQueue="resourceTreeQueue"
                            ignoreDupResponses="true">
                     <rich:recursiveTreeNodesAdaptor roots="#{ResourceTreeModelUIBean.roots}"
@@ -60,15 +71,11 @@
 
                         <a4j:support event="oncontextmenu" reRender="autoGroupMenu" timeout="5000"
                                      disableDefault="true" status="commonStatus" limitToList="true"
-                                     ajaxSingle="true" rendered="#{resourceTreeItem.data.resourceType != null}">
+                                     ajaxSingle="true" rendered="#{resourceTreeItem.data.resourceType != null}"
+                                     oncomplete="#{rich:component('autoGroupMenu')}.show(event, {})">
                                      
                             <f:param name="contextParentResourceId" value="#{resourceTreeItem.data.parentResource.id}"/>
                             <f:param name="contextAutoGroupResourceTypeId" value="#{resourceTreeItem.data.resourceType.id}"/>                           
-                            <rich:componentControl disableDefault="true" event="oncomplete" for="autoGroupMenu"
-                                                   operation="show">
-                                <f:param value="#{resourceTreeItem.data.parentResource.id}" name="id"/>
-                                <f:param value="#{resourceTreeItem.data.resourceType.name}" name="type"/>
-                            </rich:componentControl>
                         </a4j:support>
                                      
                         <h:outputText value="#{resourceTreeItem} "
@@ -91,16 +98,8 @@
                                    iconLeaf="/images/icons/Service_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png">
                         <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
                                      disableDefault="true" status="commonStatus" limitToList="true"
-                                     ajaxSingle="true">
+                                     ajaxSingle="true" oncomplete="#{rich:component('resourceMenu')}.show(event, {})">
                             <f:param name="contextResourceId" value="#{resourceTreeItem.data.id}"/>
-                            <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
-                                                   operation="show">
-                                <f:param value="#{resourceTreeItem.data.name}" name="name"/>
-                                <f:param value="#{resourceTreeItem.data.id}" name="id"/>
-                                <f:param value="#{resourceTreeItem.data.resourceType.name}" name="type"/>
-                                <f:param value="'#{resourceTreeItem.data.resourceType.operationDefinitions}'"
-                                         name="ops"/>
-                            </rich:componentControl>
                         </a4j:support>
                         <h:outputText value="#{resourceTreeItem}"
                                       styleClass="resourceLink" title="Right-click for more options."/>

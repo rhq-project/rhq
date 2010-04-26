@@ -34,12 +34,9 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
@@ -59,9 +56,6 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
      */
     @Test(enabled = ENABLED)
     public void testUpdateMeasurementDefinitions() throws Exception {
-
-        // cleanup previous run
-        cleanupTest();
 
         // Note, plugins are registered in new transactions. for tests, this means
         // you can't do everything in a trans and roll back at the end. You must clean up
@@ -134,7 +128,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             try {
                 cleanupTest();
             } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
                     + ".testUpdateMeasurementDefinition");
             }
         }
@@ -147,8 +141,6 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
      */
     @Test(enabled = ENABLED)
     public void testDeleteMeasurementDefinition() throws Exception {
-        // cleanup previous run
-        cleanupTest();
 
         // Note, plugins are registered in new transactions. for tests, this means
         // you can't do everything in a trans and roll back at the end. You must clean up
@@ -180,7 +172,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             try {
                 cleanupTest();
             } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
                     + ".testDeleteMeasurementDefinition");
             }
         }
@@ -195,9 +187,6 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
     @Test(enabled = ENABLED)
     public void testRenameServer() throws Exception {
 
-        // cleanup previous run
-        cleanupTest();
-
         Resource testResource = null;
         MeasurementSchedule sched = null;
         MeasurementBaseline baseline = null;
@@ -206,13 +195,12 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
         // Note, plugins are registered in new transactions. for tests, this means
         // you can't do everything in a trans and roll back at the end. You must clean up
         // manually.  Still, some work can be performed transactionally, as done below.
-        getTransactionManager().begin();
-
         try {
             try {
                 registerPlugin("update6-1.xml");
                 ResourceType server = getResourceType("testServer1");
 
+                getTransactionManager().begin();
                 EntityManager entityManager = getEntityManager();
 
                 getPluginId(entityManager);
@@ -223,7 +211,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
                 /*
                  * Create a Fake Resource and a MeasurementSchedule
                  */
-                testResource = new Resource("-test-", "-test resource", server);
+                testResource = new Resource("-test-", "-test resource-", server);
                 testResource.setUuid("" + new Random().nextInt());
                 entityManager.persist(testResource);
 
@@ -250,38 +238,27 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
 
             // Set up done, now replace the plugin with a new one.
 
+            System.out.println("Done with v1");
+
+            registerPlugin("update6-2.xml");
+
+            ResourceType server;
             try {
-                getTransactionManager().begin();
-
-                EntityManager entityManager = getEntityManager();
-                entityManager.flush();
-
-                System.out.println("Done with v1");
-
-                registerPlugin("update6-2.xml");
-
-                ResourceType server;
-                try {
-                    server = getResourceType("testServer1");
-                    assert server == null : "testServer1 found, but should not";
-                } catch (NoResultException nre) {
-                    ; // no issue 
-                }
-
-                server = getResourceType("testServer2");
-                assert server != null : "testServer2 not found";
-
-                getTransactionManager().commit();
-            } catch (Throwable t) {
-                getTransactionManager().rollback();
-                fail("update failed: " + t);
+                server = getResourceType("testServer1");
+                assert server == null : "testServer1 found, but should not";
+            } catch (NoResultException nre) {
+                ; // no issue 
             }
+
+            server = getResourceType("testServer2");
+            assert server != null : "testServer2 not found";
+
         } finally {
             // clean up
             try {
                 cleanupTest();
             } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testRenameServer");
+                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testRenameServer");
             }
         }
     }
@@ -294,21 +271,15 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
     @Test(enabled = ENABLED)
     public void testAddScheduleOnExistingResources() throws Exception {
 
-        Throwable savedThrowable = null;
-
-        // cleanup previous run
-        cleanupTest();
-
         // Note, plugins are registered in new transactions. for tests, this means
         // you can't do everything in a trans and roll back at the end. You must clean up
         // manually.  Still, some work can be performed transactionally, as done below.
-        getTransactionManager().begin();
-
         try {
             try {
                 registerPlugin("update7-1.xml");
                 ResourceType platform = getResourceType("myPlatform7");
 
+                getTransactionManager().begin();
                 EntityManager entityManager = getEntityManager();
 
                 getPluginId(entityManager);
@@ -333,142 +304,43 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
 
             // Set up done, now replace the plugin with a new one.
 
+            System.out.println("Done with v1");
+
             try {
-                getTransactionManager().begin();
-
-                EntityManager entityManager = getEntityManager();
-                entityManager.flush();
-
-                System.out.println("Done with v1");
-
-                try {
-                    registerPlugin("update7-2.xml");
-                } catch (Throwable t) {
-                    System.err.println(t);
-                }
-
-                ResourceType platform = getResourceType("myPlatform7");
-                Set<MeasurementDefinition> definitions2 = platform.getMetricDefinitions();
-                assert definitions2.size() == 2;
-
-                List<Resource> resources = platform.getResources();
-                assert resources != null;
-                assert resources.size() == 1;
-
-                Resource res = resources.get(0);
-                Set<MeasurementSchedule> schedules = res.getSchedules();
-                assert schedules != null;
-                /*
-                 * We only expect one schedule for the freshly created metric, as the resource we
-                 * created earlier has no schedule attached yet (in the test).
-                 * In the "real world" it would get its schedules on inventory sync time.
-                 */
-                assert schedules.size() == 1 : "Did not find the expected 1 new schedule, but: " + schedules.size();
-                getTransactionManager().commit();
-
+                registerPlugin("update7-2.xml");
             } catch (Throwable t) {
-                getTransactionManager().rollback();
-                fail("update failed: " + t);
+                System.err.println(t);
             }
+
+            ResourceType platform = getResourceType("myPlatform7");
+            Set<MeasurementDefinition> definitions2 = platform.getMetricDefinitions();
+            assert definitions2.size() == 2;
+
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            ResourceCriteria c = new ResourceCriteria();
+            c.addFilterResourceTypeId(platform.getId());
+            c.addFilterInventoryStatus(InventoryStatus.NEW);
+            c.fetchSchedules(true);
+            List<Resource> resources = LookupUtil.getResourceManager().findResourcesByCriteria(overlord, c);
+            assert resources != null;
+            assertEquals(1, resources.size());
+
+            Resource res = resources.get(0);
+            Set<MeasurementSchedule> schedules = res.getSchedules();
+            assert schedules != null;
+            /*
+             * We only expect one schedule for the freshly created metric, as the resource we
+             * created earlier has no schedule attached yet (in the test).
+             * In the "real world" it would get its schedules on inventory sync time.
+             */
+            assert schedules.size() == 1 : "Did not find the expected 1 new schedule, but: " + schedules.size();
         } finally {
             // clean up
             try {
                 cleanupTest();
             } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testRenameServer");
+                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testRenameServer");
             }
         }
-
-        if (savedThrowable != null)
-            throw new Exception(savedThrowable);
     }
-
-    private void cleanupTest() throws Exception {
-        try {
-            cleanupResourceType("testServer1");
-            cleanupResourceType("testServer2");
-            cleanupResourceType("myPlatform7");
-
-            getTransactionManager().begin();
-            EntityManager entityManager = getEntityManager();
-
-            try {
-                agentId = getAgentId(entityManager);
-                Agent agent = entityManager.getReference(Agent.class, agentId);
-                if (null != agent) {
-                    entityManager.remove(agent);
-                }
-            } catch (Exception e) {
-                // ignore, agent does not exist
-            }
-
-            try {
-                plugin1Id = getPluginId(entityManager);
-                Plugin plugin1 = entityManager.getReference(Plugin.class, plugin1Id);
-                if (null != plugin1) {
-                    entityManager.remove(plugin1);
-                }
-            } catch (Exception e) {
-                // ignore, plugin1 does not exist
-            }
-
-        } finally {
-            getTransactionManager().commit();
-        }
-    }
-
-    private void cleanupResourceType(String rtName) throws Exception {
-        ResourceType rt = getResourceType(rtName);
-
-        if (null != rt) {
-            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-
-            // delete any resources first
-            ResourceCriteria c = new ResourceCriteria();
-            c.addFilterResourceTypeId(rt.getId());
-            c.addFilterInventoryStatus(InventoryStatus.NEW);
-            List<Resource> doomedResources = resourceManager.findResourcesByCriteria(overlord, c);
-            c.addFilterInventoryStatus(InventoryStatus.DELETED);
-            doomedResources.addAll(resourceManager.findResourcesByCriteria(overlord, c));
-            c.addFilterInventoryStatus(InventoryStatus.UNINVENTORIED);
-            doomedResources.addAll(resourceManager.findResourcesByCriteria(overlord, c));
-            // invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
-            // perform in-band and out-of-band work in quick succession
-            for (Resource doomed : doomedResources) {
-                List<Integer> deletedIds = resourceManager.deleteResource(overlord, doomed.getId());
-                for (Integer deletedResourceId : deletedIds) {
-                    resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
-                }
-            }
-
-            // Measurement defs go away via cascade remove
-            /*
-            Set<MeasurementDefinition> defs = server.getMetricDefinitions();
-            if (defs != null) {
-                Iterator<MeasurementDefinition> defIter = defs.iterator();
-                while (defIter.hasNext()) {
-                    MeasurementDefinition def = defIter.next();
-                    // we can directly delete this, as there are no schdules on v2 defined.
-                    em.remove(def);
-                    defIter.remove();
-                }
-            }
-            */
-
-            getTransactionManager().begin();
-            EntityManager em = getEntityManager();
-
-            rt = em.find(ResourceType.class, rt.getId());
-            ResourceType parent = rt.getParentResourceTypes().isEmpty() ? null : rt.getParentResourceTypes().iterator()
-                .next();
-            em.remove(rt);
-            if (null != parent) {
-                em.remove(parent);
-            }
-
-            getTransactionManager().commit();
-        }
-    }
-
 }

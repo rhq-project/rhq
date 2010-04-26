@@ -21,59 +21,85 @@ package org.rhq.enterprise.server.resource.metadata.test;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.EntityManager;
+import javax.transaction.Status;
+
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
+/**
+ * Note, plugins are registered in new transactions. for tests, this means
+ * you can't do everything in a trans and roll back at the end. You must clean up manually.
+ */
 public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
+
+    private static final boolean ENABLED = true;
 
     @Override
     protected String getSubsystemDirectory() {
         return "resource";
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testSingleSubCategoryCreate() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("one-subcat-v1_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertAppsSubCategory(subCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testSingleSubCategoryCreate");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testSingleSubCategoryAddFromEmpty() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("no-subcat.xml", "1.0");
-
             registerPlugin("one-subcat-v1_0.xml", "2.0");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertAppsSubCategory(subCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testSingleSubCategoryAddFromEmpty");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testSingleSubCategoryAddSibling() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("one-subcat-v1_0.xml", "1.0");
-
             registerPlugin("two-subcat.xml", "2.0");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 2, 0);
             assertAppsSubCategory(subCat);
@@ -81,264 +107,388 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             subCat = assertSubCategory(server1.getChildSubCategories(), 2, 1);
             assertServicesSubCategory(subCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testSingleSubCategoryAddSibling");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testSingleSubCategoryReplace() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("one-subcat-v1_0.xml");
-
             registerPlugin("one-subcat-v2_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertServicesSubCategory(subCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testSingleSubCategoryReplace");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testSingleSubCategoryRemoveOneFromTwo() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("two-subcat.xml", "1.0");
-
             registerPlugin("one-subcat-v2_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertServicesSubCategory(subCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testSingleSubCategoryRemoveOneFromTwo");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testSingleSubCategoryUpdate() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("one-subcat-v1_0.xml");
-
             registerPlugin("one-subcat-v1_1.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertApps2SubCategory(subCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testSingleSubCategoryUpdate");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testSingleSubCategoryRemove() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("one-subcat-v1_0.xml");
-
             registerPlugin("no-subcat.xml", "2.0");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             assertSubCategory(server1.getChildSubCategories(), 0, null);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testSingleSubCategoryRemove");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryReplace() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-v1_0.xml");
-
             registerPlugin("nested-subcat-v2_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
             assertServicesSubCategory(childSubCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryReplace");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryAddFromEmpty() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("no-subcat.xml", "0.0");
-
             registerPlugin("nested-subcat-v1_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
             assertAppsSubCategory(childSubCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryAddFromEmpty");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryRemoveOneFromTwo() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-2children.xml", "1.0");
-
             registerPlugin("nested-subcat-v2_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
             assertServicesSubCategory(childSubCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryRemoveOneFromTwo");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryAddSibling() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-v2_0.xml");
-
             registerPlugin("nested-subcat-2children.xml", "3.0");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 2, 1);
             assertAppsSubCategory(childSubCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryAddSibling");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryRemoveChild() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-grandchild.xml", "1.0");
-
             registerPlugin("nested-subcat-v2_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
 
             assertServicesSubCategory(childSubCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryRemoveChild");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryAddChild() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-v2_0.xml");
-
             registerPlugin("nested-subcat-grandchild.xml", "3.0");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
             ResourceSubCategory grandChildSubCat = assertSubCategory(childSubCat.getChildSubCategories(), 1, 0);
             assertAppsSubCategory(grandChildSubCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryAddChild");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryUpdate() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-v1_0.xml");
-
             registerPlugin("nested-subcat-v1_1.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
 
             assertApps2SubCategory(childSubCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryUpdate");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryAdd() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("one-subcat-v3_0.xml");
-
             registerPlugin("nested-subcat-v1_1.xml", "4.0");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
 
             assertApps2SubCategory(childSubCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryAdd");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryCreate() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-v1_1.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
 
             assertApps2SubCategory(childSubCat);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryCreate");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryRemoveAll() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-v1_0.xml");
-
             registerPlugin("no-subcat.xml", "2.0");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
+
             assertSubCategory(server1.getChildSubCategories(), 0, null);
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryRemoveAll");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryCreateWithServices() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-services-v1_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
+
             Set<ResourceType> children = server1.getChildResourceTypes();
             assert children.size() == 3;
 
@@ -348,17 +498,27 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             ResourceType apps = getResourceType("testApp1");
             assertAppsSubCategory(apps.getSubCategory());
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryCreateWithServices");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryCreateWithServices2() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-services-v2_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
+
             Set<ResourceType> children = server1.getChildResourceTypes();
             assert children.size() == 2;
 
@@ -368,27 +528,41 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             ResourceType apps = getResourceType("testApp1");
             assert apps.getSubCategory().getName().equals("applications2");
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryCreateWithServices2");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testNestedSubCategoryUpdateWithServices() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("nested-subcat-services-v1_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
+
             Set<ResourceType> children = server1.getChildResourceTypes();
             assert children.size() == 3;
             List<ResourceSubCategory> subCategories = server1.getChildSubCategories();
             assert subCategories != null;
             assert subCategories.size() == 1; // subcat with name "parent"
             // TODO check for 2 children of this subcategory
+            getTransactionManager().rollback();
 
             registerPlugin("nested-subcat-services-v2_0.xml");
-
             server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
+
             children = server1.getChildResourceTypes();
             assert children.size() == 2 : "Expected 2 children, but got " + children.size();
             subCategories = server1.getChildSubCategories(); // "testServer1"
@@ -413,45 +587,64 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceSubCategory subCategory = service2.getSubCategory(); // the subcategory attribute
             // TODO the subCategory is currently not persisted to the DB, so can not be found
-            subCategory = getEntityManager().find(ResourceSubCategory.class, subCategory.getId());
+            subCategory = em.find(ResourceSubCategory.class, subCategory.getId());
             String name = subCategory.getName();
             assert name.equals("applications2") : "Expected 'applictions2', but got " + name;
 
             ResourceType apps = getResourceType("testApp1");
             assert apps.getSubCategory().getName().equals("applications2");
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testNestedSubCategoryUpdateWithServices");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testRemoveService() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("services-v1_0.xml");
             registerPlugin("services-v2_0.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
+
             Set<ResourceType> children = server1.getChildResourceTypes();
             assert children.size() == 2 : "Incorrect number of child resource types, should have been 2 but was ["
                 + children.size() + "].";
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testRemoveService");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testSimpleSubCategoryCreate() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("test-subcategories.xml");
-
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assert subCat.getName().equals("applications");
 
             ResourceType server2 = getResourceType("testServer2");
+            server2 = em.find(ResourceType.class, server2.getId());
 
             assert server2.getChildSubCategories() != null;
             assert server2.getChildSubCategories().size() == 2 : "Unexpected number of subcategories ["
@@ -464,26 +657,35 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             subCat = childSubCats.get(1);
             assert subCat.getName().equals("destinations");
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testSimpleSubCategoryCreate");
+            }
         }
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testSimpleSubCategoryUpdate() throws Exception {
-        getTransactionManager().begin();
         try {
             registerPlugin("test-subcategories.xml", "1.0");
-
             // pretend to be an updated plugin
             registerPlugin("test-subcategories2.xml", "2.0");
-
             // now test how the subcategories got updated
             ResourceType server1 = getResourceType("testServer1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            server1 = em.find(ResourceType.class, server1.getId());
 
             ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertApps2SubCategory(subCat);
 
             ResourceType server2 = getResourceType("testServer2");
+            server2 = em.find(ResourceType.class, server2.getId());
 
             assert server2.getChildSubCategories() != null;
 
@@ -507,7 +709,15 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             subCat = childSubCats.get(1);
             assert subCat.getName().equals("destinations");
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testSimpleSubCategoryUpdate");
+            }
         }
     }
 
@@ -516,36 +726,46 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
      * expected.
      * @throws Exception
      */
-    @Test
+    @Test(enabled = ENABLED)
     public void testAddIllegalSubcategory1() throws Exception {
-        boolean noException = true;
-        getTransactionManager().begin();
         try {
             registerPlugin("illegal-subcat-1.xml");
-            // We should not come here, but have bailed out with an exception
+            fail("Exception was not thrown.");
         } catch (Throwable t) {
-            noException = false;
-            //            System.out.println(t.getMessage());
+            // expected
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testAddIllegalSubcategory1");
+            }
         }
-        if (noException)
-            throw new Exception("MetadataManager did not throw an exception as expected.");
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void testReferenceToUndefinedChildSubCategory() throws Exception {
         System.out.println("= testReferenceToUndefinedChildSubCategory");
-        getTransactionManager().begin();
         try {
             try {
                 registerPlugin("undefined-child-subcat-1.xml");
                 fail("Exception was not thrown.");
             } catch (Exception ignored) {
-                Exception e = ignored;
+                // expected
             }
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testReferenceToUndefinedChildSubCategory");
+            }
         }
     }
 

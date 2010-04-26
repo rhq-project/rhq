@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.server.plugins.ant;
 
 import java.io.ByteArrayInputStream;
@@ -55,21 +54,21 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         this.tmpDirectory = new File(this.context.getTemporaryDirectory(), "ant-bundle-server-plugin");
         this.tmpDirectory.mkdirs();
         if (!this.tmpDirectory.exists() || !this.tmpDirectory.isDirectory()) {
-            throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process ant bundles");
+            throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process Ant bundles");
         }
-        log.debug("The ant bundle plugin has been initialized: " + this);
+        log.debug("The Ant bundle plugin has been initialized: " + this);
     }
 
     public void start() {
-        log.debug("The ant bundle plugin has started: " + this);
+        log.debug("The Ant bundle plugin has started: " + this);
     }
 
     public void stop() {
-        log.debug("The ant bundle plugin has stopped: " + this);
+        log.debug("The Ant bundle plugin has stopped: " + this);
     }
 
     public void shutdown() {
-        log.debug("The ant bundle plugin has been shut down: " + this);
+        log.debug("The Ant bundle plugin has been shut down: " + this);
     }
 
     public RecipeParseResults parseRecipe(String recipe) throws Exception {
@@ -90,7 +89,7 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
 
             // parse, but do not execute, the Ant script
             AntLauncher antLauncher = new AntLauncher();
-            BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, null, null, logFile, false);
+            BundleAntProject project = antLauncher.parseBundleDeployFile(recipeFile);
 
             // obtain the parse results
             deploymentProps = new DeploymentProperties(0, project.getBundleName(),

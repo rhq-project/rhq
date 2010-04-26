@@ -18,6 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Window;
@@ -33,6 +40,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
@@ -45,13 +53,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * A server-side SmartGWT DataSource for CRUD of {@link Alert}s.
@@ -107,7 +108,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         DataSourceTextField ctimeField = new DataSourceTextField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
         fields.add(ctimeField);
 
-        DataSourceBooleanField boolField = new DataSourceBooleanField("ack","Ack'd");
+        DataSourceBooleanField boolField = new DataSourceBooleanField("ack", "Ack'd");
         boolField.setCanSortClientOnly(true);
         fields.add(boolField);
 
@@ -127,14 +128,17 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         this.alertService.deleteResourceAlerts(alertIds, new AsyncCallback<Void>() {
             public void onSuccess(Void blah) {
-                CoreGUI.getMessageCenter().notify(new Message("Deleted ["+ alertIds.length + "] alerts", Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Deleted [" + alertIds.length + "] alerts", Message.Severity.Info));
                 System.out.println("Deleted Alerts with id's: " + Arrays.toString(alertIds) + ".");
                 alertsView.refresh();
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete Alerts with id's: " + Arrays.toString(alertIds), caught);
-                System.err.println("Failed to delete Alerts with id's " + Arrays.toString(alertIds) + " - cause: " + caught);
+                CoreGUI.getErrorHandler().handleError(
+                    "Failed to delete Alerts with id's: " + Arrays.toString(alertIds), caught);
+                System.err.println("Failed to delete Alerts with id's " + Arrays.toString(alertIds) + " - cause: "
+                    + caught);
             }
         });
     }
@@ -189,7 +193,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
     @Override
     public Alert copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override
@@ -200,8 +204,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         record.setAttribute("name", from.getAlertDefinition().getName());
         record.setAttribute("priority", from.getAlertDefinition().getPriority().name());
         record.setAttribute("ctime", DATE_TIME_FORMAT.format(new Date(from.getCtime())));
-        if (from.getAckTime() >0)
-            record.setAttribute("ack","true");
+        if (from.getAcknowledgeTime() > 0) {
+            record.setAttribute("ack", "true");
+        }
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;
@@ -231,17 +236,17 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         for (AlertConditionLog log : from.getConditionLogs()) {
             AlertCondition condition = log.getCondition();
             DataClass dc = new DataClass();
-            dc.setAttribute("text",AlertFormatUtility.formatAlertConditionForDisplay(condition));
+            dc.setAttribute("text", AlertFormatUtility.formatAlertConditionForDisplay(condition));
             String value = log.getValue();
             if (condition.getMeasurementDefinition() != null) {
                 value = MeasurementConverterClient.format(Double.valueOf(log.getValue()), condition
                     .getMeasurementDefinition().getUnits(), true);
             }
-            dc.setAttribute("value",value);
+            dc.setAttribute("value", value);
             conditions[i++] = dc;
         }
-        record.setAttribute("conditionLogs",conditions);
-        record.setAttribute("conditionExpression",from.getAlertDefinition().getConditionExpression());
+        record.setAttribute("conditionLogs", conditions);
+        record.setAttribute("conditionExpression", from.getAlertDefinition().getConditionExpression());
 
         String recoveryInfo = AlertFormatUtility.getAlertRecoveryInfo(from);
         record.setAttribute("recoveryInfo", recoveryInfo);
@@ -249,23 +254,23 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         // Alert notification logs
         DataClass[] notifications = new DataClass[from.getAlertNotificationLogs().size()];
         i = 0;
-        for(AlertNotificationLog log : from.getAlertNotificationLogs()) {
+        for (AlertNotificationLog log : from.getAlertNotificationLogs()) {
             DataClass dc = new DataClass();
-            dc.setAttribute("sender",log.getSender());
-            dc.setAttribute("status",log.getResultState());
-            dc.setAttribute("message",log.getMessage());
-            dc.setAttribute("allEmails",log.getAllEmails());
-            dc.setAttribute("badEmails",log.getBadEmails());
+            dc.setAttribute("sender", log.getSender());
+            dc.setAttribute("status", log.getResultState());
+            dc.setAttribute("message", log.getMessage());
+            dc.setAttribute("allEmails", log.getAllEmails());
+            dc.setAttribute("badEmails", log.getBadEmails());
 
             notifications[i++] = dc;
 
         }
-        record.setAttribute("notificationLogs",notifications);
+        record.setAttribute("notificationLogs", notifications);
         return record;
     }
 
     protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData ();
+        JavaScriptObject data = request.getData();
         ListGridRecord record = new ListGridRecord(data);
         Window.alert(String.valueOf(record.getAttributeAsInt("id")));
     }
@@ -283,15 +288,18 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         this.alertService.acknowledgeResourceAlerts(alertIds, new AsyncCallback<Void>() {
             public void onSuccess(Void blah) {
-                CoreGUI.getMessageCenter().notify(new Message("Acknowledged ["+ alertIds.length + "] alerts", Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Acknowledged [" + alertIds.length + "] alerts", Message.Severity.Info));
 
                 System.out.println("Acknowledged Alerts with id's: " + Arrays.toString(alertIds) + ".");
                 alertsView.refresh();
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to acknowledge Alerts with id's: " + Arrays.toString(alertIds), caught);
-                System.err.println("Failed to acknowledge Alerts with id's " + Arrays.toString(alertIds) + " - cause: " + caught);
+                CoreGUI.getErrorHandler().handleError(
+                    "Failed to acknowledge Alerts with id's: " + Arrays.toString(alertIds), caught);
+                System.err.println("Failed to acknowledge Alerts with id's " + Arrays.toString(alertIds) + " - cause: "
+                    + caught);
             }
         });
     }

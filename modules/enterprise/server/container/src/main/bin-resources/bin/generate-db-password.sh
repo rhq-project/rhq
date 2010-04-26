@@ -155,7 +155,7 @@ fi
 JAVA="$RHQ_SERVER_JAVA_EXE_FILE_PATH"
 export JAVA
 
-if [ $# == 0 ]
+if [ $# -eq 0 ]
 then
     echo "Usage generate-db-password <password>"
     exit 1

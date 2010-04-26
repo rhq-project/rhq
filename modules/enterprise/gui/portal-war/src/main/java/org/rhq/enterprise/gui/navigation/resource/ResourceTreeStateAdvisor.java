@@ -31,10 +31,10 @@ import org.richfaces.component.state.TreeStateAdvisor;
 import org.richfaces.model.TreeRowKey;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.composite.LockedResource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
-import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
+import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -102,49 +102,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
         ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
 
-        if (node != null) {
-            if (node.getData() instanceof LockedResource) {
-                state.setSelected(e.getOldSelection());
-
-                FacesContext.getCurrentInstance().addMessage(
-                    "leftNavTreeForm:leftNavTree",
-                    new FacesMessage(FacesMessage.SEVERITY_WARN,
-                        "You have not been granted view access to this resource", null));
-
-                return;
-
-            } else if (node.getData() instanceof Resource) {
-                if (redirectTo(node) == false) { // upon redirect failure, reselect previous node
-                    state.setSelected(e.getOldSelection());
-                }
-            } else if (node.getData() instanceof AutoGroupComposite) {
-                AutoGroupComposite ag = (AutoGroupComposite) node.getData();
-
-                if (ag.getSubcategory() != null) {
-                    state.setSelected(e.getOldSelection());
-                    // this is a subcategory or subsubcategory, no page to display right now
-                    FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
-                        new FacesMessage(FacesMessage.SEVERITY_WARN, "No subcategory pages exist", null));
-
-                    return;
-                } else {
-                    if (ag.getMemberCount() != node.getChildren().size()) {
-                        // you don't have access to every autogroup resource
-                        state.setSelected(e.getOldSelection());
-                        FacesContext.getCurrentInstance().addMessage(
-                            "leftNavTreeForm:leftNavTree",
-                            new FacesMessage(FacesMessage.SEVERITY_WARN,
-                                "You must have view access to all resources in an autogroup to view it", null));
-
-                        return;
-                    } else {
-                        if (redirectTo(node) == false) { // upon redirect failure, reselect previous node
-                            state.setSelected(e.getOldSelection());
-                        }
-                    }
-                }
-
-            }
+        if (node != null && !redirectTo(node)) {
+            state.setSelected(e.getOldSelection());
         }
     }
 
@@ -191,12 +150,12 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     }
 
     private boolean preopen(ResourceTreeNode resourceTreeNode, int selectedResourceId, int selectedAGTypeId) {
-        if (resourceTreeNode.getData() instanceof Resource && selectedAGTypeId == 0) {
-            if (((Resource) resourceTreeNode.getData()).getId() == selectedResourceId) {
+        if (resourceTreeNode.getData() instanceof ResourceFlyweight && selectedAGTypeId == 0) {
+            if (((ResourceFlyweight) resourceTreeNode.getData()).getId() == selectedResourceId) {
                 return true;
             }
-        } else if (resourceTreeNode.getData() instanceof AutoGroupComposite) {
-            AutoGroupComposite ag = (AutoGroupComposite) resourceTreeNode.getData();
+        } else if (resourceTreeNode.getData() instanceof AutoGroupCompositeFlyweight) {
+            AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) resourceTreeNode.getData();
             if (ag.getParentResource().getId() == selectedResourceId && ag.getResourceType() != null
                 && ag.getResourceType().getId() == selectedAGTypeId) {
                 return true;
@@ -220,8 +179,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
 
         if (this.selecteAGTypeId > 0) {
-            if (node.getData() instanceof AutoGroupComposite) {
-                AutoGroupComposite ag = (AutoGroupComposite) node.getData();
+            if (node.getData() instanceof AutoGroupCompositeFlyweight) {
+                AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) node.getData();
                 if (ag.getParentResource() != null && ag.getResourceType() != null
                     && String.valueOf(ag.getParentResource().getId()).equals(parent)
                     && String.valueOf(ag.getResourceType().getId()).equals(type)) {
@@ -229,8 +188,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 }
             }
         }
-        if (node.getData() instanceof Resource) {
-            if (String.valueOf(((Resource) node.getData()).getId()).equals(id)) {
+        if (node.getData() instanceof ResourceFlyweight) {
+            if (String.valueOf(((ResourceFlyweight) node.getData()).getId()).equals(id)) {
                 return Boolean.TRUE;
             }
         }
@@ -255,57 +214,77 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
 
         String path = "";
-        if (node.getData() instanceof Resource) {
-            path = FacesContextUtility.getRequest().getRequestURI();
+        if (node.getData() instanceof ResourceFlyweight) {
+            ResourceFlyweight flyweight = (ResourceFlyweight) node.getData();
+            
+            if (flyweight.isLocked()) {
+                FacesContext.getCurrentInstance().addMessage(
+                    "leftNavTreeForm:leftNavTree",
+                    new FacesMessage(FacesMessage.SEVERITY_WARN,
+                        "You have not been granted view access to this resource", null));
 
-            Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData()).getId());
-            ResourceFacets facets = this.resourceTypeManager.getResourceFacets(resource.getResourceType().getId());
+                return false;
+            } else {            
+                path = FacesContextUtility.getRequest().getRequestURI();
 
-            String fallbackPath = FunctionTagLibrary.getDefaultResourceTabURL();
+                //Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData()).getId());
+                ResourceFacets facets = this.resourceTypeManager.getResourceFacets(flyweight.getResourceType()
+                    .getId());
 
-            // Switching from a auto group view... default to monitor page
-            if (!path.startsWith("/rhq/resource")) {
-                path = fallbackPath;
-            } else {
-                if ((path.startsWith("/rhq/resource/configuration/") && !facets.isConfiguration())
-                    || (path.startsWith("/rhq/resource/content/") && !facets.isContent())
-                    || (path.startsWith("/rhq/resource/operation") && !facets.isOperation())
-                    || (path.startsWith("/rhq/resource/events") && !facets.isEvent())) {
-                    // This resource doesn't support those facets
+                String fallbackPath = FunctionTagLibrary.getDefaultResourceTabURL();
+
+                // Switching from a auto group view... default to monitor page
+                if (!path.startsWith("/rhq/resource")) {
                     path = fallbackPath;
-                } else if ((path.startsWith("/rhq/resource/configuration/view-map.xhtml")
-                    || path.startsWith("/rhq/resource/configuration/edit-map.xhtml")
-                    || path.startsWith("/rhq/resource/configuration/add-map.xhtml") || path
-                    .startsWith("/rhq/resource/configuration/edit.xhtml")
-                    && facets.isConfiguration())) {
-                    path = "/rhq/resource/configuration/view.xhtml";
+                } else {
+                    if ((path.startsWith("/rhq/resource/configuration/") && !facets.isConfiguration())
+                        || (path.startsWith("/rhq/resource/content/") && !facets.isContent())
+                        || (path.startsWith("/rhq/resource/operation") && !facets.isOperation())
+                        || (path.startsWith("/rhq/resource/events") && !facets.isEvent())) {
+                        // This resource doesn't support those facets
+                        path = fallbackPath;
+                    } else if ((path.startsWith("/rhq/resource/configuration/view-map.xhtml")
+                        || path.startsWith("/rhq/resource/configuration/edit-map.xhtml")
+                        || path.startsWith("/rhq/resource/configuration/add-map.xhtml") || path
+                        .startsWith("/rhq/resource/configuration/edit.xhtml")
+                        && facets.isConfiguration())) {
+                        path = "/rhq/resource/configuration/view.xhtml";
 
-                } else if (!path.startsWith("/rhq/resource/content/view.xhtml")
-                    && path.startsWith("/rhq/resource/content/") && facets.isContent()) {
-                    path = "/rhq/resource/content/view.xhtml";
-                } else if (path.startsWith("/rhq/resource/inventory/")
-                    && !(path.startsWith("/rhq/resource/inventory/view.xhtml")
-                        || (facets.isPluginConfiguration() && path
-                            .startsWith("/rhq/resource/inventory/view-connection.xhtml")) || path
-                        .startsWith("/rhq/resource/inventory/view-agent.xhtml"))) {
-                    path = "/rhq/resource/inventory/view.xhtml";
-                } else if (path.startsWith("/rhq/resource/operation/resourceOperationHistoryDetails.xhtml")) {
-                    path = "/rhq/resource/operation/resourceOperationHistory.xhtml";
-                } else if (path.startsWith("/rhq/resource/operation/resourceOperationScheduleDetails.xhtml")) {
-                    path = "/rhq/resource/operation/resourceOperationSchedules.xhtml";
-                } else if (path.startsWith("/rhq/resource/monitor/response.xhtml") && !facets.isCallTime()) {
-                    path = fallbackPath;
+                    } else if (!path.startsWith("/rhq/resource/content/view.xhtml")
+                        && path.startsWith("/rhq/resource/content/") && facets.isContent()) {
+                        path = "/rhq/resource/content/view.xhtml";
+                    } else if (path.startsWith("/rhq/resource/inventory/")
+                        && !(path.startsWith("/rhq/resource/inventory/view.xhtml")
+                            || (facets.isPluginConfiguration() && path
+                                .startsWith("/rhq/resource/inventory/view-connection.xhtml")) || path
+                            .startsWith("/rhq/resource/inventory/view-agent.xhtml"))) {
+                        path = "/rhq/resource/inventory/view.xhtml";
+                    } else if (path.startsWith("/rhq/resource/operation/resourceOperationHistoryDetails.xhtml")) {
+                        path = "/rhq/resource/operation/resourceOperationHistory.xhtml";
+                    } else if (path.startsWith("/rhq/resource/operation/resourceOperationScheduleDetails.xhtml")) {
+                        path = "/rhq/resource/operation/resourceOperationSchedules.xhtml";
+                    } else if (path.startsWith("/rhq/resource/monitor/response.xhtml") && !facets.isCallTime()) {
+                        path = fallbackPath;
+                    }
                 }
-            }
 
-            path += ("?id=" + ((Resource) node.getData()).getId());
-        } else if (node.getData() instanceof AutoGroupComposite) {
-            AutoGroupComposite ag = (AutoGroupComposite) node.getData();
+                path += ("?id=" + flyweight.getId());
+            }
+        } else if (node.getData() instanceof AutoGroupCompositeFlyweight) {
+            AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) node.getData();
             if (ag.getResourceType() == null) {
                 //XXX this is a temporary measure. The subcategories will get the content page in the end.
                 FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree", 
                     new FacesMessage(FacesMessage.SEVERITY_WARN, "No subcategory page exists.", null));
                 
+                return false;
+            } else if (ag.getMemberCount() != node.getChildren().size()) {
+                // you don't have access to every autogroup resource
+                FacesContext.getCurrentInstance().addMessage(
+                    "leftNavTreeForm:leftNavTree",
+                    new FacesMessage(FacesMessage.SEVERITY_WARN,
+                        "You must have view access to all resources in an autogroup to view it", null));
+
                 return false;
             } else {
                 path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId() + "&type="

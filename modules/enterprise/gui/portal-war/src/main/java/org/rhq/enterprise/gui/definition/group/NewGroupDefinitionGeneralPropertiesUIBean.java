@@ -35,7 +35,7 @@ public class NewGroupDefinitionGeneralPropertiesUIBean {
     private static final String OUTCOME_FAILURE = "failure";
     private static final String OUTCOME_CANCEL = "cancel";
 
-    private static final String TEMPORARY_CREATE_MARKER = "temporaryGroupDef-Marker";
+    private static final String TEMPORARY_CREATE_MARKER = "temporaryCreateGroupDef-Marker";
     private static final String TEMPORARY_NAME_ATTRIBUTE = "temporaryGroupDefName";
     private static final String TEMPORARY_DESCRIPTION_ATTRIBUTE = "temporaryGroupDefDescription";
     private static final String TEMPORARY_RECURSIVE_ATTRIBUTE = "temporaryGroupDefRecursive";
@@ -73,13 +73,13 @@ public class NewGroupDefinitionGeneralPropertiesUIBean {
     }
 
     public String create() {
+        HttpSession session = FacesContextUtility.getRequest().getSession();
+
         try {
             GroupDefinition groupDefinition = new GroupDefinition(this.name);
 
             groupDefinition.setDescription(this.description);
             groupDefinition.setRecursive(this.recursive);
-
-            HttpSession session = FacesContextUtility.getRequest().getSession();
 
             session.setAttribute(TEMPORARY_CREATE_MARKER, "marker");
             session.setAttribute(TEMPORARY_NAME_ATTRIBUTE, name);
@@ -98,6 +98,8 @@ public class NewGroupDefinitionGeneralPropertiesUIBean {
                 + e.getMessage());
             return OUTCOME_FAILURE;
         }
+
+        session.setAttribute(TEMPORARY_CREATE_MARKER, null);
 
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
             "Definition created successfully.  Add conditions below.");

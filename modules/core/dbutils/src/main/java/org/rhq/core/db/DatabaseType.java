@@ -25,9 +25,12 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.List;
 
 import mazz.i18n.Logger;
+
+import org.rhq.core.db.ant.dbupgrade.SST_JavaTask;
 
 /**
  * A vendor-specific database with some vendor-specific method implementations in order to do things necessary for each
@@ -353,6 +356,40 @@ public abstract class DatabaseType {
     public void deleteColumn(Connection conn, String table, String column) throws SQLException {
         String sql = "ALTER TABLE " + table + " DROP COLUMN " + column;
         executeSql(conn, sql);
+    }
+
+    /**
+     * Executes the given SQL on the given connection. Use this method if you want to return the raw results
+     * for further processing.  This is especially useful when used in conjunction with {@link SST_JavaTask}.
+     *
+     * @param  conn the connection to the database that will execute the SQL
+     * @param  sql  the actual SQL to execute
+     *
+     * @throws SQLException
+     */
+    public List<Object[]> executeSelectSql(Connection conn, String sql) throws SQLException {
+        Statement ps = null;
+
+        try {
+            LOG.debug(DbUtilsI18NResourceKeys.EXECUTING_SQL, sql);
+            ps = conn.createStatement();
+
+            ResultSet resultSet = ps.executeQuery(sql);
+            ResultSetMetaData metadata = resultSet.getMetaData();
+
+            int numberColumns = metadata.getColumnCount();
+            List<Object[]> results = new ArrayList<Object[]>();
+            while (resultSet.next()) {
+                Object[] nextRow = new Object[numberColumns];
+                for (int i = 0; i < numberColumns; i++) {
+                    nextRow[i] = resultSet.getObject(i + 1);
+                }
+                results.add(nextRow);
+            }
+            return results;
+        } finally {
+            closeStatement(ps);
+        }
     }
 
     /**

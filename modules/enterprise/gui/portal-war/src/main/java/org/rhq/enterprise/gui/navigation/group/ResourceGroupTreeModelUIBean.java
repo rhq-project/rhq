@@ -28,11 +28,10 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
+import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
+import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.navigation.resource.ResourceTreeModelUIBean;
@@ -75,7 +74,7 @@ public class ResourceGroupTreeModelUIBean {
 
         long start = System.currentTimeMillis();
         long monitorId = HibernatePerformanceMonitor.get().start();
-        List<Resource> resources = resourceManager.findResourcesByCompatibleGroup(EnterpriseFacesContextUtility
+        List<ResourceFlyweight> resources = resourceManager.findResourcesByCompatibleGroup(EnterpriseFacesContextUtility
             .getSubject(), parentGroup.getId(), PageControl.getUnlimitedInstance());
         long end = System.currentTimeMillis();
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceGroupTree group resources");
@@ -96,7 +95,7 @@ public class ResourceGroupTreeModelUIBean {
         log.debug("Constructed tree in " + (end - start));
     }
 
-    private ResourceGroupTreeNode load(ResourceGroup group, List<Resource> resources, List<Integer> members) {
+    private ResourceGroupTreeNode load(ResourceGroup group, List<ResourceFlyweight> resources, List<Integer> members) {
 
         Set<ResourceTreeNode> memberNodes = new HashSet<ResourceTreeNode>();
 
@@ -119,8 +118,8 @@ public class ResourceGroupTreeModelUIBean {
             for (ResourceTreeNode node : childNode.getChildren()) {
                 Object level = node.getData();
 
-                if (level instanceof AutoGroupComposite) {
-                    AutoGroupComposite agc = (AutoGroupComposite) level;
+                if (level instanceof AutoGroupCompositeFlyweight) {
+                    AutoGroupCompositeFlyweight agc = (AutoGroupCompositeFlyweight) level;
                     Object key = agc.getResourceType() != null ? agc.getResourceType() : agc.getSubcategory();
 
                     ResourceGroupTreeNode childGroupNode = children.get(key);
@@ -131,9 +130,8 @@ public class ResourceGroupTreeModelUIBean {
                     childGroupNode.addMember(node);
                     childGroupNode.setClusterKey(parentNode.getClusterKey());
 
-                } else if (level instanceof ResourceWithAvailability) {
-                } else if (level instanceof Resource) {
-                    Resource res = (Resource) level;
+                } else if (level instanceof ResourceFlyweight) {
+                    ResourceFlyweight res = (ResourceFlyweight) level;
                     ClusterKey parentKey = parentNode.getClusterKey();
                     ClusterKey key = null;
                     if (parentKey == null) {

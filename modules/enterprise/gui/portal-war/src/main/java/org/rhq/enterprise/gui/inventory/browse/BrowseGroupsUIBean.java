@@ -3,17 +3,20 @@ package org.rhq.enterprise.gui.inventory.browse;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -93,4 +96,28 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
         // offer suggestions based on currentInputText
         return suggestions;
     }
+
+    public String deleteSelectedGroups() {
+        try {
+            Subject subject = getSubject();
+
+            String[] selectedGroups = getSelectedItems();
+            int[] groupIds = StringUtility.getIntArray(selectedGroups);
+
+            for (int nextGroupId : groupIds) {
+                groupManager.deleteResourceGroup(subject, nextGroupId);
+            }
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted selected groups");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete all selected groups", e);
+        }
+
+        return "success";
+    }
+
+    private String[] getSelectedItems() {
+        return FacesContextUtility.getRequest().getParameterValues("selectedItems");
+    }
+
 }

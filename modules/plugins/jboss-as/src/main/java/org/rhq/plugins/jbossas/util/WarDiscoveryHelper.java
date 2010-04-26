@@ -63,7 +63,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  */
 public class WarDiscoveryHelper {
     private static final Log LOG = LogFactory.getLog(WarDiscoveryHelper.class);
-    
+
     private static final String ROOT_WEBAPP_RT_LOG_FILE_NAME_BASE = "ROOT";
     private static final String RT_LOG_FILE_NAME_SUFFIX = "_rt.log";
 
@@ -140,7 +140,7 @@ public class WarDiscoveryHelper {
                         key += ",vhost=" + vhost;
 
                         Configuration pluginConfigClone;
-                        pluginConfigClone = discoResDetail.getPluginConfiguration().deepCopy();                        
+                        pluginConfigClone = discoResDetail.getPluginConfiguration().deepCopy();
 
                         String resourceName = baseResourceName + " (" + webModuleName + ")";
                         String resourceDescription = baseResourceDescription + " (" + webModuleName + ")";
@@ -266,7 +266,7 @@ public class WarDiscoveryHelper {
     }
 
     public static String getContextPath(String contextRoot) {
-        return ((contextRoot.equals(WarComponent.ROOT_WEBAPP_CONTEXT_ROOT)) ? "/" : "/" + contextRoot);
+        return ((contextRoot == null || contextRoot.equals(WarComponent.ROOT_WEBAPP_CONTEXT_ROOT)) ? "/" : "/" + contextRoot);
     }
 
     private static void initPluginConfiguration(WarDeploymentInformation deploymentInformation, File rtLogDir,

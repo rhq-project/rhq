@@ -42,7 +42,7 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
     private static final String OUTCOME_SUCCESS = "success";
     private static final String OUTCOME_FAILURE = "failure";
 
-    private static final String TEMPORARY_EDIT_MARKER = "temporaryGroupDef-Marker";
+    private static final String TEMPORARY_EDIT_MARKER = "temporaryEditGroupDef-Marker";
     private static final String TEMPORARY_EXPRESSION_ATTRIBUTE = "temporaryGroupDefExpr";
     private static final String TEMPORARY_NAME_ATTRIBUTE = "temporaryGroupDefName";
     private static final String TEMPORARY_DESCRIPTION_ATTRIBUTE = "temporaryGroupDefDescription";

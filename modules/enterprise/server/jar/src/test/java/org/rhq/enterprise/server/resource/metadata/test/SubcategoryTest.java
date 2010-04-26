@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.resource.metadata.test;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -29,8 +27,6 @@ import org.testng.annotations.Test;
  */
 public class SubcategoryTest extends UpdateSubsytemTestBase {
 
-    private final Log log = LogFactory.getLog(SubcategoryTest.class);
-
     @Override
     protected String getSubsystemDirectory() {
         return "resource";
@@ -38,14 +34,20 @@ public class SubcategoryTest extends UpdateSubsytemTestBase {
 
     @Test
     public void testAddResourcTypeWithKnownSubCategory() throws Exception {
-        getTransactionManager().begin();
+        // Note, plugins are registered in new transactions. for tests, this means
+        // you can't do everything in a trans and roll back at the end. You must clean up
+        // manually.
         try {
             registerPlugin("test-subcategories.xml");
             registerPlugin("test-subcategories3.xml");
-
-
         } finally {
-            getTransactionManager().rollback();
+            // clean up
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testAddResourcTypeWithKnownSubCategory");
+            }
         }
     }
 

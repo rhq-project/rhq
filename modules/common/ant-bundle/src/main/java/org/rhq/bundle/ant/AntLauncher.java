@@ -22,23 +22,12 @@
  */
 package org.rhq.bundle.ant;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.Vector;
+import java.io.*;
+import java.util.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Target;
-import org.apache.tools.ant.Task;
-import org.apache.tools.ant.UnknownElement;
+import org.apache.tools.ant.*;
 import org.apache.tools.ant.helper.AntXMLContext;
 import org.apache.tools.ant.helper.ProjectHelper2;
 
@@ -48,71 +37,59 @@ import org.rhq.bundle.ant.task.InputPropertyTask;
 
 /**
  * This object enables you to invoke an Ant script within the running VM. You can fully run the script
- * or you can ask that the script just be parsed but no tasks execute.
+ * or you can ask that the script just be parsed and validated but no tasks executed.
  * 
  * @author John Mazzitelli
  * @author Ian Springer
  */
-public class AntLauncher {
-    // system property that should always be available to ant scripts - its the location where the deployment should be installed
-    public static final String DEPLOY_DIR_PROP = "rhq.deploy.dir";
-
-    // system property that should always be available to ant scripts - its ID of the bundle deployment
-    public static final String DEPLOY_ID_PROP = "rhq.deploy.id";
-
-    // "out of box" we will provide the antcontrib optional tasks
+public class AntLauncher {        
+    // "out of box" we will provide the ant contrib optional tasks (from ant-contrib.jar)
     private static final String ANTCONTRIB_ANT_TASKS = "net/sf/antcontrib/antcontrib.properties";
+
+    // "out of box" we will provide the liquibase tasks (from liquibase-core.jar)
+    private static final String LIQUIBASE_ANT_TASKS = "liquibasetasks.properties";
+
+    // private constant ProjectHelper2.REFID_CONTEXT value
+    private static final String REFID_CONTEXT = "ant.parsing.context";
 
     private final Log log = LogFactory.getLog(AntLauncher.class);
 
     /**
      * Launches Ant and parses the given build file and optionally executes it.
      *
-     * @param buildFile      the build file that Ant will run
+     * @param buildFile      the path to the build file (i.e. rhq-deploy.xml)
      * @param targetName     the target to run, <code>null</code> will run the default target
-     * @param customTaskDefs the properties files found in classloader that contains all the taskdef definitions
      * @param properties     set of properties to set for the Ant task to access
      * @param logFile        where Ant messages will be logged
      * @param logStdOut      if <code>true</code>, log messages will be sent to stdout as well as the log file
-     * @param execute        if <code>true</code> the Ant script will be parsed and executed; otherwise, it will only be
-     *                       parsed and validated
-     *
-     * @throws RuntimeException
+     * @return the bundle Ant project containing information about the specified build file
      */
-    public BundleAntProject startAnt(File buildFile, String targetName, Set<String> customTaskDefs,
-        Properties properties, File logFile, boolean logStdOut, boolean execute) {
+    public BundleAntProject executeBundleDeployFile(File buildFile, String targetName, Properties properties,
+                                                    File logFile, boolean logStdOut)
+            throws InvalidBuildFileException {
+
+        parseBundleDeployFile(buildFile);
+                
+        BundleAntProject project = new BundleAntProject();
+        ClassLoader classLoader = getClass().getClassLoader();
+        project.setCoreLoader(classLoader);
+        project.init();
+        project.setBaseDir(buildFile.getParentFile());
+
+        project.setUserProperty(MagicNames.ANT_FILE,
+                                buildFile.getAbsolutePath());
+        project.setUserProperty(MagicNames.ANT_FILE_TYPE,
+                                MagicNames.ANT_FILE_TYPE_FILE);        
+        ProjectHelper.configureProject(project, buildFile);
 
         PrintWriter logFileOutput = null;
-
         try {
             logFileOutput = new PrintWriter(new FileOutputStream(logFile, true));
-
-            ClassLoader classLoader = getClass().getClassLoader();
-
-            if (customTaskDefs == null) {
-                customTaskDefs = new HashSet<String>(1);
-            }
-            customTaskDefs.add(ANTCONTRIB_ANT_TASKS); // we always want to provide these
-
-            Properties taskDefs = new Properties();
-            for (String customTaskDef : customTaskDefs) {
-                InputStream taskDefsStream = classLoader.getResourceAsStream(customTaskDef);
-                try {
-                    taskDefs.load(taskDefsStream);
-                } finally {
-                    taskDefsStream.close();
-                }
-            }
-
-            BundleAntProject project = new BundleAntProject();
-            project.setCoreLoader(classLoader);
-            project.init();
-            project.setBaseDir(buildFile.getParentFile());
 
             if (properties != null) {
                 for (Map.Entry<Object, Object> property : properties.entrySet()) {
                     // On the assumption that these properties will be slurped in via Properties.load we
-                    // need to escape backslashes to have them treated as literals 
+                    // need to escape backslashes to have them treated as literals
                     project.setProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
                         "\\\\"));
                 }
@@ -126,86 +103,18 @@ public class AntLauncher {
                 project.addBuildListener(new LoggerAntBuildListener(targetName, stdout, Project.MSG_INFO));
             }
 
-            for (Map.Entry<Object, Object> taskDef : taskDefs.entrySet()) {
-                project.addTaskDefinition(taskDef.getKey().toString(), Class.forName(taskDef.getValue().toString(),
-                    true, classLoader));
-            }
+            // Add tasks defs for the Ant tasks that we bundle, so user won't have to explicitly declare them in their
+            // build file.
+            addTaskDefsForBundledTasks(project);
 
-            class AllOrNothingTarget extends Target {
-                public boolean doNothing = true;
+            // First execute the implicit target, which contains all tasks defined in the build file outside of any
+            // targets.
+            project.executeTarget("");
 
-                @Override
-                public void execute() throws BuildException {
-                    if (!doNothing) {
-                        super.execute();
-                    }
-                }
-            }
-            AllOrNothingTarget allOrNothingTarget = new AllOrNothingTarget();
-            allOrNothingTarget.setName("");
-            allOrNothingTarget.setProject(project);
-
-            AntXMLContext context = new AntXMLContext(project);
-            context.setImplicitTarget(allOrNothingTarget);
-            context.getTargets().clear();
-            context.getTargets().addElement(context.getImplicitTarget());
-
-            String REFID_CONTEXT = "ant.parsing.context"; // private constant ProjectHelper2.REFID_CONTEXT value
-            project.addReference(REFID_CONTEXT, context);
-            project.addReference(ProjectHelper2.REFID_TARGETS, context.getTargets());
-
-            ProjectHelper2 helper = new ProjectHelper2();
-            try {
-                helper.parse(project, buildFile);
-            } catch (BuildException e) {
-                throw new InvalidBuildFileException("Failed to parse bundle Ant build file.", e);
-            }
-
-            validateAndPreprocess(project);
-
-            log.debug("==================== PARSED BUNDLE ANT BUILD FILE ====================");
-            log.debug(" Bundle Name: " + project.getBundleName());
-            log.debug(" Bundle Version: " + project.getBundleVersion());
-            log.debug(" Bundle Description: " + project.getBundleDescription());
-            log.debug(" Deployment Configuration: " + project.getConfiguration().toString(true));
-            log.debug("======================================================================");
-
-            if (execute) {
-                // parse it again, this time, allowing the implicit target to be executed
-                allOrNothingTarget.doNothing = false;
-                helper.parse(project, buildFile);
-
-                // make sure the requires system properties are defined and valid
-                String deployDir = properties.getProperty(DEPLOY_DIR_PROP);
-                if (deployDir == null) {
-                    throw new BuildException("Required property [" + DEPLOY_DIR_PROP + "] was not specified.");
-                }
-                File deployDirFile = new File(deployDir);
-                if (!deployDirFile.isAbsolute()) {
-                    throw new BuildException("Value of property [" + DEPLOY_DIR_PROP + "] (" + deployDirFile
-                        + ") is not an absolute path.");
-                }
-                project.setDeployDir(deployDirFile);
-
-                String deploymentIdStr = properties.getProperty(DEPLOY_ID_PROP);
-                if (deploymentIdStr == null) {
-                    throw new BuildException("Required property [" + DEPLOY_ID_PROP + "] was not specified.");
-                }
-                int deploymentId;
-                try {
-                    deploymentId = Integer.parseInt(deploymentIdStr);
-                } catch (Exception e) {
-                    throw new BuildException("Value of property [" + DEPLOY_ID_PROP + "] (" + deploymentIdStr
-                        + ") is not valid.", e);
-                }
-                project.setDeploymentId(deploymentId);
-
-                // now we can execute the ant script
-                project.executeTarget((targetName == null) ? project.getDefaultTarget() : targetName);
-            }
+            // Now execute the target the user actually specified.
+            project.executeTarget((targetName == null) ? project.getDefaultTarget() : targetName);
 
             return project;
-
         } catch (Exception e) {
             throw new RuntimeException("Cannot run Ant on build file [" + buildFile + "]. Cause: " + e, e);
         } finally {
@@ -213,6 +122,72 @@ public class AntLauncher {
                 logFileOutput.close();
             }
         }
+    }
+
+    public BundleAntProject parseBundleDeployFile(File buildFile) throws InvalidBuildFileException {
+        ClassLoader classLoader = getClass().getClassLoader();
+
+        BundleAntProject project = new BundleAntProject();
+        project.setCoreLoader(classLoader);
+        project.init();
+        project.setBaseDir(buildFile.getParentFile());
+
+        AllOrNothingTarget allOrNothingTarget = new AllOrNothingTarget(true);
+        allOrNothingTarget.setName("");
+        allOrNothingTarget.setProject(project);
+
+        AntXMLContext context = new AntXMLContext(project);
+        context.setImplicitTarget(allOrNothingTarget);
+        context.getTargets().clear();
+        context.getTargets().addElement(context.getImplicitTarget());
+
+        project.addReference(REFID_CONTEXT, context);
+        project.addReference(ProjectHelper2.REFID_TARGETS, context.getTargets());
+
+        ProjectHelper2 helper = new ProjectHelper2();
+        try {
+            helper.parse(project, buildFile);
+        } catch (BuildException e) {
+            throw new InvalidBuildFileException("Failed to parse bundle Ant build file.", e);
+        }
+
+        validateAndPreprocess(project);
+
+        log.debug("==================== PARSED BUNDLE ANT BUILD FILE ====================");
+        log.debug(" Bundle Name: " + project.getBundleName());
+        log.debug(" Bundle Version: " + project.getBundleVersion());
+        log.debug(" Bundle Description: " + project.getBundleDescription());
+        log.debug(" Deployment Config Def: " + project.getConfigurationDefinition().getPropertyDefinitions().values());
+        log.debug("======================================================================");
+
+        return project;
+    }
+
+    private void addTaskDefsForBundledTasks(BundleAntProject project) throws IOException, ClassNotFoundException {
+        Properties taskDefs = buildTaskDefProperties(project.getCoreLoader());
+        for (Map.Entry<Object, Object> taskDef : taskDefs.entrySet()) {
+            project.addTaskDefinition(taskDef.getKey().toString(), Class.forName(taskDef.getValue().toString(),
+                true, project.getCoreLoader()));
+        }
+    }
+
+    private Properties buildTaskDefProperties(ClassLoader classLoader) throws IOException {
+
+        Set<String> customTaskDefs = new HashSet<String>(1);
+
+        customTaskDefs.add(ANTCONTRIB_ANT_TASKS);
+        customTaskDefs.add(LIQUIBASE_ANT_TASKS);
+
+        Properties taskDefProps = new Properties();
+        for (String customTaskDef : customTaskDefs) {
+            InputStream taskDefsStream = classLoader.getResourceAsStream(customTaskDef);
+            try {
+                taskDefProps.load(taskDefsStream);
+            } finally {
+                taskDefsStream.close();
+            }
+        }
+        return taskDefProps;
     }
 
     private void validateAndPreprocess(BundleAntProject project) throws InvalidBuildFileException {
@@ -271,6 +246,21 @@ public class AntLauncher {
             return (resolvedTask != null) ? resolvedTask : task;
         } else {
             return task;
+        }
+    }
+
+    class AllOrNothingTarget extends Target {
+        public boolean doNothing = true;
+
+        AllOrNothingTarget(boolean doNothing) {
+            this.doNothing = doNothing;
+        }
+
+        @Override
+        public void execute() throws BuildException {
+            if (!doNothing) {
+                super.execute();
+            }
         }
     }
 }

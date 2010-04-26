@@ -127,7 +127,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
                 // parse & execute, the ant script
                 AntLauncher antLauncher = new AntLauncher();
-                BundleAntProject project = antLauncher.startAnt(recipeFile, null, null, antProps, logFile, true, true);
+                BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, null, antProps, logFile, true);
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {

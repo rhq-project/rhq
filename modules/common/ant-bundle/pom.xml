@@ -28,19 +28,36 @@
 
         <dependency>
            <groupId>${project.groupId}</groupId>
+           <artifactId>rhq-core-domain</artifactId>
+           <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+           <groupId>${project.groupId}</groupId>
+           <artifactId>rhq-core-util</artifactId>
+           <version>${project.version}</version>
+        </dependency>
+        
+        <dependency>
+           <groupId>${project.groupId}</groupId>
            <artifactId>rhq-core-native-system</artifactId>
            <version>${project.version}</version>
-           <scope>provided</scope>
            <exclusions>
               <exclusion>
-                  <groupId>org.hyperic</groupId>
-                  <artifactId>sigar</artifactId>
+                 <groupId>org.hyperic</groupId>
+                 <artifactId>sigar</artifactId>
               </exclusion>
-               <exclusion>
-                   <groupId>org.hyperic</groupId>
-                   <artifactId>sigar-dist</artifactId>
-               </exclusion>
+              <exclusion>
+                 <groupId>org.hyperic</groupId>
+                 <artifactId>sigar-dist</artifactId>
+              </exclusion>
            </exclusions>
+        </dependency>
+
+        <dependency>
+           <groupId>commons-logging</groupId>
+           <artifactId>commons-logging</artifactId>
+           <version>1.1.0.jboss</version>
         </dependency>
         
         <dependency>
@@ -60,8 +77,33 @@
             <groupId>ant-contrib</groupId>
             <artifactId>ant-contrib</artifactId>
             <version>1.0b3</version>
+            <exclusions>
+               <exclusion>
+                   <groupId>ant</groupId>
+                   <artifactId>ant</artifactId>
+               </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>1.9.5</version>
         </dependency>
 
     </dependencies>
+
+    <build>
+      <plugins>
+       <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/scripts/assembly.xml</descriptor>
+          </descriptors>
+        </configuration>
+       </plugin>
+      </plugins>
+    </build>
 
 </project>

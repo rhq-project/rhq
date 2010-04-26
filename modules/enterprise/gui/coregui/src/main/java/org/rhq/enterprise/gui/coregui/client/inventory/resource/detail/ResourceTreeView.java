@@ -314,7 +314,7 @@ public class ResourceTreeView extends VLayout {
 
             // Update breadcrumbs
             viewId.getBreadcrumbs().clear();
-            for (int i = parents.length-1; i >= 0; i--) {
+            for (int i = parents.length - 1; i >= 0; i--) {
                 TreeNode n = parents[i];
                 if (n instanceof ResourceTreeDatasource.ResourceTreeNode) {
                     viewId.getBreadcrumbs().add(new Breadcrumb(n.getAttribute("id"), n.getName(), true));
@@ -367,15 +367,17 @@ public class ResourceTreeView extends VLayout {
                                         treeGrid.markForRedraw();
 
                                         // Update breadcrumbs
-                                        viewId.getBreadcrumbs().clear();
-                                        for (int i = parents.length-1; i >= 0; i--) {
-                                            TreeNode n = parents[i];
-                                            if (n instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                                                viewId.getBreadcrumbs().add(new Breadcrumb(n.getAttribute("id"), n.getName(), true));
+                                        if (viewId != null) {
+                                            viewId.getBreadcrumbs().clear();
+                                            for (int i = parents.length - 1; i >= 0; i--) {
+                                                TreeNode n = parents[i];
+                                                if (n instanceof ResourceTreeDatasource.ResourceTreeNode) {
+                                                    viewId.getBreadcrumbs().add(new Breadcrumb(n.getAttribute("id"), n.getName(), true));
+                                                }
                                             }
+                                            viewId.getBreadcrumbs().add(new Breadcrumb(selectedNode.getAttribute("id"), selectedNode.getName(), true));
+                                            CoreGUI.refreshBreadCrumbTrail();
                                         }
-                                        viewId.getBreadcrumbs().add(new Breadcrumb(selectedNode.getAttribute("id"), selectedNode.getName(), true));
-                                        CoreGUI.refreshBreadCrumbTrail();
                                     }
                                 }
                             }
@@ -428,7 +430,7 @@ public class ResourceTreeView extends VLayout {
 
                                             // Update breadcrumbs
                                             viewId.getBreadcrumbs().clear();
-                                            for (int i = parents.length-1; i >= 0; i--) {
+                                            for (int i = parents.length - 1; i >= 0; i--) {
                                                 TreeNode n = parents[i];
                                                 if (n instanceof ResourceTreeDatasource.ResourceTreeNode) {
                                                     viewId.getBreadcrumbs().add(new Breadcrumb(n.getAttribute("id"), n.getName(), true));

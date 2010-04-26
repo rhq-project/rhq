@@ -657,6 +657,21 @@ public class ResourceGroup extends Group {
         this.tags = tags;
     }
 
+    public void addTag(Tag tag) {
+        if (this.tags == null) {
+            tags = new HashSet<Tag>();
+        }
+        tags.add(tag);
+    }
+
+    public boolean removeTag(Tag tag) {
+        if (tags != null) {
+            return tags.remove(tag);
+        } else {
+            return false;
+        }
+    }
+
     @PrePersist
     @PreUpdate
     void onPersist() {

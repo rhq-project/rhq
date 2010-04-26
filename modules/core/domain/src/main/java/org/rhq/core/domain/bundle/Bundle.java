@@ -24,6 +24,7 @@ package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -182,6 +183,21 @@ public class Bundle implements Serializable {
 
     public void setTags(Set<Tag> tags) {
         this.tags = tags;
+    }
+
+    public void addTag(Tag tag) {
+        if (this.tags == null) {
+            tags = new HashSet<Tag>();
+        }
+        tags.add(tag);
+    }
+
+    public boolean removeTag(Tag tag) {
+        if (tags != null) {
+            return tags.remove(tag);
+        } else {
+            return false;
+        }
     }
 
     @Override

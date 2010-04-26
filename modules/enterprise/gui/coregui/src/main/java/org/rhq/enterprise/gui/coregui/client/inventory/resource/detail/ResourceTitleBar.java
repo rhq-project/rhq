@@ -23,15 +23,21 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.tagging.Tag;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
+import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -58,9 +64,10 @@ public class ResourceTitleBar extends HLayout {
         setMembersMargin(5);
     }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
+    public void update() {
+        for (Canvas child : getChildren()) {
+            child.destroy();
+        }
 
         this.title = new HTMLFlow();
         this.title.setWidth("*");
@@ -78,14 +85,33 @@ public class ResourceTitleBar extends HLayout {
 
         badge = new Img("types/Service_up_24.png", 24, 24);
 
+        TagEditorView tagEditorView = new TagEditorView(resource.getTags(), false, new TagsChangedCallback() {
+            public void tagsChanged(final HashSet<Tag> tags) {
+                GWTServiceLookup.getTagService().updateResourceTags(resource.getId(), tags, new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to update resource tags", caught);
+                    }
+
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(new Message("Resource tags updated", Message.Severity.Info));
+                        // update what is essentially our local cache
+                        resource.setTags(tags);
+                    }
+                });
+            }
+        });
+
+
         addMember(badge);
         addMember(title);
+        addMember(tagEditorView);
         addMember(availabilityImage);
         addMember(favoriteButton);
     }
 
     public void setResource(Resource resource) {
         this.resource = resource;
+        update();
 
         this.title.setContents("<span class=\"SectionHeader\">" + resource.getName() + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
 

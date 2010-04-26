@@ -46,5 +46,16 @@ public interface TagManagerRemote {
     void removeTags(Subject subject, Set<Tag> tags);
 
 
+    void updateResourceTags(Subject subject, int resourceId, Set<Tag> tags);
+
+    void updateResourceGroupTags(Subject subject, int resourceGroupId, Set<Tag> tags);
+
+    void updateBundleTags(Subject subject, int bundleId, Set<Tag> tags);
+
+    void updateBundleVersionTags(Subject subject, int bundleVersionId, Set<Tag> tags);
+
+    void updateBundleDeploymentTags(Subject subject, int bundleDeploymentId, Set<Tag> tags);
+
+
 
 }

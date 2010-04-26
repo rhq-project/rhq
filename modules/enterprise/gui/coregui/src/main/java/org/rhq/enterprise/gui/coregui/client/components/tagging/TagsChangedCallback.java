@@ -20,38 +20,16 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.gwt;
+package org.rhq.enterprise.gui.coregui.client.components.tagging;
 
-import java.util.Set;
+import java.util.HashSet;
 
-import com.google.gwt.user.client.rpc.RemoteService;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.Tag;
-import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Greg Hinkle
  */
-public interface TagGWTService extends RemoteService {
+public interface TagsChangedCallback {
 
-
-    PageList<Tag> findTagsByCriteria(TagCriteria tagCriteria);
-
-    Set<Tag> addTags(Set<Tag> tags);
-
-    void removeTags(Set<Tag> tags);
-
-    void updateResourceTags(int resourceId, Set<Tag> tags);
-
-    void updateResourceGroupTags(int resourceGroupId, Set<Tag> tags);
-
-    void updateBundleTags(int bundleId, Set<Tag> tags);
-
-    void updateBundleVersionTags(int bundleVersionId, Set<Tag> tags);
-
-    void updateBundleDeploymentTags(int bundleDeploymentId, Set<Tag> tags);
-
-
+    void tagsChanged(HashSet<Tag> tags);
 }

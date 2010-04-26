@@ -23,6 +23,7 @@
 package org.rhq.core.domain.tagging;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Column;
@@ -72,24 +73,24 @@ public class Tag implements Serializable {
     @Column(name = "NAME", nullable = false)
     private String name;
 
-    @JoinTable(name = "RHQ_TAGGING_RESOURCE_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "RESOURCE_ID") })
+    @JoinTable(name = "RHQ_TAGGING_RESOURCE_MAP", joinColumns = {@JoinColumn(name = "TAG_ID")}, inverseJoinColumns = {@JoinColumn(name = "RESOURCE_ID")})
     @ManyToMany
     private Set<Resource> resources;
 
-    @JoinTable(name = "RHQ_TAGGING_RES_GRP_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "RESOURCE_GROUP_ID") })
+    @JoinTable(name = "RHQ_TAGGING_RES_GRP_MAP", joinColumns = {@JoinColumn(name = "TAG_ID")}, inverseJoinColumns = {@JoinColumn(name = "RESOURCE_GROUP_ID")})
     @ManyToMany
     private Set<ResourceGroup> resourceGroups;
 
-    @JoinTable(name = "RHQ_TAGGING_BUNDLE_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_ID") })
+    @JoinTable(name = "RHQ_TAGGING_BUNDLE_MAP", joinColumns = {@JoinColumn(name = "TAG_ID")}, inverseJoinColumns = {@JoinColumn(name = "BUNDLE_ID")})
     @ManyToMany
     private Set<Bundle> bundles;
 
-    @JoinTable(name = "RHQ_TAGGING_BND_VER_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_VERSION_ID") })
+    @JoinTable(name = "RHQ_TAGGING_BND_VER_MAP", joinColumns = {@JoinColumn(name = "TAG_ID")}, inverseJoinColumns = {@JoinColumn(name = "BUNDLE_VERSION_ID")})
     @ManyToMany
     private Set<BundleVersion> bundleVersions;
 
 
-    @JoinTable(name = "RHQ_TAGGING_BND_DEP_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_DEPLOYMENT_ID") })
+    @JoinTable(name = "RHQ_TAGGING_BND_DEP_MAP", joinColumns = {@JoinColumn(name = "TAG_ID")}, inverseJoinColumns = {@JoinColumn(name = "BUNDLE_DEPLOYMENT_ID")})
     @ManyToMany
     private Set<BundleDeployment> bundleDeployments;
 
@@ -143,6 +144,137 @@ public class Tag implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+
+    public Set<Resource> getResources() {
+        return resources;
+    }
+
+    public void setResources(Set<Resource> resources) {
+        this.resources = resources;
+    }
+
+    public void addResource(Resource resource) {
+        if (resources == null) {
+            resources = new HashSet<Resource>();
+        }
+        resource.addTag(this);
+        resources.add(resource);
+    }
+
+    public boolean removeResource(Resource resource) {
+        if (resources != null) {
+            resource.removeTag(this);
+            return resources.remove(resource);
+        } else {
+            return false;
+        }
+    }
+
+
+    public Set<ResourceGroup> getResourceGroups() {
+        return resourceGroups;
+    }
+
+    public void setResourceGroups(Set<ResourceGroup> resourceGroups) {
+        this.resourceGroups = resourceGroups;
+    }
+
+    public void addResourceGroup(ResourceGroup resourceGroup) {
+        if (resourceGroups == null) {
+            resourceGroups = new HashSet<ResourceGroup>();
+        }
+        resourceGroup.addTag(this);
+        resourceGroups.add(resourceGroup);
+    }
+
+    public boolean removeResourceGroup(ResourceGroup resourceGroup) {
+        if (resourceGroups != null) {
+            resourceGroup.removeTag(this);
+            return resourceGroups.remove(resourceGroup);
+        } else {
+            return false;
+        }
+    }
+
+
+    public Set<Bundle> getBundles() {
+        return bundles;
+    }
+
+    public void setBundles(Set<Bundle> bundles) {
+        this.bundles = bundles;
+    }
+
+    public void addBundle(Bundle bundle) {
+        if (bundles == null) {
+            bundles = new HashSet<Bundle>();
+        }
+        bundle.addTag(this);
+        bundles.add(bundle);
+    }
+
+    public boolean removeBundle(Bundle bundle) {
+        if (bundles != null) {
+            bundle.removeTag(this);
+            return bundles.remove(bundle);
+        } else {
+            return false;
+        }
+    }
+
+
+    public Set<BundleVersion> getBundleVersions() {
+        return bundleVersions;
+    }
+
+    public void setBundleVersions(Set<BundleVersion> bundleVersions) {
+        this.bundleVersions = bundleVersions;
+    }
+
+    public void addBundleVersion(BundleVersion bundleVersion) {
+        if (bundleVersions == null) {
+            bundleVersions = new HashSet<BundleVersion>();
+        }
+        bundleVersion.addTag(this);
+        bundleVersions.add(bundleVersion);
+    }
+
+    public boolean removeBundleVersion(BundleVersion bundleVersion) {
+        if (bundleVersions != null) {
+            bundleVersion.removeTag(this);
+            return bundleVersions.remove(bundleVersion);
+        } else {
+            return false;
+        }
+    }
+
+
+    public Set<BundleDeployment> getBundleDeployments() {
+        return bundleDeployments;
+    }
+
+    public void setBundleDeployments(Set<BundleDeployment> bundleDeployments) {
+        this.bundleDeployments = bundleDeployments;
+    }
+
+
+    public void addBundleDeployment(BundleDeployment bundleDeployment) {
+        if (bundleDeployments == null) {
+            bundleDeployments = new HashSet<BundleDeployment>();
+        }
+        bundleDeployment.addTag(this);
+        bundleDeployments.add(bundleDeployment);
+    }
+
+    public boolean removeBundleDeployment(BundleDeployment bundleDeployment) {
+        if (bundleDeployments != null) {
+            bundleDeployment.removeTag(this);
+            return bundleDeployments.remove(bundleDeployment);
+        } else {
+            return false;
+        }
     }
 
 

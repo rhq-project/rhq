@@ -53,4 +53,24 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
     public void removeTags(Set<Tag> tags) {
         tagManager.removeTags(getSessionSubject(), tags);
     }
+
+    public void updateResourceTags(int resourceId, Set<Tag> tags) {
+        tagManager.updateResourceTags(getSessionSubject(), resourceId, tags);
+    }
+
+    public void updateResourceGroupTags(int resourceGroupId, Set<Tag> tags) {
+        tagManager.updateResourceGroupTags(getSessionSubject(), resourceGroupId, tags);
+    }
+
+    public void updateBundleTags(int bundleId, Set<Tag> tags) {
+        tagManager.updateBundleTags(getSessionSubject(), bundleId, tags);
+    }
+
+    public void updateBundleVersionTags(int bundleVersionId, Set<Tag> tags) {
+        tagManager.updateBundleVersionTags(getSessionSubject(), bundleVersionId, tags);
+    }
+
+    public void updateBundleDeploymentTags(int bundleDeploymentId, Set<Tag> tags) {
+        tagManager.updateBundleDeploymentTags(getSessionSubject(), bundleDeploymentId, tags);
+    }
 }

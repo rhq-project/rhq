@@ -1701,6 +1701,20 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.tags = tags;
     }
 
+    public void addTag(Tag tag) {
+        if (this.tags == null) {
+            tags = new HashSet<Tag>();
+        }
+        tags.add(tag);
+    }
+    public boolean removeTag (Tag tag) {
+        if (tags != null) {
+            return tags.remove (tag);
+        } else {
+            return false;
+        }
+    }
+
     public int compareTo(Resource that) {
         return this.name.compareTo(that.getName());
     }

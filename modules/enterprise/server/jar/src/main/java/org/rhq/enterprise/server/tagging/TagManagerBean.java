@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.server.tagging;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -33,11 +35,19 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.TagCriteria;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -56,7 +66,6 @@ public class TagManagerBean implements TagManagerLocal {
     private AuthorizationManagerLocal authorizationManager;
 
 
-
     public PageList<Tag> findTagsByCriteria(Subject subject, TagCriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
@@ -68,17 +77,92 @@ public class TagManagerBean implements TagManagerLocal {
 
 
     public Set<Tag> addTags(Subject subject, Set<Tag> tags) {
+        Set<Tag> results = new HashSet<Tag>();
+
         // This isn't efficient, but then how many tags will you really be creating at once
         for (Tag tag : tags) {
-            entityManager.persist(tag);
+            TagCriteria criteria = new TagCriteria();
+            criteria.addFilterNamespace(tag.getNamespace());
+            criteria.addFilterSemantic(tag.getSemantic());
+            criteria.addFilterName(tag.getName());
+            criteria.setStrict(true);
+            List<Tag> found = findTagsByCriteria(subject, criteria);
+            if (!found.isEmpty()) {
+                assert found.size() == 1; // should never be more than one
+                results.add(found.get(0));
+            } else {
+                entityManager.persist(tag);
+                results.add(tag);
+            }
         }
-        return tags;
+        return results;
     }
 
     public void removeTags(Subject subject, Set<Tag> tags) {
         // This isn't efficient, but then how many tags will you really be deleting at once
         for (Tag tag : tags) {
-            entityManager.remove(entityManager.find(Tag.class,tag.getId()));
+            entityManager.remove(entityManager.find(Tag.class, tag.getId()));
+        }
+    }
+
+
+    public void updateResourceTags(Subject subject, int resourceId, Set<Tag> tags) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resourceId)) {
+            throw new PermissionException("You do not have permission to modify resource");
+        }
+
+        Set<Tag> definedTags = addTags(subject, tags);
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        for (Tag tag : definedTags) {
+            tag.addResource(resource);
+        }
+    }
+
+    public void updateResourceGroupTags(Subject subject, int resourceGroupId, Set<Tag> tags) {
+        if (!authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, resourceGroupId)) {
+            throw new PermissionException("You do not have permission to modify group");
+        }
+
+        Set<Tag> definedTags = addTags(subject, tags);
+        ResourceGroup group = entityManager.find(ResourceGroup.class, resourceGroupId);
+        group.setTags(definedTags);
+        for (Tag tag : definedTags) {
+            tag.addResourceGroup(group);
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    // todo verify
+    public void updateBundleTags(Subject subject, int bundleId, Set<Tag> tags) {
+
+        Set<Tag> definedTags = addTags(subject, tags);
+        Bundle bundle = entityManager.find(Bundle.class, bundleId);
+        for (Tag tag : definedTags) {
+            tag.addBundle(bundle);
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    // todo verify
+    public void updateBundleVersionTags(Subject subject, int bundleVersionId, Set<Tag> tags) {
+
+        Set<Tag> definedTags = addTags(subject, tags);
+        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
+        bundleVersion.setTags(definedTags);
+        for (Tag tag : definedTags) {
+            tag.addBundleVersion(bundleVersion);
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    // todo verify
+    public void updateBundleDeploymentTags(Subject subject, int bundleDeploymentId, Set<Tag> tags) {
+
+        Set<Tag> definedTags = addTags(subject, tags);
+        BundleDeployment bundleDeployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
+        bundleDeployment.setTags(definedTags);
+        for (Tag tag : definedTags) {
+            tag.addBundleDeployment(bundleDeployment);
         }
     }
 }

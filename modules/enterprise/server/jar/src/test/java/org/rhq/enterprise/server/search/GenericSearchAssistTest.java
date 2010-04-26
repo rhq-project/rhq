@@ -36,7 +36,7 @@ public class GenericSearchAssistTest extends AbstractEJB3Test {
                 }
 
                 count++;
-                List<SearchSuggestion> results = new TestAutoCompletionManager().getSuggestions(expression,
+                List<SearchSuggestion> results = new TestAutoCompletionManager().getAdvancedSuggestions(expression,
                     expression.length());
                 List<String> expectedResults = Arrays.asList(expected.split(" "));
 
@@ -51,7 +51,8 @@ public class GenericSearchAssistTest extends AbstractEJB3Test {
             }
             System.out.println("Tested " + count + " expressions for assist");
         } catch (Exception e) {
-            System.out.println("Error testing single line RHQL: " + e);
+            System.out.println("Error testing GenericSearchAssistTest: " + e);
+            e.printStackTrace(System.out);
             throw e;
         } finally {
             if (reader != null) {

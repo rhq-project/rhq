@@ -9,6 +9,7 @@ import java.util.Map;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.server.search.assist.AbstractSearchAssistant;
 import org.rhq.enterprise.server.search.execution.SearchAssistManager;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public class TestAutoCompletionManager extends SearchAssistManager {
     public static class TestAutoCompletor extends AbstractSearchAssistant {
@@ -61,10 +62,12 @@ public class TestAutoCompletionManager extends SearchAssistManager {
     }
 
     public TestAutoCompletionManager() {
-        super(null, null);
+        super(LookupUtil.getSubjectManager().getOverlord(), null);
     }
 
-    protected AbstractSearchAssistant getAutoCompletor(SearchSubsystem searchContext) {
+    @Override
+    protected AbstractSearchAssistant getSearchAssistant() {
         return new TestAutoCompletor();
+
     }
 }

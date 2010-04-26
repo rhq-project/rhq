@@ -26,15 +26,11 @@ import java.io.Serializable;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
@@ -49,9 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.configuration.Configuration;
 
-@DiscriminatorColumn(name = "NOTIFICATION_TYPE", discriminatorType = DiscriminatorType.STRING)
 @Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @NamedQueries( {
     @NamedQuery(name = AlertNotification.DELETE_BY_ID, query = "DELETE FROM AlertNotification an WHERE an.id IN ( :ids )"),
     @NamedQuery(name = AlertNotification.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource.id IN ( :resourceIds ) )"),
@@ -80,22 +74,19 @@ public class AlertNotification implements Serializable {
     @ManyToOne
     private AlertDefinition alertDefinition;
 
-    @JoinColumn(name = "NOTIF_TEMPLATE_ID")
+    @JoinColumn(name = "TEMPLATE_ID")
     @ManyToOne
     private AlertNotificationTemplate alertNotificationTemplate;
 
-    @JoinColumn(name = "ALERT_CONFIG_ID", referencedColumnName = "ID")
+    @JoinColumn(name = "SENDER_CONFIG_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     private Configuration configuration;
 
-    @Column(name = "ALERT_SENDER_NAME")
+    @Column(name = "SENDER_NAME")
     private String senderName;
 
-    @Column(name = "ALERT_ORDER")
-    private int order;
-
-    @Column(name = "NAME")
-    private String name;
+    @Column(name = "DISPLAY_NAME")
+    private String displayName;
 
     protected AlertNotification() {
     } // JPA spec
@@ -127,8 +118,8 @@ public class AlertNotification implements Serializable {
         this.alertNotificationId = alertNotificationId;
     }
 
-    public AlertNotification(String name, String sender) {
-        this.name = name;
+    public AlertNotification(String displayName, String sender) {
+        this.displayName = displayName;
         this.senderName = sender;
     }
 
@@ -155,14 +146,14 @@ public class AlertNotification implements Serializable {
 
     public AlertNotification copyWithAlertDefintion(AlertDefinition alertDefinition, boolean cloneConfiguration) {
         Configuration config;
-        if (cloneConfiguration)
+        if (cloneConfiguration) {
             config = this.configuration.deepCopy(false);
-        else
+        } else {
             config = this.configuration;
+        }
         AlertNotification notification = new AlertNotification(alertDefinition, config);
-        notification.setName(this.name);
+        notification.setDisplayName(this.displayName);
         notification.setSenderName(this.senderName);
-        notification.setOrder(this.order);
         return notification;
     }
 
@@ -190,20 +181,12 @@ public class AlertNotification implements Serializable {
         this.configuration = configuration;
     }
 
-    public int getOrder() {
-        return order;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public void setOrder(int order) {
-        this.order = order;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public AlertNotificationTemplate getAlertNotificationTemplate() {
@@ -231,8 +214,7 @@ public class AlertNotification implements Serializable {
         sb.append(", id=").append(id);
         sb.append(", notificationTemplate=").append(alertNotificationTemplate);
         sb.append(", senderName='").append(senderName).append('\'');
-        sb.append(", order=").append(order);
-        sb.append(", name='").append(name).append('\'');
+        sb.append(", displayName='").append(displayName).append('\'');
         sb.append('}');
         return sb.toString();
     }

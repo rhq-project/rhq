@@ -46,7 +46,7 @@ public class RepoRepoGroupPK implements Serializable {
     @ManyToOne
     private Repo repo;
 
-    @JoinColumn(name = "REPO_GRP_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "REPO_GROUP_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
     private RepoGroup repoGroup;
 

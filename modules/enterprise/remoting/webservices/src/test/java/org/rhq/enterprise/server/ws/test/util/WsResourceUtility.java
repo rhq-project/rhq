@@ -89,9 +89,6 @@ public class WsResourceUtility {
         resource.setVersion("1.0");
         resource.setResourceType(types.get(0));
 
-        // Register the platform
-        service.registerPlatform(admin, resource, -1);
-
         // Retrieve for return
         ResourceCriteria criteria = objectFactory.createResourceCriteria();
         criteria.setFilterName(name);

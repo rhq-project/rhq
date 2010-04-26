@@ -55,7 +55,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
     private static final List<String> PG_STAT_USER_TABLE_STATS = Arrays.asList("seq_scan", "seq_tup_read", "idx_scan",
         "idx_tup_fetch", "n_tup_ins", "n_tup_upd", "n_tup_del", "table_size", "total_size");
 
-    public static final String PG_STAT_USER_TABLES_QUERY = "SELECT ts.*,  pg_relation_size(ts.relname) AS table_size, pg_total_relation_size(ts.relname) AS total_size, \n"
+    public static final String PG_STAT_USER_TABLES_QUERY = "SELECT ts.*,  pg_relation_size(ts.relid) AS table_size, pg_total_relation_size(ts.relid) AS total_size, \n"
         + "  ios.heap_blks_read, ios.heap_blks_hit, ios.idx_blks_read, ios.idx_blks_hit, \n"
         + "  ios.toast_blks_read, ios.toast_blks_hit, ios.tidx_blks_read, ios.tidx_blks_hit \n"
         + "FROM pg_stat_user_tables ts LEFT JOIN pg_statio_user_tables ios on ts.relid = ios.relid \n"
@@ -90,7 +90,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
             getTableName());
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
-            double value;
+            Double value;
             if (metricName.equals("rows")) {
                 value = DatabaseQueryUtility.getSingleNumericQueryValue(this, PG_COUNT_ROWS + getTableName());
             } else if (metricName.equals("rows_approx")) {
@@ -99,8 +99,10 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                 value = results.get(metricName);
             }
 
-            MeasurementDataNumeric mdn = new MeasurementDataNumeric(request, value);
-            report.addData(mdn);
+            if (value!=null) {
+                MeasurementDataNumeric mdn = new MeasurementDataNumeric(request, value);
+                report.addData(mdn);
+            }
         }
     }
 

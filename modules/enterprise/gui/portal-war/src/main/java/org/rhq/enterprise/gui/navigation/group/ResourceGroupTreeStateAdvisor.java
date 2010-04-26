@@ -31,8 +31,9 @@ import org.richfaces.component.state.TreeStateAdvisor;
 import org.richfaces.model.TreeRowKey;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.cluster.ClusterKey;
@@ -132,9 +133,9 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
             if (((ClusterKey) resourceTreeNode.getData()).equals(selectedClusterKey)) {
                 return true;
             }
-        } else if (resourceTreeNode.getData() instanceof AutoGroupComposite) {
+        } else if (resourceTreeNode.getData() instanceof AutoGroupCompositeFlyweight) {
             ClusterKey key = resourceTreeNode.getClusterKey();
-            AutoGroupComposite ag = (AutoGroupComposite) resourceTreeNode.getData();
+            AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) resourceTreeNode.getData();
             if (key.equals(selectedClusterKey)) {
                 return true;
             }
@@ -160,13 +161,8 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
         TreeRowKey<?> key = (TreeRowKey<?>) tree.getRowKey();
         ResourceGroupTreeNode node = (ResourceGroupTreeNode) tree.getRowData(key);
 
-        if (node != null) {
-            if (node.getData() instanceof AutoGroupComposite) {
-                state.setSelected(e.getOldSelection());
-            }
-            if (redirectTo(node) == false) { // upon redirect failure, reselect previous node
-                state.setSelected(e.getOldSelection());
-            }
+        if (node != null && !redirectTo(node)) {
+            state.setSelected(e.getOldSelection());
         }
     }
 
@@ -209,10 +205,10 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
             path += ("?groupId=" + group.getId() + "&parentGroupId=" + ((ClusterKey) node.getData())
                 .getClusterGroupId());
 
-        } else if (node.getData() instanceof AutoGroupComposite) {
+        } else if (node.getData() instanceof AutoGroupCompositeFlyweight) {
             FacesContext.getCurrentInstance().addMessage("leftNavGroupTreeForm:leftNavGroupTree",
                 new FacesMessage(FacesMessage.SEVERITY_WARN, "No cluster autogroup views available", null));
-
+            return false;
         } else if (node.getData() instanceof ResourceGroup) {
             path = "/rhq/group/inventory/view.xhtml";
             path += ("?groupId=" + ((ResourceGroup) node.getData()).getId());

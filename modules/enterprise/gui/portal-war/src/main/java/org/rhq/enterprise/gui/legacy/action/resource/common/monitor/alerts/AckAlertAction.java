@@ -29,10 +29,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.apache.struts.tiles.ComponentContext;
-import org.apache.struts.tiles.actions.TilesAction;
 
-import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -49,7 +46,7 @@ public class AckAlertAction extends BaseAction {
     Log log = LogFactory.getLog(AckAlertAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-            HttpServletResponse response) throws Exception {
+        HttpServletResponse response) throws Exception {
 
         Subject subject = RequestUtils.getSubject(request);
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
@@ -58,21 +55,21 @@ public class AckAlertAction extends BaseAction {
         // pass-through the alertId and resource id
         Integer alertId = new Integer(request.getParameter("a"));
         request.setAttribute("a", alertId);
-        params.put("a",alertId);
+        params.put("a", alertId);
 
         Integer resourceId = new Integer(request.getParameter("id"));
-        request.setAttribute("id",resourceId);
-        params.put("id",resourceId);
+        request.setAttribute("id", resourceId);
+        params.put("id", resourceId);
 
         String mode = request.getParameter("mode");
-        request.setAttribute("mode",mode);
-        params.put("mode",mode);
+        request.setAttribute("mode", mode);
+        params.put("mode", mode);
 
-        alertManager.acknowledgeAlert(alertId,subject);
+        alertManager.acknowledgeAlerts(subject, new Integer[] { alertId });
 
         log.debug("Acknowledged Alert with id " + alertId + " and user " + subject.getName());
 
-        return returnSuccess(request,mapping,params);
+        return returnSuccess(request, mapping, params);
     }
 
 }

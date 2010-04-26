@@ -44,6 +44,11 @@
       </layout>
    </appender>
 
+   <!-- Hibernate logs WARNINGS frequent from this class, in test envs. -->
+   <category name="org.hibernate.hql.ast.QueryTranslatorImpl">
+      <priority value="ERROR"/>
+   </category>
+
    <root>
       <appender-ref ref="CONSOLE"/>
       <appender-ref ref="FILE"/>

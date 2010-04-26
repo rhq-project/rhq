@@ -1,0 +1,111 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2010 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+
+package org.rhq.core.domain.resource.flyweight;
+
+import java.io.Serializable;
+
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
+
+/**
+ * This is basically a copy of {@link ResourceAvailability} class, but is linked to the
+ * {@link ResourceFlyweight} instead of Resource. This enables us to retain the same API
+ * for the flyweights as for the original domain entities.
+ * 
+ * @author Lukas Krejci
+ */
+public class ResourceAvailabilityFlyweight implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private ResourceFlyweight resource;
+    private int resourceId;
+    private AvailabilityType availabilityType;
+    
+    public ResourceAvailabilityFlyweight(ResourceFlyweight resource, AvailabilityType type) {
+        this.resource = resource;
+        this.resourceId = resource.getId();
+        this.availabilityType = type;
+    }
+
+    public ResourceFlyweight getResource() {
+        return resource;
+    }
+
+    public void setResource(ResourceFlyweight resource) {
+        this.resource = resource;
+    }
+
+    public int getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(int resourceId) {
+        this.resourceId = resourceId;
+    }
+
+    public AvailabilityType getAvailabilityType() {
+        return availabilityType;
+    }
+
+    public void setAvailabilityType(AvailabilityType availabilityType) {
+        this.availabilityType = availabilityType;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = (prime * result) + ((availabilityType == null) ? 0 : availabilityType.hashCode());
+        result = (prime * result) + resourceId;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null || !(obj instanceof ResourceAvailabilityFlyweight)) {
+            return false;
+        }
+
+        final ResourceAvailabilityFlyweight other = (ResourceAvailabilityFlyweight) obj;
+
+        if (resourceId != other.resourceId) {
+            return false;
+        }
+
+        if (availabilityType == null) {
+            if (other.availabilityType != null) {
+                return false;
+            }
+        } else if (!availabilityType.equals(other.availabilityType)) {
+            return false;
+        }
+
+        return true;
+    }
+}

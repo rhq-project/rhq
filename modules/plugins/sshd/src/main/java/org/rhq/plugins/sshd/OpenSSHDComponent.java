@@ -70,7 +70,7 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
     }
 
     public AvailabilityType getAvailability() {
-        return processInfo.isRunning() ? AvailabilityType.UP : AvailabilityType.DOWN;
+        return (processInfo != null && processInfo.isRunning()) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     private void getSSHDProcess() {

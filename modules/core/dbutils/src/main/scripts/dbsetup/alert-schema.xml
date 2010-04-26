@@ -79,7 +79,7 @@
         <!-- required, but 0 effectively means null -->
         <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
         <column name="ACK_TIME" required="false" type="LONG"/>
-        <column name="ACK_BY_ID" required="false" type="INTEGER" references="RHQ_SUBJECT(ID)"/>
+        <column name="ACK_SUBJECT" required="false" size="100" type="VARCHAR2"/>
         <index name="RHQ_ALERT_IDX_TIME" unique="false">
             <field ref="CTIME"/>
         </index>
@@ -127,22 +127,17 @@
         <column name="MTIME" required="true" type="LONG"/>
         <column name="NAME" required="true" size="100" type="VARCHAR2"/>
         <column name="DESCRIPTION" required="false" size="250" type="VARCHAR2"/>
-
     </table>
 
     <table name="RHQ_ALERT_NOTIFICATION" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
            storage-options="freelists 5" cache="true" logging="false">
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
-        <column name="NOTIFICATION_TYPE" required="true" size="20" type="VARCHAR2"/>
         <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
-        <column name="NOTIF_TEMPLATE_ID" required="false" type="INTEGER" references="RHQ_ALERT_NOTIF_TEMPL(ID)"/>
-        <column name="ALERT_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
-        <column name="ALERT_SENDER_NAME" required="false" size="100" type="VARCHAR2" /> <!-- TODO make required = true -->
-        <column name="ALERT_ORDER" type="INTEGER" />
-        <column name="NAME" type="VARCHAR2" size="100" />
+        <column name="TEMPLATE_ID" required="false" type="INTEGER" references="RHQ_ALERT_NOTIF_TEMPL(ID)"/>
+        <column name="SENDER_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
+        <column name="SENDER_NAME" required="true" size="100" type="VARCHAR2" />
+        <column name="DISPLAY_NAME" type="VARCHAR2" size="100" />
     </table>
-
-
 
 </dbsetup>

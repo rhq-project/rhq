@@ -307,7 +307,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         entityManager.persist(configuration);
         AlertNotification notif = new AlertNotification(definition);
         notif.setSenderName(senderName);
-        notif.setName(alertName);
+        notif.setDisplayName(alertName);
         notif.setConfiguration(configuration);
         entityManager.persist(notif);
         definition.getAlertNotifications().add(notif);
@@ -537,38 +537,4 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return template;
     }
 
-    /**
-     * Add the passed 'transient' notifications onto the alert definitions contained. The old
-     * notifications are removed.
-     * This method is mainly used when migrating alerts from an old format to the current.
-     * @param subject Subject of the caller
-     * @param notifications list of AlertNotifications that have the alert definition id encoded in a transient field
-     */
-    public void mergeTransientAlertNotifications(Subject subject, List<AlertNotification> notifications) {
-
-        // Clear out old notifications
-        for (AlertNotification n : notifications) {
-            AlertDefinition def = alertDefinitionManager.getAlertDefinitionById(subject, n.getAlertDefinitionId());
-            if (def == null) {
-                LOG.error("Alert Definition with id " + n.getAlertDefinitionId() + "does not exist for notification "
-                    + n);
-                continue;
-            }
-            def.getAlertNotifications().clear();
-        }
-
-        // add the new ones
-        for (AlertNotification n : notifications) {
-            AlertDefinition def = alertDefinitionManager.getAlertDefinitionById(subject, n.getAlertDefinitionId());
-            if (def == null)
-                continue;
-
-            AlertNotification alNo = new AlertNotification(def, n.getConfiguration());
-            alNo.setSenderName(n.getSenderName());
-            alNo.setName(n.getName());
-            alNo.setOrder(n.getOrder());
-            entityManager.persist(alNo);
-            def.addAlertNotification(alNo);
-        }
-    }
 }

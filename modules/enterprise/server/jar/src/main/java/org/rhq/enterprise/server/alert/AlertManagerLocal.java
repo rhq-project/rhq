@@ -92,13 +92,6 @@ public interface AlertManagerLocal {
     Map<Integer, Integer> getAlertCountForSchedules(long begin, long end, List<Integer> scheduleIds);
 
     /**
-     * Mark the matching alert as acknowledged by the user
-     * @param alertId Id of the alert to acknowledge
-     * @param user user who acknowledged the alert
-     */
-    void acknowledgeAlert(int alertId, Subject user);
-
-    /**
      * Return the plugin manager that is managing alert sender plugins
      * @return The alert sender plugin manager
      */

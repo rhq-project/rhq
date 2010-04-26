@@ -105,6 +105,11 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
     
     private AugeasNode getNode(AugeasNode virtualHost) {
         List<AugeasNode> directories = AugeasNodeSearch.getNodeByParentParams(virtualHost, IFMODULE_DIRECTIVE_NAME, position);
+        if (directories.isEmpty())
+        {
+            log.warn("Parent directive of ifmodule was probably deleted in configuration file.");
+            throw new RuntimeException("Parent directive of ifmodule was probably deleted in configuration file.");
+        }
         return directories.get(0);
       }
 }

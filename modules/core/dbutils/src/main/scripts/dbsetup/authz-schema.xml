@@ -84,7 +84,7 @@
     <table name="RHQ_SUBJECT_ROLE_LDAP_MAP">
         <column name="SUBJECT_ID" required="true" type="INTEGER" references="RHQ_SUBJECT"/>
         <column name="ROLE_ID" required="true" type="INTEGER" references="RHQ_ROLE"/>
-        <constraint name="RHQ_SUBJECT_ROLE_LDAP_MAP_KEY">
+        <constraint name="RHQ_SUBJECT_ROLE_LDAP_MAP_PK">
             <primaryKey>
                 <field ref="SUBJECT_ID" />
                 <field ref="ROLE_ID"/>

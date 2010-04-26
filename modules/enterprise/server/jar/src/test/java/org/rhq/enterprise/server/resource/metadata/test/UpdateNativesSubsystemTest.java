@@ -20,11 +20,18 @@ package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.util.Set;
 
+import javax.persistence.EntityManager;
+import javax.transaction.Status;
+
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceType;
 
+/**
+ * Note, plugins are registered in new transactions. for tests, this means
+ * you can't do everything in a trans and roll back at the end. You must clean up manually.
+ */
 public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
 
     @Override
@@ -39,9 +46,16 @@ public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
      */
     @Test
     public void testProcessScans() throws Exception {
-        getTransactionManager().begin();
         try {
-            ResourceType server1 = getServer1ForConfig5(null);
+            registerPlugin("update5-v1_0.xml");
+            ResourceType platform1 = getResourceType("myPlatform5");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            platform1 = em.find(ResourceType.class, platform1.getId());
+
+            Set<ResourceType> servers = platform1.getChildResourceTypes();
+            assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
+            ResourceType server1 = servers.iterator().next();
 
             /*
              * TODO check process scans as well
@@ -57,13 +71,20 @@ public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
 
             assert found == 3 : "Expected to find 3 process scans in v1";
             // TODO also check query
-
-            getEntityManager().flush();
+            getTransactionManager().rollback();
 
             /*
              * check process scans in v2 as well
              */
-            ResourceType server2 = getServer2ForConfig5(null);
+            registerPlugin("update5-v2_0.xml");
+            ResourceType platform2 = getResourceType("myPlatform5");
+            getTransactionManager().begin();
+            em = getEntityManager();
+            platform2 = em.find(ResourceType.class, platform2.getId());
+            Set<ResourceType> servers2 = platform2.getChildResourceTypes();
+            assert servers2.size() == 1 : "Expected to find 1 server in v2, but got " + servers2.size();
+            ResourceType server2 = servers2.iterator().next();
+
             Set<ProcessScan> scans2 = server2.getProcessScans();
             assert scans2.size() == 3 : "Expected to find 3 process scans in v2, but got " + scans2.size();
             found = 0;
@@ -74,13 +95,20 @@ public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
             }
 
             assert found == 3 : "Expected to find 3 specific process scans in v2, but got " + found;
-
-            getEntityManager().flush();
+            getTransactionManager().rollback();
 
             /*
              * Now return to first version of plugin
              */
-            server1 = getServer1ForConfig5("3.0");
+            registerPlugin("update5-v1_0.xml", "3.0");
+            platform1 = getResourceType("myPlatform5");
+            getTransactionManager().begin();
+            em = getEntityManager();
+            platform1 = em.find(ResourceType.class, platform1.getId());
+            servers = platform1.getChildResourceTypes();
+            assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
+            server1 = servers.iterator().next();
+
             scans1 = server1.getProcessScans();
             assert scans1.size() == 3 : "Expected to find 3 process scans in v1, but got " + scans1.size();
             found = 0;
@@ -92,25 +120,14 @@ public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
 
             assert found == 3 : "Expected to find 3 specific process scans in v1 again, but got " + found;
         } finally {
-            getTransactionManager().rollback();
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testProcessScans");
+            }
         }
-    }
-
-    protected ResourceType getServer1ForConfig5(String version) throws Exception {
-        registerPlugin("update5-v1_0.xml", version);
-        ResourceType platform1 = getResourceType("myPlatform5");
-        Set<ResourceType> servers = platform1.getChildResourceTypes();
-        assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
-        ResourceType server1 = servers.iterator().next();
-        return server1;
-    }
-
-    protected ResourceType getServer2ForConfig5(String version) throws Exception {
-        registerPlugin("update5-v2_0.xml", version);
-        ResourceType platform2 = getResourceType("myPlatform5");
-        Set<ResourceType> servers2 = platform2.getChildResourceTypes();
-        assert servers2.size() == 1 : "Expected to find 1 server in v2, but got " + servers2.size();
-        ResourceType server2 = servers2.iterator().next();
-        return server2;
     }
 }

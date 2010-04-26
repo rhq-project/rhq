@@ -100,9 +100,10 @@ public class DashboardsView extends VLayout {
         StoredPortlet graph = new StoredPortlet("ghinkle (MAC OS X) CPU", GraphPortlet.KEY, 250);
         col1.add(graph);
 
-        StoredPortlet platformSummary = new StoredPortlet("Platform Summary", PlatformPortletView.KEY, 300);
-        col2.add(platformSummary);
-
+        // Experimental
+//        StoredPortlet platformSummary = new StoredPortlet("Platform Summary", PlatformPortletView.KEY, 300);
+//        col2.add(platformSummary);
+//
         StoredPortlet discoveryQueue = new StoredPortlet("Discovery Queue", AutodiscoveryPortlet.KEY, 250);
         col2.add(discoveryQueue);
 

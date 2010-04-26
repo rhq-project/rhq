@@ -23,6 +23,8 @@
 
 package org.rhq.core.util.updater;
 
+import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -50,31 +52,55 @@ public class DeployDifferences {
     private final Map<String, String> errors = new HashMap<String, String>();
 
     public void addIgnoredFile(String path) {
-        this.ignoredFiles.add(path);
+        this.ignoredFiles.add(convertPath(path));
+    }
+
+    public void addIgnoredFiles(Collection<String> paths) {
+        for (String path : paths) {
+            addIgnoredFile(path);
+        }
     }
 
     public void addDeletedFile(String path) {
-        this.deletedFiles.add(path);
+        this.deletedFiles.add(convertPath(path));
+    }
+
+    public void addDeletedFiles(Collection<String> paths) {
+        for (String path : paths) {
+            addDeletedFile(path);
+        }
     }
 
     public void addAddedFile(String path) {
-        this.addedFiles.add(path);
+        this.addedFiles.add(convertPath(path));
+    }
+
+    public void addAddedFiles(Collection<String> paths) {
+        for (String path : paths) {
+            addAddedFile(path);
+        }
     }
 
     public void addChangedFile(String path) {
-        this.changedFiles.add(path);
+        this.changedFiles.add(convertPath(path));
+    }
+
+    public void addChangedFiles(Collection<String> paths) {
+        for (String path : paths) {
+            addChangedFile(path);
+        }
     }
 
     public void addBackedUpFile(String originalPath, String backupPath) {
-        this.backedUpFiles.put(originalPath, backupPath);
+        this.backedUpFiles.put(convertPath(originalPath), convertPath(backupPath));
     }
 
     public void addRealizedFile(String path, String content) {
-        this.realizedFiles.put(path, content);
+        this.realizedFiles.put(convertPath(path), content);
     }
 
     public void addError(String path, String errorMsg) {
-        this.errors.put(path, errorMsg);
+        this.errors.put(convertPath(path), errorMsg);
     }
 
     /**
@@ -163,5 +189,16 @@ public class DeployDifferences {
         str.append("realized=").append(this.realizedFiles.keySet()).append('\n');
         str.append("errors=").append(this.errors);
         return str.toString();
+    }
+
+    /**
+     * Converts the path to the form that will be stored internally.
+     * 
+     * @param path a filepath to be converted
+     * 
+     * @return the converted path that is to be used to store in the internal sets.
+     */
+    public String convertPath(String path) {
+        return new File(path).getPath(); // makes sure e.g. the file separators are correct for this platform
     }
 }

@@ -173,7 +173,7 @@ public class Deployer {
 
         // this is an initial deployment, so we know every file is new - tell our diff about them all
         if (diff != null) {
-            diff.getAddedFiles().addAll(newFileHashcodeMap.keySet());
+            diff.addAddedFiles(newFileHashcodeMap.keySet());
         }
 
         debug("Initial deployment finished.");
@@ -202,7 +202,7 @@ public class Deployer {
         }
 
         if (diff != null) {
-            diff.getIgnoredFiles().addAll(current.getIgnored());
+            diff.addIgnoredFiles(current.getIgnored());
             for (Map.Entry<String, String> entry : current.entrySet()) {
                 String currentPath = entry.getKey();
                 String currentHashcode = entry.getValue();
@@ -277,7 +277,7 @@ public class Deployer {
                 if (newFileNotScannedFile.exists()) {
                     currentFilesToBackup.add(newFileNotScanned);
                     if (diff != null) {
-                        diff.getAddedFiles().remove(newFileNotScanned);
+                        diff.getAddedFiles().remove(diff.convertPath(newFileNotScanned));
                         diff.addChangedFile(newFileNotScanned);
                     }
                 }

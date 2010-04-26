@@ -59,6 +59,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
+import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
@@ -323,6 +324,16 @@ public class StartupServlet extends HttpServlet {
         LookupUtil.getServerManager().scheduleServerHeartbeat();
         LookupUtil.getCacheConsistenyManager().scheduleServerCacheReloader();
         LookupUtil.getSystemManager().scheduleConfigCacheReloader();
+
+        try {
+            // Do not check until we are up at least 1 min, and every minute thereafter.
+            final long initialDelay = 1000L * 60;
+            final long interval = 1000L * 60;
+            scheduler.scheduleSimpleRepeatingJob(SavedSearchResultCountRecalculationJob.class, true, false, initialDelay,
+                interval);
+        } catch (Exception e) {
+            log("Cannot schedule asynchronous resource deletion job: " + e.getMessage());
+        }
 
         try {
             // Do not check until we are up at least 1 min, and every 5 minutes thereafter.

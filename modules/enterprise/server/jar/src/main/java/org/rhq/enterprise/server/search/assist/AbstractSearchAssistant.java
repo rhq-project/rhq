@@ -12,6 +12,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class AbstractSearchAssistant implements SearchAssistant {
 
+    private int maxResultCount = 20;
+
+    public int getMaxResultCount() {
+        return maxResultCount;
+    }
+
+    public void setMaxResultCount(int maxResultCount) {
+        this.maxResultCount = maxResultCount;
+    }
+
     @Override
     public List<String> getSimpleContexts() {
         return Collections.emptyList();
@@ -46,7 +56,7 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
     @SuppressWarnings("unchecked")
     protected final List<String> execute(String jpql) {
         Query query = LookupUtil.getEntityManager().createQuery(jpql);
-        query.setMaxResults(20);
+        query.setMaxResults(maxResultCount);
         List<String> results = query.getResultList();
         return results;
     }

@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
-import org.rhq.enterprise.server.search.execution.SearchSuggestion;
+import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 
 public class GenericSearchAssistTest extends AbstractEJB3Test {
@@ -36,7 +36,7 @@ public class GenericSearchAssistTest extends AbstractEJB3Test {
                 }
 
                 count++;
-                List<SearchSuggestion> results = new TestAutoCompletionManager().getAdvancedSuggestions(expression,
+                List<SearchSuggestion> results = new TestAutoCompletionManager().getSuggestions(expression,
                     expression.length());
                 List<String> expectedResults = Arrays.asList(expected.split(" "));
 

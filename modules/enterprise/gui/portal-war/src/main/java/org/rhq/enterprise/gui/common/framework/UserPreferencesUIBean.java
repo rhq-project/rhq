@@ -19,15 +19,14 @@
 package org.rhq.enterprise.gui.common.framework;
 
 import java.util.List;
-import java.util.Enumeration;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -35,6 +34,7 @@ import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -42,23 +42,40 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class UserPreferencesUIBean {
 
-    private final Log log = LogFactory.getLog(UserPreferencesUIBean.class);
+    //private final Log log = LogFactory.getLog(UserPreferencesUIBean.class);
 
     public static final String LEFT_RESOURCE_NAV_SHOWING = "ui.leftResourceNavShowing";
     public static final String SUMMARY_PANEL_DISPLAY_STATE = "ui.summaryPanelDisplayState";
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
+    private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
+
     private List<Resource> resourceFavorites;
     private List<ResourceGroup> groupFavorites;
+    private List<SavedSearch> savedSearches;
     private String refreshPath;
 
+    private WebUser webUser;
+    private Subject subject;
+
     public Subject getSubject() {
-        return EnterpriseFacesContextUtility.getSubject();
+        if (subject == null) {
+            loadUserInfo();
+        }
+        return subject;
     }
 
     public WebUser getWebUser() {
-        return EnterpriseFacesContextUtility.getWebUser();
+        if (webUser == null) {
+            loadUserInfo();
+        }
+        return webUser;
+    }
+
+    private void loadUserInfo() {
+        webUser = EnterpriseFacesContextUtility.getWebUser();
+        subject = webUser.getSubject();
     }
 
     public String getLeftResourceNavState() {
@@ -68,8 +85,7 @@ public class UserPreferencesUIBean {
     }
 
     public void setLeftResourceNavState(String state) {
-        WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
-        WebUserPreferences preferences = webUser.getWebPreferences();
+        WebUserPreferences preferences = getWebUser().getWebPreferences();
         preferences.setPreference(LEFT_RESOURCE_NAV_SHOWING, state);
     }
 
@@ -95,17 +111,13 @@ public class UserPreferencesUIBean {
     }
 
     public void setPageRefresh(int refresh, String path) {
-        WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
-        WebUserPreferences preferences = webUser.getWebPreferences();
+        WebUserPreferences preferences = getWebUser().getWebPreferences();
 
         preferences.setPreference("PATH_REFRESH." + path, refresh);
     }
 
-
-
     public int getPageRefresh() {
-        WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
-        WebUserPreferences preferences = webUser.getWebPreferences();
+        WebUserPreferences preferences = getWebUser().getWebPreferences();
 
         String path = (String) FacesContextUtility.getRequest().getAttribute("javax.servlet.forward.request_uri");
         if (path == null) {
@@ -124,13 +136,11 @@ public class UserPreferencesUIBean {
     }
 
     public String getSummaryPanelDisplayState() {
-        return EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getPreference(
-            SUMMARY_PANEL_DISPLAY_STATE, "true");
+        return getWebUser().getWebPreferences().getPreference(SUMMARY_PANEL_DISPLAY_STATE, "true");
     }
 
     public void setSummaryPanelDisplayState(String state) {
-        WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
-        WebUserPreferences preferences = webUser.getWebPreferences();
+        WebUserPreferences preferences = getWebUser().getWebPreferences();
         preferences.setPreference(SUMMARY_PANEL_DISPLAY_STATE, state);
     }
 
@@ -144,6 +154,20 @@ public class UserPreferencesUIBean {
                 PageControl.getUnlimitedInstance());
         }
         return resourceFavorites;
+    }
+
+    public List<SavedSearch> getSavedSearches() {
+        if (savedSearches == null) {
+            SavedSearchCriteria criteria = new SavedSearchCriteria();
+            criteria.addFilterSubjectId(getSubject().getId());
+            criteria.addFilterGlobal(true);
+            criteria.setFiltersOptional(true); // get this user's searches as well as global ones
+            criteria.addSortGlobal(PageOrdering.DESC); // globals, then user-specified
+            criteria.addSortName(PageOrdering.ASC); // each sublist is alphabetical
+
+            savedSearches = savedSearchManager.findSavedSearchesByCriteria(getSubject(), criteria);
+        }
+        return savedSearches;
     }
 
     public List<ResourceGroup> getGroupFavorites() {

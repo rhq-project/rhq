@@ -228,7 +228,7 @@ public class FileHashcodeMapTest {
             assert currentMap.getDeletions().get("test2.txt").equals(currentMap.get("test2.txt"));
             assert currentMap.getChanges().size() == 2;
             assert currentMap.getChanges().get("test1.txt").equals(currentMap.get("test1.txt"));
-            assert currentMap.getChanges().get(absPathFile.getAbsolutePath()).equals(
+            assert currentMap.getChanges().get(currentMap.convertPath(absPathFile.getAbsolutePath())).equals(
                 currentMap.get(absPathFile.getAbsolutePath()));
             assert currentMap.getIgnored().size() == 2 : currentMap.getIgnored();
             assert currentMap.getIgnored().contains("ignoreme1.txt") : currentMap.getIgnored();
@@ -255,7 +255,7 @@ public class FileHashcodeMapTest {
                 currentMap.get("subdir" + fileSeparator + "test4.txt"));
             assert currentMap.getDeletions().size() == 2;
             assert currentMap.getDeletions().get("test2.txt").equals(currentMap.get("test2.txt"));
-            assert currentMap.getDeletions().get(absPathFile.getAbsolutePath()).equals(
+            assert currentMap.getDeletions().get(currentMap.convertPath(absPathFile.getAbsolutePath())).equals(
                 currentMap.get(absPathFile.getAbsolutePath()));
             assert currentMap.getChanges().size() == 1;
             assert currentMap.getChanges().get("test1.txt").equals(currentMap.get("test1.txt"));

@@ -1,4 +1,8 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -24,9 +28,10 @@
   </scm>
 
   <issueManagement>
-    <system>jira</system>
-    <url>http://jira.rhq-project.org/</url>
+    <system>bugzilla</system>
+    <url>https://bugzilla.redhat.com/</url>
   </issueManagement>
+
 
   <properties>
     <rhq.groupId>org.rhq</rhq.groupId>
@@ -123,6 +128,7 @@
                used in the distributionManagement section of the POM. -->
     <localRepository>${user.home}/.m2/repository</localRepository>
   </properties>
+
 
   <dependencyManagement>
 
@@ -386,6 +392,7 @@
 
   </dependencyManagement>
 
+
   <dependencies>
 
     <dependency>
@@ -431,6 +438,7 @@
     </dependency>
 
   </dependencies>
+
 
   <build>
 
@@ -816,70 +824,21 @@
 
     </plugins>
 
-    <!-- To allow deploying release artifacts to SVN and snapshot artifacts to HTTP/Dav. -->
-<!--
-    <extensions>
-      <extension>
-        <groupId>org.apache.maven.wagon</groupId>
-        <artifactId>wagon-scm</artifactId>
-        <version>1.0-beta-6</version>
-      </extension>
-      <extension>
-        <groupId>org.apache.maven.scm</groupId>
-        <artifactId>maven-scm-manager-plexus</artifactId>
-        <version>1.0</version>
-      </extension>
-      <extension>
-        <groupId>org.apache.maven.scm</groupId>
-        <artifactId>maven-scm-provider-svnexe</artifactId>
-        <version>1.0</version>
-      </extension>
-      <extension>
-         <groupId>org.apache.maven.wagon</groupId>
-         <artifactId>wagon-webdav</artifactId>
-         <version>1.0-beta-2</version>
-      </extension>
-   </extensions>
--->
   </build>
 
+
   <repositories>
-        <repository>
-          <id>jboss-public-repository-group</id>
-          <name>JBoss Public Maven Repository Group</name>
-          <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-          <layout>default</layout>
-          <releases>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-          </releases>
-<!--
-          <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>always</updatePolicy>
-          </snapshots>
--->
-        </repository>
+     <repository>
+       <id>jboss-deprecated-repository</id>
+       <name>JBoss Deprecated</name>
+       <url>https://repository.jboss.org/maven2/</url>
+       <releases>
+         <enabled>true</enabled>
+         <updatePolicy>never</updatePolicy>
+       </releases>
+    </repository>
   </repositories>
 
-  <pluginRepositories>
-        <pluginRepository>
-          <id>jboss-public-repository-group</id>
-          <name>JBoss Public Maven Repository Group</name>
-          <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-          <layout>default</layout>
-          <releases>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-          </releases>
-<!--
-          <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>always</updatePolicy>
-          </snapshots>
--->
-        </pluginRepository>
-  </pluginRepositories>
 
   <distributionManagement>
 
@@ -897,9 +856,11 @@
 
   </distributionManagement>
 
+
   <modules>
     <module>modules</module>
   </modules>
+
 
   <profiles>
     <profile>
@@ -1055,13 +1016,16 @@
 
   </profiles>
 
-   <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>2.3</version>
-            </plugin>
-        </plugins>
-    </reporting>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <version>2.3.1</version>
+      </plugin>
+    </plugins>
+  </reporting>
+
 </project>
+

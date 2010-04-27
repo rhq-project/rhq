@@ -581,187 +581,176 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    // TODO (jshaughn) For some reason this test is creating a ConfigDef that Hibernate chokes on. Need
-    // to come back and figure out why. Perhaps it's oracle specific... Also, if activated update
-    // cleanup routine in TestBase to delete myPlatform6. 
-    @Test(enabled = false)
-    public void testListProperty() throws Exception {
-        // Note, plugins are registered in new transactions. for tests, this means
-        // you can't do everything in a trans and roll back at the end. You must clean up
-        // manually.
+    @Test(enabled = ENABLED)
+    public void testListOfLists() throws Exception {
         try {
-            { // extra block for variable scoping purposes
-                registerPlugin("propertyList-v1.xml");
-                ResourceType platform = getResourceType("myPlatform6");
-                getTransactionManager().begin();
-                EntityManager em = getEntityManager();
-                platform = em.find(ResourceType.class, platform.getId());
+            // extra block for variable scoping purposes
+            registerPlugin("propertyList-v1.xml");
+            ResourceType platform = getResourceType("myPlatform6");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            platform = em.find(ResourceType.class, platform.getId());
+            ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
+            Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
+            assert propDefs.size() == 4 : "Expected to see 4 <list-property>s in v1, but got " + propDefs.size();
+            for (PropertyDefinition def : propDefs.values()) {
+                assert def instanceof PropertyDefinitionList : "PropertyDefinition " + def.getName()
+                    + " is no list-property in v1";
+                PropertyDefinitionList pdl = (PropertyDefinitionList) def;
+                PropertyDefinition member = pdl.getMemberDefinition();
 
-                ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
-                Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
-                assert propDefs.size() == 4 : "Expected to see 4 <list-property>s in v1, but got " + propDefs.size();
-                for (PropertyDefinition def : propDefs.values()) {
-                    assert def instanceof PropertyDefinitionList : "PropertyDefinition " + def.getName()
-                        + " is no list-property in v1";
-                    PropertyDefinitionList pdl = (PropertyDefinitionList) def;
-                    PropertyDefinition member = pdl.getMemberDefinition();
+                if (pdl.getName().equals("myList1")) {
+                    assert pdl.getDescription().equals("Just a simple list");
+                    assert member instanceof PropertyDefinitionSimple : "Expected the member of myList1 to be a simple property in v1";
+                    PropertyDefinitionSimple pds = (PropertyDefinitionSimple) member;
+                    assert pds.getName().equals("foo");
+                } else if (pdl.getName().equals("myList2")) {
+                    assert member instanceof PropertyDefinitionList : "Expected the member of myList2 to be a list property in v1";
+                } else if (pdl.getName().equals("myList3")) {
+                    assert member instanceof PropertyDefinitionSimple : "Expected the member of myList3 to be a simple property in v1";
+                    PropertyDefinitionSimple pds = (PropertyDefinitionSimple) member;
+                    assert pds.getName().equals("baz");
+                } else if (pdl.getName().equals("rec1")) {
+                    assert member instanceof PropertyDefinitionList : "Expected the member of rc1 to be a list property in v1";
+                    PropertyDefinitionList pdl2 = (PropertyDefinitionList) member;
 
-                    if (pdl.getName().equals("myList1")) {
-                        assert pdl.getDescription().equals("Just a simple list");
-                        assert member instanceof PropertyDefinitionSimple : "Expected the member of myList1 to be a simple property in v1";
-                        PropertyDefinitionSimple pds = (PropertyDefinitionSimple) member;
-                        assert pds.getName().equals("foo");
-                    } else if (pdl.getName().equals("myList2")) {
-                        assert member instanceof PropertyDefinitionList : "Expected the member of myList2 to be a list property in v1";
-                    } else if (pdl.getName().equals("myList3")) {
-                        assert member instanceof PropertyDefinitionSimple : "Expected the member of myList3 to be a simple property in v1";
-                        PropertyDefinitionSimple pds = (PropertyDefinitionSimple) member;
-                        assert pds.getName().equals("baz");
-                    } else if (pdl.getName().equals("rec1")) {
-                        assert member instanceof PropertyDefinitionList : "Expected the member of rc1 to be a list property in v1";
-                        PropertyDefinitionList pdl2 = (PropertyDefinitionList) member;
+                    // TODO check min/max for the lists on the way. Commented out. See JBNADM-1595
+                    assert pdl2.getName().equals("rec2");
 
-                        // TODO check min/max for the lists on the way. Commented out. See JBNADM-1595
-                        assert pdl2.getName().equals("rec2");
+                    //                  assert pdl2.getMin()==2 : "Expected rec2:min to be 2, but it was " + pdl2.getMin();
+                    //                  assert pdl2.getMax()==20;
+                    pdl2 = (PropertyDefinitionList) pdl2.getMemberDefinition();
+                    assert pdl2.getName().equals("rec3");
 
-                        //                  assert pdl2.getMin()==2 : "Expected rec2:min to be 2, but it was " + pdl2.getMin();
-                        //                  assert pdl2.getMax()==20;
-                        pdl2 = (PropertyDefinitionList) pdl2.getMemberDefinition();
-                        assert pdl2.getName().equals("rec3");
+                    //                  assert pdl2.getMin()==3;
+                    //                  assert pdl2.getMax()==30;
+                    pdl2 = (PropertyDefinitionList) pdl2.getMemberDefinition();
+                    assert pdl2.getName().equals("rec4");
 
-                        //                  assert pdl2.getMin()==3;
-                        //                  assert pdl2.getMax()==30;
-                        pdl2 = (PropertyDefinitionList) pdl2.getMemberDefinition();
-                        assert pdl2.getName().equals("rec4");
-
-                        //                  assert pdl2.getMin()==4;
-                        //                  assert pdl2.getMax()==40;
-                        assert pdl2.getMemberDefinition() instanceof PropertyDefinitionSimple;
-                        PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pdl2.getMemberDefinition();
-                        assert pds.getName().equals("rec5");
-                        assert pds.getDescription().equals("Deeply nested");
-                        List<PropertyDefinitionEnumeration> options = pds.getEnumeratedValues();
-                        assert options.size() == 4;
-                        int found = 0;
-                        String[] optionVals = new String[] { "a", "b", "c", "d" };
-                        for (PropertyDefinitionEnumeration option : options) {
-                            if (containedIn(option.getValue(), optionVals)) {
-                                found++;
-                            }
+                    //                  assert pdl2.getMin()==4;
+                    //                  assert pdl2.getMax()==40;
+                    assert pdl2.getMemberDefinition() instanceof PropertyDefinitionSimple;
+                    PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pdl2.getMemberDefinition();
+                    assert pds.getName().equals("rec5");
+                    assert pds.getDescription().equals("Deeply nested");
+                    List<PropertyDefinitionEnumeration> options = pds.getEnumeratedValues();
+                    assert options.size() == 4;
+                    int found = 0;
+                    String[] optionVals = new String[] { "a", "b", "c", "d" };
+                    for (PropertyDefinitionEnumeration option : options) {
+                        if (containedIn(option.getValue(), optionVals)) {
+                            found++;
                         }
-
-                        assert found == 4;
-                        Set<Constraint> constraints = pds.getConstraints();
-                        assert constraints.size() == 1;
-                    } else {
-                        assert true == false : "Unknown list-definition in v1: " + pdl.getName();
                     }
+
+                    assert found == 4;
+                    Set<Constraint> constraints = pds.getConstraints();
+                    assert constraints.size() == 1;
+                } else {
+                    assert true == false : "Unknown list-definition in v1: " + pdl.getName();
                 }
-                getTransactionManager().rollback();
             }
+            getTransactionManager().rollback();
 
             /*
              * Deploy v2 of the plugin
              */
-            { // extra block for variable scoping purposes
-                registerPlugin("propertyList-v2.xml");
-                ResourceType platform = getResourceType("myPlatform6");
-                getTransactionManager().begin();
-                EntityManager em = getEntityManager();
-                platform = em.find(ResourceType.class, platform.getId());
+            registerPlugin("propertyList-v2.xml");
+            platform = getResourceType("myPlatform6");
+            getTransactionManager().begin();
+            em = getEntityManager();
+            platform = em.find(ResourceType.class, platform.getId());
 
-                ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
-                Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
-                assert propDefs.size() == 4 : "Expected to see 4 <list-property>s in v2, but got " + propDefs.size();
-                for (PropertyDefinition def : propDefs.values()) {
-                    assert def instanceof PropertyDefinitionList : "PropertyDefinition " + def.getName()
-                        + " is no list-property in v2";
-                    PropertyDefinitionList pdl = (PropertyDefinitionList) def;
-                    PropertyDefinition member = pdl.getMemberDefinition();
+            cd = platform.getResourceConfigurationDefinition();
+            propDefs = cd.getPropertyDefinitions();
+            assert propDefs.size() == 4 : "Expected to see 4 <list-property>s in v2, but got " + propDefs.size();
+            for (PropertyDefinition def : propDefs.values()) {
+                assert def instanceof PropertyDefinitionList : "PropertyDefinition " + def.getName()
+                    + " is no list-property in v2";
+                PropertyDefinitionList pdl = (PropertyDefinitionList) def;
+                PropertyDefinition member = pdl.getMemberDefinition();
 
-                    if (pdl.getName().equals("myList2")) {
-                        assert member instanceof PropertyDefinitionList : "Expected the member of myList2 to be a list property in v2";
-                    } else if (pdl.getName().equals("myList3")) {
-                        assert member instanceof PropertyDefinitionList : "Expected the member of myList3 to be a list property in v2";
-                        PropertyDefinitionList pds = (PropertyDefinitionList) member;
-                        assert pds.getName().equals("baz");
-                        assert pds.getDescription().equals("myList3:baz");
-                        assert pds.getMemberDefinition() instanceof PropertyDefinitionSimple : "Expected the member of list3:baz to be a simple property in v2";
-                    } else if (pdl.getName().equals("myList4")) {
-                        assert pdl.getDescription().equals("Just a simple list");
-                        assert member instanceof PropertyDefinitionSimple : "Expected the member of myList4 to be a simple property in v2";
-                        PropertyDefinitionSimple pds = (PropertyDefinitionSimple) member;
-                        assert pds.getName().equals("foo");
-                    } else if (pdl.getName().equals("rec1")) {
-                        assert member instanceof PropertyDefinitionList : "Expected the member of rec1 to be a list property in v2";
-                        PropertyDefinitionList pdl2 = (PropertyDefinitionList) member;
-                        assert pdl2.getName().equals("rec2");
+                if (pdl.getName().equals("myList2")) {
+                    assert member instanceof PropertyDefinitionList : "Expected the member of myList2 to be a list property in v2";
+                } else if (pdl.getName().equals("myList3")) {
+                    assert member instanceof PropertyDefinitionList : "Expected the member of myList3 to be a list property in v2";
+                    PropertyDefinitionList pds = (PropertyDefinitionList) member;
+                    assert pds.getName().equals("baz");
+                    assert pds.getDescription().equals("myList3:baz");
+                    assert pds.getMemberDefinition() instanceof PropertyDefinitionSimple : "Expected the member of list3:baz to be a simple property in v2";
+                } else if (pdl.getName().equals("myList4")) {
+                    assert pdl.getDescription().equals("Just a simple list");
+                    assert member instanceof PropertyDefinitionSimple : "Expected the member of myList4 to be a simple property in v2";
+                    PropertyDefinitionSimple pds = (PropertyDefinitionSimple) member;
+                    assert pds.getName().equals("foo");
+                } else if (pdl.getName().equals("rec1")) {
+                    assert member instanceof PropertyDefinitionList : "Expected the member of rec1 to be a list property in v2";
+                    PropertyDefinitionList pdl2 = (PropertyDefinitionList) member;
+                    assert pdl2.getName().equals("rec2");
 
-                        /*
-                         * PropertyDefinitionList.getMin()/getMax() are commented out. See JBNADM1595
-                         */
+                    /*
+                     * PropertyDefinitionList.getMin()/getMax() are commented out. See JBNADM1595
+                     */
 
-                        //                assert pdl2.getMin()==12 : "Expected rec2:min to be 12, but it was " + pdl2.getMin();
-                        //                assert pdl2.getMax()==200;
-                        pdl2 = (PropertyDefinitionList) pdl2.getMemberDefinition();
-                        assert pdl2.getName().equals("rec3+");
+                    //                assert pdl2.getMin()==12 : "Expected rec2:min to be 12, but it was " + pdl2.getMin();
+                    //                assert pdl2.getMax()==200;
+                    pdl2 = (PropertyDefinitionList) pdl2.getMemberDefinition();
+                    assert pdl2.getName().equals("rec3+");
 
-                        //                assert pdl2.getMin()==13;
-                        //                assert pdl2.getMax()==300;
-                        pdl2 = (PropertyDefinitionList) pdl2.getMemberDefinition();
-                        assert pdl2.getName().equals("rec4");
+                    //                assert pdl2.getMin()==13;
+                    //                assert pdl2.getMax()==300;
+                    pdl2 = (PropertyDefinitionList) pdl2.getMemberDefinition();
+                    assert pdl2.getName().equals("rec4");
 
-                        //                assert pdl2.getMin()==14;
-                        //                assert pdl2.getMax()==400;
-                        assert pdl2.getMemberDefinition() instanceof PropertyDefinitionSimple;
-                        PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pdl2.getMemberDefinition();
-                        assert pds.getName().equals("rec5");
-                        assert pds.getDescription().equals("Nested deeply");
-                        List<PropertyDefinitionEnumeration> options = pds.getEnumeratedValues();
-                        assert options.size() == 5;
-                        int found = 0;
-                        String[] optionVals = new String[] { "b", "c", "d", "x", "z" };
-                        for (PropertyDefinitionEnumeration option : options) {
-                            if (containedIn(option.getValue(), optionVals)) {
-                                found++;
-                            }
+                    //                assert pdl2.getMin()==14;
+                    //                assert pdl2.getMax()==400;
+                    assert pdl2.getMemberDefinition() instanceof PropertyDefinitionSimple;
+                    PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pdl2.getMemberDefinition();
+                    assert pds.getName().equals("rec5");
+                    assert pds.getDescription().equals("Nested deeply");
+                    List<PropertyDefinitionEnumeration> options = pds.getEnumeratedValues();
+                    assert options.size() == 5;
+                    int found = 0;
+                    String[] optionVals = new String[] { "b", "c", "d", "x", "z" };
+                    for (PropertyDefinitionEnumeration option : options) {
+                        if (containedIn(option.getValue(), optionVals)) {
+                            found++;
                         }
-
-                        assert found == optionVals.length;
-                        Set<Constraint> constraints = pds.getConstraints();
-                        assert constraints.size() == 2;
-                        for (Constraint constraint : constraints) {
-                            if (constraint instanceof IntegerRangeConstraint) {
-                                IntegerRangeConstraint irc = (IntegerRangeConstraint) constraint;
-                                assert irc != null : "Integer-constraint was null, but should not be";
-                                // See JBNADM-1596/97
-                                assert irc.getDetails().equals("-2#10");
-                                // TODO (ips, 3/31/10): The below is a workaround for IntegerRangeConstraint.onLoad() not being called by Hibernate.
-                                irc.setDetails(irc.getDetails());
-                                assert irc.getMaximum() == 10;
-                                assert irc.getMinimum() == -2;
-                            } else if (constraint instanceof FloatRangeConstraint) {
-                                FloatRangeConstraint frc = (FloatRangeConstraint) constraint;
-                                assert frc != null : "Float-constraint was null, but should not be";
-                                // See JBNADM-1596/97
-                                assert frc.getDetails().equals("10.0#5.0");
-                                // TODO (ips, 3/31/10): The below is a workaround for FloatRangeConstraint.onLoad() not being called by Hibernate.
-                                frc.setDetails(frc.getDetails());
-                                assert frc.getMinimum() == 10; // TODO change when JBNADM-1597 is being worked on
-                                assert frc.getMaximum() == 5;
-
-                            } else {
-                                assert true == false : "Unknown constraint type encountered";
-                            }
-                        }
-                    } else {
-                        assert true == false : "Unknown list-definition in v2: " + pdl.getName();
                     }
-                    getTransactionManager().rollback();
-                }
 
-                // done with v2
+                    assert found == optionVals.length;
+                    Set<Constraint> constraints = pds.getConstraints();
+                    assert constraints.size() == 2;
+                    for (Constraint constraint : constraints) {
+                        if (constraint instanceof IntegerRangeConstraint) {
+                            IntegerRangeConstraint irc = (IntegerRangeConstraint) constraint;
+                            assert irc != null : "Integer-constraint was null, but should not be";
+                            // See JBNADM-1596/97
+                            assert irc.getDetails().equals("-2#10");
+                            // TODO (ips, 3/31/10): The below is a workaround for IntegerRangeConstraint.onLoad() not being called by Hibernate.
+                            irc.setDetails(irc.getDetails());
+                            assert irc.getMaximum() == 10;
+                            assert irc.getMinimum() == -2;
+                        } else if (constraint instanceof FloatRangeConstraint) {
+                            FloatRangeConstraint frc = (FloatRangeConstraint) constraint;
+                            assert frc != null : "Float-constraint was null, but should not be";
+                            // See JBNADM-1596/97
+                            assert frc.getDetails().equals("10.0#5.0");
+                            // TODO (ips, 3/31/10): The below is a workaround for FloatRangeConstraint.onLoad() not being called by Hibernate.
+                            frc.setDetails(frc.getDetails());
+                            assert frc.getMinimum() == 10; // TODO change when JBNADM-1597 is being worked on
+                            assert frc.getMaximum() == 5;
+
+                        } else {
+                            assert true == false : "Unknown constraint type encountered";
+                        }
+                    }
+                } else {
+                    assert true == false : "Unknown list-definition in v2: " + pdl.getName();
+                }
             }
+            getTransactionManager().rollback();
+
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -771,7 +760,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             try {
                 cleanupTest();
             } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testListProperty");
+                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testListOfLists");
             }
         }
     }

@@ -33,9 +33,7 @@ import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
 import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.bundle.ant.LoggerAntBuildListener;
-import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleResourceDeployment;
-import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.*;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -43,10 +41,12 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
+import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.core.util.updater.DeployDifferences;
 
 /**
  * @author John Mazzitelli
@@ -113,6 +113,12 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 AntLauncher antLauncher = new AntLauncher();
                 BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, antProps,
                         buildListeners);
+
+                // Send the diffs to the Server so it can store them as an entry in the deployment history.
+                BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
+                DeployDifferences diffs = project.getDeployDifferences();
+                bundleManagerProvider.auditDeployment(resourceDeployment, BundleDeploymentAction.DEPLOYMENT_STEP,
+                        BundleDeploymentStatus.SUCCESS, diffs.toString());
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {

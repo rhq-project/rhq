@@ -31,6 +31,9 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 
 /**
+ * Ant build listener that sends targetFinished and taskFinished events to the Server to be stored as entries in the
+ * deployment history.
+ *
  * @author Ian Springer
  */
 public class DeploymentAuditorBuildListener implements BuildListener {
@@ -67,7 +70,7 @@ public class DeploymentAuditorBuildListener implements BuildListener {
         auditEvent(event);
     }
 
-    public void messageLogged(BuildEvent event) {
+    public void messageLogged(BuildEvent event) {        
         return;
     }
 
@@ -84,6 +87,7 @@ public class DeploymentAuditorBuildListener implements BuildListener {
         return;
     }
 
+    @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"})
     private static String createMessage(BuildEvent event) {
         StringBuilder msg = new StringBuilder();
         if (event.getTarget() != null) {
@@ -98,11 +102,8 @@ public class DeploymentAuditorBuildListener implements BuildListener {
             msg.append(event.getMessage());
         }
 
-        //noinspection ThrowableResultOfMethodCallIgnored
         if (event.getException() != null) {
-            msg.append("\n");
-            //noinspection ThrowableResultOfMethodCallIgnored
-            msg.append(StringUtils.getStackTrace(event.getException()));
+            msg.append("\n").append(StringUtils.getStackTrace(event.getException()));
         }
         return msg.toString();
     }

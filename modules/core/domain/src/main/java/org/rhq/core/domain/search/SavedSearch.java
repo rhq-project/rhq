@@ -22,13 +22,18 @@
  */
 package org.rhq.core.domain.search;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -55,7 +60,9 @@ import org.rhq.core.domain.auth.Subject;
 @Entity
 @SequenceGenerator(name = "id", sequenceName = "RHQ_SAVED_SEARCH_ID_SEQ")
 @Table(name = "RHQ_SAVED_SEARCH")
-public class SavedSearch {
+public class SavedSearch implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @Column(name = "ID", nullable = false)
@@ -75,16 +82,14 @@ public class SavedSearch {
     @Column(name = "PATTERN", nullable = false)
     private String pattern;
 
-    @Column(name = "JPQL_TRANSLATION")
-    private String jpqlTranslation;
-
     @Column(name = "LAST_COMPUTE_TIME", nullable = false)
     private long lastComputeTime;
 
     @Column(name = "RESULT_COUNT")
     private Long resultCount;
 
-    @Column(name = "SUBJECT_ID", nullable = false)
+    @JoinColumn(name = "SUBJECT_ID", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Subject subject;
 
     @Column(name = "SUBJECT_ID", insertable = false, updatable = false)
@@ -105,7 +110,6 @@ public class SavedSearch {
         setName(name); // name can be null, to allow for saving searches quickly
 
         this.description = null;
-        this.jpqlTranslation = null; // null value for pre-computed JPQL implies computation is needed
         this.lastComputeTime = 0; // further imply that computation needs to occur
         this.resultCount = null; // NULL resultCount implies either computation failed or hasn't begun yet
         this.global = false; // user must promote saved search to be a global after creation
@@ -155,14 +159,6 @@ public class SavedSearch {
             throw new IllegalArgumentException("All saved searches must have a non-empty pattern");
         }
         this.pattern = pattern;
-    }
-
-    public String getJpqlTranslation() {
-        return jpqlTranslation;
-    }
-
-    public void setJpqlTransation(String jpqlTranslation) {
-        this.jpqlTranslation = jpqlTranslation;
     }
 
     public long getLastComputeTime() {
@@ -250,4 +246,19 @@ public class SavedSearch {
 
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "SavedSearch [" //
+            + "id=" + id //
+            + ", context=" + context //
+            + ", description=" + description //
+            + ", global=" + global //
+            + ", lastComputeTime=" + lastComputeTime //
+            + ", name=" + name //
+            + ", pattern=" + pattern //
+            + ", resultCount=" + resultCount //
+            + ", subjectId=" + subjectId + "]";
+    }
+
 }

@@ -12,7 +12,6 @@
         <column name="DESCRIPTION" type="VARCHAR2" size="500" required="false"/>
         <column name="PATTERN" type="VARCHAR2" size="1000" required="true"/>
         
-        <column name="JPQL_TRANSLATION" type="VARCHAR2" size="4000" required="false"/>
         <column name="LAST_COMPUTE_TIME" type="LONG" required="true"/>
         <column name="RESULT_COUNT" type="LONG" required="false"/>
         

@@ -79,14 +79,11 @@ public class AlertNotification implements Serializable {
     private AlertNotificationTemplate alertNotificationTemplate;
 
     @JoinColumn(name = "SENDER_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     private Configuration configuration;
 
     @Column(name = "SENDER_NAME")
     private String senderName;
-
-    @Column(name = "DISPLAY_NAME")
-    private String displayName;
 
     protected AlertNotification() {
     } // JPA spec
@@ -108,6 +105,16 @@ public class AlertNotification implements Serializable {
         this.configuration = config.deepCopy();
     }
 
+    public AlertNotification(AlertNotification source, boolean copyIds) {
+        if (copyIds) {
+            this.id = source.id;
+            this.configuration = source.configuration;
+        } else {
+            this.configuration = source.configuration.deepCopy(false);
+        }
+        this.senderName = source.senderName;
+    }
+
     /**
      * Constructor only for transient usage
      * @param alertDefinitionId
@@ -118,8 +125,7 @@ public class AlertNotification implements Serializable {
         this.alertNotificationId = alertNotificationId;
     }
 
-    public AlertNotification(String displayName, String sender) {
-        this.displayName = displayName;
+    public AlertNotification(String sender) {
         this.senderName = sender;
     }
 
@@ -134,31 +140,6 @@ public class AlertNotification implements Serializable {
 
     public void setAlertDefinition(AlertDefinition alertDefinition) {
         this.alertDefinition = alertDefinition;
-    }
-
-    public AlertNotification copy(boolean copyIds) {
-        AlertNotification results = copy();
-        if (copyIds) {
-            results.id = this.id;
-        }
-        return results;
-    }
-
-    public AlertNotification copyWithAlertDefintion(AlertDefinition alertDefinition, boolean cloneConfiguration) {
-        Configuration config;
-        if (cloneConfiguration) {
-            config = this.configuration.deepCopy(false);
-        } else {
-            config = this.configuration;
-        }
-        AlertNotification notification = new AlertNotification(alertDefinition, config);
-        notification.setDisplayName(this.displayName);
-        notification.setSenderName(this.senderName);
-        return notification;
-    }
-
-    protected AlertNotification copy() {
-        return new AlertNotification(this.alertDefinition, this.configuration);
     }
 
     public void prepareForOrphanDelete() {
@@ -179,14 +160,6 @@ public class AlertNotification implements Serializable {
 
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
     }
 
     public AlertNotificationTemplate getAlertNotificationTemplate() {
@@ -214,7 +187,6 @@ public class AlertNotification implements Serializable {
         sb.append(", id=").append(id);
         sb.append(", notificationTemplate=").append(alertNotificationTemplate);
         sb.append(", senderName='").append(senderName).append('\'');
-        sb.append(", displayName='").append(displayName).append('\'');
         sb.append('}');
         return sb.toString();
     }

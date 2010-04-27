@@ -398,7 +398,7 @@ public final class CriteriaQueryGenerator {
 
             // translate first, if there was an error we won't add the dangling 'AND' to the where clause
             String translatedJPQL = searchManager.getJPQLWhereFragment();
-            LOG.info("Translated JPQL Fragment was: " + translatedJPQL);
+            LOG.debug("Translated JPQL Fragment was: " + translatedJPQL);
             if (translatedJPQL != null) {
                 searchExpressionWhereClause = translatedJPQL;
             }

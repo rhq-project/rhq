@@ -65,10 +65,9 @@ public interface AlertNotificationManagerLocal {
      * @param user subject of the caller
      * @param alertDefinitionId Id of the alert definition
      * @param senderName shortName of the {@link AlertSender}
-     * @param alertName name of the new {@link AlertNotification}
      * @param configuration Properties for this alert sender.
      */
-    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, String alertName,
+    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName,
         Configuration configuration);
 
     /**

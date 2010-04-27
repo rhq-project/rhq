@@ -21,7 +21,7 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
 
     @Override
     public SearchSubsystem getSearchSubsystem() {
-        return SearchSubsystem.Resource;
+        return SearchSubsystem.RESOURCE;
     }
 
     @Override

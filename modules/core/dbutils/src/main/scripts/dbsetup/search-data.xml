@@ -5,18 +5,18 @@
     <!-- overlord-created, global, default saved searches -->
     <table name="RHQ_SAVED_SEARCH">
         <data ID="1" 
-              CONTEXT="Resource" 
+              CONTEXT="RESOURCE" 
               NAME="Downed Platforms" 
               DESCRIPTION="All downed machines across the entire enterprise" 
-              PATTERN="down platform" 
+              PATTERN="availability=down category=platform" 
               LAST_COMPUTE_TIME="0"
               SUBJECT_ID="1"
               GLOBAL="TRUE" />
         <data ID="2" 
-              CONTEXT="Resource" 
+              CONTEXT="RESOURCE" 
               NAME="Downed Servers" 
               DESCRIPTION="All downed servers across the entire enterprise" 
-              PATTERN="down server" 
+              PATTERN="availability=down category=server" 
               LAST_COMPUTE_TIME="0"
               SUBJECT_ID="1"
               GLOBAL="TRUE" />

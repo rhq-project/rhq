@@ -75,9 +75,8 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
 
         String propertyName = "subjectId";
         String senderName = "System Users";
-        String name = "User Notifications";
 
-        persist(data, propertyName, senderName, name);
+        persist(data, propertyName, senderName);
     }
 
     private void upgradeRoleNotifications() throws SQLException {
@@ -91,9 +90,8 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
 
         String propertyName = "roleId";
         String senderName = "System Roles";
-        String name = "Role Notifications";
 
-        persist(data, propertyName, senderName, name);
+        persist(data, propertyName, senderName);
     }
 
     private void upgradeEmailNotifications() throws SQLException {
@@ -107,9 +105,8 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
 
         String propertyName = "emailAddress";
         String senderName = "Direct Emails";
-        String name = "Email Notifications";
 
-        persist(data, propertyName, senderName, name);
+        persist(data, propertyName, senderName);
     }
 
     private void upgradeSNMPNotifications() throws SQLException {
@@ -129,7 +126,7 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
 
             // buffer will be 0 the very first time, since definitionId is initially -1
             int configId = persistConfiguration("host", host, "port", port, "oid", oid);
-            persistNotification(alertDefinitionId, configId, "SNMP Traps", "SNMP Notifications");
+            persistNotification(alertDefinitionId, configId, "SNMP Traps");
         }
     }
 
@@ -147,11 +144,11 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
             // buffer will be 0 the very first time, since definitionId is initially -1
             int configId = persistConfiguration("operation-definition-id", operationDefinitionId, "selection-mode",
                 "SELF");
-            persistNotification(alertDefinitionId, configId, "Resource Operations", "Operation Invocation");
+            persistNotification(alertDefinitionId, configId, "Resource Operations");
         }
     }
 
-    private void persist(List<Object[]> data, String propertyName, String sender, String name) throws SQLException {
+    private void persist(List<Object[]> data, String propertyName, String sender) throws SQLException {
         int definitionId = -1;
         StringBuilder buffer = new StringBuilder();
         for (Object[] next : data) {
@@ -162,7 +159,7 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
                 if (buffer.length() != 0) {
                     // buffer will be 0 the very first time, since definitionId is initially -1
                     int configId = persistConfiguration(propertyName, buffer.toString());
-                    persistNotification(definitionId, configId, sender, name);
+                    persistNotification(definitionId, configId, sender);
                 }
                 buffer = new StringBuilder(); // reset for the next definitionId
             }
@@ -176,7 +173,7 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
 
         if (buffer.length() != 0) {
             int configId = persistConfiguration(propertyName, buffer.toString());
-            persistNotification(definitionId, configId, sender, name);
+            persistNotification(definitionId, configId, sender);
         }
     }
 
@@ -197,9 +194,9 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
         return configId;
     }
 
-    private void persistNotification(int definitionId, int configId, String sender, String name) throws SQLException {
+    private void persistNotification(int definitionId, int configId, String sender) throws SQLException {
         int notificationId = databaseType.getNextSequenceValue(connection, "rhq_alert_notification", "id");
-        String insertNotificationSQL = getInsertNotificationSQL(notificationId, definitionId, configId, sender, name);
+        String insertNotificationSQL = getInsertNotificationSQL(notificationId, definitionId, configId, sender);
 
         databaseType.executeSql(connection, insertNotificationSQL);
     }
@@ -214,9 +211,9 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
             + "      VALUES ( " + id + ", " + configId + ", '" + name + "', '" + value + "', 'property' ) ";
     }
 
-    private String getInsertNotificationSQL(int id, int definitionId, int configId, String sender, String name) {
-        return "INSERT INTO rhq_alert_notification ( id, alert_definition_id, sender_config_id, sender_name, display_name )" //
-            + "      VALUES ( " + id + ", " + definitionId + ", " + configId + ", '" + sender + "', '" + name + "' ) ";
+    private String getInsertNotificationSQL(int id, int definitionId, int configId, String sender) {
+        return "INSERT INTO rhq_alert_notification ( id, alert_definition_id, sender_config_id, sender_name )" //
+            + "      VALUES ( " + id + ", " + definitionId + ", " + configId + ", '" + sender + "' ) ";
     }
 
 }

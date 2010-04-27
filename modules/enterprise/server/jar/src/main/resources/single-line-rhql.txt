@@ -95,3 +95,11 @@ context = value1 | ((context = value2))
 (context = value1) (context = value2)
 (context = value1 (context = value2))
 context = value1 ((context = value2))
+
+# simple terms
+hello
+hello world
+"hello world" 'foo bar'
+'hello world' "foo bar"
+hello | world
+context=value | world

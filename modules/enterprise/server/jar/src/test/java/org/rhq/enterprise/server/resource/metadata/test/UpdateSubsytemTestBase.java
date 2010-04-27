@@ -125,6 +125,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
         ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
+        resourceTypeCriteria.setStrict(true);
         resourceTypeCriteria.addFilterName(typeName);
         resourceTypeCriteria.addFilterPluginName(pluginName);
 
@@ -274,7 +275,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
             cleanupResourceType("myPlatform3");
             cleanupResourceType("myPlatform4");
             cleanupResourceType("myPlatform5");
-            //cleanupResourceType("myPlatform6");
+            cleanupResourceType("myPlatform6");
             cleanupResourceType("myPlatform7");
             cleanupResourceType("ops");
             cleanupResourceType("testApp1");
@@ -323,6 +324,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
                 // delete any resources first
                 ResourceCriteria c = new ResourceCriteria();
+                c.setStrict(true);
                 c.addFilterResourceTypeId(rt.getId());
                 c.addFilterInventoryStatus(InventoryStatus.NEW);
                 List<Resource> doomedResources = resourceManager.findResourcesByCriteria(overlord, c);

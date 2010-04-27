@@ -30,6 +30,7 @@ import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -274,8 +275,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
      * @param existingProperties list of existing properties to inspect for potential removal
      */
     private void removeNoLongerUsedProperties(ConfigurationDefinition newConfigDef,
-                                              ConfigurationDefinition existingConfigDef,
-                                              List<PropertyDefinition> existingProperties) {
+        ConfigurationDefinition existingConfigDef, List<PropertyDefinition> existingProperties) {
         List<PropertyDefinition> propDefsToDelete = new ArrayList<PropertyDefinition>();
         for (PropertyDefinition existingPropDef : existingProperties) {
             PropertyDefinition newPropDef = newConfigDef.get(existingPropDef.getName());
@@ -350,14 +350,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             PropertyDefinitionList exList = (PropertyDefinitionList) existingProperty;
             if (newProperty instanceof PropertyDefinitionList) {
                 PropertyDefinitionList newList = (PropertyDefinitionList) newProperty;
-                exList.setMemberDefinition(newList.getMemberDefinition());
-                exList.setMax(newList.getMax());
-                exList.setMin(newList.getMax());
-                // what about parentPropertyListDefinition ?
-
-                // TODO recursively update the member ?
-            } else // simple property or map-property
-            {
+                replaceListPropertyMemberDefinition(exList, newList);
+            } else { // simple property or map-property
                 replaceProperty(existingProperty, newProperty);
             }
         } else if (existingProperty instanceof PropertyDefinitionSimple) {
@@ -374,12 +368,11 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 List<PropertyDefinitionEnumeration> toDelete = missingInFirstList(newOptions, existingOptions);
                 List<PropertyDefinitionEnumeration> changed = intersection(existingOptions, newOptions);
 
-                // TODO GH: This still doesn't properly reorder options, but at least it doesn't leave any nulls
-                // and therefore doesn't blow up the renderer
-                // delete old ones (first so we don't leave index holes later)
+                // sync the enumerated values and then merge the changes into the PDS, I think this
+                // solves previous issues with orderIndex values.
+                // First remove obsolete values
                 for (PropertyDefinitionEnumeration pde : toDelete) {
-                    existingOptions.remove(pde);
-                    entityManager.remove(pde);
+                    existingPDS.removeEnumeratedValues(pde);
                 }
 
                 // save new ones
@@ -388,16 +381,16 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                     entityManager.persist(pde);
                 }
 
+                // update others
                 for (PropertyDefinitionEnumeration pde : changed) {
                     for (PropertyDefinitionEnumeration nPde : newOptions) {
                         if (nPde.equals(pde)) {
                             pde.setDefault(nPde.isDefault());
-                            pde.setOrderIndex(nPde.getOrderIndex());
                             pde.setValue(nPde.getValue());
-                            entityManager.merge(pde);
                         }
                     }
                 }
+                entityManager.merge(existingPDS);
 
                 // handle <constraint> [0..*]
 
@@ -440,6 +433,26 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
         entityManager.remove(existingProperty);
         entityManager.merge(configDef);
+        entityManager.flush();
+    }
+
+    /**
+     * This replaces the member property for the list.  If it is a nested structure the whole thing
+     * is replaced from the top. The previous member property is removed. cascading should remove a nested
+     * structure.
+     *
+     * @param existingProperty the existing prop
+     * @param newProperty the new prop that should replace the existing prop
+     */
+    private void replaceListPropertyMemberDefinition(PropertyDefinitionList exList, PropertyDefinitionList newList) {
+        PropertyDefinition doomedMember = exList.getMemberDefinition();
+
+        exList.setMemberDefinition(newList.getMemberDefinition());
+        exList.setMax(newList.getMax());
+        exList.setMin(newList.getMin());
+
+        entityManager.remove(doomedMember);
+        entityManager.merge(exList);
         entityManager.flush();
     }
 

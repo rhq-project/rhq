@@ -23,7 +23,6 @@
 
 package org.rhq.core.domain.plugin;
 
-import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 
 import javax.persistence.Column;
@@ -39,8 +38,6 @@ import javax.persistence.InheritanceType;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-
-import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * Base plugin implementation that agent and server plugin implementations extend.

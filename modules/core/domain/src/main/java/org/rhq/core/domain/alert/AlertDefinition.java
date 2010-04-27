@@ -448,8 +448,7 @@ public class AlertDefinition implements Serializable {
 
         Set<AlertNotification> copiedNotifications = new HashSet<AlertNotification>();
         for (AlertNotification oldNotification : new HashSet<AlertNotification>(alertDef.getAlertNotifications())) {
-            AlertNotification newNotification = oldNotification.copy(copyIds);
-            newNotification.setAlertDefinition(this);
+            AlertNotification newNotification = new AlertNotification(oldNotification, copyIds);
             copiedNotifications.add(newNotification);
         }
         this.removeAllAlertNotifications();

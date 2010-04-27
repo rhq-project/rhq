@@ -95,6 +95,7 @@ conditionalPrimary
 
 simpleConditionalExpression
     :   c=context WS* op=comparisonOperator WS* ident=identifier                      -> ^($op $c ^(VALUE $ident))
+    |   ident=identifier
     ; // rewrite tree output so operator is always the root -- ignore captured WS
 
 context

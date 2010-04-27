@@ -296,7 +296,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * {@inheritDoc}
      */
     public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName,
-        String alertName, Configuration configuration) {
+        Configuration configuration) {
 
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user, alertDefinitionId);
         if (definition == null) {
@@ -307,7 +307,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         entityManager.persist(configuration);
         AlertNotification notif = new AlertNotification(definition);
         notif.setSenderName(senderName);
-        notif.setDisplayName(alertName);
         notif.setConfiguration(configuration);
         entityManager.persist(notif);
         definition.getAlertNotifications().add(notif);
@@ -393,7 +392,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             def.getAlertNotifications().clear();
 
         for (AlertNotification notif : template.getNotifications()) {
-            AlertNotification notification = notif.copyWithAlertDefintion(def, true);
+            AlertNotification notification = new AlertNotification(notif, true);
+            notification.setAlertDefinition(notif.getAlertDefinition());
             entityManager.persist(notification.getConfiguration());
             entityManager.persist(notification);
             def.addAlertNotification(notification); // Attach a copy, as the ones in the template should not be shared
@@ -484,7 +484,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         AlertNotificationTemplate template = entityManager.find(AlertNotificationTemplate.class, templateId);
 
         entityManager.persist(notificationConfiguration);
-        AlertNotification alertNotification = new AlertNotification(notificationName, sender);
+        AlertNotification alertNotification = new AlertNotification(sender);
         alertNotification.setConfiguration(notificationConfiguration);
         alertNotification.setAlertNotificationTemplate(template);
         entityManager.persist(alertNotification);

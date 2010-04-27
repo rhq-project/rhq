@@ -52,19 +52,13 @@
                                            fastOrderControlsVisible="false"
                                            orderControlsVisible="false"
                                            id="sendersList">
-                            <rich:column width="20%">
-                                <f:facet name="header">
-                                    <h:outputText value="Name" />
-                                </f:facet>
-                                <h:outputText value="#{alertNotification.name}" />
-                            </rich:column>
-                            <rich:column width="20%">
+                            <rich:column width="25%">
                                 <f:facet name="header">
                                     <h:outputText value="Type" />
                                 </f:facet>
                                 <h:outputText value="#{alertNotification.senderName}" />
                             </rich:column>
-                            <rich:column width="60%">
+                            <rich:column width="75%">
                                 <f:facet name="header">
                                     <h:outputText value="Configuration" />
                                 </f:facet>
@@ -170,20 +164,6 @@
                     <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
                 
                     <div style="height: 100px;">
-                        <h:outputLabel for="alertNameInput" value="Alert Notification Name:" />
-                        <br />
-                        <h:inputText id="alertNameInput"
-                                     value="#{alertNotificationsUIBean.newAlertName}"
-                                     maxlength="100"
-                                     required="true" />
-
-                        <h:message for="alertNameInput"
-                                   infoClass="InfoBlock"
-                                   warnClass="WarnBlock"
-                                   errorClass="ErrorBlock"
-                                   fatalClass="FatalBlock" />
-                        <br /><br />
-
                         <h:outputLabel for="senderList" value="Alert Sender Type:" />
                         <br />
                         <h:selectOneMenu id="senderList" value="#{alertNotificationsUIBean.selectedNewSender}">

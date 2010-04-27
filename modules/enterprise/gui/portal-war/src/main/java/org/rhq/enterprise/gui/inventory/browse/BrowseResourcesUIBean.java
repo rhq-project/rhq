@@ -13,7 +13,9 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -24,8 +26,8 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
 import org.rhq.enterprise.server.search.execution.SearchAssistManager;
-import org.rhq.enterprise.server.search.execution.SearchSuggestion;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -34,9 +36,12 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
 
     public static final String MANAGED_BEAN_NAME = "BrowseResourcesUIBean";
 
-    private String filter;
-    private HtmlInputText filterInput;
+    private String search;
+    private HtmlInputText searchInput;
     private ResourceCategory category;
+
+    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+    private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
 
     private static final IntExtractor<ResourceComposite> RESOURCE_ID_EXTRATOR = new IntExtractor<ResourceComposite>() {
         public int extract(ResourceComposite object) {
@@ -54,15 +59,21 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
             category = ResourceCategory.SERVICE;
         }
 
-        filter = FacesContextUtility.getOptionalRequestParameter("filter");
+        String searchId = FacesContextUtility.getOptionalRequestParameter("searchId");
+        if (searchId != null) {
+            SavedSearch savedSearch = savedSearchManager.getSavedSearchById(getSubject(), Integer.valueOf(searchId));
+            search = savedSearch.getPattern();
+        } else {
+            search = FacesContextUtility.getOptionalRequestParameter("search");
+        }
     }
 
-    public String getFilter() {
-        return this.filter;
+    public String getSearch() {
+        return this.search;
     }
 
-    public void setFilter(String filter) {
-        this.filter = filter;
+    public void setSearch(String search) {
+        this.search = search;
     }
 
     public ResourceCategory getCategory() {
@@ -77,8 +88,6 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-
     private class ResultsDataModel extends ResourceNameDisambiguatingPagedListDataModel<ResourceComposite> {
 
         public ResultsDataModel(PageControlView view, String beanName) {
@@ -86,14 +95,14 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
         }
 
         public PageList<ResourceComposite> fetchDataForPage(PageControl pc) {
-            String filter = getFilter();
+            String search = getSearch();
             ResourceCategory category = getCategory();
 
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.setPageControl(pc);
             criteria.addFilterResourceCategory(category);
-            if (filter != null && !filter.trim().equals("")) {
-                criteria.setSearchExpression(filter);
+            if (search != null && !search.trim().equals("")) {
+                criteria.setSearchExpression(search);
             }
             criteria.fetchParentResource(true);
 
@@ -127,25 +136,24 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
         return FacesContextUtility.getRequest().getParameterValues("selectedItems");
     }
 
-    SearchAssistManager searchAssist = new SearchAssistManager(SearchSubsystem.Resource);
+    SearchAssistManager searchAssist = new SearchAssistManager(getSubject(), SearchSubsystem.RESOURCE);
 
     public List<SearchSuggestion> autocomplete(Object suggest) {
         String currentInputText = (String) suggest;
 
         // assume caret at the end of the input
         long id = HibernatePerformanceMonitor.get().start();
-        List<SearchSuggestion> suggestions = searchAssist.getAdvancedSuggestions(currentInputText, currentInputText
-            .length());
+        List<SearchSuggestion> suggestions = searchAssist.getSuggestions(currentInputText, currentInputText.length());
         HibernatePerformanceMonitor.get().stop(id, "ResourceSuggestions");
         return suggestions;
     }
 
-    public HtmlInputText getFilterInput() {
-        return filterInput;
+    public HtmlInputText getSearchInput() {
+        return searchInput;
     }
 
-    public void setFilterInput(HtmlInputText filterInput) {
-        this.filterInput = filterInput;
+    public void setSearchInput(HtmlInputText searchInput) {
+        this.searchInput = searchInput;
     }
 
 }

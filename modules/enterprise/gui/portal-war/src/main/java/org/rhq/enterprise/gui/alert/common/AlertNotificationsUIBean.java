@@ -49,14 +49,16 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
     @RequestParameter("nid")
     private Integer notificationId;
+    @RequestParameter("context")
+    private String context;
+    @RequestParameter("contextId")
+    private Integer contextId;
+
     @In
     private AlertNotificationManagerLocal alertNotificationManager;
-    @In(create = true)
-    private AlertNotificationStoreUIBean alertNotificationStoreUIBean;
 
     private List<AlertNotification> alertNotifications;
     private Set<AlertNotification> selectedNotifications;
-    private String newAlertName;
     private String selectedNewSender;
     private AlertNotification activeNotification;
     private ConfigurationDefinition activeConfigDefinition;
@@ -77,14 +79,6 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
     public void setSelectedNotifications(Set<AlertNotification> selectedNotifications) {
         this.selectedNotifications = selectedNotifications;
-    }
-
-    public String getNewAlertName() {
-        return newAlertName;
-    }
-
-    public void setNewAlertName(String newAlertName) {
-        this.newAlertName = newAlertName;
     }
 
     public String getSelectedNewSender() {
@@ -136,7 +130,8 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
     }
 
     public void reloadAlertNotifications() {
-        this.alertNotifications = this.alertNotificationStoreUIBean.lookupNotifications(getSubject());
+        this.alertNotifications = this.alertNotificationManager.getNotificationsForAlertDefinition(getSubject(),
+            contextId);
     }
 
     // Sets the initial state of the bean given the requrest parameters, this allows
@@ -175,8 +170,9 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
             newSenderConfig = new Configuration();
         }
 
-        AlertNotification newlyCreated = this.alertNotificationStoreUIBean.addNotification(getSubject(),
-            this.selectedNewSender, this.newAlertName, newSenderConfig);
+        AlertNotification newlyCreated = this.alertNotificationManager.addAlertNotification(getSubject(),
+            this.contextId, this.selectedNewSender, newSenderConfig);
+
         this.alertNotifications.add(newlyCreated); // only add if no errors
         this.activeNotification = newlyCreated;
         this.selectedNotifications.clear();
@@ -194,7 +190,7 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
     }
 
     public String removeSelected() {
-        this.alertNotificationStoreUIBean.removeNotifications(getSubject(), getSelectedIds());
+        this.alertNotificationManager.removeNotifications(getSubject(), contextId, getSelectedIds());
         this.alertNotifications.removeAll(this.selectedNotifications); // only remove if no errors
         this.activeNotification = null;
 

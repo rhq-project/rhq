@@ -6,14 +6,14 @@ import org.rhq.core.domain.search.SearchSubsystem;
 
 public interface SearchAssistant {
 
-    public SearchSubsystem getSearchSubsystem();
+    SearchSubsystem getSearchSubsystem();
 
-    public List<String> getSimpleContexts();
+    List<String> getSimpleContexts();
 
-    public List<String> getParameterizedContexts();
+    List<String> getParameterizedContexts();
 
-    public List<String> getParameters(String context, String filter);
+    List<String> getParameters(String context, String filter);
 
-    public List<String> getValues(String context, String param, String filter);
+    List<String> getValues(String context, String param, String filter);
 
 }

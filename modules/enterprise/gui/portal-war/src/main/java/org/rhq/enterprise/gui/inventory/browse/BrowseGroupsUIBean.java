@@ -13,6 +13,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -21,7 +22,6 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
-import org.rhq.enterprise.server.search.execution.SearchSuggestion;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class BrowseGroupsUIBean extends PagedDataTableUIBean {

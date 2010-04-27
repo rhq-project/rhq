@@ -411,6 +411,7 @@ public class Deployer {
             File currentLocationFile = rawFile.getKey();
             File newLocationFile = rawFile.getValue();
             String newLocationPath = rawFile.getValue().getPath();
+            newLocationPath = newFileHashCodeMap.convertPath(newLocationPath);
             if (currentFilesToLeaveAlone != null && currentFilesToLeaveAlone.containsKey(newLocationPath)) {
                 continue;
             }

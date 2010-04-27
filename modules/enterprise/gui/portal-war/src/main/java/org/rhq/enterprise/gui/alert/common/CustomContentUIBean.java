@@ -77,6 +77,8 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
             customBackingBean.setWebUser(getSubject());
             customBackingBean.setContext(FacesContextUtility.getRequiredRequestParameter("context"));
             customBackingBean.setContextId(FacesContextUtility.getRequiredRequestParameter("contextId"));
+            customBackingBean.setContextSubId(FacesContextUtility.getOptionalRequestParameter("contextSubId",
+                (String) null));
             customBackingBean.loadView();
             outjectBean(backingBeanName, customBackingBean);
         }

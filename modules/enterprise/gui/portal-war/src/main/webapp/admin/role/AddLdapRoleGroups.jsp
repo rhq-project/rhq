@@ -13,7 +13,7 @@
 
 <tiles:insert definition=".portlet.error"/>
 
-<tiles:insert page="/admin/role/RoleGroupsForm.jsp">
+<tiles:insert page="/admin/role/RoleLdapGroupsForm.jsp">
   <tiles:put name="availableResGrps" beanName="AvailableResGrps"/>
   <tiles:put name="numAvailableResGrps" beanName="NumAvailableResGrps"/>
   <tiles:put name="pendingResGrps" beanName="PendingResGrps"/>

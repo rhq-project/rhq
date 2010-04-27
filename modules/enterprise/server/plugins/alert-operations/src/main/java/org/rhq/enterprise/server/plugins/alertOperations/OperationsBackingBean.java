@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.plugins.alertOperations;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -100,8 +101,24 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
             descendantTypeId = get(OperationInfo.Constants.RELATIVE_DESCENDANT_TYPE_ID, "none");
 
             ResourceType contextType = computeResourceTypeFromContext(); // should not be null
-            List<ResourceType> ancestors = LookupUtil.getResourceTypeManager().getResourceTypeAncestorsWithOperations(
-                getOverlord(), contextType.getId());
+            List<ResourceType> ancestors = null;
+            if (context.equals("resource")) {
+                try {
+                    List<Resource> ancestry = LookupUtil.getResourceManager().getResourceLineage(
+                        Integer.parseInt(contextSubId));
+                    ancestors = new ArrayList<ResourceType>();
+                    for (Resource next : ancestry) {
+                        ancestors.add(next.getResourceType());
+                    }
+                } catch (Throwable t) {
+                    // ignore, we'll default to a different loading style below
+                }
+            }
+
+            if (ancestors == null) { // if not in the resource content or fallback if resource ancestry loading bombs
+                ancestors = LookupUtil.getResourceTypeManager().getResourceTypeAncestorsWithOperations(getOverlord(),
+                    contextType.getId());
+            }
             load(ancestorTypeOptions, ancestors);
 
             if (ancestorTypeId.equals("none") == false) {

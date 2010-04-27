@@ -19,11 +19,14 @@
 package org.rhq.enterprise.gui.admin.role;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,6 +46,7 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -59,6 +63,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * An Action that retrieves data to facilitate display of the form for adding groups to a role.
  */
 public class AddLdapGroupsFormPrepareAction extends TilesAction {
+    final String LDAP_GROUP_CACHE = "ldapGroupCache";
+
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         Log log = LogFactory.getLog(AddLdapGroupsFormPrepareAction.class.getName());
@@ -76,6 +82,9 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
             RequestUtils.setError(request, Constants.ERR_ROLE_NOT_FOUND);
             return null;
         }
+        //use cached LDAP group list to avoid hitting ldap server each time ui pref changed.
+        Set<Map<String, String>> cachedAvailableLdapGroups = null;
+        cachedAvailableLdapGroups = (Set<Map<String, String>>) request.getSession().getAttribute(LDAP_GROUP_CACHE);
 
         addForm.setR(role.getId());
 
@@ -93,21 +102,31 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
         PageList<Map<String, String>> pendingGroups = new PageList<Map<String, String>>(pendingSet, 0, pcp);
         PageList<Map<String, String>> availableGroups = new PageList<Map<String, String>>(availableGroupsSet, 0, pca);
         /* pending groups are those on the right side of the "add
-         * to list" widget- awaiting association with the rolewhen the form's "ok" button is clicked. */
+         * to list" widget- awaiting association with the role when the form's "ok" button is clicked. */
         pendingGroupIds = SessionUtils.getListAsListStr(request.getSession(), Constants.PENDING_RESGRPS_SES_ATTR);
 
         log.trace("getting pending groups for role [" + roleId + ")");
         String name = "foo";
 
         try { //defend against ldap communication runtime difficulties.
-            allGroups = LdapGroupManager.getInstance().findAvailableGroups();
-            RoleManagerLocal roleManager = LookupUtil.getRoleManager();
 
+            if (cachedAvailableLdapGroups == null) {
+                allGroups = LdapGroupManager.getInstance().findAvailableGroups();
+            } else {//reuse cached.
+                allGroups = cachedAvailableLdapGroups;
+            }
+            //store unmodified list in session.
+            cachedAvailableLdapGroups = allGroups;
+
+            RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+            //retrieve currently assigned groups
             assignedList = roleManager.findLdapGroupsByRole(role.getId(), PageControl.getUnlimitedInstance());
 
+            //trim already defined from all groups returned.
             allGroups = filterExisting(assignedList, allGroups);
             Set<String> pendingIds = new HashSet<String>(pendingGroupIds);
 
+            //retrieve pending information
             pendingSet = findPendingGroups(pendingIds, allGroups);
             pendingGroups = new PageList<Map<String, String>>(pendingSet, pendingSet.size(), pcp);
 
@@ -118,6 +137,86 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
 
             availableGroupsSet = findAvailableGroups(pendingIds, allGroups);
             availableGroups = new PageList<Map<String, String>>(availableGroupsSet, availableGroupsSet.size(), pca);
+
+            //We cannot reuse the PageControl mechanism as there are no database calls to retrieve list
+            // must replicate paging using existing web params, formula etc.
+
+            //determine count to return up to 15|30|45 and page index
+            int returnAmount = pca.getPageSize();
+            int returnIndex = pca.getPageNumber();
+
+            //determine sort order
+            PageOrdering sortOrder = pca.getPrimarySortOrder();
+            if (sortOrder == null) {
+                sortOrder = PageOrdering.ASC;
+                pca.setPrimarySortOrder(sortOrder);//reset on pc
+            }
+
+            //determine which column to sort on
+            String sortColumn = pca.getPrimarySortColumn();
+            if (sortColumn == null) {
+                sortColumn = "lg.name";
+                pca.setPrimarySort(sortColumn, sortOrder);//reset on pc
+            }
+
+            //now sort based off these values and populate sizedAvailableGroups accordingly
+            ArrayList<Map<String, String>> groupsValues = availableGroups.getValues();
+
+            //store maps based off the keys and sort()
+            Map<Integer, Map> groupLookup = new HashMap<Integer, Map>();
+            TreeMap<String, Integer> groupNames = new TreeMap<String, Integer>();
+            TreeMap<String, Integer> groupDescriptions = new TreeMap<String, Integer>();
+            for (int i = 0; i < groupsValues.size(); i++) {
+                Map<String, String> entry = groupsValues.get(i);
+                Integer key = Integer.valueOf(i);
+                groupLookup.put(key, entry);
+                groupNames.put(entry.get("name"), key);
+                groupDescriptions.put(entry.get("description"), key);
+            }
+
+            //do calculations to determine how many sorted values to return.
+            int start, end;
+            start = (int) (returnIndex * returnAmount);
+            end = start + returnAmount;
+            PageList<Map<String, String>> sizedAvailableGroups = new PageList<Map<String, String>>();
+
+            //detect sort order
+            boolean descending = false;
+            if (sortOrder.DESC == sortOrder) {
+                descending = true;
+            }
+            //use sort column to determine which list to use
+            if (sortColumn.equalsIgnoreCase("lg.name")) {
+                int i = 0;
+                NavigableSet<String> keyList = groupNames.navigableKeySet();
+                if (descending) {
+                    keyList = groupNames.descendingKeySet();
+                }
+                for (String key : keyList) {
+                    if ((i >= start) && (i < end)) {
+                        sizedAvailableGroups.add(groupLookup.get(groupNames.get(key)));
+                    }
+                    i++;
+                }
+            } else {
+                int i = 0;
+                NavigableSet<String> keyList = groupDescriptions.navigableKeySet();
+                if (descending) {
+                    keyList = groupNames.descendingKeySet();
+                }
+                for (String key : keyList) {
+                    if ((i >= start) && (i < end)) {
+                        sizedAvailableGroups.add(groupLookup.get(groupDescriptions.get(key)));
+                    }
+                    i++;
+                }
+            }
+            //make sizedAvailableGroup the new reference to return.
+            availableGroups = sizedAvailableGroups;
+            //populate pagination elements for loaded elements.
+            availableGroups.setTotalSize(groupLookup.size());
+            availableGroups.setPageControl(pca);
+
         } catch (LdapFilterException lce) {
             ActionMessages actionMessages = new ActionMessages();
             actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage("admin.role.LdapGroupFilterMessage"));
@@ -136,7 +235,9 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
         request.setAttribute(Constants.PENDING_RESGRPS_ATTR, pendingGroups);
         request.setAttribute(Constants.NUM_PENDING_RESGRPS_ATTR, new Integer(pendingGroups.getTotalSize()));
         request.setAttribute(Constants.AVAIL_RESGRPS_ATTR, availableGroups);
-        request.setAttribute(Constants.NUM_AVAIL_RESGRPS_ATTR, new Integer(availableGroups.getTotalSize()));
+        request.setAttribute(Constants.NUM_AVAIL_RESGRPS_ATTR, new Integer(allGroups.size()));
+        //store cachedAvailableGroups in session so trim down ldap communication chatter.
+        request.getSession().setAttribute(LDAP_GROUP_CACHE, cachedAvailableLdapGroups);
 
         return null;
     }

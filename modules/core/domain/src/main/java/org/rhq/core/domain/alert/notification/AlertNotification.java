@@ -49,7 +49,7 @@ import org.rhq.core.domain.configuration.Configuration;
 @NamedQueries( {
     @NamedQuery(name = AlertNotification.DELETE_BY_ID, query = "DELETE FROM AlertNotification an WHERE an.id IN ( :ids )"),
     @NamedQuery(name = AlertNotification.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource.id IN ( :resourceIds ) )"),
-    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL AND an.alertNotificationTemplate IS NULL") })
+    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIFICATION")
 public class AlertNotification implements Serializable {
@@ -73,10 +73,6 @@ public class AlertNotification implements Serializable {
     @JoinColumn(name = "ALERT_DEFINITION_ID")
     @ManyToOne
     private AlertDefinition alertDefinition;
-
-    @JoinColumn(name = "TEMPLATE_ID")
-    @ManyToOne
-    private AlertNotificationTemplate alertNotificationTemplate;
 
     @JoinColumn(name = "SENDER_CONFIG_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
@@ -162,14 +158,6 @@ public class AlertNotification implements Serializable {
         this.configuration = configuration;
     }
 
-    public AlertNotificationTemplate getAlertNotificationTemplate() {
-        return alertNotificationTemplate;
-    }
-
-    public void setAlertNotificationTemplate(AlertNotificationTemplate alertNotificationTemplate) {
-        this.alertNotificationTemplate = alertNotificationTemplate;
-    }
-
     public int getAlertDefinitionId() {
         return alertDefinitionId;
     }
@@ -185,7 +173,6 @@ public class AlertNotification implements Serializable {
         sb.append("{alertDefinitionId=").append(alertDefinitionId);
         sb.append(", alertNotificationId=").append(alertNotificationId);
         sb.append(", id=").append(id);
-        sb.append(", notificationTemplate=").append(alertNotificationTemplate);
         sb.append(", senderName='").append(senderName).append('\'');
         sb.append('}');
         return sb.toString();

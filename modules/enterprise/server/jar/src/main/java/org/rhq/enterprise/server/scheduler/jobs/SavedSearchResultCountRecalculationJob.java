@@ -67,7 +67,10 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
                     PageList<Resource> results = resourceManager.findResourcesByCriteria(overlord, criteria);
                     totalMillis += System.currentTimeMillis();
 
-                    if (results.getTotalSize() != next.getResultCount()) {
+                    // TODO: should recent count be computed at the time of update/save for this saved search?
+                    //       it would obviate the need for null checking here as well as in the UI for conditional 
+                    //        display of the result count
+                    if (next.getResultCount() == null || results.getTotalSize() != next.getResultCount()) {
                         next.setResultCount((long) results.getTotalSize());
                         savedSearchManager.updateSavedSearch(overlord, next);
                         updated++;
@@ -76,7 +79,7 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
             } catch (Throwable t) {
                 // TODO: mark this saved search as "broken" so that future computation is suppressed for it
                 errors++;
-                LOG.error("Could not calculate result count for SavedSearch[name=" + next.getName() + ", patter='"
+                LOG.error("Could not calculate result count for SavedSearch[name=" + next.getName() + ", pattern='"
                     + next.getPattern() + "']");
             }
         }

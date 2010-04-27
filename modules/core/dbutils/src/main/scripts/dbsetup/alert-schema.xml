@@ -137,7 +137,6 @@
         <column name="TEMPLATE_ID" required="false" type="INTEGER" references="RHQ_ALERT_NOTIF_TEMPL(ID)"/>
         <column name="SENDER_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
         <column name="SENDER_NAME" required="true" size="100" type="VARCHAR2" />
-        <column name="DISPLAY_NAME" type="VARCHAR2" size="100" />
     </table>
 
 </dbsetup>

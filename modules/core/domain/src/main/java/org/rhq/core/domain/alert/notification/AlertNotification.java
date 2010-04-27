@@ -85,9 +85,6 @@ public class AlertNotification implements Serializable {
     @Column(name = "SENDER_NAME")
     private String senderName;
 
-    @Column(name = "DISPLAY_NAME")
-    private String displayName;
-
     protected AlertNotification() {
     } // JPA spec
 
@@ -115,7 +112,6 @@ public class AlertNotification implements Serializable {
         } else {
             this.configuration = source.configuration.deepCopy(false);
         }
-        this.displayName = source.displayName;
         this.senderName = source.senderName;
     }
 
@@ -129,8 +125,7 @@ public class AlertNotification implements Serializable {
         this.alertNotificationId = alertNotificationId;
     }
 
-    public AlertNotification(String displayName, String sender) {
-        this.displayName = displayName;
+    public AlertNotification(String sender) {
         this.senderName = sender;
     }
 
@@ -145,22 +140,6 @@ public class AlertNotification implements Serializable {
 
     public void setAlertDefinition(AlertDefinition alertDefinition) {
         this.alertDefinition = alertDefinition;
-    }
-
-    public AlertNotification copyWithAlertDefintion(AlertDefinition alertDefinition, boolean copyIds) {
-        Configuration config;
-        if (copyIds) {
-            config = this.configuration;
-        } else {
-            config = this.configuration.deepCopy(false);
-        }
-        AlertNotification notification = new AlertNotification(alertDefinition, config);
-        if (copyIds) {
-            notification.id = this.id;
-        }
-        notification.setDisplayName(this.displayName);
-        notification.setSenderName(this.senderName);
-        return notification;
     }
 
     public void prepareForOrphanDelete() {
@@ -181,14 +160,6 @@ public class AlertNotification implements Serializable {
 
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
     }
 
     public AlertNotificationTemplate getAlertNotificationTemplate() {
@@ -216,7 +187,6 @@ public class AlertNotification implements Serializable {
         sb.append(", id=").append(id);
         sb.append(", notificationTemplate=").append(alertNotificationTemplate);
         sb.append(", senderName='").append(senderName).append('\'');
-        sb.append(", displayName='").append(displayName).append('\'');
         sb.append('}');
         return sb.toString();
     }

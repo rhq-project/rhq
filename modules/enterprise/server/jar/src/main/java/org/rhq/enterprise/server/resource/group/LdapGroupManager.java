@@ -208,8 +208,10 @@ public class LdapGroupManager {
                     }
                     Map<String, String> entry = new HashMap<String, String>();
                     String name = (String) si.getAttributes().get("cn").get();
+                    name = name.trim();
                     Attribute desc = si.getAttributes().get("description");
                     String description = desc != null ? (String) desc.get() : "";
+                    description = description.trim();
                     entry.put("id", name);
                     entry.put("name", name);
                     entry.put("description", description);

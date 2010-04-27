@@ -50,6 +50,7 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
     private final Set<String> filesToNotExtract;
     private final StreamCopyDigest copierAndHashcodeGenerator;
     private final DeployDifferences diff;
+    private final boolean dryRun;
 
     /**
      * Creates the visitor. When the visitor hits a zip entry whose name matches
@@ -65,9 +66,10 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
      * @param templateEngine the template engine that replaces replacement variables in files to be realized
      * @param filesToNotExtract set of files that are not to be extracted from the zip and stored; these are to be skipped
      * @param diff optional object that is told when files are realized
+     * @param dryRun if <code>true</code>, this won't actually write files to the filesystem
      */
     public ExtractorZipFileVisitor(File rootDir, Pattern filesToRealizeRegex, TemplateEngine templateEngine,
-        Set<String> filesToNotExtract, DeployDifferences diff) {
+        Set<String> filesToNotExtract, DeployDifferences diff, boolean dryRun) {
 
         this.rootDir = rootDir;
 
@@ -84,6 +86,7 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
         this.filesToNotExtract = filesToNotExtract;
         this.copierAndHashcodeGenerator = new StreamCopyDigest();
         this.diff = diff;
+        this.dryRun = dryRun;
     }
 
     /**
@@ -106,12 +109,16 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
         File entryFile = new File(this.rootDir, pathname);
 
         if (entry.isDirectory()) {
-            entryFile.mkdirs();
+            if (!dryRun) {
+                entryFile.mkdirs();
+            }
             return true;
         }
 
         // make sure all parent directories are created
-        entryFile.getParentFile().mkdirs();
+        if (!dryRun) {
+            entryFile.getParentFile().mkdirs();
+        }
 
         String hashcode;
 
@@ -130,22 +137,28 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
             // now write the realized content to the filesystem
             byte[] bytes = content.getBytes();
 
-            FileOutputStream fos = new FileOutputStream(entryFile);
-            try {
-                fos.write(bytes);
-            } finally {
-                fos.close();
+            if (!dryRun) {
+                FileOutputStream fos = new FileOutputStream(entryFile);
+                try {
+                    fos.write(bytes);
+                } finally {
+                    fos.close();
+                }
             }
 
             MessageDigestGenerator hashcodeGenerator = this.copierAndHashcodeGenerator.getMessageDigestGenerator();
             hashcodeGenerator.add(bytes);
             hashcode = hashcodeGenerator.getDigestString();
         } else {
-            FileOutputStream fos = new FileOutputStream(entryFile);
-            try {
-                hashcode = this.copierAndHashcodeGenerator.copyAndCalculateHashcode(stream, fos);
-            } finally {
-                fos.close();
+            if (!dryRun) {
+                FileOutputStream fos = new FileOutputStream(entryFile);
+                try {
+                    hashcode = this.copierAndHashcodeGenerator.copyAndCalculateHashcode(stream, fos);
+                } finally {
+                    fos.close();
+                }
+            } else {
+                hashcode = MessageDigestGenerator.getDigestString(stream);
             }
         }
 

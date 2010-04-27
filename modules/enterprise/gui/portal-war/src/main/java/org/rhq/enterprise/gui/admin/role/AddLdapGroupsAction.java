@@ -35,13 +35,16 @@ import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * An Action that adds resource groups for a role.
  */
 public class AddLdapGroupsAction extends BaseAction {
+
+    LdapGroupManagerLocal ldapManager = LookupUtil.getLdapGroupManager();
+
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         Log log = LogFactory.getLog(AddLdapGroupsAction.class.getName());
@@ -75,8 +78,7 @@ public class AddLdapGroupsAction extends BaseAction {
             log.debug("adding group [" + id + "] for role [" + roleId + "]");
         }
 
-        RoleManagerLocal roleManager = LookupUtil.getRoleManager();
-        roleManager.addLdapGroupsToRole(RequestUtils.getSubject(request), roleId, pendingGroupIds);
+        ldapManager.addLdapGroupsToRole(RequestUtils.getSubject(request), roleId, pendingGroupIds);
 
         log.debug("removing pending group list");
         SessionUtils.removeList(session, Constants.PENDING_RESGRPS_SES_ATTR);

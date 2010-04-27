@@ -57,19 +57,19 @@ public class SearchTranslationManager {
 
     public String getJPQLSelectStatement() throws Exception {
         String jpql = "SELECT " + alias + " FROM " + entity + " " + alias + " WHERE " + getJPQLWhereFragment();
-        System.out.println("JPQL was:");
+        //System.out.println("JPQL was:");
         PrintUtils.printJPQL(jpql.split(" "));
-        System.out.println();
+        //System.out.println();
         return jpql;
     }
 
     public String getJPQLWhereFragment() throws Exception {
         RHQLParser.searchExpression_return searchAST = parser.searchExpression();
 
-        System.out.println("Search was: " + expression);
+        //System.out.println("Search was: " + expression);
         CommonTree searchExpressionTree = (CommonTree) searchAST.getTree();
-        System.out.println("Errors found: " + adaptor.getErrorMessages());
-        System.out.println("Tree was:");
+        //System.out.println("Errors found: " + adaptor.getErrorMessages());
+        //System.out.println("Tree was:");
         PrintUtils.print(searchExpressionTree, "");
         String fragment = generateJPQL(searchExpressionTree);
         return fragment;
@@ -193,12 +193,12 @@ public class SearchTranslationManager {
                 }
 
                 if (lineBreakers.contains(next)) {
-                    System.out.println();
-                    System.out.print(indent);
+                    //System.out.println();
+                    //System.out.print(indent);
                 }
 
-                System.out.print(next);
-                System.out.print(" ");
+                //System.out.print(next);
+                //System.out.print(" ");
 
                 if (next.equals(")")) {
                     indent = indent.substring(3);
@@ -228,11 +228,11 @@ public class SearchTranslationManager {
                 return;
             }
 
-            System.out.print(indent + token.getText());
+            //System.out.print(indent + token.getText());
             if (isStringNode(token)) {
-                System.out.println(collapseStringChildren(tree));
+                //System.out.println(collapseStringChildren(tree));
             } else {
-                System.out.println();
+                //System.out.println();
                 for (int childIndex = 0; childIndex < tree.getChildCount(); childIndex++) {
                     CommonTree child = (CommonTree) tree.getChild(childIndex);
                     print(child, indent + "   ");
@@ -261,7 +261,7 @@ public class SearchTranslationManager {
     }
 
     public static void main(String[] args) throws Exception {
-        SearchTranslationManager manager = new SearchTranslationManager(SearchSubsystem.Resource);
+        SearchTranslationManager manager = new SearchTranslationManager(SearchSubsystem.RESOURCE);
         manager.setExpression("(name = rhq and category = server) or plugin = jbossas");
         String jpql = manager.getJPQLSelectStatement();
     }

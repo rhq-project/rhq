@@ -8,7 +8,7 @@ public class SearchTranslatorFactory {
     }
 
     public static SearchTranslator getTranslator(SearchSubsystem searchContext) {
-        if (searchContext == SearchSubsystem.Resource) {
+        if (searchContext == SearchSubsystem.RESOURCE) {
             return new ResourceSearchTranslator();
         }
         throw new IllegalArgumentException("No SearchTranslator found for SearchContext[" + searchContext + "]");

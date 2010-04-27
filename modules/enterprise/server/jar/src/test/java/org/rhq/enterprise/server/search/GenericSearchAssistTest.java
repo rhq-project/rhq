@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
-import org.rhq.enterprise.server.search.execution.SearchSuggestion;
+import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 
 public class GenericSearchAssistTest extends AbstractEJB3Test {
@@ -51,7 +51,8 @@ public class GenericSearchAssistTest extends AbstractEJB3Test {
             }
             System.out.println("Tested " + count + " expressions for assist");
         } catch (Exception e) {
-            System.out.println("Error testing single line RHQL: " + e);
+            System.out.println("Error testing GenericSearchAssistTest: " + e);
+            e.printStackTrace(System.out);
             throw e;
         } finally {
             if (reader != null) {

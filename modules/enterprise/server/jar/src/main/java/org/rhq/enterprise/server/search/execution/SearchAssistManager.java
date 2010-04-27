@@ -9,19 +9,29 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SavedSearchCriteria;
+import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.core.domain.search.SearchSuggestion;
+import org.rhq.core.domain.search.SearchSuggestion.Kind;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
+import org.rhq.enterprise.server.search.assist.AbstractSearchAssistant;
 import org.rhq.enterprise.server.search.assist.ResourceSearchAssistant;
-import org.rhq.enterprise.server.search.assist.SearchAssistant;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public class SearchAssistManager {
 
     private static final Log LOG = LogFactory.getLog(SearchAssistManager.class);
+    private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
 
     private static List<String> comparisonOperators = Arrays.asList("!==", "!=", "==", "=");
-    private static List<String> booleanOperators = Arrays.asList("and", "or");
+    private static List<String> booleanOperators = Arrays.asList("and", "or", "|");
 
-    private SearchAssistant completor;
+    private Subject subject;
+    private SearchSubsystem searchSubsystem;
 
     /*
      * states:
@@ -266,12 +276,14 @@ public class SearchAssistManager {
         }
     }
 
-    public SearchAssistManager(SearchSubsystem searchSubsystem) {
-        this.completor = getAutoCompletor(searchSubsystem);
+    public SearchAssistManager(Subject subject, SearchSubsystem searchSubsystem) {
+        this.subject = subject;
+        this.searchSubsystem = searchSubsystem;
+
     }
 
-    protected SearchAssistant getAutoCompletor(SearchSubsystem searchSubsystem) {
-        if (searchSubsystem == SearchSubsystem.Resource) {
+    protected AbstractSearchAssistant getSearchAssistant() {
+        if (searchSubsystem == SearchSubsystem.RESOURCE) {
             return new ResourceSearchAssistant();
         } else {
             throw new IllegalArgumentException("No SearchAssistant found for SearchSubsystem[" + searchSubsystem + "]");
@@ -279,14 +291,48 @@ public class SearchAssistManager {
     }
 
     public List<String> getAllContexts() {
-        List<String> results = new ArrayList<String>(completor.getSimpleContexts());
-        for (String parameterized : completor.getParameterizedContexts()) {
+        List<String> results = new ArrayList<String>(getSearchAssistant().getSimpleContexts());
+        for (String parameterized : getSearchAssistant().getParameterizedContexts()) {
             results.add(parameterized + "[");
         }
         return results;
     }
 
+    public List<SearchSuggestion> getSuggestions(String expression, int caretPos) {
+        //List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos);
+        List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos);
+        List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);
+        List<SearchSuggestion> globalSavedSearches = getGlobalSavedSearchSuggestions(expression);
+
+        List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
+        //results.addAll(simple);
+        results.addAll(advanced);
+        results.addAll(userSavedSearches);
+        results.addAll(globalSavedSearches);
+        Collections.sort(results);
+        return results;
+    }
+
+    public List<SearchSuggestion> getSimpleSuggestions(String expression, int caretPos) {
+        AbstractSearchAssistant completor = getSearchAssistant();
+
+        List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
+        for (String nextContext : completor.getSimpleContexts()) {
+            String intermediateExpression = nextContext + "=" + expression;
+            List<SearchSuggestion> suggestions = getAdvancedSuggestions(intermediateExpression, caretPos);
+            results.addAll(suggestions);
+        }
+        Collections.sort(results);
+        if (results.size() > completor.getMaxResultCount()) {
+            return results.subList(0, completor.getMaxResultCount());
+        } else {
+            return results;
+        }
+    }
+
     public List<SearchSuggestion> getAdvancedSuggestions(String expression, int caretPos) {
+        AbstractSearchAssistant completor = getSearchAssistant();
+
         debug("getAdvancedSuggestions: START");
         long id = HibernatePerformanceMonitor.get().start();
         SearchTermAssistant assistant = new SearchTermAssistant(expression, caretPos);
@@ -392,6 +438,55 @@ public class SearchAssistManager {
         }
     }
 
+    public List<SearchSuggestion> getUserSavedSearchSuggestions(String expression) {
+        SavedSearchCriteria criteria = new SavedSearchCriteria();
+        criteria.addFilterSubjectId(subject.getId());
+        criteria.addFilterSearchContext(searchSubsystem);
+        if (expression != null && expression.trim().equals("")) {
+            criteria.addFilterName(expression);
+        }
+
+        criteria.setCaseSensitive(false);
+        criteria.addSortName(PageOrdering.ASC);
+
+        List<SavedSearch> savedSearchResults = savedSearchManager.findSavedSearchesByCriteria(subject, criteria);
+
+        List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
+        for (SavedSearch next : savedSearchResults) {
+            String label = next.getName();
+            String value = next.getPattern();
+            int index = next.getName().toLowerCase().indexOf(expression);
+            SearchSuggestion suggestion = new SearchSuggestion(Kind.UserSavedSearch, label, value, index, expression
+                .length());
+            results.add(suggestion);
+        }
+        return results;
+    }
+
+    public List<SearchSuggestion> getGlobalSavedSearchSuggestions(String expression) {
+        SavedSearchCriteria criteria = new SavedSearchCriteria();
+        criteria.addFilterGlobal(true);
+        if (expression != null && expression.trim().equals("")) {
+            criteria.addFilterName(expression);
+        }
+
+        criteria.setCaseSensitive(false);
+        criteria.addSortName(PageOrdering.ASC);
+
+        List<SavedSearch> savedSearchResults = savedSearchManager.findSavedSearchesByCriteria(subject, criteria);
+
+        List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
+        for (SavedSearch next : savedSearchResults) {
+            String label = next.getName();
+            String value = next.getPattern();
+            int index = next.getName().toLowerCase().indexOf(expression);
+            SearchSuggestion suggestion = new SearchSuggestion(Kind.GlobalSavedSearch, label, value, index, expression
+                .length());
+            results.add(suggestion);
+        }
+        return results;
+    }
+
     private boolean isBooleanTerm(String term) {
         for (String op : booleanOperators) {
             if (op.equals(term)) {
@@ -404,7 +499,7 @@ public class SearchAssistManager {
     private List<SearchSuggestion> convert(List<String> suggestions) {
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>(suggestions.size());
         for (String suggestion : suggestions) {
-            results.add(new SearchSuggestion(SearchSuggestion.SearchCategory.Advanced, suggestion));
+            results.add(new SearchSuggestion(Kind.Advanced, suggestion));
         }
         return results;
     }

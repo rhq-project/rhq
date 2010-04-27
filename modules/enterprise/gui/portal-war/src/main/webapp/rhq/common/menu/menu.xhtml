@@ -124,6 +124,21 @@
                 </c:if>
             </c:forEach>
         </rich:menuGroup>
+        
+        <ui:remove>***** Resources > SAVED SEARCHES *****</ui:remove>
+        <rich:menuGroup value="Saved Searches" icon="/images/bookmark.png">
+            <c:forEach var="savedSearch" items="#{UserPreferencesUIBean.savedSearches}">
+                <c:if test="#{savedSearch.context.name == 'RESOURCE'}">
+                <rich:menuItem submitMode="none"
+                               icon="/images/icons/Flag_#{savedSearch.global ? 'yellow' : 'blue'}_16.png"
+                               onclick="window.location = '/rhq/inventory/browseResources.xhtml?subtab=all&amp;searchId=#{savedSearch.id}'">
+                    <h:outputText value="#{savedSearch.name}" />
+                    <h:outputText value=" (#{savedSearch.resultCount})"
+                                  rendered="#{not empty savedSearch.resultCount}" />
+                </rich:menuItem>
+                </c:if>
+            </c:forEach>
+        </rich:menuGroup>
 
         <rich:menuSeparator/>
 
@@ -136,7 +151,7 @@
                 <rich:suggestionbox id="resourceSelectBox" for="selectedResource" tokens=",[]"
                                     ajaxSingle="true" immediate="true"
                                     suggestionAction="#{ResourceSelectUIBean.autocomplete}"
-                                    var="result" data="foo" fetchValue="#{result.resource.id}"
+                                    var="result" data="foo" fetchValue="#{result.original.resource.id}"
                                     nothingLabel="No matching resources found"
                                     style="background-color: #cccccc;"
                                     onselect="document.location.href='#{onf:getDefaultResourceTabURL()}?id=' + #{rich:element('selectedResource')}.value"
@@ -144,15 +159,15 @@
                     <h:column>
                         <f:facet name="header">Avail</f:facet>
                         <h:graphicImage
-                                value="/images/icons/availability_#{result.availability == 'UP' ? 'green' : 'red'}_16.png"/>
+                                value="/images/icons/availability_#{result.original.availability == 'UP' ? 'green' : 'red'}_16.png"/>
                     </h:column>
                     <h:column>
                         <f:facet name="header">Resource</f:facet>
-                        <h:outputText value="#{result.resource.name}"/>
+                        <h:outputText value="#{result.original.resource.name}"/>
                     </h:column>
                     <h:column>
                         <f:facet name="header">Parent</f:facet>
-                        <h:outputText value="#{result.parent.name}"/>
+                        <h:outputText value="#{result.original.parent.name}"/>
                     </h:column>
                 </rich:suggestionbox>
             </h:panelGroup>

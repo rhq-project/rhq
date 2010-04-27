@@ -393,7 +393,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             def.getAlertNotifications().clear();
 
         for (AlertNotification notif : template.getNotifications()) {
-            AlertNotification notification = notif.copyWithAlertDefintion(def, true);
+            AlertNotification notification = new AlertNotification(notif, true);
+            notification.setAlertDefinition(notif.getAlertDefinition());
             entityManager.persist(notification.getConfiguration());
             entityManager.persist(notification);
             def.addAlertNotification(notification); // Attach a copy, as the ones in the template should not be shared

@@ -25,6 +25,7 @@ package org.rhq.core.domain.search;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
@@ -40,8 +41,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  */
 public enum SearchSubsystem {
 
-    Resource(org.rhq.core.domain.resource.Resource.class), //
-    Group(ResourceGroup.class);
+    RESOURCE(Resource.class), //
+    GROUP(ResourceGroup.class);
 
     private Class<?> entityClass;
     private static Map<Class<?>, SearchSubsystem> subsystems;
@@ -62,5 +63,14 @@ public enum SearchSubsystem {
 
     public static SearchSubsystem get(Class<?> entityClass) {
         return SearchSubsystem.subsystems.get(entityClass);
+    }
+
+    /**
+     * A Java bean style getter to allow us to access the enum name from JSP or Facelets pages
+     *
+     * @return the enum name
+     */
+    public String getName() {
+        return name();
     }
 }

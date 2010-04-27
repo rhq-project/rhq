@@ -31,17 +31,23 @@
       <a4j:keepAlive beanName="BrowseResourcesUIBean"/>
 
       <h:form id="browseResourcesForm">
-            <input type="hidden" name="subtab" value="${param.subtab}"/>
+            <input type="hidden" name="subtab" value="${param.subtab}" />
             
             <p/>
             <h:panelGroup>
-               <h:outputLabel for="filter" value="Search: " />
-               <h:inputText id="filter"
-                            binding="#{BrowseResourcesUIBean.filterInput}"
-                            value="#{BrowseResourcesUIBean.filter}"
+               <h:outputLabel for="search" value="Search: " />
+               <h:inputText id="search"
+                            binding="#{BrowseResourcesUIBean.searchInput}"
+                            value="#{BrowseResourcesUIBean.search}"
                             onkeypress="return ignoreEnterKey(event);"
-                            style="width: 600px;" />
-               <rich:suggestionbox id="suggest" for="filter" 
+                            style="width: 600px;">
+                   <ui:remove>
+                   <a4j:support event="onfocus" reRender="suggest"
+                                disableDefault="true" status="commonStatus" limitToList="true" 
+                                ajaxSingle="true" oncomplete="#{rich:component('suggest')}.show(event, {})"/>
+                   </ui:remove>
+               </h:inputText>
+               <rich:suggestionbox id="suggest" for="search" 
                                    width="600" height="400"
                                    border="1" cellpadding="1" cellspacing="1"
                                    minChars="0"
@@ -56,7 +62,19 @@
                                    eventsQueue="resourceSearchSuggestions"
                                    ignoreDupResponses="true"
                                    rendered="true"> <!-- disable until auto-completer is added -->
-                   <h:column>
+                   <h:column width="10%">
+                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: gray;" 
+                                    rendered="#{suggestItem.kind.name eq 'Simple'}" />
+                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; " 
+                                    rendered="#{suggestItem.kind.name eq 'Advanced'}" />
+                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: yellow" 
+                                    rendered="#{suggestItem.kind.name eq 'AdvancedOperator'}" />
+                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: green;" 
+                                    rendered="#{suggestItem.kind.name eq 'UserSavedSearch'}" />
+                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: orange;" 
+                                    rendered="#{suggestItem.kind.name eq 'GlobalSavedSearch'}" />
+                   </h:column>
+                   <h:column width="90%">
                       <h:outputText value="#{suggestItem.label}" />
                    </h:column>
                </rich:suggestionbox>

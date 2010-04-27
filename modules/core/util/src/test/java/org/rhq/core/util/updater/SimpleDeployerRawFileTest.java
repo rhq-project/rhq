@@ -418,7 +418,7 @@ public class SimpleDeployerRawFileTest {
         }
 
         // verify the backup copy
-        File backupFile = new File(this.diff.getBackedUpFiles().get(currentAbsPath));
+        File backupFile = new File(this.diff.getBackedUpFiles().get(this.diff.convertPath(currentAbsPath)));
         if (dryRun) {
             assert !backupFile.exists() : "dry run should not create backup";
         } else {

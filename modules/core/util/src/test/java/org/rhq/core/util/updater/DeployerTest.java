@@ -205,7 +205,7 @@ public class DeployerTest {
      * testUpdateDeployZipsAndRawFiles and testUpdateDeployZipsAndRawFilesWithRealizeAndIgnore. 
      */
     private void baseUpdateTest(boolean realize, boolean ignore) throws Exception {
-        DeployDifferences listener;
+        DeployDifferences diff;
 
         final Pattern filesToRealizeRegex = realize ? Pattern.compile("fileA") : null;
         final Pattern ignoreRegex = ignore ? Pattern.compile("ignoreme.*") : null;
@@ -255,18 +255,18 @@ public class DeployerTest {
             File destDir = tmpDir;
             Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
                 templateEngine, ignoreRegex);
-            listener = new DeployDifferences();
-            deployer.deploy(listener);
+            diff = new DeployDifferences();
+            deployer.deploy(diff);
 
             if (ignore) {
                 assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
-                assert listener.getIgnoredFiles().size() == 0 : "this was an initial deploy - nothing to ignore (ignore is only for updates)";
+                assert diff.getIgnoredFiles().size() == 0 : "this was an initial deploy - nothing to ignore (ignore is only for updates)";
             }
-            assert listener.getAddedFiles().size() == 6 : listener;
-            assert listener.getDeletedFiles().size() == 0 : listener;
-            assert listener.getChangedFiles().size() == 0 : listener;
-            assert listener.getRealizedFiles().size() == 0 : "No fileA to realize in this deployment: " + listener;
-            assert listener.getBackedUpFiles().size() == 0 : "No fileA to realize in this deployment: " + listener;
+            assert diff.getAddedFiles().size() == 6 : diff;
+            assert diff.getDeletedFiles().size() == 0 : diff;
+            assert diff.getChangedFiles().size() == 0 : diff;
+            assert diff.getRealizedFiles().size() == 0 : "No fileA to realize in this deployment: " + diff;
+            assert diff.getBackedUpFiles().size() == 0 : "No fileA to realize in this deployment: " + diff;
 
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, file1)));
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(updaterAabsolute));
@@ -282,13 +282,13 @@ public class DeployerTest {
             rawFiles.put(testRawFileB, updaterBabsolute); // raw file to absolute path
             deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
                 ignoreRegex);
-            listener = new DeployDifferences();
-            deployer.deploy(listener);
+            diff = new DeployDifferences();
+            deployer.deploy(diff);
 
             if (ignore) {
                 assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
-                assert listener.getIgnoredFiles().size() == 1;
-                assert listener.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
+                assert diff.getIgnoredFiles().size() == 1;
+                assert diff.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
             }
 
             assert !updaterAabsolute.exists() : "updateA.txt should be deleted";
@@ -363,33 +363,33 @@ public class DeployerTest {
             File file999backupTo1 = new File(metadir, "1/backup/" + file999);
             assert file999backupTo1.exists() : "file999 should not be backed up";
             assert new File(tmpDir, file3).exists() : "file3 should exist";
-            assert listener.getAddedFiles().size() == 3 : listener;
-            assert listener.getAddedFiles().contains(file2) : listener;
-            assert listener.getAddedFiles().contains(fileC) : listener;
-            assert listener.getAddedFiles().contains(fileA) : listener;
-            assert listener.getDeletedFiles().size() == 3 : listener;
-            assert listener.getDeletedFiles().contains(file0) : listener;
-            assert listener.getDeletedFiles().contains(updaterAabsolute.getAbsolutePath()) : listener;
-            assert listener.getDeletedFiles().contains(file999) : listener;
-            assert listener.getChangedFiles().size() == 2 : listener;
-            assert listener.getChangedFiles().contains(updaterBabsolute.getAbsolutePath()) : listener;
-            assert listener.getChangedFiles().contains(fileB) : listener;
-            assert listener.getBackedUpFiles().size() == 4 : listener;
-            assert listener.getBackedUpFiles().containsKey(updaterAabsolute.getAbsolutePath()) : listener;
-            assert listener.getBackedUpFiles().get(updaterAabsolute.getAbsolutePath())
-                .equals(updaterAabsoluteBackupTo1) : listener;
-            assert listener.getBackedUpFiles().containsKey(updaterBabsolute.getAbsolutePath()) : listener;
-            assert listener.getBackedUpFiles().get(updaterBabsolute.getAbsolutePath())
-                .equals(updaterBabsoluteBackupTo1) : listener;
-            assert listener.getBackedUpFiles().containsKey(fileB) : listener;
-            assert listener.getBackedUpFiles().get(fileB).equals(fileBbackupTo1.getAbsolutePath()) : listener;
-            assert listener.getBackedUpFiles().containsKey(file999) : listener;
-            assert listener.getBackedUpFiles().get(file999).equals(file999backupTo1.getAbsolutePath()) : listener;
+            assert diff.getAddedFiles().size() == 3 : diff;
+            assert diff.getAddedFiles().contains(file2) : diff;
+            assert diff.getAddedFiles().contains(fileC) : diff;
+            assert diff.getAddedFiles().contains(fileA) : diff;
+            assert diff.getDeletedFiles().size() == 3 : diff;
+            assert diff.getDeletedFiles().contains(file0) : diff;
+            assert diff.getDeletedFiles().contains(diff.convertPath(updaterAabsolute.getAbsolutePath())) : diff;
+            assert diff.getDeletedFiles().contains(file999) : diff;
+            assert diff.getChangedFiles().size() == 2 : diff;
+            assert diff.getChangedFiles().contains(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
+            assert diff.getChangedFiles().contains(fileB) : diff;
+            assert diff.getBackedUpFiles().size() == 4 : diff;
+            assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterAabsolute.getAbsolutePath())) : diff;
+            assert diff.getBackedUpFiles().get(diff.convertPath(updaterAabsolute.getAbsolutePath())).equals(
+                updaterAabsoluteBackupTo1) : diff;
+            assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
+            assert diff.getBackedUpFiles().get(diff.convertPath(updaterBabsolute.getAbsolutePath())).equals(
+                updaterBabsoluteBackupTo1) : diff;
+            assert diff.getBackedUpFiles().containsKey(fileB) : diff;
+            assert diff.getBackedUpFiles().get(fileB).equals(fileBbackupTo1.getAbsolutePath()) : diff;
+            assert diff.getBackedUpFiles().containsKey(file999) : diff;
+            assert diff.getBackedUpFiles().get(file999).equals(file999backupTo1.getAbsolutePath()) : diff;
             if (realize) {
-                assert listener.getRealizedFiles().size() == 1 : listener;
-                assert listener.getRealizedFiles().containsKey(fileA) : listener;
+                assert diff.getRealizedFiles().size() == 1 : diff;
+                assert diff.getRealizedFiles().containsKey(fileA) : diff;
             } else {
-                assert listener.getRealizedFiles().size() == 0 : listener;
+                assert diff.getRealizedFiles().size() == 0 : diff;
             }
 
             StreamUtil.copy(new ByteArrayInputStream("Y".getBytes()), new FileOutputStream(updaterBabsolute));
@@ -401,33 +401,33 @@ public class DeployerTest {
             rawFiles.put(testRawFileBChange1, updaterBabsolute); // source raw file to absolute path
             deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
                 ignoreRegex);
-            listener = new DeployDifferences();
-            deployer.deploy(listener);
+            diff = new DeployDifferences();
+            deployer.deploy(diff);
 
             if (ignore) {
                 assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
-                assert listener.getIgnoredFiles().size() == 1;
-                assert listener.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
+                assert diff.getIgnoredFiles().size() == 1;
+                assert diff.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
             }
 
             assert new File(updaterBabsoluteBackupTo2).exists() : "updaterB should be backed up";
             assert "B1prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
             assert "Y".equals(new String(StreamUtil.slurp(new FileInputStream(new File(updaterBabsoluteBackupTo2)))));
 
-            assert listener.getAddedFiles().size() == 1 : listener;
-            assert listener.getAddedFiles().contains(updaterAabsolute.getAbsolutePath()) : listener;
-            assert listener.getDeletedFiles().size() == 0 : listener;
-            assert listener.getChangedFiles().size() == 1 : listener;
-            assert listener.getChangedFiles().contains(updaterBabsolute.getAbsolutePath()) : listener;
-            assert listener.getBackedUpFiles().size() == 1 : listener;
-            assert listener.getBackedUpFiles().containsKey(updaterBabsolute.getAbsolutePath()) : listener;
-            assert listener.getBackedUpFiles().get(updaterBabsolute.getAbsolutePath())
-                .equals(updaterBabsoluteBackupTo2) : listener;
+            assert diff.getAddedFiles().size() == 1 : diff;
+            assert diff.getAddedFiles().contains(diff.convertPath(updaterAabsolute.getAbsolutePath())) : diff;
+            assert diff.getDeletedFiles().size() == 0 : diff;
+            assert diff.getChangedFiles().size() == 1 : diff;
+            assert diff.getChangedFiles().contains(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
+            assert diff.getBackedUpFiles().size() == 1 : diff;
+            assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
+            assert diff.getBackedUpFiles().get(diff.convertPath(updaterBabsolute.getAbsolutePath())).equals(
+                updaterBabsoluteBackupTo2) : diff;
             if (realize) {
-                assert listener.getRealizedFiles().size() == 1 : listener;
-                assert listener.getRealizedFiles().containsKey(fileA) : listener;
+                assert diff.getRealizedFiles().size() == 1 : diff;
+                assert diff.getRealizedFiles().containsKey(fileA) : diff;
             } else {
-                assert listener.getRealizedFiles().size() == 0 : listener;
+                assert diff.getRealizedFiles().size() == 0 : diff;
             }
 
             StreamUtil.copy(new ByteArrayInputStream("Aprime".getBytes()), new FileOutputStream(updaterAabsolute));
@@ -440,28 +440,28 @@ public class DeployerTest {
             rawFiles.put(testRawFileBChange2, updaterBabsolute); // source raw file to absolute path
             deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
                 ignoreRegex);
-            listener = new DeployDifferences();
-            deployer.deploy(listener);
+            diff = new DeployDifferences();
+            deployer.deploy(diff);
 
             if (ignore) {
                 assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
-                assert listener.getIgnoredFiles().size() == 1;
-                assert listener.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
+                assert diff.getIgnoredFiles().size() == 1;
+                assert diff.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
             }
 
             assert "Aprime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterAabsolute))));
             assert "B2prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
 
-            assert listener.getAddedFiles().size() == 0 : listener;
-            assert listener.getDeletedFiles().size() == 0 : listener;
-            assert listener.getChangedFiles().size() == 1 : listener;
-            assert listener.getChangedFiles().contains(updaterBabsolute.getAbsolutePath()) : listener;
-            assert listener.getBackedUpFiles().size() == 0 : listener;
+            assert diff.getAddedFiles().size() == 0 : diff;
+            assert diff.getDeletedFiles().size() == 0 : diff;
+            assert diff.getChangedFiles().size() == 1 : diff;
+            assert diff.getChangedFiles().contains(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
+            assert diff.getBackedUpFiles().size() == 0 : diff;
             if (realize) {
-                assert listener.getRealizedFiles().size() == 1 : listener;
-                assert listener.getRealizedFiles().containsKey(fileA) : listener;
+                assert diff.getRealizedFiles().size() == 1 : diff;
+                assert diff.getRealizedFiles().containsKey(fileA) : diff;
             } else {
-                assert listener.getRealizedFiles().size() == 0 : listener;
+                assert diff.getRealizedFiles().size() == 0 : diff;
             }
         } finally {
             FileUtil.purge(tmpDir, true);

@@ -445,13 +445,20 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
      * @param newProperty the new prop that should replace the existing prop
      */
     private void replaceListPropertyMemberDefinition(PropertyDefinitionList exList, PropertyDefinitionList newList) {
-        PropertyDefinition doomedMember = exList.getMemberDefinition();
+        PropertyDefinition doomedMember = null;
+
+        // only remove the existing member if it is a different entity
+        if (exList.getMemberDefinition().getId() != newList.getMemberDefinition().getId()) {
+            doomedMember = exList.getMemberDefinition();
+        }
 
         exList.setMemberDefinition(newList.getMemberDefinition());
         exList.setMax(newList.getMax());
         exList.setMin(newList.getMin());
 
-        entityManager.remove(doomedMember);
+        if (null != doomedMember) {
+            entityManager.remove(doomedMember);
+        }
         entityManager.merge(exList);
         entityManager.flush();
     }

@@ -302,21 +302,33 @@ public final class CriteriaQueryGenerator {
 
                 String fieldName = orderingField.getField();
                 String override = criteria.getJPQLSortOverride(fieldName);
-                if (override == null) {
-                    override = alias + "." + fieldName;
-                } else {
-                    override = alias + "." + override;
-                }
+                String suffix = (override == null) ? fieldName : override;
+
+                // if the suffix is numerical, do not prefix the alias
+                // this allows us to sort by column ordinal, which is required for availability on the group browser 
+                String sortFragment = (isNumber(suffix)) ? suffix : (alias + "." + suffix);
 
                 PageOrdering ordering = orderingField.getOrdering();
 
-                results.append(override).append(' ').append(ordering);
+                results.append(sortFragment).append(' ').append(ordering);
             }
         }
         results.append(NL);
 
         LOG.debug(results);
         return results.toString();
+    }
+
+    private boolean isNumber(String input) {
+        if (input == null) {
+            return false;
+        }
+        for (char next : input.toCharArray()) {
+            if (Character.isDigit(next) == false) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public List<String> getFetchFields(Criteria criteria) {

@@ -492,12 +492,12 @@ public class DeployerTest {
 
             Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
                 templateEngine, ignoreRegex);
-            DeployDifferences listener = new DeployDifferences();
-            FileHashcodeMap map = deployer.deploy(listener);
+            DeployDifferences diff = new DeployDifferences();
+            FileHashcodeMap map = deployer.deploy(diff);
 
-            assert listener.getAddedFiles().size() == 2 : listener;
-            assert listener.getAddedFiles().contains("rawA.txt") : listener;
-            assert listener.getAddedFiles().contains(rawFileDestination.getAbsolutePath()) : listener;
+            assert diff.getAddedFiles().size() == 2 : diff;
+            assert diff.getAddedFiles().contains("rawA.txt") : diff;
+            assert diff.getAddedFiles().contains(diff.convertPath(rawFileDestination.getAbsolutePath())) : diff;
 
             assert map.size() == 2 : map;
             String f = "rawA.txt";

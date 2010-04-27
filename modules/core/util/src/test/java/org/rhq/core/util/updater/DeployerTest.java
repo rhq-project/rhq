@@ -377,14 +377,14 @@ public class DeployerTest {
             assert diff.getBackedUpFiles().size() == 4 : diff;
             assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterAabsolute.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().get(diff.convertPath(updaterAabsolute.getAbsolutePath())).equals(
-                updaterAabsoluteBackupTo1) : diff;
+                diff.convertPath(updaterAabsoluteBackupTo1)) : diff;
             assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().get(diff.convertPath(updaterBabsolute.getAbsolutePath())).equals(
-                updaterBabsoluteBackupTo1) : diff;
+                diff.convertPath(updaterBabsoluteBackupTo1)) : diff;
             assert diff.getBackedUpFiles().containsKey(fileB) : diff;
-            assert diff.getBackedUpFiles().get(fileB).equals(fileBbackupTo1.getAbsolutePath()) : diff;
+            assert diff.getBackedUpFiles().get(fileB).equals(diff.convertPath(fileBbackupTo1.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().containsKey(file999) : diff;
-            assert diff.getBackedUpFiles().get(file999).equals(file999backupTo1.getAbsolutePath()) : diff;
+            assert diff.getBackedUpFiles().get(file999).equals(diff.convertPath(file999backupTo1.getAbsolutePath())) : diff;
             if (realize) {
                 assert diff.getRealizedFiles().size() == 1 : diff;
                 assert diff.getRealizedFiles().containsKey(fileA) : diff;
@@ -422,7 +422,7 @@ public class DeployerTest {
             assert diff.getBackedUpFiles().size() == 1 : diff;
             assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().get(diff.convertPath(updaterBabsolute.getAbsolutePath())).equals(
-                updaterBabsoluteBackupTo2) : diff;
+                diff.convertPath(updaterBabsoluteBackupTo2)) : diff;
             if (realize) {
                 assert diff.getRealizedFiles().size() == 1 : diff;
                 assert diff.getRealizedFiles().containsKey(fileA) : diff;

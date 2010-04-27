@@ -59,13 +59,15 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
 
         AlertNotification activeNotification = alertNotificationManager.getAlertNotification(getSubject(),
             alertNotificationId);
+        if (activeNotification == null) {
+            return; // this was just removed on the previous request
+        }
         String senderName = activeNotification.getSenderName();
 
         AlertSenderInfo info = alertNotificationManager.getAlertInfoForSender(senderName);
 
         if (info != null && info.getUiSnippetUrl() != null) {
             this.contentUrl = info.getUiSnippetUrl().toString();
-            //this.contentUrl = "rhq/custom/plugin/alert/" + senderName + "/" + info.getUiSnippetShortPath();
         }
 
         String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(senderName);

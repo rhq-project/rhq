@@ -38,7 +38,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 
 /**
- * A bundle server-side plugin component that the server uses to process ant-based bundles.
+ * A bundle server-side plugin component that the server uses to process Ant-based bundles.
  * 
  * @author John Mazzitelli
  */
@@ -52,6 +52,7 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
     public void initialize(ServerPluginContext context) throws Exception {
         this.context = context;
         this.tmpDirectory = new File(this.context.getTemporaryDirectory(), "ant-bundle-server-plugin");
+        //noinspection ResultOfMethodCallIgnored
         this.tmpDirectory.mkdirs();
         if (!this.tmpDirectory.exists() || !this.tmpDirectory.isDirectory()) {
             throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process Ant bundles");

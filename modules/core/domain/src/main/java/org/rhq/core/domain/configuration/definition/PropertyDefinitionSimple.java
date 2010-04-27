@@ -157,12 +157,30 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     public void setEnumeratedValues(List<PropertyDefinitionEnumeration> enumeratedValues, boolean allowCustomEnumValue) {
         this.enumeratedValues = enumeratedValues;
         this.allowCustomEnumeratedValue = allowCustomEnumValue;
+        ensureOrdering();
     }
 
     public void addEnumeratedValues(PropertyDefinitionEnumeration... enumerations) {
         for (PropertyDefinitionEnumeration enumeration : enumerations) {
-            getEnumeratedValues().add(enumeration);
             enumeration.setPropertyDefinitionSimple(this);
+            getEnumeratedValues().add(enumeration);
+        }
+        ensureOrdering();
+    }
+
+    public void removeEnumeratedValues(PropertyDefinitionEnumeration... enumerations) {
+        for (PropertyDefinitionEnumeration enumeration : enumerations) {
+            getEnumeratedValues().remove(enumeration);
+        }
+        ensureOrdering();
+    }
+
+    private void ensureOrdering() {
+        if (null == this.enumeratedValues) {
+            return;
+        }
+        for (int i = 0, size = getEnumeratedValues().size(); (i < size); ++i) {
+            getEnumeratedValues().get(i).setOrderIndex(i);
         }
     }
 

@@ -340,9 +340,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * ordering (though the underlying SLSB may add a default ordering downstream). 
              */
             resetToDefaults(pc);
-            if (log.isTraceEnabled()) {
-                log.trace(pageControlView + ": Received error[" + t.getMessage() + "], resetting to " + pc);
-            }
+            log.error(pageControlView + ": Received error[" + t.getMessage() + "], resetting to " + pc);
             tryQueryAgain = true;
         }
 

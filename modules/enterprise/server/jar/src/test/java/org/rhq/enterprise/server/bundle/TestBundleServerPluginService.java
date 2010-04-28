@@ -216,5 +216,10 @@ public class TestBundleServerPluginService extends ServerPluginService implement
 
             return new RecipeParseResults(metadata, configDef, bundleFileNames);
         }
+
+        public UberBundleFileInfo processUberBundleFile(File uberBundleFile) throws Exception {
+            // TODO: bundle implement me
+            throw new UnsupportedOperationException("this mock object cannot do this");
+        }
     }
 }

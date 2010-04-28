@@ -21,9 +21,11 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.tagging.Tag;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
@@ -38,6 +40,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -101,6 +104,8 @@ public class ResourceTitleBar extends HLayout {
             }
         });
 
+        loadTags(tagEditorView);
+
 
         addMember(badge);
         addMember(title);
@@ -108,6 +113,25 @@ public class ResourceTitleBar extends HLayout {
         addMember(availabilityImage);
         addMember(favoriteButton);
     }
+
+    private void loadTags(final TagEditorView tagEditorView) {
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterId(resource.getId());
+        criteria.fetchTags(true);
+        GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Could not load resource tags",caught);
+            }
+
+            public void onSuccess(PageList<Resource> result) {
+                LinkedHashSet<Tag> tags = new LinkedHashSet<Tag>();
+                tags.addAll(result.get(0).getTags());
+                tagEditorView.setTags(tags);
+            }
+        });
+    }
+
+
 
     public void setResource(Resource resource) {
         this.resource = resource;

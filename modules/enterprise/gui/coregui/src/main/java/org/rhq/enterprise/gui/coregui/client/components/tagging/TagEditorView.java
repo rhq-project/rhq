@@ -72,6 +72,15 @@ public class TagEditorView extends HLayout {
         this.callback = callback;
     }
 
+    public LinkedHashSet<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(LinkedHashSet<Tag> tags) {
+        this.tags = tags;
+        setup();
+    }
+
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -180,6 +189,7 @@ public class TagEditorView extends HLayout {
             });
             addMember(modeImg);
         }
+        markForRedraw();
     }
 
     private void save() {

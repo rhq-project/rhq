@@ -410,12 +410,18 @@
           <id>jboss-deprecated-repository</id>
           <name>JBoss Deprecated Maven Repository</name>
           <url>https://repository.jboss.org/nexus/content/repositories/deprecated/</url>
+          <snapshots>
+             <enabled>false</enabled>
+          </snapshots>
         </repository>
 
         <repository>
             <id>codehaus</id>
-            <name>codehaus</name>
+            <name>Codehaus Releases</name>
             <url>http://repository.codehaus.org/</url>
+            <snapshots>
+               <enabled>false</enabled>
+            </snapshots>
         </repository>
 
     </repositories>

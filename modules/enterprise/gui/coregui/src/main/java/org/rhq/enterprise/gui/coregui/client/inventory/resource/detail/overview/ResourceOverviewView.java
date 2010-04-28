@@ -43,10 +43,8 @@ public class ResourceOverviewView extends VLayout {
 
         ResourceSummaryView summaryView = new ResourceSummaryView();
         summaryView.onResourceSelected(resource);
-        SimpleCollapsiblePanel summaryPanel = new SimpleCollapsiblePanel("Summary", summaryView);
 
-
-        addMember(summaryPanel);
+        addMember(summaryView);
 
 
         FullHTMLPane summaryPane = new FullHTMLPane("/rhq/resource/summary/overview-plain.xhtml?id=" + resource.getId());

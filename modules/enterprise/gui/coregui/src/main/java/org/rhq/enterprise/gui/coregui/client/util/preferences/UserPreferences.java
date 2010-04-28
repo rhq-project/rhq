@@ -58,14 +58,16 @@ public class UserPreferences {
     }
 
     public void setFavoriteResources(Set<Integer> resourceIds, AsyncCallback<Subject> callback) {
-        setPreference(UserPreferenceNames.RESOURCE_HEALTH_RESOURCES, resourceIds, callback);
+        setPreference(UserPreferenceNames.RESOURCE_HEALTH_RESOURCES, resourceIds);
+        store(callback);
     }
+
 
     protected String getPreference(String name) {
         return userConfiguration.getSimpleValue(name, null);
     }
 
-    protected void setPreference(String name, Collection value, AsyncCallback<Subject> callback) {
+    protected void setPreference(String name, Collection value) {
         StringBuilder buffer = new StringBuilder();
         boolean first = true;
         for (Object item : value) {
@@ -76,10 +78,10 @@ public class UserPreferences {
             }
             buffer.append(item);
         }
-        setPreference(name, buffer.toString(), callback);
+        setPreference(name, buffer.toString());
     }
 
-    protected void setPreference(String name, String value, AsyncCallback<Subject> callback) {
+    protected void setPreference(String name, String value) {
         PropertySimple prop = this.userConfiguration.getSimple(name);
         String oldValue = null;
         if (prop == null) {
@@ -88,8 +90,6 @@ public class UserPreferences {
             oldValue = prop.getStringValue();
             prop.setStringValue(value);
         }
-        this.subjectService.updateSubject(this.subject, callback);
-
 
         UserPreferenceChangeEvent event = new UserPreferenceChangeEvent(name, value, oldValue);
         for (UserPreferenceChangeListener listener : changeListeners) {
@@ -98,20 +98,29 @@ public class UserPreferences {
     }
 
 
+    public void store(AsyncCallback<Subject> callback) {
+        this.subjectService.updateSubject(this.subject, callback);
+    }
 
 
-    protected List<String> getPreferenceAsList(String key) {
+    public Configuration getConfiguration() {
+        return userConfiguration;
+    }
+
+
+    public List<String> getPreferenceAsList(String key) {
         String pref = null;
         try {
             pref = getPreference(key);
         } catch (IllegalArgumentException e) {
+
 //            log.debug("A user preference named '" + key + "' does not exist.");
         }
 
         return (pref != null) ? Arrays.asList(pref.split(PREF_LIST_DELIM_REGEX)) : new ArrayList<String>();
     }
 
-    protected Set<Integer> getPreferenceAsIntegerSet(String key) {
+    public Set<Integer> getPreferenceAsIntegerSet(String key) {
         try {
             List<String> value = getPreferenceAsList(key);
             // Use a TreeSet, so the Resource id's are sorted.

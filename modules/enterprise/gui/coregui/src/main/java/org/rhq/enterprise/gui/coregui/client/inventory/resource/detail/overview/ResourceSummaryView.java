@@ -28,6 +28,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
@@ -128,6 +129,9 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
         ArrayList<String> itemIds = new ArrayList<String>();
 
+        HeaderItem headerItem = new HeaderItem("header", "Summary");
+        headerItem.setValue("Summary");
+        formItems.add(headerItem);
 
         StaticTextItem typeItem = new StaticTextItem("typeItem", "Type");
         typeItem.setTooltip("Plugin: " + type.getPlugin() + "\n<br>" + "Type: " + type.getName());

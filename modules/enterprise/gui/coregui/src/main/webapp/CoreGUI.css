@@ -134,6 +134,38 @@ a:hover {
     font-weight: bold;
 }
 
+.subtitle {
+    color: #D6D6D6;
+    font-variant: small-caps;
+    font-weight: bold;
+    font-size: 12pt;
+}
+
+
+/* Availability Bar */
+.availBarLeftCap {
+    background-image: url("images/availBar/leftCap.png");
+    width: 8px;
+    height: 28px;
+}
+.availBarRightCap {
+    background-image: url("images/availBar/rightCap.png");
+    width: 8px;
+    height: 28px;
+}
+
+.availBarUp {
+    background-image: url("images/availBar/up.png");
+    background-repeat: repeat-x;
+    height: 28px;
+}
+
+.availBarDown {
+    background-image: url("images/availBar/down.png");
+    background-repeat: repeat-x;
+    height: 28px;
+}
+
 
 
 .GraphTooltip {

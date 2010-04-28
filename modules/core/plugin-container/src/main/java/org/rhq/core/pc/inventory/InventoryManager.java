@@ -672,6 +672,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 if (log.isDebugEnabled()) {
                     log.debug("Adding manually discovered resource [" + resource + "] to inventory...");
                 }
+                resource.setInventoryStatus(InventoryStatus.COMMITTED);
                 parentResource.addChildResource(resource);
                 initResourceContainer(resource);
             }

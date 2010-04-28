@@ -156,17 +156,6 @@
          <layout>legacy</layout>
       </repository>
 
-      <!--
-      <repository>
-         <id>exadel-snapshots</id>
-         <name>Exadel Snapshot Maven 2 Repo - for ajax4jsf and richfaces snapshots</name>
-         <url>http://maven.exadel.com/</url>
-         <releases>
-            <enabled>false</enabled>
-         </releases>
-      </repository>
-      -->
-
    </repositories>
 
    <profiles>

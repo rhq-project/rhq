@@ -58,6 +58,7 @@ public class ResourceGroupCriteria extends Criteria {
     private boolean fetchGroupDefinition;
     private boolean fetchResourceType;
     private boolean fetchRoles;
+    private boolean fetchTags;
 
     private PageOrdering sortName;
     private PageOrdering sortResourceTypeName; // requires overrides
@@ -158,6 +159,11 @@ public class ResourceGroupCriteria extends Criteria {
     public void fetchResourceType(boolean fetchResourceType) {
         this.fetchResourceType = fetchResourceType;
     }
+
+    public void fetchTags(boolean fetchTags) {
+        this.fetchTags = fetchTags;
+    }
+
 
     /**
      * Requires MANAGE_SECURITY

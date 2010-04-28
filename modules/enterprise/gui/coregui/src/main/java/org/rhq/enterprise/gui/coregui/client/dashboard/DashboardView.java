@@ -18,7 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
-import com.google.gwt.user.client.Random;
+import java.util.ArrayList;
+
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -26,85 +27,75 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.Menu;
+import com.smartgwt.client.widgets.menu.MenuButton;
+import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.ItemClickEvent;
+import com.smartgwt.client.widgets.menu.events.ItemClickHandler;
 
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.RecentlyAddedView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.SmallGraphView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.AutodiscoveryQueueDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.summary.SummaryCountsView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredDashboard;
+import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
 
 /**
  * @author Greg Hinkle
  */
 public class DashboardView extends VLayout {
 
-    private static String[] colors = new String[]{
-            "FF6600", "808000", "008000", "008080", "0000FF", "666699",
-            "FF0000", "FF9900", "99CC00", "339966", "33CCCC", "3366FF",
-            "800080", "969696", "FF00FF", "FFCC00", "FFFF00", "00FF00",
-            "00FFFF", "00CCFF", "993366", "C0C0C0", "FF99CC", "FFCC99",
-            "FFFF99", "CCFFCC", "CCFFFF", "99CCFF", "CC99FF", "FFFFFF"
-    };
+    StoredDashboard storedDashboard;
 
-    public DashboardView() {
+    boolean editMode = false;
+
+    PortalLayout portalLayout;
+    DynamicForm form;
+    MenuButton addPortlet;
+
+
+    public DashboardView(StoredDashboard storedDashboard) {
+        this.storedDashboard = storedDashboard;
         setOverflow(Overflow.AUTO);
         setPadding(5);
     }
 
-    public void onInit() {
+    public void redraw() {
+        for (Canvas c : getChildren()) {
+            c.destroy();
+        }
+
+        buildPortlets();
+    }
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        buildPortlets();
+    }
+
+    public void buildPortlets() {
         setWidth100();
         setHeight100();
 
 
-        final PortalLayout portalLayout = new PortalLayout(2);
+        portalLayout = new PortalLayout(storedDashboard.getColumns());
         portalLayout.setWidth100();
         portalLayout.setHeight100();
 
 
-        Portlet summaryPortlet = new Portlet();
-        summaryPortlet.setTitle("Inventory Summary");
-        summaryPortlet.addItem(new SummaryCountsView());
-        summaryPortlet.setHeight(300);
-        portalLayout.addPortlet(summaryPortlet);
+        loadPortlets();
 
 
-        Portlet adPortlet = new Portlet();
-        adPortlet.setTitle("Auto Discovery Queue");
-        adPortlet.addItem(new ResourceAutodiscoveryView(true));
-        adPortlet.setHeight(250);
-        portalLayout.addPortlet(adPortlet);
-
-
-        // create portlets...
-        for (int i = 1; i <= 2; i++) {
-            Portlet portlet = new Portlet();
-            portlet.setTitle("Portlet");
-
-            // Label label = new Label();
-            // label.setAlign(Alignment.CENTER);
-            // label.setLayoutAlign(VerticalAlignment.CENTER);
-            // label.setContents("Portlet contents");
-            // label.setBackgroundColor(colors[Random.nextInt(colors.length - 1)]);
-
-            portlet.addItem(new SmallGraphView());
-            portlet.setHeight(400);
-            portalLayout.addPortlet(portlet);
-        }
-
-        final VLayout vLayout = new VLayout(15);
-
-        final DynamicForm form = new DynamicForm();
+        form = new DynamicForm();
         form.setAutoWidth();
-        form.setNumCols(5);
+        form.setNumCols(7);
 
         final StaticTextItem numColItem = new StaticTextItem();
         numColItem.setTitle("Columns");
         numColItem.setValue(portalLayout.getMembers().length);
 
-        ButtonItem addColumn = new ButtonItem("addColun", "Add Column");
+        ButtonItem addColumn = new ButtonItem("addColumn", "Add Column");
 //        addColumn.setIcon("silk/application_side_expand.png");
         addColumn.setAutoFit(true);
         addColumn.setStartRow(false);
@@ -140,85 +131,134 @@ public class DashboardView extends VLayout {
             }
         });
 
-        final ButtonItem addPortlet = new ButtonItem("addPortlet", "Add Portlet");
-        addPortlet.setIcon("[skin]/images/actions/add.png");
-        addPortlet.setAutoFit(true);
 
-        addPortlet.setStartRow(false);
-        addPortlet.setEndRow(false);
-        addPortlet.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
-            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
-
-                final Portlet newPortlet = new Portlet();
-                newPortlet.setTitle("Portlet ");
-
-//                Label label = new Label();
-//                label.setAlign(Alignment.CENTER);
-//                label.setLayoutAlign(VerticalAlignment.CENTER);
-//                label.setContents("Portlet contents");
-//                label.setBackgroundColor(colors[Random.nextInt(colors.length - 1)]);
-//                newPortlet.addItem(label);
-
-                int nextInt = Random.nextInt() % 3;
-
-//                if (nextInt == 0) {
-//                    ResourceSearchView item = new ResourceSearchView();
-//                    newPortlet.addItem(item);
-//
-//                } else if (nextInt == 1) {
-//                    newPortlet.addItem(new RolesView());
-//                } else {
-//                    newPortlet.addItem(new SummaryCountsView());
-//                }
-
-                ClickHandler handler = new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        PortletSettingsWindow settingsWindow = new PortletSettingsWindow("Recently Added Resources");
-                        settingsWindow.show();
-                    }
-                };
-
-                newPortlet.addItem(new RecentlyAddedView());
-                newPortlet.setHeight(350);
-                newPortlet.setVisible(false);
-                newPortlet.setHelpClickHandler(handler);
-                newPortlet.setSettingsClickHandler(handler);
-                PortalColumn column = portalLayout.addPortlet(newPortlet);
-
-                // also insert a blank spacer element, which will trigger the built-in
-                //  animateMembers layout animation
-                final LayoutSpacer placeHolder = new LayoutSpacer();
-                placeHolder.setRect(newPortlet.getRect());
-                column.addMember(placeHolder, 0); // add to top
-
-                // create an outline around the clicked button
-                final Canvas outline = new Canvas();
-                outline.setLeft(form.getAbsoluteLeft() + addPortlet.getLeft());
-                outline.setTop(form.getAbsoluteTop());
-                outline.setWidth(addPortlet.getWidth());
-                outline.setHeight(addPortlet.getHeight());
-                outline.setBorder("2px solid 8289A6");
-                outline.draw();
-                outline.bringToFront();
-
-                outline.animateRect(newPortlet.getPageLeft(), newPortlet.getPageTop(),
-                        newPortlet.getVisibleWidth(), newPortlet.getViewportHeight(),
-                        new AnimationCallback() {
-                            public void execute(boolean earlyFinish) {
-                                // callback at end of animation - destroy placeholder and outline; show the new portlet
-                                placeHolder.destroy();
-                                outline.destroy();
-                                newPortlet.show();
-                            }
-                        }, 750);
+        final ButtonItem editButton = new ButtonItem("editable", editMode ? "View Mode" : "Edit Mode");
+        editButton.setAutoFit(true);
+        editButton.setStartRow(false);
+        editButton.setEndRow(false);
+        editButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
+                editMode = !editMode;
+                redraw();
             }
         });
 
 
-        form.setItems(numColItem, addPortlet, addColumn, removeColumn);
+        Menu addPorletMenu = new Menu();
+        for (String portletName : PortletFactory.getRegisteredPortlets()) {
+            addPorletMenu.addItem(new MenuItem(portletName));
+        }
 
+
+        addPortlet = new MenuButton("Add Portlet", addPorletMenu);
+
+
+//        addPortlet = new ButtonItem("addPortlet", "Add Portlet");
+        addPortlet.setIcon("[skin]/images/actions/add.png");
+        addPortlet.setAutoFit(true);
+
+        addPorletMenu.addItemClickHandler(new ItemClickHandler() {
+            public void onItemClick(ItemClickEvent itemClickEvent) {
+                String portalTitle = itemClickEvent.getItem().getTitle();
+                addPortlet(portalTitle);
+            }
+        });
+
+        CanvasItem addCanvas = new CanvasItem();
+        addCanvas.setShowTitle(false);
+        addCanvas.setCanvas(addPortlet);
+        addCanvas.setStartRow(false);
+        addCanvas.setEndRow(false);
+
+
+        if (editMode) {
+            form.setItems(numColItem, addCanvas, addColumn, removeColumn, editButton);
+        } else {
+            form.setItems(editButton);
+        }
         addMember(form);
         addMember(portalLayout);
 
+    }
+
+    private void loadPortlets() {
+
+        int col = 0;
+        for (ArrayList<StoredPortlet> column : storedDashboard.getPortlets()) {
+
+            for (StoredPortlet storedPortlet : column) {
+                Canvas portalCanvas = PortletFactory.buildPortlet(storedPortlet.getPortletKey());
+
+                final Portlet portlet = new Portlet(editMode);
+                portlet.addItem(portalCanvas);
+                portlet.setTitle(storedPortlet.getName());
+
+                portlet.setHeight(storedPortlet.getHeight());
+                portlet.setVisible(true);
+
+//                newPortlet.setHelpClickHandler(handler);
+//                newPortlet.setSettingsClickHandler(handler);
+
+                portalLayout.addPortlet(portlet, col);
+            }
+
+            col++;
+        }
+
+
+    }
+
+
+    private void addPortlet(String portletName) {
+        final Portlet newPortlet = new Portlet(true);
+
+        Canvas canvas = PortletFactory.buildPortlet(portletName);
+
+        newPortlet.setTitle(portletName);
+
+
+        ClickHandler handler = new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                PortletSettingsWindow settingsWindow = new PortletSettingsWindow("Recently Added Resources");
+                settingsWindow.show();
+            }
+        };
+
+        newPortlet.addItem(canvas);
+
+        newPortlet.setHeight(350);
+        newPortlet.setVisible(false);
+        newPortlet.setHelpClickHandler(handler);
+        newPortlet.setSettingsClickHandler(handler);
+
+
+        PortalColumn column = portalLayout.addPortlet(newPortlet);
+
+        // also insert a blank spacer element, which will trigger the built-in
+        //  animateMembers layout animation
+        final LayoutSpacer placeHolder = new LayoutSpacer();
+        placeHolder.setRect(newPortlet.getRect());
+        column.addMember(placeHolder, 0); // add to top
+
+        // create an outline around the clicked button
+        final Canvas outline = new Canvas();
+        outline.setLeft(form.getAbsoluteLeft() + addPortlet.getLeft());
+        outline.setTop(form.getAbsoluteTop());
+        outline.setWidth(addPortlet.getWidth());
+        outline.setHeight(addPortlet.getHeight());
+        outline.setBorder("2px solid 8289A6");
+        outline.draw();
+        outline.bringToFront();
+
+        outline.animateRect(newPortlet.getPageLeft(), newPortlet.getPageTop(),
+                newPortlet.getVisibleWidth(), newPortlet.getViewportHeight(),
+                new AnimationCallback() {
+                    public void execute(boolean earlyFinish) {
+                        // callback at end of animation - destroy placeholder and outline; show the new portlet
+                        placeHolder.destroy();
+                        outline.destroy();
+                        newPortlet.show();
+                    }
+                }, 750);
     }
 }

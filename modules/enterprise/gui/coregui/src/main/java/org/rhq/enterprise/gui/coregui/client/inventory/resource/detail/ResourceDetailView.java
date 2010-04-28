@@ -18,20 +18,25 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import java.util.EnumSet;
+import java.util.Set;
+
+import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Side;
+import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.tab.Tab;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
-import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.UnknownViewException;
-import org.rhq.enterprise.gui.coregui.client.View;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
-import org.rhq.enterprise.gui.coregui.client.ViewRenderer;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.AlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
@@ -42,27 +47,19 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectLi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.calltime.CallTimeView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview.ResourceOverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
-import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Side;
-import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tab.Tab;
-
-import java.util.EnumSet;
-import java.util.Set;
-
 /**
  * Right panel of the resource view.
  *
  * @author Greg Hinkle
  */
-public class ResourceDetailView extends VLayout implements ViewRenderer, ResourceSelectListener, TwoLevelTabSelectedHandler {
+public class ResourceDetailView extends VLayout implements BookmarkableView, ResourceSelectListener, TwoLevelTabSelectedHandler {
 
     private Resource resource;
     private ResourcePermission permissions;
@@ -81,8 +78,9 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
 
     private ResourceTitleBar titleBar;
 
-    private ViewId currentView;
-    private ViewId baseViewId;
+    private ViewId tabView;
+    private ViewId subtabView;
+
 
     public void setResource(Resource resource) {
         this.resource = resource;
@@ -165,9 +163,9 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
 
 
         inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
-        inventoryTab.updateSubTab("Connection Settings", new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
+        inventoryTab.updateSubTab("Connection Settings", new PluginConfigurationEditView(resource)); // new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
 
-        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource.getId()));
+        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
 
         configurationTab.updateSubTab("Current", new ResourceConfigurationEditView(resource));
         configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
@@ -275,41 +273,34 @@ public class ResourceDetailView extends VLayout implements ViewRenderer, Resourc
         }
     }
 
-    public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {
 
-        if (baseViewId == null) {
-            baseViewId = viewId;
-        }
-        currentView = viewId;
+    public void renderView(ViewPath viewPath) {
+        // TODO: Implement this method.
 
-        String[] parts = currentView.getPath().split("/");
-        Breadcrumb crumb = null;
-        if (parts.length >= 3) {
+        if (viewPath.isEnd()) {
+            // default
+
+        } else {
+
+            tabView = viewPath.getCurrent();
+            subtabView = viewPath.getNext();
+
             for (Tab t : topTabSet.getTabs()) {
                 TwoLevelTab tab = (TwoLevelTab) t;
 
-                if (tab.getTitle().equals(parts[2])) {
+                if (tab.getTitle().equals(tabView.getPath())) {
+                    topTabSet.selectTab(tabView.getPath());
 
-                    if (parts.length == 3) {
-                        crumb = new Breadcrumb(parts[2], parts[2], false);
-                    }
-
-
-                    if (parts.length >= 4) {
-                        tab.getLayout().selectTab(parts[3]);
-
-                        // Switch the top tab after the subtab to avoid an extra subtab render
-                        topTabSet.selectTab(tab);
+                    tab.getLayout().selectTab(subtabView.getPath());
 
 
-                        if (parts.length == 4) {
-                            crumb = new Breadcrumb(parts[3], parts[3], false);
-                        }
-                    }
                 }
+
             }
+
+
         }
 
-        return new View(viewId, crumb);
+
     }
 }

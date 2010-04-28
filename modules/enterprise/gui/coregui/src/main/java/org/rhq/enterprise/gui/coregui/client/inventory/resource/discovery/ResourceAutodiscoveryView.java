@@ -69,8 +69,8 @@ public class ResourceAutodiscoveryView extends VLayout {
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
 
         HLayout titleLayout = new HLayout(150);

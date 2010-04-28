@@ -40,6 +40,7 @@ public class BundleDeploymentCriteria extends Criteria {
     private boolean fetchConfiguration;
     private boolean fetchDeployments;
     private boolean fetchGroupDeployments;
+    private boolean fetchTags;
 
     public BundleDeploymentCriteria() {
     }
@@ -75,6 +76,10 @@ public class BundleDeploymentCriteria extends Criteria {
 
     public void fetchGroupDeployments(boolean fetchGroupDeployments) {
         this.fetchGroupDeployments = fetchGroupDeployments;
+    }
+
+    public void fetchTags(boolean fetchTags) {
+        this.fetchTags = fetchTags;
     }
 
 }

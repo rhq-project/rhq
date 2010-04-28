@@ -7,38 +7,25 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-      <groupId>org.jboss.on</groupId>
-      <!--  Bypass the jopr-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
-      <artifactId>jopr-modules-parent</artifactId>
-      <version>2.3.0-SNAPSHOT</version>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-parent</artifactId>
+        <version>3.0.0.B04</version>
     </parent>
 
     <groupId>org.jboss.on</groupId>
     <artifactId>jopr-jbas5-plugin-descriptor-gen</artifactId>
     <packaging>jar</packaging>
 
-    <name>Jopr JBossAS 5.x Plugin Descriptor Generator</name>
-    <description>A tool that connects to a JBoss Application Server 5.x instance's Profile Service and generates an RHQ plugin descriptor with a ResourceType for each ManagedComponent type that is deployed.</description>
+    <name>Jopr JBossAS 5.x/6.x Plugin Descriptor Generator</name>
+    <description>A tool that connects to a JBoss Application Server 5.x/6.x instance's Profile Service and generates an RHQ plugin descriptor with a ResourceType for each ManagedComponent type that is deployed.</description>
 
     <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as-5</connection>
-        <developerConnection>
-            scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as-5
-        </developerConnection>
+        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/jopr/tools/jbas5-plugin-descriptor-gen/</connection>
+        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/jopr/tools/jbas5-plugin-descriptor-gen/</developerConnection>
     </scm>
 
-    <properties>
-        <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
-
-        <!-- NOTE: If you are developing this plugin or using it with a snapshot EAP 5.0 build,
-                   you should do the following before building the plugin:
-
-                   1) Checkout and build the EAP 5.0 branch
-                      (https://svn.jboss.org/repos/jbossas/branches/JBPAPP_5_0/).
-                   2) Change the below property to "5.1.0-SNAPSHOT".
-                   3) Uncomment the JBoss snapshot repo near the bottom of this POM.
-        -->
-        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
+    <properties>        
+        <jbossas.version>6.0.0.M1</jbossas.version>
     </properties>
 
     <dependencyManagement>

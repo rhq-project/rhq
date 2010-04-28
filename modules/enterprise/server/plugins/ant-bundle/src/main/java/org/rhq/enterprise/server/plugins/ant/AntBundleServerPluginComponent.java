@@ -33,12 +33,13 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeploymentProperties;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
+import org.rhq.enterprise.server.bundle.UberBundleFileInfo;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 
 /**
- * A bundle server-side plugin component that the server uses to process ant-based bundles.
+ * A bundle server-side plugin component that the server uses to process Ant-based bundles.
  * 
  * @author John Mazzitelli
  */
@@ -52,6 +53,7 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
     public void initialize(ServerPluginContext context) throws Exception {
         this.context = context;
         this.tmpDirectory = new File(this.context.getTemporaryDirectory(), "ant-bundle-server-plugin");
+        //noinspection ResultOfMethodCallIgnored
         this.tmpDirectory.mkdirs();
         if (!this.tmpDirectory.exists() || !this.tmpDirectory.isDirectory()) {
             throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process Ant bundles");
@@ -111,6 +113,11 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
 
         results = new RecipeParseResults(deploymentProps, configDef, bundleFiles);
         return results;
+    }
+
+    public UberBundleFileInfo processUberBundleFile(File uberBundleFile) throws Exception {
+        // TODO: bundle implement me
+        return null;
     }
 
     @Override

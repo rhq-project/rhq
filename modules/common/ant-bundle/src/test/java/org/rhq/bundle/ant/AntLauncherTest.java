@@ -25,9 +25,13 @@ package org.rhq.bundle.ant;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
-import org.testng.annotations.BeforeMethod;
+import org.apache.tools.ant.BuildListener;
+import org.apache.tools.ant.DefaultLogger;
+import org.apache.tools.ant.Project;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -36,22 +40,13 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.util.file.FileUtil;
 
+/**
+ * @author John Mazzitelli
+ * @author Ian Springer
+ */
 @Test
 public class AntLauncherTest {
     private static final File DEPLOY_DIR = new File("target/test-ant-bundle").getAbsoluteFile();
-
-    private File logFile;
-
-    @BeforeMethod
-    public void beforeMethod() {
-        logFile = new File("target/test-ant-log.txt");
-        if (logFile.exists()) {
-            if (!logFile.delete()) {
-                System.out.println("Failed to delete log file [" + this.logFile + "] prior to executing test method.");
-            }
-        }
-        return;
-    }
 
     public void testParse() throws Exception {
         AntLauncher ant = new AntLauncher();
@@ -75,8 +70,10 @@ public class AntLauncherTest {
 
         AntLauncher ant = new AntLauncher();
         Properties inputProps = createInputProperties("/test-bundle-v1-input.properties");
+        List<BuildListener> buildListeners = createBuildListeners();
+
         BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v1.xml"), "deploy", inputProps,
-            this.logFile, true);
+                buildListeners);
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
         assert bundleFiles.size() == 2 : bundleFiles;
@@ -94,14 +91,26 @@ public class AntLauncherTest {
         assert "10000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
     }
 
+    private List<BuildListener> createBuildListeners() {
+        List<BuildListener> buildListeners = new ArrayList<BuildListener>();
+        DefaultLogger logger = new DefaultLogger();
+        logger.setMessageOutputLevel(Project.MSG_DEBUG);
+        logger.setOutputPrintStream(System.out);
+        logger.setErrorPrintStream(System.err);
+        buildListeners.add(logger);
+        return buildListeners;
+    }
+
     @Test(dependsOnMethods = "testInstall")
     public void testUpgrade() throws Exception {
         // We want to test an upgrade, so do *not* wipe out the deploy dir.
 
         AntLauncher ant = new AntLauncher();
         Properties inputProps = createInputProperties("/test-bundle-v2-input.properties");
+        List<BuildListener> buildListeners = createBuildListeners();
+
         BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v2.xml"), "deploy", inputProps,
-            this.logFile, true);
+                buildListeners);
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
         assert bundleFiles.size() == 2 : bundleFiles;

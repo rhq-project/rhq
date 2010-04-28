@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.pluginapi.bundle;
 
 import java.io.OutputStream;
@@ -48,9 +47,11 @@ public interface BundleManagerProvider {
     /**
      * Bundle plugins call back into this manager to obtain the bundle files that belong to a given bundle version.
      * 
-     * @param bundleVersion
+     * @param bundleVersion a bundle version
+     *
      * @return the bundle files that are associated with the given bundle
-     * @throws Exception
+     *
+     * @throws Exception on failure
      */
     List<PackageVersion> getAllBundleVersionPackageVersions(BundleVersion bundleVersion) throws Exception;
 
@@ -59,8 +60,10 @@ public interface BundleManagerProvider {
      * 
      * @param packageVersion the package whose bits are to be downloaded
      * @param outputStream where the package bits will get written to
+     *
      * @return the size of the package version content that was downloaded and output
-     * @throws Exception
+     *
+     * @throws Exception on failure
      */
     long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception;
 }

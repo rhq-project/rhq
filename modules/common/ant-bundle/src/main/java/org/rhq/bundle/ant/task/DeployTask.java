@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 
 import org.apache.tools.ant.BuildException;
 
+import org.apache.tools.ant.Project;
 import org.rhq.bundle.ant.type.ArchiveType;
 import org.rhq.bundle.ant.type.FileSet;
 import org.rhq.bundle.ant.type.FileType;
@@ -69,20 +70,22 @@ public class DeployTask extends AbstractBundleTask {
             throw new BuildException("You must specify at least one file to deploy via nested rhq:file and/or rhq:archive elements.");
         }
         if (!this.files.isEmpty()) {
-            log("Deploying files " + this.files + "...");
+            log("Deploying files " + this.files + "...", Project.MSG_VERBOSE);
         }
         if (!this.archives.isEmpty()) {
-            log("Deploying archives " + this.archives + "...");
+            log("Deploying archives " + this.archives + "...", Project.MSG_VERBOSE);
         }
         Deployer deployer = new Deployer(deploymentProps, this.archives, this.files, deployDir, this.replacePattern,
             templateEngine, this.ignorePattern);
         try {
-            DeployDifferences diff = null;
-            deployer.deploy(diff);
+            DeployDifferences diffs = getProject().getDeployDifferences();
+            deployer.deploy(diffs);
+            getProject().log("Results:\n" + diffs + "\n");            
         } catch (Exception e) {
             throw new BuildException("Failed to deploy bundle '" + getProject().getBundleName() + "' version "
                 + getProject().getBundleVersion() + ": " + e, e);
         }
+
         return;
     }
 

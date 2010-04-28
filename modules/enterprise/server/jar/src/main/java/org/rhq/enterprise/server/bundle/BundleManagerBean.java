@@ -316,6 +316,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
+    public BundleVersion createBundleVersionViaUberBundleFileURL(Subject subject, URL uberBundleFile) throws Exception {
+        // TODO: bundle implement me
+        return null;
+    }
+
     @SuppressWarnings("unchecked")
     private String getVersion(String version, Bundle bundle) {
         if (null != version && version.trim().length() > 0) {

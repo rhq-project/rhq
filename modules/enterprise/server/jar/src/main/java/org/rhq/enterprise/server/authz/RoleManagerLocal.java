@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.authz;
 
-import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -27,7 +26,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
-import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -161,8 +159,6 @@ public interface RoleManagerLocal {
 
     Role getRole(Subject subject, int roleId);
 
-    PageList<LdapGroup> findLdapGroupsByRole(int roleId, PageControl pageControl);
-
     PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc);
 
     //This is a proxy of getAvailableRolesForSubject but without pendingRoleIds as required by remote spec
@@ -202,8 +198,6 @@ public interface RoleManagerLocal {
 
     void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds);
 
-    void addLdapGroupsToRole(Subject subject, int roleId, List<String> groupIds);
-
     /**
      * Removes the given resource groups from the given role.
      *
@@ -215,11 +209,6 @@ public interface RoleManagerLocal {
 
     void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds);
 
-    void removeLdapGroupsFromRole(Subject subject, int roleId, int[] groupIds);
-
     PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria);
 
-    void assignRolesToLdapSubject(int subjectId, List<String> ldapGroupNames);
-
-    PageList<LdapGroup> findLdapGroups(PageControl pc);
 }

@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugins.filetemplate;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.util.updater.DeploymentProperties;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
+import org.rhq.enterprise.server.bundle.UberBundleFileInfo;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -98,6 +100,11 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
         RecipeParseResults results = new RecipeParseResults(bundleMetadata, configDef, bundleFileNames);
         return results;
 
+    }
+
+    public UberBundleFileInfo processUberBundleFile(File uberBundleFile) throws Exception {
+        // TODO: bundle implement me
+        return null;
     }
 
     public ControlResults invoke(String name, Configuration parameters) {

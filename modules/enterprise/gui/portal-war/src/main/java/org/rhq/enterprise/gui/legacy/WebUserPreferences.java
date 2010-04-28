@@ -693,16 +693,21 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     }
 
     public PageControl getPageControl(PageControlView view) {
-        return getPageControl(view, 15);
+        PageControl results = getPageControl(view, 15);
+        log.debug("getPageControl(" + view + ") " + results);
+        return results;
     }
 
     public PageControl getPageControl(PageControlView view, int defaultPageSize) {
         if (view == PageControlView.NONE) {
+            log.debug("getPageControl(" + view + ") -> PageControl.getUnlimitedInstance()");
             return PageControl.getUnlimitedInstance();
         }
 
         List<String> pageControlProperties = getPreferenceAsList(view.toString());
+        log.debug("getPageControl(" + view + ") -> pageControlProperties: " + pageControlProperties);
         if (pageControlProperties.size() == 0) {
+            log.debug("getPageControl(" + view + ") -> getDefaultPageControl for empty properties");
             PageControl defaultControl = getDefaultPageControl(view, defaultPageSize);
             return defaultControl;
         } else {
@@ -722,6 +727,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
                     i += 2;
                 }
+                log.debug("getPageControl(" + view + ") -> " + pageControl);
 
                 if (view.isUnlimited() && pageSize != PageControl.SIZE_UNLIMITED) {
                     // make sure pageSize for an unlimited view is actually unlimited
@@ -739,6 +745,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
                  * persist and load just fine because the logic in this method and its counterpart
                  * setPageControl are kept in sync
                  */
+                log.debug("getPageControl(" + view + ") -> getDefaultPageControl for exception: " + t.getMessage());
                 pageControl = getDefaultPageControl(view, defaultPageSize);
             }
             return pageControl;
@@ -770,6 +777,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             pageControlProperties.add(field.getOrdering().toString());
             pageControlProperties.add(field.getField());
         }
+        log.debug("setPageControl(" + view + ", " + pageControl + ")");
 
         setPreference(view.toString(), pageControlProperties);
     }

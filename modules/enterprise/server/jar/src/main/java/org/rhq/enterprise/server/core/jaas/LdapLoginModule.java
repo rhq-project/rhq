@@ -45,7 +45,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
-import org.rhq.enterprise.server.resource.group.LdapGroupManager;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
@@ -93,6 +93,8 @@ import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 public class LdapLoginModule extends UsernamePasswordLoginModule {
     private Log log = LogFactory.getLog(LdapLoginModule.class);
+
+    LdapGroupManagerLocal ldapManager = LookupUtil.getLdapGroupManager();
 
     // The delimimiter to use when specifiying multiple BaseDN's.
     private static final String BASEDN_DELIMITER = ";";
@@ -218,11 +220,11 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
                     //BUT still must always return true as authz is handled by RHQ if roles/groups correct
 
                     //retrieve all ldap groups that this user is authorized for based on ldap group filter and group member settings
-                    Set<String> authorizedLdapGroups = LdapGroupManager.getInstance().findAvailableGroupsFor(userName);
+                    Set<String> authorizedLdapGroups = ldapManager.findAvailableGroupsFor(userName);
                     RoleManagerLocal roleManager = LookupUtil.getRoleManager();
 
                     //find all currently mapped ldap groups
-                    PageList<LdapGroup> allCurrentLdapGroupsRegistered = roleManager.findLdapGroups(PageControl
+                    PageList<LdapGroup> allCurrentLdapGroupsRegistered = ldapManager.findLdapGroups(PageControl
                         .getUnlimitedInstance());
 
                     //find all roles for currently mapped ldap groups.
@@ -239,7 +241,7 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
                     //else add this subject back to all AuthoriziedLdapGroups
                     //lookup all roles that map to the authorizedLdapGroup names
                     List authorizedList = new ArrayList(authorizedLdapGroups);
-                    roleManager.assignRolesToLdapSubject(ldapSubject.getId(), authorizedList);
+                    ldapManager.assignRolesToLdapSubject(ldapSubject.getId(), authorizedList);
                 }
                 return true;
             }

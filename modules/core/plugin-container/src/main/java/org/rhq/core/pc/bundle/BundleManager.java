@@ -172,6 +172,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
         BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory("Bundle Plugin", action, status,
             message);
+        log.debug("Reporting deployment step [" + history + "] to Server...");
         getBundleServerService().addDeploymentHistory(bundleResourceDeployment.getId(), history);
     }
 

@@ -29,8 +29,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -46,8 +46,8 @@ public class AlertDefinitionCriteria extends Criteria {
     private String filterName;
     private String filterDescription;
     private AlertPriority filterPriority;
-    private String filterAlertTemplateParentId; // requires overrides
-    private String filterAlertTemplateResourceTypeId; // requires overrides
+    private Integer filterAlertTemplateParentId; // requires overrides
+    private Integer filterAlertTemplateResourceTypeId; // requires overrides
     private String filterAlertTemplateResourceTypeName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
     private Boolean filterEnabled;
@@ -90,11 +90,11 @@ public class AlertDefinitionCriteria extends Criteria {
         this.filterPriority = filterPriority;
     }
 
-    public void addFilterAlertTemplateParentId(String filterAlertTemplateParentId) {
+    public void addFilterAlertTemplateParentId(Integer filterAlertTemplateParentId) {
         this.filterAlertTemplateParentId = filterAlertTemplateParentId;
     }
 
-    public void addFilterAlertTemplateResourceTypeId(String filterAlertTemplateResourceTypeId) {
+    public void addFilterAlertTemplateResourceTypeId(Integer filterAlertTemplateResourceTypeId) {
         this.filterAlertTemplateResourceTypeId = filterAlertTemplateResourceTypeId;
     }
 

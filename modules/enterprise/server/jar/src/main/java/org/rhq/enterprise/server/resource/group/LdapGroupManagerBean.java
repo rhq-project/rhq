@@ -19,12 +19,17 @@
 
 package org.rhq.enterprise.server.resource.group;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -33,36 +38,54 @@ import javax.naming.directory.InvalidSearchFilterException;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.resource.group.LdapGroup;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.exception.LdapCommunicationException;
 import org.rhq.enterprise.server.exception.LdapFilterException;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 /**
+ * This bean provides functionality to manipulate the ldap auth/authz funcitonality. 
+ * That is, adding/modifying/deleting ldap group/users and their
+ * associated subjects and permissions are performed by this manager.
  * @author paji
+ * @author Simeon Pinder
  */
-public class LdapGroupManager {
-    private static final LdapGroupManager INSTANCE = new LdapGroupManager();
+@Stateless
+public class LdapGroupManagerBean implements LdapGroupManagerLocal {
+
+    //    private static final LdapGroupManagerBean INSTANCE = new LdapGroupManagerBean();
+    private Log log = LogFactory.getLog(LdapGroupManagerBean.class);
+
     private static final String BASEDN_DELIMITER = ";";
-    private Log log = LogFactory.getLog(LdapGroupManager.class);
 
-    private LdapGroupManager() {
-    }
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
 
-    public static LdapGroupManager getInstance() {
-        return INSTANCE;
-    }
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private SystemManagerLocal systemManager;
 
     public Set<Map<String, String>> findAvailableGroups() {
-        SystemManagerLocal manager = LookupUtil.getSystemManager();
-
-        Properties options = manager.getSystemConfiguration();
+        Properties options = systemManager.getSystemConfiguration();
         String groupFilter = (String) options.get(RHQConstants.LDAPGroupFilter);
         String filter = String.format("(%s)", groupFilter);
 
@@ -70,8 +93,7 @@ public class LdapGroupManager {
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {
-        SystemManagerLocal manager = LookupUtil.getSystemManager();
-        Properties options = manager.getSystemConfiguration();
+        Properties options = systemManager.getSystemConfiguration();
         String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
         String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
         String userDN = getUserDN(options, userName);
@@ -88,6 +110,106 @@ public class LdapGroupManager {
             ldapSet.add(match.get("id"));
         }
         return ldapSet;
+    }
+
+    /**
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addResourceGroupsToRole(Subject, int, int[])
+     */
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void addLdapGroupsToRole(Subject subject, int roleId, List<String> groupIds) {
+        if ((groupIds != null) && (groupIds.size() > 0)) {
+            Role role = entityManager.find(Role.class, roleId);
+            if (role == null) {
+                throw new IllegalArgumentException("Could not find role[" + roleId + "] to add resourceGroups to");
+            }
+            role.getLdapGroups().size(); // load them in
+
+            for (String groupId : groupIds) {
+                LdapGroup group = new LdapGroup();
+                group.setName(groupId);
+                if (role == null) {
+                    throw new IllegalArgumentException("Tried to add ldapGroup[" + groupId + "] to role[" + roleId
+                        + "], but resourceGroup was not found");
+                }
+                role.addLdapGroup(group);
+            }
+        }
+    }
+
+    /**
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeLdapGroupsFromRole(Subject, int, int[])
+     */
+
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void removeLdapGroupsFromRole(Subject subject, int roleId, int[] groupIds) {
+        if ((groupIds != null) && (groupIds.length > 0)) {
+            Role role = entityManager.find(Role.class, roleId);
+            if (role == null) {
+                throw new IllegalArgumentException("Could not find role[" + roleId + "] to remove resourceGroups from");
+            }
+            role.getLdapGroups().size(); // load them in
+
+            for (Integer groupId : groupIds) {
+                LdapGroup doomedGroup = entityManager.find(LdapGroup.class, groupId);
+                if (doomedGroup == null) {
+                    throw new IllegalArgumentException("Tried to remove doomedGroup[" + groupId + "] from role["
+                        + roleId + "], but subject was not found");
+                }
+                role.removeLdapGroup(doomedGroup);
+            }
+
+            Query purgeQuery = entityManager.createNamedQuery(LdapGroup.DELETE_BY_ID);
+
+            List<Integer> ids = new LinkedList<Integer>();
+            for (int i : groupIds) {
+                ids.add(i);
+            }
+            purgeQuery.setParameter("ids", ids);
+            purgeQuery.executeUpdate();
+        }
+    }
+
+    private List<Role> findRolesByLdapGroupNames(List<String> ldapGroupNames) {
+        if (ldapGroupNames.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
+        Query query = entityManager.createNamedQuery(LdapGroup.FIND_BY_ROLES_GROUP_NAMES);
+        query.setParameter("names", ldapGroupNames);
+        return (List<Role>) query.getResultList();
+    }
+
+    public void assignRolesToLdapSubject(int subjectId, List<String> ldapGroupNames) {
+        Subject sub = entityManager.find(Subject.class, subjectId);
+        List<Role> roles = findRolesByLdapGroupNames(ldapGroupNames);
+        sub.getRoles().clear();
+        sub.getLdapRoles().clear();
+        for (Role role : roles) {
+            sub.addRole(role);
+            sub.addLdapRole(role);
+        }
+    }
+
+    @Override
+    public PageList<LdapGroup> findLdapGroupsByRole(int roleId, PageControl pageControl) {
+        Role role = entityManager.find(Role.class, roleId);
+        if (role == null) {
+            throw new IllegalArgumentException("Could not find role[" + roleId + "] to lookup ldap Groups on");
+        }
+        return new PageList<LdapGroup>(role.getLdapGroups(), role.getLdapGroups().size(), pageControl);
+    }
+
+    public PageList<LdapGroup> findLdapGroups(PageControl pc) {
+
+        pc.initDefaultOrderingField("g.name");
+
+        String queryName = LdapGroup.QUERY_FIND_ALL;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+
+        long count = (Long) queryCount.getSingleResult();
+        //        List<Role> roles = query.getResultList();
+        List<LdapGroup> groups = query.getResultList();
+        return new PageList<LdapGroup>(groups, (int) count, pc);
     }
 
     private String getUserDN(Properties options, String userName) {

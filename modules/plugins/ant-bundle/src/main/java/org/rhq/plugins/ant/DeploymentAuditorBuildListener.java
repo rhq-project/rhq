@@ -25,7 +25,7 @@ package org.rhq.plugins.ant;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.util.StringUtils;
-import org.rhq.core.domain.bundle.BundleDeploymentAction;
+
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
@@ -40,8 +40,8 @@ public class DeploymentAuditorBuildListener implements BuildListener {
     private BundleManagerProvider bundleManagerProvider;
     private BundleResourceDeployment bundleResourceDeployment;
 
-    public DeploymentAuditorBuildListener(BundleManagerProvider bundleManagerProvider, 
-                                          BundleResourceDeployment bundleResourceDeployment) {
+    public DeploymentAuditorBuildListener(BundleManagerProvider bundleManagerProvider,
+        BundleResourceDeployment bundleResourceDeployment) {
         this.bundleManagerProvider = bundleManagerProvider;
         this.bundleResourceDeployment = bundleResourceDeployment;
     }
@@ -70,25 +70,25 @@ public class DeploymentAuditorBuildListener implements BuildListener {
         auditEvent(event);
     }
 
-    public void messageLogged(BuildEvent event) {        
+    public void messageLogged(BuildEvent event) {
         return;
     }
 
     private void auditEvent(BuildEvent event) {
-        BundleDeploymentStatus status = (event.getException() == null) ? BundleDeploymentStatus.SUCCESS :
-                BundleDeploymentStatus.FAILURE;
-        String message = createMessage(event);
+        BundleDeploymentStatus status = (event.getException() == null) ? BundleDeploymentStatus.SUCCESS
+            : BundleDeploymentStatus.FAILURE;
+        String action = createAction(event);
+        String message = createMessage(action, event);
         try {
-            this.bundleManagerProvider.auditDeployment(this.bundleResourceDeployment,
-                    BundleDeploymentAction.DEPLOYMENT_STEP, status, message);
+            this.bundleManagerProvider.auditDeployment(this.bundleResourceDeployment, "Build Event: " + action, status,
+                message);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return;
     }
 
-    @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"})
-    private static String createMessage(BuildEvent event) {
+    private static String createAction(BuildEvent event) {
         StringBuilder msg = new StringBuilder();
         if (event.getTarget() != null) {
             msg.append("[").append(event.getTarget().getName()).append("] ");
@@ -97,6 +97,13 @@ public class DeploymentAuditorBuildListener implements BuildListener {
         if (event.getTask() != null) {
             msg.append("<").append(event.getTask().getTaskName()).append("> ");
         }
+
+        return msg.toString();
+    }
+
+    @SuppressWarnings( { "ThrowableResultOfMethodCallIgnored" })
+    private static String createMessage(String action, BuildEvent event) {
+        StringBuilder msg = new StringBuilder(action);
 
         if (event.getMessage() != null) {
             msg.append(event.getMessage());

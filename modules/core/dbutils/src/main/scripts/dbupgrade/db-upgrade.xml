@@ -2706,18 +2706,10 @@
                 </schema-directSQL>
             </schemaSpec>
 
-<<<<<<< HEAD
-            <schemaSpec version="2.83"> 
+            <schemaSpec version="2.83">
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_SUBJECT_ROLE_LDAP_MAP">
                         CREATE TABLE RHQ_SUBJECT_ROLE_LDAP_MAP ( SUBJECT_ID INTEGER, ROLE_ID INTEGER )
-=======
-			<schemaSpec version="2.83">
-				<!-- The following constraint change shortens the constraint name < 30 chars for Oracle. -->
-				<schema-directSQL>
-                    <statement targetDBVendor="postgresql" desc="Dropping RHQ_SUBJECT_ROLE_LDAP_MAP constraint RHQ_SUBJECT_ROLE_LDAP_MAPPING_KEY.">
-                        ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP DROP CONSTRAINT RHQ_SUBJECT_ROLE_LDAP_MAPPING_KEY;
->>>>>>> New tag system for bundle system
                     </statement>
                     <statement desc="Creating composite PK for RHQ_SUBJECT_ROLE_LDAP_MAP">
                         ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP 

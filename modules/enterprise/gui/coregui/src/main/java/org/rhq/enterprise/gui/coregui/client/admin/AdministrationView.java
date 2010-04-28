@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
@@ -238,8 +239,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
             } else if ("Auto Discovery Queue".equals(page)) {
                 content = new ResourceAutodiscoveryView();
             } else if ("Remote Agent Install".equals(page)) {
-                // todo
-                //content = new RemoteAgentInstallView();
+                content = new RemoteAgentInstallView();
             }
         } else if ("Configuration".equals(section)) {
 

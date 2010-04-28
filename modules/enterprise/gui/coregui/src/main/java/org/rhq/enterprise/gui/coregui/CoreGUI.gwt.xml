@@ -59,5 +59,6 @@
     <servlet path="/AuthorizationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AuthorizationGWTServiceImpl"/>
     <servlet path="/AvailabilityGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl"/>
     <servlet path="/TagGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl"/>
+    <servlet path="/RemoteInstallGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl"/>
 
 </module>

@@ -288,25 +288,6 @@ public interface BundleManagerRemote {
      */
 
     /**
-     * Deploy the bundle as described in the provided deployment to the specified resource.
-     * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
-     * returned {@link BundleResourceDeployment} can be used to track the history of the deployment.
-     * 
-     *  TODO: Add the scheduling capability, currently it's Immediate. 
-     * 
-     * @param subject must be InventoryManager
-     * @param bundleDeploymentId the BundleDeployment being used to guide the deployments
-     * @param resourceId the target resource (must exist), typically platforms, for the deployments
-     * @return the {@link BundleResourceDeployment} created to track the deployment. 
-     * @throws Exception
-     */
-    @WebMethod
-    BundleResourceDeployment scheduleBundleResourceDeployment( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleDeploymentId") int bundleDeploymentId, //
-        @WebParam(name = "resourceId") int resourceId) throws Exception;
-
-    /**
      * Deploy the bundle as described in the provided deployment to all of the resources in the
      * specified resource group.
      * Deployment is asynchronous so return of this method does not indicate deployments are complete. The

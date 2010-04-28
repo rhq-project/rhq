@@ -601,7 +601,7 @@
         <column name="BUNDLE_RES_DEPLOY_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_RES_DEPLOY" />        
         <column name="SUBJECT_NAME" required="false" size="255" type="VARCHAR2"/>
         <column name="AUDIT_TIME" required="true" type="LONG"/>
-        <column name="AUDIT_ACTION" required="true" size="50" type="VARCHAR2"/>
+        <column name="AUDIT_ACTION" required="true" size="512" type="VARCHAR2"/>
         <column name="AUDIT_STATUS" required="true" type="VARCHAR2" size="16"/>        
         <column name="AUDIT_MESSAGE" required="false" type="LONGVARCHAR"/>
     </table>    

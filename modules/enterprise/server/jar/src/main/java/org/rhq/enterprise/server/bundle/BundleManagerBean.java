@@ -46,7 +46,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
@@ -97,6 +96,9 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
 @Stateless
 public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemote {
     private final Log log = LogFactory.getLog(this.getClass());
+
+    private final String AUDIT_ACTION_DEPLOYMENT = "Deployment";
+    private final String AUDIT_ACTION_DEPLOYMENT_REQUESTED = "Deployment Requested";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -435,6 +437,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleFile;
     }
 
+    /** TODO: Remove after we finalize the move to group only deployment in the public API
+     * 
+     *  
     public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeploymentId,
         int resourceId) throws Exception {
         BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
@@ -449,6 +454,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         return scheduleBundleResourceDeployment(subject, deployment, resource, null);
     }
+    */
 
     private BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, BundleDeployment deployment,
         Resource resource, BundleGroupDeployment groupDeployment) throws Exception {
@@ -483,7 +489,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // add the deployment request history (in a new trans)
         BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
-            BundleDeploymentAction.DEPLOYMENT_REQUESTED, BundleDeploymentStatus.SUCCESS, "Requested deployment time: "
+            AUDIT_ACTION_DEPLOYMENT_REQUESTED, BundleDeploymentStatus.SUCCESS, "Requested deployment time: "
                 + request.getRequestedDeployTimeAsString());
         bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
 
@@ -495,7 +501,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // Handle Schedule Failures. This may include deployment failures for immediate deployment request
         if (!response.isSuccess()) {
-            history = new BundleResourceDeploymentHistory(subject.getName(), BundleDeploymentAction.DEPLOYMENT,
+            history = new BundleResourceDeploymentHistory(subject.getName(), AUDIT_ACTION_DEPLOYMENT,
                 BundleDeploymentStatus.FAILURE, response.getErrorMessage());
             bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
                 BundleDeploymentStatus.FAILURE);

@@ -409,11 +409,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
     */
 
-    public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeploymentId,
-        int resourceId) throws Exception {
-        return bundleManager.scheduleBundleResourceDeployment(subject, bundleDeploymentId, resourceId);
-    }
-
     public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeploymentId,
         int resourceGroupId) throws Exception {
         return bundleManager.scheduleBundleGroupDeployment(subject, bundleDeploymentId, resourceGroupId);

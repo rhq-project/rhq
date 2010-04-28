@@ -2614,7 +2614,7 @@
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="SUBJECT_NAME" columnType="VARCHAR2" precision="255" />
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="AUDIT_TIME" columnType="LONG" />
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="AUDIT_TIME" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="AUDIT_ACTION" columnType="VARCHAR2" precision="50" />
+                <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="AUDIT_ACTION" columnType="VARCHAR2" precision="512" />
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="AUDIT_ACTION" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="AUDIT_STATUS" columnType="VARCHAR2" precision="16" />
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="AUDIT_STATUS" nullable="FALSE" />

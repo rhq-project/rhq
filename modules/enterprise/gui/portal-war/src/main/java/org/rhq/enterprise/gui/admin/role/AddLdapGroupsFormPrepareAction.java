@@ -28,6 +28,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.ejb.EJBException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -55,7 +56,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.exception.LdapCommunicationException;
 import org.rhq.enterprise.server.exception.LdapFilterException;
-import org.rhq.enterprise.server.resource.group.LdapGroupManager;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -64,6 +65,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class AddLdapGroupsFormPrepareAction extends TilesAction {
     final String LDAP_GROUP_CACHE = "ldapGroupCache";
+
+    RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+    LdapGroupManagerLocal ldapManager = LookupUtil.getLdapGroupManager();
 
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -111,16 +115,16 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
         try { //defend against ldap communication runtime difficulties.
 
             if (cachedAvailableLdapGroups == null) {
-                allGroups = LdapGroupManager.getInstance().findAvailableGroups();
+                //                allGroups = LdapGroupManagerBean.getInstance().findAvailableGroups();
+                allGroups = ldapManager.findAvailableGroups();
             } else {//reuse cached.
                 allGroups = cachedAvailableLdapGroups;
             }
             //store unmodified list in session.
             cachedAvailableLdapGroups = allGroups;
 
-            RoleManagerLocal roleManager = LookupUtil.getRoleManager();
             //retrieve currently assigned groups
-            assignedList = roleManager.findLdapGroupsByRole(role.getId(), PageControl.getUnlimitedInstance());
+            assignedList = ldapManager.findLdapGroupsByRole(role.getId(), PageControl.getUnlimitedInstance());
 
             //trim already defined from all groups returned.
             allGroups = filterExisting(assignedList, allGroups);
@@ -217,6 +221,30 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
             availableGroups.setTotalSize(groupLookup.size());
             availableGroups.setPageControl(pca);
 
+        } catch (EJBException ejx) {
+            //this is the exception type thrown now that we use SLSB.Local methods
+            // mine out other exceptions
+            Exception cause = ejx.getCausedByException();
+            if (cause == null) {
+                ActionMessages actionMessages = new ActionMessages();
+                actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage("errors.cam.general"));
+                saveErrors(request, actionMessages);
+            } else {
+                if (cause instanceof LdapFilterException) {
+                    ActionMessages actionMessages = new ActionMessages();
+                    actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
+                        "admin.role.LdapGroupFilterMessage"));
+                    saveErrors(request, actionMessages);
+                } else if (cause instanceof LdapCommunicationException) {
+                    ActionMessages actionMessages = new ActionMessages();
+                    SystemManagerLocal manager = LookupUtil.getSystemManager();
+                    Properties options = manager.getSystemConfiguration();
+                    String providerUrl = options.getProperty(RHQConstants.LDAPUrl, "(unavailable)");
+                    actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
+                        "admin.role.LdapCommunicationMessage", providerUrl));
+                    saveErrors(request, actionMessages);
+                }
+            }
         } catch (LdapFilterException lce) {
             ActionMessages actionMessages = new ActionMessages();
             actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage("admin.role.LdapGroupFilterMessage"));

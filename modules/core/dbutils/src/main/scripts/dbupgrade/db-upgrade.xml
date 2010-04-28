@@ -2734,7 +2734,6 @@
             </schemaSpec>
 
 
-
             <!-- Remove the old tagging system -->
             <schemaSpec version="2.84">
                 <schema-dropTable table="RHQ_REPO_TAG_MAP"/>
@@ -2963,14 +2962,10 @@
                       REFERENCES RHQ_TAGGING ( ID )
                   </statement>
               </schema-directSQL>
-
-
-
-
-
-
-
             </schemaSpec>
+
+
+
 
         </dbupgrade>
     </target>

@@ -255,10 +255,10 @@
         </constraint>
     </table>
 
-    <table name="RHQ_TAGGING_RES_GRP_MAP">
+    <table name="RHQ_TAGGING_RES_GROUP_MAP">
         <column name="RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
         <column name="TAG_ID" type="INTEGER" references="RHQ_TAGGING"/>
-        <constraint name="RHQ_TAGGING_RES_GRP_MAP_KEY">
+        <constraint name="RHQ_TAGGING_RES_GROUP_MAP_KEY">
             <primaryKey>
                 <field ref="RESOURCE_GROUP_ID"/>
                 <field ref="TAG_ID"/>

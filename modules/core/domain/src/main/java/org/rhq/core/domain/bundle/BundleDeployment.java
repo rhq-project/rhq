@@ -104,9 +104,8 @@ public class BundleDeployment implements Serializable {
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleGroupDeployment> groupDeployments = new ArrayList<BundleGroupDeployment>();
 
-    @ManyToMany(mappedBy = "resources", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "bundleDeployments", fetch = FetchType.LAZY)
     private Set<Tag> tags;
-
 
     public BundleDeployment() {
         // for JPA use

@@ -45,7 +45,6 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
-
 /**
  * @author Greg Hinkle
  */
@@ -57,12 +56,10 @@ public class Tag implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_TAGGING_SEQ")
     @Id
     private int id;
-
 
     @Column(name = "NAMESPACE", nullable = true)
     private String namespace;
@@ -73,31 +70,28 @@ public class Tag implements Serializable {
     @Column(name = "NAME", nullable = false)
     private String name;
 
-    @JoinTable(name = "RHQ_TAGGING_RESOURCE_MAP", joinColumns = {@JoinColumn(name = "TAG_ID")}, inverseJoinColumns = {@JoinColumn(name = "RESOURCE_ID")})
+    @JoinTable(name = "RHQ_TAGGING_RESOURCE_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "RESOURCE_ID") })
     @ManyToMany
     private Set<Resource> resources;
 
-    @JoinTable(name = "RHQ_TAGGING_RES_GRP_MAP", joinColumns = {@JoinColumn(name = "TAG_ID")}, inverseJoinColumns = {@JoinColumn(name = "RESOURCE_GROUP_ID")})
+    @JoinTable(name = "RHQ_TAGGING_RES_GROUP_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "RESOURCE_GROUP_ID") })
     @ManyToMany
     private Set<ResourceGroup> resourceGroups;
 
-    @JoinTable(name = "RHQ_TAGGING_BUNDLE_MAP", joinColumns = {@JoinColumn(name = "TAG_ID")}, inverseJoinColumns = {@JoinColumn(name = "BUNDLE_ID")})
+    @JoinTable(name = "RHQ_TAGGING_BUNDLE_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_ID") })
     @ManyToMany
     private Set<Bundle> bundles;
 
-    @JoinTable(name = "RHQ_TAGGING_BND_VER_MAP", joinColumns = {@JoinColumn(name = "TAG_ID")}, inverseJoinColumns = {@JoinColumn(name = "BUNDLE_VERSION_ID")})
+    @JoinTable(name = "RHQ_TAGGING_BUNDLE_VERSION_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_VERSION_ID") })
     @ManyToMany
     private Set<BundleVersion> bundleVersions;
 
-
-    @JoinTable(name = "RHQ_TAGGING_BND_DEP_MAP", joinColumns = {@JoinColumn(name = "TAG_ID")}, inverseJoinColumns = {@JoinColumn(name = "BUNDLE_DEPLOYMENT_ID")})
+    @JoinTable(name = "RHQ_TAGGING_BUNDLE_DEPLOY_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_DEPLOY_ID") })
     @ManyToMany
     private Set<BundleDeployment> bundleDeployments;
 
-
     protected Tag() {
     }
-
 
     public Tag(String namespace, String semantic, String name) {
         this.namespace = namespace;
@@ -146,7 +140,6 @@ public class Tag implements Serializable {
         this.name = name;
     }
 
-
     public Set<Resource> getResources() {
         return resources;
     }
@@ -171,7 +164,6 @@ public class Tag implements Serializable {
             return false;
         }
     }
-
 
     public Set<ResourceGroup> getResourceGroups() {
         return resourceGroups;
@@ -198,7 +190,6 @@ public class Tag implements Serializable {
         }
     }
 
-
     public Set<Bundle> getBundles() {
         return bundles;
     }
@@ -223,7 +214,6 @@ public class Tag implements Serializable {
             return false;
         }
     }
-
 
     public Set<BundleVersion> getBundleVersions() {
         return bundleVersions;
@@ -250,7 +240,6 @@ public class Tag implements Serializable {
         }
     }
 
-
     public Set<BundleDeployment> getBundleDeployments() {
         return bundleDeployments;
     }
@@ -258,7 +247,6 @@ public class Tag implements Serializable {
     public void setBundleDeployments(Set<BundleDeployment> bundleDeployments) {
         this.bundleDeployments = bundleDeployments;
     }
-
 
     public void addBundleDeployment(BundleDeployment bundleDeployment) {
         if (bundleDeployments == null) {
@@ -277,25 +265,26 @@ public class Tag implements Serializable {
         }
     }
 
-
     @Override
     public String toString() {
-        return (namespace != null ? namespace + ":" : "") +
-                (semantic != null ? semantic + "=" : "") +
-                name;
+        return (namespace != null ? namespace + ":" : "") + (semantic != null ? semantic + "=" : "") + name;
     }
-
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         Tag tag = (Tag) o;
 
-        if (!name.equals(tag.name)) return false;
-        if (namespace != null ? !namespace.equals(tag.namespace) : tag.namespace != null) return false;
-        if (semantic != null ? !semantic.equals(tag.semantic) : tag.semantic != null) return false;
+        if (!name.equals(tag.name))
+            return false;
+        if (namespace != null ? !namespace.equals(tag.namespace) : tag.namespace != null)
+            return false;
+        if (semantic != null ? !semantic.equals(tag.semantic) : tag.semantic != null)
+            return false;
 
         return true;
     }

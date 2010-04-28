@@ -604,10 +604,10 @@
             </primaryKey>
         </constraint>
     </table>
-    <table name="RHQ_TAGGING_BND_VER_MAP">
+    <table name="RHQ_TAGGING_BUNDLE_VERSION_MAP">
         <column name="BUNDLE_VERSION_ID" type="INTEGER" references="RHQ_BUNDLE_VERSION"/>
         <column name="TAG_ID" type="INTEGER" references="RHQ_TAGGING"/>
-        <constraint name="RHQ_TAGGING_BND_VER_MAP_KEY">
+        <constraint name="RHQ_TAGGING_BUNDLE_VER_MAP_KEY">
             <primaryKey>
                 <field ref="BUNDLE_VERSION_ID"/>
                 <field ref="TAG_ID"/>
@@ -615,17 +615,16 @@
         </constraint>
     </table>
 
-    <table name="RHQ_TAGGING_BND_DEP_MAP">
-        <column name="BUNDLE_DEPLOYMENT_ID" type="INTEGER" references="RHQ_BUNDLE_DEPLOY"/>
+    <table name="RHQ_TAGGING_BUNDLE_DEPLOY_MAP">
+        <column name="BUNDLE_DEPLOY_ID" type="INTEGER" references="RHQ_BUNDLE_DEPLOY"/>
         <column name="TAG_ID" type="INTEGER" references="RHQ_TAGGING"/>
-        <constraint name="RHQ_TAGGING_BND_DEP_MAP_KEY">
+        <constraint name="RHQ_TAGGING_BUNDLE_DEP_MAP_KEY">
             <primaryKey>
-                <field ref="BUNDLE_DEPLOYMENT_ID"/>
+                <field ref="BUNDLE_DEPLOY_ID"/>
                 <field ref="TAG_ID"/>
             </primaryKey>
         </constraint>
     </table>
-
 
 </dbsetup>
 

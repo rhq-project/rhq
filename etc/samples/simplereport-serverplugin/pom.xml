@@ -15,7 +15,7 @@
    <description>A RHQ server plugin that periodically outputs a simple report containing some RHQ data</description>
 
    <properties>
-      <rhq.version>3.0.0-SNAPSHOT</rhq.version>
+      <rhq.version>3.0.0.B04</rhq.version>
    </properties>
 
    <dependencies>
@@ -138,9 +138,6 @@
          <id>jboss</id>
          <name>JBoss Repository</name>
          <url>http://repository.jboss.org/maven2/</url>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
       </repository>
    </repositories>
 
@@ -149,9 +146,6 @@
          <id>jboss</id>
          <name>JBoss Plugin Repository</name>
          <url>http://repository.jboss.org/maven2/</url>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
       </pluginRepository>
    </pluginRepositories>
 

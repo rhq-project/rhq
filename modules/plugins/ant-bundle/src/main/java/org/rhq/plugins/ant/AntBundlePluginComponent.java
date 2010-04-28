@@ -18,22 +18,22 @@
  */
 package org.rhq.plugins.ant;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.apache.tools.ant.BuildListener;
+import org.apache.tools.ant.Project;
 import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
 import org.rhq.bundle.ant.DeployPropertyNames;
-import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleResourceDeployment;
-import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.bundle.ant.LoggerAntBuildListener;
+import org.rhq.core.domain.bundle.*;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -41,10 +41,12 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
+import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.core.util.updater.DeployDifferences;
 
 /**
  * @author John Mazzitelli
@@ -86,52 +88,37 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
             String recipe = bundleVersion.getRecipe();
             File recipeFile = File.createTempFile("ant-bundle-recipe", ".xml", request.getBundleFilesLocation());
             File logFile = File.createTempFile("ant-bundle-recipe", ".log", this.tmpDirectory);
+            PrintWriter logFileOutput = null;
             try {
-                // store the recipe in the tmp recipe file
+                // Open the log file for writing.
+                logFileOutput = new PrintWriter(new FileOutputStream(logFile, true));
+
+                // Store the recipe in the tmp recipe file.
                 ByteArrayInputStream in = new ByteArrayInputStream(recipe.getBytes());
                 FileOutputStream out = new FileOutputStream(recipeFile);
                 StreamUtil.copy(in, out);
 
-                // get the bundle's configuration values and the global system facts and
-                // add them as Ant properties so the ant script can get their values
-                Properties antProps = new Properties();
+                // Get the bundle's configuration values and the global system facts and
+                // add them as Ant properties so the ant script can get their values.
+                Properties antProps = createAntProperties(bundleDeployment);
 
-                String installDir = bundleDeployment.getInstallDir();
-                if (installDir == null) {
-                    throw new IllegalStateException("Bundle deployment does not specify install dir: "
-                        + bundleDeployment);
-                }
-                antProps.setProperty(DeployPropertyNames.DEPLOY_DIR, installDir);
+                List<BuildListener> buildListeners = new ArrayList();
+                LoggerAntBuildListener logger = new LoggerAntBuildListener(null, logFileOutput, Project.MSG_DEBUG);
+                buildListeners.add(logger);
+                DeploymentAuditorBuildListener auditor = new DeploymentAuditorBuildListener(
+                        request.getBundleManagerProvider(), resourceDeployment);
+                buildListeners.add(auditor);
 
-                int deploymentId = bundleDeployment.getId();
-                antProps.setProperty(DeployPropertyNames.DEPLOY_ID, Integer.toString(deploymentId));
-
-                Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
-                for (Map.Entry<String, String> fact : sysFacts.entrySet()) {
-                    antProps.setProperty(fact.getKey(), fact.getValue());
-                }
-
-                Configuration config = bundleDeployment.getConfiguration();
-                if (config != null) {
-                    Map<String, Property> allProperties = config.getAllProperties();
-                    for (Map.Entry<String, Property> entry : allProperties.entrySet()) {
-                        String name = entry.getKey();
-                        Property prop = entry.getValue();
-                        String value;
-                        if (prop instanceof PropertySimple) {
-                            value = ((PropertySimple) prop).getStringValue();
-                        } else {
-                            // for now, just skip all property lists and maps, just assume we are getting simples
-                            continue;
-                        }
-                        antProps.setProperty(name, value);
-                    }
-                }
-
-                // parse & execute the Ant script
+                // Parse & execute the Ant script.
                 AntLauncher antLauncher = new AntLauncher();
-                BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, antProps, logFile,
-                        true);
+                BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, antProps,
+                        buildListeners);
+
+                // Send the diffs to the Server so it can store them as an entry in the deployment history.
+                BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
+                DeployDifferences diffs = project.getDeployDifferences();
+                bundleManagerProvider.auditDeployment(resourceDeployment, BundleDeploymentAction.DEPLOYMENT_STEP,
+                        BundleDeploymentStatus.SUCCESS, diffs.toString());
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {
@@ -139,8 +126,11 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                     } catch (Exception e) {
                     }
                 }
-                throw new Exception("Failed to parse the bundle Ant script", t);
+                throw new Exception("Failed to execute the bundle Ant script", t);
             } finally {
+                if (logFileOutput != null) {
+                    logFileOutput.close();
+                }
                 recipeFile.delete();
                 logFile.delete();
             }
@@ -150,5 +140,42 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
             result.setErrorMessage(t);
         }
         return result;
+    }
+
+    private Properties createAntProperties(BundleDeployment bundleDeployment) {
+        Properties antProps = new Properties();
+
+        String installDir = bundleDeployment.getInstallDir();
+        if (installDir == null) {
+            throw new IllegalStateException("Bundle deployment does not specify install dir: "
+                + bundleDeployment);
+        }
+        antProps.setProperty(DeployPropertyNames.DEPLOY_DIR, installDir);
+
+        int deploymentId = bundleDeployment.getId();
+        antProps.setProperty(DeployPropertyNames.DEPLOY_ID, Integer.toString(deploymentId));
+
+        Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
+        for (Map.Entry<String, String> fact : sysFacts.entrySet()) {
+            antProps.setProperty(fact.getKey(), fact.getValue());
+        }
+
+        Configuration config = bundleDeployment.getConfiguration();
+        if (config != null) {
+            Map<String, Property> allProperties = config.getAllProperties();
+            for (Map.Entry<String, Property> entry : allProperties.entrySet()) {
+                String name = entry.getKey();
+                Property prop = entry.getValue();
+                String value;
+                if (prop instanceof PropertySimple) {
+                    value = ((PropertySimple) prop).getStringValue();
+                } else {
+                    // for now, just skip all property lists and maps, just assume we are getting simples
+                    continue;
+                }
+                antProps.setProperty(name, value);
+            }
+        }
+        return antProps;
     }
 }

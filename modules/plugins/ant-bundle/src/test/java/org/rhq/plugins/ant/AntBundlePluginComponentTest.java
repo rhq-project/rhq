@@ -25,18 +25,18 @@ package org.rhq.plugins.ant;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
 
+import org.rhq.core.domain.bundle.*;
+import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.util.file.FileUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleResourceDeployment;
-import org.rhq.core.domain.bundle.BundleType;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageType;
@@ -143,6 +143,7 @@ public class AntBundlePluginComponentTest {
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(tmpDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
+        request.setBundleManagerProvider(new MockBundleManagerProvider());
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -159,5 +160,20 @@ public class AntBundlePluginComponentTest {
         InputStream stream = getClass().getClassLoader().getResourceAsStream(filename);
         byte[] contents = StreamUtil.slurp(stream);
         return new String(contents);
+    }
+
+    private class MockBundleManagerProvider implements BundleManagerProvider {
+        public void auditDeployment(BundleResourceDeployment deployment, BundleDeploymentAction action,
+                                    BundleDeploymentStatus status, String message) throws Exception {
+            System.out.println("Auditing deployment step [" + message + "]...");
+        }
+
+        public List<PackageVersion> getAllBundleVersionPackageVersions(BundleVersion bundleVersion) throws Exception {
+            return null;
+        }
+
+        public long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception {
+            return 0;
+        }
     }
 }

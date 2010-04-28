@@ -55,17 +55,19 @@ public class AntLauncher {
     private final Log log = LogFactory.getLog(AntLauncher.class);
 
     /**
-     * Launches Ant and parses the given build file and optionally executes it.
+     * Executes the specified bundle deploy Ant build file (i.e. rhq-deploy.xml).
      *
-     * @param buildFile      the path to the build file (i.e. rhq-deploy.xml)
-     * @param targetName     the target to run, <code>null</code> will run the default target
-     * @param properties     set of properties to set for the Ant task to access
-     * @param logFile        where Ant messages will be logged
-     * @param logStdOut      if <code>true</code>, log messages will be sent to stdout as well as the log file
+     * @param buildFile       the path to the build file (i.e. rhq-deploy.xml)
+     * @param targetName      the target to run, <code>null</code> will run the default target
+     * @param buildProperties the properties to pass into Ant
+     * @param buildListeners  a list of build listeners (provide callback methods for targetExecuted, taskExecuted, etc.)
+     *
      * @return the bundle Ant project containing information about the specified build file
+     *
+     * @throws InvalidBuildFileException if the build file is invalid
      */
-    public BundleAntProject executeBundleDeployFile(File buildFile, String targetName, Properties properties,
-                                                    File logFile, boolean logStdOut)
+    public BundleAntProject executeBundleDeployFile(File buildFile, String targetName, Properties buildProperties,
+                                                    List<BuildListener> buildListeners)
             throws InvalidBuildFileException {
         parseBundleDeployFile(buildFile);
                 
@@ -75,12 +77,9 @@ public class AntLauncher {
         project.init();
         project.setBaseDir(buildFile.getParentFile());
 
-        PrintWriter logFileOutput = null;
         try {
-            logFileOutput = new PrintWriter(new FileOutputStream(logFile, true));
-
-            if (properties != null) {
-                for (Map.Entry<Object, Object> property : properties.entrySet()) {
+            if (buildProperties != null) {
+                for (Map.Entry<Object, Object> property : buildProperties.entrySet()) {
                     // On the assumption that these properties will be slurped in via Properties.load we
                     // need to escape backslashes to have them treated as literals
                     project.setUserProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
@@ -93,12 +92,10 @@ public class AntLauncher {
                                     MagicNames.ANT_FILE_TYPE_FILE);
             ProjectHelper.configureProject(project, buildFile);
 
-            // notice we are adding the listener after we set the properties - we do not want the
-            // the properties echoed out in the log (in case they contain sensitive passwords)
-            project.addBuildListener(new LoggerAntBuildListener(targetName, logFileOutput, Project.MSG_DEBUG));
-            if (logStdOut) {
-                PrintWriter stdout = new PrintWriter(System.out);
-                project.addBuildListener(new LoggerAntBuildListener(targetName, stdout, Project.MSG_INFO));
+            if (buildListeners != null) {
+                for (BuildListener buildListener : buildListeners) {
+                    project.addBuildListener(buildListener);
+                }
             }
 
             // Add tasks defs for the Ant tasks that we bundle, so user won't have to explicitly declare them in their
@@ -114,11 +111,7 @@ public class AntLauncher {
 
             return project;
         } catch (Exception e) {
-            throw new RuntimeException("Cannot run Ant on build file [" + buildFile + "]. Cause: " + e, e);
-        } finally {
-            if (logFileOutput != null) {
-                logFileOutput.close();
-            }
+            throw new RuntimeException("Failed to execute bundle deploy file [" + buildFile.getAbsolutePath() + "]. Cause: " + e, e);
         }
     }
 

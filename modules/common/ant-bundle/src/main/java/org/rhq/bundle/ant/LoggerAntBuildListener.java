@@ -27,7 +27,7 @@ import org.apache.tools.ant.Target;
 import org.apache.tools.ant.Task;
 
 /**
- * Listens for Ant build events and logs them to a log stream.
+ * Listens for Ant build events and logs them to a print writer.
  *
  * @author John Mazzitelli
  */
@@ -36,15 +36,15 @@ public class LoggerAntBuildListener implements BuildListener {
     private final PrintWriter output;
     private final int priorityThreshold;
 
-    public LoggerAntBuildListener(String target, PrintWriter logFile, int priorityThreshold) {
+    public LoggerAntBuildListener(String target, PrintWriter printWriter, int priorityThreshold) {
         this.mainTarget = (target != null) ? target : "(default)";
-        this.output = logFile;
+        this.output = printWriter;
         this.priorityThreshold = priorityThreshold;
 
         // start with the date this was started
         this.output.println("======================================");
         this.output.println("Ant target [" + this.mainTarget + "]");
-        this.output.println(new Date().toString());
+        this.output.println(new Date());
         this.output.println("======================================");
     }
 
@@ -57,7 +57,9 @@ public class LoggerAntBuildListener implements BuildListener {
     }
 
     public void messageLogged(BuildEvent event) {
-        logEvent(event, null);
+        if (event.getPriority() <= this.priorityThreshold) {
+            logEvent(event, null);
+        }
     }
 
     public void targetFinished(BuildEvent event) {
@@ -77,10 +79,6 @@ public class LoggerAntBuildListener implements BuildListener {
     }
 
     private void logEvent(BuildEvent event, String additionalMessage) {
-        if (event.getPriority() > this.priorityThreshold) {
-            return;
-        }
-
         String message = event.getMessage();
         Throwable exception = event.getException();
         Target target = event.getTarget();

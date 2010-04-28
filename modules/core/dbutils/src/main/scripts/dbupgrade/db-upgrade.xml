@@ -2817,12 +2817,12 @@
                         ALTER TABLE RHQ_TAGGING_RES_GRP_MAP
                         ADD CONSTRAINT RHQ_TAGGING_RES_GRP_MAP_RESOURCE_GROUP_ID_FKEY
                         FOREIGN KEY ( RESOURCE_GROUP_ID )
-                        REFERENCES RHQ_RESOURCE ( ID )
+                        REFERENCES RHQ_RESOURCE_GROUP ( ID )
                     </statement>
                     <statement targetDBVendor="oracle">
                         ALTER TABLE RHQ_TAGGING_RES_GRP_MAP
                         ADD FOREIGN KEY ( RESOURCE_GROUP_ID )
-                        REFERENCES RHQ_RESOURCE ( ID )
+                        REFERENCES RHQ_RESOURCE_GROUP ( ID )
                     </statement>
                     <statement targetDBVendor="postgresql">
                         ALTER TABLE RHQ_TAGGING_RES_GRP_MAP
@@ -2858,12 +2858,12 @@
                         ALTER TABLE RHQ_TAGGING_BUNDLE_MAP
                         ADD CONSTRAINT RHQ_TAGGING_BUNDLE_MAP_BUNDLE_ID_FKEY
                         FOREIGN KEY ( BUNDLE_ID )
-                        REFERENCES RHQ_RESOURCE ( ID )
+                        REFERENCES RHQ_BUNDLE ( ID )
                     </statement>
                     <statement targetDBVendor="oracle">
                         ALTER TABLE RHQ_TAGGING_BUNDLE_MAP
                         ADD FOREIGN KEY ( BUNDLE_ID )
-                        REFERENCES RHQ_RESOURCE ( ID )
+                        REFERENCES RHQ_BUNDLE ( ID )
                     </statement>
                     <statement targetDBVendor="postgresql">
                         ALTER TABLE RHQ_TAGGING_BUNDLE_MAP
@@ -2902,12 +2902,12 @@
                         ALTER TABLE RHQ_TAGGING_BND_VER_MAP
                         ADD CONSTRAINT RHQ_TAGGING_BND_VER_MAP_BUNDLE_VERSION_ID_FKEY
                         FOREIGN KEY ( BUNDLE_VERSION_ID )
-                        REFERENCES RHQ_RESOURCE ( ID )
+                        REFERENCES RHQ_BUNDLE_VERSION ( ID )
                     </statement>
                     <statement targetDBVendor="oracle">
                         ALTER TABLE RHQ_TAGGING_BND_VER_MAP
                         ADD FOREIGN KEY ( BUNDLE_VERSION_ID )
-                        REFERENCES RHQ_RESOURCE ( ID )
+                        REFERENCES RHQ_BUNDLE_VERSION ( ID )
                     </statement>
                     <statement targetDBVendor="postgresql">
                         ALTER TABLE RHQ_TAGGING_BND_VER_MAP
@@ -2943,12 +2943,12 @@
                       ALTER TABLE RHQ_TAGGING_BND_DEP_MAP
                       ADD CONSTRAINT RHQ_TAGGING_BND_DEP_MAP_BUNDLE_DEPLOYMENT_ID_FKEY
                       FOREIGN KEY ( BUNDLE_DEPLOYMENT_ID )
-                      REFERENCES RHQ_RESOURCE ( ID )
+                      REFERENCES RHQ_BUNDLE_DEPLOY ( ID )
                   </statement>
                   <statement targetDBVendor="oracle">
                       ALTER TABLE RHQ_TAGGING_BND_DEP_MAP
                       ADD FOREIGN KEY ( BUNDLE_DEPLOYMENT_ID )
-                      REFERENCES RHQ_RESOURCE ( ID )
+                      REFERENCES RHQ_BUNDLE_DEPLOY ( ID )
                   </statement>
                   <statement targetDBVendor="postgresql">
                       ALTER TABLE RHQ_TAGGING_BND_DEP_MAP

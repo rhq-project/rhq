@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeploymentProperties;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
+import org.rhq.enterprise.server.bundle.UberBundleFileInfo;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
@@ -112,6 +113,11 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
 
         results = new RecipeParseResults(deploymentProps, configDef, bundleFiles);
         return results;
+    }
+
+    public UberBundleFileInfo processUberBundleFile(File uberBundleFile) throws Exception {
+        // TODO: bundle implement me
+        return null;
     }
 
     @Override

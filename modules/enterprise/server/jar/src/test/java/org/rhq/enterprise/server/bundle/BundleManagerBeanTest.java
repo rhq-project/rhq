@@ -37,7 +37,6 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
@@ -62,6 +61,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
@@ -240,6 +240,13 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(Agent.class, ((Agent) removeMe).getId()));
+            }
+
+            // remove Resource Groups left over from test deployments            
+            q = em.createQuery("SELECT rg FROM ResourceGroup rg WHERE rg.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(ResourceGroup.class, ((ResourceGroup) removeMe).getId()));
             }
 
             getTransactionManager().commit();
@@ -607,42 +614,43 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
         BundleDeployment bd1 = createDeployment("one", bv1, "/test", config);
         assertNotNull(bd1);
-        Resource platformResource = createTestResource();
-        BundleResourceDeployment bd = bundleManager.scheduleBundleResourceDeployment(overlord, bd1.getId(),
-            platformResource.getId());
-        assertNotNull(bd);
-        assertEquals(bd1.getId(), bd.getBundleDeployment().getId());
-        assertEquals(platformResource.getId(), bd.getResource().getId());
-        assertEquals(BundleDeploymentStatus.INPROGRESS, bd.getStatus());
+        ResourceGroup platformResourceGroup = createTestResourceGroup();
+        BundleGroupDeployment bgd = bundleManager.scheduleBundleGroupDeployment(overlord, bd1.getId(),
+            platformResourceGroup.getId());
+        assertNotNull(bgd);
+        assertEquals(bd1.getId(), bgd.getBundleDeployment().getId());
+        assertEquals(platformResourceGroup.getId(), bgd.getGroup().getId());
+        assertEquals(BundleDeploymentStatus.INPROGRESS, bgd.getStatus());
         BundleResourceDeploymentCriteria c = new BundleResourceDeploymentCriteria();
-        c.addFilterId(bd.getId());
+        c.addFilterGroupDeploymentId(bgd.getId());
         c.fetchHistories(true);
-        List<BundleResourceDeployment> bds = bundleManager.findBundleResourceDeploymentsByCriteria(overlord, c);
-        assertEquals(1, bds.size());
-        assertEquals(bd.getId(), bds.get(0).getId());
-        bd = bds.get(0);
-        assertNotNull(bd.getBundleResourceDeploymentHistories());
-        int size = bd.getBundleResourceDeploymentHistories().size();
+        List<BundleResourceDeployment> brds = bundleManager.findBundleResourceDeploymentsByCriteria(overlord, c);
+        assertEquals(1, brds.size());
+        assertEquals(1, bgd.getResourceDeployments().size());
+        assertEquals(bgd.getResourceDeployments().get(0).getId(), brds.get(0).getId());
+        BundleResourceDeployment brd = brds.get(0);
+        assertNotNull(brd.getBundleResourceDeploymentHistories());
+        int size = brd.getBundleResourceDeploymentHistories().size();
         assertTrue(size > 0);
         String auditMessage = "BundleTest-Message";
-        bundleManager.addBundleResourceDeploymentHistory(overlord, bd.getId(), new BundleResourceDeploymentHistory(
-            overlord.getName(), BundleDeploymentAction.DEPLOYMENT_STEP, BundleDeploymentStatus.NOCHANGE, auditMessage));
-        bds = bundleManager.findBundleResourceDeploymentsByCriteria(overlord, c);
-        assertEquals(1, bds.size());
-        assertEquals(bd.getId(), bds.get(0).getId());
-        bd = bds.get(0);
-        assertNotNull(bd.getBundleResourceDeploymentHistories());
-        assertTrue((size + 1) == bd.getBundleResourceDeploymentHistories().size());
+        bundleManager.addBundleResourceDeploymentHistory(overlord, bgd.getId(), new BundleResourceDeploymentHistory(
+            overlord.getName(), auditMessage, BundleDeploymentStatus.SUCCESS, auditMessage));
+        brds = bundleManager.findBundleResourceDeploymentsByCriteria(overlord, c);
+        assertEquals(1, brds.size());
+        assertEquals(bgd.getId(), brds.get(0).getId());
+        brd = brds.get(0);
+        assertNotNull(brd.getBundleResourceDeploymentHistories());
+        assertTrue((size + 1) == brd.getBundleResourceDeploymentHistories().size());
         BundleResourceDeploymentHistory newHistory = null;
-        for (BundleResourceDeploymentHistory h : bd.getBundleResourceDeploymentHistories()) {
+        for (BundleResourceDeploymentHistory h : brd.getBundleResourceDeploymentHistories()) {
             if (auditMessage.equals(h.getAuditMessage())) {
                 newHistory = h;
                 break;
             }
         }
         assertNotNull(newHistory);
-        assertEquals(BundleDeploymentAction.DEPLOYMENT_STEP, newHistory.getAuditAction());
-        assertEquals(BundleDeploymentStatus.NOCHANGE, newHistory.getAuditStatus());
+        assertEquals(auditMessage, newHistory.getAuditAction());
+        assertEquals(BundleDeploymentStatus.SUCCESS, newHistory.getAuditStatus());
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -839,10 +847,11 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     }
 
     // lifted from ResourceManagerBeanTest
-    private Resource createTestResource() throws Exception {
+    private ResourceGroup createTestResourceGroup() throws Exception {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
 
+        ResourceGroup resourceGroup = null;
         Resource resource = null;
 
         try {
@@ -862,6 +871,10 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             resource.setAgent(agent);
             em.persist(resource);
 
+            resourceGroup = new ResourceGroup(TEST_PREFIX + "-group-" + System.currentTimeMillis());
+            resourceGroup.addExplicitResource(resource);
+            em.persist(resourceGroup);
+
             getTransactionManager().commit();
         } catch (Exception e) {
             try {
@@ -874,6 +887,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             em.close();
         }
 
-        return resource;
+        return resourceGroup;
     }
 }

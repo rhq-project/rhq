@@ -18,7 +18,11 @@
  */
 package org.rhq.plugins.ant;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,14 +30,17 @@ import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.Project;
+
 import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
 import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.bundle.ant.LoggerAntBuildListener;
-import org.rhq.core.domain.bundle.*;
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -105,20 +112,20 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 List<BuildListener> buildListeners = new ArrayList();
                 LoggerAntBuildListener logger = new LoggerAntBuildListener(null, logFileOutput, Project.MSG_DEBUG);
                 buildListeners.add(logger);
-                DeploymentAuditorBuildListener auditor = new DeploymentAuditorBuildListener(
-                        request.getBundleManagerProvider(), resourceDeployment);
+                DeploymentAuditorBuildListener auditor = new DeploymentAuditorBuildListener(request
+                    .getBundleManagerProvider(), resourceDeployment);
                 buildListeners.add(auditor);
 
                 // Parse & execute the Ant script.
                 AntLauncher antLauncher = new AntLauncher();
                 BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, antProps,
-                        buildListeners);
+                    buildListeners);
 
                 // Send the diffs to the Server so it can store them as an entry in the deployment history.
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
                 DeployDifferences diffs = project.getDeployDifferences();
-                bundleManagerProvider.auditDeployment(resourceDeployment, BundleDeploymentAction.DEPLOYMENT_STEP,
-                        BundleDeploymentStatus.SUCCESS, diffs.toString());
+                bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences",
+                    BundleDeploymentStatus.SUCCESS, diffs.toString());
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {
@@ -147,8 +154,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
         String installDir = bundleDeployment.getInstallDir();
         if (installDir == null) {
-            throw new IllegalStateException("Bundle deployment does not specify install dir: "
-                + bundleDeployment);
+            throw new IllegalStateException("Bundle deployment does not specify install dir: " + bundleDeployment);
         }
         antProps.setProperty(DeployPropertyNames.DEPLOY_DIR, installDir);
 

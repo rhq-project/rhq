@@ -63,7 +63,7 @@ public interface BundleManagerRemote {
      * Adds a BundleFile to the BundleVersion and implicitly creates the backing PackageVersion. If the PackageVersion
      * already exists use {@link addBundleFile(Subject, int, String, int, boolean)} 
      *   
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param bundleVersionId id of the BundleVersion incorporating this BundleFile 
      * @param name name of the BundleFile (and the resulting Package)
      * @param version version of the backing package
@@ -119,7 +119,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "packageVersionId") int packageVersionId) throws Exception;
 
     /**
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param name not null or empty 
      * @param description optional long description of the bundle 
      * @param bundleTypeId valid bundleType
@@ -132,7 +132,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "bundleTypeId") int bundleTypeId) throws Exception;
 
     /**
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param BundleVersionId the BundleVersion being deployed by this deployment
      * @param name a name for this deployment. not null or empty
      * @param description an optional longer description describing this deployment 
@@ -151,7 +151,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "configuration") Configuration configuration) throws Exception;
 
     /**
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param bundleId the bundle for which this will be the next version
      * @param name not null or empty
      * @param description optional long description of the bundle version 
@@ -167,11 +167,24 @@ public interface BundleManagerRemote {
         @WebParam(name = "recipe") String recipe) throws Exception;
 
     /**
+     * Creates a bundle version based on a "uber bundle" zip file. The "uber bundle" zip file should contain
+     * the recipe for a supported bundle type, along with 0, 1 or more bundle files that will be associated
+     * with the bundle version.
+     * 
+     * @param subject
+     * @param uberBundleZipFile a zip file containing a bundle recipe and bundle files
+     * @return the persisted BundleVersion (id is assigned)
+     */
+    BundleVersion createBundleVersionViaUberBundleFileURL( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "url") URL uberBundleZipFile) throws Exception;
+
+    /**
      * Convienence method that combines {@link #createBundle(Subject, String, int)} and {@link #createBundleVersion(Subject, int, String, String, String)}.
      * This will first check to see if a bundle with the given type/name exists - if it doesn't, it will be created. If it does, it will be reused.
      * This will then create the bundle version that will be associated with the bundle that was created or found.
      * 
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param bundleName name of the bundle to use (if not found, it will be created)
      * @param bundleDescription optional long description of the bundle
      * @param bundleTypeId the bundle type for the new bundle (if it is created) for which this will be the first version
@@ -259,7 +272,7 @@ public interface BundleManagerRemote {
      * Determine the files required for a BundleVersion and return all of the filenames or optionally, just those
      * that lack BundleFiles for the BundleVersion.  The recipe may be parsed as part of this call.
      *   
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param bundleVersionId the BundleVersion being queried
      * @param withoutBundleFileOnly if true omit any filenames that already have a corresponding BundleFile for
      *        the BundleVersion.  
@@ -276,7 +289,7 @@ public interface BundleManagerRemote {
      * all of the filenames, with the values of the map being true if they already exist or false if they lack BundleFile representation
      * in the BundleVersion.
      *   
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param bundleVersionId the BundleVersion being queried
      * @return map keyed on filenames whose value indicates if a bundle file exists for the file or not
      * @throws Exception
@@ -288,25 +301,6 @@ public interface BundleManagerRemote {
      */
 
     /**
-     * Deploy the bundle as described in the provided deployment to the specified resource.
-     * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
-     * returned {@link BundleResourceDeployment} can be used to track the history of the deployment.
-     * 
-     *  TODO: Add the scheduling capability, currently it's Immediate. 
-     * 
-     * @param subject must be InventoryManager
-     * @param bundleDeploymentId the BundleDeployment being used to guide the deployments
-     * @param resourceId the target resource (must exist), typically platforms, for the deployments
-     * @return the {@link BundleResourceDeployment} created to track the deployment. 
-     * @throws Exception
-     */
-    @WebMethod
-    BundleResourceDeployment scheduleBundleResourceDeployment( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleDeploymentId") int bundleDeploymentId, //
-        @WebParam(name = "resourceId") int resourceId) throws Exception;
-
-    /**
      * Deploy the bundle as described in the provided deployment to all of the resources in the
      * specified resource group.
      * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
@@ -314,7 +308,7 @@ public interface BundleManagerRemote {
      * 
      *  TODO: Add the scheduling capability, currently it's Immediate. 
      * 
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param bundleDeploymentId the BundleDeployment being used to guide the deployments
      * @param resourceGroupId the target resourceGroup (must exist), typically platforms, for the deployments
      * @return the BundleGroupDeployment created to track the deployments. 

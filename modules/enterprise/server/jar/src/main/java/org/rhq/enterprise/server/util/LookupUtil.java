@@ -155,6 +155,8 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerBean;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerBean;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpressionBuilderManagerBean;
@@ -653,6 +655,10 @@ public final class LookupUtil {
 
     public static DataAccessManagerLocal getDataAccessManager() {
         return lookupLocal(DataAccessManagerBean.class);
+    }
+
+    public static LdapGroupManagerLocal getLdapGroupManager() {
+        return lookupLocal(LdapGroupManagerBean.class);
     }
 
 }

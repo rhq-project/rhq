@@ -353,6 +353,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.createBundleVersion(subject, bundleId, name, description, version, recipe);
     }
 
+    public BundleVersion createBundleVersionViaUberBundleFileURL(Subject subject, URL uberBundleZipFile)
+        throws Exception {
+        return bundleManager.createBundleVersionViaUberBundleFileURL(subject, uberBundleZipFile);
+    }
+
     public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
         int bundleTypeId, String bundleVersionName, String bundleVersionDescription, String version, String recipe)
         throws Exception {
@@ -408,11 +413,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.getAllBundleVersionFilenames(subject, bundleVersionId);
     }
     */
-
-    public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeploymentId,
-        int resourceId) throws Exception {
-        return bundleManager.scheduleBundleResourceDeployment(subject, bundleDeploymentId, resourceId);
-    }
 
     public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeploymentId,
         int resourceGroupId) throws Exception {

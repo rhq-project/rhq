@@ -33,6 +33,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -43,6 +44,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class RoleManagerBeanTest extends AbstractEJB3Test {
     private SubjectManagerLocal subjectManager;
     private RoleManagerLocal roleManager;
+    private LdapGroupManagerLocal ldapManager;
 
     /**
      * Prepares things for the entire test class.
@@ -51,6 +53,7 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
     public void beforeClass() {
         roleManager = LookupUtil.getRoleManager();
         subjectManager = LookupUtil.getSubjectManager();
+        ldapManager = LookupUtil.getLdapGroupManager();
     }
 
     /**
@@ -263,7 +266,7 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
             LdapGroup group = new LdapGroup();
             group.setName("Foo");
             role.addLdapGroup(group);
-            assert roleManager.findLdapGroupsByRole(role.getId(), PageControl.getUnlimitedInstance()).size() == 1 : "Ldap Group Foo Should be assigned";
+            assert ldapManager.findLdapGroupsByRole(role.getId(), PageControl.getUnlimitedInstance()).size() == 1 : "Ldap Group Foo Should be assigned";
         } finally {
             getTransactionManager().rollback();
         }

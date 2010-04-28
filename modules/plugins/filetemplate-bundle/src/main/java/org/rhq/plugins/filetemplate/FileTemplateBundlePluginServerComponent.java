@@ -23,7 +23,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -71,17 +70,16 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
 
             request.getBundleManagerProvider().auditDeployment(
                 resourceDeployment,
-                BundleDeploymentAction.DEPLOYMENT_STEP,
-                BundleDeploymentStatus.NOCHANGE,
+                "Configuration Variable Replacement",
+                BundleDeploymentStatus.SUCCESS,
                 "setting replacement variable values using [" + bundleDeployment.getConfiguration().toString(true)
                     + "]");
             recipeContext.setReplacementVariableValues(bundleDeployment.getConfiguration());
 
             parser.setReplaceReplacementVariables(true);
 
-            request.getBundleManagerProvider().auditDeployment(resourceDeployment,
-                BundleDeploymentAction.DEPLOYMENT_STEP, BundleDeploymentStatus.NOCHANGE,
-                "Parsing Recipe using context [" + recipeContext + "]");
+            request.getBundleManagerProvider().auditDeployment(resourceDeployment, "Parse Recipe",
+                BundleDeploymentStatus.SUCCESS, "Parsing Recipe using context [" + recipeContext + "]");
             parser.parseRecipe(recipeContext);
         } catch (Throwable t) {
             log.error("Failed to deploy bundle [" + request + "]", t);

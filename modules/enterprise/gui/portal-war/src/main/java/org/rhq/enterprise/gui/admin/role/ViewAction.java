@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.legacy.action.WorkflowPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -52,6 +53,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * An Action that retrieves a specific role. This is executed when you view a specific role.
  */
 public class ViewAction extends WorkflowPrepareAction {
+
+    LdapGroupManagerLocal ldapManager = LookupUtil.getLdapGroupManager();
+    RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+    ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
+
     /**
      */
     public ActionForward workflow(ComponentContext context, ActionMapping mapping, ActionForm form,
@@ -75,8 +81,8 @@ public class ViewAction extends WorkflowPrepareAction {
         log.trace("group page control: " + pcg);
         log.trace("ldap group page control: " + pcldap);
 
-        RoleManagerLocal roleManager = LookupUtil.getRoleManager();
-        ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
+        //        RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+        //        ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
         // get all the role permissions
         Set<Permission> permissions = roleManager.getPermissions(roleId);
@@ -91,6 +97,7 @@ public class ViewAction extends WorkflowPrepareAction {
 
         // get the subjects attached to the role
         log.trace("getting users for role [" + roleId + "]");
+        //        PageList<Subject> users = roleManager.findSubjectsByRole(roleId, pcu);
         PageList<Subject> users = roleManager.findSubjectsByRole(roleId, pcu);
         request.setAttribute(Constants.ROLE_USERS_ATTR, users);
 
@@ -104,7 +111,7 @@ public class ViewAction extends WorkflowPrepareAction {
             request.setAttribute(Constants.NUM_RESGRPS_ATTR, new Integer(groups.getTotalSize()));
         }
 
-        PageList<LdapGroup> ldapGroups = roleManager.findLdapGroupsByRole(roleId, pcldap);
+        PageList<LdapGroup> ldapGroups = ldapManager.findLdapGroupsByRole(roleId, pcldap);
         request.setAttribute(Constants.ROLE_LDAPGRPS_ATTR, ldapGroups);
         if (ldapGroups == null) {
             request.setAttribute(Constants.NUM_LDAPGRPS_ATTR, new Integer(0));

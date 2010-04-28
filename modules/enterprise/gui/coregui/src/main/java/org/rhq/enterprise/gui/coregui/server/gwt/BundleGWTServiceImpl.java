@@ -24,7 +24,6 @@ import java.util.HashMap;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
-import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -155,6 +154,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         return SerialUtility.prepare(results, "getAllBundleVersionFilenames");
     }
 
+    /*
     public BundleResourceDeployment scheduleBundleResourceDeployment(int bundleDeploymentId, int resourceId)
         throws Exception {
         try {
@@ -165,6 +165,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
+    */
 
     public BundleGroupDeployment scheduleBundleGroupDeployment(int bundleDeploymentId, int resourceGroupId)
         throws Exception {

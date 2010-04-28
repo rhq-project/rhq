@@ -31,12 +31,16 @@ import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * An Action that retrieves data to facilitate display of the form for removing groups to a role.
  */
 public class RemoveLdapGroupsAction extends BaseAction {
+
+    LdapGroupManagerLocal ldapManager = LookupUtil.getLdapGroupManager();
+
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         Log log = LogFactory.getLog(RemoveLdapGroupsAction.class.getName());
@@ -46,7 +50,7 @@ public class RemoveLdapGroupsAction extends BaseAction {
         int[] groupIds = ArrayUtils.unwrapArray(rmForm.getLdapGroups());
 
         log.debug("removing groups " + groupIds + "] for role [" + roleId + "]");
-        LookupUtil.getRoleManager().removeLdapGroupsFromRole(RequestUtils.getSubject(request), roleId, groupIds);
+        ldapManager.removeLdapGroupsFromRole(RequestUtils.getSubject(request), roleId, groupIds);
 
         RequestUtils.setConfirmation(request, "admin.role.confirm.RemoveLdapGroups");
         return returnSuccess(request, mapping, Constants.ROLE_PARAM, roleId);

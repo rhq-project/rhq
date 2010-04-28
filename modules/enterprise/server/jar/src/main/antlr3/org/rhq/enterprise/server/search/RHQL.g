@@ -75,7 +75,7 @@ tokens {
  */
  
 searchExpression
-    :   conditionalExpression { System.out.println($conditionalExpression.tree.toStringTree()); }
+    :   conditionalExpression { /* System.out.println($conditionalExpression.tree.toStringTree()); */ }
     ;
 
 conditionalExpression

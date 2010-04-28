@@ -174,16 +174,16 @@
                    <f:facet name="header">
                           <h:outputText styleClass="headerText" value="Ack by" />
                    </f:facet>
-                   <h:outputText value="#{item.alert.ackBy.name}" title="#{item.alert.ackBy.firstName} #{item.alert.ackBy.lastName}"/>
+                   <h:outputText value="#{item.alert.acknowledgingSubject}" />
                </rich:column>
 
                <rich:column>
                    <f:facet name="header">
-                       <onc:sortableColumnHeader sort="a.ackTime">
+                       <onc:sortableColumnHeader sort="a.acknowledgeTime">
                           <h:outputText styleClass="headerText" value="Ack date" />
                        </onc:sortableColumnHeader>
                    </f:facet>
-                   <h:outputText value="#{item.alert.ackTime}">
+                   <h:outputText value="#{item.alert.acknowledgeTime}">
                         <f:converter converterId="RelativeDurationConverter" />
                    </h:outputText>
                </rich:column>

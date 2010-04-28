@@ -86,7 +86,7 @@ public class DeployStep implements WizardStep {
                             wizard.setBundleDeployment(result);
 
                             if (wizard.isResourceDeploy()) {
-                                bundleServer.scheduleBundleResourceDeployment(wizard.getBundleDeployment().getId(),
+                                /*bundleServer.scheduleBundleResourceDeployment(wizard.getBundleDeployment().getId(),
                                     wizard.getDeployTargetId(), //
                                     new AsyncCallback<BundleResourceDeployment>() {
                                         public void onSuccess(BundleResourceDeployment result) {
@@ -106,7 +106,7 @@ public class DeployStep implements WizardStep {
                                                 "Failed to schedule deployment: " + caught.getMessage(), caught);
                                             wizard.setResourceDeployment(null);
                                         }
-                                    });
+                                    });*/
                             } else {
                                 bundleServer.scheduleBundleGroupDeployment(wizard.getBundleDeployment().getId(), wizard
                                     .getDeployTargetId(), //

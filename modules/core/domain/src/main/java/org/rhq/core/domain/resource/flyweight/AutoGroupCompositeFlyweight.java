@@ -82,7 +82,7 @@ public class AutoGroupCompositeFlyweight implements Serializable {
         this.resourceType = resourceType;
         this.memberCount = memberCount;
         if (isDuplicateResourceTypeName) {
-            this.name = String.format("%s (%s plugin)", this.resourceType.getName(), this.resourceType.getPlugin());
+            this.name = this.resourceType.getName() + " (" + this.resourceType.getPlugin() + " plugin)";
         } else {
             this.name = this.resourceType.getName();
         }

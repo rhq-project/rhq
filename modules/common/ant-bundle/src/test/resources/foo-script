@@ -1,0 +1,24 @@
+#! /bin/bash
+
+# a sample init script
+
+# Set config defaults.
+FOO=0
+
+# Source config if it exists.
+NAME=`basename $0`
+CONFIG=/etc/sysconfig/$NAME
+[ -f "$CONFIG" ] && . "$CONFIG"
+
+case "$1" in
+   *start)
+    echo "Starting foo (FOO=$FOO)..."
+	;;
+   *stop)
+    echo "Stopping foo (FOO=$FOO)..."
+	;;
+   *)
+	echo "Usage: $NAME {start|stop}" >&2
+	exit 1
+	;;
+esac

@@ -777,7 +777,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             pageControlProperties.add(field.getOrdering().toString());
             pageControlProperties.add(field.getField());
         }
-        System.out.println("setPageControl(" + view + ", " + pageControl + ")");
+        log.debug("setPageControl(" + view + ", " + pageControl + ")");
 
         setPreference(view.toString(), pageControlProperties);
     }

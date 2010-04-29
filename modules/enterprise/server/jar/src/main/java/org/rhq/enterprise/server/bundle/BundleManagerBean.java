@@ -81,6 +81,7 @@ import org.rhq.core.util.NumberUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -109,6 +110,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     @EJB
     private AgentManagerLocal agentManager;
@@ -323,6 +327,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
 
         BundleServerPluginManager manager = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager();
@@ -332,6 +338,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaURL(Subject subject, URL distributionFileUrl) throws Exception {
 
         // get the distro file into a tmp dir
@@ -352,17 +360,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             log.debug("Copied [" + len + "] bytes from [" + distributionFileUrl + "] into ["
                 + tempDistributionFile.getPath() + "]");
 
-            bundleVersion = bundleManager.createBundleVersionViaFile(subject, tempDistributionFile);
+            bundleVersion = createBundleVersionViaFile(subject, tempDistributionFile);
         } finally {
             if (null != tempDistributionFile) {
                 tempDistributionFile.delete();
             }
-            if (is != null) {
-                is.close();
-            }
-            if (os != null) {
-                os.close();
-            }
+            safeClose(is);
+            safeClose(os);
         }
 
         return bundleVersion;
@@ -374,44 +378,80 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleType bundleType = bundleManager.getBundleType(subject, info.getBundleTypeName());
         String bundleName = info.getRecipeParseResults().getBundleMetadata().getBundleName();
         String bundleDescription = info.getRecipeParseResults().getBundleMetadata().getDescription();
-        String name = "TODO: bundleVersionName";
-        String description = "TODO: bundleVersionDesc";
+        String name = bundleName;
+        String description = bundleDescription;
         String version = info.getRecipeParseResults().getBundleMetadata().getBundleVersion();
         String recipe = info.getRecipe();
 
         // first see if the bundle exists or not; if not, create one
+        boolean createdBundle;
         BundleCriteria criteria = new BundleCriteria();
         criteria.setStrict(true);
         criteria.addFilterBundleTypeId(bundleType.getId());
         criteria.addFilterName(bundleName);
-        PageList<Bundle> bundles = findBundlesByCriteria(subject, criteria);
+        PageList<Bundle> bundles = bundleManager.findBundlesByCriteria(subject, criteria);
         Bundle bundle;
         if (bundles.getTotalSize() == 0) {
-            bundle = createBundle(subject, bundleName, bundleDescription, bundleType.getId());
+            bundle = bundleManager.createBundle(subject, bundleName, bundleDescription, bundleType.getId());
+            createdBundle = true;
         } else {
             bundle = bundles.get(0);
+            createdBundle = false;
         }
 
         // now create the bundle version with the bundle we either found or created
-        BundleVersion bundleVersion = createBundleVersion(subject, bundle.getId(), name, description, version, recipe);
+        BundleVersion bundleVersion = bundleManager.createBundleVersion(subject, bundle.getId(), name, description,
+            version, recipe);
 
         // now that we have the bundle version we can actually create the bundle files that were provided in
         // the bundle distribution
-        Map<String, File> bundleFiles = info.getBundleFiles();
-        for (String fileName : bundleFiles.keySet()) {
-            File file = bundleFiles.get(fileName);
-            InputStream is = null;
-            try {
-                is = new FileInputStream(file);
-                BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersion.getId(), fileName, "1.0",
-                    null, is);
-                log.debug("Added bundle file [" + bundleFile + "] to BundleVersion [" + bundleVersion + "]");
-            } finally {
-                safeClose(is);
-                if (null != file) {
-                    file.delete();
+        try {
+            Map<String, File> bundleFiles = info.getBundleFiles();
+            for (String fileName : bundleFiles.keySet()) {
+                File file = bundleFiles.get(fileName);
+                InputStream is = null;
+                try {
+                    is = new FileInputStream(file);
+                    BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersion.getId(), fileName,
+                        "1.0", null, is);
+                    log.debug("Added bundle file [" + bundleFile + "] to BundleVersion [" + bundleVersion + "]");
+                } finally {
+                    safeClose(is);
+                    if (null != file) {
+                        file.delete();
+                    }
                 }
             }
+        } catch (Exception e) {
+            // we failed to add one or more bundle files to the bundle version. Since this means the distribution file
+            // did not fully get its bundle data persisted, we need to abort the entire effort. Let's delete
+            // the bundle version including the bundle definition if we were the ones that initially created it
+            // (thus this should completely wipe the database of any knowledge of what we just did previously)
+            log.error("Failed to add bundle file to new bundle version [" + bundleVersion
+                + "], will not create the new bundle", e);
+            try {
+                bundleManager.deleteBundleVersion(subjectManager.getOverlord(), bundleVersion.getId(), createdBundle);
+            } catch (Exception e1) {
+                log.error("Failed to delete the partially created bundle version: " + bundleVersion, e1);
+            }
+            throw e;
+        }
+
+        // because the distribution file can define things like bundle files and default tags, let's
+        // ask for the full bundle version data so we can return that back to the caller; thus we let
+        // the caller know exactly what the distribution file had inside of it and what we persisted to the DB
+        BundleVersionCriteria bvCriteria = new BundleVersionCriteria();
+        bvCriteria.addFilterId(bundleVersion.getId());
+        bvCriteria.fetchBundle(true);
+        bvCriteria.fetchBundleFiles(true);
+        bvCriteria.fetchConfigurationDefinition(true);
+        bvCriteria.fetchTags(true);
+        PageList<BundleVersion> bundleVersions = bundleManager.findBundleVersionsByCriteria(subject, bvCriteria);
+        if (bundleVersions != null && bundleVersions.size() == 1) {
+            bundleVersion = bundleVersions.get(0);
+        } else {
+            log.error("Failed to obtain the full bundle version, returning only what we currently know about it: "
+                + bundleVersion);
         }
 
         return bundleVersion;
@@ -933,7 +973,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             try {
                 os.close();
             } catch (Exception e) {
-                log.warn("Failed to close InputStream", e);
+                log.warn("Failed to close OutputStream", e);
             }
         }
     }

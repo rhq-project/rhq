@@ -342,11 +342,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleVersion bundleVersion = null;
 
         try {
-            tempDistributionFile = File.createTempFile("bundle-" + distributionFileUrl.hashCode(), "zip");
+            tempDistributionFile = File.createTempFile("bundle-" + distributionFileUrl.hashCode(), ".zip");
 
             is = distributionFileUrl.openStream();
             os = new FileOutputStream(tempDistributionFile);
             long len = StreamUtil.copy(is, os);
+            is = null;
+            os = null;
             log.debug("Copied [" + len + "] bytes from [" + distributionFileUrl + "] into ["
                 + tempDistributionFile.getPath() + "]");
 
@@ -354,6 +356,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         } finally {
             if (null != tempDistributionFile) {
                 tempDistributionFile.delete();
+            }
+            if (is != null) {
+                is.close();
+            }
+            if (os != null) {
+                os.close();
             }
         }
 

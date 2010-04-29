@@ -21,8 +21,8 @@ package org.rhq.enterprise.server.plugin.pc.bundle;
 
 import java.io.File;
 
+import org.rhq.enterprise.server.bundle.BundleDistributionInfo;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
-import org.rhq.enterprise.server.bundle.UberBundleFileInfo;
 
 /**
  * All bundle server plugins must implement this facet.
@@ -41,14 +41,14 @@ public interface BundleServerPluginFacet {
     RecipeParseResults parseRecipe(String recipe) throws Exception;
 
     /**
-     * The server side plugin is being given an uber bundle file that must be procssed.
+     * The server side plugin is being given an bundle distribution file that must be procssed.
      * The results of the processing are to be returned.
      * 
-     * An uber bundle file is a zip file that contains a recipe and 0, 1 or more bundle files.
+     * An bundle distribution file is a zip file that contains a recipe and 0, 1 or more bundle files.
      * 
-     * @param uberBundleFile
-     * @return the information gleened by cracking open the uber bundle file and examining its contents
-     * @throws Exception if the uber bundle file could not be processed successfully
+     * @param distributionFile
+     * @return the information gleened by cracking open the bundle distribution file and examining its contents
+     * @throws Exception if the bundle distribution file could not be processed successfully
      */
-    UberBundleFileInfo processUberBundleFile(File uberBundleFile) throws Exception;
+    BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws Exception;
 }

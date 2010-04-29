@@ -19,9 +19,18 @@
 
 package org.rhq.enterprise.server.bundle;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -47,6 +56,9 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
@@ -64,6 +76,9 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.core.util.updater.DeploymentProperties;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.test.UpdateSubsytemTestBase;
@@ -221,6 +236,13 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 em.remove(em.getReference(Repo.class, ((Repo) removeMe).getId()));
             }
 
+            // remove Resource Groups left over from test deployments freeing up test resources           
+            q = em.createQuery("SELECT rg FROM ResourceGroup rg WHERE rg.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(ResourceGroup.class, ((ResourceGroup) removeMe).getId()));
+            }
+
             // remove ResourceTypes which cascade remove BundleTypes
             q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
@@ -242,13 +264,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 em.remove(em.getReference(Agent.class, ((Agent) removeMe).getId()));
             }
 
-            // remove Resource Groups left over from test deployments            
-            q = em.createQuery("SELECT rg FROM ResourceGroup rg WHERE rg.name LIKE '" + TEST_PREFIX + "%'");
-            doomed = q.getResultList();
-            for (Object removeMe : doomed) {
-                em.remove(em.getReference(ResourceGroup.class, ((ResourceGroup) removeMe).getId()));
-            }
-
             getTransactionManager().commit();
             em.close();
             em = null;
@@ -262,6 +277,94 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             if (null != em) {
                 em.close();
             }
+        }
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testCreateBundleVersionFromDistributionFile() throws Exception {
+
+        File tmpDir = FileUtil.createTempDirectory("createBundleFromDistro", ".dir", null);
+        try {
+            String bundleFile1 = TEST_PREFIX + "_subdir1/bundle-file-1.txt";
+            String bundleFile2 = TEST_PREFIX + "_subdir2/bundle-file-2.txt";
+            String bundleFile3 = TEST_PREFIX + "_bundle-file-3.txt";
+            writeFile(new File(tmpDir, bundleFile1), "first bundle file found inside bundle distro");
+            writeFile(new File(tmpDir, bundleFile2), "second bundle file found inside bundle distro");
+            writeFile(new File(tmpDir, bundleFile3), "third bundle file found inside bundle distro");
+
+            String bundleName = TEST_PREFIX + "-create-from-distro";
+            String bundleVersion = "1.2.3";
+            String bundleDescription = "test bundle desc";
+            DeploymentProperties bundleMetadata = new DeploymentProperties(0, bundleName, bundleVersion,
+                bundleDescription);
+
+            ConfigurationDefinition configDef = new ConfigurationDefinition("foo", null);
+            String propName = "prop1";
+            String propDescription = "prop1desc";
+            configDef.put(new PropertyDefinitionSimple(propName, propDescription, true, PropertySimpleType.INTEGER));
+
+            Map<String, File> bundleFiles = new HashMap<String, File>(3);
+            bundleFiles.put(bundleFile1, new File(tmpDir, bundleFile1));
+            bundleFiles.put(bundleFile2, new File(tmpDir, bundleFile2));
+            bundleFiles.put(bundleFile3, new File(tmpDir, bundleFile3));
+
+            File bundleDistroFile = tmpDir; // not a real distro zip, but its just a simulation anyway - SLSB will pass this to our mock PC
+            String recipe = "mock recipe";
+            BundleType bt1 = createBundleType("one");
+
+            // prepare our mock bundle PC
+            ps.parseRecipe_returnValue = new RecipeParseResults(bundleMetadata, configDef, new HashSet<String>(
+                bundleFiles.keySet()));
+            ps.processBundleDistributionFile_returnValue = new BundleDistributionInfo(recipe,
+                ps.parseRecipe_returnValue, bundleFiles);
+            ps.processBundleDistributionFile_returnValue.setBundleTypeName(bt1.getName());
+
+            // now ask the SLSB to persist our bundle data given our mock distribution
+            BundleVersion bv1 = bundleManager.createBundleVersionViaURL(overlord, bundleDistroFile.toURI().toURL());
+
+            // to a db lookup to make sure our bundle version is queryable
+            BundleVersionCriteria criteria = new BundleVersionCriteria();
+            criteria.addFilterId(bv1.getId());
+            criteria.fetchBundle(true);
+            criteria.fetchConfigurationDefinition(true);
+            criteria.fetchBundleFiles(true);
+            criteria.fetchTags(true);
+            BundleVersion bv2 = bundleManager.findBundleVersionsByCriteria(overlord, criteria).get(0);
+            List<BundleFile> bv2BundleFiles = bv2.getBundleFiles();
+            BundleFileCriteria bfCriteria = new BundleFileCriteria();
+            bfCriteria.addFilterBundleVersionId(bv2.getId());
+            bfCriteria.fetchPackageVersion(true);
+            PageList<BundleFile> bfs = bundleManager.findBundleFilesByCriteria(overlord, bfCriteria);
+            bv2BundleFiles.clear();
+            bv2BundleFiles.addAll(bfs);
+            bv2.setBundleDeployments(new ArrayList<BundleDeployment>());
+
+            // test that the PC's return value and our own DB lookup match the bundle version we expect to be in the DB
+            BundleVersion[] bvs = new BundleVersion[] { bv1, bv2 };
+            for (BundleVersion bv : bvs) {
+                assert bv.getId() > 0 : bv;
+                assert bv.getBundle().getName().equals(bundleName) : bv;
+                assert bv.getBundle().getDescription().equals(bundleDescription) : bv;
+                assert bv.getDescription().equals(bundleDescription) : "the bundle version desc should be the same as the bundle desc";
+                assert bv.getVersion().equals(bundleVersion) : bv;
+                assert bv.getBundleFiles().size() == 3 : bv;
+                ArrayList<String> bundleFileNames = new ArrayList<String>(3);
+                for (BundleFile bf : bv.getBundleFiles()) {
+                    bundleFileNames.add(bf.getPackageVersion().getFileName());
+                }
+                assert bundleFileNames.contains(bundleFile1) : bv;
+                assert bundleFileNames.contains(bundleFile2) : bv;
+                assert bundleFileNames.contains(bundleFile3) : bv;
+                assert bv.getBundleDeployments().isEmpty() : bv;
+                assert bv.getConfigurationDefinition().getPropertyDefinitions().size() == 1;
+                assert bv.getConfigurationDefinition().get(propName) != null;
+                assert bv.getConfigurationDefinition().get(propName).getDescription().equals(propDescription);
+                assert bv.getConfigurationDefinition().get(propName).isRequired();
+                assert bv.getConfigurationDefinition().getPropertyDefinitionSimple(propName).getType() == PropertySimpleType.INTEGER;
+                assert bv.getRecipe().equals(recipe);
+            }
+        } finally {
+            FileUtil.purge(tmpDir, true);
         }
     }
 
@@ -382,7 +485,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         PageList<BundleWithLatestVersionComposite> results;
 
         // verify there are no bundle versions yet
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
@@ -393,7 +496,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bv1);
         assertEquals("1.0", bv1.getVersion());
         assert 0 == bv1.getVersionOrder();
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
@@ -404,7 +507,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bv2);
         assertEquals("2.0", bv2.getVersion());
         assert 1 == bv2.getVersionOrder();
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
@@ -415,7 +518,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bv3);
         assertEquals("1.5", bv3.getVersion());
         assert 1 == bv3.getVersionOrder();
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
@@ -475,7 +578,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         // verify our composite criteria query can return more than one item
         Bundle b2 = createBundle("two");
         assertNotNull(b2);
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.size() == 2 : results;
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
@@ -492,7 +595,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(b2_bv1);
         assertEquals("9.1", b2_bv1.getVersion());
 
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.size() == 2 : results;
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
@@ -507,7 +610,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
         // test sorting of the BundleWithLastestVersionComposite
         criteria.addSortName(PageOrdering.DESC);
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.size() == 2 : results;
         assert results.get(1).getBundleId().equals(b1.getId());
         assert results.get(1).getBundleName().equals(b1.getName());
@@ -521,7 +624,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert results.get(0).getVersionsCount().longValue() == 1L;
 
         criteria.addSortName(PageOrdering.ASC);
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.size() == 2 : results;
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
@@ -888,5 +991,42 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         }
 
         return resourceGroup;
+    }
+
+    private String readFile(File file) throws Exception {
+        return new String(StreamUtil.slurp(new FileInputStream(file)));
+    }
+
+    private void writeFile(File file, String content) throws Exception {
+        file.getParentFile().mkdirs();
+        StreamUtil.copy(new ByteArrayInputStream(content.getBytes()), new FileOutputStream(file));
+    }
+
+    private File createZip(File destDir, String zipName, String[] entryNames, String[] contents) throws Exception {
+        FileOutputStream stream = null;
+        ZipOutputStream out = null;
+
+        try {
+            destDir.mkdirs();
+            File zipFile = new File(destDir, zipName);
+            stream = new FileOutputStream(zipFile);
+            out = new ZipOutputStream(stream);
+
+            assert contents.length == entryNames.length;
+            for (int i = 0; i < contents.length; i++) {
+                ZipEntry zipAdd = new ZipEntry(entryNames[i]);
+                zipAdd.setTime(System.currentTimeMillis());
+                out.putNextEntry(zipAdd);
+                out.write(contents[i].getBytes());
+            }
+            return zipFile;
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+            if (stream != null) {
+                stream.close();
+            }
+        }
     }
 }

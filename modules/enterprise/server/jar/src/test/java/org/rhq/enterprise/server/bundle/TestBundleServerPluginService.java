@@ -62,6 +62,9 @@ public class TestBundleServerPluginService extends ServerPluginService implement
     public TestBundleServerPluginContainer bundlePC;
     public MasterServerPluginContainerConfiguration masterConfig;
 
+    public RecipeParseResults parseRecipe_returnValue = null;
+    public BundleDistributionInfo processBundleDistributionFile_returnValue;
+
     public TestBundleServerPluginService() {
         // build the config at constructor time so tests have it even before the PC is initialized
         File dir = new File(System.getProperty("java.io.tmpdir"), "test-server-plugins");
@@ -191,6 +194,11 @@ public class TestBundleServerPluginService extends ServerPluginService implement
         public RecipeParseResults parseRecipe(String bundleTypeName, String recipe) throws Exception {
             return new TestBundlePluginComponent().parseRecipe(recipe);
         }
+
+        @Override
+        public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws Exception {
+            return new TestBundlePluginComponent().processBundleDistributionFile(distributionFile);
+        }
     }
 
     class TestBundlePluginComponent implements BundleServerPluginFacet {
@@ -199,6 +207,10 @@ public class TestBundleServerPluginService extends ServerPluginService implement
         };
 
         public RecipeParseResults parseRecipe(String recipe) throws Exception {
+
+            if (parseRecipe_returnValue != null) {
+                return parseRecipe_returnValue;
+            }
 
             ConfigurationDefinition configDef;
             Set<String> bundleFileNames;
@@ -217,8 +229,11 @@ public class TestBundleServerPluginService extends ServerPluginService implement
             return new RecipeParseResults(metadata, configDef, bundleFileNames);
         }
 
-        public UberBundleFileInfo processUberBundleFile(File uberBundleFile) throws Exception {
-            // TODO: bundle implement me
+        public BundleDistributionInfo processBundleDistributionFile(File uberBundleFile) throws Exception {
+            if (processBundleDistributionFile_returnValue != null) {
+                return processBundleDistributionFile_returnValue;
+            }
+
             throw new UnsupportedOperationException("this mock object cannot do this");
         }
     }

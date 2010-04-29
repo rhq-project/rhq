@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.bundle;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
@@ -167,17 +168,40 @@ public interface BundleManagerRemote {
         @WebParam(name = "recipe") String recipe) throws Exception;
 
     /**
-     * Creates a bundle version based on a "uber bundle" zip file. The "uber bundle" zip file should contain
-     * the recipe for a supported bundle type, along with 0, 1 or more bundle files that will be associated
-     * with the bundle version.
+     * Creates a bundle version based on a Bundle Distribution file. Typically a zip file, the bundle distribution
+     * contains the recipe for a supported bundle type, along with 0, 1 or more bundle files that will be associated
+     * with the bundle version.  The recipe specifies the bundle name, version, version name and version description.
+     * If this is the initial version for the named bundle the bundle will be implicitly created.  The bundle type
+     * is discovered by inspecting the distribution file.   
      * 
      * @param subject
-     * @param uberBundleZipFile a zip file containing a bundle recipe and bundle files
-     * @return the persisted BundleVersion (id is assigned)
+     * @param distributionFile a local Bundle Distribution file. It must be read accessible by the RHQ server process.
+     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     *         understand all that this method did. Bundle files specifically are returned.
      */
-    BundleVersion createBundleVersionViaUberBundleFileURL( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "url") URL uberBundleZipFile) throws Exception;
+    BundleVersion createBundleVersionViaFile( //
+        @WebParam(name = "subject") Subject subject, //        
+        @WebParam(name = "distributionFile") File distributionFile) throws Exception;
+
+    /**
+     * Creates a bundle version based on a Bundle Distribution file. Typically a zip file, the bundle distribution
+     * contains the recipe for a supported bundle type, along with 0, 1 or more bundle files that will be associated
+     * with the bundle version.  The recipe specifies the bundle name, version, version name and version description.
+     * If this is the initial version for the named bundle the bundle will be implicitly created.  The bundle type
+     * is discovered by inspecting the distribution file.
+     * <br/></br>
+     * Note, if the file is local it is more efficient to use {@link createBundleVersionViaFile(Subject,File)}.  
+     * 
+     * @param subject
+     * @param distributionFileUrl a URL to the Bundle Distribution file. It must be live, resolvable and read accessible
+     * by the RHQ server process. 
+     * 
+     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     *         understand all that this method did. Bundle files specifically are returned.
+     */
+    BundleVersion createBundleVersionViaURL( //
+        @WebParam(name = "subject") Subject subject, //        
+        @WebParam(name = "distributionFileUrl") URL distributionFileUrl) throws Exception;
 
     /**
      * Convienence method that combines {@link #createBundle(Subject, String, int)} and {@link #createBundleVersion(Subject, int, String, String, String)}.
@@ -260,13 +284,18 @@ public interface BundleManagerRemote {
         @WebParam(name = "criteria") BundleVersionCriteria criteria);
 
     @WebMethod
-    PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria( //
+    PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") BundleCriteria criteria);
 
     @WebMethod
     List<BundleType> getAllBundleTypes( //
         @WebParam(name = "subject") Subject subject);
+
+    @WebMethod
+    BundleType getBundleType( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleTypeName") String bundleTypeName);
 
     /**
      * Determine the files required for a BundleVersion and return all of the filenames or optionally, just those

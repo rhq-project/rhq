@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -449,6 +450,17 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         PageList<BundleVersion> bundleVersions = bundleManager.findBundleVersionsByCriteria(subject, bvCriteria);
         if (bundleVersions != null && bundleVersions.size() == 1) {
             bundleVersion = bundleVersions.get(0);
+            List<BundleFile> bundleFiles = bundleVersion.getBundleFiles();
+            if (bundleFiles != null && bundleFiles.size() > 0) {
+                BundleFileCriteria bfCriteria = new BundleFileCriteria();
+                bfCriteria.addFilterBundleVersionId(bundleVersion.getId());
+                bfCriteria.fetchPackageVersion(true);
+                PageList<BundleFile> bfs = bundleManager.findBundleFilesByCriteria(subjectManager.getOverlord(),
+                    bfCriteria);
+                bundleFiles.clear();
+                bundleFiles.addAll(bfs);
+            }
+            bundleVersion.setBundleDeployments(new ArrayList<BundleDeployment>());
         } else {
             log.error("Failed to obtain the full bundle version, returning only what we currently know about it: "
                 + bundleVersion);

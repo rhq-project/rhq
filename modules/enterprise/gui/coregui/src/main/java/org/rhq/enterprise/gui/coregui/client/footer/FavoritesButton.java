@@ -90,6 +90,12 @@ public class FavoritesButton extends IMenuButton {
                                 // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
                                 //       disambiguated Resource names.
                                 item.setTitle(resource.getName());
+
+                                String category = resource.getResourceType().getCategory().getDisplayName();
+
+                                String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability().getAvailabilityType() != null)
+                                        ? (resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
+                                item.setIcon("types/" + category + "_" + avail + "_16.png");
                             }
                             favoritesMenu.setItems(items);
                             favoritesMenu.showContextMenu();

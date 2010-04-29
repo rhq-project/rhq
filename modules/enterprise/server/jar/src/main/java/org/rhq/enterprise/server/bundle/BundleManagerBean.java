@@ -408,18 +408,20 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // the bundle distribution
         try {
             Map<String, File> bundleFiles = info.getBundleFiles();
-            for (String fileName : bundleFiles.keySet()) {
-                File file = bundleFiles.get(fileName);
-                InputStream is = null;
-                try {
-                    is = new FileInputStream(file);
-                    BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersion.getId(), fileName,
-                        "1.0", null, is);
-                    log.debug("Added bundle file [" + bundleFile + "] to BundleVersion [" + bundleVersion + "]");
-                } finally {
-                    safeClose(is);
-                    if (null != file) {
-                        file.delete();
+            if (bundleFiles != null) {
+                for (String fileName : bundleFiles.keySet()) {
+                    File file = bundleFiles.get(fileName);
+                    InputStream is = null;
+                    try {
+                        is = new FileInputStream(file);
+                        BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersion.getId(), fileName,
+                            "1.0", null, is);
+                        log.debug("Added bundle file [" + bundleFile + "] to BundleVersion [" + bundleVersion + "]");
+                    } finally {
+                        safeClose(is);
+                        if (null != file) {
+                            file.delete();
+                        }
                     }
                 }
             }

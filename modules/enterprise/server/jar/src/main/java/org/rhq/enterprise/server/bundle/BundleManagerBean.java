@@ -408,20 +408,22 @@ public class BundleManagerBean implements BundleManagerLocal {
         // the bundle distribution
         try {
             Map<String, File> bundleFiles = info.getBundleFiles();
-            for (String fileName : bundleFiles.keySet()) {
-                File file = bundleFiles.get(fileName);
-                InputStream is = null;
-                try {
-                    is = new FileInputStream(file);
-                    // peg the file version to the bundle version. In the future we may allow a distribution
-                    // to refer to existing versions of a file.
-                    BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersion.getId(), fileName,
-                        bundleVersion.getVersion(), null, is);
-                    log.debug("Added bundle file [" + bundleFile + "] to BundleVersion [" + bundleVersion + "]");
-                } finally {
-                    safeClose(is);
-                    if (null != file) {
-                        file.delete();
+            if (bundleFiles != null) {
+                for (String fileName : bundleFiles.keySet()) {
+                    File file = bundleFiles.get(fileName);
+                    InputStream is = null;
+                    try {
+                        is = new FileInputStream(file);
+                        // peg the file version to the bundle version. In the future we may allow a distribution
+                        // to refer to existing versions of a file.
+                        BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersion.getId(), fileName,
+                            bundleVersion.getVersion(), null, is);
+                        log.debug("Added bundle file [" + bundleFile + "] to BundleVersion [" + bundleVersion + "]");
+                    } finally {
+                        safeClose(is);
+                        if (null != file) {
+                            file.delete();
+                        }
                     }
                 }
             }

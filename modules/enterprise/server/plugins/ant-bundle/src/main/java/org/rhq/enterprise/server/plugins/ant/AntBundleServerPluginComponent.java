@@ -197,7 +197,7 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         public BundleFileVisitor(String bundleName, Set<String> bundleFileNames) throws IOException {
             this.bundleFileNames = bundleFileNames;
             this.bundleFiles = new HashMap<String, File>(bundleFileNames.size());
-            this.tmpDir = FileUtil.createTempDirectory("bundle-" + bundleName, ".dir", null);
+            this.tmpDir = FileUtil.createTempDirectory("ant-bundle", ".dir", null);
         }
 
         public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {

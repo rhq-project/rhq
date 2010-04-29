@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.plugins.ant;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -163,15 +164,16 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         }
 
         public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
-            if (recipeName.equalsIgnoreCase(entry.getName())) {
+            if (this.recipeName.equalsIgnoreCase(entry.getName())) {
                 // this should be safe downcast, recipes are not that big
-                byte[] recipeBytes = new byte[(int) entry.getSize()];
-                recipeBytes = StreamUtil.slurp(stream);
-                this.recipe = new String(recipeBytes);
+                ByteArrayOutputStream out = new ByteArrayOutputStream((int) entry.getSize());
+                StreamUtil.copy(stream, out, false);
+                this.recipe = new String(out.toByteArray());
+                out = null; // no need for this anymore, help out GC
                 try {
-                    this.results = facet.parseRecipe(this.recipe);
+                    this.results = this.facet.parseRecipe(this.recipe);
                 } catch (Throwable t) {
-                    results = null;
+                    this.results = null;
                 }
             }
             return true;
@@ -194,14 +196,15 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         public BundleFileVisitor(String bundleName, Set<String> bundleFileNames) throws IOException {
             this.bundleFileNames = bundleFileNames;
             this.bundleFiles = new HashMap<String, File>(bundleFileNames.size());
-            tmpDir = FileUtil.createTempDirectory("bundle-" + bundleName, String.valueOf(System.currentTimeMillis()),
-                null);
+            this.tmpDir = FileUtil.createTempDirectory("bundle-" + bundleName, ".dir", null);
         }
 
         public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
             if (bundleFileNames.contains(entry.getName())) {
 
                 File bundleFile = new File(tmpDir, entry.getName());
+                bundleFile.getParentFile().mkdirs();
+
                 FileOutputStream fos = null;
                 try {
                     fos = new FileOutputStream(bundleFile);

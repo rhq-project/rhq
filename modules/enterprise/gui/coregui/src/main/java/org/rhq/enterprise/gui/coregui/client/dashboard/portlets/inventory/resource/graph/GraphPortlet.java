@@ -34,11 +34,12 @@ public class GraphPortlet extends SmallGraphView implements PortletView {
     public static final String KEY = "Resource Graph";
 
     public GraphPortlet() {
-        super(10001, 10100);
+
     }
 
     public void configure(StoredPortlet storedPortlet) {
-        // TODO: Implement this method.
+        setResourceId(Integer.parseInt(storedPortlet.getProperties().get("resourceId")));
+        setDefinitionId(Integer.parseInt(storedPortlet.getProperties().get("definitionId")));
     }
 
     public Canvas getHelpCanvas() {

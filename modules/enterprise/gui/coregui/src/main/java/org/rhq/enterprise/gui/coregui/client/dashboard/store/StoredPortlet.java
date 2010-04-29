@@ -101,4 +101,9 @@ public class StoredPortlet {
     public void setHeight(int height) {
         this.height = height;
     }
+
+    public void setProperty(String name, String value) {
+        properties.put(name, value);
+    }
+
 }

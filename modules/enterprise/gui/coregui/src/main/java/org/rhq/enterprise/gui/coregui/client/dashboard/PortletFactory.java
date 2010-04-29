@@ -33,6 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.Re
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
 
 /**
  * @author Greg Hinkle
@@ -58,13 +59,15 @@ public class PortletFactory {
 
     }
 
-    public static Canvas buildPortlet(String portletKey) {
+    public static Canvas buildPortlet(StoredPortlet storedPortlet) {
 
 
-        PortletViewFactory viewFactory = registeredPortlets.get(portletKey);
+        PortletViewFactory viewFactory = registeredPortlets.get(storedPortlet.getPortletKey());
 
         Canvas canvas = null;
-        canvas = (Canvas) viewFactory.getInstance();
+        PortletView view = viewFactory.getInstance();
+        view.configure(storedPortlet);
+        canvas = (Canvas) view;
 
         return canvas;
 

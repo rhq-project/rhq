@@ -98,7 +98,16 @@ public class DashboardsView extends VLayout {
         col1.add(summary);
 
         StoredPortlet graph = new StoredPortlet("ghinkle (MAC OS X) CPU", GraphPortlet.KEY, 250);
+        graph.setProperty("resourceId","10001");
+        graph.setProperty("definitionId","10139");
         col1.add(graph);
+
+        StoredPortlet graphTwo = new StoredPortlet("JBoss AS Txn / Min", GraphPortlet.KEY, 250);
+        graphTwo.setProperty("resourceId","10003");
+        graphTwo.setProperty("definitionId","10971");
+        col1.add(graphTwo);
+
+
 
         // Experimental
 //        StoredPortlet platformSummary = new StoredPortlet("Platform Summary", PlatformPortletView.KEY, 300);

@@ -187,7 +187,7 @@ public class DashboardView extends VLayout {
         for (ArrayList<StoredPortlet> column : storedDashboard.getPortlets()) {
 
             for (StoredPortlet storedPortlet : column) {
-                Canvas portalCanvas = PortletFactory.buildPortlet(storedPortlet.getPortletKey());
+                Canvas portalCanvas = PortletFactory.buildPortlet(storedPortlet);
 
                 final Portlet portlet = new Portlet(editMode);
                 portlet.addItem(portalCanvas);
@@ -212,7 +212,8 @@ public class DashboardView extends VLayout {
     private void addPortlet(String portletName) {
         final Portlet newPortlet = new Portlet(true);
 
-        Canvas canvas = PortletFactory.buildPortlet(portletName);
+        StoredPortlet storedPortlet = new StoredPortlet(portletName, portletName, 250);
+        Canvas canvas = PortletFactory.buildPortlet(storedPortlet);
 
         newPortlet.setTitle(portletName);
 

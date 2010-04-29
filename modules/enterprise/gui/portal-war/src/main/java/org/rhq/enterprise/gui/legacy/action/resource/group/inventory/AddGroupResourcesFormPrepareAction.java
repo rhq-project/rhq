@@ -39,7 +39,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
-import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -189,5 +188,44 @@ public class AddGroupResourcesFormPrepareAction extends Action {
         }
 
         return resourceCategoryTypes;
-    }    
+    }
+    
+    //
+    // These two methods are to support the resource names disambiguation in the above code.
+    // Hopefully this page gets rewritten in JSF so that we don't have to employ this kind of
+    // nasties.
+    //
+    
+    private static PageList<Resource> buildResourceList(ResourceNamesDisambiguationResult<Resource> results, int totalSize, PageControl pageControl) {
+        ArrayList<Resource> convertedResults = new ArrayList<Resource>(results.getResolution().size());
+        
+        for(DisambiguationReport<Resource> dr : results.getResolution()) {
+            Resource resource = dr.getOriginal();
+            
+            Resource parent = resource.getParentResource();
+            //platforms don't have parents, need to check for null here
+            if (parent != null) {
+                parent.setName(buildLineage(dr.getParents()));
+            }
+            
+            convertedResults.add(resource);
+        }
+        return new PageList<Resource>(convertedResults, totalSize, pageControl);
+    }
+    
+    private static String buildLineage(List<DisambiguationReport.Resource> parents) {
+        if (parents == null || parents.size() == 0) {
+            return "";
+        }
+        
+        Iterator<DisambiguationReport.Resource> it = parents.iterator();
+        
+        StringBuilder bld = new StringBuilder(it.next().getName());
+        
+        while (it.hasNext()) {
+            bld.append(ResourcePartialLineageComponent.DEFAULT_SEPARATOR).append(it.next().getName());
+        }
+        
+        return bld.toString();
+    }
 }

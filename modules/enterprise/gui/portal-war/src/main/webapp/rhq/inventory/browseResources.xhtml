@@ -126,17 +126,32 @@
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="r.name">
-                        <h:outputText styleClass="headerText" value="Resource" />
+                        <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
                      <f:param name="id" value="#{item.original.resource.id}" />
                      <h:outputText value="#{item.original.resource.name}" />
+                     <!-- 
                      <h:outputText value=" (#{item.original.resource.resourceType.name})" />
+                      -->
+                     <h:outputText value="#{item.resourceType.singleton ? '' : ' ('}" />
+                     <h:outputText value="#{item.resourceType.singleton ? '' : item.original.resource.resourceType.name}" />
+                     <h:outputText value="#{item.resourceType.singleton ? '' : ')'}" />
                   </h:outputLink>
                </rich:column>
-               
+<!--                
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="r.resourceType.name">
+                        <h:outputText styleClass="headerText" value="Type" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.original.resource.resourceType.name}" />
+               </rich:column>
+ -->
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Location" />

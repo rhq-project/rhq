@@ -28,7 +28,7 @@ import java.util.List;
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
 
-import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.gui.util.FacesComponentUtility;
 
 /**
@@ -49,7 +49,7 @@ public class ResourcePartialLineageComponent extends UIComponentBase {
 
     private Boolean renderLinks;
     private String separator;
-    private List<ResourceParentFlyweight> parents;
+    private List<DisambiguationReport.Resource> parents;
     
     public String getFamily() {
         return COMPONENT_FAMILY;
@@ -86,7 +86,7 @@ public class ResourcePartialLineageComponent extends UIComponentBase {
     }
 
     @SuppressWarnings("unchecked")
-    public List<ResourceParentFlyweight> getParents() {
+    public List<DisambiguationReport.Resource> getParents() {
         if (parents == null) {
             //do *NOT* store this value into the parents explicitly
             //unless dynamic updates (if the expression is in loop for example)
@@ -97,7 +97,7 @@ public class ResourcePartialLineageComponent extends UIComponentBase {
         }
     }
 
-    public void setParents(List<ResourceParentFlyweight> parents) {
+    public void setParents(List<DisambiguationReport.Resource> parents) {
         this.parents = parents;
     }
     

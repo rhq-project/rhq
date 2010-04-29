@@ -36,34 +36,110 @@ public class DisambiguationReport<T> implements Serializable {
     private static final long serialVersionUID = 1L;
     
     private T original;
-    private List<ResourceParentFlyweight> parents;
-    private String resourceTypeName;
-    private String resourceTypePluginName;
+    private List<Resource> parents;
+    private ResourceType resourceType;
 
-    public DisambiguationReport(T original, List<ResourceParentFlyweight> parents, String resourceTypeName, String resourceTypePluginName) {
+    public static class ResourceType implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+        private String name;
+        private String plugin;
+        private boolean singleton;
+        
+        /**
+         * @param name
+         * @param plugin
+         * @param singleton
+         */
+        public ResourceType(String name, String plugin, boolean singleton) {
+            super();
+            this.name = name;
+            this.plugin = plugin;
+            this.singleton = singleton;
+        }
+        
+        public String getName() {
+            return name;
+        }
+        public String getPlugin() {
+            return plugin;
+        }
+        public boolean isSingleton() {
+            return singleton;
+        }
+        
+        public String toString() {
+            return "ResourceType[name='" + name + "', plugin='" + plugin + "'" + "]";
+        }
+    }
+
+    public static class Resource implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+        private int id;
+        private String name;
+        private ResourceType type;
+        
+        /**
+         * @param id
+         * @param name
+         * @param type
+         */
+        public Resource(int id, String name, ResourceType type) {
+            this.id = id;
+            this.name = name;
+            this.type = type;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public ResourceType getType() {
+            return type;
+        }
+        
+        public String toString() {
+            return "Resource[id=" + id + ", name='" + name + "', type=" + type + "]";
+        }
+    }
+    
+    public DisambiguationReport(T original, List<Resource> parents, ResourceType resourceType) {
         this.original = original;
         this.parents = Collections.unmodifiableList(parents);
-        this.resourceTypeName = resourceTypeName;
-        this.resourceTypePluginName = resourceTypePluginName;
+        this.resourceType = resourceType;
     }
 
     public T getOriginal() {
         return original;
     }
     
-    public List<ResourceParentFlyweight> getParents() {
+    public List<Resource> getParents() {
         return parents;
     }
 
+    @Deprecated
     public String getResourceTypeName() {
-        return resourceTypeName;
+        return resourceType.getName();
     }
 
+    @Deprecated
     public String getResourceTypePluginName() {
-        return resourceTypePluginName;
+        return resourceType.getPlugin();
+    }
+
+    /**
+     * @return the ResourceType of the resource represented by the {@link #getOriginal()}
+     */
+    public ResourceType getResourceType() {
+        return resourceType;
     }
     
     public String toString() {
-        return "DisambiguationReport(type=" + resourceTypeName + ", plugin=" + resourceTypePluginName + ", parents=" + parents + ", original=" + original + ")";
+        return "DisambiguationReport(type=" + resourceType + ", parents=" + parents + ", original=" + original + ")";
     }
 }

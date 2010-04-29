@@ -95,7 +95,6 @@ import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
-import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.flyweight.FlyweightCache;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
@@ -2169,7 +2168,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             //k, now let's construct the JPQL query to get the parents and type infos...
             StringBuilder selectBuilder = new StringBuilder(
-                "SELECT r0.id, r0.resourceType.name, r0.resourceType.plugin");
+                "SELECT r0.id, r0.resourceType.name, r0.resourceType.plugin, r0.resourceType.singleton");
             StringBuilder fromBuilder = new StringBuilder("FROM Resource r0");
 
             for (i = 1; i <= disambiguationLevel; ++i) {
@@ -2177,6 +2176,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 selectBuilder.append(", r").append(i).append(".id");
                 selectBuilder.append(", r").append(i).append(".name");
                 selectBuilder.append(", r").append(i).append(".resourceType.name");
+                selectBuilder.append(", r").append(i).append(".resourceType.plugin");
+                selectBuilder.append(", r").append(i).append(".resourceType.singleton");
+                
                 fromBuilder.append(" left join r").append(pi).append(".parentResource r").append(i);
             }
 
@@ -2189,25 +2191,31 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             @SuppressWarnings("unchecked")
             List<Object[]> parentsResults = (List<Object[]>) parentsQuery.getResultList();
             for (Object[] parentsResult : parentsResults) {
-                List<ResourceParentFlyweight> parents = new ArrayList<ResourceParentFlyweight>(disambiguationLevel);
+                List<DisambiguationReport.Resource> parents = new ArrayList<DisambiguationReport.Resource>(disambiguationLevel);
                 Integer resourceId = (Integer) parentsResult[0];
                 String typeName = (String) parentsResult[1];
                 String pluginName = (String) parentsResult[2];
-
+                Boolean singleton = (Boolean) parentsResult[3];
+                
+                DisambiguationReport.ResourceType resourceType = new DisambiguationReport.ResourceType(typeName, pluginName, singleton);
+                
                 for (i = 0; i < disambiguationLevel; ++i) {
-                    Integer parentId = (Integer) parentsResult[3 + 3 * i];
+                    Integer parentId = (Integer) parentsResult[4 + 5 * i];
                     if (parentId == null)
                         break;
-                    String parentName = (String) parentsResult[3 + 3 * i + 1];
-                    String parentType = (String) parentsResult[3 + 3 * i + 2];
+                    String parentName = (String) parentsResult[4 + 5 * i + 1];
+                    String parentType = (String) parentsResult[4 + 5 * i + 2];
+                    String parentPlugin = (String) parentsResult[4 + 5 * i + 3];
+                    Boolean parentSingleton = (Boolean) parentsResult[4 + 5 * i + 4];
                     
-                    parents.add(new ResourceParentFlyweight(parentId, parentName, parentType));
+                    DisambiguationReport.ResourceType type = new DisambiguationReport.ResourceType(parentType, parentPlugin, parentSingleton);
+                    
+                    parents.add(new DisambiguationReport.Resource(parentId, parentName, type));
                 }
 
                 //update all the reports that correspond to this resourceId
                 for (MutableDisambiguationReport<T> report : reportsByResourceId.get(resourceId)) {
-                    report.typeName = typeName;
-                    report.pluginName = pluginName;
+                    report.resourceType = resourceType;
                     report.parents = parents;
                 }
             }
@@ -2225,13 +2233,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     private static class MutableDisambiguationReport<T> {
         public T original;
-        public String typeName;
-        public String pluginName;
-        public List<ResourceParentFlyweight> parents;
+        public DisambiguationReport.ResourceType resourceType;
+        public List<DisambiguationReport.Resource> parents;
 
         public DisambiguationReport<T> getReport() {
             return new DisambiguationReport<T>(original, parents == null ? Collections
-                .<ResourceParentFlyweight> emptyList() : parents, typeName, pluginName);
+                .<DisambiguationReport.Resource> emptyList() : parents, resourceType);
         }
     }
 }

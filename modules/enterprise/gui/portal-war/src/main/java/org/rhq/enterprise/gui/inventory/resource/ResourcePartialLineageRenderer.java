@@ -32,7 +32,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
 
-import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 
 /**
  * Renderer for {@link ResourcePartialLineageComponent}
@@ -47,13 +47,13 @@ public class ResourcePartialLineageRenderer extends Renderer {
         ResourcePartialLineageComponent lineageComponent = (ResourcePartialLineageComponent) component;
         
         String separator = lineageComponent.getSeparator();
-        List<ResourceParentFlyweight> parents = lineageComponent.getParents();
+        List<DisambiguationReport.Resource> parents = lineageComponent.getParents();
         boolean renderLinks = lineageComponent.getRenderLinks();
         
         if (parents != null && parents.size() > 0) {
             ResponseWriter writer = context.getResponseWriter();
             
-            Iterator<ResourceParentFlyweight> parentsIt = parents.iterator();
+            Iterator<DisambiguationReport.Resource> parentsIt = parents.iterator();
             
             if (renderLinks) {
                 encodeUrl(writer, parentsIt.next());
@@ -71,21 +71,23 @@ public class ResourcePartialLineageRenderer extends Renderer {
         }
     }
     
-    private void encodeUrl(ResponseWriter writer, ResourceParentFlyweight parent) throws IOException {
+    private void encodeUrl(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         writer.startElement("a", null);
         writer.writeAttribute("href", getUrl(parent), null);
         encodeSimple(writer, parent);
         writer.endElement("a");
     }
     
-    private void encodeSimple(ResponseWriter writer, ResourceParentFlyweight parent) throws IOException {
-        writer.writeText(parent.getParentName(), null);
-        writer.writeText(" (", null);
-        writer.writeText(parent.getParentResourceTypeName(), null);
-        writer.writeText(")", null);
+    private void encodeSimple(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
+        writer.writeText(parent.getName(), null);
+        if (!parent.getType().isSingleton()) {
+            writer.writeText(" (", null);
+            writer.writeText(parent.getType().getName(), null);
+            writer.writeText(")", null);
+        }
     }
     
-    private static String getUrl(ResourceParentFlyweight parent) {
-        return RESOURCE_URL + "?id=" + parent.getParentId();
+    private static String getUrl(DisambiguationReport.Resource parent) {
+        return RESOURCE_URL + "?id=" + parent.getId();
     }
 }

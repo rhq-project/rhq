@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.plugins.filetemplate;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -119,6 +120,7 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
         BundleDistributionInfo info = null;
         String recipe = null;
         RecipeParseResults recipeParseResults = null;
+        Map<String, File> bundleFiles = null;
 
         // try and parse the recipe, if successful then process the distributionFile completely 
         RecipeVisitor recipeVisitor = new RecipeVisitor(this, "deploy.txt");
@@ -127,15 +129,31 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
         recipeParseResults = recipeVisitor.getResults();
 
         if (null == recipeParseResults) {
-            throw new IllegalArgumentException("Not a File Template Bundle");
+            // we also want to support the ability to provide just a file template recipe as the distro file
+            // so see if we can parse it, but note that we don't even bother if its a really big file since
+            // that's probably not a recipe file and we don't want to risk loading in a huge file in memory
+            if (distributionFile.length() < 50000L) {
+                try {
+                    byte[] content = StreamUtil.slurp(new FileInputStream(distributionFile));
+                    recipe = new String(content);
+                    content = null;
+                    recipeParseResults = parseRecipe(recipe);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Not a File Template Bundle"); // nope, its not a recipe file either
+                }
+            } else {
+                throw new IllegalArgumentException("Not a File Template Bundle");
+            }
+        } else {
+
+            // if we parsed the recipe, then this is a distribution zip we can deal with, get the bundle file Map                 
+            BundleFileVisitor bundleFileVisitor = new BundleFileVisitor(recipeParseResults.getBundleMetadata()
+                .getBundleName(), recipeParseResults.getBundleFileNames());
+            ZipUtil.walkZipFile(distributionFile, bundleFileVisitor);
+            bundleFiles = bundleFileVisitor.getBundleFiles();
         }
 
-        // if we parsed the recipe then this is a distribution we can deal with, get the bundle file Map                 
-        BundleFileVisitor bundleFileVisitor = new BundleFileVisitor(recipeParseResults.getBundleMetadata()
-            .getBundleName(), recipeParseResults.getBundleFileNames());
-        ZipUtil.walkZipFile(distributionFile, bundleFileVisitor);
-
-        info = new BundleDistributionInfo(recipe, recipeParseResults, bundleFileVisitor.getBundleFiles());
+        info = new BundleDistributionInfo(recipe, recipeParseResults, bundleFiles);
 
         return info;
     }

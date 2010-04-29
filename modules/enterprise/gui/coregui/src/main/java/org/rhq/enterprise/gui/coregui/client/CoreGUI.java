@@ -64,7 +64,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static ViewPath currentViewPath;
 
+    private static CoreGUI coreGUI;
+
     public void onModuleLoad() {
+        coreGUI = this;
 
         if (!GWT.isScript()) {
             KeyIdentifier debugKey = new KeyIdentifier();
@@ -83,6 +86,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             }
         });
 
+        messageCenter = new MessageCenter();
+
+
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
                 "/j_security_check.do?j_username=rhqadmin&j_password=rhqadmin");
         try {
@@ -100,7 +106,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
 
-        messageCenter = new MessageCenter();
 
         SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
 
@@ -115,18 +120,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 System.out.println("Logged in: " + result.getSessionId());
                 setSessionSubject(result);
                 userPreferences = new UserPreferences(result);
-
-                buildCoreUI();
-
-                /* We can cache all metadata right here
-                ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                        (Integer[]) null, EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
-                    public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
-                        System.out.println("Preloaded [" + types.size() + "] resource types");
-                        buildCoreUI();
-                    }
-                });
-                */
             }
         });
     }
@@ -195,6 +188,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new DashboardsView();
         } else if (breadcrumbName.equals("Bundles")) {
             canvas = new BundleTopView();
+        } else if (breadcrumbName.equals("LogOut")) {
+            canvas = new LoginView();
         } else {
             canvas = null;
         }
@@ -229,6 +224,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         //        Subject s = new Subject(subject.getName(),subject.getFactive(), subject.getFsystem());
         //        s.setSessionId(subject.getSessionId());
         CoreGUI.sessionSubject = subject;
+        CoreGUI.userPreferences = new UserPreferences(subject);
+        coreGUI.buildCoreUI();
     }
 
     public static void setContent(Canvas newContent) {

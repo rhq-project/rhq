@@ -174,8 +174,6 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         final TreeNode manageDownloads = new TreeNode("Downloads");
         final TreeNode manageLicense = new TreeNode("License");
         final TreeNode managePlugins = new TreeNode("Plugins");
-        FullHTMLPane pane = new FullHTMLPane("/rhq/admin/plugin/plugin-list.xhtml");
-
 
         tree.setRoot(new TreeNode("System Configuration",
                 manageSettings, manageTemplates, manageDownloads, manageLicense, managePlugins));
@@ -252,6 +250,8 @@ public class AdministrationView extends HLayout implements BookmarkableView {
                 url = "/rhq/admin/downloads-body.xhtml";
             } else if ("License".equals(page)) {
                 url = "/admin/license/LicenseAdmin.do?mode=view";
+            } else if ("Plugins".equals(page)) {
+                url = "/rhq/admin/plugin/plugin-list.xhtml";
             }
             url = addQueryStringParam(url, "nomenu=true");
             content = new FullHTMLPane(url);

@@ -23,12 +23,10 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.Collection;
-import java.util.List;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 

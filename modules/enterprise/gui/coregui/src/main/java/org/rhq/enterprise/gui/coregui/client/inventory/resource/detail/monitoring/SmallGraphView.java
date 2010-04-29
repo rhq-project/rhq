@@ -116,6 +116,22 @@ public class SmallGraphView extends VLayout {
         return "PlotHoverListener";
     }
 
+    public int getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(int resourceId) {
+        this.resourceId = resourceId;
+    }
+
+    public int getDefinitionId() {
+        return definitionId;
+    }
+
+    public void setDefinitionId(int definitionId) {
+        this.definitionId = definitionId;
+    }
+
     @Override
     protected void onDraw() {
         super.onDraw();

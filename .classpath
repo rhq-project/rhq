@@ -250,5 +250,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-dev/2.0.0/gwt-dev-2.0.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/smartgwt/smartgwt/2.1/smartgwt-2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/ca/nanometrics/gflot/1.0.0/gflot-1.0.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/jcraft/jsch/0.1.29/jsch-0.1.29.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

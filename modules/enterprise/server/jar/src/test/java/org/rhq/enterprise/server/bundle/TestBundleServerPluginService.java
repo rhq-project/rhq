@@ -62,6 +62,9 @@ public class TestBundleServerPluginService extends ServerPluginService implement
     public TestBundleServerPluginContainer bundlePC;
     public MasterServerPluginContainerConfiguration masterConfig;
 
+    public RecipeParseResults parseRecipe_returnValue = null;
+    public BundleDistributionInfo processBundleDistributionFile_returnValue;
+
     public TestBundleServerPluginService() {
         // build the config at constructor time so tests have it even before the PC is initialized
         File dir = new File(System.getProperty("java.io.tmpdir"), "test-server-plugins");
@@ -200,6 +203,10 @@ public class TestBundleServerPluginService extends ServerPluginService implement
 
         public RecipeParseResults parseRecipe(String recipe) throws Exception {
 
+            if (parseRecipe_returnValue != null) {
+                return parseRecipe_returnValue;
+            }
+
             ConfigurationDefinition configDef;
             Set<String> bundleFileNames;
             DeploymentProperties metadata;
@@ -218,7 +225,10 @@ public class TestBundleServerPluginService extends ServerPluginService implement
         }
 
         public BundleDistributionInfo processBundleDistributionFile(File uberBundleFile) throws Exception {
-            // TODO: bundle implement me
+            if (processBundleDistributionFile_returnValue != null) {
+                return processBundleDistributionFile_returnValue;
+            }
+
             throw new UnsupportedOperationException("this mock object cannot do this");
         }
     }

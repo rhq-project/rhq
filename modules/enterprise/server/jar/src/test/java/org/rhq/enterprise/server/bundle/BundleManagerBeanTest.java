@@ -24,8 +24,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -279,58 +281,75 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     }
 
     @Test(enabled = TESTS_ENABLED)
-    public void testCreateBundleFromDistribution() throws Exception {
+    public void testCreateBundleVersionFromDistributionFile() throws Exception {
 
         File tmpDir = FileUtil.createTempDirectory("createBundleFromDistro", ".dir", null);
+        try {
+            String bundleFile1 = "subdir1/bundle-file-1.txt";
+            String bundleFile2 = "subdir2/bundle-file-2.txt";
+            String bundleFile3 = "bundle-file-3.txt";
+            writeFile(new File(tmpDir, bundleFile1), "first bundle file found inside bundle distro");
+            writeFile(new File(tmpDir, bundleFile2), "second bundle file found inside bundle distro");
+            writeFile(new File(tmpDir, bundleFile3), "third bundle file found inside bundle distro");
 
-        String bundleFile1 = "subdir1/bundle-file-1.txt";
-        String bundleFile2 = "subdir2/bundle-file-2.txt";
-        String bundleFile3 = "bundle-file-3.txt";
-        writeFile(new File(tmpDir, bundleFile1), "first bundle file found inside bundle distro");
-        writeFile(new File(tmpDir, bundleFile2), "second bundle file found inside bundle distro");
-        writeFile(new File(tmpDir, bundleFile3), "third bundle file found inside bundle distro");
+            String bundleName = "test-bundle-name";
+            String bundleVersion = "1.2.3";
+            String bundleDescription = "test bundle desc";
+            DeploymentProperties bundleMetadata = new DeploymentProperties(0, bundleName, bundleVersion,
+                bundleDescription);
 
-        String bundleName = "test-bundle-name";
-        String bundleVersion = "1.2.3";
-        String bundleDescription = "test bundle desc";
-        DeploymentProperties bundleMetadata = new DeploymentProperties(0, bundleName, bundleVersion, bundleDescription);
+            ConfigurationDefinition configDef = new ConfigurationDefinition("foo", null);
+            String propName = "prop1";
+            String propDescription = "prop1desc";
+            configDef.put(new PropertyDefinitionSimple(propName, propDescription, true, PropertySimpleType.INTEGER));
 
-        ConfigurationDefinition configDef = new ConfigurationDefinition("foo", null);
-        String propName = "prop1";
-        String propDescription = "prop1desc";
-        configDef.put(new PropertyDefinitionSimple(propName, propDescription, true, PropertySimpleType.INTEGER));
+            Map<String, File> bundleFiles = new HashMap<String, File>(3);
+            bundleFiles.put(bundleFile1, new File(tmpDir, bundleFile1));
+            bundleFiles.put(bundleFile2, new File(tmpDir, bundleFile2));
+            bundleFiles.put(bundleFile3, new File(tmpDir, bundleFile3));
 
-        Set<String> bundleFileNames = new HashSet<String>(3);
-        bundleFileNames.add(bundleFile1);
-        bundleFileNames.add(bundleFile2);
-        bundleFileNames.add(bundleFile3);
+            File bundleDistroFile = tmpDir; // not a real distro zip, but its just a simulation anyway - SLSB will pass this to our mock PC
+            String recipe = "mock recipe";
+            BundleType bt1 = createBundleType("one");
 
-        File bundleDistroFile = tmpDir; // not a real distro zip, but its just a simulation anyway - SLSB will pass this to our mock PC
-        String recipe = "mock recipe";
-        BundleType bt1 = createBundleType("one");
+            // prepare our mock bundle PC
+            ps.parseRecipe_returnValue = new RecipeParseResults(bundleMetadata, configDef, new HashSet<String>(
+                bundleFiles.keySet()));
+            ps.processBundleDistributionFile_returnValue = new BundleDistributionInfo(recipe,
+                ps.parseRecipe_returnValue, bundleFiles);
+            ps.processBundleDistributionFile_returnValue.setBundleTypeName(bt1.getName());
 
-        ps.parseRecipe_returnValue = new RecipeParseResults(bundleMetadata, configDef, bundleFileNames);
-        ps.processBundleDistributionFile_returnValue = new BundleDistributionInfo();
+            // now ask the SLSB to persist our bundle data given our mock distribution
+            BundleVersion bv1 = bundleManager.createBundleVersionViaURL(overlord, bundleDistroFile.toURI().toURL());
 
-        BundleVersion bv;
-        bv = bundleManager.createBundleVersionViaUberBundleFileURL(overlord, bundleDistroFile.toURI().toURL());
+            // to a db lookup to make sure our bundle version is queryable
+            BundleVersionCriteria criteria = new BundleVersionCriteria();
+            criteria.addFilterId(bv1.getId());
+            BundleVersion bv2 = bundleManager.findBundleVersionsByCriteria(overlord, criteria).get(0);
 
-        assert bv.getId() > 0 : bv;
-        assert bv.getBundle().getName().equals(bundleName) : bv;
-        assert bv.getBundle().getDescription().equals(bundleDescription) : bv;
-        assert bv.getDescription().equals(bundleDescription) : "the bundle version desc should be the same as the bundle desc";
-        assert bv.getVersion().equals(bundleVersion) : bv;
-        assert bv.getBundleFiles().size() == 3 : bv;
-        assert bv.getBundleFiles().contains(bundleFile1) : bv;
-        assert bv.getBundleFiles().contains(bundleFile2) : bv;
-        assert bv.getBundleFiles().contains(bundleFile3) : bv;
-        assert bv.getBundleDeployments().isEmpty() : bv;
-        assert bv.getConfigurationDefinition().getPropertyDefinitions().size() == 1;
-        assert bv.getConfigurationDefinition().get(propName) != null;
-        assert bv.getConfigurationDefinition().get(propName).getDescription().equals(propDescription);
-        assert bv.getConfigurationDefinition().get(propName).isRequired();
-        assert bv.getConfigurationDefinition().getPropertyDefinitionSimple(propName).getType() == PropertySimpleType.INTEGER;
-        assert bv.getRecipe().equals(recipe);
+            // test that the PC's return value and our own DB lookup match the bundle version we expect to be in the DB
+            BundleVersion[] bvs = new BundleVersion[] { bv1, bv2 };
+            for (BundleVersion bv : bvs) {
+                assert bv.getId() > 0 : bv;
+                assert bv.getBundle().getName().equals(bundleName) : bv;
+                assert bv.getBundle().getDescription().equals(bundleDescription) : bv;
+                assert bv.getDescription().equals(bundleDescription) : "the bundle version desc should be the same as the bundle desc";
+                assert bv.getVersion().equals(bundleVersion) : bv;
+                assert bv.getBundleFiles().size() == 3 : bv;
+                assert bv.getBundleFiles().contains(bundleFile1) : bv;
+                assert bv.getBundleFiles().contains(bundleFile2) : bv;
+                assert bv.getBundleFiles().contains(bundleFile3) : bv;
+                assert bv.getBundleDeployments().isEmpty() : bv;
+                assert bv.getConfigurationDefinition().getPropertyDefinitions().size() == 1;
+                assert bv.getConfigurationDefinition().get(propName) != null;
+                assert bv.getConfigurationDefinition().get(propName).getDescription().equals(propDescription);
+                assert bv.getConfigurationDefinition().get(propName).isRequired();
+                assert bv.getConfigurationDefinition().getPropertyDefinitionSimple(propName).getType() == PropertySimpleType.INTEGER;
+                assert bv.getRecipe().equals(recipe);
+            }
+        } finally {
+            FileUtil.purge(tmpDir, true);
+        }
     }
 
     @Test(enabled = TESTS_ENABLED)

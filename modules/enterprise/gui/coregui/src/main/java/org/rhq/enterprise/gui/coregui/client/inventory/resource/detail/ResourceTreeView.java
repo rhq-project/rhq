@@ -80,7 +80,7 @@ public class ResourceTreeView extends VLayout {
         super();
         this.selectedResource = selectedResource;
 
-        setWidth("30%");
+        setWidth("250");
         setHeight100();
 
         setShowResizeBar(true);
@@ -317,7 +317,8 @@ public class ResourceTreeView extends VLayout {
             for (int i = parents.length - 1; i >= 0; i--) {
                 TreeNode n = parents[i];
                 if (n instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                    viewId.getBreadcrumbs().add(new Breadcrumb(n.getAttribute("id"), n.getName(), true));
+                    viewId.getBreadcrumbs().add(new Breadcrumb(n.getAttribute("id"),
+                            n.getName() + " (" + ((ResourceTreeDatasource.ResourceTreeNode)n).getResourceType().getName() + ")", true));
                 }
             }
             viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), node.getName(), true));
@@ -372,7 +373,8 @@ public class ResourceTreeView extends VLayout {
                                             for (int i = parents.length - 1; i >= 0; i--) {
                                                 TreeNode n = parents[i];
                                                 if (n instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                                                    viewId.getBreadcrumbs().add(new Breadcrumb(n.getAttribute("id"), n.getName(), true));
+                                                    viewId.getBreadcrumbs().add(new Breadcrumb(n.getAttribute("id"),
+                                                            n.getName() + " (" + ((ResourceTreeDatasource.ResourceTreeNode)n).getResourceType().getName() + ")", true));
                                                 }
                                             }
                                             viewId.getBreadcrumbs().add(new Breadcrumb(selectedNode.getAttribute("id"), selectedNode.getName(), true));
@@ -433,7 +435,8 @@ public class ResourceTreeView extends VLayout {
                                             for (int i = parents.length - 1; i >= 0; i--) {
                                                 TreeNode n = parents[i];
                                                 if (n instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                                                    viewId.getBreadcrumbs().add(new Breadcrumb(n.getAttribute("id"), n.getName(), true));
+                                                    viewId.getBreadcrumbs().add(new Breadcrumb(n.getAttribute("id"),
+                                                            n.getName() + " (" + ((ResourceTreeDatasource.ResourceTreeNode)n).getResourceType().getName() + ")", true));
                                                 }
                                             }
                                             viewId.getBreadcrumbs().add(new Breadcrumb(selectedNode.getAttribute("id"), selectedNode.getName(), true));

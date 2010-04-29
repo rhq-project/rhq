@@ -27,7 +27,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -288,43 +290,51 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 namingPort = port;
         }
 
-        String configName = absoluteConfigPath.getName();
-        String baseName = discoveryContext.getSystemInformation().getHostname();
         String description = installInfo.getProductType().DESCRIPTION;
         File deployDir = new File(absoluteConfigPath, "deploy");
         File rhqInstallerWar = new File(deployDir, "rhq-installer.war");
         File rhqInstallerWarUndeployed = new File(deployDir, "rhq-installer.war.rej");
         boolean isRhqServer = rhqInstallerWar.exists() || rhqInstallerWarUndeployed.exists();
         if (isRhqServer) {
-            baseName += " RHQ Server, ";
             description += " hosting the RHQ Server";
             // We know this is an RHQ Server. Let's add an event source for its server log file, but disable it by default.
             configureEventSourceForServerLogFile(pluginConfig);
         }
-        String name = bindAddress+ (namingPort ==null?"":":"+namingPort);
+        String name = formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(), isRhqServer);
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, installInfo.getVersion(),
             description, pluginConfig, processInfo);
     }
-    /*
-    private String formatServerName(String baseName, String bindingAddress, String jnpPort, String configName,
-        JBossInstallationInfo installInfo) {
-       baseName = baseName + " " + installInfo.getProductType().NAME + " " + installInfo.getVersion() + " "
-            + configName;
-        
-        String details = null;
-        if ((bindingAddress != null) && (jnpPort != null && !jnpPort.equals(CHANGE_ME))) {
-            details = bindingAddress + ":" + jnpPort;
-        } else if ((bindingAddress == null) && (jnpPort != null && !jnpPort.equals(CHANGE_ME))) {
-            details = jnpPort;
-        } else if (bindingAddress != null) {
-            details = bindingAddress;
-        }
 
-        return baseName + ((details != null) ? (" (" + details + ")") : "");
-        
+    public String formatServerName(String bindingAddress, String jnpPort, String hostname, boolean isRhq) {
+
+        if (isRhq) {
+            return hostname + " RHQ Server";
+        } else {
+            String hostnameToUse = hostname;
+
+            if (bindingAddress != null) {
+                try {
+                    InetAddress bindAddr = InetAddress.getByName(bindingAddress);
+                    if (!bindAddr.isAnyLocalAddress()) {
+                        //if the binding address != 0.0.0.0
+                        hostnameToUse = bindAddr.getHostName();
+                    }
+                } catch (UnknownHostException e) {
+                    //this should not happen?
+                    log.warn("Unknown hostname passed in as the binding address for JBoss AS server discovery: "
+                        + bindingAddress);
+                }
+            }
+
+            if (jnpPort != null && !jnpPort.equals(CHANGE_ME)) {
+                hostnameToUse += ":" + jnpPort;
+            }
+
+            return hostnameToUse;
+        }
     }
-*/
+   
     private void configureEventSourceForServerLogFile(Configuration pluginConfig) {
         File rhqLogFile = resolvePathRelativeToHomeDir(pluginConfig, "../logs/rhq-server-log4j.log");
         if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {

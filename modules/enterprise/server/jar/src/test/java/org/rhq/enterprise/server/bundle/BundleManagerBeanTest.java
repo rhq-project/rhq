@@ -19,9 +19,16 @@
 
 package org.rhq.enterprise.server.bundle;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -47,6 +54,9 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
@@ -64,6 +74,9 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.core.util.updater.DeploymentProperties;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.test.UpdateSubsytemTestBase;
@@ -263,6 +276,61 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 em.close();
             }
         }
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testCreateBundleFromDistribution() throws Exception {
+
+        File tmpDir = FileUtil.createTempDirectory("createBundleFromDistro", ".dir", null);
+
+        String bundleFile1 = "subdir1/bundle-file-1.txt";
+        String bundleFile2 = "subdir2/bundle-file-2.txt";
+        String bundleFile3 = "bundle-file-3.txt";
+        writeFile(new File(tmpDir, bundleFile1), "first bundle file found inside bundle distro");
+        writeFile(new File(tmpDir, bundleFile2), "second bundle file found inside bundle distro");
+        writeFile(new File(tmpDir, bundleFile3), "third bundle file found inside bundle distro");
+
+        String bundleName = "test-bundle-name";
+        String bundleVersion = "1.2.3";
+        String bundleDescription = "test bundle desc";
+        DeploymentProperties bundleMetadata = new DeploymentProperties(0, bundleName, bundleVersion, bundleDescription);
+
+        ConfigurationDefinition configDef = new ConfigurationDefinition("foo", null);
+        String propName = "prop1";
+        String propDescription = "prop1desc";
+        configDef.put(new PropertyDefinitionSimple(propName, propDescription, true, PropertySimpleType.INTEGER));
+
+        Set<String> bundleFileNames = new HashSet<String>(3);
+        bundleFileNames.add(bundleFile1);
+        bundleFileNames.add(bundleFile2);
+        bundleFileNames.add(bundleFile3);
+
+        File bundleDistroFile = tmpDir; // not a real distro zip, but its just a simulation anyway - SLSB will pass this to our mock PC
+        String recipe = "mock recipe";
+        BundleType bt1 = createBundleType("one");
+
+        ps.parseRecipe_returnValue = new RecipeParseResults(bundleMetadata, configDef, bundleFileNames);
+        ps.processBundleDistributionFile_returnValue = new BundleDistributionInfo();
+
+        BundleVersion bv;
+        bv = bundleManager.createBundleVersionViaUberBundleFileURL(overlord, bundleDistroFile.toURI().toURL());
+
+        assert bv.getId() > 0 : bv;
+        assert bv.getBundle().getName().equals(bundleName) : bv;
+        assert bv.getBundle().getDescription().equals(bundleDescription) : bv;
+        assert bv.getDescription().equals(bundleDescription) : "the bundle version desc should be the same as the bundle desc";
+        assert bv.getVersion().equals(bundleVersion) : bv;
+        assert bv.getBundleFiles().size() == 3 : bv;
+        assert bv.getBundleFiles().contains(bundleFile1) : bv;
+        assert bv.getBundleFiles().contains(bundleFile2) : bv;
+        assert bv.getBundleFiles().contains(bundleFile3) : bv;
+        assert bv.getBundleDeployments().isEmpty() : bv;
+        assert bv.getConfigurationDefinition().getPropertyDefinitions().size() == 1;
+        assert bv.getConfigurationDefinition().get(propName) != null;
+        assert bv.getConfigurationDefinition().get(propName).getDescription().equals(propDescription);
+        assert bv.getConfigurationDefinition().get(propName).isRequired();
+        assert bv.getConfigurationDefinition().getPropertyDefinitionSimple(propName).getType() == PropertySimpleType.INTEGER;
+        assert bv.getRecipe().equals(recipe);
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -888,5 +956,42 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         }
 
         return resourceGroup;
+    }
+
+    private String readFile(File file) throws Exception {
+        return new String(StreamUtil.slurp(new FileInputStream(file)));
+    }
+
+    private void writeFile(File file, String content) throws Exception {
+        file.getParentFile().mkdirs();
+        StreamUtil.copy(new ByteArrayInputStream(content.getBytes()), new FileOutputStream(file));
+    }
+
+    private File createZip(File destDir, String zipName, String[] entryNames, String[] contents) throws Exception {
+        FileOutputStream stream = null;
+        ZipOutputStream out = null;
+
+        try {
+            destDir.mkdirs();
+            File zipFile = new File(destDir, zipName);
+            stream = new FileOutputStream(zipFile);
+            out = new ZipOutputStream(stream);
+
+            assert contents.length == entryNames.length;
+            for (int i = 0; i < contents.length; i++) {
+                ZipEntry zipAdd = new ZipEntry(entryNames[i]);
+                zipAdd.setTime(System.currentTimeMillis());
+                out.putNextEntry(zipAdd);
+                out.write(contents[i].getBytes());
+            }
+            return zipFile;
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+            if (stream != null) {
+                stream.close();
+            }
+        }
     }
 }

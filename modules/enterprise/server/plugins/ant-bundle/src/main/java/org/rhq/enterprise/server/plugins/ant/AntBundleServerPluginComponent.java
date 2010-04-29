@@ -175,6 +175,7 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
                 } catch (Throwable t) {
                     this.results = null;
                 }
+                return false; // whether we parsed it or not, we found the file we are looking for so stop walking
             }
             return true;
         }

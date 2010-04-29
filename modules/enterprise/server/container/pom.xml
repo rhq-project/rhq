@@ -272,6 +272,9 @@
          <name>Java.net Maven1 Repository</name>
          <url>http://download.java.net/maven/1/</url>
          <layout>legacy</layout>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
       </repository>
 
       <!-- for javax.el and com.sun.el dependencies -->
@@ -279,6 +282,9 @@
           <id>java.net-m2-releases</id>
           <name>Java.net Maven2 Repository</name>
           <url>http://download.java.net/maven/2/</url>
+          <snapshots>
+             <enabled>false</enabled>
+          </snapshots>
       </repository>
 
    </repositories>

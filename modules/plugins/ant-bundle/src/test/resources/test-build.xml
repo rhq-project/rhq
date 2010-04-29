@@ -8,13 +8,13 @@
     <rhq:bundle name="example.com (JBoss EAP 4.3)" version="1.0"
                 description="example.com corporate website hosted on JBoss EAP 4.3"/>
 
-    <rhq:inputProperty
+    <rhq:input-property
        name="custom.prop1"
        description="my prop 1"
        required="true"
        defaultValue="default 1"/>
 
-    <rhq:inputProperty
+    <rhq:input-property
        name="custom.prop2"
        description="my prop 2"
        required="true"

@@ -194,6 +194,11 @@ public class TestBundleServerPluginService extends ServerPluginService implement
         public RecipeParseResults parseRecipe(String bundleTypeName, String recipe) throws Exception {
             return new TestBundlePluginComponent().parseRecipe(recipe);
         }
+
+        @Override
+        public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws Exception {
+            return new TestBundlePluginComponent().processBundleDistributionFile(distributionFile);
+        }
     }
 
     class TestBundlePluginComponent implements BundleServerPluginFacet {

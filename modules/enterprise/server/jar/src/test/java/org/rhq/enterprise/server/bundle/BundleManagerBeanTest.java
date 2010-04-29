@@ -285,14 +285,14 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
         File tmpDir = FileUtil.createTempDirectory("createBundleFromDistro", ".dir", null);
         try {
-            String bundleFile1 = "subdir1/bundle-file-1.txt";
-            String bundleFile2 = "subdir2/bundle-file-2.txt";
-            String bundleFile3 = "bundle-file-3.txt";
+            String bundleFile1 = TEST_PREFIX + "_subdir1/bundle-file-1.txt";
+            String bundleFile2 = TEST_PREFIX + "_subdir2/bundle-file-2.txt";
+            String bundleFile3 = TEST_PREFIX + "_bundle-file-3.txt";
             writeFile(new File(tmpDir, bundleFile1), "first bundle file found inside bundle distro");
             writeFile(new File(tmpDir, bundleFile2), "second bundle file found inside bundle distro");
             writeFile(new File(tmpDir, bundleFile3), "third bundle file found inside bundle distro");
 
-            String bundleName = "test-bundle-name";
+            String bundleName = TEST_PREFIX + "-create-from-distro";
             String bundleVersion = "1.2.3";
             String bundleDescription = "test bundle desc";
             DeploymentProperties bundleMetadata = new DeploymentProperties(0, bundleName, bundleVersion,
@@ -325,6 +325,10 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             // to a db lookup to make sure our bundle version is queryable
             BundleVersionCriteria criteria = new BundleVersionCriteria();
             criteria.addFilterId(bv1.getId());
+            criteria.fetchBundle(true);
+            criteria.fetchConfigurationDefinition(true);
+            criteria.fetchBundleFiles(true);
+            criteria.fetchTags(true);
             BundleVersion bv2 = bundleManager.findBundleVersionsByCriteria(overlord, criteria).get(0);
 
             // test that the PC's return value and our own DB lookup match the bundle version we expect to be in the DB
@@ -336,9 +340,13 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 assert bv.getDescription().equals(bundleDescription) : "the bundle version desc should be the same as the bundle desc";
                 assert bv.getVersion().equals(bundleVersion) : bv;
                 assert bv.getBundleFiles().size() == 3 : bv;
-                assert bv.getBundleFiles().contains(bundleFile1) : bv;
-                assert bv.getBundleFiles().contains(bundleFile2) : bv;
-                assert bv.getBundleFiles().contains(bundleFile3) : bv;
+                ArrayList<String> bundleFileNames = new ArrayList<String>(3);
+                for (BundleFile bf : bv.getBundleFiles()) {
+                    bundleFileNames.add(bf.getPackageVersion().getFileName());
+                }
+                assert bundleFileNames.contains(bundleFile1) : bv;
+                assert bundleFileNames.contains(bundleFile2) : bv;
+                assert bundleFileNames.contains(bundleFile3) : bv;
                 assert bv.getBundleDeployments().isEmpty() : bv;
                 assert bv.getConfigurationDefinition().getPropertyDefinitions().size() == 1;
                 assert bv.getConfigurationDefinition().get(propName) != null;

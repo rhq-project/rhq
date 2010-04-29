@@ -13,8 +13,11 @@
   <repositories>
     <repository>
       <id>codehaus</id>
-      <name>codehaus maven 2 repo</name>
-      <url>http://repository.codehaus.org</url>
+      <name>Codehaus Releases</name>
+      <url>http://repository.codehaus.org/</url>
+      <snapshots>
+         <enabled>false</enabled>
+      </snapshots>
     </repository>
   </repositories>
 
@@ -162,3 +165,4 @@
     </profile>
   </profiles>
 </project>
+

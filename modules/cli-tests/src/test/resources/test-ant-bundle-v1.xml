@@ -4,13 +4,13 @@
     <rhq:bundle name="example.com (JBoss EAP 4.3)" version="1.0"
                 description="example.com corporate website hosted on JBoss EAP 4.3"/>
 
-    <rhq:inputProperty
+    <rhq:input-property
        name="http.port"
        description="the HTTP port the JBoss EAP server should listen on"
        required="true"
        type="integer"/>
 
-    <rhq:inputProperty
+    <rhq:input-property
        name="https.port"
        description="the HTTPS port the JBoss EAP server should listen on"
        required="true"

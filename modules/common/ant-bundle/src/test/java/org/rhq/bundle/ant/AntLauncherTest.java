@@ -60,8 +60,10 @@ public class AntLauncherTest {
         assert bundleFiles.get("pkg").equals("package.zip") : bundleFiles;*/
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 1;
-        assert configDef.getPropertyDefinitionSimple("listener.port") != null;
+        assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
+        PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
+        assert propDef != null;
+        assert propDef.getType() == PropertySimpleType.INTEGER;
     }
 
     public void testInstall() throws Exception {
@@ -81,7 +83,7 @@ public class AntLauncherTest {
         assert bundleFiles.get("pkg").equals("package.zip") : bundleFiles;*/
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 1;
+        assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
         PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
         assert propDef != null;
         assert propDef.getType() == PropertySimpleType.INTEGER;

@@ -43,6 +43,8 @@ import org.rhq.bundle.ant.task.InputPropertyTask;
  * @author Ian Springer
  */
 public class AntLauncher {        
+    private final Log log = LogFactory.getLog(this.getClass());
+
     // "out of box" we will provide the ant contrib optional tasks (from ant-contrib.jar)
     private static final String ANTCONTRIB_ANT_TASKS = "net/sf/antcontrib/antcontrib.properties";
 
@@ -52,7 +54,10 @@ public class AntLauncher {
     // private constant ProjectHelper2.REFID_CONTEXT value
     private static final String REFID_CONTEXT = "ant.parsing.context";
 
-    private final Log log = LogFactory.getLog(AntLauncher.class);
+    // TODO (ips, 04/28/10): Figure out a way to avoid assuming the prefix is "rhq".
+    private static final String BUNDLE_TASK_NAME = "rhq:bundle";
+    private static final String INPUT_PROPERTY_TASK_NAME = "rhq:input-property";
+    private static final String DEPLOY_TASK_NAME = "rhq:deploy";
 
     /**
      * Executes the specified bundle deploy Ant build file (i.e. rhq-deploy.xml).
@@ -190,14 +195,14 @@ public class AntLauncher {
             Task[] tasks = target.getTasks();
             for (Task task : tasks) {
                 // NOTE: For rhq:inputProperty tasks, the below call will add propDefs to the project configDef.
-                if (task.getTaskName().equals("rhq:bundle")) {
+                if (task.getTaskName().equals(BUNDLE_TASK_NAME)) {
                     abortIfTaskWithinTarget(target, task);
                     bundleTaskCount++;
                     unconfiguredBundleTask = task;
-                } else if (task.getTaskName().equals("rhq:inputProperty")) {
+                } else if (task.getTaskName().equals(INPUT_PROPERTY_TASK_NAME)) {
                     abortIfTaskWithinTarget(target, task);
                     InputPropertyTask inputPropertyTask = (InputPropertyTask) preconfigureTask(task);
-                } else if (task.getTaskName().equals("rhq:deploy")) {
+                } else if (task.getTaskName().equals(DEPLOY_TASK_NAME)) {
                     DeployTask deployTask = (DeployTask) preconfigureTask(task);
                     Map<File, File> files = deployTask.getFiles();
                     for (File file : files.values()) {

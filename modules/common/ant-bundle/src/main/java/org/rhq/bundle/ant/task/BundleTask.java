@@ -28,7 +28,7 @@ import java.util.Hashtable;
 /**
  * @author Ian Springer
  */
-public class BundleTask extends AbstractBundleTask {
+public class BundleTask extends AbstractBundleTask {        
     private String name;
     private String version;
     private String description;

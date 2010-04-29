@@ -127,7 +127,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         BundleCriteria criteria) throws Exception {
         try {
             PageList<BundleWithLatestVersionComposite> results;
-            results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(getSessionSubject(), criteria);
+            results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundlesWithLastestVersionCompositesByCriteria");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));

@@ -20,8 +20,8 @@ package org.rhq.enterprise.server.plugin.pc.bundle;
 
 import java.io.File;
 
+import org.rhq.enterprise.server.bundle.BundleDistributionInfo;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
-import org.rhq.enterprise.server.bundle.UberBundleFileInfo;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
@@ -121,17 +121,52 @@ public class BundleServerPluginManager extends ServerPluginManager {
     }
 
     /**
-     * Given an uber bundle file, this will find the appropriate server side plugin that can process it
-     * and will ask that plugin to crack open the uber bundle file and return information about it.
+     * Given an bundle distribution file, this will find the appropriate server side plugin that can process it
+     * and will ask that plugin to crack open the bundle distribution file and return information about it.
      * 
-     * An uber bundle file is a zip file that contains a recipe and 0, 1 or more bundle files.
+     * An bundle distribution file is a zip file that contains a recipe and 0, 1 or more bundle files.
      * 
-     * @param uberBundleFile
-     * @return the information gleened by cracking open the uber bundle file and examining its contents
-     * @throws Exception if the uber bundle file could not be processed successfully
+     * @param distributionFile
+     * @return the information gleened by cracking open the bundle distribution file and examining its contents
+     * @throws Exception if the bundle distribution file could not be processed successfully
      */
-    public UberBundleFileInfo processUberBundleFile(File uberBundleFile) throws Exception {
-        // TODO: bundle implement me
-        return null;
+    public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws Exception {
+
+        if (null == distributionFile) {
+            throw new IllegalArgumentException("bundleDistributionFile == null");
+        }
+
+        // find the bundle plugin that can handle this distribution and get the distro info
+        BundleDistributionInfo info = null;
+
+        for (ServerPluginEnvironment env : getPluginEnvironments()) {
+            BundlePluginDescriptorType descriptor = (BundlePluginDescriptorType) env.getPluginDescriptor();
+
+            // get the facet and see if this plugin can deal with the distro
+            String pluginName = env.getPluginKey().getPluginName();
+            ServerPluginComponent component = getServerPluginComponent(pluginName);
+            BundleServerPluginFacet facet = (BundleServerPluginFacet) component; // we know this cast will work because our loadPlugin ensured so
+            getLog().debug(
+                "Bundle server plugin [" + pluginName + "] is parsing a distribution file [" + distributionFile + "]");
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
+                try {
+                    info = facet.processBundleDistributionFile(distributionFile);
+                    info.setBundleTypeName(descriptor.getBundle().getType());
+                    break;
+                } catch (IllegalArgumentException e) {
+                    info = null;
+                }
+            } finally {
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+            }
+        }
+        if (null == info) {
+            throw new IllegalArgumentException(
+                "Invalid bundle distribution file. BundleType/Recipe not recognized by any deployed server bundle plugin.");
+        }
+
+        return info;
     }
 }

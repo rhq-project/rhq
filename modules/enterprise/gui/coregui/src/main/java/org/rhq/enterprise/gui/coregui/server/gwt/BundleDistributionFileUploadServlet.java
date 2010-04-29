@@ -32,12 +32,12 @@ import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Accepts a "uber bundle file" - which is simply a zip file that contains within it
+ * Accepts a "bundle distribution file" - which is simply a zip file that contains within it
  * a bundle recipe and additional bundle files.
  * 
  * @author John Mazzitelli
  */
-public class UberBundleFileUploadServlet extends FileUploadServlet {
+public class BundleDistributionFileUploadServlet extends FileUploadServlet {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -51,11 +51,10 @@ public class UberBundleFileUploadServlet extends FileUploadServlet {
             File file = files.values().iterator().next();
 
             BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
-            BundleVersion bundleVersion = bundleManager.createBundleVersionViaUberBundleFileURL(subject, file.toURI()
-                .toURL());
+            BundleVersion bundleVersion = bundleManager.createBundleVersionViaURL(subject, file.toURI().toURL());
             successMsg = "success [" + bundleVersion.getId() + "]";
         } catch (Exception e) {
-            writeExceptionResponse(response, "Failed to upload uber bundle file", e); // clients will look for this string!
+            writeExceptionResponse(response, "Failed to upload bundle distribution file", e); // clients will look for this string!
             return;
         }
 

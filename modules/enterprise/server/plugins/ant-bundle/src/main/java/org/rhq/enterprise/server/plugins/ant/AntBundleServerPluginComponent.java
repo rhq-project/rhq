@@ -22,7 +22,12 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,10 +35,12 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.util.ZipUtil;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeploymentProperties;
+import org.rhq.enterprise.server.bundle.BundleDistributionInfo;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
-import org.rhq.enterprise.server.bundle.UberBundleFileInfo;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
@@ -94,8 +101,8 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
             BundleAntProject project = antLauncher.parseBundleDeployFile(recipeFile);
 
             // obtain the parse results
-            deploymentProps = new DeploymentProperties(0, project.getBundleName(),
-                    project.getBundleVersion(), project.getBundleDescription()) ;
+            deploymentProps = new DeploymentProperties(0, project.getBundleName(), project.getBundleVersion(), project
+                .getBundleDescription());
             bundleFiles = project.getBundleFileNames();
             configDef = project.getConfigurationDefinition();
         } catch (Throwable t) {
@@ -115,9 +122,108 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         return results;
     }
 
-    public UberBundleFileInfo processUberBundleFile(File uberBundleFile) throws Exception {
-        // TODO: bundle implement me
-        return null;
+    public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws Exception {
+        if (null == distributionFile) {
+            throw new IllegalArgumentException("distributionFile == null");
+        }
+
+        BundleDistributionInfo info = null;
+        String recipe = null;
+        RecipeParseResults recipeParseResults = null;
+
+        // try and parse the recipe, if successful then process the distributionFile completely 
+        RecipeVisitor recipeVisitor = new RecipeVisitor(this, "deploy.xml");
+        ZipUtil.walkZipFile(distributionFile, recipeVisitor);
+        recipe = recipeVisitor.getRecipe();
+        recipeParseResults = recipeVisitor.getResults();
+
+        if (null == recipeParseResults) {
+            throw new IllegalArgumentException("Not an Ant Bundle");
+        }
+
+        // if we parsed the recipe then this is a distribution we can deal with, get the bundle file Map                 
+        BundleFileVisitor bundleFileVisitor = new BundleFileVisitor(recipeParseResults.getBundleMetadata()
+            .getBundleName(), recipeParseResults.getBundleFileNames());
+        ZipUtil.walkZipFile(distributionFile, bundleFileVisitor);
+
+        info = new BundleDistributionInfo(recipe, recipeParseResults, bundleFileVisitor.getBundleFiles());
+
+        return info;
+    }
+
+    private static class RecipeVisitor implements ZipUtil.ZipEntryVisitor {
+        private RecipeParseResults results = null;
+        private String recipeName = null;
+        private BundleServerPluginFacet facet = null;
+        private String recipe = null;
+
+        public RecipeVisitor(BundleServerPluginFacet facet, String recipeName) {
+            this.facet = facet;
+            this.recipeName = recipeName;
+        }
+
+        public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+            if (recipeName.equalsIgnoreCase(entry.getName())) {
+                // this should be safe downcast, recipes are not that big
+                byte[] recipeBytes = new byte[(int) entry.getSize()];
+                recipeBytes = StreamUtil.slurp(stream);
+                this.recipe = new String(recipeBytes);
+                try {
+                    this.results = facet.parseRecipe(this.recipe);
+                } catch (Throwable t) {
+                    results = null;
+                }
+            }
+            return true;
+        }
+
+        public RecipeParseResults getResults() {
+            return results;
+        }
+
+        public String getRecipe() {
+            return recipe;
+        }
+    }
+
+    private static class BundleFileVisitor implements ZipUtil.ZipEntryVisitor {
+        private Set<String> bundleFileNames;
+        private Map<String, File> bundleFiles;
+        private File tmpDir;
+
+        public BundleFileVisitor(String bundleName, Set<String> bundleFileNames) throws IOException {
+            this.bundleFileNames = bundleFileNames;
+            this.bundleFiles = new HashMap<String, File>(bundleFileNames.size());
+            tmpDir = FileUtil.createTempDirectory("bundle-" + bundleName, String.valueOf(System.currentTimeMillis()),
+                null);
+        }
+
+        public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+            if (bundleFileNames.contains(entry.getName())) {
+
+                File bundleFile = new File(tmpDir, entry.getName());
+                FileOutputStream fos = null;
+                try {
+                    fos = new FileOutputStream(bundleFile);
+                    StreamUtil.copy(stream, fos, false);
+                } finally {
+                    if (null != fos) {
+                        try {
+                            fos.close();
+                        } catch (Exception e) {
+                            //
+                        }
+                    }
+                }
+                this.bundleFiles.put(entry.getName(), bundleFile);
+            }
+
+            return true;
+        }
+
+        public Map<String, File> getBundleFiles() {
+            return bundleFiles;
+        }
     }
 
     @Override

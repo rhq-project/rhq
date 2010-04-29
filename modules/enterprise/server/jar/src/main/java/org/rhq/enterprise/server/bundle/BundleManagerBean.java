@@ -19,11 +19,16 @@
 package org.rhq.enterprise.server.bundle;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -73,6 +78,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.StringUtils;
 import org.rhq.core.util.NumberUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -81,6 +87,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.HibernateDetachUtility;
@@ -316,9 +323,90 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
-    public BundleVersion createBundleVersionViaUberBundleFileURL(Subject subject, URL uberBundleFile) throws Exception {
-        // TODO: bundle implement me
-        return null;
+    public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
+
+        BundleServerPluginManager manager = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager();
+        BundleDistributionInfo info = manager.processBundleDistributionFile(distributionFile);
+        BundleVersion bundleVersion = createBundleVersionViaDistributionInfo(subject, info);
+
+        return bundleVersion;
+    }
+
+    public BundleVersion createBundleVersionViaURL(Subject subject, URL distributionFileUrl) throws Exception {
+
+        // get the distro file into a tmp dir
+        // create temp file
+        File tempDistributionFile = null;
+        InputStream is = null;
+        OutputStream os = null;
+        BundleVersion bundleVersion = null;
+
+        try {
+            tempDistributionFile = File.createTempFile("bundle-" + distributionFileUrl.hashCode(), "zip");
+
+            is = distributionFileUrl.openStream();
+            os = new FileOutputStream(tempDistributionFile);
+            long len = StreamUtil.copy(is, os);
+            log.debug("Copied [" + len + "] bytes from [" + distributionFileUrl + "] into ["
+                + tempDistributionFile.getPath() + "]");
+
+            bundleVersion = bundleManager.createBundleVersionViaFile(subject, tempDistributionFile);
+        } finally {
+            if (null != tempDistributionFile) {
+                tempDistributionFile.delete();
+            }
+        }
+
+        return bundleVersion;
+    }
+
+    private BundleVersion createBundleVersionViaDistributionInfo(Subject subject, BundleDistributionInfo info)
+        throws Exception {
+
+        BundleType bundleType = bundleManager.getBundleType(subject, info.getBundleTypeName());
+        String bundleName = info.getRecipeParseResults().getBundleMetadata().getBundleName();
+        String bundleDescription = info.getRecipeParseResults().getBundleMetadata().getDescription();
+        String name = "TODO: bundleVersionName";
+        String description = "TODO: bundleVersionDesc";
+        String version = info.getRecipeParseResults().getBundleMetadata().getBundleVersion();
+        String recipe = info.getRecipe();
+
+        // first see if the bundle exists or not; if not, create one
+        BundleCriteria criteria = new BundleCriteria();
+        criteria.setStrict(true);
+        criteria.addFilterBundleTypeId(bundleType.getId());
+        criteria.addFilterName(bundleName);
+        PageList<Bundle> bundles = findBundlesByCriteria(subject, criteria);
+        Bundle bundle;
+        if (bundles.getTotalSize() == 0) {
+            bundle = createBundle(subject, bundleName, bundleDescription, bundleType.getId());
+        } else {
+            bundle = bundles.get(0);
+        }
+
+        // now create the bundle version with the bundle we either found or created
+        BundleVersion bundleVersion = createBundleVersion(subject, bundle.getId(), name, description, version, recipe);
+
+        // now that we have the bundle version we can actually create the bundle files that were provided in
+        // the bundle distribution
+        Map<String, File> bundleFiles = info.getBundleFiles();
+        for (String fileName : bundleFiles.keySet()) {
+            File file = bundleFiles.get(fileName);
+            InputStream is = null;
+            try {
+                is = new FileInputStream(file);
+                BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersion.getId(), fileName, "1.0",
+                    null, is);
+                log.debug("Added bundle file [" + bundleFile + "] to BundleVersion [" + bundleVersion + "]");
+            } finally {
+                safeClose(is);
+                if (null != file) {
+                    file.delete();
+                }
+            }
+        }
+
+        return bundleVersion;
     }
 
     @SuppressWarnings("unchecked")
@@ -690,6 +778,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return types;
     }
 
+    @SuppressWarnings("unchecked")
+    public BundleType getBundleType(Subject subject, String bundleTypeName) {
+        // the list of types will be small, no need to support paging
+        Query q = entityManager.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
+        q.setParameter("name", bundleTypeName);
+        BundleType type = (BundleType) q.getSingleResult();
+        return type;
+    }
+
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
@@ -742,8 +839,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return queryRunner.execute();
     }
 
-    public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
-        Subject subject, BundleCriteria criteria) {
+    public PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(Subject subject,
+        BundleCriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         String replacementSelectList = ""
@@ -812,4 +909,25 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         return;
     }
+
+    private void safeClose(InputStream is) {
+        if (null != is) {
+            try {
+                is.close();
+            } catch (Exception e) {
+                log.warn("Failed to close InputStream", e);
+            }
+        }
+    }
+
+    private void safeClose(OutputStream os) {
+        if (null != os) {
+            try {
+                os.close();
+            } catch (Exception e) {
+                log.warn("Failed to close InputStream", e);
+            }
+        }
+    }
+
 }

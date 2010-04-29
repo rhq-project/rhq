@@ -221,6 +221,13 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 em.remove(em.getReference(Repo.class, ((Repo) removeMe).getId()));
             }
 
+            // remove Resource Groups left over from test deployments freeing up test resources           
+            q = em.createQuery("SELECT rg FROM ResourceGroup rg WHERE rg.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(ResourceGroup.class, ((ResourceGroup) removeMe).getId()));
+            }
+
             // remove ResourceTypes which cascade remove BundleTypes
             q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
@@ -240,13 +247,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(Agent.class, ((Agent) removeMe).getId()));
-            }
-
-            // remove Resource Groups left over from test deployments            
-            q = em.createQuery("SELECT rg FROM ResourceGroup rg WHERE rg.name LIKE '" + TEST_PREFIX + "%'");
-            doomed = q.getResultList();
-            for (Object removeMe : doomed) {
-                em.remove(em.getReference(ResourceGroup.class, ((ResourceGroup) removeMe).getId()));
             }
 
             getTransactionManager().commit();
@@ -382,7 +382,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         PageList<BundleWithLatestVersionComposite> results;
 
         // verify there are no bundle versions yet
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
@@ -393,7 +393,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bv1);
         assertEquals("1.0", bv1.getVersion());
         assert 0 == bv1.getVersionOrder();
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
@@ -404,7 +404,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bv2);
         assertEquals("2.0", bv2.getVersion());
         assert 1 == bv2.getVersionOrder();
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
@@ -415,7 +415,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bv3);
         assertEquals("1.5", bv3.getVersion());
         assert 1 == bv3.getVersionOrder();
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
         assert results.get(0).getBundleDescription().equals(b1.getDescription());
@@ -475,7 +475,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         // verify our composite criteria query can return more than one item
         Bundle b2 = createBundle("two");
         assertNotNull(b2);
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.size() == 2 : results;
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
@@ -492,7 +492,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(b2_bv1);
         assertEquals("9.1", b2_bv1.getVersion());
 
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.size() == 2 : results;
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());
@@ -507,7 +507,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
         // test sorting of the BundleWithLastestVersionComposite
         criteria.addSortName(PageOrdering.DESC);
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.size() == 2 : results;
         assert results.get(1).getBundleId().equals(b1.getId());
         assert results.get(1).getBundleName().equals(b1.getName());
@@ -521,7 +521,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assert results.get(0).getVersionsCount().longValue() == 1L;
 
         criteria.addSortName(PageOrdering.ASC);
-        results = bundleManager.findBundlesWithLastestVersionCompositesByCriteria(overlord, criteria);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.size() == 2 : results;
         assert results.get(0).getBundleId().equals(b1.getId());
         assert results.get(0).getBundleName().equals(b1.getName());

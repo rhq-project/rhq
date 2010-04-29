@@ -261,7 +261,7 @@ public class BundleVersion implements Serializable {
 
     @Override
     public String toString() {
-        return "BundleVersion[id=" + id + ",name=" + name + ",version=" + version + ",bundle=" + bundle + "]";
+        return "BundleVersion[id=" + id + ",name=" + name + ",version=" + version + ",bundle=" + bundle.getName() + "]";
     }
 
     @Override

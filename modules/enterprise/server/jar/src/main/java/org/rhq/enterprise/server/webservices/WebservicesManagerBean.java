@@ -22,6 +22,7 @@
   */
 package org.rhq.enterprise.server.webservices;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
@@ -353,9 +354,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.createBundleVersion(subject, bundleId, name, description, version, recipe);
     }
 
-    public BundleVersion createBundleVersionViaUberBundleFileURL(Subject subject, URL uberBundleZipFile)
-        throws Exception {
-        return bundleManager.createBundleVersionViaUberBundleFileURL(subject, uberBundleZipFile);
+    public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
+        return bundleManager.createBundleVersionViaFile(subject, distributionFile);
+    }
+
+    public BundleVersion createBundleVersionViaURL(Subject subject, URL distributionFileUrl) throws Exception {
+        return bundleManager.createBundleVersionViaURL(subject, distributionFileUrl);
     }
 
     public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
@@ -394,13 +398,17 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.findBundleVersionsByCriteria(subject, criteria);
     }
 
-    public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
-        Subject subject, BundleCriteria criteria) {
-        return bundleManager.findBundlesWithLastestVersionCompositesByCriteria(subject, criteria);
+    public PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(Subject subject,
+        BundleCriteria criteria) {
+        return bundleManager.findBundlesWithLatestVersionCompositesByCriteria(subject, criteria);
     }
 
     public List<BundleType> getAllBundleTypes(Subject subject) {
         return bundleManager.getAllBundleTypes(subject);
+    }
+
+    public BundleType getBundleType(Subject subject, String bundleTypeName) {
+        return bundleManager.getBundleType(subject, bundleTypeName);
     }
 
     public Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)

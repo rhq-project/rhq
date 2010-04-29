@@ -18,22 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
-import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTService;
-import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
-import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
-
-import javax.jws.WebParam;
 
 /**
  * @author Greg Hinkle
@@ -62,4 +53,11 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
         roleManager.deleteRoles(getSessionSubject(), roleIds);
     }
 
+    public void setAssignedResourceGroups(int roleId, int[] resourceGroupIds) {
+        roleManager.setAssignedResourceGroups(getSessionSubject(), roleId, resourceGroupIds);
+    }
+
+    public void setAssignedSubjects(int roleId, int[] subjectIds) {
+        roleManager.setAssignedSubjects(getSessionSubject(), roleId, subjectIds);
+    }
 }

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
+import java.util.Collection;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.IPickTreeItem;
@@ -75,7 +77,7 @@ public class ResourceSelector extends AbstractSelector {
     private class SelectedResourceDataSource extends ResourceDatasource {
 
         @Override
-        public ListGridRecord[] buildRecords(PageList<Resource> resources) {
+        public ListGridRecord[] buildRecords(Collection<Resource> resources) {
             ListGridRecord[] records = super.buildRecords(resources);
             for (ListGridRecord record : records) {
                 if (selection.contains(record.getAttributeAsInt("id"))) {

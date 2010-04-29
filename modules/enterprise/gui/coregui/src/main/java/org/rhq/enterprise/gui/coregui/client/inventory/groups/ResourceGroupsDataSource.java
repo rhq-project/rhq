@@ -55,7 +55,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     }
 
     public ResourceGroupsDataSource() {
-        super("ResourceGroups");
+//        super("ResourceGroups");
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);

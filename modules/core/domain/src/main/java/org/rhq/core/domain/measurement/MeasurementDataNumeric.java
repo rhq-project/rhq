@@ -24,11 +24,17 @@ package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
 
-/**
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
+ /**
  * Subclass for numerical measurement data
  *
  * @author Heiko W. Rupp
  */
+ @XmlAccessorType(XmlAccessType.FIELD)
+ @XmlRootElement
 public class MeasurementDataNumeric extends MeasurementData implements Serializable {
     private static final long serialVersionUID = 1L;
 

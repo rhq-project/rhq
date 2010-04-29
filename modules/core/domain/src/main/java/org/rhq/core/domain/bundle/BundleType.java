@@ -38,6 +38,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -70,6 +71,7 @@ public class BundleType implements Serializable {
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
     @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @XmlTransient
     private ResourceType resourceType;
 
     public BundleType() {

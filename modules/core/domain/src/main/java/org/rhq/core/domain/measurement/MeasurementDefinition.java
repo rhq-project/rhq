@@ -43,6 +43,9 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Version;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +76,8 @@ import org.rhq.core.domain.resource.ResourceType;
         + "   SET md.defaultOn = false") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_MEASUREMENT_DEF_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_DEF")
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement
 public class MeasurementDefinition implements Serializable {
 
     public static final String QUERY_NATIVE_UPDATE_DEFAULT_ON_BY_IDS = "" //

@@ -176,7 +176,8 @@ public interface BundleManagerRemote {
      * 
      * @param subject
      * @param distributionFile a local Bundle Distribution file. It must be read accessible by the RHQ server process.
-     * @return the persisted BundleVersion (id is assigned)
+     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     *         understand all that this method did. Bundle files specifically are returned.
      */
     BundleVersion createBundleVersionViaFile( //
         @WebParam(name = "subject") Subject subject, //        
@@ -195,7 +196,8 @@ public interface BundleManagerRemote {
      * @param distributionFileUrl a URL to the Bundle Distribution file. It must be live, resolvable and read accessible
      * by the RHQ server process. 
      * 
-     * @return the persisted BundleVersion (id is assigned)
+     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     *         understand all that this method did. Bundle files specifically are returned.
      */
     BundleVersion createBundleVersionViaURL( //
         @WebParam(name = "subject") Subject subject, //        

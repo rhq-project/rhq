@@ -330,6 +330,14 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             criteria.fetchBundleFiles(true);
             criteria.fetchTags(true);
             BundleVersion bv2 = bundleManager.findBundleVersionsByCriteria(overlord, criteria).get(0);
+            List<BundleFile> bv2BundleFiles = bv2.getBundleFiles();
+            BundleFileCriteria bfCriteria = new BundleFileCriteria();
+            bfCriteria.addFilterBundleVersionId(bv2.getId());
+            bfCriteria.fetchPackageVersion(true);
+            PageList<BundleFile> bfs = bundleManager.findBundleFilesByCriteria(overlord, bfCriteria);
+            bv2BundleFiles.clear();
+            bv2BundleFiles.addAll(bfs);
+            bv2.setBundleDeployments(new ArrayList<BundleDeployment>());
 
             // test that the PC's return value and our own DB lookup match the bundle version we expect to be in the DB
             BundleVersion[] bvs = new BundleVersion[] { bv1, bv2 };

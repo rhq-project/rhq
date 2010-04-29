@@ -155,7 +155,7 @@ public class BundleServerPluginManager extends ServerPluginManager {
                     info = facet.processBundleDistributionFile(distributionFile);
                     info.setBundleTypeName(descriptor.getBundle().getType());
                     break;
-                } catch (IllegalArgumentException e) {
+                } catch (Exception e) {
                     info = null;
                 }
             } finally {

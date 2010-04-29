@@ -339,19 +339,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.addBundleFileViaPackageVersion(subject, bundleVersionId, name, packageVersionId);
     }
 
-    public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
-        return bundleManager.createBundle(subject, name, description, bundleTypeId);
-    }
-
     public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, String name,
         String description, String installDir, Configuration configuration) throws Exception {
         return bundleManager.createBundleDeployment(subject, bundleVersionId, name, description, installDir,
             configuration);
-    }
-
-    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
-        String version, String recipe) throws Exception {
-        return bundleManager.createBundleVersion(subject, bundleId, name, description, version, recipe);
     }
 
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
@@ -360,13 +351,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public BundleVersion createBundleVersionViaURL(Subject subject, URL distributionFileUrl) throws Exception {
         return bundleManager.createBundleVersionViaURL(subject, distributionFileUrl);
-    }
-
-    public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
-        int bundleTypeId, String bundleVersionName, String bundleVersionDescription, String version, String recipe)
-        throws Exception {
-        return bundleManager.createBundleAndBundleVersion(subject, bundleName, bundleDescription, bundleTypeId,
-            bundleVersionName, bundleVersionDescription, version, recipe);
     }
 
     public void deleteBundle(Subject subject, int bundleId) throws Exception {

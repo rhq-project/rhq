@@ -23,11 +23,13 @@ import java.util.HashMap;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
 
 /**
  * Local interface to the manager responsible for creating and managing bundles.
@@ -58,6 +60,50 @@ public interface BundleManagerLocal extends BundleManagerRemote {
         BundleResourceDeploymentHistory history) throws Exception;
 
     /**
+     * Mainly Used  For Testing
+     * 
+     * @param subject user that must have proper permissions
+     * @param name not null or empty 
+     * @param description optional long description of the bundle 
+     * @param bundleTypeId valid bundleType
+     * @return the persisted Bundle (id is assigned)
+     */
+    Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception;
+
+    /**
+     * Mainly Used  For Testing
+     * 
+     * Convienence method that combines {@link #createBundle(Subject, String, int)} and {@link #createBundleVersion(Subject, int, String, String, String)}.
+     * This will first check to see if a bundle with the given type/name exists - if it doesn't, it will be created. If it does, it will be reused.
+     * This will then create the bundle version that will be associated with the bundle that was created or found.
+     * 
+     * @param subject user that must have proper permissions
+     * @param bundleName name of the bundle to use (if not found, it will be created)
+     * @param bundleDescription optional long description of the bundle
+     * @param bundleTypeId the bundle type for the new bundle (if it is created) for which this will be the first version
+     * @param bundleVersionName name of the bundle version
+     * @param bundleVersionDescription optional long description of the bundle version  
+     * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
+     * @return the persisted BundleVersion (id is assigned)
+     */
+    BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
+        int bundleTypeId, String bundleVersionName, String bundleVersionDescription, String version, String recipe)
+        throws Exception;
+
+    /**
+     * Mainly Used  For Testing
+     * 
+     * @param subject user that must have proper permissions
+     * @param bundleId the bundle for which this will be the next version
+     * @param name not null or empty
+     * @param description optional long description of the bundle version 
+     * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
+     * @return the persisted BundleVersion (id is assigned)
+     */
+    BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description, String version,
+        String recipe) throws Exception;
+
+    /**
      * Not generally called. For use by Server Side Plugins when registering a Bundle Plugin.
      *  
      * @param subject must be InventoryManager
@@ -71,8 +117,8 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * This is typically not called directly, typically scheduleBundleResourceDeployment() is called externally. This executes
      * in a New Transaction and supports scheduleBundleResourceDeployment. 
      */
-    BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId,
-        int resourceId, int groupDeploymentId) throws Exception;
+    BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId, int resourceId,
+        int groupDeploymentId) throws Exception;
 
     /**
      * This is typically not called directly, typically scheduleBundleGroupDeployment() is called externally.

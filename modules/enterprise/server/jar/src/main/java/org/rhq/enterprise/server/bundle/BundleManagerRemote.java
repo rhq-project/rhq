@@ -121,19 +121,6 @@ public interface BundleManagerRemote {
 
     /**
      * @param subject user that must have proper permissions
-     * @param name not null or empty 
-     * @param description optional long description of the bundle 
-     * @param bundleTypeId valid bundleType
-     * @return the persisted Bundle (id is assigned)
-     */
-    Bundle createBundle( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "name") String name, //
-        @WebParam(name = "description") String description, //        
-        @WebParam(name = "bundleTypeId") int bundleTypeId) throws Exception;
-
-    /**
-     * @param subject user that must have proper permissions
      * @param BundleVersionId the BundleVersion being deployed by this deployment
      * @param name a name for this deployment. not null or empty
      * @param description an optional longer description describing this deployment 
@@ -150,22 +137,6 @@ public interface BundleManagerRemote {
         @WebParam(name = "description") String description, //
         @WebParam(name = "installDir") String installDir, //        
         @WebParam(name = "configuration") Configuration configuration) throws Exception;
-
-    /**
-     * @param subject user that must have proper permissions
-     * @param bundleId the bundle for which this will be the next version
-     * @param name not null or empty
-     * @param description optional long description of the bundle version 
-     * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
-     * @return the persisted BundleVersion (id is assigned)
-     */
-    BundleVersion createBundleVersion( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleId") int bundleId, //        
-        @WebParam(name = "name") String name, //
-        @WebParam(name = "description") String description, //                
-        @WebParam(name = "version") String version, //
-        @WebParam(name = "recipe") String recipe) throws Exception;
 
     /**
      * Creates a bundle version based on a Bundle Distribution file. Typically a zip file, the bundle distribution
@@ -202,30 +173,6 @@ public interface BundleManagerRemote {
     BundleVersion createBundleVersionViaURL( //
         @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "distributionFileUrl") URL distributionFileUrl) throws Exception;
-
-    /**
-     * Convienence method that combines {@link #createBundle(Subject, String, int)} and {@link #createBundleVersion(Subject, int, String, String, String)}.
-     * This will first check to see if a bundle with the given type/name exists - if it doesn't, it will be created. If it does, it will be reused.
-     * This will then create the bundle version that will be associated with the bundle that was created or found.
-     * 
-     * @param subject user that must have proper permissions
-     * @param bundleName name of the bundle to use (if not found, it will be created)
-     * @param bundleDescription optional long description of the bundle
-     * @param bundleTypeId the bundle type for the new bundle (if it is created) for which this will be the first version
-     * @param bundleVersionName name of the bundle version
-     * @param bundleVersionDescription optional long description of the bundle version  
-     * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
-     * @return the persisted BundleVersion (id is assigned)
-     */
-    BundleVersion createBundleAndBundleVersion( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleName") String bundleName, //
-        @WebParam(name = "bundleDescription") String bundleDescription, //        
-        @WebParam(name = "bundleTypeId") int bundleTypeId, //
-        @WebParam(name = "bundleVersionName") String bundleVersionName, //
-        @WebParam(name = "bundleVersionDescription") String bundleVersionDescription, //        
-        @WebParam(name = "version") String version, //
-        @WebParam(name = "recipe") String recipe) throws Exception;
 
     /**
      * Remove everything associated with the Bundle with the exception of files laid down by related deployments.

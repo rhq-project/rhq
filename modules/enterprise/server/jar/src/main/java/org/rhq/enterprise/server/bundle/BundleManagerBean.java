@@ -103,7 +103,7 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
  * @author Jay Shaughnessy
  */
 @Stateless
-public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemote {
+public class BundleManagerBean implements BundleManagerLocal {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private final String AUDIT_ACTION_DEPLOYMENT = "Deployment";
@@ -351,7 +351,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleVersion bundleVersion = null;
 
         try {
-            tempDistributionFile = File.createTempFile("bundle-" + distributionFileUrl.hashCode(), ".zip");
+            tempDistributionFile = File.createTempFile("bundle-distribution", ".zip");
 
             is = distributionFileUrl.openStream();
             os = new FileOutputStream(tempDistributionFile);
@@ -413,8 +413,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 InputStream is = null;
                 try {
                     is = new FileInputStream(file);
+                    // peg the file version to the bundle version. In the future we may allow a distribution
+                    // to refer to existing versions of a file.
                     BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersion.getId(), fileName,
-                        "1.0", null, is);
+                        bundleVersion.getVersion(), null, is);
                     log.debug("Added bundle file [" + bundleFile + "] to BundleVersion [" + bundleVersion + "]");
                 } finally {
                     safeClose(is);
@@ -838,7 +840,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return types;
     }
 
-    @SuppressWarnings("unchecked")
     public BundleType getBundleType(Subject subject, String bundleTypeName) {
         // the list of types will be small, no need to support paging
         Query q = entityManager.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);

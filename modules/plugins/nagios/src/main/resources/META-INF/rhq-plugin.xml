@@ -4,12 +4,18 @@
         package="org.rhq.plugins.nagios"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
-        xmlns:c="urn:xmlns:rhq-configuration">
-
-
-    <server name="NagiosMonitor" discovery="NagiosMonitorDiscovery" class="NagiosMonitorComponent"
-            description="Interface to Nagios monitoring system. Nagios needs to be equipped with
+        xmlns:c="urn:xmlns:rhq-configuration"
+        description="Interface to Nagios monitoring system. Nagios needs to be equipped with
             mk_livestatus module for this plugin to work"
+        >
+
+
+    <server name="NagiosMonitor"
+	    discovery="NagiosMonitorDiscovery"
+        class="NagiosMonitorComponent"
+        description="Interface to Nagios monitoring system. Nagios needs to be equipped with
+            mk_livestatus module for this plugin to work"
+	    supportsManualAdd="true"
             >
 
             <plugin-configuration>

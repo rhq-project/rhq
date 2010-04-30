@@ -199,6 +199,8 @@ public class RecipeParser {
     }
 
     protected String[] splitCommandLine(String cmdLine) {
+        cmdLine = cmdLine.replace('\\', '/');
+
         ByteArrayInputStream in = new ByteArrayInputStream(cmdLine.getBytes());
         StreamTokenizer strtok = new StreamTokenizer(new InputStreamReader(in));
         List<String> args = new ArrayList<String>();

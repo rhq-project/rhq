@@ -311,6 +311,22 @@ public class RecipeParserTest {
         assert files.get("tomcat.tar").equals("/opt/tomcat") : files;
     }
 
+    public void testSimpleRecipeWithBackslashes() throws Exception {
+        addRecipeCommand("deploy -f jboss1.zip -d \"C:\\opt\\jboss1\"");
+        addRecipeCommand("deploy -f tomcat.tar \"--directory=C:\\Documents and Settings\\user\\\"");
+        addRecipeCommand("deploy -f jboss2.zip -d C:\\opt\\jboss1");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        Map<String, String> files = context.getDeployFiles();
+        assert files.containsKey("jboss1.zip") : files;
+        assert files.get("jboss1.zip").equals("C:/opt/jboss1") : files;
+        assert files.containsKey("tomcat.tar") : files;
+        assert files.get("tomcat.tar").equals("C:/Documents and Settings/user/") : files;
+        assert files.containsKey("jboss2.zip") : files;
+        assert files.get("jboss2.zip").equals("C:/opt/jboss1") : files;
+    }
+
     public void testSimpleRecipeError() throws Exception {
         addRecipeCommand("deploy -f jboss.tar");
         RecipeParser parser = new RecipeParser();

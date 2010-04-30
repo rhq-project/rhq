@@ -40,12 +40,10 @@ import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.Server;
-import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * A JON agent.
@@ -484,8 +482,7 @@ public class Agent implements Serializable {
         try {
             new IllegalArgumentException(message);
         } catch (IllegalArgumentException iae) {
-            String stackTrace = ThrowableUtil.getStackAsString(iae);
-            LogFactory.getLog("HighAvailabilityLogic").fatal(stackTrace);
+            iae.printStackTrace(System.out);
         }
     }
 

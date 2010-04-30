@@ -22,9 +22,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.alert.notification.AlertNotificationTemplate;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -93,15 +91,6 @@ public interface AlertNotificationManagerLocal {
     AlertSenderInfo getAlertInfoForSender(String shortName);
 
     /**
-     * Take the passed NotificationTemplate and apply its Notifications to the passed AlertDefinition
-     * @param template NotificationTemplate to apply
-     * @param def AlertDefinition  to apply the template to
-     * @param removeOldNotifications Shall old Notifications on the Definition be removed?
-     */
-    void applyNotificationTemplateToAlertDefinition(AlertNotificationTemplate template, AlertDefinition def,
-        boolean removeOldNotifications);
-
-    /**
      * Return the backing bean for the AlertSender with the passed shortNama
      * @param shortName name of a sender
      * @param alertNotificationId
@@ -111,62 +100,5 @@ public interface AlertNotificationManagerLocal {
 
     String getBackingBeanNameForSender(String shortName);
 
-    /**
-     * Create a new NotificationTemplate from the passed parameters. The passed AlertNotification objects need to have the
-     * name and sender and any configuration properties already set; alert definitions must not be set.
-     * @param name name of this notification template. Must be unique
-     * @param description description of the template
-     * @param notifications notifications that make up the template
-     * @param copyNotifications
-     * @return the newly created template
-     * @throws IllegalArgumentException when a template with the passed name already exists
-     */
-    AlertNotificationTemplate createNotificationTemplate(String name, String description,
-        List<AlertNotification> notifications, boolean copyNotifications) throws IllegalArgumentException;
-
-    void updateNotificationTemplate(Subject subject, int templateId, String newName, String newDescription);
-
-    /**
-     * Get all defined notification templates in the system along with their AlertNotifications
-     * @param user Subject of the caller
-     * @return List of all defined alert notification templates
-     */
-    List<AlertNotificationTemplate> listNotificationTemplates(Subject user);
-
     AlertNotification getAlertNotification(Subject user, int alertNotificationId);
-
-    AlertNotificationTemplate getAlertNotificationTemplate(Subject user, int alertNotificationTemplateId);
-
-    /**
-     * Take the passed NotificationTemplate and apply its Notifications to the passed AlertDefinition
-     * @param templateName name of a pre-defined alert NotificationTemplate
-     * @param alertDefinitionId id of an AlertDefinition on which the template should be applied
-     * @param removeOldNotifications Shall old Notifications on the Definition be removed?
-     */
-    void applyNotificationTemplateToAlertDefinition(String templateName, int alertDefinitionId,
-        boolean removeOldNotifications);
-
-    /**
-     * Add a new alert Notification to a template
-     * @param user subject of the caller
-     * @param templateName name of the NotificationTemplate to use
-     * @param sender the alert sender to use
-     * @param notificationName the name of this notification
-     * @param notificationConfiguration the configuration of this AlertNotification
-     * @return the new AlertNotification
-     */
-    AlertNotification addAlertNotificationToTemplate(Subject user, int templateId, String sender,
-        String notificationName, Configuration notificationConfiguration);
-
-    int removeNotificationsFromTemplate(Subject subject, int templateId, Integer[] notificationIds);
-
-    List<AlertNotification> getNotificationsForTemplate(Subject subject, int templateId);
-
-    /**
-     * Delete the passed Notification Templates
-     * @param subject subject of the caller
-     * @param templateIds ids of the templates to delete
-     * @return number of templates deleted
-     */
-    int deleteNotificationTemplates(Subject subject, Integer[] templateIds);
 }

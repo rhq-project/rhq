@@ -103,6 +103,8 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
     }
 
     public String update() {
+        HttpSession session = FacesContextUtility.getRequest().getSession();
+
         try {
             GroupDefinition groupDefinition = GroupDefinitionUIBean.lookupGroupDefinition();
 
@@ -119,8 +121,6 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
              */
             groupDefinition.setExpression(expression.replaceAll("\\r", "\n").replaceAll("\\f", "\n").replaceAll("\\n+",
                 "\n"));
-
-            HttpSession session = FacesContextUtility.getRequest().getSession();
 
             session.setAttribute(TEMPORARY_EDIT_MARKER, "marker");
             session.setAttribute(TEMPORARY_EXPRESSION_ATTRIBUTE, expression);
@@ -147,6 +147,8 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             log.error("Error updating group definition: ", e);
             return OUTCOME_FAILURE;
         }
+
+        session.removeAttribute(TEMPORARY_EDIT_MARKER);
 
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "General properties updated.");
         return OUTCOME_SUCCESS;

@@ -31,8 +31,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -63,7 +61,7 @@ public class PropertyDefinitionEnumeration implements Serializable {
     private String value;
 
     @Column(name = "ORDER_INDEX", nullable = false)
-    private int orderIndex;
+    private int orderIndex = -1;
 
     @Column(name = "IS_DEFAULT")
     private boolean isDefault;
@@ -87,11 +85,13 @@ public class PropertyDefinitionEnumeration implements Serializable {
         this.isDefault = isDefault;
     }
 
-    @PrePersist
-    @PreUpdate
-    public void updateOrder() {
-        this.orderIndex = this.propertyDefinitionSimple.getEnumeratedValues().indexOf(this);
-    }
+    //    @PrePersist
+    //    @PreUpdate
+    //    public void updateOrder() {
+    //        if (this.orderIndex < 0) {
+    //            this.orderIndex = this.propertyDefinitionSimple.getEnumeratedValues().indexOf(this);
+    //        }
+    //    }
 
     public PropertyDefinitionSimple getPropertyDefinitionSimple() {
         return propertyDefinitionSimple;

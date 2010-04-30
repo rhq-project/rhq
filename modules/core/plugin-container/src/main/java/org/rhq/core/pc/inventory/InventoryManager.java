@@ -1821,7 +1821,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param listener instance to notify of change events
      */
     public void addInventoryEventListener(InventoryEventListener listener) {
-        this.inventoryEventListeners.add(listener);
+        synchronized (this.inventoryEventListeners) {
+            this.inventoryEventListeners.add(listener);
+        }
     }
 
     /**
@@ -1830,7 +1832,21 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param listener instance to remove from event notification
      */
     public void removeInventoryEventListener(InventoryEventListener listener) {
-        this.inventoryEventListeners.remove(listener);
+        synchronized (this.inventoryEventListeners) {
+            this.inventoryEventListeners.remove(listener);
+        }
+    }
+
+    /**
+     * Always use this before accessing the event listeners because this ensures
+     * thread safety.
+     * 
+     * @return all inventory event listeners
+     */
+    private Set<InventoryEventListener> getInventoryEventListeners() {
+        synchronized (this.inventoryEventListeners) {
+            return new HashSet<InventoryEventListener>(this.inventoryEventListeners);
+        }
     }
 
     /**
@@ -1844,8 +1860,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return;
         }
 
-        InventoryEventListener[] iteratorSafeListeners = new InventoryEventListener[inventoryEventListeners.size()];
-        iteratorSafeListeners = inventoryEventListeners.toArray(iteratorSafeListeners);
+        Set<InventoryEventListener> iteratorSafeListeners = getInventoryEventListeners();
         for (InventoryEventListener listener : iteratorSafeListeners) {
             // Catch anything to make sure we don't stop firing to other listeners
             try {
@@ -1868,8 +1883,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.debug("Firing activated for resource: " + resource);
         }
 
-        InventoryEventListener[] iteratorSafeListeners = new InventoryEventListener[inventoryEventListeners.size()];
-        iteratorSafeListeners = inventoryEventListeners.toArray(iteratorSafeListeners);
+        Set<InventoryEventListener> iteratorSafeListeners = getInventoryEventListeners();
         for (InventoryEventListener listener : iteratorSafeListeners) {
             // Catch anything to make sure we don't stop firing to other listeners
             try {
@@ -1893,8 +1907,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.debug("Firing deactivated for resource: " + resource);
         }
 
-        InventoryEventListener[] iteratorSafeListeners = new InventoryEventListener[inventoryEventListeners.size()];
-        iteratorSafeListeners = inventoryEventListeners.toArray(iteratorSafeListeners);
+        Set<InventoryEventListener> iteratorSafeListeners = getInventoryEventListeners();
         for (InventoryEventListener listener : iteratorSafeListeners) {
             // Catch anything to make sure we don't stop firing to other listeners
             try {
@@ -1917,8 +1930,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return;
         }
 
-        InventoryEventListener[] iteratorSafeListeners = new InventoryEventListener[inventoryEventListeners.size()];
-        iteratorSafeListeners = inventoryEventListeners.toArray(iteratorSafeListeners);
+        Set<InventoryEventListener> iteratorSafeListeners = getInventoryEventListeners();
         for (InventoryEventListener listener : iteratorSafeListeners) {
             // Catch anything to make sure we don't stop firing to other listeners
             try {

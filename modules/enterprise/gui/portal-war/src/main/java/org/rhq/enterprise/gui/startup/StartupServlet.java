@@ -59,7 +59,6 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
-import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
@@ -67,6 +66,7 @@ import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CloudManagerJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
 import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
+import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
@@ -329,8 +329,8 @@ public class StartupServlet extends HttpServlet {
             // Do not check until we are up at least 1 min, and every minute thereafter.
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60;
-            scheduler.scheduleSimpleRepeatingJob(SavedSearchResultCountRecalculationJob.class, true, false, initialDelay,
-                interval);
+            scheduler.scheduleSimpleRepeatingJob(SavedSearchResultCountRecalculationJob.class, true, false,
+                initialDelay, interval);
         } catch (Exception e) {
             log("Cannot schedule asynchronous resource deletion job: " + e.getMessage());
         }
@@ -357,6 +357,14 @@ public class StartupServlet extends HttpServlet {
 
         // Cluster Manager Job
         try {
+            String oldJobName = "org.rhq.enterprise.server.scheduler.jobs.ClusterManagerJob";
+            boolean foundAndDeleted = scheduler.deleteJob(oldJobName, oldJobName);
+            if (foundAndDeleted) {
+                log("Unscheduling deprecated job references for " + oldJobName);
+            } else {
+                log("No deprecated job references found for " + oldJobName);
+            }
+
             // Wait long enough to allow the Server instance jobs to start executing first.
             final long initialDelay = 1000L * 60 * 2; // 2 mins
             final long interval = 1000L * 30; // 30 secs

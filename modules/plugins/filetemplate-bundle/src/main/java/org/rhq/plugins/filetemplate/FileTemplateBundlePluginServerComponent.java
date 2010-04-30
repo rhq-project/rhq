@@ -39,6 +39,12 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 @SuppressWarnings("unchecked")
 public class FileTemplateBundlePluginServerComponent implements ResourceComponent, BundleFacet {
 
+    /** property that should always be available to scripts - it's the location where the deployment should be installed */
+    private static final String DEPLOY_DIR = "rhq.deploy.dir";
+
+    /** property that should always be available to scripts - it's the ID of the bundle deployment */
+    private static final String DEPLOY_ID = "rhq.deploy.id";
+
     private final Log log = LogFactory.getLog(FileTemplateBundlePluginServerComponent.class);
 
     private ResourceContext resourceContext;
@@ -75,6 +81,8 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
                 "setting replacement variable values using [" + bundleDeployment.getConfiguration().toString(true)
                     + "]");
             recipeContext.setReplacementVariableValues(bundleDeployment.getConfiguration());
+            recipeContext.addReplacementVariableValue(DEPLOY_DIR, bundleDeployment.getInstallDir());
+            recipeContext.addReplacementVariableValue(DEPLOY_ID, Integer.toString(bundleDeployment.getId()));
 
             parser.setReplaceReplacementVariables(true);
 

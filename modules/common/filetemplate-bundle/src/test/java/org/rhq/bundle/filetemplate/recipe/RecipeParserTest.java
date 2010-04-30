@@ -42,11 +42,22 @@ public class RecipeParserTest {
     }
 
     public void testBundleCommand() throws Exception {
-        addRecipeCommand("bundle --name=my-name --version=1.0 \"--description=my description here\"");
+        addRecipeCommand("bundle --version \"1.0\" --name \"my-name\" --description \"my description here\"");
         RecipeParser parser = new RecipeParser();
         RecipeContext context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         DeploymentProperties props = context.getDeploymentProperties();
+        assert props.getBundleName().equals("my-name");
+        assert props.getBundleVersion().equals("1.0");
+        assert props.getDescription().equals("my description here");
+        assert props.getDeploymentId() == 0;
+
+        cleanRecipe();
+        addRecipeCommand("bundle --name=my-name --version=1.0 \"--description=my description here\"");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        props = context.getDeploymentProperties();
         assert props.getBundleName().equals("my-name");
         assert props.getBundleVersion().equals("1.0");
         assert props.getDescription().equals("my description here");
@@ -84,6 +95,28 @@ public class RecipeParserTest {
         try {
             parser.parseRecipe(context);
             assert false : "should not have parsed, missing version";
+        } catch (Exception ok) {
+            // expected
+        }
+
+        cleanRecipe();
+        addRecipeCommand("bundle --name \" \" -v 1");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        try {
+            parser.parseRecipe(context);
+            assert false : "should not have parsed, blank name not allowed";
+        } catch (Exception ok) {
+            // expected
+        }
+
+        cleanRecipe();
+        addRecipeCommand("bundle --version \" \" -n name");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        try {
+            parser.parseRecipe(context);
+            assert false : "should not have parsed, blank version not allowed";
         } catch (Exception ok) {
             // expected
         }

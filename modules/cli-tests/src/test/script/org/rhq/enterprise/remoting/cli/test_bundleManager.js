@@ -28,7 +28,7 @@
 
 var TestsEnabled = true;
 
-var bundleName = 'testScriptBundle';
+var bundleName = 'test-cli-bundle';
 
 // note, super-user, will not test any security constraints
 var subject = rhq.login('rhqadmin', 'rhqadmin');

@@ -93,5 +93,5 @@ public interface AlertConditionCacheMonitorMBean {
     /*
      * cache contents
      */
-    public void getReloadCaches();
+    public void reloadCaches();
 }

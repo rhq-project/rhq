@@ -85,6 +85,7 @@ public class CloudManagerBean implements CloudManagerLocal {
     public List<Agent> getAgentsByServerName(String serverName) {
         Server server = cloudManager.getServerByName(serverName);
         List<Agent> agents = server.getAgents();
+        agents.size(); // iterating over this collection out of a transactional boundaries will throw LazyInitExceptions
         return agents;
     }
 

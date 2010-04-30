@@ -195,7 +195,7 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         totalProcessingTime.addAndGet(moreMillis);
     }
 
-    public void getReloadCaches() {
+    public void reloadCaches() {
         LookupUtil.getAlertConditionCacheManager().reloadAllCaches();
     }
 

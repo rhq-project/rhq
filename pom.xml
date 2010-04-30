@@ -891,6 +891,9 @@
      <properties>
         <!-- The below prop can be used by antrun scripts to check if the dev profile is enabled. -->
         <dev.profile.active>true</dev.profile.active>
+        <!-- This tells dbsetup (in the dbutils module) to use the dev DB conn props
+             (rhq.dev.ds.*), rather than the test DB conn props (rhq.test.ds.*). -->
+        <db>dev</db>
      </properties>
 
      <build>

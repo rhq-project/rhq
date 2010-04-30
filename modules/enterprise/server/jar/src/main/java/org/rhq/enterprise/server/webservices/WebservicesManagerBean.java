@@ -1080,6 +1080,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         roleManager.removeSubjectsFromRole(subject, roleId, subjectIds);
     }
 
+    public void setAssignedResourceGroups(Subject subject, int roleId, int[] groupIds) {
+        roleManager.setAssignedResourceGroups(subject, roleId, groupIds);
+    }
+
     //ROLEMANAGER: END ----------------------------------
 
     //SUBJECT MANAGER: BEGIN ---------------------------------------

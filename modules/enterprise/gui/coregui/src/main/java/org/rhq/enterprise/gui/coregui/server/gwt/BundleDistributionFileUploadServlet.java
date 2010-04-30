@@ -51,7 +51,7 @@ public class BundleDistributionFileUploadServlet extends FileUploadServlet {
             File file = files.values().iterator().next();
 
             BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
-            BundleVersion bundleVersion = bundleManager.createBundleVersionViaURL(subject, file.toURI().toURL());
+            BundleVersion bundleVersion = bundleManager.createBundleVersionViaFile(subject, file);
             successMsg = "success [" + bundleVersion.getId() + "]";
         } catch (Exception e) {
             writeExceptionResponse(response, "Failed to upload bundle distribution file", e); // clients will look for this string!

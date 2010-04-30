@@ -103,7 +103,7 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
  * @author Jay Shaughnessy
  */
 @Stateless
-public class BundleManagerBean implements BundleManagerLocal {
+public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemote {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private final String AUDIT_ACTION_DEPLOYMENT = "Deployment";

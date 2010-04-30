@@ -37,51 +37,6 @@ executeAllTests();
 
 rhq.logout();
 
-function testDeployment() {
-   if ( !TestsEnabled ) {
-      return;
-   }
-   
-   // delete the test bundle if it exists
-   cleanupTestBundle();
-
-   // create the test bundle
-   var testBundle = BundleManager.createBundle( bundleName, bundleName, getBundleType() );
-   
-   // define the recipe for bundleVersion 1.0 
-   var recipe = "file -s testBundle.war -d @@bundleTest.deployHome@@/testBundle.war"
-      
-   // create bundleVersion 1.0
-   var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, bundleName, null, recipe);
-
-   // add the single bundleFile, the test war file
-   var fileBytes = scriptUtil.getFileBytes("./src/test/resources/testBundle.war"); 
-   var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "testBundle.war",
-         "1.0", null, fileBytes);
-
-   // create the config, setting the required properties from the recipe
-   var config = new Configuration();   
-   var property = new PropertySimple("bundleTest.deployHome", "/tmp/bundle-test");
-   config.put( property );
-
-   // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config);
-
-   // Find a target platform
-   var rc = new ResourceCriteria();
-   rc.addFilterResourceTypeName("in"); // wINdows, lINux
-   var winPlatforms = ResourceManager.findResourcesByCriteria(rc);
-   var platformId = winPlatforms.get(0).getId();
-   
-   var bd = BundleManager.scheduleBundleResourceDeployment(testDeployment.getId(), platformId);
-   Assert.assertNotNull( bd );   
-   
-   
-   // delete the test bundle if it exists (after allowing agent audit messages to complete)
-   sleep( 5000 );
-   cleanupTestBundle();
-}
-
 function testGroupDeployment() {
    if ( !TestsEnabled ) {
       return;
@@ -90,20 +45,11 @@ function testGroupDeployment() {
    // delete the test bundle if it exists
    cleanupTestBundle();
 
-   // create the test bundle
-   var testBundle = BundleManager.createBundle( bundleName, bundleName, getBundleType() );
-   
-   // define the recipe for bundleVersion 1.0 
-   var recipe = "file -s testBundle.war -d @@bundleTest.deployHome@@/group/testBundle.war"
-      
-   // create bundleVersion 1.0
-   var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, bundleName, null, recipe);
-
-   // add the single bundleFile, the test war file
-   var fileBytes = scriptUtil.getFileBytes("./src/test/resources/testBundle.war"); 
-   var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "testBundle.war",
-         "1.0", null, fileBytes);
-
+   // create the test bundle version
+   var distributionFile = new java.io.File("./src/test/resources/cli-test-bundle.zip");
+   distributionFile = new java.io.File(distributionFile.getAbsolutePath());
+   var testBundleVersion = BundleManager.createBundleVersionViaFile( distributionFile );
+         
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
    var property = new PropertySimple("bundleTest.deployHome", "/tmp/bundle-test");

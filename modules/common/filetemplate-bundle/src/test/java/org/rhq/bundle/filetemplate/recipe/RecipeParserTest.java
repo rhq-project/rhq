@@ -260,11 +260,11 @@ public class RecipeParserTest {
         RecipeContext context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         Map<String, String> files = context.getDeployFiles();
-        assert files.get("jboss1.tar").equals(System.getProperty("java.io.tmpdir")) : files;
-        assert files.get("jboss2.tar").equals(System.getProperty("file.separator")) : files;
+        assert files.get("jboss1.tar").equals(System.getProperty("java.io.tmpdir").replace('\\', '/')) : files;
+        assert files.get("jboss2.tar").equals(System.getProperty("file.separator").replace('\\', '/')) : files;
         //assert files.get("jboss3.tar").equals(System.getProperty("line.separator")) : files;
         assert files.get("jboss4.tar").equals(System.getProperty("path.separator")) : files;
-        assert files.get("jboss5.tar").equals(System.getProperty("java.home")) : files;
+        assert files.get("jboss5.tar").equals(System.getProperty("java.home").replace('\\', '/')) : files;
         assert files.get("jboss6.tar").equals(System.getProperty("java.version")) : files;
         //assert files.get("jboss7.tar").equals(System.getProperty("user.timezone")) : files;
         //assert files.get("jboss8.tar").equals(System.getProperty("user.region")) : files;

@@ -58,12 +58,10 @@ function testGroupDeployment() {
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
-   var property = new PropertySimple("dummy.deployHome", "/tmp/bundle-test");
+   var property = new PropertySimple("dummy.name", "NAME REPLACED HERE!!!");
    config.put( property );
-   var property2 = new PropertySimple("dummy.name", "NAME REPLACED HERE!!!");
-   config.put( property2 );
-   var property3 = new PropertySimple("dummy.description", "FLOPPY!!!");
-   config.put( property3 );
+   var property = new PropertySimple("dummy.description", "FLOPPY!!!");
+   config.put( property );
 
    // create a deployment using the above config
    var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", "/tmp/bundle-test", config);

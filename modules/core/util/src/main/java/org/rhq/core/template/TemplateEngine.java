@@ -37,7 +37,12 @@ public class TemplateEngine implements Serializable {
     }
 
     public String replaceTokens(String input) {
-        StringBuffer buffer = new StringBuffer();
+
+        // since our replacement strings may include \ and $ characters avoid the use of
+        // matcher.appendReplacement and like methods when doing this work.
+
+        String result = input;
+
         Matcher matcher = tokenPattern.matcher(input);
         while (matcher.find()) {
             String next = matcher.group();
@@ -46,14 +51,10 @@ public class TemplateEngine implements Serializable {
                 String key = keyMatcher.group();
                 String value = tokens.get(key);
                 if (value != null) {
-                    next = value;
+                    result = result.replace(next, value);
                 }
             }
-            //If we didn't find a replacement for the key
-            //We leave the original value unchanged
-            matcher.appendReplacement(buffer, next);
         }
-        matcher.appendTail(buffer);
-        return buffer.toString();
+        return result;
     }
 }

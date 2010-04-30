@@ -215,7 +215,7 @@ public class RecipeParserTest {
         addRecipeCommand("deploy -f jboss2.tar -d @@rhq.system.sysprop.file.separator@@");
         //addRecipeCommand("deploy -f jboss3.tar -d @@rhq.system.sysprop.line.separator@@"); // can't test this here
         addRecipeCommand("deploy -f jboss4.tar -d @@rhq.system.sysprop.path.separator@@");
-        addRecipeCommand("deploy -f jboss5.tar -d @@rhq.system.sysprop.java.home@@");
+        addRecipeCommand("deploy -f jboss5.tar -d \"@@rhq.system.sysprop.java.home@@\"");
         addRecipeCommand("deploy -f jboss6.tar -d @@rhq.system.sysprop.java.version@@");
         //addRecipeCommand("deploy -f jboss7.tar -d @@rhq.system.sysprop.user.timezone@@"); // sometimes this is empty
         //addRecipeCommand("deploy -f jboss8.tar -d @@rhq.system.sysprop.user.region@@"); // sometimes this doesn't exist

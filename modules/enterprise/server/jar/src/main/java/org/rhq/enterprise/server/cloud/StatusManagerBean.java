@@ -106,9 +106,39 @@ public class StatusManagerBean implements StatusManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void updateByResource(int resourceId) {
+        log.debug("About to mark status by resource");
+
+        /* 
+         * the old alert definition is needed to know which caches to remove stale entries from; the updated / new
+         * alert definition is needed to know which caches need to be reloaded to get the new conditions; by the time
+         * this method is called, we only have the updated alert definition, thus it's not possible to intelligently
+         * know which of the two caches to reload; so, we need to reload them both to be sure the system is consistent
+         */
+        markGlobalCache();
+
+        Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_RESOURCE);
+        updateAgentQuery.setParameter("resourceId", resourceId);
+        int agentsUpdated = updateAgentQuery.executeUpdate();
+
+        /*
+         * this is informational debugging only - do NOT change the status bits here
+         */
+        if (log.isDebugEnabled()) {
+            Agent agent = agentManager.getAgentByResourceId(resourceId);
+            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+                + "] for resource[id=" + resourceId + "]");
+
+            log.debug("Agents updated: " + agentsUpdated);
+        }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateByAlertDefinition(int alertDefinitionId) {
-        // protect against template update, it has no resource and/or agent
-        if (alertDefinitionManager.isTemplate(alertDefinitionId)) {
+        log.debug("About to mark status by alert definition");
+
+        // alert templates and group alert definitions do not represent cache-ready entries
+        if (alertDefinitionManager.isResourceAlertDefinition(alertDefinitionId) == false) {
             return;
         }
 
@@ -118,31 +148,44 @@ public class StatusManagerBean implements StatusManagerLocal {
          * this method is called, we only have the updated alert definition, thus it's not possible to intelligently
          * know which of the two caches to reload; so, we need to reload them both to be sure the system is consistent
          */
-        Query updateServerQuery = entityManager.createNamedQuery(Server.QUERY_UPDATE_STATUS_BY_NAME);
-        updateServerQuery.setParameter("identity", serverManager.getIdentity());
-        updateServerQuery.executeUpdate();
+        markGlobalCache();
 
         Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_ALERT_DEFINITION);
         updateAgentQuery.setParameter("alertDefinitionId", alertDefinitionId);
-        updateAgentQuery.executeUpdate();
+        int agentsUpdated = updateAgentQuery.executeUpdate();
+
+        /*
+         * this is informational debugging only - do NOT change the status bits here
+         */
+        if (log.isDebugEnabled()) {
+            AlertDefinition definition = entityManager.find(AlertDefinition.class, alertDefinitionId);
+            Agent agent = agentManager.getAgentByResourceId(definition.getResource().getId());
+            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+                + "] for alertDefinition[id=" + alertDefinitionId + "]");
+
+            log.debug("Agents updated: " + agentsUpdated);
+        }
+    }
+
+    private void markGlobalCache() {
+        Query updateServerQuery = entityManager.createNamedQuery(Server.QUERY_UPDATE_STATUS_BY_NAME);
+        updateServerQuery.setParameter("identity", serverManager.getIdentity());
+        int serversUpdated = updateServerQuery.executeUpdate();
 
         /*
          * this is informational debugging only - do NOT change the status bits here
          */
         if (log.isDebugEnabled()) {
             Server server = serverManager.getServer();
-            log.debug("Marking status, server[id=" + server.getId() + ", status=" + server.getStatus()
-                + "] for alertDefinition[id=" + alertDefinitionId + "]");
+            log.debug("Marking status, server[id=" + server.getId() + ", status=" + server.getStatus() + "]");
 
-            AlertDefinition definition = entityManager.find(AlertDefinition.class, alertDefinitionId);
-            Agent agent = agentManager.getAgentByResourceId(definition.getResource().getId());
-            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
-                + "] for alertDefinition[id=" + alertDefinitionId + "]");
+            log.debug("Servers updated: " + serversUpdated);
         }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateByMeasurementBaseline(int baselineId) {
+        log.debug("About to mark status by measurement baseline");
         // baselines refer to measurement-based alert conditions, thus only agent statuses need to be set
         Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_MEASUREMENT_BASELINE);
         updateAgentQuery.setParameter("baselineId", baselineId);
@@ -172,6 +215,7 @@ public class StatusManagerBean implements StatusManagerLocal {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateByAgent(int agentId) {
+        log.debug("About to mark status by agent");
         Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_AGENT);
         updateAgentQuery.setParameter("agentId", agentId);
         updateAgentQuery.executeUpdate();
@@ -187,6 +231,7 @@ public class StatusManagerBean implements StatusManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateByAutoBaselineCalculationJob() {
+        log.debug("About to mark status by autoBaselineCalculationJob");
         // baselines refer to measurement-based alert conditions, thus only agent statuses need to be set
         Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_FOR_ALL);
         updateAgentQuery.executeUpdate();

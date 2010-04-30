@@ -22,10 +22,9 @@
  */
 package org.rhq.core.domain.resource;
 
-import org.rhq.core.domain.cloud.AffinityGroup;
-import org.rhq.core.domain.cloud.Server;
-
-import org.jetbrains.annotations.NotNull;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -41,9 +40,12 @@ import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
+
+import org.rhq.core.domain.cloud.AffinityGroup;
+import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * A JON agent.
@@ -98,9 +100,17 @@ import java.util.List;
         + "  FROM Agent a " //
         + " WHERE a.id = :agentId " //
         + "   AND a.backFilled = true "), //
+    @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_BY_RESOURCE, query = "" //
+        + " UPDATE Agent a " //
+        + "    SET a.status = -1 " // negative numbers so that bitmask strategy does not conflict with this one
+        + "  WHERE a.status = 0 " // we only need the first guy to set it
+        + "    AND a.id = ( SELECT resA.id " // only update ourselves;
+        + "                   FROM Resource res " //
+        + "                   JOIN res.agent resA " //
+        + "                  WHERE res.id = :resourceId ) "), //
     @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_BY_ALERT_DEFINITION, query = "" //
         + " UPDATE Agent a " //
-        + "    SET a.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
+        + "    SET a.status = -1 " // negative numbers so that bitmask strategy does not conflict with this one
         + "  WHERE a.status = 0 " // we only need the first guy to set it
         + "    AND a.id = ( SELECT resA.id " // only update ourselves;
         + "                   FROM AlertDefinition ad " //
@@ -109,7 +119,7 @@ import java.util.List;
         + "                  WHERE ad.id = :alertDefinitionId ) "), //
     @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_BY_MEASUREMENT_BASELINE, query = "" //
         + " UPDATE Agent a " //
-        + "    SET a.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
+        + "    SET a.status = -1 " // negative numbers so that bitmask strategy does not conflict with this one
         + "  WHERE a.status = 0 " // we only need the first guy to set it
         + "    AND a.id = ( SELECT resA.id " // only update ourselves;
         + "                   FROM MeasurementBaseline mb " //
@@ -119,12 +129,12 @@ import java.util.List;
         + "                  WHERE mb.id = :baselineId ) "), //
     @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_BY_AGENT, query = "" //
         + " UPDATE Agent a " //
-        + "    SET a.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
+        + "    SET a.status = -1 " // negative numbers so that bitmask strategy does not conflict with this one
         + "  WHERE a.status = 0 " // we only need the first guy to set it
         + "    AND a.id = :agentId "), //
     @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_FOR_ALL, query = "" //
         + " UPDATE Agent a " //
-        + "    SET a.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
+        + "    SET a.status = -1 " // negative numbers so that bitmask strategy does not conflict with this one
         + "  WHERE a.status = 0 ") //
 })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_AGENT_ID_SEQ")
@@ -154,6 +164,7 @@ public class Agent implements Serializable {
     public static final String QUERY_UPDATE_CLEAR_STATUS_BY_IDS = "Agent.updateClearStatusByIds";
     public static final String QUERY_REMOVE_SERVER_REFERENCE = "Agent.removeServerReference";
 
+    public static final String QUERY_UPDATE_STATUS_BY_RESOURCE = "Agent.updateStatusByResource";
     public static final String QUERY_UPDATE_STATUS_BY_ALERT_DEFINITION = "Agent.updateStatusByAlertDefinition";
     public static final String QUERY_UPDATE_STATUS_BY_MEASUREMENT_BASELINE = "Agent.updateStatusByMeasurementBasleine";
     public static final String QUERY_UPDATE_STATUS_BY_AGENT = "Agent.updateStatusByAgent";
@@ -463,7 +474,19 @@ public class Agent implements Serializable {
 
     @PreUpdate
     void onUpdate() {
+        if (this.server == null) {
+            printWithTrace("Agent getting it's server reference set to null");
+        }
         this.mtime = System.currentTimeMillis();
+    }
+
+    private void printWithTrace(String message) {
+        try {
+            new IllegalArgumentException(message);
+        } catch (IllegalArgumentException iae) {
+            String stackTrace = ThrowableUtil.getStackAsString(iae);
+            LogFactory.getLog("HighAvailabilityLogic").fatal(stackTrace);
+        }
     }
 
     @Override

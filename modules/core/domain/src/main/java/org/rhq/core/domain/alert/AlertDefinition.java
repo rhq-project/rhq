@@ -196,6 +196,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "  FROM AlertDefinition ad " //
         + " WHERE ad.id = :alertDefinitionId " //
         + "   AND ad.resourceGroup IS NOT NULL "), //
+    @NamedQuery(name = AlertDefinition.QUERY_IS_RESOURCE_ALERT_DEFINITION, query = "" //
+        + "SELECT ad.id " //
+        + "  FROM AlertDefinition ad " //
+        + " WHERE ad.id = :alertDefinitionId " //
+        + "   AND ad.resource IS NOT NULL "), //
     @NamedQuery(name = AlertDefinition.QUERY_UPDATE_SET_DELETED, query = "" //
         + "UPDATE AlertDefinition ad " //
         + "   SET ad.deleted = TRUE " //
@@ -249,6 +254,7 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_IS_ENABLED = "AlertDefinition.isEnabled";
     public static final String QUERY_IS_TEMPLATE = "AlertDefinition.isTemplate";
     public static final String QUERY_IS_GROUP_ALERT_DEFINITION = "AlertDefinition.isGroupAlertDefinition";
+    public static final String QUERY_IS_RESOURCE_ALERT_DEFINITION = "AlertDefinition.isResourceAlertDefinition";
 
     // group alert definitions
     public static final String QUERY_UPDATE_SET_DELETED = "AlertDefinition.updateSetDeleted";

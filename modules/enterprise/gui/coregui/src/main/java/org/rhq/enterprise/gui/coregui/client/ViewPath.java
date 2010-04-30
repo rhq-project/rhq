@@ -72,4 +72,12 @@ public class ViewPath {
     public boolean isNext(ViewId providedViewId) {
         return ((index + 1) < viewPath.size() && providedViewId != null && getNext().equals(providedViewId));
     }
+
+    public boolean isNextEnd() {
+        return viewPath.size() <= index+1;
+    }
+
+    public int viewsLeft() {
+        return viewPath.size() - index - 1;
+    }
 }

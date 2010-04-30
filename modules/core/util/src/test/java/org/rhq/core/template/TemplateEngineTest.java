@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 public class TemplateEngineTest extends TestCase {
     private static final String IPADDR = "192.168.22.153";
     private static final String SUCCESSTOKEN1 = "successtoken1";
-    private static final String WINTEMPDIR = "C:\\Users\\JSHAUG~1\\AppData\\Local\\Temp\\";
+    private static final String WINTEMPDIR = "C:\\Users\\JSHAUG~1\\Documents and Settings\\Local\\Temp\\";
     String noTokens = "This string should come through unchanged";
     String justOneToken = "@@rhq.token1@@";
     String oneTokenWhiteSpace = "@@ rhq.token1 @@";
@@ -46,6 +46,8 @@ public class TemplateEngineTest extends TestCase {
 
     public void testWinToken() {
         assertEquals(WINTEMPDIR, templateEngine.replaceTokens("@@rhq.system.sysprop.java.io.tmpdir@@"));
+        assertEquals(WINTEMPDIR + "-" + WINTEMPDIR, templateEngine
+            .replaceTokens("@@rhq.system.sysprop.java.io.tmpdir@@-@@ rhq.system.sysprop.java.io.tmpdir @@"));
     }
 
     public void testOneTokenWhiteSpace() {

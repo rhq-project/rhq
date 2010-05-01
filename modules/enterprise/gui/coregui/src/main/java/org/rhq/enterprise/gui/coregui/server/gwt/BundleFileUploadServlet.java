@@ -34,6 +34,12 @@ import org.rhq.core.domain.content.Architecture;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+/**
+ * This servlet allows the requestor to upload a bundle file and attach it to
+ * a given BundleVersion.
+ * 
+ * @author John Mazzitelli
+ */
 public class BundleFileUploadServlet extends FileUploadServlet {
     private static final long serialVersionUID = 1L;
 

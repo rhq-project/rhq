@@ -49,7 +49,7 @@ public class BundleFileUploadServlet extends FileUploadServlet {
 
             int bundleVersionId = Integer.parseInt(getFormField(formFields, "bundleVersionId", null));
             String name = getFormField(formFields, "name", file.getName());
-            String version = getFormField(formFields, "version", "1.0");
+            String version = getFormField(formFields, "version", Integer.toString(bundleVersionId));
             Architecture architecture = new Architecture(getFormField(formFields, "arch", "noarch"));
             InputStream fileStream = new FileInputStream(file);
 

@@ -36,13 +36,15 @@ public class RecentlyAddedResourceComposite implements Serializable {
     private long ctime;
     private boolean showChildren;
     private List<RecentlyAddedResourceComposite> children;
-
-    public RecentlyAddedResourceComposite() {
+    private String resourceTypeName;
+    
+    public RecentlyAddedResourceComposite() {    
     }
-
-    public RecentlyAddedResourceComposite(int id, String name, long ctime) {
+    
+    public RecentlyAddedResourceComposite(int id, String name, String resourceTypeName, long ctime) {
         this.id = id;
         this.name = name;
+        this.resourceTypeName = resourceTypeName;
         this.ctime = ctime;
     }
 
@@ -56,6 +58,10 @@ public class RecentlyAddedResourceComposite implements Serializable {
 
     public String getName() {
         return name;
+    }
+
+    public String getResourceTypeName() {
+        return resourceTypeName;
     }
 
     public long getCtime() {

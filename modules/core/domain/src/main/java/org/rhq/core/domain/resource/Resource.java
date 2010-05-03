@@ -182,27 +182,27 @@ import org.rhq.core.domain.util.Summary;
         + "  FROM Resource res " //
         + " WHERE res.parentResource = :parent "),
     @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_PLATFORMS, query = "" //
-        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
+        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.resourceType.name, res.itime) "
         + "    FROM Resource res JOIN res.childResources child JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
         + "   WHERE (res.itime >= :oldestEpochTime OR ((child.itime >= :oldestEpochTime) AND (child.inventoryStatus = 'COMMITTED'))) "
         + "     AND res.resourceType.category = 'PLATFORM' "
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND s = :subject " + "ORDER BY res.itime DESC "),
     @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_PLATFORMS_ADMIN, query = "" //
-        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
+        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.resourceType.name, res.itime) "
         + "    FROM Resource res JOIN res.childResources child "
         + "   WHERE ((res.itime >= :oldestEpochTime) OR ((child.itime >= :oldestEpochTime) AND (child.inventoryStatus = 'COMMITTED'))) "
         + "     AND res.resourceType.category = 'PLATFORM' "
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "ORDER BY res.itime DESC "),
     @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_SERVERS, query = ""
-        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
+        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.resourceType.name, res.itime) "
         + "    FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
         + "   WHERE res.itime >= :oldestEpochTime " + "     AND res.resourceType.category = 'SERVER' "
         + "     AND res.inventoryStatus = 'COMMITTED' " + "     AND res.parentResource.id = :platformId "
         + "     AND s = :subject " + "ORDER BY res.itime DESC "),
     @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_SERVERS_ADMIN, query = ""
-        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
+        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.resourceType.name, res.itime) "
         + "    FROM Resource res " + "   WHERE res.itime >= :oldestEpochTime "
         + "     AND res.resourceType.category = 'SERVER' " + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND res.parentResource.id = :platformId " + "ORDER BY res.itime DESC "),

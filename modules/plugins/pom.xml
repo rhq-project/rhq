@@ -78,6 +78,10 @@
 
    </dependencies>
 
+   <!--  !!! -->
+   <!--  These profile groupings need to also be mirrored in server/ear/pom.xml -->
+   <!--  !!! -->   
+      
    <modules>
       <!--  core plugins  -->
       <module>platform</module>

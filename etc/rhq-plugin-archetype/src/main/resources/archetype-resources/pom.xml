@@ -15,7 +15,7 @@
   <description>RHQ Plugin</description>
 
   <properties>        
-    <rhq.version>1.2.0.GA</rhq.version>
+    <rhq.version>3.0.0.B04</rhq.version>
   </properties>    
   
   <dependencies>
@@ -169,7 +169,7 @@
       <name>JBoss Repository</name>
       <url>http://repository.jboss.org/maven2/</url>
       <snapshots>
-        <enabled>false</enabled>
+         <enabled>false</enabled>
       </snapshots>
     </repository>
   </repositories>
@@ -180,7 +180,7 @@
        <name>JBoss Plugin Repository</name>
        <url>http://repository.jboss.org/maven2/</url>
        <snapshots>
-         <enabled>false</enabled>
+          <enabled>false</enabled>
        </snapshots>
      </pluginRepository>
    </pluginRepositories>

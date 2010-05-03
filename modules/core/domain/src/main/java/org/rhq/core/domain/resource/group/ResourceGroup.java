@@ -33,6 +33,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -60,6 +61,7 @@ import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.tagging.Tag;
 
 /**
  * A {@link Group} that contains {@link Resource}s. It cannot contain other groups.
@@ -446,6 +448,10 @@ public class ResourceGroup extends Group {
     @OneToMany(mappedBy = "resourceGroup", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     private Set<AlertDefinition> alertDefinitions = new LinkedHashSet<AlertDefinition>();
 
+    @ManyToMany(mappedBy = "resourceGroups", fetch = FetchType.LAZY)
+    private Set<Tag> tags;
+
+
     /* no-arg constructor required by EJB spec */
     protected ResourceGroup() {
     }
@@ -641,6 +647,29 @@ public class ResourceGroup extends Group {
 
     public void setAlertDefinitions(Set<AlertDefinition> alertDefinitions) {
         this.alertDefinitions = alertDefinitions;
+    }
+
+    public Set<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
+    }
+
+    public void addTag(Tag tag) {
+        if (this.tags == null) {
+            tags = new HashSet<Tag>();
+        }
+        tags.add(tag);
+    }
+
+    public boolean removeTag(Tag tag) {
+        if (tags != null) {
+            return tags.remove(tag);
+        } else {
+            return false;
+        }
     }
 
     @PrePersist

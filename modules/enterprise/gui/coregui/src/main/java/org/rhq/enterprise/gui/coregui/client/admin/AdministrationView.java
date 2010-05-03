@@ -18,16 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin;
 
-import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
-import org.rhq.enterprise.gui.coregui.client.UnknownViewException;
-import org.rhq.enterprise.gui.coregui.client.View;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
-import org.rhq.enterprise.gui.coregui.client.ViewRenderer;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
-import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import java.util.LinkedHashMap;
 
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -41,25 +32,32 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
+import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 
 /**
- * 
  * @author Greg Hinkle
  */
-public class AdministrationView extends HLayout implements ViewRenderer {
+public class AdministrationView extends HLayout implements BookmarkableView {
+
     public static final String VIEW_PATH = "Administration";
 
-    public static final String SUBVIEW_PATH_REPORTS = VIEW_PATH + ViewId.PATH_SEPARATOR + "Reports";
-    public static final String SUBVIEW_PATH_REPORTS_INVENTORY_SUMMARY = SUBVIEW_PATH_REPORTS + ViewId.PATH_SEPARATOR + "InventorySummary";
 
-    private static final String IFRAME_URL_INVENTORY_SUMMARY_REPORT = "/rhq/admin/report/resourceInstallReport-body.xhtml";
+    private ViewId currentSectionViewId;
+    private ViewId currentPageViewId;
+
 
     private SectionStack sectionStack;
 
     private Canvas contentCanvas;
-    private List<TreeGrid> treeGrids;
+    private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
 
     @Override
     protected void onInit() {
@@ -78,21 +76,39 @@ public class AdministrationView extends HLayout implements ViewRenderer {
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-        this.treeGrids = new ArrayList<TreeGrid>(5);
-        sectionStack.addSection(buildSecuritySection());
-        sectionStack.addSection(buildPluginsSection());
-        sectionStack.addSection(buildManagementClusterSection());
-        sectionStack.addSection(buildSystemConfigurationSection());
-        sectionStack.addSection(buildReportsSection());
+
+        treeGrids.put("Security", buildSecuritySection());
+        treeGrids.put("Configuration", buildSystemConfigurationSection());
+        treeGrids.put("Cluster", buildManagementClusterSection());
+        treeGrids.put("Reports", buildReportsSection());
+        treeGrids.put("Security", buildSecuritySection());
+
+
+        for (final String name : treeGrids.keySet()) {
+            TreeGrid grid = treeGrids.get(name);
+
+            grid.addSelectionChangedHandler(new SelectionChangedHandler() {
+                public void onSelectionChanged(SelectionEvent selectionEvent) {
+                    CoreGUI.goTo("Administration/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                }
+            });
+
+
+            SectionStackSection section = new SectionStackSection(name);
+            section.setExpanded(true);
+            section.addItem(grid);
+
+            sectionStack.addSection(section);
+        }
+
 
         addMember(sectionStack);
         addMember(contentCanvas);
 
-        setContent(buildLanding());        
     }
 
 
-    private HTMLFlow buildLanding() {
+    private HTMLFlow defaultView() {
         String contents = "<h1>Administration</h1>\n" +
                 "From this section, the RHQ global settings can be administered. This includes configuring \n" +
                 "<a href=\"\">Security</a>, setting up <a href=\"\">Plugins</a> and other stuff.";
@@ -102,61 +118,32 @@ public class AdministrationView extends HLayout implements ViewRenderer {
     }
 
 
-    private SectionStackSection buildSecuritySection() {
-        final SectionStackSection section = new SectionStackSection("Security");
-        section.setExpanded(true);
+    private TreeGrid buildSecuritySection() {
 
         final TreeGrid securityTreeGrid = new TreeGrid();
         securityTreeGrid.setShowHeader(false);
-        this.treeGrids.add(securityTreeGrid);
 
         Tree tree = new Tree();
         final TreeNode manageUsersNode = new TreeNode("Manage Users");
         final TreeNode manageRolesNode = new TreeNode("Manage Roles");
         final TreeNode discoveryQueue = new TreeNode("Auto Discovery Queue");
+        final TreeNode remoteAgentInstall = new TreeNode("Remote Agent Install");
         tree.setRoot(new TreeNode("security",
                 manageUsersNode,
                 manageRolesNode,
-                discoveryQueue));
+                discoveryQueue,
+                remoteAgentInstall));
 
         securityTreeGrid.setData(tree);
 
-        securityTreeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    Canvas content;
-                    if (selectionEvent.getRecord() == manageUsersNode) {
-                        content = new UsersView();
-                    } else if (selectionEvent.getRecord() == manageRolesNode) {
-                        content = new RolesView();
-                    } else if (selectionEvent.getRecord() == discoveryQueue) {
-                        content = new ResourceAutodiscoveryView();
-                    } else {
-                        throw new IllegalStateException("Unknown record selected: " + selectionEvent.getRecord());
-                    }
-                    setContent(content);
-
-                    for (TreeGrid treeGrid : treeGrids) {
-                        if (treeGrid != securityTreeGrid) {
-                            treeGrid.deselectAllRecords();
-                        }
-                    }
-                }
-            }
-        });
-
-        section.addItem(securityTreeGrid);
-
-        return section;
+        return securityTreeGrid;
     }
 
-    private SectionStackSection buildManagementClusterSection() {
-        final SectionStackSection section = new SectionStackSection("Management Cluster");
-        section.setExpanded(true);
+
+    private TreeGrid buildManagementClusterSection() {
 
         final TreeGrid mgmtClusterTreeGrid = new TreeGrid();
         mgmtClusterTreeGrid.setShowHeader(false);
-        this.treeGrids.add(mgmtClusterTreeGrid);
 
         Tree tree = new Tree();
         final TreeNode manageServersNode = new TreeNode("Servers");
@@ -172,144 +159,35 @@ public class AdministrationView extends HLayout implements ViewRenderer {
 
         mgmtClusterTreeGrid.setData(tree);
 
-        mgmtClusterTreeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    String url;
-                    if (selectionEvent.getRecord() == manageServersNode) {
-                        url = "/rhq/ha/listServers.xhtml";
-                    } else if (selectionEvent.getRecord() == manageAgentsNode) {
-                        url = "/rhq/ha/listAgents.xhtml";
-                    } else if (selectionEvent.getRecord() == manageAffinityGroupsNode) {
-                        url = "/rhq/ha/listAffinityGroups.xhtml";
-                    } else if (selectionEvent.getRecord() == managePartitionEventsNode) {
-                        url = "/rhq/ha/listPartitionEvents.xhtml";
-                    } else {
-                        throw new IllegalStateException("Unknown record selected: " + selectionEvent.getRecord());
-                    }
-                    url = addQueryStringParam(url, "nomenu=true");
-                    FullHTMLPane pane = new FullHTMLPane(url);                    
-                    setContent(pane);
-
-                    for (TreeGrid treeGrid : treeGrids) {
-                        if (treeGrid != mgmtClusterTreeGrid) {
-                            treeGrid.deselectAllRecords();
-                        }
-                    }
-                }
-            }
-        });
-
-        section.addItem(mgmtClusterTreeGrid);
-
-        return section;
-    }
-
-    private SectionStackSection buildPluginsSection() {
-        final SectionStackSection section = new SectionStackSection("Plugins");
-        section.setExpanded(true);
-
-        final TreeGrid pluginsTreeGrid = new TreeGrid();
-        pluginsTreeGrid.setShowHeader(false);
-        this.treeGrids.add(pluginsTreeGrid);
-
-        Tree tree = new Tree();
-        final TreeNode managePlugins = new TreeNode("Plugins");
-
-        tree.setRoot(new TreeNode("clustering",
-                managePlugins));
-
-        pluginsTreeGrid.setData(tree);
-
-        pluginsTreeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    String url = null;
-                    if (selectionEvent.getRecord() == managePlugins) {
-                        url = "/rhq/admin/plugin/plugin-list.xhtml";
-                    } else {
-                        throw new IllegalStateException("Unknown record selected: " + selectionEvent.getRecord());
-                    }
-                    url = addQueryStringParam(url, "nomenu=true");
-                    FullHTMLPane pane = new FullHTMLPane(url);
-                    setContent(pane);
-
-                    for (TreeGrid treeGrid : treeGrids) {
-                        if (treeGrid != pluginsTreeGrid) {
-                            treeGrid.deselectAllRecords();
-                        }
-                    }
-                }
-            }
-        });
-
-        section.addItem(pluginsTreeGrid);
-
-        return section;
+        return mgmtClusterTreeGrid;
     }
 
 
-    private SectionStackSection buildSystemConfigurationSection() {
-        final SectionStackSection section = new SectionStackSection("System Configuration");
-        section.setExpanded(true);
+    private TreeGrid buildSystemConfigurationSection() {
 
         final TreeGrid systemConfigTreeGrid = new TreeGrid();
         systemConfigTreeGrid.setShowHeader(false);
-        this.treeGrids.add(systemConfigTreeGrid);
 
         Tree tree = new Tree();
         final TreeNode manageSettings = new TreeNode("System Settings");
         final TreeNode manageTemplates = new TreeNode("Templates");
         final TreeNode manageDownloads = new TreeNode("Downloads");
         final TreeNode manageLicense = new TreeNode("License");
+        final TreeNode managePlugins = new TreeNode("Plugins");
 
         tree.setRoot(new TreeNode("System Configuration",
-                manageSettings, manageTemplates, manageDownloads, manageLicense));
+                manageSettings, manageTemplates, manageDownloads, manageLicense, managePlugins));
 
         systemConfigTreeGrid.setData(tree);
 
-
-        systemConfigTreeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    String url;
-                    if (selectionEvent.getRecord() == manageSettings) {
-                        url = "/admin/config/Config.do?mode=edit";
-                    } else if (selectionEvent.getRecord() == manageTemplates) {
-                        url = "/admin/config/EditDefaults.do?mode=monitor&viewMode=all";
-                    } else if (selectionEvent.getRecord() == manageDownloads) {
-                        url = "/rhq/admin/downloads-body.xhtml";
-                    } else if (selectionEvent.getRecord() == manageLicense) {
-                        url = "/admin/license/LicenseAdmin.do?mode=view";
-                    } else {
-                        throw new IllegalStateException("Unknown record selected: " + selectionEvent.getRecord());
-                    }
-                    url = addQueryStringParam(url, "nomenu=true");
-                    FullHTMLPane pane = new FullHTMLPane(url);
-                    setContent(pane);
-
-                    for (TreeGrid treeGrid : treeGrids) {
-                        if (treeGrid != systemConfigTreeGrid) {
-                            treeGrid.deselectAllRecords();
-                        }
-                    }
-                }
-            }
-        });
-
-        section.addItem(systemConfigTreeGrid);
-
-        return section;
+        return systemConfigTreeGrid;
     }
 
-    private SectionStackSection buildReportsSection() {
-        final SectionStackSection section = new SectionStackSection("Reports");
-        section.setID("Reports");
-        section.setExpanded(true);
+
+    private TreeGrid buildReportsSection() {
 
         final TreeGrid reportsTreeGrid = new TreeGrid();
         reportsTreeGrid.setShowHeader(false);
-        this.treeGrids.add(reportsTreeGrid);
 
         Tree tree = new Tree();
         final TreeNode inventorySummaryNode = new TreeNode("Inventory Summary");
@@ -319,23 +197,9 @@ public class AdministrationView extends HLayout implements ViewRenderer {
 
         reportsTreeGrid.setData(tree);
 
-        reportsTreeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    CoreGUI.goTo(SUBVIEW_PATH_REPORTS_INVENTORY_SUMMARY);
-                    for (TreeGrid treeGrid : treeGrids) {
-                        if (treeGrid != reportsTreeGrid) {
-                            treeGrid.deselectAllRecords();
-                        }
-                    }
-                }
-            }
-        });
-
-        section.addItem(reportsTreeGrid);
-
-        return section;
+        return reportsTreeGrid;
     }
+
 
     public void setContent(Canvas newContent) {
 
@@ -346,22 +210,105 @@ public class AdministrationView extends HLayout implements ViewRenderer {
         contentCanvas.markForRedraw();
     }
 
-    public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {
-        String parentPath = viewId.getParent().getPath();
-        if (parentPath.equals("Administration")) {
-            SectionStackSection stackSection = this.sectionStack.getSection(viewId.getName());
-            if (stackSection != null) {
-                stackSection.setExpanded(true);
-                if (lastNode) {
-                    // TODO: Render some default content for the e.g. Administration/Reports view.
-                }
-                return new View(viewId, new Breadcrumb(viewId.getName(), false));
+
+    private void renderContentView(ViewPath viewPath) {
+
+        currentSectionViewId = viewPath.getCurrent();
+        currentPageViewId = viewPath.getNext();
+
+        String section = currentSectionViewId.getPath();
+        String page = currentPageViewId.getPath();
+
+
+        Canvas content = null;
+        if ("Reports".equals(section)) {
+
+            if ("Inventory Summary".equals(page)) {
+                content = new FullHTMLPane("/rhq/admin/report/resourceInstallReport-body.xhtml");
             }
-        } else if (parentPath.equals("Administration/Reports")) {            
-            setContent(new FullHTMLPane(IFRAME_URL_INVENTORY_SUMMARY_REPORT));
-            return new View(viewId);
+
+
+        } else if ("Security".equals(section)) {
+
+            if ("Manage Users".equals(page)) {
+                content = new UsersView();
+            } else if ("Manage Roles".equals(page)) {
+                content = new RolesView();
+            } else if ("Auto Discovery Queue".equals(page)) {
+                content = new ResourceAutodiscoveryView();
+            } else if ("Remote Agent Install".equals(page)) {
+                content = new RemoteAgentInstallView();
+            }
+        } else if ("Configuration".equals(section)) {
+
+            String url = null;
+            if ("System Settings".equals(page)) {
+                url = "/admin/config/Config.do?mode=edit";
+            } else if ("Templates".equals(page)) {
+                url = "/admin/config/EditDefaults.do?mode=monitor&viewMode=all";
+            } else if ("Downloads".equals(page)) {
+                url = "/rhq/admin/downloads-body.xhtml";
+            } else if ("License".equals(page)) {
+                url = "/admin/license/LicenseAdmin.do?mode=view";
+            } else if ("Plugins".equals(page)) {
+                url = "/rhq/admin/plugin/plugin-list.xhtml";
+            }
+            url = addQueryStringParam(url, "nomenu=true");
+            content = new FullHTMLPane(url);
+
+
+        } else if ("Cluster".equals(section)) {
+            String url = null;
+            if ("Servers".equals(page)) {
+                url = "/rhq/ha/listServers.xhtml";
+            } else if ("Agents".equals(page)) {
+                url = "/rhq/ha/listAgents.xhtml";
+            } else if ("Affinity Groups".equals(page)) {
+                url = "/rhq/ha/listAffinityGroups.xhtml";
+            } else if ("Partition Events".equals(page)) {
+                url = "/rhq/ha/listPartitionEvents.xhtml";
+            }
+            url = addQueryStringParam(url, "nomenu=true");
+            content = new FullHTMLPane(url);
         }
-        throw new UnknownViewException();
+
+
+        for (String name : treeGrids.keySet()) {
+
+            TreeGrid treeGrid = treeGrids.get(name);
+            if (name.equals(section)) {
+                treeGrid.setSelectedPaths(page);
+            } else {
+                treeGrid.deselectAllRecords();
+            }
+        }
+
+
+
+        setContent(content);
+
+
+        if (content instanceof BookmarkableView) {
+            ((BookmarkableView) content).renderView(viewPath.next().next());
+        }
+
+
+    }
+
+
+    public void renderView(ViewPath viewPath) {
+
+        if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
+
+            if (viewPath.isEnd()) {
+                // Display default view
+                setContent(defaultView());
+            } else {
+                renderContentView(viewPath);
+            }
+        }
+
+
     }
 
     private static String addQueryStringParam(String url, String param) {

@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 import org.apache.tools.ant.BuildException;
 
-import org.rhq.bundle.ant.AntLauncher;
+import org.apache.tools.ant.Project;
 import org.rhq.bundle.ant.type.ArchiveType;
 import org.rhq.bundle.ant.type.FileSet;
 import org.rhq.bundle.ant.type.FileType;
@@ -37,6 +37,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.template.TemplateEngine;
+import org.rhq.core.util.updater.DeployDifferences;
 import org.rhq.core.util.updater.Deployer;
 import org.rhq.core.util.updater.DeploymentProperties;
 
@@ -60,21 +61,31 @@ public class DeployTask extends AbstractBundleTask {
 
     @Override
     public void execute() throws BuildException {
-        int deploymentId = getDeploymentId();
+        int deploymentId = getProject().getDeploymentId();
         DeploymentProperties deploymentProps = new DeploymentProperties(deploymentId, getProject().getBundleName(),
             getProject().getBundleVersion(), getProject().getBundleDescription());
         File deployDir = getProject().getDeployDir();
         TemplateEngine templateEngine = createTemplateEngine();
-        log("Deploying files " + this.files + "...");
-        log("Deploying archives " + this.archives + "...");
+        if (this.files.isEmpty() && this.archives.isEmpty()) {
+            throw new BuildException("You must specify at least one file to deploy via nested rhq:file and/or rhq:archive elements.");
+        }
+        if (!this.files.isEmpty()) {
+            log("Deploying files " + this.files + "...", Project.MSG_VERBOSE);
+        }
+        if (!this.archives.isEmpty()) {
+            log("Deploying archives " + this.archives + "...", Project.MSG_VERBOSE);
+        }
         Deployer deployer = new Deployer(deploymentProps, this.archives, this.files, deployDir, this.replacePattern,
             templateEngine, this.ignorePattern);
         try {
-            deployer.deploy();
+            DeployDifferences diffs = getProject().getDeployDifferences();
+            deployer.deploy(diffs);
+            getProject().log("Results:\n" + diffs + "\n");            
         } catch (Exception e) {
             throw new BuildException("Failed to deploy bundle '" + getProject().getBundleName() + "' version "
-                + getProject().getBundleVersion() + ".", e);
+                + getProject().getBundleVersion() + ": " + e, e);
         }
+
         return;
     }
 
@@ -115,14 +126,6 @@ public class DeployTask extends AbstractBundleTask {
     public void addConfigured(ReplaceType replace) {
         List<FileSet> fileSets = replace.getFileSets();
         this.replacePattern = getPattern(fileSets);
-    }
-
-    private int getDeploymentId() {
-        String deploymentIdStr = getProject().getProperty(AntLauncher.DEPLOY_ID_PROP);
-        if (deploymentIdStr == null) {
-            return 0;
-        }
-        return Integer.parseInt(deploymentIdStr);
     }
 
     private TemplateEngine createTemplateEngine() {

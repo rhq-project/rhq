@@ -1,0 +1,94 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!--  Copyright 2006 Sun Microsystems, Inc.  All rights reserved.  You may not modify, use, reproduce, or distribute this software except in compliance with the terms of the License at: 
+ http://developer.sun.com/berkeley_license.html
+ $Id: faces-config.xml,v 1.13 2006/05/03 22:03:20 inder Exp $ -->
+
+<faces-config xmlns="http://java.sun.com/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd"
+    version="1.2">
+    <!-- ========== Application Wide Features ================================ -->
+
+    <!-- ========== Managed Beans ============================================ -->
+    <managed-bean>
+        <managed-bean-name>SearchBean</managed-bean-name>
+        <managed-bean-class>com.sun.javaee.blueprints.petstore.search.SearchBean</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+
+    <managed-bean>
+        <managed-bean-name>RatingBean</managed-bean-name>
+        <managed-bean-class>com.sun.javaee.blueprints.petstore.model.RatingBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+        <managed-property>
+            <property-name>itemId</property-name>
+            <value>#{param.itemIdBinding}</value>
+        </managed-property>             
+    </managed-bean>
+    
+    <managed-bean>
+        <managed-bean-name>PayPalBean</managed-bean-name>
+        <managed-bean-class>com.sun.javaee.blueprints.petstore.model.PayPalBean</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+    
+    <managed-bean>
+        <managed-bean-name>FileUploadBean</managed-bean-name>
+        <managed-bean-class>com.sun.javaee.blueprints.petstore.controller.FileUploadBean</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+    
+    <managed-bean>
+        <managed-bean-name>MapBean</managed-bean-name>
+        <managed-bean-class>com.sun.javaee.blueprints.petstore.mapviewer.MapBean</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+    
+    <managed-bean>
+        <managed-bean-name>AutocompleteBean</managed-bean-name>
+        <managed-bean-class>com.sun.javaee.blueprints.petstore.controller.AutocompleteBean</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+       
+    <managed-bean>
+        <managed-bean-name>AddressBean</managed-bean-name>
+        <managed-bean-class>com.sun.javaee.blueprints.petstore.controller.AddressBean</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+  
+    <!-- ========== Navigation Rules ========================================= -->
+    <navigation-rule>
+        <from-view-id>/mapLocation.jsp</from-view-id>
+        <navigation-case>
+            <from-outcome>map</from-outcome>
+            <to-view-id>/map.jsp</to-view-id>
+        </navigation-case>
+    </navigation-rule>    
+    <navigation-rule>
+        <from-view-id>/mapAll.jsp</from-view-id>
+        <navigation-case>
+            <from-outcome>map</from-outcome>
+            <to-view-id>/map.jsp</to-view-id>
+        </navigation-case>
+    </navigation-rule>    
+    <navigation-rule>
+        <from-view-id>/map.jsp</from-view-id>
+        <navigation-case>
+            <to-view-id>/mapLocation.jsp</to-view-id>
+        </navigation-case>
+    </navigation-rule>    
+    <navigation-rule>
+        <from-view-id>/search.jsp</from-view-id>
+        <navigation-case>
+            <from-outcome>displayResults</from-outcome>
+            <to-view-id>/search.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>map</from-outcome>
+            <to-view-id>/map.jsp</to-view-id>
+        </navigation-case>
+    </navigation-rule>    
+    
+</faces-config>
+

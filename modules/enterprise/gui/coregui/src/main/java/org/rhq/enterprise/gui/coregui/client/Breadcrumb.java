@@ -38,7 +38,7 @@ public class Breadcrumb {
     }
 
     public Breadcrumb(String name, boolean hyperlink) {
-        this(name, null, hyperlink);
+        this(name, name, hyperlink);
     }
 
     public Breadcrumb(String name, String displayName, boolean hyperlink) {

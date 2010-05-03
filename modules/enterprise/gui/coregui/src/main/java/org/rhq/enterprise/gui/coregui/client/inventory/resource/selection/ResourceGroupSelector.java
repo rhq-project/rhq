@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
+import java.util.Collection;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -32,7 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupSelector extends AbstractSelector {
+public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
     public ResourceGroupSelector() {
         super();
@@ -51,7 +53,7 @@ public class ResourceGroupSelector extends AbstractSelector {
         return availableFilterForm;
     }
 
-    protected RPCDataSource<?> getDataSource() {
+    protected RPCDataSource<ResourceGroup> getDataSource() {
         return new SelectedResourceGroupsDataSource();
     }
 
@@ -68,7 +70,7 @@ public class ResourceGroupSelector extends AbstractSelector {
     private class SelectedResourceGroupsDataSource extends ResourceGroupsDataSource {
 
         @Override
-        public ListGridRecord[] buildRecords(PageList<ResourceGroup> resourceGroups) {
+        public ListGridRecord[] buildRecords(Collection<ResourceGroup> resourceGroups) {
             ListGridRecord[] records = super.buildRecords(resourceGroups);
             for (ListGridRecord record : records) {
                 if (selection.contains(record.getAttributeAsInt("id"))) {

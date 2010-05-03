@@ -1,0 +1,3 @@
+# sysconfig file for foo init script
+
+FOO=1

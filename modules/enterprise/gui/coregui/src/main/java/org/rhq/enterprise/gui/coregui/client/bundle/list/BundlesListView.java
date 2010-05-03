@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
@@ -49,19 +50,29 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class BundlesListView extends VLayout {
 
+    public BundlesListView() {
+        setWidth100();
+        setHeight100();
+    }
+
     @Override
     protected void onDraw() {
         super.onDraw();
 
         final Table table = new Table("Bundles");
-        table.setHeight("50%");
-        table.setShowResizeBar(true);
-        table.setResizeBarTarget("next");
 
         table.setDataSource(new BundlesWithLatestVersionDataSource());
 
         table.getListGrid().getField("id").setWidth("60");
         table.getListGrid().getField("name").setWidth("25%");
+        table.getListGrid().getField("name").setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return "<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+            }
+        });
+
+
+
         table.getListGrid().getField("description").setWidth("25%");
         table.getListGrid().getField("latestVersion").setWidth("25%");
         table.getListGrid().getField("versionsCount").setWidth("*");
@@ -154,14 +165,5 @@ public class BundlesListView extends VLayout {
 
         addMember(table);
 
-        final BundleView bundleView = new BundleView();
-        bundleView.setOverflow(Overflow.AUTO);
-        addMember(bundleView);
-
-        table.getListGrid().addRecordClickHandler(new RecordClickHandler() {
-            public void onRecordClick(RecordClickEvent event) {
-                bundleView.viewRecord(event.getRecord());
-            }
-        });
     }
 }

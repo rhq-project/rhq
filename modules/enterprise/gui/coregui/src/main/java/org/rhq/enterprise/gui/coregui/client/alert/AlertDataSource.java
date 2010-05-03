@@ -38,6 +38,7 @@ import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
+import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -94,9 +95,17 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         conditionValueField.setCanSortClientOnly(true);
         fields.add(conditionValueField);
 
-        DataSourceTextField recoveryInfoField = new DataSourceTextField("recoveryInfo", "Recovery Info");
-        recoveryInfoField.setCanSortClientOnly(true);
-        fields.add(recoveryInfoField);
+        DataSourceTextField resourceName = new DataSourceTextField("resourceName", "Resource");
+        resourceName.setCanSortClientOnly(true);
+        fields.add(resourceName);
+
+
+//        DataSourceTextField recoveryInfoField = new DataSourceTextField("recoveryInfo", "Recovery Info");
+//        recoveryInfoField.setCanSortClientOnly(true);
+//        fields.add(recoveryInfoField);
+
+
+
 
         // TODO: Will using DataSourceEnumField here allow us to do
         //       record.setAttribute("priority", alert.getAlertDefinition().getPriority()), rather than
@@ -201,6 +210,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", from.getId());
         record.setAttribute("resourceId", from.getAlertDefinition().getResource().getId());
+        record.setAttribute("resourceName", from.getAlertDefinition().getResource().getName());
         record.setAttribute("name", from.getAlertDefinition().getName());
         record.setAttribute("priority", from.getAlertDefinition().getPriority().name());
         record.setAttribute("ctime", DATE_TIME_FORMAT.format(new Date(from.getCtime())));

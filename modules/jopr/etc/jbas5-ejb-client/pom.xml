@@ -15,7 +15,7 @@
     <description>a simple client for testing connecting to a JBAS5 instance via JNP, looking up the ProfileService EJB3 beans, and invoking some methods on them</description>
 
     <properties>        
-        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
+        <jbossas.version>6.0.0.M1</jbossas.version>
     </properties>
     
     <dependencyManagement>
@@ -275,17 +275,6 @@
             <name>JBoss Repository</name>
             <url>http://repository.jboss.org/maven2/</url>
         </repository>
-<!--            
-        <repository>
-            <id>jboss-snapshots</id>
-            <name>JBoss Snapshot Repository</name>
-            <url>http://snapshots.jboss.org/maven2/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
--->        
     </repositories>
 
 </project>

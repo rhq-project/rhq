@@ -24,12 +24,12 @@
     </generate-with>-->
 
 
-    <replace-with class="at.bestsolution.gwt.util.impl.DynamicCallbackFormImpl">
-		<when-type-is class="at.bestsolution.gwt.util.impl.DynamicCallbackFormImpl"/>
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
+		<when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
 	</replace-with>
 
-	<replace-with class="at.bestsolution.gwt.util.impl.DynamicCallbackFormImplIE6">
-		<when-type-is class="at.bestsolution.gwt.util.impl.DynamicCallbackFormImpl"/>
+	<replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE6">
+		<when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
 		<when-property-is name="user.agent" value="ie6"/>
 	</replace-with>
 
@@ -57,5 +57,8 @@
     <servlet path="/BundleGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.BundleGWTServiceImpl"/>
     <servlet path="/ResourceBossGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl"/>
     <servlet path="/AuthorizationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AuthorizationGWTServiceImpl"/>
+    <servlet path="/AvailabilityGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl"/>
+    <servlet path="/TagGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl"/>
+    <servlet path="/RemoteInstallGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl"/>
 
 </module>

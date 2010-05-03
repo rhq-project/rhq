@@ -184,6 +184,11 @@ public interface RoleManagerRemote {
         @WebParam(name = "groupId") int groupId, //
         @WebParam(name = "roleIds") int[] roleIds);
 
+    void setAssignedResourceGroups(
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "roleId") int roleId, //
+        @WebParam(name = "groupIds") int[] groupIds);
+
     /**
      * Removes the given resource groups from the given role.
      *

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import java.util.Collection;
+
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -111,7 +113,7 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
 
-    public ListGridRecord[] buildRecords(PageList<T> list) {
+    public ListGridRecord[] buildRecords(Collection<T> list) {
         if (list == null) {
             return null;
         }

@@ -836,6 +836,11 @@
          <enabled>true</enabled>
          <updatePolicy>never</updatePolicy>
        </releases>
+       <!-- Explicitly disable snapshots, so Maven won't try to
+            check for updates for snapshot internal (rhq-*) deps. -->
+       <snapshots>
+         <enabled>false</enabled>
+       </snapshots>
     </repository>
   </repositories>
 

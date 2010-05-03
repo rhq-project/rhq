@@ -19,10 +19,13 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert.AlertEditView;
 
 /**
  * @author Greg Hinkle
@@ -46,6 +49,13 @@ public class AlertDefinitionsView extends VLayout {
         Table table = new Table("Alert Definitions", criteria);
         table.setDataSource(new AlertDefinitionsDataSource());
         table.getListGrid().setUseAllDataSourceFields(true);
+
+
+        table.addTableAction("New", new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                new AlertEditView().displayAsDialog();
+            }
+        });
 
         addMember(table);
     }

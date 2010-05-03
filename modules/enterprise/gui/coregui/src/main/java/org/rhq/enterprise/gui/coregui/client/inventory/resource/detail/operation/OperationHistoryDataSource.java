@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation;
 
+import java.util.Date;
+
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
@@ -95,7 +97,7 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", from.getId());
         record.setAttribute("createdTime", from.getCreatedTime());
-        record.setAttribute("startedTime", from.getStartedTime());
+        record.setAttribute("startedTime", new Date(from.getStartedTime()));
         record.setAttribute("duration", from.getDuration());
         record.setAttribute("resource", from.getResource());
         record.setAttribute("subject", from.getSubjectName());

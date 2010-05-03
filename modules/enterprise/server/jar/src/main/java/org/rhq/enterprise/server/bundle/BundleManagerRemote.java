@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.bundle;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
@@ -63,7 +64,7 @@ public interface BundleManagerRemote {
      * Adds a BundleFile to the BundleVersion and implicitly creates the backing PackageVersion. If the PackageVersion
      * already exists use {@link addBundleFile(Subject, int, String, int, boolean)} 
      *   
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param bundleVersionId id of the BundleVersion incorporating this BundleFile 
      * @param name name of the BundleFile (and the resulting Package)
      * @param version version of the backing package
@@ -119,20 +120,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "packageVersionId") int packageVersionId) throws Exception;
 
     /**
-     * @param subject must be InventoryManager
-     * @param name not null or empty 
-     * @param description optional long description of the bundle 
-     * @param bundleTypeId valid bundleType
-     * @return the persisted Bundle (id is assigned)
-     */
-    Bundle createBundle( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "name") String name, //
-        @WebParam(name = "description") String description, //        
-        @WebParam(name = "bundleTypeId") int bundleTypeId) throws Exception;
-
-    /**
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param BundleVersionId the BundleVersion being deployed by this deployment
      * @param name a name for this deployment. not null or empty
      * @param description an optional longer description describing this deployment 
@@ -151,44 +139,40 @@ public interface BundleManagerRemote {
         @WebParam(name = "configuration") Configuration configuration) throws Exception;
 
     /**
-     * @param subject must be InventoryManager
-     * @param bundleId the bundle for which this will be the next version
-     * @param name not null or empty
-     * @param description optional long description of the bundle version 
-     * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
-     * @return the persisted BundleVersion (id is assigned)
+     * Creates a bundle version based on a Bundle Distribution file. Typically a zip file, the bundle distribution
+     * contains the recipe for a supported bundle type, along with 0, 1 or more bundle files that will be associated
+     * with the bundle version.  The recipe specifies the bundle name, version, version name and version description.
+     * If this is the initial version for the named bundle the bundle will be implicitly created.  The bundle type
+     * is discovered by inspecting the distribution file.   
+     * 
+     * @param subject
+     * @param distributionFile a local Bundle Distribution file. It must be read accessible by the RHQ server process.
+     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     *         understand all that this method did. Bundle files specifically are returned.
      */
-    BundleVersion createBundleVersion( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleId") int bundleId, //        
-        @WebParam(name = "name") String name, //
-        @WebParam(name = "description") String description, //                
-        @WebParam(name = "version") String version, //
-        @WebParam(name = "recipe") String recipe) throws Exception;
+    BundleVersion createBundleVersionViaFile( //
+        @WebParam(name = "subject") Subject subject, //        
+        @WebParam(name = "distributionFile") File distributionFile) throws Exception;
 
     /**
-     * Convienence method that combines {@link #createBundle(Subject, String, int)} and {@link #createBundleVersion(Subject, int, String, String, String)}.
-     * This will first check to see if a bundle with the given type/name exists - if it doesn't, it will be created. If it does, it will be reused.
-     * This will then create the bundle version that will be associated with the bundle that was created or found.
+     * Creates a bundle version based on a Bundle Distribution file. Typically a zip file, the bundle distribution
+     * contains the recipe for a supported bundle type, along with 0, 1 or more bundle files that will be associated
+     * with the bundle version.  The recipe specifies the bundle name, version, version name and version description.
+     * If this is the initial version for the named bundle the bundle will be implicitly created.  The bundle type
+     * is discovered by inspecting the distribution file.
+     * <br/></br>
+     * Note, if the file is local it is more efficient to use {@link createBundleVersionViaFile(Subject,File)}.  
      * 
-     * @param subject must be InventoryManager
-     * @param bundleName name of the bundle to use (if not found, it will be created)
-     * @param bundleDescription optional long description of the bundle
-     * @param bundleTypeId the bundle type for the new bundle (if it is created) for which this will be the first version
-     * @param bundleVersionName name of the bundle version
-     * @param bundleVersionDescription optional long description of the bundle version  
-     * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
-     * @return the persisted BundleVersion (id is assigned)
+     * @param subject
+     * @param distributionFileUrl a URL to the Bundle Distribution file. It must be live, resolvable and read accessible
+     * by the RHQ server process. 
+     * 
+     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     *         understand all that this method did. Bundle files specifically are returned.
      */
-    BundleVersion createBundleAndBundleVersion( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleName") String bundleName, //
-        @WebParam(name = "bundleDescription") String bundleDescription, //        
-        @WebParam(name = "bundleTypeId") int bundleTypeId, //
-        @WebParam(name = "bundleVersionName") String bundleVersionName, //
-        @WebParam(name = "bundleVersionDescription") String bundleVersionDescription, //        
-        @WebParam(name = "version") String version, //
-        @WebParam(name = "recipe") String recipe) throws Exception;
+    BundleVersion createBundleVersionViaURL( //
+        @WebParam(name = "subject") Subject subject, //        
+        @WebParam(name = "distributionFileUrl") URL distributionFileUrl) throws Exception;
 
     /**
      * Remove everything associated with the Bundle with the exception of files laid down by related deployments.
@@ -247,7 +231,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "criteria") BundleVersionCriteria criteria);
 
     @WebMethod
-    PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria( //
+    PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") BundleCriteria criteria);
 
@@ -255,11 +239,16 @@ public interface BundleManagerRemote {
     List<BundleType> getAllBundleTypes( //
         @WebParam(name = "subject") Subject subject);
 
+    @WebMethod
+    BundleType getBundleType( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleTypeName") String bundleTypeName);
+
     /**
      * Determine the files required for a BundleVersion and return all of the filenames or optionally, just those
      * that lack BundleFiles for the BundleVersion.  The recipe may be parsed as part of this call.
      *   
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param bundleVersionId the BundleVersion being queried
      * @param withoutBundleFileOnly if true omit any filenames that already have a corresponding BundleFile for
      *        the BundleVersion.  
@@ -276,7 +265,7 @@ public interface BundleManagerRemote {
      * all of the filenames, with the values of the map being true if they already exist or false if they lack BundleFile representation
      * in the BundleVersion.
      *   
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param bundleVersionId the BundleVersion being queried
      * @return map keyed on filenames whose value indicates if a bundle file exists for the file or not
      * @throws Exception
@@ -288,25 +277,6 @@ public interface BundleManagerRemote {
      */
 
     /**
-     * Deploy the bundle as described in the provided deployment to the specified resource.
-     * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
-     * returned {@link BundleResourceDeployment} can be used to track the history of the deployment.
-     * 
-     *  TODO: Add the scheduling capability, currently it's Immediate. 
-     * 
-     * @param subject must be InventoryManager
-     * @param bundleDeploymentId the BundleDeployment being used to guide the deployments
-     * @param resourceId the target resource (must exist), typically platforms, for the deployments
-     * @return the {@link BundleResourceDeployment} created to track the deployment. 
-     * @throws Exception
-     */
-    @WebMethod
-    BundleResourceDeployment scheduleBundleResourceDeployment( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleDeploymentId") int bundleDeploymentId, //
-        @WebParam(name = "resourceId") int resourceId) throws Exception;
-
-    /**
      * Deploy the bundle as described in the provided deployment to all of the resources in the
      * specified resource group.
      * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
@@ -314,7 +284,7 @@ public interface BundleManagerRemote {
      * 
      *  TODO: Add the scheduling capability, currently it's Immediate. 
      * 
-     * @param subject must be InventoryManager
+     * @param subject user that must have proper permissions
      * @param bundleDeploymentId the BundleDeployment being used to guide the deployments
      * @param resourceGroupId the target resourceGroup (must exist), typically platforms, for the deployments
      * @return the BundleGroupDeployment created to track the deployments. 

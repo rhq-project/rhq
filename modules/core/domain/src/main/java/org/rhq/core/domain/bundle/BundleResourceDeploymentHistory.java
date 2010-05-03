@@ -73,8 +73,7 @@ public class BundleResourceDeploymentHistory implements Serializable {
     private Long auditTime = System.currentTimeMillis();
 
     @Column(name = "AUDIT_ACTION", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private BundleDeploymentAction auditAction;
+    private String auditAction;
 
     @Column(name = "AUDIT_STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -87,8 +86,8 @@ public class BundleResourceDeploymentHistory implements Serializable {
     protected BundleResourceDeploymentHistory() {
     }
 
-    public BundleResourceDeploymentHistory(String subjectName, BundleDeploymentAction auditAction,
-        BundleDeploymentStatus auditStatus, String auditMessage) {
+    public BundleResourceDeploymentHistory(String subjectName, String auditAction, BundleDeploymentStatus auditStatus,
+        String auditMessage) {
 
         this.subjectName = subjectName;
         this.auditAction = auditAction;
@@ -120,11 +119,11 @@ public class BundleResourceDeploymentHistory implements Serializable {
         this.auditTime = auditTime;
     }
 
-    public BundleDeploymentAction getAuditAction() {
-        return this.auditAction;
+    public String getAuditAction() {
+        return auditAction;
     }
 
-    public void setAuditAction(BundleDeploymentAction auditAction) {
+    public void setAuditAction(String auditAction) {
         this.auditAction = auditAction;
     }
 

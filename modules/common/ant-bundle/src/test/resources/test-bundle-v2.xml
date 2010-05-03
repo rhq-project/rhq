@@ -5,7 +5,7 @@
     <rhq:bundle name="example.com (JBoss EAP 4.3)" version="2.0"
                 description="example.com corporate website hosted on JBoss EAP 4.3"/>
 
-    <rhq:inputProperty
+    <rhq:input-property
        name="listener.port"
        description="This is where the product will listen for incoming messages"
        required="true"

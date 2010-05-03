@@ -40,13 +40,11 @@ public class BundleFileCriteria extends Criteria {
 
     private boolean fetchBundleVersion;
     private boolean fetchPackageVersion;
-    private boolean fetchGeneralPackage;
 
     public BundleFileCriteria() {
         super();
 
         filterOverrides.put("bundleVersionId", "bundleVersion.id = ?");
-        filterOverrides.put("packageId", "generalPackage.id = ?");
         filterOverrides.put("packageVersionId", "packageVersion.id = ?");
     }
 
@@ -69,10 +67,6 @@ public class BundleFileCriteria extends Criteria {
 
     public void fetchBundleVersion(boolean fetchBundleVersion) {
         this.fetchBundleVersion = fetchBundleVersion;
-    }
-
-    public void fetchPackage(boolean fetchGeneralPackage) {
-        this.fetchGeneralPackage = fetchGeneralPackage;
     }
 
     public void fetchPackageVersion(boolean fetchPackageVersion) {

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.startup;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Connection;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -59,7 +60,6 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
-import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
@@ -67,6 +67,7 @@ import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CloudManagerJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
 import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
+import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
@@ -293,6 +294,27 @@ public class StartupServlet extends HttpServlet {
      * @throws ServletException
      */
     private void startServerCommunicationServices() throws ServletException {
+
+        // under a rare case, if the server starts up really fast as soon as it dies, any connected
+        // agents will not realize the server has bounced and will not know to re-connect. When this
+        // happens the server's caches will not be refreshed and bad things will happen (e.g. alerts not firing).
+        // make sure we are down for a certain amount of time to ensure the agent's know the server was down.
+        long ensureDownTimeSecs = 70;
+        try {
+            ensureDownTimeSecs = Long.parseLong(System.getProperty("rhq.server.ensure-down-time-secs", "70"));
+        } catch (Exception e) {
+        }
+        long elapsed = getElapsedTimeSinceStartup();
+        long sleepTime = (ensureDownTimeSecs * 1000L) - elapsed;
+        if (sleepTime > 0) {
+            try {
+                log("Forcing the server to wait [" + sleepTime + "]ms to ensure agents know we went down");
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException ignore) {
+            }
+        }
+
+        // now start our comm layer
         log("Starting the server-agent communications services");
 
         try {
@@ -329,8 +351,8 @@ public class StartupServlet extends HttpServlet {
             // Do not check until we are up at least 1 min, and every minute thereafter.
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60;
-            scheduler.scheduleSimpleRepeatingJob(SavedSearchResultCountRecalculationJob.class, true, false, initialDelay,
-                interval);
+            scheduler.scheduleSimpleRepeatingJob(SavedSearchResultCountRecalculationJob.class, true, false,
+                initialDelay, interval);
         } catch (Exception e) {
             log("Cannot schedule asynchronous resource deletion job: " + e.getMessage());
         }
@@ -592,5 +614,23 @@ public class StartupServlet extends HttpServlet {
         } catch (Exception e) {
             throw new ServletException("Failed to register the Server Shutdown Listener", e);
         }
+    }
+
+    /**
+     * Gets the number of milliseconds since the time when the server was started.
+     * @return elapsed time since server started, 0 if not known
+     */
+    private long getElapsedTimeSinceStartup() throws ServletException {
+        long elapsed;
+        try {
+            ObjectName jbossServerName = new ObjectName("jboss.system:type=Server");
+            MBeanServer jbossServer = MBeanServerLocator.locateJBoss();
+            Date startTime = (Date) jbossServer.getAttribute(jbossServerName, "StartDate");
+            long currentTime = System.currentTimeMillis();
+            elapsed = currentTime - startTime.getTime();
+        } catch (Exception e) {
+            elapsed = 0;
+        }
+        return elapsed;
     }
 }

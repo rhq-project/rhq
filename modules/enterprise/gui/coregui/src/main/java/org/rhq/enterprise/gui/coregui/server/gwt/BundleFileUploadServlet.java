@@ -34,6 +34,12 @@ import org.rhq.core.domain.content.Architecture;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+/**
+ * This servlet allows the requestor to upload a bundle file and attach it to
+ * a given BundleVersion.
+ * 
+ * @author John Mazzitelli
+ */
 public class BundleFileUploadServlet extends FileUploadServlet {
     private static final long serialVersionUID = 1L;
 
@@ -49,7 +55,7 @@ public class BundleFileUploadServlet extends FileUploadServlet {
 
             int bundleVersionId = Integer.parseInt(getFormField(formFields, "bundleVersionId", null));
             String name = getFormField(formFields, "name", file.getName());
-            String version = getFormField(formFields, "version", "1.0");
+            String version = getFormField(formFields, "version", Integer.toString(bundleVersionId));
             Architecture architecture = new Architecture(getFormField(formFields, "arch", "noarch"));
             InputStream fileStream = new FileInputStream(file);
 

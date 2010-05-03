@@ -173,7 +173,7 @@
            <module>perftest</module>
            <module>snmptrapd</module>
            <module>twitter</module>
-           <module>NagiosMonitor</module>
+           <module>nagios</module>
         </modules>
     </profile>
 

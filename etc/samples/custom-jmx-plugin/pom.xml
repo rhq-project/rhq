@@ -12,6 +12,7 @@
    <packaging>jar</packaging>
 
    <name>RHQ Custom JMX Plugin</name>
-   <description>Plugin that monitors a custom set of MBeans</description>
+   <description>Plugin that monitors a set of custom MBeans</description>
 
 </project>
+

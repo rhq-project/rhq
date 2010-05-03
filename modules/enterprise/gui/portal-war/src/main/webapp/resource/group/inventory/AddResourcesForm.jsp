@@ -400,7 +400,7 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
 	               rightSidebar="true"  
 	               styleId="fromTable"
                    postfix="a" >
-          <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"fromToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
+          <display:column width="1%" property="original.id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"fromToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
             <display:checkboxdecorator name="availableResource" onclick="ToggleSelection(this, widgetProperties)" styleClass="availableListMember" />
           </display:column>
           <display:column property="original.name" title="resource.group.inventory.NameTH" 
@@ -453,7 +453,7 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
                        leftSidebar="true"
                        styleId="toTable"    
                        postfix="p" >
-          <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"toToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
+          <display:column width="1%" property="original.id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"toToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
             <display:checkboxdecorator name="pendingResource" onclick="ToggleSelection(this, widgetProperties)" styleClass="pendingListMember" />
           </display:column>
           <display:column property="original.name" title="resource.group.inventory.NameTH" 

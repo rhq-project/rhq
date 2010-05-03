@@ -364,20 +364,24 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
 	<display:table cellpadding="0" cellspacing="0" border="0" width="100%"
 	               action="${selfPaAction}"
 	               items="${AvailableResources}" 
-	               var="resource"
+	               var="item"
 	               padRows="true" 
 	               rightSidebar="true"   
                    styleId="fromTable" 
                    postfix="a" >
-          <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"fromToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
+          <display:column width="1%" property="original.id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"fromToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
             <display:checkboxdecorator name="availableResources" onclick="ToggleSelection(this, widgetProperties)" styleClass="availableListMember"/>
           </display:column>
-          <display:column property="name" title="common.header.ResourceName" 
-                          width="40%" 
+          <display:column property="original.name" title="common.header.ResourceName" 
+                          width="30%" 
                           sortAttr="res.name" />
-          <display:column property="description" title="common.header.Description" 
-                          width="59%" 
-                          sortAttr="res.resourceType.description" />
+          <display:column property="original.resourceType.name" title="resource.group.inventory.TypeTH" 
+                          width="39%" 
+                          sortAttr="res.resourceType.name" >
+          </display:column>
+          <display:column property="lineage" title="resource.group.inventory.ParentTH" 
+                          width="30%" />
+
         </display:table>
       </div>
       <!--  /  -->
@@ -416,15 +420,18 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
                        leftSidebar="true"   
                        styleId="toTable" 
                        postfix="p" >
-          <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"toToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
+          <display:column width="1%" property="original.id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"toToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
             <display:checkboxdecorator name="pendingResources" onclick="ToggleSelection(this, widgetProperties)" styleClass="pendingListMember"/>
           </display:column>
-          <display:column property="name" title="common.header.ResourceName" 
-                          width="40%" 
+          <display:column property="original.name" title="common.header.ResourceName" 
+                          width="30%" 
                           sortAttr="res.name" />
-          <display:column property="description" title="common.header.Description" 
-                          width="59%" 
-                          sortAttr="res.resourceType.description" />
+          <display:column property="original.resourceType.name" title="resource.group.inventory.TypeTH" 
+                          width="39%" 
+                          sortAttr="res.resourceType.name" >
+          </display:column>
+          <display:column property="lineage" title="resource.group.inventory.ParentTH" 
+                          width="30%" />
         </display:table>
       </div>
       <!--  /  -->

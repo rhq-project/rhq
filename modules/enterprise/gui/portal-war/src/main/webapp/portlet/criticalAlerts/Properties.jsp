@@ -99,8 +99,10 @@ var help = '<hq:help/>';
           <display:checkboxdecorator name="ids" onclick="ToggleSelection(this, widgetProperties, true)" styleClass="listMember"/>
         </display:column>
       
-        <display:column width="50%" property="name"        sortAttr="res.name"        title="dash.settings.ListHeader.Resource" /> 
-        <display:column width="50%" property="description" sortAttr="res.description" title="common.header.Description" /> 
+        <display:column width="25%" property="original.name" sortAttr="res.name" title="dash.settings.ListHeader.Resource" /> 
+        <display:column width="25%" property="original.resourceType.name" title="dash.settings.ListHeader.Type" /> 
+        <display:column width="25%" property="lineage" title="dash.settings.ListHeader.Location" /> 
+        <display:column width="25%" property="original.description" sortAttr="res.description" title="common.header.Description" /> 
 
       </display:table>
 

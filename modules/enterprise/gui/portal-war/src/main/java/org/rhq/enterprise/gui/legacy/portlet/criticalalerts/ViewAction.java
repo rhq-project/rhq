@@ -33,23 +33,32 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.AlertsPortletPreferences;
+import org.rhq.enterprise.gui.legacy.util.DisambiguatedResourceListUtil;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
 
     private static final Log log = LogFactory.getLog(ViewAction.class);
 
+    static final IntExtractor<Alert> RESOURCE_ID_EXTRACTOR = new IntExtractor<Alert>() {
+        public int extract(Alert object) {
+            return object.getAlertDefinition().getResource().getId();
+        }
+    };  
+    
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        PageList<Alert> alerts = new PageList<Alert>();
+        PageList<DisambiguatedResourceListUtil.Record<Alert>> disambiguatedAlerts = new PageList<DisambiguatedResourceListUtil.Record<Alert>>();
         try {
             WebUser user = SessionUtils.getWebUser(request.getSession());
             if (user == null) {
@@ -64,9 +73,13 @@ public class ViewAction extends TilesAction {
 
             PageControl pageControl = new PageControl(0, alertPrefs.count);
             AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-            alerts = alertManager.findAlerts(user.getSubject(), ("all".equals(alertPrefs.displayAll) ? null
+            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+            PageList<Alert> alerts = alertManager.findAlerts(user.getSubject(), ("all".equals(alertPrefs.displayAll) ? null
                 : ArrayUtils.wrapInArray(alertPrefs.asArray())), AlertPriority.getByLegacyIndex(alertPrefs.priority),
                 alertPrefs.timeRange, pageControl);
+            
+            disambiguatedAlerts = DisambiguatedResourceListUtil.buildResourceList(resourceManager.disambiguate(alerts, true, RESOURCE_ID_EXTRACTOR)
+                , alerts.getTotalSize(), alerts.getPageControl(), true);
         } catch (Exception e) {
             if (log.isDebugEnabled()) {
                 log.debug("Dashboard Portlet [CriticalAlerts] experienced an error: " + e.getMessage(), e);
@@ -74,7 +87,7 @@ public class ViewAction extends TilesAction {
                 log.error("Dashboard Portlet [CriticalAlerts] experienced an error: " + e.getMessage());
             }
         } finally {
-            context.putAttribute("criticalAlerts", alerts);
+            context.putAttribute("criticalAlerts", disambiguatedAlerts);
         }
 
         return null;

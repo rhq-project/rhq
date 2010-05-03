@@ -99,7 +99,7 @@ public class NewGroupDefinitionGeneralPropertiesUIBean {
             return OUTCOME_FAILURE;
         }
 
-        session.setAttribute(TEMPORARY_CREATE_MARKER, null);
+        session.removeAttribute(TEMPORARY_CREATE_MARKER);
 
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
             "Definition created successfully.  Add conditions below.");

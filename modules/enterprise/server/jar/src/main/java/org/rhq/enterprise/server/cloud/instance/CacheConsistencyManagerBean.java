@@ -104,6 +104,9 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
         try {
             boolean hadServerStatus = serverManager.getAndClearServerStatus();
             if (hadServerStatus == false) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Global cache does not need reloading");
+                }
                 return;
             }
 
@@ -133,6 +136,9 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
 
             // do nothing if nothing to do
             if (agentIds.size() == 0) {
+                if (log.isDebugEnabled()) {
+                    log.debug("No agent caches need reloading");
+                }
                 return;
             }
 

@@ -29,12 +29,16 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
+import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
+import org.rhq.enterprise.gui.legacy.util.DisambiguatedResourceListUtil;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -44,11 +48,18 @@ public class ViewAction extends TilesAction {
 
     private static final Log log = LogFactory.getLog(ViewAction.class);
 
+    private static final IntExtractor<ResourceHealthComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceHealthComposite>() {
+
+        public int extract(ResourceHealthComposite object) {
+            return object.getId();
+        }
+    };
+    
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        PageList<ResourceHealthComposite> list = new PageList<ResourceHealthComposite>();
+        PageList<DisambiguatedResourceListUtil.Record<ResourceHealthComposite>> list = new PageList<DisambiguatedResourceListUtil.Record<ResourceHealthComposite>>();
         boolean showAvailability = true;
         boolean showAlerts = true;
         try {
@@ -65,7 +76,12 @@ public class ViewAction extends TilesAction {
                 .getFavoriteResourcePortletPreferences();
 
             ResourceManagerLocal manager = LookupUtil.getResourceManager();
-            list = manager.findResourceHealth(user.getSubject(), favoriteResourcePreferences.asArray(), pc);
+            PageList<ResourceHealthComposite> lst = manager.findResourceHealth(user.getSubject(), favoriteResourcePreferences.asArray(), pc);
+            
+            ResourceNamesDisambiguationResult<ResourceHealthComposite> disambiguatedList = manager.disambiguate(lst, true, RESOURCE_ID_EXTRACTOR);
+            
+            list = DisambiguatedResourceListUtil.buildResourceList(disambiguatedList, lst.getTotalSize(), lst.getPageControl(), true);
+            
             showAvailability = favoriteResourcePreferences.showAvailability;
             showAlerts = favoriteResourcePreferences.showAlerts;
         } catch (Exception e) {

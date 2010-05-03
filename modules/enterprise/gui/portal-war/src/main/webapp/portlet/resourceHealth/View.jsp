@@ -27,15 +27,16 @@
   <c:when test="${not empty resourceHealth}">   
   
     <display:table cellspacing="0" cellpadding="0" width="100%" action="/Dashboard.do"
-                   var="resource" items="${resourceHealth}" >
+                   var="item" items="${resourceHealth}" >
                 
-        <display:column width="50%" href="/rhq/resource/summary/overview.xhtml?id=${resource.id}" property="name" sortAttr="res.name" title="dash.home.TableHeader.ResourceName"/>
-        <display:column width="25%" property="typeName" title="dash.home.TableHeader.Type"/>
+        <display:column width="25%" href="/rhq/resource/summary/overview.xhtml?id=${item.original.id}" property="original.name" sortAttr="res.name" title="dash.home.TableHeader.ResourceName"/>
+        <display:column width="25%" property="original.typeName" title="dash.home.TableHeader.Type"/>
+        <display:column width="25%" property="lineage" title="dash.home.TableHeader.Location"/>
         <c:if test="${alerts}">                  
-          <display:column width="10%" property="alerts" title="dash.home.TableHeader.Alerts" align="center"/>          
+          <display:column width="10%" property="original.alerts" title="dash.home.TableHeader.Alerts" align="center"/>          
         </c:if>
         <c:if test="${availability}">  
-          <display:column width="15%" property="availabilityType" title="resource.common.monitor.visibility.AvailabilityTH" align="center"
+          <display:column width="15%" property="original.availabilityType" title="resource.common.monitor.visibility.AvailabilityTH" align="center"
                           sortAttr="avail.availabilityType" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle">
              <display:availabilitydecorator/>
           </display:column>

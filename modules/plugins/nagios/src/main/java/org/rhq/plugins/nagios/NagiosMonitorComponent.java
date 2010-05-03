@@ -100,56 +100,59 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
      */
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics)
     {
-    	NagiosSystemData nagiosSystemData = null;
+        NagiosSystemData nagiosSystemData = null;
 
-    	try
-		{
-			nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
+        try
+        {
+            nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
+
+            log.info(nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue());
+            log.info(nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue());
+            log.info(nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue());
+
+        } catch (Exception e) {
+            log.warn(" Can not get information from Nagios: ", e);
+            return;
+        }
 
 
-			log.info(nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue());
-	    	log.info(nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue());
-	    	log.info(nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue());
 
 
-			for (MeasurementScheduleRequest req : metrics)
-	         {
-				if("execution_time".equals(req.getName()) )
-				{
-		    		String value = nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue();
-					MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
-	    			report.addData(res);
-				}
-				else if("host_check_period".equals(req.getName()) )
-				{
-					String value = nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue();
-					MeasurementDataTrait res = new MeasurementDataTrait(req, value);
-					report.addData(res);
-				}
-				else if("host_execution_time".equals(req.getName()) )
-				{
-					String value = nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue();
-					MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
-					report.addData(res);
-				}
-	     	}
+        for (MeasurementScheduleRequest req : metrics)
+        {
+            try { // Don't let one bad egg spoil the cake
+                if("execution_time".equals(req.getName()) )
+                {
+                    String value = nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue();
+                    MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
+                    report.addData(res);
+                }
+                else if("host_check_period".equals(req.getName()) )
+                {
+                    String value = nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue();
+                    MeasurementDataTrait res = new MeasurementDataTrait(req, value);
+                    report.addData(res);
+                }
+                else if("host_execution_time".equals(req.getName()) )
+                {
+                    String value = nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue();
+                    MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
+                    report.addData(res);
+                }
+            }
+            catch (InvalidMetricRequestException e)
+            {
+                log.error(e);
+            }
+            catch (InvalidServiceRequestException e)
+            {
+                log.error(e);
+            }
+            catch (InvalidHostRequestException e)
+            {
+                log.error(e);
+            }
+        }
 
-		}
-		catch (InvalidReplyTypeException e)
-		{
-			log.error(e);
-		}
-		catch (InvalidMetricRequestException e)
-		{
-			log.error(e);
-		}
-		catch (InvalidServiceRequestException e)
-		{
-			log.error(e);
-		}
-		catch (InvalidHostRequestException e)
-		{
-			log.error(e);
-		}
-	}
+    }
 }

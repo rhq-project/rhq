@@ -48,7 +48,7 @@ public class ViewAction extends TilesAction {
 
     private static final Log log = LogFactory.getLog(ViewAction.class);
 
-    private static final IntExtractor<ResourceHealthComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceHealthComposite>() {
+    static final IntExtractor<ResourceHealthComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceHealthComposite>() {
 
         public int extract(ResourceHealthComposite object) {
             return object.getId();

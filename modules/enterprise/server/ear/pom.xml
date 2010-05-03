@@ -350,6 +350,75 @@
    <profiles>
 
         <profile>
+            <id>bundle-plugins</id>
+            <activation>
+                <property>
+                    <name>java.home</name>
+                </property>
+            </activation>
+
+            <build>
+                <plugins>
+                  <plugin>
+                      <artifactId>maven-dependency-plugin</artifactId>
+                      <executions>
+
+                        <execution>
+                          <id>copy-bundle-agent-plugins</id>
+                          <phase>process-resources</phase>
+                          <goals>
+                             <goal>copy</goal>
+                          </goals>
+                          <configuration>
+                             <artifactItems>
+                               <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-ant-bundle-plugin</artifactId>
+                                 <version>${project.version}</version>
+                               </artifactItem>
+
+                               <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-filetemplate-bundle-plugin</artifactId>
+                                 <version>${project.version}</version>
+                               </artifactItem>
+                             </artifactItems>
+                             
+                             <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
+                           </configuration>
+                         </execution>
+
+                        <execution>
+                          <id>copy-bundle-server-plugins</id>
+                          <phase>process-resources</phase>
+                          <goals>
+                             <goal>copy</goal>
+                          </goals>
+                          <configuration>
+                             <artifactItems>
+                               <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-serverplugin-ant-bundle</artifactId>
+                                 <version>${project.version}</version>
+                               </artifactItem>
+
+                               <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-serverplugin-filetemplate-bundle</artifactId>
+                                 <version>${project.version}</version>
+                               </artifactItem>
+                             </artifactItems>
+                             
+                             <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
+                           </configuration>
+                         </execution>
+                      </executions>
+                  </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
             <id>jboss-plugins</id>
              <activation>
                 <property>

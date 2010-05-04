@@ -34,7 +34,7 @@ public enum JBossProductType {
     AS("JBoss AS", "JBoss Application Server", "default"), // the public offering
     EAP("JBoss EAP", "JBoss Enterprise Application Platform", "default"), // the customer offering
     EWP("JBoss EWP", "JBoss Enterprise Web Platform", "default"), // the customer offering    
-    SOA("JBoss SOA-P", "JBoss Enterprise SOA Platform", "production"); // the customer SOA platform
+    SOA("JBoss SOA-P", "JBoss Enterprise SOA Platform", "default"); // the customer SOA platform
 
     public final String NAME;
     public final String DESCRIPTION;

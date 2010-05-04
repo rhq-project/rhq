@@ -19,13 +19,10 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
-import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
@@ -70,8 +67,6 @@ public class BundlesListView extends VLayout {
                 return "<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
             }
         });
-
-
 
         table.getListGrid().getField("description").setWidth("25%");
         table.getListGrid().getField("latestVersion").setWidth("25%");
@@ -137,8 +132,15 @@ public class BundlesListView extends VLayout {
             }
         });
 
-        table.addTableAction("Deploy", Table.SelectionEnablement.SINGLE, null, new TableAction() {
+        // can change this back to SINGLE selection when we feel like it. currently allowing the wizard to
+        // select the bundle.
+        table.addTableAction("Deploy", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
+                if (selection.length == 0) {
+                    new BundleDeployWizard().startBundleWizard();
+                    return;
+                }
+
                 BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) table.getDataSource();
                 final BundleWithLatestVersionComposite object = ds.copyValues(selection[0]);
                 BundleCriteria bc = new BundleCriteria();
@@ -153,11 +155,11 @@ public class BundlesListView extends VLayout {
                     public void onSuccess(PageList<Bundle> result) {
                         if (result == null || result.size() != 1) {
                             CoreGUI.getMessageCenter().notify(
-                                new Message("Failed to get bundle to deploy [" + object.getBundleName() + "]",
+                                new Message("Failed to get single bundle to deploy [" + object.getBundleName() + "]",
                                     Severity.Error));
                             return;
                         }
-                        new BundleDeployWizard(result.get(0)).startBundleWizard();
+                        new BundleDeployWizard(null, result.get(0).getId()).startBundleWizard();
                     }
                 });
             }

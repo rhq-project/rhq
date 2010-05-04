@@ -25,12 +25,12 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
-public class CreateConfigStep implements WizardStep {
+public class GetDeploymentConfigStep implements WizardStep {
 
     private final BundleDeployWizard wizard;
     private ConfigurationEditor editor;
 
-    public CreateConfigStep(BundleDeployWizard bundleCreationWizard) {
+    public GetDeploymentConfigStep(BundleDeployWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 

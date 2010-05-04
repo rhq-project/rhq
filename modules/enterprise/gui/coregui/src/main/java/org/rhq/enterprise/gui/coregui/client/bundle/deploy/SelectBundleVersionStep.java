@@ -59,7 +59,7 @@ public class SelectBundleVersionStep implements WizardStep {
     }
 
     public String getName() {
-        return "Select Bundle Version";
+        return "Select Deployment Bundle Version";
     }
 
     public Canvas getCanvas() {
@@ -106,7 +106,7 @@ public class SelectBundleVersionStep implements WizardStep {
 
     private void setItemValues() {
         BundleVersionCriteria criteria = new BundleVersionCriteria();
-        criteria.addFilterBundleId(wizard.getBundle().getId());
+        criteria.addFilterBundleId(wizard.getBundleId());
         criteria.fetchConfigurationDefinition(true);
         bundleServer.findBundleVersionsByCriteria(criteria, //
             new AsyncCallback<PageList<BundleVersion>>() {

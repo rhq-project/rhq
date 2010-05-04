@@ -52,6 +52,8 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
         DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
         addField(descriptionField);
 
+        DataSourceTextField bundleTypeDataField = new DataSourceTextField("bundleType", "Bundle Type");
+        addField(bundleTypeDataField);
     }
 
     @Override
@@ -88,12 +90,11 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
         record.setAttribute("id", from.getId());
         record.setAttribute("name", from.getName());
         record.setAttribute("description", from.getDescription());
-        record.setAttribute("bundleType", from.getBundleType());
-        record.setAttribute("repos", from.getRepo());
+        record.setAttribute("bundleType", from.getBundleType().getName());
+        record.setAttribute("repo", from.getRepo().getName());
 
         record.setAttribute("object", from);
 
         return record;
-
     }
 }

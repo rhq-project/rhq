@@ -26,8 +26,8 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
@@ -45,8 +45,8 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         availableFilterForm.setNumCols(4);
         final TextItem search = new TextItem("search", "Search");
 
-        SelectItem groupCategorySelect = new SelectItem("groupCategory", "Group Category");
-        groupCategorySelect.setValueMap("Compatible", "Mixed");
+        SelectItem groupCategorySelect = new SelectItem("category", "Category");
+        groupCategorySelect.setValueMap(GroupCategory.COMPATIBLE.toString(), GroupCategory.MIXED.toString());
         groupCategorySelect.setAllowEmptyValue(true);
         availableFilterForm.setItems(search, groupCategorySelect);
 
@@ -60,9 +60,9 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
         Criteria latestCriteria = new Criteria();
         Object search = availableFilterForm.getValue("search");
-        Object category = availableFilterForm.getValue("groupCategory");
+        Object category = availableFilterForm.getValue("category");
         latestCriteria.setAttribute("name", search);
-        latestCriteria.setAttribute("groupCategory", category);
+        latestCriteria.setAttribute("category", category);
 
         return latestCriteria;
     }

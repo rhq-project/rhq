@@ -51,7 +51,7 @@ public class DeployStep implements WizardStep {
     }
 
     public String getName() {
-        return "Deploy Bundle to Target Platforms";
+        return "Deploy Bundle to Destination Platforms";
     }
 
     public Canvas getCanvas() {
@@ -84,53 +84,27 @@ public class DeployStep implements WizardStep {
                                     + result.getDescription(), Severity.Info));
                             wizard.setBundleDeployment(result);
 
-                            if (wizard.isResourceDeploy()) {
-                                /*
-                                bundleServer.scheduleBundleResourceDeployment(wizard.getBundleDeployment().getId(),
-                                    wizard.getDeployTargetId(), //
-                                    new AsyncCallback<BundleResourceDeployment>() {
-                                        public void onSuccess(BundleResourceDeployment result) {
-                                            deployingImage.setSrc("/images/status_complete.gif");
-                                            deployingMessage.setText("Bundle Deployment Scheduled!");
-                                            CoreGUI.getMessageCenter().notify(
-                                                new Message("Schedule bundle deployment ["
-                                                    + wizard.getBundleDeployment().getName() + "] resource ["
-                                                    + result.getResource() + "]", Severity.Info));
-                                            wizard.setResourceDeployment(result);
-                                        }
+                            bundleServer.scheduleBundleGroupDeployment(wizard.getBundleDeployment().getId(), wizard
+                                .getPlatformGroupId(), //
+                                new AsyncCallback<BundleGroupDeployment>() {
+                                    public void onSuccess(BundleGroupDeployment result) {
+                                        deployingImage.setSrc("/images/status_complete.gif");
+                                        deployingMessage.setText("Bundle Group Deployment Scheduled!");
+                                        CoreGUI.getMessageCenter().notify(
+                                            new Message("Schedule bundle group deployment ["
+                                                + wizard.getBundleDeployment().getName() + "] resource group ["
+                                                + result.getGroup() + "]", Severity.Info));
+                                        wizard.setGroupDeployment(result);
+                                    }
 
-                                        public void onFailure(Throwable caught) {
-                                            deployingImage.setSrc("/images/status_error.gif");
-                                            deployingMessage.setText("Failed to Schedule Deployment!");
-                                            CoreGUI.getErrorHandler().handleError(
-                                                "Failed to schedule deployment: " + caught.getMessage(), caught);
-                                            wizard.setResourceDeployment(null);
-                                        }
-                                    });
-                                    */
-                            } else {
-                                bundleServer.scheduleBundleGroupDeployment(wizard.getBundleDeployment().getId(), wizard
-                                    .getDeployTargetId(), //
-                                    new AsyncCallback<BundleGroupDeployment>() {
-                                        public void onSuccess(BundleGroupDeployment result) {
-                                            deployingImage.setSrc("/images/status_complete.gif");
-                                            deployingMessage.setText("Bundle Group Deployment Scheduled!");
-                                            CoreGUI.getMessageCenter().notify(
-                                                new Message("Schedule bundle group deployment ["
-                                                    + wizard.getBundleDeployment().getName() + "] resource group ["
-                                                    + result.getGroup() + "]", Severity.Info));
-                                            wizard.setGroupDeployment(result);
-                                        }
-
-                                        public void onFailure(Throwable caught) {
-                                            deployingImage.setSrc("/images/status_error.gif");
-                                            deployingMessage.setText("Failed to Schedule Group Deployment!");
-                                            CoreGUI.getErrorHandler().handleError(
-                                                "Failed to schedule group deployment: " + caught.getMessage(), caught);
-                                            wizard.setGroupDeployment(null);
-                                        }
-                                    });
-                            }
+                                    public void onFailure(Throwable caught) {
+                                        deployingImage.setSrc("/images/status_error.gif");
+                                        deployingMessage.setText("Failed to Schedule Group Deployment!");
+                                        CoreGUI.getErrorHandler().handleError(
+                                            "Failed to schedule group deployment: " + caught.getMessage(), caught);
+                                        wizard.setGroupDeployment(null);
+                                    }
+                                });
                         }
 
                         public void onFailure(Throwable caught) {

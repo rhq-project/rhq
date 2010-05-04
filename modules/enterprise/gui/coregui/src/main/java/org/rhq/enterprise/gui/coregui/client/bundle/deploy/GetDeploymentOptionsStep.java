@@ -18,32 +18,31 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
+import java.util.LinkedHashMap;
+
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
-/**
- * @author Jay Shaughnessy
- *
- */
-public class BundleDeploymentInfoStep implements WizardStep {
+public class GetDeploymentOptionsStep implements WizardStep {
 
-    private DynamicForm form;
+    static private final String DEPLOY_LATER = "later";
+    static private final String DEPLOY_NOW = "now";
+
     private final BundleDeployWizard wizard;
+    private DynamicForm form;
+    private RadioGroupItem rgDeployTimeItem;
 
-    // private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-
-    public BundleDeploymentInfoStep(BundleDeployWizard bundleDeployWizard) {
-        this.wizard = bundleDeployWizard;
+    public GetDeploymentOptionsStep(BundleDeployWizard bundleCreationWizard) {
+        this.wizard = bundleCreationWizard;
     }
 
     public String getName() {
-        return "Provide Deployment Information";
+        return "Deploy Options";
     }
 
     public Canvas getCanvas() {
@@ -53,33 +52,22 @@ public class BundleDeploymentInfoStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            final TextItem nameTextItem = new TextItem("name", "Name");
-            nameTextItem.setRequired(true);
-            nameTextItem.addChangedHandler(new ChangedHandler() {
+            rgDeployTimeItem = new RadioGroupItem("deployTime", "Deployment Time");
+            LinkedHashMap<String, String> deployTimeValues = new LinkedHashMap<String, String>();
+            deployTimeValues.put(DEPLOY_NOW, "Deploy Now");
+            deployTimeValues.put(DEPLOY_LATER, "Deploy Later");
+            rgDeployTimeItem.setRequired(true);
+            rgDeployTimeItem.setValueMap(deployTimeValues);
+            rgDeployTimeItem.setValue(DEPLOY_NOW);
+            wizard.setDeployNow(true);
+            rgDeployTimeItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
-                    }
-                    wizard.setSubtitle(value.toString());
-                    wizard.setName(value.toString());
+                    wizard.setDeployNow(DEPLOY_NOW.equals(event.getValue()));
                 }
             });
 
-            final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", "Description");
-            descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
-                    }
-                    wizard.setDescription(value.toString());
-                }
-            });
-
-            form.setItems(nameTextItem, descriptionTextAreaItem);
+            form.setItems(rgDeployTimeItem);
         }
-
         return form;
     }
 

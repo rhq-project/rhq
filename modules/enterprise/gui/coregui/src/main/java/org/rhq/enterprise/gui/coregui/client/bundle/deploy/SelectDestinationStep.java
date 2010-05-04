@@ -23,46 +23,38 @@ import java.util.HashSet;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 
-public class DeployTargetStep implements WizardStep {
+public class SelectDestinationStep implements WizardStep {
 
     private final BundleDeployWizard wizard;
 
-    private AbstractSelector selector;
+    private AbstractSelector<ResourceGroup> selector;
 
-    public DeployTargetStep(BundleDeployWizard bundleCreationWizard) {
+    public SelectDestinationStep(BundleDeployWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 
     public String getName() {
-        return this.wizard.isResourceDeploy() ? "Select Target Resource" : "Select Target Group";
+        return "Select Destination Platform Group";
     }
 
     public Canvas getCanvas() {
-        if ((null == selector) || isMismatch()) {
-            selector = this.wizard.isResourceDeploy() ? new ResourceSelector() : new ResourceGroupSelector();
-        }
-
-        return selector;
-    }
-
-    private boolean isMismatch() {
-        return ((selector instanceof ResourceSelector && !this.wizard.isResourceDeploy()) || (selector instanceof ResourceGroupSelector && this.wizard
-            .isResourceDeploy()));
+        this.selector = new ResourceGroupSelector();
+        return this.selector;
     }
 
     public boolean nextPage() {
-        HashSet<Integer> selection = selector.getSelection();
+        HashSet<Integer> selection = this.selector.getSelection();
         if (selection.size() != 1) {
-            SC.warn("Select only a single target resource for deployment. Use group deploy for multiple targets.");
+            SC.warn("Select only a single destination group for deployment.");
             return false;
         }
 
-        wizard.setDeployTargetId(selection.iterator().next());
+        this.wizard.setPlatformGroupId(selection.iterator().next());
         return true;
     }
 }

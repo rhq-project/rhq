@@ -18,10 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
-import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
-import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -34,27 +32,26 @@ import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
 public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     // the things we build up in the wizard
-    private Bundle bundle;
+    private Integer bundleId;
     private BundleVersion bundleVersion;
+    private Integer platformGroupId;
     private BundleDeployment bundleDeployment;
-    private BundleResourceDeployment resourceDeployment;
     private BundleGroupDeployment groupDeployment;
     private String name;
     private String description;
     private String installDir;
     private ConfigurationTemplate template;
     private Configuration config;
-    private Integer deployTargetId;
+
     private Boolean newDefinition = Boolean.TRUE;
     private boolean deployNow = true;
-    private boolean resourceDeploy = true;
 
-    public Bundle getBundle() {
-        return bundle;
+    public Integer getBundleId() {
+        return bundleId;
     }
 
-    public void setBundle(Bundle bundle) {
-        this.bundle = bundle;
+    public void setBundleId(Integer bundleId) {
+        this.bundleId = bundleId;
     }
 
     public BundleVersion getBundleVersion() {
@@ -118,23 +115,11 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
     }
 
     public Integer getPlatformGroupId() {
-        return deployTargetId;
+        return platformGroupId;
     }
 
     public void setPlatformGroupId(Integer platformGroupId) {
-        this.deployTargetId = platformGroupId;
-    }
-
-    public Integer getDeployTargetId() {
-        return deployTargetId;
-    }
-
-    public void setDeployTargetId(Integer deployTargetId) {
-        this.deployTargetId = deployTargetId;
-    }
-
-    public boolean isResourceDeploy() {
-        return resourceDeploy;
+        this.platformGroupId = platformGroupId;
     }
 
     public Boolean isDeployNow() {
@@ -143,18 +128,6 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     public void setDeployNow(Boolean deployNow) {
         this.deployNow = deployNow;
-    }
-
-    public void setResourceDeploy(boolean resourceDeploy) {
-        this.resourceDeploy = resourceDeploy;
-    }
-
-    public BundleResourceDeployment getResourceDeployment() {
-        return resourceDeployment;
-    }
-
-    public void setResourceDeployment(BundleResourceDeployment resourceDeployment) {
-        this.resourceDeployment = resourceDeployment;
     }
 
     public BundleGroupDeployment getGroupDeployment() {

@@ -21,50 +21,96 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
-    public BundleDeployWizard(Bundle bundle) {
+    public BundleDeployWizard() {
         List<WizardStep> steps = init();
-        setBundle(bundle);
-
+        steps.add(new SelectDestinationStep(this));
+        steps.add(new SelectBundleStep(this));
         steps.add(new SelectBundleVersionStep(this));
-        steps.add(new BundleDeploymentInfoStep(this));
-        steps.add(new SelectTemplateStep(this));
-        steps.add(new CreateConfigStep(this));
-        steps.add(new DeployOptionsStep(this));
-        steps.add(new DeployTargetStep(this));
+        steps.add(new GetDeploymentInfoStep(this));
+        steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
     }
 
-    public BundleDeployWizard(Bundle bundle, BundleVersion bundleVersion) {
-        List<WizardStep> steps = init();
-        setBundle(bundle);
-        setBundleVersion(bundleVersion);
+    public BundleDeployWizard(Integer platformGroupId) {
+        this.setPlatformGroupId(platformGroupId);
 
-        steps.add(new BundleDeploymentInfoStep(this));
-        steps.add(new SelectTemplateStep(this));
-        steps.add(new CreateConfigStep(this));
-        steps.add(new DeployOptionsStep(this));
-        steps.add(new DeployTargetStep(this));
+        List<WizardStep> steps = init();
+        if (null == this.getPlatformGroupId()) {
+            steps.add(new SelectDestinationStep(this));
+        }
+        steps.add(new SelectBundleStep(this));
+        steps.add(new SelectBundleVersionStep(this));
+        steps.add(new GetDeploymentInfoStep(this));
+        steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
     }
 
-    public BundleDeployWizard(Bundle bundle, BundleVersion bundleVersion, BundleDeployment bundleDeployment) {
+    public BundleDeployWizard(Integer platformGroupId, Integer bundleId) {
+        this.setPlatformGroupId(platformGroupId);
+        this.setBundleId(bundleId);
+
         List<WizardStep> steps = init();
-        setBundle(bundle);
-        setBundleVersion(bundleVersion);
-        setBundleDeployment(bundleDeployment);
+        if (null == this.getPlatformGroupId()) {
+            steps.add(new SelectDestinationStep(this));
+        }
+        if (null == this.getBundleId()) {
+            steps.add(new SelectBundleStep(this));
+        }
+        steps.add(new SelectBundleVersionStep(this));
+        steps.add(new GetDeploymentInfoStep(this));
+        steps.add(new GetDeploymentConfigStep(this));
+        steps.add(new DeployStep(this));
+    }
+
+    public BundleDeployWizard(Integer platformGroupId, Integer bundleId, BundleVersion bundleVersion) {
+        this.setPlatformGroupId(platformGroupId);
+        this.setBundleId(bundleId);
+        this.setBundleVersion(bundleVersion);
+
+        List<WizardStep> steps = init();
+        if (null == this.getPlatformGroupId()) {
+            steps.add(new SelectDestinationStep(this));
+        }
+        if (null == this.getBundleId()) {
+            steps.add(new SelectBundleStep(this));
+        }
+        if (null == this.getBundleVersion()) {
+            steps.add(new SelectBundleVersionStep(this));
+        }
+        steps.add(new GetDeploymentInfoStep(this));
+        steps.add(new GetDeploymentConfigStep(this));
+        steps.add(new DeployStep(this));
+    }
+
+    public BundleDeployWizard(BundleDeployment bundleDeployment) {
+        List<WizardStep> steps = init();
+        this.setBundleId(bundleDeployment.getBundleVersion().getBundle().getId());
+        this.setBundleVersion(bundleDeployment.getBundleVersion());
+        this.setBundleDeployment(bundleDeployment);
         setNewDefinition(Boolean.FALSE);
 
-        steps.add(new SelectTemplateStep(this));
-        steps.add(new CreateConfigStep(this));
-        steps.add(new DeployOptionsStep(this));
-        steps.add(new DeployTargetStep(this));
+        steps.add(new SelectDestinationStep(this));
+        steps.add(new GetDeploymentConfigStep(this));
+        steps.add(new DeployStep(this));
+    }
+
+    public BundleDeployWizard(Integer platformGroupId, BundleDeployment bundleDeployment) {
+        List<WizardStep> steps = init();
+        this.setBundleId(bundleDeployment.getBundleVersion().getBundle().getId());
+        this.setBundleVersion(bundleDeployment.getBundleVersion());
+        this.setBundleDeployment(bundleDeployment);
+        setNewDefinition(Boolean.FALSE);
+
+        if (null == this.getPlatformGroupId()) {
+            steps.add(new SelectDestinationStep(this));
+        }
+        steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
     }
 

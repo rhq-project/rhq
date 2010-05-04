@@ -32,19 +32,21 @@
   </c:when>
   <c:when test="${not empty problemResources}">   
     <display:table cellspacing="0" cellpadding="0" width="100%" action="/Dashboard.do"
-                   var="probres" items="${problemResources}" >
-      <display:column width="60%" href="/rhq/resource/summary/overview.xhtml?id=${probres.resourceId}" property="resourceName" title="dash.home.TableHeader.ResourceName"/>
-      <display:column width="10%" property="numAlerts" title="dash.home.TableHeader.Alerts" align="center"/>
-      <display:column width="10%" property="availabilityType" title="resource.common.monitor.visibility.CAvailabilityTH" align="center" >
-        <display:availabilitydecorator/> 
-      </display:column>        
-	   <display:footer>
-	     <tr class="ListRow">
-	       <td class="ListCell" colspan="4">
-	         <i><c:out value="${timeRange}"/></i>
-	       </td>	
-	     </tr>
-	   </display:footer>
+                   var="obj" items="${problemResources}" >
+       <display:column width="20%" href="/rhq/resource/summary/overview.xhtml?id=${obj.original.resourceId}" property="original.resourceName" title="dash.home.TableHeader.ResourceName"/>
+       <display:column width="20%" property="originalResourceTypeName" title="dash.home.TableHeader.Type"/>
+       <display:column width="20%" property="lineage" title="dash.home.TableHeader.Location"/>
+       <display:column width="10%" property="original.numAlerts" title="dash.home.TableHeader.Alerts" align="center"/>
+       <display:column width="10%" property="original.availabilityType" title="resource.common.monitor.visibility.CAvailabilityTH" align="center" >
+         <display:availabilitydecorator/> 
+       </display:column>        
+       <display:footer>
+         <tr class="ListRow">
+           <td class="ListCell" colspan="4">
+             <i><c:out value="${timeRange}"/></i>
+           </td>    
+         </tr>
+       </display:footer>
     </display:table>
   </c:when>
   <c:otherwise>

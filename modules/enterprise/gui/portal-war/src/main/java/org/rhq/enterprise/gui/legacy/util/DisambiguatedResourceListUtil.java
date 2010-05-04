@@ -52,10 +52,12 @@ public class DisambiguatedResourceListUtil {
     
         private T original;
         private String lineage;
+        private String originalResourceTypeName;
         
-        public Record(T original, String lineage) {
+        public Record(T original, String resourceTypeName, String lineage) {
             this.original = original;
             this.lineage = lineage;
+            this.originalResourceTypeName = resourceTypeName;
         }
         
         public T getOriginal() {
@@ -65,13 +67,21 @@ public class DisambiguatedResourceListUtil {
         public String getLineage() {
             return lineage;
         }
+
+        public String getOriginalResourceTypeName() {
+            return originalResourceTypeName;
+        }
     }
     
     public static <T> PageList<Record<T>> buildResourceList(ResourceNamesDisambiguationResult<T> results, int totalSize, PageControl pageControl, boolean renderLinks) {
         ArrayList<Record<T>> convertedResults = new ArrayList<Record<T>>(results.getResolution().size());
         
         for(DisambiguationReport<T> dr : results.getResolution()) {
-            convertedResults.add(new Record<T>(dr.getOriginal(), buildLineage(dr.getParents(), renderLinks)));
+            String typeName = dr.getResourceTypeName();
+            if (results.isPluginResolutionNeeded()) {
+                typeName += " (" + dr.getResourceTypePluginName() + " plugin)";
+            }
+            convertedResults.add(new Record<T>(dr.getOriginal(), typeName, buildLineage(dr.getParents(), renderLinks)));
         }
         return new PageList<Record<T>>(convertedResults, totalSize, pageControl);
     }

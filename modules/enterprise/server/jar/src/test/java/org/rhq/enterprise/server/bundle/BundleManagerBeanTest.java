@@ -320,7 +320,8 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             ps.processBundleDistributionFile_returnValue.setBundleTypeName(bt1.getName());
 
             // now ask the SLSB to persist our bundle data given our mock distribution
-            BundleVersion bv1 = bundleManager.createBundleVersionViaURL(overlord, bundleDistroFile.toURI().toURL());
+            BundleVersion bv1 = bundleManager.createBundleVersionViaURL(overlord, bundleDistroFile.toURI().toURL()
+                .toString());
 
             // to a db lookup to make sure our bundle version is queryable
             BundleVersionCriteria criteria = new BundleVersionCriteria();

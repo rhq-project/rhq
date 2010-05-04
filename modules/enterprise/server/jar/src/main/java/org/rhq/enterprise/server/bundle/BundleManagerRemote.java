@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.bundle;
 
 import java.io.File;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
@@ -96,7 +95,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "fileBytes") byte[] fileBytes) throws Exception;
 
     /**
-     * A convenience method taking a URL whose content will be streamed to the server and used for the file bits.
+     * A convenience method taking a URL String whose content will be streamed to the server and used for the file bits.
      * 
      * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
      */
@@ -106,7 +105,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "name") String name, //
         @WebParam(name = "version") String version, //
         @WebParam(name = "architecture") Architecture architecture, //
-        @WebParam(name = "url") URL url) throws Exception;
+        @WebParam(name = "bundleFileUrl") String bundleFileUrl) throws Exception;
 
     /**
      * A convenience method taking an existing PackageVersion as opposed to a stream for the file bits.
@@ -179,7 +178,7 @@ public interface BundleManagerRemote {
      * Note, if the file is local it is more efficient to use {@link createBundleVersionViaFile(Subject,File)}.  
      * 
      * @param subject
-     * @param distributionFileUrl a URL to the Bundle Distribution file. It must be live, resolvable and read accessible
+     * @param distributionFileUrl a URL String to the Bundle Distribution file. It must be live, resolvable and read accessible
      * by the RHQ server process. 
      * 
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
@@ -187,7 +186,7 @@ public interface BundleManagerRemote {
      */
     BundleVersion createBundleVersionViaURL( //
         @WebParam(name = "subject") Subject subject, //        
-        @WebParam(name = "distributionFileUrl") URL distributionFileUrl) throws Exception;
+        @WebParam(name = "distributionFileUrl") String distributionFileUrl) throws Exception;
 
     /**
      * Remove everything associated with the Bundle with the exception of files laid down by related deployments.

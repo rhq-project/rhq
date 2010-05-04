@@ -330,8 +330,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
-        Architecture architecture, URL url) throws Exception {
-        return bundleManager.addBundleFileViaURL(subject, bundleVersionId, name, version, architecture, url);
+        Architecture architecture, String bundleFileUrl) throws Exception {
+        return bundleManager.addBundleFileViaURL(subject, bundleVersionId, name, version, architecture, bundleFileUrl);
     }
 
     public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
@@ -353,7 +353,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.createBundleVersionViaFile(subject, distributionFile);
     }
 
-    public BundleVersion createBundleVersionViaURL(Subject subject, URL distributionFileUrl) throws Exception {
+    public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
         return bundleManager.createBundleVersionViaURL(subject, distributionFileUrl);
     }
 

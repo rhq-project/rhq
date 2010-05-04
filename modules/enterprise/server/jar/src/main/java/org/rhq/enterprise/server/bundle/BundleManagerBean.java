@@ -351,7 +351,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public BundleVersion createBundleVersionViaURL(Subject subject, URL distributionFileUrl) throws Exception {
+    public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
+
+        // validate by immediately creating a URL
+        URL url = new URL(distributionFileUrl);
 
         // get the distro file into a tmp dir
         // create temp file
@@ -363,7 +366,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         try {
             tempDistributionFile = File.createTempFile("bundle-distribution", ".zip");
 
-            is = distributionFileUrl.openStream();
+            is = url.openStream();
             os = new FileOutputStream(tempDistributionFile);
             long len = StreamUtil.copy(is, os);
             is = null;
@@ -572,7 +575,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
-        Architecture architecture, URL url) throws Exception {
+        Architecture architecture, String bundleFileUrl) throws Exception {
+
+        // validate by immediately creating a URL
+        URL url = new URL(bundleFileUrl);
 
         return addBundleFile(subject, bundleVersionId, name, version, architecture, url.openStream());
     }

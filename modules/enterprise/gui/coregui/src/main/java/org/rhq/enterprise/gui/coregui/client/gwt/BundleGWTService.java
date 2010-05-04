@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -37,7 +36,7 @@ import org.rhq.core.domain.util.PageList;
 
 public interface BundleGWTService extends RemoteService {
 
-    BundleVersion createBundleVersionViaURL(URL url) throws Exception;
+    BundleVersion createBundleVersionViaURL(String url) throws Exception;
 
     BundleVersion createBundleVersionViaRecipe(String recipe) throws Exception;
 

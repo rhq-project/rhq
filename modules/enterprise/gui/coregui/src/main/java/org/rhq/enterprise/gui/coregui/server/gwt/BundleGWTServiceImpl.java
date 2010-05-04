@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -43,7 +42,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
     private BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
 
-    public BundleVersion createBundleVersionViaURL(URL url) throws Exception {
+    public BundleVersion createBundleVersionViaURL(String url) throws Exception {
         BundleVersion results;
         try {
             results = bundleManager.createBundleVersionViaURL(getSessionSubject(), url);

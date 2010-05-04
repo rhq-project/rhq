@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import java.net.URL;
 import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -151,18 +150,9 @@ public class BundleUploadDistroFileStep implements WizardStep {
 
     private void processUrl() {
         String urlString = (String) this.urlTextItem.getValue();
-        URL url;
-        try {
-            url = new URL(urlString);
-        } catch (Exception e) {
-            CoreGUI.getErrorHandler().handleError("Invalid URL [" + urlString + "]", e);
-            wizard.setBundleVersion(null);
-            setButtonsDisableMode(false);
-            return;
-        }
 
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-        bundleServer.createBundleVersionViaURL(url, new AsyncCallback<BundleVersion>() {
+        bundleServer.createBundleVersionViaURL(urlString, new AsyncCallback<BundleVersion>() {
             public void onSuccess(BundleVersion result) {
                 CoreGUI.getMessageCenter().notify(
                     new Message("Created bundle [" + result.getName() + "] version [" + result.getVersion() + "]",

@@ -1,0 +1,69 @@
+# Configuration file for jbossas init script that configures the
+# settings needed to start a particular JBoss AS instance.
+
+#
+# the JBoss AS installation directory (e.g. /opt/jboss-6.0.0.M1)
+# (*REQUIRED*)
+#
+JBOSS_HOME="@@rhq.deploy.dir@@"
+
+#
+# the args that will be passed to run.sh
+# (i.e. org.jboss.Main).
+#
+JBOSS_OPTS="-b @@jboss.bind.address@@"
+
+# What UNIX user the JBoss AS java process will run as.
+# (The shutdown client is always run as the invoker of the
+# init script). JBoss AS will be run as root by default, but, for
+# the sake of security, it is recommended that you chown the JBoss
+# AS installation files to a non-root user and use that use here.
+# Note, you do need to run as root if your server will listen on one
+# or more privileged (< 1024) ports. If you really do want to run as
+# root, comment out the JBOSS_USER variable completely (i.e. do not
+# set it to root). This will run the server process without "su".
+#JBOSS_USER=jboss
+
+#
+# Specify the maximum file descriptor limit, use "max" or "maximum" to use
+# the default, as queried by the system.
+#
+# Defaults to "maximum"
+#
+#MAX_FD="maximum"
+
+#
+# Specify the profiler configuration file to load.
+#
+# Default is to not load profiler configuration file.
+#
+#PROFILER=
+
+#
+# Specify the location of the Java Rntime Environment (JRE) or 
+# Java Development Kit (JDK) installation directory. If not set,
+# "/usr/java/default" will be used.
+#
+#JAVA_HOME="/usr/java/default"
+
+#
+# Specify options to pass to the Java VM (if unset, a default
+# set of options will be used).
+#
+# Note, if you want to pass the default options but some of 
+# your own additional options in, then set the 
+# ADDITIONAL_JAVA_OPTS variable (see below), rather than JAVA_OPTS.
+#
+#JAVA_OPTS="-Xms128M -Xmx512M -XX:MaxPermSize=256M -Dorg.jboss.resolver.warning=true -Dsun.rmi.dgc.client.gcInterval=3600000 -Dsun.rmi.dgc.server.gcInterval=3600000 -Djava.net.preferIPv4Stack=true"
+
+#
+# Specify additional options to pass to the Java VM. These are passed
+# in addition to the default set of options,
+# i.e. java $JAVA_OPTS $ADDITIONAL_JAVA_OPTS ... org.jboss.Main ...
+#
+# Sample JPDA settings (uncomment either a) or b))
+#  a) remote socket debugging
+#ADDITIONAL_JAVA_OPTS="-Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=n"
+#  b) shared memory debugging 
+#ADDITIONAL_JAVA_OPTS="-Xrunjdwp:transport=dt_shmem,server=y,suspend=n,address=jboss"
+

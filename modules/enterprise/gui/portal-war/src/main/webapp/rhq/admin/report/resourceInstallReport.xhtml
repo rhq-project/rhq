@@ -58,7 +58,7 @@
                             </f:facet>
                             <h:outputLink value="/rhq/inventory/browseResources.xhtml">
                                 <f:param name="subtab" value="#{installReport.category.name.toLowerCase()}" />
-                                <f:param name="filter" value="#{installReport.typeName}"/>
+                                <f:param name="search" value="type='#{installReport.typeName}'"/>
                                 <h:outputText value="#{installReport.typeName}"/>
                             </h:outputLink>
                         </rich:column>

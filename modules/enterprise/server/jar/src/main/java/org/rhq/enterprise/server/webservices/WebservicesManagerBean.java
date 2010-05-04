@@ -22,6 +22,7 @@
   */
 package org.rhq.enterprise.server.webservices;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
@@ -338,26 +339,18 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.addBundleFileViaPackageVersion(subject, bundleVersionId, name, packageVersionId);
     }
 
-    public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
-        return bundleManager.createBundle(subject, name, description, bundleTypeId);
-    }
-
     public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, String name,
         String description, String installDir, Configuration configuration) throws Exception {
         return bundleManager.createBundleDeployment(subject, bundleVersionId, name, description, installDir,
             configuration);
     }
 
-    public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
-        String version, String recipe) throws Exception {
-        return bundleManager.createBundleVersion(subject, bundleId, name, description, version, recipe);
+    public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
+        return bundleManager.createBundleVersionViaFile(subject, distributionFile);
     }
 
-    public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
-        int bundleTypeId, String bundleVersionName, String bundleVersionDescription, String version, String recipe)
-        throws Exception {
-        return bundleManager.createBundleAndBundleVersion(subject, bundleName, bundleDescription, bundleTypeId,
-            bundleVersionName, bundleVersionDescription, version, recipe);
+    public BundleVersion createBundleVersionViaURL(Subject subject, URL distributionFileUrl) throws Exception {
+        return bundleManager.createBundleVersionViaURL(subject, distributionFileUrl);
     }
 
     public void deleteBundle(Subject subject, int bundleId) throws Exception {
@@ -389,13 +382,17 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.findBundleVersionsByCriteria(subject, criteria);
     }
 
-    public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
-        Subject subject, BundleCriteria criteria) {
-        return bundleManager.findBundlesWithLastestVersionCompositesByCriteria(subject, criteria);
+    public PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(Subject subject,
+        BundleCriteria criteria) {
+        return bundleManager.findBundlesWithLatestVersionCompositesByCriteria(subject, criteria);
     }
 
     public List<BundleType> getAllBundleTypes(Subject subject) {
         return bundleManager.getAllBundleTypes(subject);
+    }
+
+    public BundleType getBundleType(Subject subject, String bundleTypeName) {
+        return bundleManager.getBundleType(subject, bundleTypeName);
     }
 
     public Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)
@@ -408,11 +405,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.getAllBundleVersionFilenames(subject, bundleVersionId);
     }
     */
-
-    public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeploymentId,
-        int resourceId) throws Exception {
-        return bundleManager.scheduleBundleResourceDeployment(subject, bundleDeploymentId, resourceId);
-    }
 
     public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeploymentId,
         int resourceGroupId) throws Exception {
@@ -1086,6 +1078,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public void removeSubjectsFromRole(Subject subject, int roleId, int[] subjectIds) {
         roleManager.removeSubjectsFromRole(subject, roleId, subjectIds);
+    }
+
+    public void setAssignedResourceGroups(Subject subject, int roleId, int[] groupIds) {
+        roleManager.setAssignedResourceGroups(subject, roleId, groupIds);
     }
 
     //ROLEMANAGER: END ----------------------------------

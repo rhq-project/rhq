@@ -398,29 +398,21 @@
     <repositories>
         <repository>
             <id>smartgwt</id>
-            <name>SmartGWT</name>
+            <name>SmartGWT Releases</name>
             <url>http://www.smartclient.com/maven2/</url>
             <snapshots>
-                <enabled>false</enabled>
+               <enabled>false</enabled>
             </snapshots>
         </repository>
 
         <repository>
             <id>codehaus</id>
-            <name>codehaus</name>
+            <name>Codehaus Releases</name>
             <url>http://repository.codehaus.org/</url>
             <snapshots>
-                <enabled>false</enabled>
+               <enabled>false</enabled>
             </snapshots>
         </repository>
-
-        <!--
-        <repository>
-            <id>gflot</id>
-            <name>GFlot</name>
-            <url>http://codemonkey.dumontierlab.com/maven/repo/</url>
-        </repository>
-        -->
     </repositories>
 
 </project>

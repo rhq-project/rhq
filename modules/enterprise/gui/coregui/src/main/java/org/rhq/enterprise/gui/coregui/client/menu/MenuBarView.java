@@ -56,6 +56,10 @@ public class MenuBarView extends VLayout {
             public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
                 String first = stringValueChangeEvent.getValue().split("/")[0];
 
+                if ("Resource".equals(first)) {
+                    first = "Inventory";
+                }
+
                 selected = first;
                 linksPane.setContents(setupLinks());
                 linksPane.markForRedraw();
@@ -91,6 +95,7 @@ public class MenuBarView extends VLayout {
 
         HLayout helpLayout = new HLayout();
         Label loggedInAs = new Label("Logged in as " + CoreGUI.getSessionSubject().getName());
+        loggedInAs.setWrap(false);
         loggedInAs.setValign(VerticalAlignment.CENTER);
         helpLayout.addMember(loggedInAs);
         helpLayout.addMember(new Hyperlink("Help", "Help"));

@@ -23,7 +23,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentAction;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -39,6 +38,12 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  */
 @SuppressWarnings("unchecked")
 public class FileTemplateBundlePluginServerComponent implements ResourceComponent, BundleFacet {
+
+    /** property that should always be available to scripts - it's the location where the deployment should be installed */
+    private static final String DEPLOY_DIR = "rhq.deploy.dir";
+
+    /** property that should always be available to scripts - it's the ID of the bundle deployment */
+    private static final String DEPLOY_ID = "rhq.deploy.id";
 
     private final Log log = LogFactory.getLog(FileTemplateBundlePluginServerComponent.class);
 
@@ -71,17 +76,18 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
 
             request.getBundleManagerProvider().auditDeployment(
                 resourceDeployment,
-                BundleDeploymentAction.DEPLOYMENT_STEP,
-                BundleDeploymentStatus.NOCHANGE,
+                "Configuration Variable Replacement",
+                BundleDeploymentStatus.SUCCESS,
                 "setting replacement variable values using [" + bundleDeployment.getConfiguration().toString(true)
                     + "]");
             recipeContext.setReplacementVariableValues(bundleDeployment.getConfiguration());
+            recipeContext.addReplacementVariableValue(DEPLOY_DIR, bundleDeployment.getInstallDir());
+            recipeContext.addReplacementVariableValue(DEPLOY_ID, Integer.toString(bundleDeployment.getId()));
 
             parser.setReplaceReplacementVariables(true);
 
-            request.getBundleManagerProvider().auditDeployment(resourceDeployment,
-                BundleDeploymentAction.DEPLOYMENT_STEP, BundleDeploymentStatus.NOCHANGE,
-                "Parsing Recipe using context [" + recipeContext + "]");
+            request.getBundleManagerProvider().auditDeployment(resourceDeployment, "Parse Recipe",
+                BundleDeploymentStatus.SUCCESS, "Parsing Recipe using context [" + recipeContext + "]");
             parser.parseRecipe(recipeContext);
         } catch (Throwable t) {
             log.error("Failed to deploy bundle [" + request + "]", t);

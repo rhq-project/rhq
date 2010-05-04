@@ -1,0 +1,36 @@
+<!-- Copyright 2006 Sun Microsystems, Inc. All rights reserved. You may not modify, use, reproduce, or distribute this software except in compliance with the terms of the License at: http://developer.sun.com/berkeley_license.html
+$Id: main.htmf,v 1.3 2006/05/03 22:00:33 inder Exp $ -->
+
+   <table valign="top" id="bodyTable" border="0">
+     <tr>
+      <td>
+        <map name="petmap">
+        <area onmouseover="javascript:this.style.cursor='pointer';" onclick="loadCategory('BIRDS')" 
+            alt="Birds" 
+            coords="72,2,280,250">
+        <area onmouseover="javascript:this.style.cursor='pointer';" onclick="loadCategory('FISH')" 
+            alt="Fish" 
+            coords="2,180,72,250">
+        <area onmouseover="javascript:this.style.cursor='pointer';" onclick="loadCategory('DOGS')" 
+            alt="Dogs" 
+            coords="60,250,130,320">
+       <area onmouseover="javascript:this.style.cursor='pointer';" onclick="loadCategory('REPTILES')" 
+            alt="Reptiles" 
+            coords="140,270,210,340">
+        <area onmouseover="javascript:this.style.cursor='pointer';" onclick="loadCategory('CATS')" 
+            alt="Cats" 
+            coords="225,240,295,310">
+        <area onmouseover="javascript:this.style.cursor='pointer';" onclick="loadCategory('BIRDS')" 
+            alt="Birds" 
+            coords="280,180,350,250">
+        </map>
+
+        <img src="images/splash.gif" 
+            alt="Pet Selection Map"
+            usemap="#petmap" 
+            width="350" 
+            height="355" 
+        border="0">
+     </td>
+    </tr>
+   </table>

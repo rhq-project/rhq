@@ -89,8 +89,6 @@ import org.rhq.core.util.stream.StreamUtil;
 public class Deployer {
     private final Log log = LogFactory.getLog(Deployer.class);
 
-    private static final String BACKUP_EXTENSION = ".rhqbackup";
-
     private final DeploymentProperties deploymentProps;
     private final Set<File> zipFiles;
     private final Map<File, File> rawFiles;
@@ -156,34 +154,90 @@ public class Deployer {
         return;
     }
 
-    public FileHashcodeMap deploy() throws Exception {
+    public FileHashcodeMap deploy(DeployDifferences diff) throws Exception {
         FileHashcodeMap map = null;
 
         if (!this.deploymentsMetadata.isManaged()) {
             // the destination dir has not been used to deploy a bundle yet, therefore, this is the first deployment
-            map = performInitialDeployment();
+            map = performInitialDeployment(diff, false);
         } else {
             // we have metadata in the destination directory, therefore, this deployment is updating a current one
-            map = performUpdateDeployment();
+            map = performUpdateDeployment(diff, false);
         }
 
         return map;
     }
 
-    private FileHashcodeMap performInitialDeployment() throws Exception {
-        FileHashcodeMap newFileHashcodeMap = extractZipAndRawFiles(null);
-        debug("Initial deployment finished.");
+    public FileHashcodeMap dryRun(DeployDifferences diff) throws Exception {
+        FileHashcodeMap map = null;
+
+        if (!this.deploymentsMetadata.isManaged()) {
+            // the destination dir has not been used to deploy a bundle yet, therefore, this is the first deployment
+            map = performInitialDeployment(diff, true);
+        } else {
+            // we have metadata in the destination directory, therefore, this deployment is updating a current one
+            map = performUpdateDeployment(diff, true);
+        }
+
+        return map;
+    }
+
+    private FileHashcodeMap performInitialDeployment(DeployDifferences diff, boolean dryRun) throws Exception {
+        FileHashcodeMap newFileHashcodeMap = extractZipAndRawFiles(new HashMap<String, String>(0), diff, dryRun);
+
+        // this is an initial deployment, so we know every file is new - tell our diff about them all
+        if (diff != null) {
+            diff.addAddedFiles(newFileHashcodeMap.keySet());
+        }
+
+        debug("Initial deployment finished. dryRun=", dryRun);
         return newFileHashcodeMap;
     }
 
-    private FileHashcodeMap performUpdateDeployment() throws Exception {
-        debug("Analyzing original, current and new files as part of update deployment");
+    private FileHashcodeMap performUpdateDeployment(DeployDifferences diff, boolean dryRun) throws Exception {
+        debug("Analyzing original, current and new files as part of update deployment. dryRun=", dryRun);
+
+        // NOTE: remember that data that goes in diff are only things affecting the current file set such as:
+        //       * if a current file will change
+        //       * if a current file will be deleted
+        //       * if a new file is added to the filesystem
+        //       * if a current file is ignored in the latest rescan
+        //       * if a file is realized on the filesystem before its stored on the file system
+        //       * if a current file is backed up
 
         DeploymentProperties originalDeploymentProps = this.deploymentsMetadata.getCurrentDeploymentProperties();
 
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
         ChangesFileHashcodeMap current = original.rescan(this.destDir, this.ignoreRegex);
         FileHashcodeMap newFiles = getNewDeploymentFileHashcodeMap();
+
+        if (current.getUnknownContent() != null) {
+            throw new Exception("Failed to properly rescan the current deployment: " + current.getUnknownContent());
+        }
+
+        if (diff != null) {
+            diff.addIgnoredFiles(current.getIgnored());
+            for (Map.Entry<String, String> entry : current.entrySet()) {
+                String currentPath = entry.getKey();
+                String currentHashcode = entry.getValue();
+                if (currentHashcode.equals(FileHashcodeMap.DELETED_FILE_HASHCODE)) {
+                    if (newFiles.containsKey(currentPath)) {
+                        diff.addAddedFile(currentPath);
+                    }
+                } else if (!newFiles.containsKey(currentPath)) {
+                    diff.addDeletedFile(currentPath);
+                } else if (!newFiles.get(currentPath).equals(currentHashcode)) {
+                    if (!newFiles.get(currentPath).equals(original.get(currentPath))) {
+                        diff.addChangedFile(currentPath);
+                    }
+                }
+            }
+            for (Map.Entry<String, String> entry : newFiles.entrySet()) {
+                if (!current.containsKey(entry.getKey())) {
+                    diff.addAddedFile(entry.getKey());
+                }
+            }
+        }
 
         // backup the current file if either of these are true:
         // * if there is a current file but there was no original file (current.getAdditions())
@@ -192,21 +246,38 @@ public class Deployer {
         // do nothing (do not backup the current file and do not copy the new file to disk) if:
         // * the original file is not the same as the current file (current.getChanges()) but is the same as the new file
         Set<String> currentFilesToBackup = new HashSet<String>(current.getAdditions().keySet());
-        Set<String> currentFilesToLeaveAlone = new HashSet<String>();
+        Map<String, String> currentFilesToLeaveAlone = new HashMap<String, String>();
         Set<String> currentFilesToDelete;
 
         for (Map.Entry<String, String> changed : current.getChanges().entrySet()) {
             String changedFilePath = changed.getKey();
             String newHashcode = newFiles.get(changedFilePath);
             if (newHashcode != null) {
-                // remember, original hash will never be the same as the changed hash (that's why it is considered changed!)
-                if (newHashcode.equals(original.get(changedFilePath))) {
-                    currentFilesToLeaveAlone.add(changedFilePath);
-                } else if (!newHashcode.equals(changed.getValue())) {
+                // Remember, original hash will never be the same as the changed hash (that's why it is considered changed!).
+                // If the new file hash is the same as the original, it means the user changed the file but that change
+                // should be compatible with the new deployment (this is assumed, but if the new file didn't alter the original file,
+                // presumably the new software is backward compatible and should accept the changed original as a valid file).
+                // Now however in this case we mark the changed file path with the *original* hashcode - in effect, we continue
+                // along the knowlege of the original hashcode (which is the same as the new) thus continuing the knowledge
+                // that a file is different from the deployment distribution.
+                // If the new is different from the original and if the new is different than the current, we need to backup the
+                // current because we will be overwriting the current file with the new.
+                String changedFileHashcode = changed.getValue();
+                String originalFileHashcode = original.get(changedFilePath);
+                if (newHashcode.equals(originalFileHashcode)) {
+                    currentFilesToLeaveAlone.put(changedFilePath, originalFileHashcode);
+                } else if (!newHashcode.equals(changedFileHashcode)) {
                     currentFilesToBackup.add(changedFilePath);
                 }
+            } else {
+                // the current file is a changed version of original, but there is no new file
+                // we should back this up since it will be deleted but was changed from the original for some reason
+                currentFilesToBackup.add(changedFilePath);
             }
         }
+
+        // done with this, allow GC to reclaim memory
+        original = null;
 
         // the rescan can only find things in the dest dir.
         // if the new deployment introduced new files with absolute paths ('new' meaning they
@@ -216,20 +287,28 @@ public class Deployer {
         newNotFoundByRescan.removeAll(current.keySet());
         for (String newFileNotScanned : newNotFoundByRescan) {
             File newFileNotScannedFile = new File(newFileNotScanned);
-            if (newFileNotScannedFile.isAbsolute() && newFileNotScannedFile.exists()) {
-                currentFilesToBackup.add(newFileNotScanned);
+            if (newFileNotScannedFile.isAbsolute()) {
+                if (newFileNotScannedFile.exists()) {
+                    currentFilesToBackup.add(newFileNotScanned);
+                    if (diff != null) {
+                        diff.removeAddedFile(newFileNotScanned);
+                        diff.addChangedFile(newFileNotScanned);
+                    }
+                }
             }
         }
 
-        // done with these, allow GC to reclaim memory
+        // done with this, allow GC to reclaim memory
         newNotFoundByRescan = null;
-        original = null;
 
         // now remove all the new files from the current map - what's left are files that exist that are not in the new deployment
         // thus, those files left in current are those that need to be deleted from disk
         currentFilesToDelete = current.keySet(); // the set is backed by the map, changes to it affect the map
         currentFilesToDelete.removeAll(newFiles.keySet());
         currentFilesToDelete.removeAll(current.getDeletions().keySet()); // these are already deleted, no sense trying to delete them again
+
+        // don't use this anymore - its underlying key set has been altered and this no longer is the full current files
+        current = null;
 
         // we now know what to do:
         // 1. backup the files in currentFilesToBackup
@@ -239,56 +318,116 @@ public class Deployer {
         // 1. backup the files we want to retain for the admin to review
         if (!currentFilesToBackup.isEmpty()) {
             int deploymentId = originalDeploymentProps.getDeploymentId();
-            File backupDir = this.deploymentsMetadata.getDeploymentBackupDirectory(deploymentId);
-            debug("Backing up files to [", backupDir, "] as part of update deployment");
+            debug("Backing up files as part of update deployment. dryRun=", dryRun);
             for (String fileToBackupPath : currentFilesToBackup) {
-                File backupFile;
-                File fileToBackup = new File(fileToBackupPath);
-                if (!fileToBackup.isAbsolute()) {
-                    backupFile = new File(backupDir, fileToBackupPath);
-                    fileToBackup = new File(this.destDir, fileToBackupPath);
-                } else {
-                    backupFile = new File(fileToBackupPath + BACKUP_EXTENSION);
-                }
-                backupFile.getParentFile().mkdirs();
-                FileUtil.copyFile(fileToBackup, backupFile);
-                debug("Backed up file [", fileToBackup, "] to [", backupFile, "]");
+                backupFile(diff, deploymentId, fileToBackupPath, dryRun);
             }
         }
 
         // 2. delete the obsolete files
-        debug("Deleting obsolete files as part of update deployment");
-        for (String fileToDeletePath : currentFilesToDelete) {
-            File doomedFile = new File(fileToDeletePath);
-            if (!doomedFile.isAbsolute()) {
-                doomedFile = new File(this.destDir, fileToDeletePath);
-            }
-            boolean deleted = doomedFile.delete();
-            if (deleted) {
-                debug("Deleted obsolete file [", doomedFile, "]");
-            } else {
-                // TODO: what should we do? is it a major failure if we can't remove obsolete files?                
-                debug("Failed to delete obsolete file [", doomedFile, "]");
+        if (!currentFilesToDelete.isEmpty()) {
+            debug("Deleting obsolete files as part of update deployment. dryRun=", dryRun);
+            for (String fileToDeletePath : currentFilesToDelete) {
+                File doomedFile = new File(fileToDeletePath);
+                if (!doomedFile.isAbsolute()) {
+                    doomedFile = new File(this.destDir, fileToDeletePath);
+                }
+                boolean deleted;
+                if (!dryRun) {
+                    deleted = doomedFile.delete();
+                } else {
+                    deleted = true;
+                }
+                if (deleted) {
+                    debug("Deleted obsolete file [", doomedFile, "]. dryRun=", dryRun);
+                } else {
+                    // TODO: what should we do? is it a major failure if we can't remove obsolete files?                
+                    debug("Failed to delete obsolete file [", doomedFile, "]");
+                    if (diff != null) {
+                        diff.addError(fileToDeletePath, "File [" + doomedFile.getAbsolutePath() + "] did not delete");
+                    }
+                }
             }
         }
 
         // 3. copy all new files except for those to be kept as-is
-        debug("Copying new files as part of update deployment");
-        FileHashcodeMap newFileHashCodeMap = extractZipAndRawFiles(currentFilesToLeaveAlone);
+        debug("Copying new files as part of update deployment. dryRun=", dryRun);
+        FileHashcodeMap newFileHashCodeMap = extractZipAndRawFiles(currentFilesToLeaveAlone, diff, dryRun);
 
-        debug("Update deployment finished.");
+        debug("Update deployment finished. dryRun=", dryRun);
         return newFileHashCodeMap;
     }
 
-    private FileHashcodeMap extractZipAndRawFiles(Set<String> currentFilesToLeaveAlone) throws Exception {
+    private void backupFile(DeployDifferences diff, int deploymentId, final String fileToBackupPath, boolean dryRun)
+        throws Exception {
+
+        File bakFile;
+
+        // we need to play some games if we are on windows and a drive letter is specified
+        boolean isWindows = (File.separatorChar == '\\');
+        StringBuilder fileToBackupPathNoDriveLetter = null;
+        String driveLetter = null;
+
+        if (isWindows) {
+            fileToBackupPathNoDriveLetter = new StringBuilder(fileToBackupPath);
+            driveLetter = FileUtil.stripDriveLetter(fileToBackupPathNoDriveLetter);
+        }
+
+        File fileToBackup = new File(fileToBackupPath);
+        if (fileToBackup.isAbsolute()) {
+            File backupDir = this.deploymentsMetadata.getDeploymentExternalBackupDirectory(deploymentId);
+            if (isWindows && driveLetter != null) {
+                backupDir = new File(backupDir, "_" + driveLetter.toUpperCase());
+                bakFile = new File(backupDir, fileToBackupPathNoDriveLetter.toString());
+            } else {
+                bakFile = new File(backupDir, fileToBackupPath);
+            }
+        } else {
+            File backupDir = this.deploymentsMetadata.getDeploymentBackupDirectory(deploymentId);
+            if (isWindows && driveLetter != null) {
+                StringBuilder destDirAbsPathBuilder = new StringBuilder(this.destDir.getAbsolutePath());
+                String destDirDriveLetter = FileUtil.stripDriveLetter(destDirAbsPathBuilder);
+                if (destDirDriveLetter == null || driveLetter.equals(destDirDriveLetter)) {
+                    bakFile = new File(backupDir, fileToBackupPath);
+                    fileToBackup = new File(this.destDir, fileToBackupPathNoDriveLetter.toString());
+                } else {
+                    throw new Exception("Cannot backup relative path [" + fileToBackupPath
+                        + "] whose drive letter is different than the destination directory ["
+                        + this.destDir.getAbsolutePath() + "]");
+                }
+            } else {
+                bakFile = new File(backupDir, fileToBackupPath);
+                fileToBackup = new File(this.destDir, fileToBackupPath);
+            }
+        }
+
+        if (!dryRun) {
+            bakFile.getParentFile().mkdirs();
+            FileUtil.copyFile(fileToBackup, bakFile);
+        }
+
+        debug("Backed up file [", fileToBackup, "] to [", bakFile, "]. dryRun=", dryRun);
+
+        if (diff != null) {
+            diff.addBackedUpFile(fileToBackupPath, bakFile.getAbsolutePath());
+        }
+
+        return;
+    }
+
+    private FileHashcodeMap extractZipAndRawFiles(Map<String, String> currentFilesToLeaveAlone, DeployDifferences diff,
+        boolean dryRun) throws Exception {
+
+        // NOTE: right now, this only adds to the "realized" set of files is diff, no need to track "added" or "changed" here
+
         FileHashcodeMap newFileHashCodeMap = new FileHashcodeMap();
 
         // extract all zip files
         ExtractorZipFileVisitor visitor;
         for (File zipFile : this.zipFiles) {
-            debug("Extracting zip [", zipFile, "] entries");
+            debug("Extracting zip [", zipFile, "] entries. dryRun=", dryRun);
             visitor = new ExtractorZipFileVisitor(this.destDir, this.filesToRealizeRegex, this.templateEngine,
-                currentFilesToLeaveAlone);
+                currentFilesToLeaveAlone.keySet(), diff, dryRun);
             ZipUtil.walkZipFile(zipFile, visitor);
             newFileHashCodeMap.putAll(visitor.getFileHashcodeMap());
         }
@@ -300,22 +439,26 @@ public class Deployer {
             File currentLocationFile = rawFile.getKey();
             File newLocationFile = rawFile.getValue();
             String newLocationPath = rawFile.getValue().getPath();
-            if (currentFilesToLeaveAlone != null && currentFilesToLeaveAlone.contains(newLocationPath)) {
+            newLocationPath = newFileHashCodeMap.convertPath(newLocationPath);
+            if (currentFilesToLeaveAlone != null && currentFilesToLeaveAlone.containsKey(newLocationPath)) {
                 continue;
             }
             if (!newLocationFile.isAbsolute()) {
                 newLocationFile = new File(this.destDir, newLocationFile.getPath());
             }
-            File newLocationParentDir = newLocationFile.getParentFile();
-            newLocationParentDir.mkdirs();
-            if (!newLocationParentDir.isDirectory()) {
-                throw new Exception("Failed to create new parent directory for raw file [" + newLocationFile + "]");
+
+            if (!dryRun) {
+                File newLocationParentDir = newLocationFile.getParentFile();
+                newLocationParentDir.mkdirs();
+                if (!newLocationParentDir.isDirectory()) {
+                    throw new Exception("Failed to create new parent directory for raw file [" + newLocationFile + "]");
+                }
             }
 
             String hashcode;
 
             if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocationPath).matches()) {
-                debug("Realizing file [", currentLocationFile, "] to [", newLocationFile, "]");
+                debug("Realizing file [", currentLocationFile, "] to [", newLocationFile, "]. dryRun=", dryRun);
 
                 // this entry needs to be realized, do it now in-memory (we assume realizable files will not be large)
                 // note: tempateEngine will never be null if we got here
@@ -323,29 +466,39 @@ public class Deployer {
                 byte[] rawFileContent = StreamUtil.slurp(in);
                 String content = this.templateEngine.replaceTokens(new String(rawFileContent));
 
+                if (diff != null) {
+                    diff.addRealizedFile(newLocationPath, content);
+                }
+
                 // now write the realized content to the filesystem
                 byte[] bytes = content.getBytes();
 
-                BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(newLocationFile));
-                try {
-                    out.write(bytes);
-                } finally {
-                    out.close();
+                if (!dryRun) {
+                    BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(newLocationFile));
+                    try {
+                        out.write(bytes);
+                    } finally {
+                        out.close();
+                    }
                 }
 
                 MessageDigestGenerator hashcodeGenerator = copyDigester.getMessageDigestGenerator();
                 hashcodeGenerator.add(bytes);
                 hashcode = hashcodeGenerator.getDigestString();
             } else {
-                debug("Copying raw file [", currentLocationFile, "] to [", newLocationFile, "]");
+                debug("Copying raw file [", currentLocationFile, "] to [", newLocationFile, "]. dryRun=", dryRun);
 
                 FileInputStream in = new FileInputStream(currentLocationFile);
                 try {
-                    BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(newLocationFile));
-                    try {
-                        hashcode = copyDigester.copyAndCalculateHashcode(in, out);
-                    } finally {
-                        out.close();
+                    if (!dryRun) {
+                        BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(newLocationFile));
+                        try {
+                            hashcode = copyDigester.copyAndCalculateHashcode(in, out);
+                        } finally {
+                            out.close();
+                        }
+                    } else {
+                        hashcode = MessageDigestGenerator.getDigestString(in);
                     }
                 } finally {
                     in.close();
@@ -360,7 +513,12 @@ public class Deployer {
             }
         }
 
-        this.deploymentsMetadata.setCurrentDeployment(deploymentProps, newFileHashCodeMap);
+        newFileHashCodeMap.putAll(currentFilesToLeaveAlone); // remember that these are still there
+
+        if (!dryRun) {
+            this.deploymentsMetadata.setCurrentDeployment(deploymentProps, newFileHashCodeMap);
+        }
+
         return newFileHashCodeMap;
     }
 

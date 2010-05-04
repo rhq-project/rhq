@@ -24,6 +24,7 @@
 package org.rhq.core.util.updater;
 
 import java.io.File;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.rhq.core.util.file.FileUtil;
@@ -39,6 +40,7 @@ public class DeploymentsMetadata {
     public static final String DEPLOYMENT_FILE = "deployment.properties";
     public static final String HASHCODES_FILE = "file-hashcodes.dat";
     public static final String BACKUP_DIR = "backup";
+    public static final String EXT_BACKUP_DIR = "ext-backup";
 
     private final File rootDirectory;
 
@@ -191,6 +193,8 @@ public class DeploymentsMetadata {
 
     /**
      * Returns a metadata directory that is appropriate to place backup files for the deployment.
+     * Files placed here are files found in the deployment directory that needed to be backed up
+     * before being overwritten or deleted.
      * 
      * @param deploymentId the ID of the deployment whose backup directory is to be returned
      * @return backup directory for the deployment
@@ -211,6 +215,34 @@ public class DeploymentsMetadata {
             return backupDir;
         } catch (Exception e) {
             throw new IllegalStateException("Cannot determine deployment backup dir for [" + deploymentId + "]", e);
+        }
+    }
+
+    /**
+     * Returns a metadata directory that is appropriate to place backup files for the deployment.
+     * Files placed here are files found in external directories (i.e. outside the deployment directory)
+     * that needed to be backed up before being overwritten or deleted.
+     * 
+     * @param deploymentId the ID of the deployment whose backup directory is to be returned
+     * @return backup directory for the deployment's external files
+     */
+    public File getDeploymentExternalBackupDirectory(int deploymentId) throws Exception {
+        try {
+            File dir = getDeploymentMetadataDirectory(deploymentId);
+            File backupDir = new File(dir, EXT_BACKUP_DIR);
+            if (!backupDir.isDirectory()) {
+                if (!backupDir.exists()) {
+                    if (!backupDir.mkdirs()) {
+                        throw new IllegalStateException("Failed to create external backup directory: " + backupDir);
+                    }
+                } else {
+                    throw new IllegalStateException("ext backup is a file but should be a directory: " + backupDir);
+                }
+            }
+            return backupDir;
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot determine deployment external backup dir for [" + deploymentId
+                + "]", e);
         }
     }
 
@@ -255,14 +287,15 @@ public class DeploymentsMetadata {
      *
      * @param deploymentProps identifies the deployment information for the live data
      * @param ignoreRegex the live files/directories to ignore
+     * @param ignored a set that will contain those files/directories that were ignored while scanning the deployment
      * @return the map of the files/hashcodes
      * @throws Exception if failed to calculate and store the metadata
      */
-    public FileHashcodeMap snapshotLiveDeployment(DeploymentProperties deploymentProps, Pattern ignoreRegex)
-        throws Exception {
+    public FileHashcodeMap snapshotLiveDeployment(DeploymentProperties deploymentProps, Pattern ignoreRegex,
+        Set<String> ignored) throws Exception {
 
         // calculate the hashcodes from the live files and write the data to the proper file
-        FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(getRootDirectory(), ignoreRegex);
+        FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(getRootDirectory(), ignoreRegex, ignored);
         setCurrentDeployment(deploymentProps, map);
         return map;
     }

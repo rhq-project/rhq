@@ -44,5 +44,24 @@
       </index>
    </table>
 
+
+     <table name="RHQ_TAG" obsolete="true">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+    </table>
+
+     <table name="RHQ_REPO_TAG_MAP" obsolete="true">
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAG"/>
+
+        <constraint name="RHQ_REPO_TAG_MAP_KEY">
+            <primaryKey>
+                <field ref="REPO_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
 </dbsetup>
 

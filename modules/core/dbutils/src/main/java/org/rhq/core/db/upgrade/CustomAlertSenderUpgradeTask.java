@@ -133,7 +133,8 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
     private void upgradeOperationNotifications() throws SQLException {
         String dataMapSQL = "" //
             + "  SELECT def.id, def.operation_def_id" //
-            + "    FROM rhq_alert_definition def";
+            + "    FROM rhq_alert_definition def" //
+            + "   WHERE def.operation_def_id IS NOT NULL"; // not all alert definitions have operation notifications
 
         List<Object[]> data = databaseType.executeSelectSql(connection, dataMapSQL);
 

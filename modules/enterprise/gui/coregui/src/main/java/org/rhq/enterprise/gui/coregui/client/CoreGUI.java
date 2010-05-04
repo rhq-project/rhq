@@ -30,7 +30,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
-import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
@@ -44,12 +44,11 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class CoreGUI implements EntryPoint {
+public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
     private static Subject sessionSubject;
-    //private static Subject fullSubject;
 
     private static UserPreferences userPreferences;
 
@@ -61,11 +60,14 @@ public class CoreGUI implements EntryPoint {
 
     private static Canvas content;
 
-    private View rootView;
+    private RootCanvas rootCanvas;
 
-    public View currentView;
+    private static ViewPath currentViewPath;
+
+    private static CoreGUI coreGUI;
 
     public void onModuleLoad() {
+        coreGUI = this;
 
         if (!GWT.isScript()) {
             KeyIdentifier debugKey = new KeyIdentifier();
@@ -84,8 +86,11 @@ public class CoreGUI implements EntryPoint {
             }
         });
 
+        messageCenter = new MessageCenter();
+
+
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
-            "/j_security_check.do?j_username=rhqadmin&j_password=rhqadmin");
+                "/j_security_check.do?j_username=rhqadmin&j_password=rhqadmin");
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(Request request, Response response) {
@@ -101,7 +106,6 @@ public class CoreGUI implements EntryPoint {
             e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
 
-        messageCenter = new MessageCenter();
 
         SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
 
@@ -116,26 +120,13 @@ public class CoreGUI implements EntryPoint {
                 System.out.println("Logged in: " + result.getSessionId());
                 setSessionSubject(result);
                 userPreferences = new UserPreferences(result);
-
-                buildCoreUI();
-
-                /* We can cache all metadata right here
-                ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                        (Integer[]) null, EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
-                    public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
-                        System.out.println("Preloaded [" + types.size() + "] resource types");
-                        buildCoreUI();
-                    }
-                });
-                */
             }
         });
     }
 
     private void buildCoreUI() {
-        RootCanvas rootCanvas = new RootCanvas();
+        this.rootCanvas = new RootCanvas();
         rootCanvas.setOverflow(Overflow.HIDDEN);
-        this.currentView = this.rootView = new View(new ViewId("", null), rootCanvas);
 
         //        HTMLPane menuPane = new HTMLPane();
         //        menuPane.setWidth100();
@@ -167,95 +158,24 @@ public class CoreGUI implements EntryPoint {
 
         rootCanvas.draw();
 
-        History.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-            public void onValueChange(ValueChangeEvent<String> historyChangeEvent) {
-                String path = historyChangeEvent.getValue();
-                System.out.println("History request: " + path);
-
-                List<String> viewIdNames = path.equals("") ? Collections.<String> emptyList() : Arrays.asList(path
-                    .split("\\/"));
-                String currentPath = CoreGUI.this.currentView.getId().getPath();
-                List<String> currentViewIdNames = currentPath.equals("") ? Collections.<String> emptyList() : Arrays
-                    .asList(currentPath.split("\\/"));
-
-                int commonBasePathSize = 0;
-                for (int i = 0; i < viewIdNames.size() && i < currentViewIdNames.size(); i++) {
-                    String name = viewIdNames.get(i);
-                    String currentName = currentViewIdNames.get(i);
-                    if (name.equals(currentName)) {
-                        commonBasePathSize++;
-                    } else {
-                        break;
-                    }
-                }
-                int startIndex;
-                View parentView = null;
-                if (commonBasePathSize > 0) {
-                    // The requested path shares a common base path with the current view, so skip rendering of
-                    // views corresponding to this common base path. For example, if the current view is
-                    // Resource/10001/Summary/Overview and Resource/10001/Monitor/Graphs is requested, call renderView()
-                    // only on for the Monitor and Graphs components of the path.
-                    startIndex = commonBasePathSize;
-                    int subViewsToRenderPathSize = viewIdNames.size() - commonBasePathSize;
-                    View view = CoreGUI.this.currentView;
-                    if (view != null) {
-                        parentView = view;
-                    }
-                    for (int i = 0; i < subViewsToRenderPathSize; i++) {
-                        parentView = parentView.getParent();
-                    }
-                } else {
-                    // Otherwise, start at the root view (i.e. call renderView() for every component in the path).
-                    startIndex = 0;
-                    parentView = CoreGUI.this.rootView;
-                }
-                System.out.println("Starting parent view: " + parentView);
-
-                ViewRenderer viewRenderer = parentView.getDescendantViewRenderer();
-                try {
-                    for (int i = startIndex, viewIdNamesSize = viewIdNames.size(); i < viewIdNamesSize; i++) {
-                        String viewIdName = viewIdNames.get(i);
-                        // See if the parent view provided a view renderer to use for its descendants. If not,
-                        // continue using the view renderer that renderer the parent view.
-                        ViewRenderer descendantViewRenderer = parentView.getDescendantViewRenderer();
-                        if (descendantViewRenderer != null) {
-                            viewRenderer = descendantViewRenderer;
-                        }
-                        ViewId viewId = new ViewId(viewIdName, parentView.getId());
-                        boolean lastNode = (i == (viewIdNamesSize - 1));
-                        View view = viewRenderer.renderView(viewId, lastNode);
-                        view.setParent(parentView);
-
-                        parentView = view;
-                    }
-                } catch (UnknownViewException e) {
-                    // Abort the for-loop, since once we hit an unknown name, we don't care about any remaining names
-                    // in the list. The breadcrumbs list will contain breadcrumbs for only the names that were
-                    // recognized.
-                    System.err.println(e.getMessage());
-                    // TODO: Should we add a new token to the History to point to the valid location
-                    //       we ended up at?
-                }
-                CoreGUI.this.currentView = parentView;
-
-                // Update the breadcrumb trail.
-                List<Breadcrumb> breadcrumbs = new LinkedList<Breadcrumb>();
-                while (parentView.getParent() != null) {
-                    breadcrumbs.add(0, parentView.getBreadcrumb());
-                    parentView = parentView.getParent();
-                }
-                System.out.println("Breadcrumbs: " + breadcrumbs);
-                breadCrumbTrailPane.setBreadcrumbs(breadcrumbs);
-                breadCrumbTrailPane.refresh();
-            }
-        });
+        History.addValueChangeHandler(this);
 
         History.fireCurrentHistoryState();
     }
 
+
+    public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
+        System.out.println("Handling history event: " + stringValueChangeEvent.getValue());
+        currentViewPath = new ViewPath(stringValueChangeEvent.getValue());
+
+        rootCanvas.renderView(currentViewPath);
+
+    }
+
+
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
+
         if (breadcrumbName.equals("Administration")) {
             canvas = new AdministrationView();
         } else if (breadcrumbName.equals("Demo")) {
@@ -265,9 +185,11 @@ public class CoreGUI implements EntryPoint {
         } else if (breadcrumbName.equals("Resource")) {
             canvas = new ResourceView();
         } else if (breadcrumbName.equals("Dashboard")) {
-            canvas = new DashboardView();
+            canvas = new DashboardsView();
         } else if (breadcrumbName.equals("Bundles")) {
             canvas = new BundleTopView();
+        } else if (breadcrumbName.equals("LogOut")) {
+            canvas = new LoginView();
         } else {
             canvas = null;
         }
@@ -294,7 +216,6 @@ public class CoreGUI implements EntryPoint {
     }
 
 
-
     public static void setSessionSubject(Subject subject) {
         GWTServiceLookup.registerSession(String.valueOf(subject.getSessionId()));
 
@@ -303,6 +224,8 @@ public class CoreGUI implements EntryPoint {
         //        Subject s = new Subject(subject.getName(),subject.getFactive(), subject.getFsystem());
         //        s.setSessionId(subject.getSessionId());
         CoreGUI.sessionSubject = subject;
+        CoreGUI.userPreferences = new UserPreferences(subject);
+        coreGUI.buildCoreUI();
     }
 
     public static void setContent(Canvas newContent) {
@@ -322,34 +245,40 @@ public class CoreGUI implements EntryPoint {
     }
 
     public static void refreshBreadCrumbTrail() {
-        breadCrumbTrailPane.refresh();
+        breadCrumbTrailPane.refresh(currentViewPath);
     }
 
-    private class RootCanvas extends VLayout implements ViewRenderer {
+
+    private class RootCanvas extends VLayout implements BookmarkableView {
 
         ViewId currentViewId;
         Canvas currentCanvas;
 
         private RootCanvas() {
-            setWidth100(); // (1200);
-            setHeight100(); // (900);
+            setWidth100();
+            setHeight100();
         }
 
-        public View renderView(ViewId viewId, boolean lastNode) throws UnknownViewException {
-            if (!viewId.equals(currentViewId)) {
-                currentViewId = viewId;
-                String path = viewId.getPath();
-                Canvas canvas = createContent(path);
-                if (canvas == null) {
-                    throw new UnknownViewException();
-                }
-                currentCanvas = canvas;
-                setContent(canvas);
-            }
-            ViewRenderer descendantViewRender = (currentCanvas instanceof ViewRenderer) ? (ViewRenderer) currentCanvas
-                : null;
 
-            return new View(viewId, descendantViewRender);
+        public void renderView(ViewPath viewPath) {
+            if (viewPath.isEnd()) {
+                // default view
+                History.newItem("Dashboard");
+            } else {
+
+                if (!viewPath.getCurrent().equals(currentViewId)) {
+                    currentViewId = viewPath.getCurrent();
+
+                    currentCanvas = createContent(viewPath.getCurrent().getPath());
+                    setContent(currentCanvas);
+                }
+                if (currentCanvas instanceof BookmarkableView) {
+                    ((BookmarkableView) currentCanvas).renderView(viewPath.next()); // e.g.
+                }
+
+                refreshBreadCrumbTrail();
+
+            }
         }
     }
 }

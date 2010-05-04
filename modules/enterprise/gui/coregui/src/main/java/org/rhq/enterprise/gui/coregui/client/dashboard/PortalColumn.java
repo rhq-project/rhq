@@ -42,13 +42,13 @@ public class PortalColumn extends VStack {
         setDropLineThickness(4);
 
         Canvas dropLineProperties = new Canvas();
-        dropLineProperties.setBackgroundColor("aqua");
+        dropLineProperties.setBackgroundColor("#4A5D75");
         setDropLineProperties(dropLineProperties);
 
         setShowDragPlaceHolder(true);
 
         Canvas placeHolderProperties = new Canvas();
-        placeHolderProperties.setBorder("2px solid 8289A6");
+        placeHolderProperties.setBorder("2px solid 4A5D75");
         setPlaceHolderProperties(placeHolderProperties);
     }
 }

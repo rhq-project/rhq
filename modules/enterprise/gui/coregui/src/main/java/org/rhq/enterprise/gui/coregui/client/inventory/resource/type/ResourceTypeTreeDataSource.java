@@ -32,6 +32,7 @@ import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -117,20 +118,18 @@ public class ResourceTypeTreeDataSource extends DataSource {
 
     public static TreeNode[] buildNodes(PageList<ResourceType> result) {
 
-        HashMap<String, PluginTreeNode> pluginNodes = new HashMap<String, PluginTreeNode>();
-
         HashSet<TreeNode> nodes = new HashSet<TreeNode>();
+
+        HashSet<ResourceType> platforms = new HashSet<ResourceType>();
+        HashSet<ResourceType> noParentNonPlatformNodes = new HashSet<ResourceType>();
+
         for (ResourceType type : result) {
 
-            PluginTreeNode pluginNode = pluginNodes.get(type.getPlugin());
-            if (pluginNode == null) {
-                pluginNode = new PluginTreeNode(type.getPlugin());
-                pluginNodes.put(type.getPlugin(), pluginNode);
-                nodes.add(pluginNode);
-            }
+            if (type.getCategory() != ResourceCategory.PLATFORM && (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty())) {
+                noParentNonPlatformNodes.add(type);
 
-
-            if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
+            } else if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
+                platforms.add(type);
                 nodes.add(new ResourceTypeTreeNode(type, type.getPlugin()));
             } else {
                 for (ResourceType parent : type.getParentResourceTypes()) {
@@ -138,6 +137,13 @@ public class ResourceTypeTreeDataSource extends DataSource {
                 }
             }
         }
+
+        for (ResourceType platform : platforms) {
+            for (ResourceType platformChild : noParentNonPlatformNodes) {
+                nodes.add(new ResourceTypeTreeNode(platformChild, String.valueOf(platform.getId())));
+            }
+        }
+
 
         TreeNode[] treeNodes = nodes.toArray(new TreeNode[nodes.size()]);
         return treeNodes;

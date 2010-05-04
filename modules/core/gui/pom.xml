@@ -154,18 +154,10 @@
          <name>Java.net Maven1 Repository - for javax.faces, javax.el, com.sun.el, and com.sun.facelets releases</name>
          <url>http://download.java.net/maven/1/</url>
          <layout>legacy</layout>
-      </repository>
-
-      <!--
-      <repository>
-         <id>exadel-snapshots</id>
-         <name>Exadel Snapshot Maven 2 Repo - for ajax4jsf and richfaces snapshots</name>
-         <url>http://maven.exadel.com/</url>
-         <releases>
+         <snapshots>
             <enabled>false</enabled>
-         </releases>
+         </snapshots>
       </repository>
-      -->
 
    </repositories>
 

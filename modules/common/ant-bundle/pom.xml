@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -28,19 +30,36 @@
 
         <dependency>
            <groupId>${project.groupId}</groupId>
+           <artifactId>rhq-core-domain</artifactId>
+           <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+           <groupId>${project.groupId}</groupId>
+           <artifactId>rhq-core-util</artifactId>
+           <version>${project.version}</version>
+        </dependency>
+        
+        <dependency>
+           <groupId>${project.groupId}</groupId>
            <artifactId>rhq-core-native-system</artifactId>
            <version>${project.version}</version>
-           <scope>provided</scope>
            <exclusions>
               <exclusion>
-                  <groupId>org.hyperic</groupId>
-                  <artifactId>sigar</artifactId>
+                 <groupId>org.hyperic</groupId>
+                 <artifactId>sigar</artifactId>
               </exclusion>
-               <exclusion>
-                   <groupId>org.hyperic</groupId>
-                   <artifactId>sigar-dist</artifactId>
-               </exclusion>
+              <exclusion>
+                 <groupId>org.hyperic</groupId>
+                 <artifactId>sigar-dist</artifactId>
+              </exclusion>
            </exclusions>
+        </dependency>
+
+        <dependency>
+           <groupId>commons-logging</groupId>
+           <artifactId>commons-logging</artifactId>
+           <version>1.1.0.jboss</version>
         </dependency>
         
         <dependency>
@@ -55,13 +74,53 @@
             <version>1.8.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.ant</groupId>
+            <artifactId>ant-nodeps</artifactId>
+            <version>1.8.0</version>
+        </dependency>
+
         <!-- include some optional ant tasks for users to be able to use -->
         <dependency>
             <groupId>ant-contrib</groupId>
             <artifactId>ant-contrib</artifactId>
             <version>1.0b3</version>
+            <exclusions>
+               <exclusion>
+                   <groupId>ant</groupId>
+                   <artifactId>ant</artifactId>
+               </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>1.9.5</version>
         </dependency>
 
     </dependencies>
+
+    <build>
+      <plugins>
+       <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/scripts/assembly.xml</descriptor>
+          </descriptors>
+        </configuration>
+        <executions>
+          <execution>
+             <id>assembly</id>
+             <phase>package</phase>
+             <goals>
+                <goal>single</goal>
+             </goals>
+          </execution>
+        </executions>
+       </plugin>
+      </plugins>
+    </build>
 
 </project>

@@ -42,11 +42,22 @@ public class RecipeParserTest {
     }
 
     public void testBundleCommand() throws Exception {
-        addRecipeCommand("bundle --name=my-name --version=1.0 \"--description=my description here\"");
+        addRecipeCommand("bundle --version \"1.0\" --name \"my-name\" --description \"my description here\"");
         RecipeParser parser = new RecipeParser();
         RecipeContext context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         DeploymentProperties props = context.getDeploymentProperties();
+        assert props.getBundleName().equals("my-name");
+        assert props.getBundleVersion().equals("1.0");
+        assert props.getDescription().equals("my description here");
+        assert props.getDeploymentId() == 0;
+
+        cleanRecipe();
+        addRecipeCommand("bundle --name=my-name --version=1.0 \"--description=my description here\"");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        props = context.getDeploymentProperties();
         assert props.getBundleName().equals("my-name");
         assert props.getBundleVersion().equals("1.0");
         assert props.getDescription().equals("my description here");
@@ -84,6 +95,28 @@ public class RecipeParserTest {
         try {
             parser.parseRecipe(context);
             assert false : "should not have parsed, missing version";
+        } catch (Exception ok) {
+            // expected
+        }
+
+        cleanRecipe();
+        addRecipeCommand("bundle --name \" \" -v 1");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        try {
+            parser.parseRecipe(context);
+            assert false : "should not have parsed, blank name not allowed";
+        } catch (Exception ok) {
+            // expected
+        }
+
+        cleanRecipe();
+        addRecipeCommand("bundle --version \" \" -n name");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        try {
+            parser.parseRecipe(context);
+            assert false : "should not have parsed, blank version not allowed";
         } catch (Exception ok) {
             // expected
         }
@@ -215,7 +248,7 @@ public class RecipeParserTest {
         addRecipeCommand("deploy -f jboss2.tar -d @@rhq.system.sysprop.file.separator@@");
         //addRecipeCommand("deploy -f jboss3.tar -d @@rhq.system.sysprop.line.separator@@"); // can't test this here
         addRecipeCommand("deploy -f jboss4.tar -d @@rhq.system.sysprop.path.separator@@");
-        addRecipeCommand("deploy -f jboss5.tar -d @@rhq.system.sysprop.java.home@@");
+        addRecipeCommand("deploy -f jboss5.tar -d \"@@rhq.system.sysprop.java.home@@\"");
         addRecipeCommand("deploy -f jboss6.tar -d @@rhq.system.sysprop.java.version@@");
         //addRecipeCommand("deploy -f jboss7.tar -d @@rhq.system.sysprop.user.timezone@@"); // sometimes this is empty
         //addRecipeCommand("deploy -f jboss8.tar -d @@rhq.system.sysprop.user.region@@"); // sometimes this doesn't exist
@@ -227,11 +260,11 @@ public class RecipeParserTest {
         RecipeContext context = new RecipeContext(getRecipe());
         parser.parseRecipe(context);
         Map<String, String> files = context.getDeployFiles();
-        assert files.get("jboss1.tar").equals(System.getProperty("java.io.tmpdir")) : files;
-        assert files.get("jboss2.tar").equals(System.getProperty("file.separator")) : files;
+        assert files.get("jboss1.tar").equals(System.getProperty("java.io.tmpdir").replace('\\', '/')) : files;
+        assert files.get("jboss2.tar").equals(System.getProperty("file.separator").replace('\\', '/')) : files;
         //assert files.get("jboss3.tar").equals(System.getProperty("line.separator")) : files;
         assert files.get("jboss4.tar").equals(System.getProperty("path.separator")) : files;
-        assert files.get("jboss5.tar").equals(System.getProperty("java.home")) : files;
+        assert files.get("jboss5.tar").equals(System.getProperty("java.home").replace('\\', '/')) : files;
         assert files.get("jboss6.tar").equals(System.getProperty("java.version")) : files;
         //assert files.get("jboss7.tar").equals(System.getProperty("user.timezone")) : files;
         //assert files.get("jboss8.tar").equals(System.getProperty("user.region")) : files;
@@ -276,6 +309,22 @@ public class RecipeParserTest {
         assert files.get("jboss.tar").equals("'/opt/jboss'") : files;
         assert files.containsKey("tomcat.tar") : files;
         assert files.get("tomcat.tar").equals("/opt/tomcat") : files;
+    }
+
+    public void testSimpleRecipeWithBackslashes() throws Exception {
+        addRecipeCommand("deploy -f jboss1.zip -d \"C:\\opt\\jboss1\"");
+        addRecipeCommand("deploy -f tomcat.tar \"--directory=C:\\Documents and Settings\\user\\\"");
+        addRecipeCommand("deploy -f jboss2.zip -d C:\\opt\\jboss1");
+        RecipeParser parser = new RecipeParser();
+        RecipeContext context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        Map<String, String> files = context.getDeployFiles();
+        assert files.containsKey("jboss1.zip") : files;
+        assert files.get("jboss1.zip").equals("C:/opt/jboss1") : files;
+        assert files.containsKey("tomcat.tar") : files;
+        assert files.get("tomcat.tar").equals("C:/Documents and Settings/user/") : files;
+        assert files.containsKey("jboss2.zip") : files;
+        assert files.get("jboss2.zip").equals("C:/opt/jboss1") : files;
     }
 
     public void testSimpleRecipeError() throws Exception {

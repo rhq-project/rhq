@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operatio
 
 import java.util.Date;
 
+import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.AutoFitTextAreaItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -83,11 +85,20 @@ public class OperationDetailsView extends VLayout {
 
         // Results configuration view
 
+        if (operationHistory.getErrorMessage() != null) {
+
+            DynamicForm errorDisplay = new DynamicForm();
+            errorDisplay.setNumCols(1);
+            AutoFitTextAreaItem errorText = new AutoFitTextAreaItem("error","Error");
+            errorText.setTitleOrientation(TitleOrientation.TOP);
+            errorText.setValue(operationHistory.getErrorMessage());
+
+        }
 
         if (operationHistory.getResults() != null) {
 
             ConfigurationEditor resultsEditor = new ConfigurationEditor(definition.getResultsConfigurationDefinition(), operationHistory.getResults());
-
+            resultsEditor.setReadOnly(true);
             addMember(resultsEditor);
 
         }

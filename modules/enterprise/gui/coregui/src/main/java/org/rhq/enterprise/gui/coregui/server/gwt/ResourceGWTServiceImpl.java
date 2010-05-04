@@ -95,11 +95,11 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 //                    "resourceRepos                   \n" +
                     "schedules",
 //                    "availability                    \n" +
-            "currentAvailability"
+            "currentAvailability",
 //                    "resourceErrors                  \n" +
 //                    "eventSources                    \n" +
 //                    "productVersion                  "}
-
+            "tags"
     };
 
     private static Set<String> importantFieldsSet = new HashSet<String>(Arrays.asList(importantFields));
@@ -160,6 +160,10 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         return SerialUtility.prepare(
                 resourceManager.deleteResources(getSessionSubject(), resourceIds),
                 "ResourceService.deleteResources");
+    }
+
+    public void updateResource(Resource resource) {
+        resourceManager.updateResource(getSessionSubject(), resource);
     }
 
 

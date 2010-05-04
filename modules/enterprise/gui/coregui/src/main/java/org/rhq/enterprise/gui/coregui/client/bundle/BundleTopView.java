@@ -19,16 +19,30 @@
 package org.rhq.enterprise.gui.coregui.client.bundle;
 
 import com.smartgwt.client.types.VisibilityMode;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
+import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
+import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleTopView extends HLayout {
+public class BundleTopView extends HLayout implements BookmarkableView {
+    private BundleTreeView bundleTreeView;
+
+    private Canvas contentCanvas;
+
+    private ViewId currentNextPath;
+    private BundleView bundleView;
 
     public BundleTopView() {
         setWidth100();
@@ -45,12 +59,51 @@ public class BundleTopView extends HLayout {
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-        sectionStack.addSection(new SectionStackSection("Bundles"));
-        sectionStack.addSection(new SectionStackSection("Repositories"));
-        sectionStack.addSection(new SectionStackSection("Providers"));
+        SectionStackSection bundlesSection = new SectionStackSection("Bundles");
+        bundleTreeView = new BundleTreeView();
+        bundlesSection.addItem(bundleTreeView);
+        sectionStack.addSection(bundlesSection);
+
+        SectionStackSection repositoriesSection = new SectionStackSection("Repositories");
+        sectionStack.addSection(repositoriesSection);
+
+        SectionStackSection providersSection = new SectionStackSection("Providers");
+        sectionStack.addSection(providersSection);
 
         addMember(sectionStack);
 
-        addMember(new BundlesListView());
+        contentCanvas = new Canvas();
+        contentCanvas.setWidth100();
+        contentCanvas.setHeight100();
+        addMember(contentCanvas);
+
+    }
+
+    public void setContent(Canvas newContent) {
+        if (contentCanvas.getChildren().length > 0)
+            contentCanvas.getChildren()[0].destroy();
+        contentCanvas.addChild(newContent);
+        contentCanvas.markForRedraw();
+    }
+
+
+    public void renderView(ViewPath viewPath) {
+
+        bundleTreeView.selectPath(viewPath);
+
+
+        if (viewPath.isEnd()) {
+            currentNextPath = null;
+            setContent(new BundlesListView());
+        } else if (viewPath.getCurrent().getPath().equals("Bundle")) {
+            if (!viewPath.getNext().equals(currentNextPath)) {
+                currentNextPath = viewPath.getNext();
+                bundleView = new BundleView();
+                setContent(bundleView);
+                bundleView.renderView(viewPath.next());
+            } else {
+                bundleView.renderView(viewPath.next());
+            }
+        }
     }
 }

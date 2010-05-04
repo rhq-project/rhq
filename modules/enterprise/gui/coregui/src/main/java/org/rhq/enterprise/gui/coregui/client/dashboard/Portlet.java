@@ -52,39 +52,46 @@ public class Portlet extends Window {
         }
     };
 
-    public Portlet() {
+    public Portlet(boolean showFrame) {
+
+        if (!showFrame) {
+            setShowHeader(false);
+            setShowEdges(false);
+        } else {
+            // customize the appearance and order of the controls in the window header
+            setHeaderControls(
+                    HeaderControls.MINIMIZE_BUTTON,
+                    HeaderControls.HEADER_LABEL,
+                    new HeaderControl(HeaderControl.SETTINGS, settingsHandler),
+                    new HeaderControl(HeaderControl.HELP, helpHandler),
+                    HeaderControls.CLOSE_BUTTON
+            );
+
+            // show either a shadow, or translucency, when dragging a portlet
+            // (could do both at the same time, but these are not visually compatible effects)
+            // setShowDragShadow(true);
+            setDragOpacity(30);
+
+            // enable predefined component animation
+            setAnimateMinimize(true);
+
+            // Window is draggable with "outline" appearance by default.
+            // "target" is the solid appearance.
+            setDragAppearance(DragAppearance.TARGET);
+            setCanDrop(true);
+
+            setCanDragResize(true);
+            setResizeFrom("B");
+
+        }
 
         setShowShadow(false);
-
-        // enable predefined component animation
-        setAnimateMinimize(true);
-
-        // Window is draggable with "outline" appearance by default.
-        // "target" is the solid appearance.
-        setDragAppearance(DragAppearance.OUTLINE);
-        setCanDrop(true);
-
-        // customize the appearance and order of the controls in the window header
-        setHeaderControls(
-            HeaderControls.MINIMIZE_BUTTON,
-            HeaderControls.HEADER_LABEL,
-            new HeaderControl(HeaderControl.SETTINGS, settingsHandler),
-            new HeaderControl(HeaderControl.HELP, helpHandler),
-            HeaderControls.CLOSE_BUTTON
-        );
-
-        // show either a shadow, or translucency, when dragging a portlet
-        // (could do both at the same time, but these are not visually compatible effects)
-        // setShowDragShadow(true);
-        setDragOpacity(30);
 
         // these settings enable the portlet to autosize its height only to fit its contents
         // (since width is determined from the containing layout, not the portlet contents)
 //        setVPolicy(LayoutPolicy.NONE);
         setOverflow(Overflow.VISIBLE);
 
-        setCanDragResize(true);
-        setResizeFrom("B");
     }
 
     public void setSettingsClickHandler(ClickHandler handler) {

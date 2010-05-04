@@ -1,0 +1,47 @@
+        .itemTable {
+            padding: 0.3cm;
+            border-style: double; 
+            width: 800px; 
+            border-color: darkgreen; 
+        }
+        .itemCell {
+            border-style: solid; 
+            border-color: darkgreen; 
+            border-width: thin;
+            padding: 5px
+        }
+        .tagCell {
+            padding: 0.3cm;
+        }
+        .xxlarge 
+        {
+            font-size: xx-large;
+            color: red;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .xlarge 
+        {
+            font-size: x-large;
+            color: blue;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .large
+        {
+            font-size: large;
+            color: green;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .medium 
+        {
+            font-size: medium;
+            cursor: pointer;
+            color: black;
+            text-decoration: underline;
+        }
+        .items 
+        {
+            visibility: hidden;
+        }

@@ -28,7 +28,6 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleGroupDeployment;
-import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -86,6 +85,7 @@ public class DeployStep implements WizardStep {
                             wizard.setBundleDeployment(result);
 
                             if (wizard.isResourceDeploy()) {
+                                /*
                                 bundleServer.scheduleBundleResourceDeployment(wizard.getBundleDeployment().getId(),
                                     wizard.getDeployTargetId(), //
                                     new AsyncCallback<BundleResourceDeployment>() {
@@ -107,6 +107,7 @@ public class DeployStep implements WizardStep {
                                             wizard.setResourceDeployment(null);
                                         }
                                     });
+                                    */
                             } else {
                                 bundleServer.scheduleBundleGroupDeployment(wizard.getBundleDeployment().getId(), wizard
                                     .getDeployTargetId(), //

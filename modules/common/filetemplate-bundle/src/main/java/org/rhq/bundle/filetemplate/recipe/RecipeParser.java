@@ -168,9 +168,13 @@ public class RecipeParser {
 
     public String replaceReplacementVariables(RecipeContext context, String input) {
 
+        // since our replacement strings may include \ and $ characters avoid the use of
+        // matcher.appendReplacement and like methods when doing this work.
+
+        String result = input;
         Configuration replacementValues = context.getReplacementVariableValues();
         TemplateEngine templateEngine = null;
-        StringBuffer buffer = new StringBuffer();
+
         Matcher matcher = this.replacementVariableDeclarationPattern.matcher(input);
         while (matcher.find()) {
             String next = matcher.group();
@@ -186,18 +190,17 @@ public class RecipeParser {
                     value = templateEngine.replaceTokens(next);
                 }
                 if (value != null) {
-                    next = value;
+                    result = result.replace(next, value);
                 }
             }
-
-            // If we didn't find a replacement for the key then leave the original value unchanged
-            matcher.appendReplacement(buffer, Matcher.quoteReplacement(next));
         }
-        matcher.appendTail(buffer);
-        return buffer.toString();
+
+        return result;
     }
 
     protected String[] splitCommandLine(String cmdLine) {
+        cmdLine = cmdLine.replace('\\', '/');
+
         ByteArrayInputStream in = new ByteArrayInputStream(cmdLine.getBytes());
         StreamTokenizer strtok = new StreamTokenizer(new InputStreamReader(in));
         List<String> args = new ArrayList<String>();

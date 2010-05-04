@@ -49,9 +49,9 @@ public class TemplateEngine implements Serializable {
                     next = value;
                 }
             }
-            //If we didn't find a replacement for the key
-            //We leave the original value unchanged
-            matcher.appendReplacement(buffer, next);
+
+            // If we didn't find a replacement for the key, leave the original value unchanged
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(next));
         }
         matcher.appendTail(buffer);
         return buffer.toString();

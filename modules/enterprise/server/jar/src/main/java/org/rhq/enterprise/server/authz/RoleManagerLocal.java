@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.authz;
 import java.util.Set;
 
 import javax.ejb.Local;
+import javax.jws.WebParam;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -187,6 +188,8 @@ public interface RoleManagerLocal {
 
     void removeSubjectsFromRole(Subject subject, int roleId, int[] subjectIds);
 
+    void setAssignedSubjects(Subject sessionSubject, int roleId, int[] subjectIds);
+
     /**
      * Adds the given resource groups to the given role.
      *
@@ -197,6 +200,10 @@ public interface RoleManagerLocal {
     void addResourceGroupsToRole(Subject subject, int roleId, int[] pendingGroupIds);
 
     void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds);
+
+    void setAssignedResourceGroups(Subject subject, int roleId, int[] groupIds);
+
+
 
     /**
      * Removes the given resource groups from the given role.

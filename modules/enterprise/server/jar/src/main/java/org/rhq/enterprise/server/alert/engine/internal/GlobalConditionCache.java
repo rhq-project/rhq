@@ -50,7 +50,6 @@ import org.rhq.enterprise.server.alert.engine.model.InvalidCacheElementException
 import org.rhq.enterprise.server.alert.engine.model.ResourceConfigurationCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.ResourceOperationCacheElement;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -64,7 +63,6 @@ class GlobalConditionCache extends AbstractConditionCache {
 
     private AlertConditionManagerLocal alertConditionManager;
     private SubjectManagerLocal subjectManager;
-    private EntityManagerFacadeLocal entityManagerFacade;
 
     public GlobalConditionCache() {
         super();
@@ -75,7 +73,6 @@ class GlobalConditionCache extends AbstractConditionCache {
 
         alertConditionManager = LookupUtil.getAlertConditionManager();
         subjectManager = LookupUtil.getSubjectManager();
-        entityManagerFacade = LookupUtil.getEntityManagerFacade();
 
         loadCaches();
     }
@@ -113,9 +110,6 @@ class GlobalConditionCache extends AbstractConditionCache {
                     for (AbstractAlertConditionCategoryComposite nextComposite : alertConditions) {
                         insertAlertConditionComposite(nextComposite, stats);
                     }
-
-                    entityManagerFacade.flush();
-                    entityManagerFacade.clear();
 
                     rowsProcessed += alertConditions.size();
                     if (rowsProcessed >= alertConditions.getTotalSize()) {

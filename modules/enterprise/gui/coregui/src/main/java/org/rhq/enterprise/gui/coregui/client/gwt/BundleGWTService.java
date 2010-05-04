@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -36,10 +37,9 @@ import org.rhq.core.domain.util.PageList;
 
 public interface BundleGWTService extends RemoteService {
 
-    Bundle createBundle(String name, int bundleTypeId) throws Exception;
+    BundleVersion createBundleVersionViaURL(URL url) throws Exception;
 
-    BundleVersion createBundleAndBundleVersion(String bundleName, int bundleTypeId, String name, String version,
-        String description, String recipe) throws Exception;
+    BundleVersion createBundleVersionViaRecipe(String recipe) throws Exception;
 
     BundleDeployment createBundleDeployment(int bundleVersionId, String name, String description, String installDir,
         Configuration configuration, boolean enforcePolicy, int enforcementInterval, boolean pinToBundle)
@@ -63,9 +63,8 @@ public interface BundleGWTService extends RemoteService {
     ArrayList<BundleType> getAllBundleTypes() throws Exception;
 
     /*
-    BundleResourceDeployment scheduleBundleResourceDeployment(int bundleDeploymentId, int resourceId)
-        throws Exception;
-        */
+    BundleResourceDeployment scheduleBundleResourceDeployment(int bundleDeploymentId, int resourceId) throws Exception;
+    */
 
     BundleGroupDeployment scheduleBundleGroupDeployment(int bundleDeploymentId, int resourceGroupId) throws Exception;
 }

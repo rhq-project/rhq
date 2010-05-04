@@ -345,6 +345,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
             configuration);
     }
 
+    public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {
+        return bundleManager.createBundleVersionViaRecipe(subject, recipe);
+    }
+
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
         return bundleManager.createBundleVersionViaFile(subject, distributionFile);
     }

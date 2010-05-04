@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -42,27 +43,24 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
     private BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
 
-    public Bundle createBundle(String name, int bundleTypeId) throws Exception {
-        Bundle results;
-        try {
-            results = bundleManager.createBundle(getSessionSubject(), name, null, bundleTypeId);
-        } catch (Exception e) {
-            throw new Exception(ThrowableUtil.getAllMessages(e));
-        }
-        return SerialUtility.prepare(results, "createBundle");
-    }
-
-    public BundleVersion createBundleAndBundleVersion(String bundleName, int bundleTypeId, String name, String version,
-        String description, String recipe) throws Exception {
-
+    public BundleVersion createBundleVersionViaURL(URL url) throws Exception {
         BundleVersion results;
         try {
-            results = bundleManager.createBundleAndBundleVersion(getSessionSubject(), bundleName, description,
-                bundleTypeId, name, null, version, recipe);
+            results = bundleManager.createBundleVersionViaURL(getSessionSubject(), url);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
-        return SerialUtility.prepare(results, "createBundleAndBundleVersion");
+        return SerialUtility.prepare(results, "createBundleVersionViaURL");
+    }
+
+    public BundleVersion createBundleVersionViaRecipe(String recipe) throws Exception {
+        BundleVersion results;
+        try {
+            results = bundleManager.createBundleVersionViaRecipe(getSessionSubject(), recipe);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+        return SerialUtility.prepare(results, "createBundleVersionViaRecipe");
     }
 
     public BundleDeployment createBundleDeployment(int bundleVersionId, String name, String description,

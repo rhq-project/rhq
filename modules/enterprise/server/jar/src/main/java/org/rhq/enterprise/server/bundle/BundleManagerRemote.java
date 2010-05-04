@@ -139,6 +139,21 @@ public interface BundleManagerRemote {
         @WebParam(name = "configuration") Configuration configuration) throws Exception;
 
     /**
+     * Creates a bundle version based on single recipe string. The recipe specifies the bundle name,
+     * version, version name and version description. If this is the initial version for the named
+     * bundle the bundle will be implicitly created.  The bundle type is discovered by the bundle server
+     * plugin that can parse the recipe.   
+     * 
+     * @param subject
+     * @param recipe the recipe that defines the bundle version to be created
+     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     *         understand all that this method did.
+     */
+    BundleVersion createBundleVersionViaRecipe( //
+        @WebParam(name = "subject") Subject subject, //        
+        @WebParam(name = "recipe") String recipe) throws Exception;
+
+    /**
      * Creates a bundle version based on a Bundle Distribution file. Typically a zip file, the bundle distribution
      * contains the recipe for a supported bundle type, along with 0, 1 or more bundle files that will be associated
      * with the bundle version.  The recipe specifies the bundle name, version, version name and version description.

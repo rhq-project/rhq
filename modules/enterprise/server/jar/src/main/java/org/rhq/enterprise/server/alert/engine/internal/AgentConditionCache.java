@@ -53,7 +53,6 @@ import org.rhq.enterprise.server.alert.engine.model.MeasurementNumericCacheEleme
 import org.rhq.enterprise.server.alert.engine.model.MeasurementTraitCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.NumericDoubleCacheElement;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -69,7 +68,6 @@ class AgentConditionCache extends AbstractConditionCache {
     private AlertConditionManagerLocal alertConditionManager;
     private MeasurementDataManagerLocal measurementDataManager;
     private SubjectManagerLocal subjectManager;
-    private EntityManagerFacadeLocal entityManagerFacade;
 
     private int agentId;
 
@@ -85,8 +83,6 @@ class AgentConditionCache extends AbstractConditionCache {
         alertConditionManager = LookupUtil.getAlertConditionManager();
         measurementDataManager = LookupUtil.getMeasurementDataManager();
         subjectManager = LookupUtil.getSubjectManager();
-
-        entityManagerFacade = LookupUtil.getEntityManagerFacade();
 
         loadCachesForAgent(agentId);
     }
@@ -131,9 +127,6 @@ class AgentConditionCache extends AbstractConditionCache {
                     for (AbstractAlertConditionCategoryComposite nextComposite : alertConditions) {
                         insertAlertConditionComposite(agentId, nextComposite, stats);
                     }
-
-                    entityManagerFacade.flush();
-                    entityManagerFacade.clear();
 
                     rowsProcessed += alertConditions.size();
                     if (rowsProcessed >= alertConditions.getTotalSize()) {

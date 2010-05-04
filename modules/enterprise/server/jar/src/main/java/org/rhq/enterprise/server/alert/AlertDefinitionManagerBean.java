@@ -71,6 +71,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
+    @EJB
+    private AlertDefinitionManagerLocal alertDefinitionManager;
 
     @EJB
     private StatusManagerLocal agentStatusManager;
@@ -433,7 +435,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         AlertDefinition alertDefinition, boolean purgeInternals) throws InvalidAlertDefinitionException,
         AlertDefinitionUpdateException {
         if (purgeInternals) {
-            purgeInternals(alertDefinitionId);
+            alertDefinitionManager.purgeInternals(alertDefinitionId);
         }
 
         /*
@@ -604,7 +606,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
-    private void purgeInternals(int alertDefinitionId) {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void purgeInternals(int alertDefinitionId) {
         Query alertDampeningEventPurgeQuery = entityManager
             .createNamedQuery(AlertDampeningEvent.QUERY_DELETE_BY_ALERT_DEFINITION_ID);
         Query unmatchedAlertConditionLogPurgeQuery = entityManager
@@ -616,15 +619,17 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         int alertDampeningEventPurgeCount = alertDampeningEventPurgeQuery.executeUpdate();
         int unmatchedAlertConditionLogPurgeCount = unmatchedAlertConditionLogPurgeQuery.executeUpdate();
 
-        LOG.debug("Update to AlertDefinition[id=" + alertDefinitionId
-            + " caused a purge of internal, dampening constructs.");
-        if (alertDampeningEventPurgeCount > 0) {
-            LOG.debug("Removed " + alertDampeningEventPurgeCount + " AlertDampeningEvent"
-                + (alertDampeningEventPurgeCount == 1 ? "" : "s"));
-        }
-        if (unmatchedAlertConditionLogPurgeCount > 0) {
-            LOG.debug("Removed " + unmatchedAlertConditionLogPurgeCount + " unmatched AlertConditionLog"
-                + (unmatchedAlertConditionLogPurgeCount == 1 ? "" : "s"));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Update to AlertDefinition[id=" + alertDefinitionId
+                + " caused a purge of internal, dampening constructs.");
+            if (alertDampeningEventPurgeCount > 0) {
+                LOG.debug("Removed " + alertDampeningEventPurgeCount + " AlertDampeningEvent"
+                    + (alertDampeningEventPurgeCount == 1 ? "" : "s"));
+            }
+            if (unmatchedAlertConditionLogPurgeCount > 0) {
+                LOG.debug("Removed " + unmatchedAlertConditionLogPurgeCount + " unmatched AlertConditionLog"
+                    + (unmatchedAlertConditionLogPurgeCount == 1 ? "" : "s"));
+            }
         }
     }
 

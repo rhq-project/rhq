@@ -93,7 +93,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void reloadServerCacheIfNeeded() {
         // try reload the global cache separate from the agent caches for purposes of isolated failures
         reloadGlobalCacheIfNeeded();
@@ -145,7 +145,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
             // otherwise print informational messages for poor-man's verification purposes
             long startTime = System.currentTimeMillis();
             for (Integer nextAgentId : agentIds) {
-                log.debug("Agent[id=" + nextAgentId + " is stale ");
+                log.debug("Agent[id=" + nextAgentId + "] is stale ");
                 cacheManager.reloadCachesForAgent(nextAgentId);
             }
             long endTime = System.currentTimeMillis();

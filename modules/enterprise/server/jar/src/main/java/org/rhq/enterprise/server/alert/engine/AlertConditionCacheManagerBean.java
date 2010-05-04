@@ -43,16 +43,13 @@ import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
  */
 
 @Stateless
-@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
 public class AlertConditionCacheManagerBean implements AlertConditionCacheManagerLocal {
     @SuppressWarnings("unused")
     private static final Log log = LogFactory.getLog(AlertConditionCacheManagerBean.class);
 
     @EJB
     private ServerManagerLocal serverManager;
-
-    @EJB
-    private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
     public AlertConditionCacheStats checkConditions(MeasurementData... measurementData) {
         AlertConditionCacheStats stats;
@@ -84,21 +81,19 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
         return stats;
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void reloadCachesForAgent(int agentId) {
         AlertConditionCacheCoordinator.getInstance().reloadCachesForAgent(agentId);
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void reloadGlobalCache() {
         AlertConditionCacheCoordinator.getInstance().reloadGlobalCache();
     }
 
     public void reloadAllCaches() {
-        alertConditionCacheManager.reloadGlobalCache();
+        reloadGlobalCache();
         List<Agent> agents = serverManager.getAgents();
         for (Agent agent : agents) {
-            alertConditionCacheManager.reloadCachesForAgent(agent.getId());
+            reloadCachesForAgent(agent.getId());
         }
     }
 

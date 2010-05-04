@@ -329,6 +329,16 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {
+
+        BundleServerPluginManager manager = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager();
+        BundleDistributionInfo info = manager.parseRecipe(recipe);
+        BundleVersion bundleVersion = createBundleVersionViaDistributionInfo(subject, info);
+
+        return bundleVersion;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
 

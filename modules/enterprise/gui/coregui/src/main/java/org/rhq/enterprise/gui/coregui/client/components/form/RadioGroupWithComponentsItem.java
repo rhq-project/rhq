@@ -22,17 +22,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.ValuesManager;
-import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
-import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.form.fields.SpacerItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
@@ -41,22 +34,21 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
  */
 public class RadioGroupWithComponentsItem extends CanvasItem {
 
-    LinkedHashMap valueMap = new LinkedHashMap();
-    RGWCCanvas canvas;
+    private final LinkedHashMap<String, ? extends Canvas> valueMap;
+    private final RGWCCanvas canvas;
+    private final DynamicForm form;
 
-    DynamicForm form;
+    public RadioGroupWithComponentsItem(String name, String title, LinkedHashMap<String, ? extends Canvas> valueMap,
+        DynamicForm form) {
 
-    public RadioGroupWithComponentsItem(String name, String title, LinkedHashMap valueMap, DynamicForm form) {
         super(name, title);
         this.valueMap = valueMap;
         this.form = form;
-        canvas = new RGWCCanvas();
-        setCanvas(canvas);
+        this.canvas = new RGWCCanvas();
+        setCanvas(this.canvas);
     }
 
-
     public class RGWCCanvas extends DynamicForm {
-
         public RGWCCanvas() {
             setNumCols(3);
         }
@@ -67,26 +59,18 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
 
             ArrayList<FormItem> items = new ArrayList<FormItem>();
 
-            for (final Object key : valueMap.keySet()) {
-
-                final String label = (String) key;
-
+            for (final String label : valueMap.keySet()) {
                 RadioGroupItem button = new RadioGroupItem(getName(), label);
                 button.setShowTitle(false);
                 button.setStartRow(true);
                 button.setValueMap(label);
-
                 items.add(button);
 
-
-
-                Object value = valueMap.get(key);
-                if (value instanceof Canvas) {
-                    CanvasItem ci = new CanvasItem();
-                    ci.setShowTitle(false);
-                    ci.setCanvas((Canvas) value);
-                    items.add(ci);
-                }
+                Canvas value = valueMap.get(label);
+                CanvasItem ci = new CanvasItem();
+                ci.setShowTitle(false);
+                ci.setCanvas(value);
+                items.add(ci);
 
                 button.addChangedHandler(new ChangedHandler() {
                     public void onChanged(ChangedEvent changedEvent) {
@@ -96,36 +80,19 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
                 });
             }
             setItems(items.toArray(new FormItem[items.size()]));
-
-
-
-            addItemChangedHandler(new ItemChangedHandler() {
-                public void onItemChanged(ItemChangedEvent changedEvent) {
-                    if (getName().equals(changedEvent.getItem().getName())) {
-                        updateEnablement();
-                    }
-                }
-            });
         }
 
         public void updateEnablement() {
             String formValue = form.getValueAsString(getName());
-            for (Object key : valueMap.keySet()) {
-                Object value = valueMap.get(key);
+            for (String key : valueMap.keySet()) {
+                Canvas value = valueMap.get(key);
                 if (value != null && value instanceof DynamicForm) {
-                    for (FormItem item : ((DynamicForm)value).getFields()) {
+                    for (FormItem item : ((DynamicForm) value).getFields()) {
                         item.setDisabled(!formValue.equals(key));
-
                     }
-
-//                    ((DynamicForm) value).setDisabled(!formValue.equals(key));
                 }
             }
         }
     }
-
-
-
-
 
 }

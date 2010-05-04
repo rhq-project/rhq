@@ -121,6 +121,56 @@ public class BundleServerPluginManager extends ServerPluginManager {
     }
 
     /**
+     * Given just a recipe, this will attempt to parse the given recipe by asking all the
+     * bundle plugins to see if any can parse it successfully. If the recipe cannot be
+     * parsed by any plugin, an exception is thrown, otherwise, results are returned.
+     * 
+     * @param recipe the recipe to parse
+     *
+     * @return the results of the parse, which also includes the bundle type
+     * 
+     * @throws Exception if the recipe could not be parsed successfully
+     */
+    public BundleDistributionInfo parseRecipe(String recipe) throws Exception {
+
+        if (recipe == null) {
+            throw new IllegalArgumentException("recipe == null");
+        }
+
+        BundleDistributionInfo info = null;
+
+        for (ServerPluginEnvironment env : getPluginEnvironments()) {
+            BundlePluginDescriptorType descriptor = (BundlePluginDescriptorType) env.getPluginDescriptor();
+
+            // get the facet and see if this plugin can deal with the recipe
+            String pluginName = env.getPluginKey().getPluginName();
+            ServerPluginComponent component = getServerPluginComponent(pluginName);
+            BundleServerPluginFacet facet = (BundleServerPluginFacet) component; // we know this cast will work because our loadPlugin ensured so
+            getLog().debug("Bundle server plugin [" + pluginName + "] is parsing a recipe");
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
+                try {
+                    RecipeParseResults results = facet.parseRecipe(recipe);
+                    info = new BundleDistributionInfo(recipe, results, null);
+                    info.setBundleTypeName(descriptor.getBundle().getType());
+                    break;
+                } catch (Exception e) {
+                    info = null;
+                }
+            } finally {
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+            }
+        }
+
+        if (null == info) {
+            throw new IllegalArgumentException("Invalid recipe not recognized by any deployed server bundle plugin.");
+        }
+
+        return info;
+    }
+
+    /**
      * Given an bundle distribution file, this will find the appropriate server side plugin that can process it
      * and will ask that plugin to crack open the bundle distribution file and return information about it.
      * 

@@ -36,17 +36,32 @@ import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposit
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.OperationPortletPreferences;
+import org.rhq.enterprise.gui.legacy.util.DisambiguatedResourceListUtil;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
 
     private static final Log log = LogFactory.getLog(ViewAction.class);
 
+    private static final IntExtractor<ResourceOperationLastCompletedComposite> RESOURCE_OPERATION_RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceOperationLastCompletedComposite>() {
+        public int extract(ResourceOperationLastCompletedComposite object) {
+            return object.getResourceId();
+        }
+    };
+    
+    private static final IntExtractor<ResourceOperationScheduleComposite> RESOURCE_OPERATION_SCHEDULE_RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceOperationScheduleComposite>() {
+        public int extract(ResourceOperationScheduleComposite object) {
+            return object.getResourceId();
+        }
+    };
+    
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -54,9 +69,9 @@ public class ViewAction extends TilesAction {
         boolean displayLastCompleted = false;
         boolean displayNextScheduled = false;
 
-        PageList<ResourceOperationLastCompletedComposite> lastCompletedResourceOps = new PageList<ResourceOperationLastCompletedComposite>();
+        PageList<DisambiguatedResourceListUtil.Record<ResourceOperationLastCompletedComposite>> disambiguatedLastCompletedResourceOps = new PageList<DisambiguatedResourceListUtil.Record<ResourceOperationLastCompletedComposite>>();
         PageList<GroupOperationLastCompletedComposite> lastCompletedGroupOps = new PageList<GroupOperationLastCompletedComposite>();
-        PageList<ResourceOperationScheduleComposite> nextScheduledResourceOps = new PageList<ResourceOperationScheduleComposite>();
+        PageList<DisambiguatedResourceListUtil.Record<ResourceOperationScheduleComposite>> disambiguatedNextScheduledResourceOps = new PageList<DisambiguatedResourceListUtil.Record<ResourceOperationScheduleComposite>>();
         PageList<GroupOperationScheduleComposite> nextScheduledGroupOps = new PageList<GroupOperationScheduleComposite>();
 
         try {
@@ -74,13 +89,18 @@ public class ViewAction extends TilesAction {
             displayNextScheduled = operationPreferences.useNextScheduled;
 
             OperationManagerLocal manager = LookupUtil.getOperationManager();
-
+            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+            
             if (operationPreferences.useLastCompleted) {
                 PageControl pageControl = new PageControl(0, operationPreferences.lastCompleted);
                 pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
-                lastCompletedResourceOps = manager.findRecentlyCompletedResourceOperations(user.getSubject(), null,
-                    pageControl);
+                PageList<ResourceOperationLastCompletedComposite> lastCompletedResourceOps = 
+                    manager.findRecentlyCompletedResourceOperations(user.getSubject(), null, pageControl);
 
+                disambiguatedLastCompletedResourceOps = DisambiguatedResourceListUtil.buildResourceList(
+                    resourceManager.disambiguate(lastCompletedResourceOps, true, RESOURCE_OPERATION_RESOURCE_ID_EXTRACTOR), 
+                    lastCompletedResourceOps.getTotalSize(), lastCompletedResourceOps.getPageControl(), true);
+                
                 pageControl = new PageControl(0, operationPreferences.lastCompleted);
                 pageControl.initDefaultOrderingField("go.createdTime", PageOrdering.DESC);
                 lastCompletedGroupOps = manager.findRecentlyCompletedGroupOperations(user.getSubject(), pageControl);
@@ -88,9 +108,14 @@ public class ViewAction extends TilesAction {
 
             if (operationPreferences.useNextScheduled) {
                 PageControl pageControl = new PageControl(0, operationPreferences.nextScheduled);
-                nextScheduledResourceOps = manager.findCurrentlyScheduledResourceOperations(user.getSubject(),
+                PageList<ResourceOperationScheduleComposite> nextScheduledResourceOps = 
+                    manager.findCurrentlyScheduledResourceOperations(user.getSubject(),
                     pageControl);
 
+                disambiguatedNextScheduledResourceOps = DisambiguatedResourceListUtil.buildResourceList(
+                    resourceManager.disambiguate(nextScheduledResourceOps, true, RESOURCE_OPERATION_SCHEDULE_RESOURCE_ID_EXTRACTOR), 
+                    nextScheduledResourceOps.getTotalSize(), nextScheduledResourceOps.getPageControl(), true);
+                
                 pageControl = new PageControl(0, operationPreferences.nextScheduled);
                 nextScheduledGroupOps = manager.findCurrentlyScheduledGroupOperations(user.getSubject(), pageControl);
             }
@@ -103,9 +128,9 @@ public class ViewAction extends TilesAction {
         } finally {
             context.putAttribute("displayLastCompleted", displayLastCompleted);
             context.putAttribute("displayNextScheduled", displayNextScheduled);
-            context.putAttribute("lastCompletedResource", lastCompletedResourceOps);
+            context.putAttribute("lastCompletedResource", disambiguatedLastCompletedResourceOps);
             context.putAttribute("lastCompletedGroup", lastCompletedGroupOps);
-            context.putAttribute("nextScheduledResource", nextScheduledResourceOps);
+            context.putAttribute("nextScheduledResource", disambiguatedNextScheduledResourceOps);
             context.putAttribute("nextScheduledGroup", nextScheduledGroupOps);
         }
 

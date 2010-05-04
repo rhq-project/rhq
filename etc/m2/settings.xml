@@ -57,6 +57,9 @@
                  some possible values: agent-comm,comm-client,native-system,postgres-plugin -->
             <rhq.testng.excludedGroups>agent-comm,comm-client,native-system,postgres-plugin</rhq.testng.excludedGroups>
 
+            <!-- *** enforcer plugin settings *** -->
+            <!--<enforcer.skip>true</enforcer.skip>-->
+
             <!-- *** surefire plugin settings *** -->
             <!--<maven.test.skip>true</maven.test.skip>-->
             <!--<maven.test.failure.ignore>true</maven.test.failure.ignore>-->

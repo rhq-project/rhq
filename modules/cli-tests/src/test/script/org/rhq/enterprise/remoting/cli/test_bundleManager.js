@@ -50,13 +50,10 @@ function testGroupDeployment() {
    distributionFile = new java.io.File(distributionFile.getAbsolutePath());
    var testBundleVersion = BundleManager.createBundleVersionViaFile( distributionFile );
          
-   // create the config, setting the required properties from the recipe
-   var config = new Configuration();   
-   var property = new PropertySimple("bundleTest.deployHome", "/tmp/bundle-test");
-   config.put( property );
+   // there in no required config, it uses only the built in rhq.deploy.dir property
 
    // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config);
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", new Configuration());
 
    // Find a target platform group
    var rgc = new ResourceGroupCriteria();

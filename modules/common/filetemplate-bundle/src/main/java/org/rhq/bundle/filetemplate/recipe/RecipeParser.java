@@ -48,12 +48,22 @@ import org.rhq.core.template.TemplateEngine;
  *
  */
 public class RecipeParser {
+
+    private final static String PROPERTY_DEPLOY_DIR = "rhq.deploy.dir";
+    /** properties that will be set by the deployment automatically and do not need user definition */
+    private final static Set<String> IGNORE_PROPERTIES;
+
     private Map<String, RecipeCommand> recipeCommands;
 
     private Pattern replacementVariableDeclarationPattern;
     private Pattern replacementVariableNamePattern;
     private String systemReplacementVariablePrefix;
     private boolean replaceVariables = false;
+
+    static {
+        IGNORE_PROPERTIES = new HashSet<String>();
+        IGNORE_PROPERTIES.add(PROPERTY_DEPLOY_DIR);
+    }
 
     public RecipeParser() {
         this.recipeCommands = createRecipeCommands();
@@ -163,6 +173,9 @@ public class RecipeParser {
             }
         }
 
+        if (null != replacementVariables) {
+            replacementVariables.removeAll(IGNORE_PROPERTIES);
+        }
         return replacementVariables;
     }
 

@@ -41,9 +41,17 @@ public class GetDeploymentConfigStep implements WizardStep {
     public Canvas getCanvas() {
         if (null == editor) {
             ConfigurationDefinition configDef = wizard.getBundleVersion().getConfigurationDefinition();
-            Configuration startingConfig = (null != wizard.getTemplate()) ? wizard.getTemplate().getConfiguration()
-                : new Configuration();
+            Configuration startingConfig = (null != this.wizard.getTemplate()) ? this.wizard.getTemplate()
+                .getConfiguration() : new Configuration();
 
+            // if there are no prop defs for this config def then we can skip this step entirely. just
+            // set an empty config.
+            if (configDef.getPropertyDefinitions().isEmpty()) {
+                this.wizard.setConfig(startingConfig);
+                this.wizard.getView().incrementStep();
+            }
+
+            // otherwise, pop up the config editor to get the needed config
             editor = new ConfigurationEditor(configDef, startingConfig);
         }
 

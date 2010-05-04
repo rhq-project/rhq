@@ -30,6 +30,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -203,6 +205,8 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
     private AvailabilityCollectorRunnable availCollector;
 
+    private boolean loggedHijackedJnpUrlError;
+
     // ResourceComponent Implementation  --------------------------------------------
 
     public void start(ResourceContext context) throws Exception {
@@ -293,6 +297,8 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
             }
             this.connection = null;
         }
+
+        this.loggedHijackedJnpUrlError = false;
     }
 
     public AvailabilityType getAvailability() {
@@ -305,24 +311,59 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
     private AvailabilityType getAvailabilityNow() {
         try {
-            EmsConnection connection = loadConnection();
-            EmsBean bean = connection.getBean("jboss.system:type=ServerConfig");
-
-            File serverHomeViaJNP = (File) bean.getAttribute("ServerHomeDir").refresh();
-            if (this.configPath.getCanonicalPath().equals(serverHomeViaJNP.getCanonicalPath())) {
+            File serverHomeViaJnp = getServerHome();
+            if (this.configPath.getCanonicalPath().equals(serverHomeViaJnp.getCanonicalPath())) {
+                this.loggedHijackedJnpUrlError = false;
                 return AvailabilityType.UP;
             } else {
-                // a different server must have been started on our jnp url
-                if (log.isDebugEnabled()) {
-                    log.debug("Availability check for JBAS resource with configPath [" + this.configPath
-                        + "] is trying to connect to a different running JBAS which is installed at ["
-                        + serverHomeViaJNP + "]. Returning AvailabilityType.DOWN for the former resource.");
+                // A different server must have been started on our JNP URL - this is definitely something about which
+                // the user should be informed.
+                if (!this.loggedHijackedJnpUrlError) {
+                    String namingURL = this.resourceContext.getPluginConfiguration().
+                            getSimpleValue(NAMING_URL_CONFIG_PROP, null);
+                    String message = "Availability check for JBoss AS Resource with configPath [" + this.configPath
+                            + "] has connected to a different running JBoss AS instance which is installed at ["
+                            + serverHomeViaJnp + "] using namingURL [" + namingURL
+                            + "] - returning AvailabilityType.DOWN...";
+                    log.error(message);
+                    this.loggedHijackedJnpUrlError = true;
+                    // Throw an exception, so the PC can send the message to the Server for display in the GUI.
+                    throw new RuntimeException(message);
                 }
+                return AvailabilityType.DOWN;
             }
-            return AvailabilityType.DOWN;
         } catch (Exception e) {
             return AvailabilityType.DOWN;
         }
+    }
+
+    private File getServerHome() throws Exception {
+        EmsConnection connection = loadConnection();
+        EmsBean bean = connection.getBean("jboss.system:type=ServerConfig");
+        File serverHomeViaJnp;
+        EmsAttribute serverHomeDirAttrib = bean.getAttribute("ServerHomeDir");
+        if (serverHomeDirAttrib != null) {
+            serverHomeViaJnp = (File)serverHomeDirAttrib.refresh();
+        } else {
+            // We have a non-null MBean but a null ServerHomeDir attribute. This most likely means we're
+            // connected to a JBoss 5.x or 6.x instance, because in those versions the ServerConfig MBean no
+            // longer has a ServerHomeDir attribute. It instead has a ServerHomeLocation attribute, so give
+            // that a try, so getAvailabilityNow() can print a more intelligent warning.
+            EmsAttribute serverHomeLocationAttrib = bean.getAttribute("ServerHomeLocation");
+            URL serverHomeLocation = (URL) serverHomeLocationAttrib.refresh();
+            serverHomeViaJnp = toFile(serverHomeLocation);
+        }
+        return serverHomeViaJnp;
+    }
+
+    private static  File toFile(URL url) {
+        File file;
+        try {
+          file = new File(url.toURI());
+        } catch(URISyntaxException e) {
+          file = new File(url.getPath());
+        }
+        return file;
     }
 
     // MeasurementFacet Implementation  --------------------------------------------

@@ -140,4 +140,11 @@ public class ContentServerServiceImpl implements ContentServerService {
         long size = manager.getPackageBitsLength(resourceId, packageDetailsKey);
         return size;
     }
-}
+
+    public boolean preLoadRemoteContent(int resourceId,
+            PackageDetailsKey packageDetailsKey) {
+        ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
+        return manager.downloadPackageBits(resourceId,packageDetailsKey);
+        
+    }
+} 

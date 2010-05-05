@@ -204,4 +204,16 @@ public interface ContentServerService {
      * @return the size, in number of bytes, of the package version
      */
     long getPackageBitsLength(int resourceId, PackageDetailsKey packageDetailsKey);
-}
+    
+    /**
+     * Requests loading of lazy loaded package. By this method the package content will be 
+     * loaded to server and ready to stream to the client.
+     *   
+     * @param resourceId
+     * @param packageDetailsKey
+     * @return
+     */
+    @Timeout(90 * 60 * 1000L)
+    @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
+    boolean preLoadRemoteContent(int resourceId, PackageDetailsKey packageDetailsKey);
+} 

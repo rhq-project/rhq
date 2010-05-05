@@ -37,6 +37,7 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
     private final LinkedHashMap<String, ? extends Canvas> valueMap;
     private final RGWCCanvas canvas;
     private final DynamicForm form;
+    private String selected;
 
     public RadioGroupWithComponentsItem(String name, String title, LinkedHashMap<String, ? extends Canvas> valueMap,
         DynamicForm form) {
@@ -45,7 +46,20 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         this.valueMap = valueMap;
         this.form = form;
         this.canvas = new RGWCCanvas();
+        this.selected = null;
         setCanvas(this.canvas);
+    }
+
+    public String getSelected() {
+        return this.selected;
+    }
+
+    public Canvas getSelectedComponent() {
+        if (null == this.selected) {
+            return null;
+        }
+
+        return valueMap.get(this.selected);
     }
 
     public class RGWCCanvas extends DynamicForm {
@@ -60,7 +74,7 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
             ArrayList<FormItem> items = new ArrayList<FormItem>();
 
             for (final String label : valueMap.keySet()) {
-                RadioGroupItem button = new RadioGroupItem(getName(), label);
+                RadioGroupItem button = new RadioGroupItem(label, label);
                 button.setShowTitle(false);
                 button.setStartRow(true);
                 button.setValueMap(label);
@@ -70,25 +84,37 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
                 CanvasItem ci = new CanvasItem();
                 ci.setShowTitle(false);
                 ci.setCanvas(value);
+                ci.setDisabled(true);
                 items.add(ci);
 
                 button.addChangedHandler(new ChangedHandler() {
                     public void onChanged(ChangedEvent changedEvent) {
-                        form.setValue(getName(), label);
+                        selected = (String) changedEvent.getValue();
                         updateEnablement();
+                        form.markForRedraw();
                     }
                 });
             }
-            setItems(items.toArray(new FormItem[items.size()]));
+            this.setItems(items.toArray(new FormItem[items.size()]));
         }
 
         public void updateEnablement() {
-            String formValue = form.getValueAsString(getName());
+
             for (String key : valueMap.keySet()) {
                 Canvas value = valueMap.get(key);
+                Boolean disabled = !selected.equals(key);
+                if (disabled) {
+                    canvas.getItem(key).clearValue();
+                    canvas.getItem(key).redraw();
+                }
                 if (value != null && value instanceof DynamicForm) {
-                    for (FormItem item : ((DynamicForm) value).getFields()) {
-                        item.setDisabled(!formValue.equals(key));
+                    if (!disabled.equals(value.isDisabled())) {
+                        value.setDisabled(disabled);
+                        for (FormItem item : ((DynamicForm) value).getFields()) {
+                            item.clearValue();
+                            item.redraw();
+                        }
+                        value.markForRedraw();
                     }
                 }
             }

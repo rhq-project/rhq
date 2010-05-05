@@ -18,59 +18,44 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
- * TODO
  *
- * @author Ian Springer
+ * @author Greg Hinkle
  */
 public class ViewId {
-    public static final char PATH_SEPARATOR = '/';
-    public static final ViewId ROOT_VIEW_ID = new ViewId("", null);
 
-    private String name;
-    private ViewId parent;
+
     private String path;
 
-    /**
-     * Create a view id with the specified base name and parent. The name must not contain any slashes. The parent
-     * should not be null, unless this is the root view id.
-     *
-     * @param name the base name of the view represented by this id
-     * @param parent the id of the view represented by this id's parent view
-     */
-    public ViewId(String name, ViewId parent) {
-        if (name == null) {
-            throw new IllegalArgumentException("Name is null.");
+    private List<Breadcrumb> breadcrumbs;
+
+
+    public ViewId(String path, Breadcrumb... breadcrumbs) {
+        this.path = path;
+        if ( breadcrumbs != null) {
+        this.breadcrumbs = Arrays.asList(breadcrumbs);
+        } else {
+            this.breadcrumbs = new ArrayList<Breadcrumb>();
         }
-        if (name.indexOf(PATH_SEPARATOR) >= 0) {
-            throw new IllegalArgumentException("Name contains illegal character '" + PATH_SEPARATOR + "'. ");
-        }
-        this.name = name;
-        this.parent = parent;
     }
 
-    public String getName() {
-        return this.name;
+    public ViewId(String path) {
+        this.path = path;
+        breadcrumbs = new ArrayList<Breadcrumb>();
+
+        breadcrumbs.add(new Breadcrumb(path));
     }
 
-    public ViewId getParent() {
-        return this.parent;
+    public List<Breadcrumb> getBreadcrumbs() {
+        return breadcrumbs;
     }
 
     public String getPath() {
-        if (this.path == null) {
-            StringBuilder buffer = new StringBuilder();
-            if (this.parent != null) {
-                String parentPath = this.parent.getPath();
-                buffer.append(parentPath);
-                if (!parentPath.equals(ROOT_VIEW_ID.getPath())) {
-                    buffer.append(PATH_SEPARATOR);
-                }
-            }
-            buffer.append(this.name);
-            this.path = buffer.toString();
-        }
-        return this.path;
+        return path;
     }
 
     @Override
@@ -80,18 +65,13 @@ public class ViewId {
 
         ViewId viewId = (ViewId) o;
 
-        if (!getPath().equals(viewId.getPath())) return false;
+        if (!path.equals(viewId.path)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return getPath().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return getPath();
+        return path.hashCode();
     }
 }

@@ -15,7 +15,7 @@
    <description>A RHQ server plugin that periodically outputs a simple report containing some RHQ data</description>
 
    <properties>
-      <rhq.version>3.0.0-SNAPSHOT</rhq.version>
+      <rhq.version>3.0.0.B04</rhq.version>
    </properties>
 
    <dependencies>

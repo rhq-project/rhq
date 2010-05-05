@@ -28,7 +28,7 @@
 
 var TestsEnabled = true;
 
-var bundleName = 'testScriptBundleZip';
+var bundleName = 'test-cli-bundle-zip';
 
 // note, super-user, will not test any security constraints
 var subject = rhq.login('rhqadmin', 'rhqadmin');
@@ -37,7 +37,7 @@ executeAllTests();
 
 rhq.logout();
 
-function testDeployment() {
+function testGroupDeployment() {
    if ( !TestsEnabled ) {
       return;
    }
@@ -51,41 +51,30 @@ function testDeployment() {
       BundleManager.deleteBundle( bundles.get(0).getId() );      
    }
 
-   // create the test bundle
-   var testBundle = BundleManager.createBundle( bundleName, getBundleType() );
-   
-   // define the recipe for bundleVersion 1.0 
-   var recipe = "deploy -f dummy.zip -d @@dummy.deployHome@@\n"
-              + "realize -f @@dummy.deployHome@@/dummy/README.txt\n"
-              + "realize -f @@dummy.deployHome@@/dummy/subdirectory/file.txt";
-
    // create bundleVersion 1.0
-   var testBundleVersion = BundleManager.createBundleVersion( testBundle.getId(), bundleName, null, recipe);
-
-   // add the single bundleFile, the test war file
-   var fileBytes = scriptUtil.getFileBytes("./src/test/resources/dummy.zip"); 
-   var bundleFile = BundleManager.addBundleFileViaByteArray(testBundleVersion.getId(), "dummy.zip",
-         "1.0", null, fileBytes);
+   var distributionFile = new java.io.File("./src/test/resources/cli-test-bundle-zip.zip");
+   distributionFile = new java.io.File(distributionFile.getAbsolutePath());
+   var testBundleVersion = BundleManager.createBundleVersionViaFile( distributionFile );
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
-   var property = new PropertySimple("dummy.deployHome", "/tmp/bundle-test");
+   var property = new PropertySimple("dummy.name", "NAME REPLACED HERE!!!");
    config.put( property );
-   var property2 = new PropertySimple("dummy.name", "NAME REPLACED HERE!!!");
-   config.put( property2 );
-   var property3 = new PropertySimple("dummy.description", "FLOPPY!!!");
-   config.put( property3 );
+   var property = new PropertySimple("dummy.description", "FLOPPY!!!");
+   config.put( property );
 
    // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", config);
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", "/tmp/bundle-test", config);
 
-   // Find a target platform
-   var rc = new ResourceCriteria();
-   rc.addFilterResourceTypeName("in"); // wINdows, lINux
-   var winPlatforms = ResourceManager.findResourcesByCriteria(rc);
-   var platformId = winPlatforms.get(0).getId();
+   // Find a target platform group
+   var rgc = new ResourceGroupCriteria();
+   rgc.addFilterName("platforms");
+   var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
+   Assert.assertTrue( groups.size() > 0 );
+   var groupId = groups.get(0).getId();
    
-   var bundleScheduleResponse = BundleManager.scheduleBundleResourceDeployment(testDeployment.getId(), platformId);
+   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
+   Assert.assertNotNull( bgd );      
 }
 
 function getBundleType() {

@@ -27,7 +27,9 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.testng.annotations.Test;
@@ -38,9 +40,15 @@ import org.rhq.core.util.stream.StreamUtil;
 
 @Test
 public class FileHashcodeMapTest {
+
+    // earlier we supported windows separators in the  map, but i think we want to always support /
+    // this constant is here in case I want to move back to supporting windows paths explicitly
+    // we'd do this by "fileSeparator = File.separator;"
+    private static final String fileSeparator = "/";
+
     public void testError() throws Exception {
         try {
-            FileHashcodeMap.generateFileHashcodeMap(new File("this/should/not/exist"), null);
+            FileHashcodeMap.generateFileHashcodeMap(new File("this/should/not/exist"), null, null);
             assert false : "should have thrown exception due to invalid directory";
         } catch (Exception ok) {
             // expected and ok
@@ -60,10 +68,13 @@ public class FileHashcodeMapTest {
             StreamUtil.copy(new ByteArrayInputStream("test2".getBytes()), new FileOutputStream(testFile2));
             StreamUtil.copy(new ByteArrayInputStream("ignore1".getBytes()), new FileOutputStream(ignoreFile1));
 
-            FileHashcodeMap originalMap = FileHashcodeMap.generateFileHashcodeMap(tmpDir, ignoreRegex);
+            Set<String> ignored = new HashSet<String>();
+            FileHashcodeMap originalMap = FileHashcodeMap.generateFileHashcodeMap(tmpDir, ignoreRegex, ignored);
             assert originalMap.size() == 2 : originalMap;
             assert originalMap.containsKey("test1.txt") : originalMap;
             assert originalMap.containsKey("test2.txt") : originalMap;
+            assert ignored.size() == 1 : ignored;
+            assert ignored.contains("ignoreme1.txt") : ignored;
 
             // first test - see that no changes can be detected
             ChangesFileHashcodeMap currentMap = originalMap.rescan(tmpDir, ignoreRegex);
@@ -71,6 +82,8 @@ public class FileHashcodeMapTest {
             assert currentMap.getAdditions().isEmpty();
             assert currentMap.getDeletions().isEmpty();
             assert currentMap.getChanges().isEmpty();
+            assert currentMap.getIgnored().size() == 1 : currentMap;
+            assert currentMap.getIgnored().contains("ignoreme1.txt") : currentMap;
 
             // second test - change an original file
             StreamUtil.copy(new ByteArrayInputStream("test1-change".getBytes()), new FileOutputStream(testFile1));
@@ -84,6 +97,8 @@ public class FileHashcodeMapTest {
             assert currentMap.getDeletions().isEmpty();
             assert currentMap.getChanges().size() == 1;
             assert currentMap.getChanges().get("test1.txt").equals(currentMap.get("test1.txt"));
+            assert currentMap.getIgnored().size() == 1 : currentMap;
+            assert currentMap.getIgnored().contains("ignoreme1.txt") : currentMap;
 
             // third test - delete an original file
             assert testFile1.delete() : "could not delete file in order to test delete-detection";
@@ -97,6 +112,8 @@ public class FileHashcodeMapTest {
             assert currentMap.getDeletions().size() == 1;
             assert currentMap.getDeletions().get("test1.txt").equals(currentMap.get("test1.txt"));
             assert currentMap.getChanges().isEmpty();
+            assert currentMap.getIgnored().size() == 1 : currentMap.getIgnored();
+            assert currentMap.getIgnored().contains("ignoreme1.txt") : currentMap.getIgnored();
 
             // fourth test - add a new file
             StreamUtil.copy(new ByteArrayInputStream("test1".getBytes()), new FileOutputStream(testFile1));
@@ -114,6 +131,8 @@ public class FileHashcodeMapTest {
             assert currentMap.getAdditions().get("test3.txt").equals(currentMap.get("test3.txt"));
             assert currentMap.getDeletions().isEmpty();
             assert currentMap.getChanges().isEmpty();
+            assert currentMap.getIgnored().size() == 1 : currentMap.getIgnored();
+            assert currentMap.getIgnored().contains("ignoreme1.txt") : currentMap.getIgnored();
 
             // fifth test - concurrently change a file, delete a file add new file and add new file in new directory
             // changed file: testFile1
@@ -135,18 +154,23 @@ public class FileHashcodeMapTest {
             assert currentMap.containsKey("test1.txt") : currentMap;
             assert currentMap.containsKey("test2.txt") : currentMap;
             assert currentMap.containsKey("test3.txt") : currentMap;
-            assert currentMap.containsKey("subdir/test4.txt") : currentMap;
+            assert currentMap.containsKey("subdir" + fileSeparator + "test4.txt") : currentMap;
             assert !currentMap.get("test1.txt").equals(originalMap.get("test1.txt")) : currentMap + ":" + originalMap;
             assert currentMap.get("test2.txt").equals(FileHashcodeMap.DELETED_FILE_HASHCODE) : currentMap;
             assert currentMap.get("test3.txt").equals(MessageDigestGenerator.getDigestString(testFile3)) : currentMap;
-            assert currentMap.get("subdir/test4.txt").equals(MessageDigestGenerator.getDigestString(testFile4)) : currentMap;
+            assert currentMap.get("subdir" + fileSeparator + "test4.txt").equals(
+                MessageDigestGenerator.getDigestString(testFile4)) : currentMap;
             assert currentMap.getAdditions().size() == 2;
             assert currentMap.getAdditions().get("test3.txt").equals(currentMap.get("test3.txt"));
-            assert currentMap.getAdditions().get("subdir/test4.txt").equals(currentMap.get("subdir/test4.txt"));
+            assert currentMap.getAdditions().get("subdir" + fileSeparator + "test4.txt").equals(
+                currentMap.get("subdir" + fileSeparator + "test4.txt"));
             assert currentMap.getDeletions().size() == 1;
             assert currentMap.getDeletions().get("test2.txt").equals(currentMap.get("test2.txt"));
             assert currentMap.getChanges().size() == 1;
             assert currentMap.getChanges().get("test1.txt").equals(currentMap.get("test1.txt"));
+            assert currentMap.getIgnored().size() == 2 : currentMap.getIgnored();
+            assert currentMap.getIgnored().contains("ignoreme1.txt") : currentMap.getIgnored();
+            assert currentMap.getIgnored().contains("ignoreme") : currentMap.getIgnored();
 
             // sixth test - starting from 5th test above, add an absolute path file
             absPathFile = File.createTempFile("fileHashcodeMapTestFile", ".test");
@@ -159,21 +183,26 @@ public class FileHashcodeMapTest {
             assert currentMap.containsKey("test1.txt") : currentMap;
             assert currentMap.containsKey("test2.txt") : currentMap;
             assert currentMap.containsKey("test3.txt") : currentMap;
-            assert currentMap.containsKey("subdir/test4.txt") : currentMap;
+            assert currentMap.containsKey("subdir" + fileSeparator + "test4.txt") : currentMap;
             assert currentMap.containsKey(absPathFile.getAbsolutePath()) : currentMap;
             assert !currentMap.get("test1.txt").equals(originalMap.get("test1.txt")) : currentMap + ":" + originalMap;
             assert currentMap.get("test2.txt").equals(FileHashcodeMap.DELETED_FILE_HASHCODE) : currentMap;
             assert currentMap.get("test3.txt").equals(MessageDigestGenerator.getDigestString(testFile3)) : currentMap;
-            assert currentMap.get("subdir/test4.txt").equals(MessageDigestGenerator.getDigestString(testFile4)) : currentMap;
+            assert currentMap.get("subdir" + fileSeparator + "test4.txt").equals(
+                MessageDigestGenerator.getDigestString(testFile4)) : currentMap;
             assert currentMap.get(absPathFile.getAbsolutePath()).equals(originalMap.get(absPathFile.getAbsolutePath())) : currentMap
                 + ":" + originalMap;
             assert currentMap.getAdditions().size() == 2;
             assert currentMap.getAdditions().get("test3.txt").equals(currentMap.get("test3.txt"));
-            assert currentMap.getAdditions().get("subdir/test4.txt").equals(currentMap.get("subdir/test4.txt"));
+            assert currentMap.getAdditions().get("subdir" + fileSeparator + "test4.txt").equals(
+                currentMap.get("subdir" + fileSeparator + "test4.txt"));
             assert currentMap.getDeletions().size() == 1;
             assert currentMap.getDeletions().get("test2.txt").equals(currentMap.get("test2.txt"));
             assert currentMap.getChanges().size() == 1;
             assert currentMap.getChanges().get("test1.txt").equals(currentMap.get("test1.txt"));
+            assert currentMap.getIgnored().size() == 2 : currentMap.getIgnored();
+            assert currentMap.getIgnored().contains("ignoreme1.txt") : currentMap.getIgnored();
+            assert currentMap.getIgnored().contains("ignoreme") : currentMap.getIgnored();
 
             // seventh test - detect that the absolute path file has changed
             StreamUtil.copy(new ByteArrayInputStream("abs-changed".getBytes()), new FileOutputStream(absPathFile));
@@ -182,23 +211,28 @@ public class FileHashcodeMapTest {
             assert currentMap.containsKey("test1.txt") : currentMap;
             assert currentMap.containsKey("test2.txt") : currentMap;
             assert currentMap.containsKey("test3.txt") : currentMap;
-            assert currentMap.containsKey("subdir/test4.txt") : currentMap;
+            assert currentMap.containsKey("subdir" + fileSeparator + "test4.txt") : currentMap;
             assert currentMap.containsKey(absPathFile.getAbsolutePath()) : currentMap;
             assert !currentMap.get("test1.txt").equals(originalMap.get("test1.txt")) : currentMap + ":" + originalMap;
             assert currentMap.get("test2.txt").equals(FileHashcodeMap.DELETED_FILE_HASHCODE) : currentMap;
             assert currentMap.get("test3.txt").equals(MessageDigestGenerator.getDigestString(testFile3)) : currentMap;
-            assert currentMap.get("subdir/test4.txt").equals(MessageDigestGenerator.getDigestString(testFile4)) : currentMap;
+            assert currentMap.get("subdir" + fileSeparator + "test4.txt").equals(
+                MessageDigestGenerator.getDigestString(testFile4)) : currentMap;
             assert !currentMap.get(absPathFile.getAbsolutePath())
                 .equals(originalMap.get(absPathFile.getAbsolutePath())) : currentMap + ":" + originalMap;
             assert currentMap.getAdditions().size() == 2;
             assert currentMap.getAdditions().get("test3.txt").equals(currentMap.get("test3.txt"));
-            assert currentMap.getAdditions().get("subdir/test4.txt").equals(currentMap.get("subdir/test4.txt"));
+            assert currentMap.getAdditions().get("subdir" + fileSeparator + "test4.txt").equals(
+                currentMap.get("subdir" + fileSeparator + "test4.txt"));
             assert currentMap.getDeletions().size() == 1;
             assert currentMap.getDeletions().get("test2.txt").equals(currentMap.get("test2.txt"));
             assert currentMap.getChanges().size() == 2;
             assert currentMap.getChanges().get("test1.txt").equals(currentMap.get("test1.txt"));
-            assert currentMap.getChanges().get(absPathFile.getAbsolutePath()).equals(
+            assert currentMap.getChanges().get(currentMap.convertPath(absPathFile.getAbsolutePath())).equals(
                 currentMap.get(absPathFile.getAbsolutePath()));
+            assert currentMap.getIgnored().size() == 2 : currentMap.getIgnored();
+            assert currentMap.getIgnored().contains("ignoreme1.txt") : currentMap.getIgnored();
+            assert currentMap.getIgnored().contains("ignoreme") : currentMap.getIgnored();
 
             // eighth test - detect absolute path file has been deleted 
             assert absPathFile.delete() : "could not delete the absolute path file for testing";
@@ -207,22 +241,27 @@ public class FileHashcodeMapTest {
             assert currentMap.containsKey("test1.txt") : currentMap;
             assert currentMap.containsKey("test2.txt") : currentMap;
             assert currentMap.containsKey("test3.txt") : currentMap;
-            assert currentMap.containsKey("subdir/test4.txt") : currentMap;
+            assert currentMap.containsKey("subdir" + fileSeparator + "test4.txt") : currentMap;
             assert currentMap.containsKey(absPathFile.getAbsolutePath()) : currentMap;
             assert !currentMap.get("test1.txt").equals(originalMap.get("test1.txt")) : currentMap + ":" + originalMap;
             assert currentMap.get("test2.txt").equals(FileHashcodeMap.DELETED_FILE_HASHCODE) : currentMap;
             assert currentMap.get("test3.txt").equals(MessageDigestGenerator.getDigestString(testFile3)) : currentMap;
-            assert currentMap.get("subdir/test4.txt").equals(MessageDigestGenerator.getDigestString(testFile4)) : currentMap;
+            assert currentMap.get("subdir" + fileSeparator + "test4.txt").equals(
+                MessageDigestGenerator.getDigestString(testFile4)) : currentMap;
             assert currentMap.get(absPathFile.getAbsolutePath()).equals(FileHashcodeMap.DELETED_FILE_HASHCODE) : currentMap;
             assert currentMap.getAdditions().size() == 2;
             assert currentMap.getAdditions().get("test3.txt").equals(currentMap.get("test3.txt"));
-            assert currentMap.getAdditions().get("subdir/test4.txt").equals(currentMap.get("subdir/test4.txt"));
+            assert currentMap.getAdditions().get("subdir" + fileSeparator + "test4.txt").equals(
+                currentMap.get("subdir" + fileSeparator + "test4.txt"));
             assert currentMap.getDeletions().size() == 2;
             assert currentMap.getDeletions().get("test2.txt").equals(currentMap.get("test2.txt"));
-            assert currentMap.getDeletions().get(absPathFile.getAbsolutePath()).equals(
+            assert currentMap.getDeletions().get(currentMap.convertPath(absPathFile.getAbsolutePath())).equals(
                 currentMap.get(absPathFile.getAbsolutePath()));
             assert currentMap.getChanges().size() == 1;
             assert currentMap.getChanges().get("test1.txt").equals(currentMap.get("test1.txt"));
+            assert currentMap.getIgnored().size() == 2 : currentMap.getIgnored();
+            assert currentMap.getIgnored().contains("ignoreme1.txt") : currentMap.getIgnored();
+            assert currentMap.getIgnored().contains("ignoreme") : currentMap.getIgnored();
 
         } finally {
             FileUtil.purge(tmpDir, true);
@@ -336,7 +375,7 @@ public class FileHashcodeMapTest {
         assert fileOrDir.exists() && fileOrDir.listFiles().length > 0 : "empty dir: " + fileOrDir;
 
         // now generate hashcodes for all files
-        FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(fileOrDir, null);
+        FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(fileOrDir, null, null);
         assert map.size() > 0 : "should have generated something from: " + fileOrDir;
 
         // just check the first entry to see that the generate hash matches what we expect
@@ -365,9 +404,11 @@ public class FileHashcodeMapTest {
 
         // now ask to generate hashcodes for all files, but ignore everything
         Pattern regex = Pattern.compile(".*");
-        FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(fileOrDir, regex);
+        Set<String> ignored = new HashSet<String>();
+        FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(fileOrDir, regex, ignored);
 
         assert map.size() == 0 : "should have ignored everything from: " + fileOrDir + ": " + map;
+        assert ignored.size() > 0 : "should have ignored some files";
     }
 
     private void assertSameMap(FileHashcodeMap map1, FileHashcodeMap map2) {

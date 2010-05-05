@@ -59,6 +59,10 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleFileUploadServlet</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleFileUploadServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI UberBundleFileUploadServlet</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.UberBundleFileUploadServlet</servlet-class>
+    </servlet>
 
     <servlet>
       <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
@@ -67,6 +71,18 @@
     <servlet>
       <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AuthorizationGWTService</servlet-name>
       <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AuthorizationGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AvailabilityGWTService</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TagGWTService</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RemoteInstallGWTService</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl</servlet-class>
     </servlet>
 
     <servlet-mapping>
@@ -117,6 +133,10 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleFileUploadServlet</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/BundleFileUploadServlet</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI UberBundleFileUploadServlet</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/UberBundleFileUploadServlet</url-pattern>
+    </servlet-mapping>
 
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
@@ -126,5 +146,17 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AuthorizationGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AuthorizationGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AvailabilityGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AvailabilityGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TagGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/TagGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RemoteInstallGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/RemoteInstallGWTService</url-pattern>
     </servlet-mapping>
 </web-app>

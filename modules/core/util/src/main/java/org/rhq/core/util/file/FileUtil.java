@@ -33,6 +33,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.rhq.core.util.collection.IntHashMap;
 import org.rhq.core.util.stream.StreamUtil;
@@ -287,5 +289,23 @@ public class FileUtil {
                 tmp.delete();
             }
         }
+    }
+
+    /**
+     * Strips the drive letter from the given Windows path. The drive letter is returned
+     * or <code>null</code> is returned if there was no drive letter in the path.
+     *  
+     * @param path the path string that will be altered to have its drive letter stripped.
+     * @return if there was a drive letter, it will be returned. If no drive letter was in path, null is returned
+     */
+    public static String stripDriveLetter(StringBuilder path) {
+        String driveLetter = null;
+        Pattern regex = Pattern.compile("^([a-zA-Z]):.*");
+        Matcher matcher = regex.matcher(path);
+        if (matcher.matches()) {
+            driveLetter = matcher.group(1);
+            path.replace(0, 2, ""); // we know the pattern is one char drive letter plus one ':' char followed by the path
+        }
+        return driveLetter;
     }
 }

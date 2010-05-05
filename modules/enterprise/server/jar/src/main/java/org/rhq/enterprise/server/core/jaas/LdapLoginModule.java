@@ -212,8 +212,6 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
                 String groupMember = (String) options.get("GroupMemberFilter");
                 SubjectManagerLocal sManager = LookupUtil.getSubjectManager();
                 Subject ldapSubject = sManager.getSubjectByName(getUsername());
-
-                //if (user id already exists) && (groupFilter defined) && (groupMember defined)
                 if (ldapSubject != null && ((groupFilter != null) && !groupFilter.trim().isEmpty())
                     && ((groupMember != null) && !groupMember.trim().isEmpty())) {
                     //check authorized groups to see if this user is authorized via ldap

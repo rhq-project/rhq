@@ -236,4 +236,34 @@
         <column name="DTYPE" type="VARCHAR2" required="true" size="10"/>
     </table>
 
+
+    <table name="RHQ_TAGGING">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="NAMESPACE" type="VARCHAR2" required="false" size="20"/>
+        <column name="SEMANTIC" type="VARCHAR2" required="false" size="50"/>
+        <column name="NAME" type="VARCHAR2" required="true" size="100"/>
+    </table>
+
+    <table name="RHQ_TAGGING_RESOURCE_MAP">
+        <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE"/>
+        <column name="TAG_ID" type="INTEGER" references="RHQ_TAGGING"/>
+        <constraint name="RHQ_TAGGING_RESOURCE_MAP_KEY">
+            <primaryKey>
+                <field ref="RESOURCE_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <table name="RHQ_TAGGING_RES_GROUP_MAP">
+        <column name="RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
+        <column name="TAG_ID" type="INTEGER" references="RHQ_TAGGING"/>
+        <constraint name="RHQ_TAGGING_RES_GROUP_MAP_KEY">
+            <primaryKey>
+                <field ref="RESOURCE_GROUP_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
 </dbsetup>

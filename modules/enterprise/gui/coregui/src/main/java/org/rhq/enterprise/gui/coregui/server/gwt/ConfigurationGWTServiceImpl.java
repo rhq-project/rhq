@@ -2,6 +2,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -66,6 +67,13 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 configurationManager.updateResourceConfiguration(getSessionSubject(), resourceId, configuration);
 
         return SerialUtility.prepare(update, "ConfigurationService.updateResourceConfiguration");
+    }
+
+    public PluginConfigurationUpdate updatePluginConfiguration(int resourceId, Configuration configuration) {
+        PluginConfigurationUpdate update =
+                configurationManager.updatePluginConfiguration(getSessionSubject(), resourceId, configuration);
+
+        return SerialUtility.prepare(update, "ConfigurationService.updatePluginConfiguration");
     }
 
 

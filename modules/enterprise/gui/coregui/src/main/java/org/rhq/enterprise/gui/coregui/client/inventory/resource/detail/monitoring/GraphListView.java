@@ -67,7 +67,9 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
             c.destroy();
         }
 
-        addMember(loadingLabel);
+        addMember(new AvailabilityBarView(resource));
+
+//        addMember(loadingLabel);
 
         addMember(new MeasurementRangeEditor());
 
@@ -131,7 +133,7 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
 
     private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
         SmallGraphView graph = new SmallGraphView(resource.getId(), def, data);
-        graph.setWidth("80%");
+        graph.setWidth("95%");
         graph.setHeight(220);
 
         addMember(graph);

@@ -74,11 +74,15 @@ public class ConfigurationTemplateStep implements WizardStep {
     }
 
     public String getName() {
-        return "Select a Template";
+        return "New Resource";
     }
 
     public Configuration getConfiguration() {
-        return templates.get(form.getValueAsString("template")).createConfiguration();
+        String template = form.getValueAsString("template");
+        if (template == null) {
+            template = "default";
+        }
+        return templates.get(template).createConfiguration();
     }
 
     public String getResourceName() {

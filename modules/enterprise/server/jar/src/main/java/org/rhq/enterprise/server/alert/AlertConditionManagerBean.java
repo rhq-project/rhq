@@ -77,6 +77,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public PageList<? extends AbstractAlertConditionCategoryComposite> getAlertConditionComposites(Subject user,
         Integer agentId, AlertConditionCategory category, PageControl pageControl) {
         if (authorizationManager.isOverlord(user) == false) {

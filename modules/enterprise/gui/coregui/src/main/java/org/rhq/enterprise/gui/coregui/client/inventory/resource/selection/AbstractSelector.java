@@ -53,9 +53,11 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public abstract class AbstractSelector extends HLayout {
+public abstract class AbstractSelector<T> extends HLayout {
 
     protected HashSet<Integer> selection = new HashSet<Integer>();
+
+    protected ListGridRecord[] initialSelection;
 
     protected ListGrid availableGrid;
     protected ListGrid assignedGrid;
@@ -72,13 +74,17 @@ public abstract class AbstractSelector extends HLayout {
         setHeight(380);
     }
 
+    public void setAssigned(ListGridRecord[] assignedRecords) {
+        initialSelection = assignedRecords;
+    }
+
     public HashSet<Integer> getSelection() {
         return selection;
     }
 
     protected abstract DynamicForm getAvailableFilterForm();
 
-    protected abstract RPCDataSource<?> getDataSource();
+    protected abstract RPCDataSource<T> getDataSource();
 
     protected abstract Criteria getLatestCriteria(DynamicForm availableFilterForm);
 
@@ -219,6 +225,11 @@ public abstract class AbstractSelector extends HLayout {
                 select(recordDropEvent.getDropRecords());
             }
         });
+
+        if (initialSelection != null) {
+            assignedGrid.setData(initialSelection);
+            select(initialSelection);
+        }
     }
 
     protected void updateButtons() {

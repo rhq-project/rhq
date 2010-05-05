@@ -34,7 +34,7 @@ public enum BundleDeploymentStatus {
     INPROGRESS("In Progress"), //
     SUCCESS("Success"), //
     FAILURE("Failure"), //
-    NOCHANGE("No Change");
+    WARN("Warning");
 
     private String displayName;
 

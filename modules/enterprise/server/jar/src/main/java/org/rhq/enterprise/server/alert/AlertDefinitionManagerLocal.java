@@ -57,6 +57,8 @@ public interface AlertDefinitionManagerLocal {
 
     boolean isGroupAlertDefinition(Integer definitionId);
 
+    boolean isResourceAlertDefinition(Integer definitionId);
+
     int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 
     List<AlertDefinition> findAllRecoveryDefinitionsById(Subject subject, Integer alertDefinitionId);
@@ -67,6 +69,8 @@ public interface AlertDefinitionManagerLocal {
         boolean updateInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 
     int purgeUnusedAlertDefinition();
+
+    void purgeInternals(int alertDefinitionId);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

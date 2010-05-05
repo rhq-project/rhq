@@ -39,6 +39,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -167,6 +168,15 @@ public class ServerManagerBean implements ServerManagerLocal {
         return result;
     }
 
+    public void printWithTrace(String message) {
+        try {
+            new IllegalArgumentException(message);
+        } catch (IllegalArgumentException iae) {
+            String stackTrace = ThrowableUtil.getStackAsString(iae);
+            LogFactory.getLog("HighAvailabilityLogic").fatal(stackTrace);
+        }
+    }
+
     public void establishCurrentServerMode() {
         Server server = getServer();
         Server.OperationMode serverMode = server.getOperationMode();
@@ -179,6 +189,7 @@ public class ServerManagerBean implements ServerManagerLocal {
         // for previously connected agents that did not fail-over while this server was unavailable. This
         // is done to avoid unnecessary cache re/load and moreover provides a logically initialized environment.
         if (null == lastEstablishedServerMode) {
+            printWithTrace("establishCurrentServerMode: NULL->" + serverMode + ", clearing agent references");
             clearAgentReferences(server);
         }
 
@@ -191,6 +202,7 @@ public class ServerManagerBean implements ServerManagerLocal {
                 //    - out of MM without ever taking down the server
                 // 2) Re-establish server communication by taking away the MM listener
                 if (Server.OperationMode.MAINTENANCE == lastEstablishedServerMode) {
+                    printWithTrace("establishCurrentServerMode: MAINTENANCE->NORMAL, clearing agent references");
                     clearAgentReferences(server);
 
                     ServerCommunicationsServiceUtil.getService().safeGetServiceContainer().removeCommandListener(

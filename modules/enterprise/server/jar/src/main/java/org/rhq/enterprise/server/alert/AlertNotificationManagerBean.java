@@ -267,9 +267,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return pluginmanager.getBackingBeanNameForSender(shortName);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    // TODO: jmarques - this no longer handles the group alert definition or alert template cases!!
     public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName,
         Configuration configuration) {
 
@@ -315,9 +313,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return notifications;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    // TODO: jmarques - this no longer handles the group alert definition or alert template cases!!
     public void updateAlertNotification(AlertNotification notification) {
         notification = entityManager.merge(notification);
 

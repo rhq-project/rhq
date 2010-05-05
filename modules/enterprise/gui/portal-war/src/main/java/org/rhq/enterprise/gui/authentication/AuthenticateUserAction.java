@@ -38,6 +38,8 @@ import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -94,6 +96,34 @@ public class AuthenticateUserAction extends TilesAction {
                 // entry in the principals table.  If they do, then we know we use JDBC authentication
                 // for that user.  If they do not, then we must be using LDAP to authenticate that user.
                 hasPrincipal = subjectManager.isUserWithPrincipal(logonForm.getJ_username());
+
+                if (!hasPrincipal && needsRegistration) {
+                    //for the case when they're already registered but entering a case sensitive different name
+                    //BZ-586435: insert case insensitivity for usernames with ldap auth
+                    // locate first matching subject and attach.
+                    SubjectCriteria subjectCriteria = new SubjectCriteria();
+                    subjectCriteria.setCaseSensitive(false);
+                    subjectCriteria.setStrict(true);
+                    subjectCriteria.addFilterName(logonForm.getJ_username());
+                    subjectCriteria.fetchRoles(true);
+                    subjectCriteria.fetchConfiguration(true);
+                    PageList<Subject> subjectsLocated = LookupUtil.getSubjectManager().findSubjectsByCriteria(
+                        LookupUtil.getSubjectManager().getOverlord(), subjectCriteria);
+                    //if subject variants located then take the first one with a principal otherwise do nothing
+                    //To defend against the case where they create an account with the same name but not 
+                    //case as an rhq sysadmin or higher perms, then make them relogin with same creds entered.
+                    if (!subjectsLocated.isEmpty()) {//then case insensitive username matches found. Try to use instead.
+                        Subject ldapSubject = subjectsLocated.get(0);
+                        String msg = "Located existing ldap account with different case for [" + ldapSubject.getName()
+                            + "]. " + "Attempting to authenticate with that account instead.";
+                        log.info(msg);
+                        subject = subjectManager.login(ldapSubject.getName(), logonForm.getJ_password());
+                        sessionId = subject.getSessionId();
+                        log.debug("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId + "]");
+                        needsRegistration = false;
+                    }
+                }
+
             } else {
                 // with regular JDBC authentication, we are guaranteed to have a principal
                 hasPrincipal = true;

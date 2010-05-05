@@ -30,6 +30,10 @@ public interface StatusManagerLocal {
 
     List<Integer> getAndClearAgentsWithStatusForServer(String serverName);
 
+    void markGlobalCache();
+
+    void updateByResource(int resourceId);
+
     void updateByAlertDefinition(int alertDefinitionId);
 
     void updateByMeasurementBaseline(int baselineId);

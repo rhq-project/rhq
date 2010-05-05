@@ -27,11 +27,13 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -56,9 +58,9 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 public class AlertsView extends VLayout {
     private static final String TITLE = "Alerts";
 
-    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {
-        new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME, SortDirection.DESCENDING),
-        new SortSpecifier(AlertCriteria.SORT_FIELD_NAME, SortDirection.ASCENDING)
+    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[]{
+            new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME, SortDirection.DESCENDING),
+            new SortSpecifier(AlertCriteria.SORT_FIELD_NAME, SortDirection.ASCENDING)
     };
 
     private static final String DELETE_CONFIRM_MESSAGE = "Are you sure you want to delete the selected alert(s)?";
@@ -70,8 +72,20 @@ public class AlertsView extends VLayout {
     private VerticalPanel vpanel;
     private static final String SENDER = "sender";
 
+    Criteria criteria;
+    String[] excludedFieldNames;
+    boolean showDetails;
+
+    public AlertsView() {
+        this(null, null);
+        showDetails = false;
+
+    }
+
     public AlertsView(Criteria criteria, String[] excludedFieldNames) {
-        this.table = new Table(TITLE, criteria, SORT_SPECIFIERS, excludedFieldNames);
+        this.criteria = criteria;
+        this.excludedFieldNames = excludedFieldNames;
+        showDetails = false;
     }
 
 
@@ -88,59 +102,72 @@ public class AlertsView extends VLayout {
     protected void onDraw() {
         super.onDraw();
 
+        if (table == null) {
+            this.table = new Table(TITLE, criteria, SORT_SPECIFIERS, excludedFieldNames);
 
-        // Add the list table as the top half of the view.
-        //Criteria criteria = new Criteria(AlertCriteria.);
-        this.table.setHeight("50%");
-        ListGrid listGrid = this.table.getListGrid();
-        this.dataSource = new AlertDataSource();
-        this.table.setDataSource(this.dataSource);
-        listGrid.getField("name").setWidth("10%");
-        listGrid.getField("conditionText").setWidth("30%");
-        listGrid.getField("conditionValue").setWidth("15%");
-        listGrid.getField("recoveryInfo").setWidth("20%");
-        listGrid.getField("priority").setWidth("7%");
-        listGrid.getField("ctime").setWidth("13%");
-        listGrid.getField("ack").setWidth("5%");
 
-        this.table.addTableAction("Delete", Table.SelectionEnablement.ANY, DELETE_CONFIRM_MESSAGE, new TableAction() {
-            public void executeAction(ListGridRecord[] selection) {
-                AlertsView.this.dataSource.deleteAlerts(AlertsView.this);
-            }
-        });
-        this.table.addTableAction("Acknowledge", Table.SelectionEnablement.ANY, null, new TableAction() {
-            public void executeAction(ListGridRecord[] selection) {
-                AlertsView.this.dataSource.acknowledgeAlerts(AlertsView.this);
-            }
-        });
+            // Add the list table as the top half of the view.
+            //Criteria criteria = new Criteria(AlertCriteria.);
+            this.table.setHeight("50%");
+            ListGrid listGrid = this.table.getListGrid();
+            this.dataSource = new AlertDataSource();
+            this.table.setDataSource(this.dataSource);
+            listGrid.getField("name").setWidth("15%");
+            listGrid.getField("conditionText").setWidth("30%");
+            listGrid.getField("conditionValue").setWidth("10%");
+            listGrid.getField("resourceName").setWidth("20%");
+//            listGrid.getField("recoveryInfo").setWidth("20%");
+            listGrid.getField("priority").setWidth("7%");
+            listGrid.getField("ctime").setWidth("13%");
+            listGrid.getField("ack").setWidth("5%");
 
-        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent event) {
-                ListGridRecord[] selectedRecords =  AlertsView.this.table.getListGrid().getSelection();
-                String contents;
-                if (selectedRecords.length == 1) {
-                    ListGridRecord record = selectedRecords[0];
-
-                    // Clean out existing details and provide new ones
-                    for (int i = 1 ; i <= getChildren().length ; i ++)
-                        getChildren()[1].destroy();
-
-                    addMember(getDetailsTabSet(record));
-
-                } else {
-                    // Clean out existing details and show the "nothing selected message"
-                    for (int i = 1 ; i <= getChildren().length ; i ++)
-                        getChildren()[1].destroy();
-                    addMember(getNoAlertSelectedMessage());
+            listGrid.getField("resourceName").setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                    return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
                 }
+            });
+
+            this.table.addTableAction("Delete", Table.SelectionEnablement.ANY, DELETE_CONFIRM_MESSAGE, new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    AlertsView.this.dataSource.deleteAlerts(AlertsView.this);
+                }
+            });
+            this.table.addTableAction("Acknowledge", Table.SelectionEnablement.ANY, null, new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    AlertsView.this.dataSource.acknowledgeAlerts(AlertsView.this);
+                }
+            });
+
+            if (showDetails) {
+                listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+                    public void onSelectionChanged(SelectionEvent event) {
+                        ListGridRecord[] selectedRecords = AlertsView.this.table.getListGrid().getSelection();
+                        String contents;
+                        if (selectedRecords.length == 1) {
+                            ListGridRecord record = selectedRecords[0];
+
+                            // Clean out existing details and provide new ones
+                            for (int i = 1; i <= getChildren().length; i++)
+                                getChildren()[1].destroy();
+
+                            addMember(getDetailsTabSet(record));
+
+                        } else {
+                            // Clean out existing details and show the "nothing selected message"
+                            for (int i = 1; i <= getChildren().length; i++)
+                                getChildren()[1].destroy();
+                            addMember(getNoAlertSelectedMessage());
+                        }
+                    }
+                });
             }
-        });
 
-        addMember(this.table);
+            addMember(this.table);
+        }
 
-        // Add the details panel as the bottom half of the view.
-        // Default is the "nothing selected" message
-        addMember(getNoAlertSelectedMessage());
+//        // Add the details panel as the bottom half of the view.
+//        // Default is the "nothing selected" message
+//        addMember(getNoAlertSelectedMessage());
 
     }
 
@@ -185,27 +212,27 @@ public class AlertsView extends VLayout {
         descriptionTextItem.setValue(record.getAttribute("description"));
         items.add(descriptionTextItem);
 
-        StaticTextItem prioTextItem = new StaticTextItem("priority","Priority");
+        StaticTextItem prioTextItem = new StaticTextItem("priority", "Priority");
         prioTextItem.setValue(record.getAttribute("priority"));
         items.add(prioTextItem);
 
-        StaticTextItem createdTextItem = new StaticTextItem("ctime","Created at");
+        StaticTextItem createdTextItem = new StaticTextItem("ctime", "Created at");
         createdTextItem.setValue(record.getAttribute("ctime"));
         items.add(createdTextItem);
 
-        StaticTextItem ackByItem = new StaticTextItem("ack_by","Acknowledged by");
-        if (record.getAttribute("ack_by")!=null) {
+        StaticTextItem ackByItem = new StaticTextItem("ack_by", "Acknowledged by");
+        if (record.getAttribute("ack_by") != null) {
             ackByItem.setValue(record.getAttribute("ack_by"));
         }
         items.add(ackByItem);
 
-        StaticTextItem ackTimeItem = new StaticTextItem("ack_time","Acknowledged at");
-        if (record.getAttribute("ack_time")!=null) {
+        StaticTextItem ackTimeItem = new StaticTextItem("ack_time", "Acknowledged at");
+        if (record.getAttribute("ack_time") != null) {
             ackTimeItem.setValue(record.getAttribute("ack_time"));
         }
         items.add(ackTimeItem);
 
-        StaticTextItem recoveryItem = new StaticTextItem("recovery","Recovery Info");
+        StaticTextItem recoveryItem = new StaticTextItem("recovery", "Recovery Info");
         recoveryItem.setValue(record.getAttribute("recoveryInfo"));
         items.add(recoveryItem);
 
@@ -219,25 +246,25 @@ public class AlertsView extends VLayout {
 
         DataClass[] input = record.getAttributeAsRecordArray("notificationLogs");
 
-        Table notifTable = new Table("Notifications",false);
+        Table notifTable = new Table("Notifications", false);
         notifTable.setHeight("35%");
         notifTable.setWidth100();
         ListGrid grid = notifTable.getListGrid();
         grid.setData((Record[]) input);
 
 
-        ListGridField sender = new ListGridField(SENDER,"Sender");
+        ListGridField sender = new ListGridField(SENDER, "Sender");
         sender.setWidth("10%");
-        ListGridField status = new ListGridField("status","Result");
+        ListGridField status = new ListGridField("status", "Result");
         status.setWidth("8%");
-        ListGridField message = new ListGridField("message","Message");
+        ListGridField message = new ListGridField("message", "Message");
         message.setWidth("32%");
-        ListGridField allEmails = new ListGridField("allEmails","All Emails");
+        ListGridField allEmails = new ListGridField("allEmails", "All Emails");
         allEmails.setWidth("25%");
-        ListGridField badEmails = new ListGridField("badEmails","Bad Emails");
+        ListGridField badEmails = new ListGridField("badEmails", "Bad Emails");
         badEmails.setWidth("25%");
 
-        grid.setFields(sender,status,message,allEmails,badEmails);
+        grid.setFields(sender, status, message, allEmails, badEmails);
 
         return notifTable;
     }
@@ -248,18 +275,18 @@ public class AlertsView extends VLayout {
         String mode = record.getAttribute("conditionExpression");
 
 
-        Table table = new Table("Conditions: match = " + mode,false);
+        Table table = new Table("Conditions: match = " + mode, false);
         table.setHeight("35%");
         table.setWidth100();
         ListGrid grid = table.getListGrid();
         grid.setData((Record[]) input);
 
-        ListGridField condition = new ListGridField("text","Matching condition");
+        ListGridField condition = new ListGridField("text", "Matching condition");
         condition.setWidth("60%");
-        ListGridField value = new ListGridField("value","Value");
+        ListGridField value = new ListGridField("value", "Value");
 
 
-        grid.setFields(condition,value);
+        grid.setFields(condition, value);
 
         return table;
 

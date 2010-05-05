@@ -1018,7 +1018,7 @@ public class DBSetup {
         }
 
         long duration = System.currentTimeMillis() - start;
-        log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DURATION, duration);
+//        log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DURATION, duration);
 
         // Reset the commit option
         this.getConnection().setAutoCommit(committing);

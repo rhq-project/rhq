@@ -84,6 +84,17 @@ public class GWTServiceLookup {
         return secure(AuthorizationGWTServiceAsync.Util.getInstance());
     }
 
+    public static AvailabilityGWTServiceAsync getAvailabilityService() {
+        return secure(AvailabilityGWTServiceAsync.Util.getInstance());
+    }
+
+    public static TagGWTServiceAsync getTagService() {
+        return secure(TagGWTServiceAsync.Util.getInstance());
+    }
+
+    public static RemoteInstallGWTServiceAsync getRemoteInstallService() {
+        return secure(RemoteInstallGWTServiceAsync.Util.getInstance());
+    }
 
 
     private static <T> T secure(Object sdt) {

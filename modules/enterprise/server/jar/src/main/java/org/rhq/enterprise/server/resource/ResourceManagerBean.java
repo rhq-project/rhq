@@ -1759,7 +1759,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             + "    SELECT res.id, res.uuid, res.name, res.resourceKey, " //
             + "           parent.id, parent.name, " //
             + "           currentAvail.availabilityType, " //
-            + "           type.id, type.name, type.plugin, type.category, " //
+            + "           type.id, type.name, type.plugin, type.singleton, type.category, " //
             + "           subCategory.id, subCategory.name, " //
             + "           parentSubCategory.id, parentSubCategory.name " //
             + "      FROM Resource res " //
@@ -1829,6 +1829,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Integer typeId = (Integer) prefetched[i++];
             String typeName = (String) prefetched[i++];
             String typePlugin = (String) prefetched[i++];
+            Boolean typeSingleton = (Boolean) prefetched[i++];
             ResourceCategory typeCategory = (ResourceCategory) prefetched[i++];
 
             Integer subCategoryId = (Integer) prefetched[i++];
@@ -1843,7 +1844,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
             
             //we don't need the resource type reference here, only in the cache
-            flyweightCache.constructResourceType(typeId, typeName, typePlugin, typeCategory, subCategoryId);
+            flyweightCache.constructResourceType(typeId, typeName, typePlugin, typeSingleton, typeCategory, subCategoryId);
             
             ResourceFlyweight resourceFlyweight = flyweightCache.constructResource(
                 resourceId, resourceName, resourceUuid, resourceKey, parentId, typeId, availType);
@@ -1863,7 +1864,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             + "    SELECT res.id, res.uuid, res.name, res.resourceKey, " //
             + "           parent.id, parent.name, " //
             + "           currentAvail.availabilityType, " //
-            + "           type.id, type.name, type.plugin, type.category, " //
+            + "           type.id, type.name, type.plugin, type.singleton, type.category, " //
             + "           subCategory.id, subCategory.name, " //
             + "           parentSubCategory.id, parentSubCategory.name " //
             + "      FROM Resource res " //

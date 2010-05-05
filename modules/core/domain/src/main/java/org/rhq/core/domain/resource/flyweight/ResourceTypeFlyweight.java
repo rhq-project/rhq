@@ -39,6 +39,7 @@ public class ResourceTypeFlyweight implements Serializable {
     private int id;
     private String name;
     private String plugin;
+    private boolean singleton;
     private ResourceCategory category;
     private ResourceSubCategoryFlyweight subCategory;
 
@@ -86,6 +87,14 @@ public class ResourceTypeFlyweight implements Serializable {
         this.subCategory = subCategory;
     }
     
+    public boolean isSingleton() {
+        return singleton;
+    }
+
+    public void setSingleton(boolean singleton) {
+        this.singleton = singleton;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

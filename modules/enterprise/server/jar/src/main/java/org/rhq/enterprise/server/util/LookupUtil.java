@@ -107,6 +107,8 @@ import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
 import org.rhq.enterprise.server.entitlement.EntitlementManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
+import org.rhq.enterprise.server.install.remote.RemoteInstallManagerBean;
+import org.rhq.enterprise.server.install.remote.RemoteInstallManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
@@ -179,6 +181,8 @@ import org.rhq.enterprise.server.support.SupportManagerBean;
 import org.rhq.enterprise.server.support.SupportManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.tagging.TagManagerBean;
+import org.rhq.enterprise.server.tagging.TagManagerLocal;
 import org.rhq.enterprise.server.test.AccessBean;
 import org.rhq.enterprise.server.test.AccessLocal;
 import org.rhq.enterprise.server.test.AlertTemplateTestBean;
@@ -476,6 +480,10 @@ public final class LookupUtil {
         return lookupLocal(CacheConsistencyManagerBean.class);
     }
 
+    public static RemoteInstallManagerLocal getRemoteInstallManager() {
+         return lookupLocal(RemoteInstallManagerBean.class);
+     }
+
     public static ResourceMetadataManagerLocal getResourceMetadataManager() {
         return lookupLocal(ResourceMetadataManagerBean.class);
     }
@@ -559,6 +567,12 @@ public final class LookupUtil {
     public static ServerPluginsLocal getServerPlugins() {
         return lookupLocal(ServerPluginsBean.class);
     }
+
+    public static TagManagerLocal getTagManager() {
+        return lookupLocal(TagManagerBean.class);
+    }
+
+
 
     public static CoreServerMBean getCoreServer() {
         MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();

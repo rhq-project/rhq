@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
-
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
@@ -27,7 +25,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -52,6 +49,10 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
     public PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria) {
         return SerialUtility.prepare(definitionManager.findGroupDefinitionsByCriteria(getSessionSubject(), criteria),
                 "ResourceGroupService.findGroupDefinitionsByCriteria");
+    }
+
+    public void ensureMembershipMatches(int groupId, int[] resourceIds) {
+        groupManager.ensureMembershipMatches(getSessionSubject(), groupId, resourceIds);
     }
 
 }

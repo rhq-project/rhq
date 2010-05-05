@@ -193,6 +193,9 @@
          <name>Java.net Maven1 Repository - for javax.faces, javax.el, com.sun.el, and com.sun.facelets releases</name>
          <url>http://download.java.net/maven/1/</url>
          <layout>legacy</layout>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
       </repository>
   </repositories>
   

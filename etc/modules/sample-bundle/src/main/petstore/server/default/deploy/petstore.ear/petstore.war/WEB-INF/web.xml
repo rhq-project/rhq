@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  Copyright 2006 Sun Microsystems, Inc.  All rights reserved.  You may not modify, use, reproduce, or distribute this software except in compliance with the terms of the License at: 
+ http://developer.sun.com/berkeley_license.html
+ $Id: web.xml,v 1.27 2007/04/18 19:25:09 smitha Exp $ -->
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+
+    <display-name>Petstore</display-name>
+    <filter>
+        <filter-name>CaptchaValidateFilter</filter-name>
+        <filter-class>com.sun.javaee.blueprints.petstore.controller.CaptchaValidateFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>EntryFilter</filter-name>
+        <filter-class>com.sun.javaee.blueprints.petstore.controller.EntryFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>EntryFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CaptchaValidateFilter</filter-name>
+        <url-pattern>/faces/dynamic/bpui_fileupload_handler/handleFileUpload</url-pattern>
+    </filter-mapping>
+    <listener>
+        <listener-class>com.sun.javaee.blueprints.petstore.model.CatalogFacade</listener-class>
+    </listener>
+  
+    <servlet>
+        <display-name>ControllerServlet</display-name>
+        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-class>com.sun.javaee.blueprints.petstore.controller.ControllerServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>ControllerServlet</servlet-name>
+        <url-pattern>/catalog</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+    <servlet-name>ControllerServlet</servlet-name>
+        <url-pattern>/controller</url-pattern>
+    </servlet-mapping>
+
+    <context-param>
+        <description>
+            Google Maps authorization key for "http://localhost:8080/"
+            To use a another URL a new map key will have to be generated from http://www.google.com/apis/maps/
+        </description>
+        <param-name>com.sun.j2ee.blueprints.ui.mapviewer.KEY</param-name>
+        <param-value>ABQIAAAAyQYKk4__l80DyIsqLPvvuxTwM0brOpm-All5BF6PoaKBxRWWERSt2NPUufvDhWGdrb-pCzTZQ2vi2A</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>javax.faces.STATE_SAVING_METHOD</param-name>
+        <param-value>server</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>com.sun.faces.validateXml</param-name>
+        <param-value>false</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>com.sun.faces.verifyObjects</param-name>
+        <param-value>false</param-value>
+    </context-param>
+    
+    <context-param>
+        <param-name>javax.faces.CONFIG_FILES</param-name>
+        <param-value>/WEB-INF/faces-config.xml</param-value>
+    </context-param>
+    
+    <!-- proxy for mapviewer -->
+    <context-param>
+        <param-name>proxyHost</param-name>
+        <param-value></param-value>
+    </context-param>
+    <context-param>
+        <param-name>proxyPort</param-name>
+        <param-value></param-value>
+    </context-param>
+    <!-- filter init-param not working so use servlet context -->
+    <context-param>
+        <param-name>entryPages</param-name>
+        <param-value>.jpg|.gif|index.html|index.jsp|fileupload.jsp|search.jsp|catalog.jsp|mapAll.jsp|tag.jsp|news.jsp</param-value>
+    </context-param>
+
+    
+    <!-- Faces Servlet -->
+    <servlet>
+        <servlet-name>Faces Servlet</servlet-name>
+        <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <!-- Faces Servlet Mapping -->
+    <servlet-mapping>
+        <servlet-name>Faces Servlet</servlet-name>
+        <url-pattern>/faces/*</url-pattern>
+    </servlet-mapping>
+    
+    <!-- need datasource for indexing Lucene search engine -->
+    <servlet-mapping>
+        <servlet-name>ControllerServlet</servlet-name>
+        <url-pattern>/faces/CaptchaServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ControllerServlet</servlet-name>
+        <url-pattern>/ImageServlet/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ControllerServlet</servlet-name>
+        <url-pattern>/TagServlet/*</url-pattern>
+    </servlet-mapping>
+    <error-page>
+        <exception-type>java.lang.RuntimeException</exception-type>
+        <location>/systemerror.jsp</location>
+    </error-page>
+    <resource-ref>
+        <res-ref-name>jdbc/PetstoreDB</res-ref-name>
+        <res-type>javax.sql.DataSource</res-type>
+        <res-auth>Container</res-auth>
+        <res-sharing-scope>Shareable</res-sharing-scope>
+    </resource-ref>   
+</web-app>
+

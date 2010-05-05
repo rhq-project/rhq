@@ -22,8 +22,15 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
@@ -32,6 +39,7 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.ResetItem;
 import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -40,6 +48,8 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -57,7 +67,8 @@ public class RoleEditView extends VLayout {
     private HeaderLabel editLabel;
     private DynamicForm form;
     private PermissionEditorView permissionEditorItem;
-    private RoleGroupsEditorItem assignedGroupEditorItem;
+    private CanvasItem selectorItem;
+    private ResourceGroupSelector groupSelector;
 
     public RoleEditView() {
         super();
@@ -97,10 +108,10 @@ public class RoleEditView extends VLayout {
         permissionEditorItem.setShowTitle(false);
         permissionEditorItem.setColSpan(2);
 
+        selectorItem = new CanvasItem("groupSelectionCanvas");
 
-        assignedGroupEditorItem = new RoleGroupsEditorItem("assignedGroups", "Assigned Groups");
-        assignedGroupEditorItem.setShowTitle(false);
-        assignedGroupEditorItem.setColSpan(2);
+        selectorItem.setShowTitle(false);
+        selectorItem.setColSpan(2);
 
         SubmitItem saveButton = new SubmitItem("save", "Save");
 
@@ -123,7 +134,7 @@ public class RoleEditView extends VLayout {
                 idItem,
                 nameItem,
                 permissionEditorItem,
-                assignedGroupEditorItem,
+                selectorItem,
                 saveButton, new ResetItem("reset", "Reset"));
 
         editCanvas.addMember(form);
@@ -140,7 +151,10 @@ public class RoleEditView extends VLayout {
             form.editRecord(record);
             permissionEditorItem.setParentForm(form);
             permissionEditorItem.setPermissions((Set<Permission>) record.getAttributeAsObject("permissions"));
-            assignedGroupEditorItem.setGroups((PageList<ResourceGroup>) record.getAttributeAsObject("assignedGroups"));
+
+            groupSelector = new RoleResourceGroupSelector((Collection<ResourceGroup>) record.getAttributeAsObject("resourceGroups"));
+            selectorItem.setCanvas(groupSelector);
+
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -164,8 +178,39 @@ public class RoleEditView extends VLayout {
 
 
     public void save() {
+
         System.out.println("Saving role");
-        form.saveData();
+        form.saveData(new DSCallback() {
+            public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
+                HashSet<Integer> selection = groupSelector.getSelection();
+                int[] groupIds = new int[selection.size()];
+                int i = 0;
+                for (Integer id : selection) {
+                    groupIds[i++] = id;
+                }
+
+                int roleId;
+                if (roleBeingEdited != null) {
+                    roleId = roleBeingEdited.getId();
+                } else {
+                    // new role
+                    roleId = Integer.parseInt(new ListGridRecord(dsRequest.getData()).getAttribute("id"));
+                }
+
+
+                GWTServiceLookup.getRoleService().setAssignedResourceGroups(
+                        roleId, groupIds,
+                        new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to update role's assigned groups",caught);
+                            }
+
+                            public void onSuccess(Void result) {
+                                // TODO: Implement this method.
+                            }
+                        });
+            }
+        });
     }
 
 

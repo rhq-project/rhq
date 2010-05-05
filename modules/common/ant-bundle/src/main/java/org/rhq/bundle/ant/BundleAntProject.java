@@ -30,6 +30,7 @@ import org.apache.tools.ant.Project;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.util.updater.DeployDifferences;
 
 /**
  * This is the Ant project object that is used when processing bundle Ant scripts
@@ -53,6 +54,7 @@ public class BundleAntProject extends Project {
     private File deployDir;
     private final Set<String> bundleFileNames = new HashSet<String>();
     private int deploymentId;
+    private DeployDifferences deployDiffs = new DeployDifferences();
 
     public Set<String> getBundleFileNames() {
         return bundleFileNames;
@@ -110,5 +112,9 @@ public class BundleAntProject extends Project {
 
     public void setDeploymentId(int deploymentId) {
         this.deploymentId = deploymentId;
+    }
+
+    public DeployDifferences getDeployDifferences() {
+        return deployDiffs;
     }
 }

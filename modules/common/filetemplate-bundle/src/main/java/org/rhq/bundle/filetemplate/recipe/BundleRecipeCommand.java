@@ -80,11 +80,11 @@ public class BundleRecipeCommand implements RecipeCommand {
             }
         }
 
-        if (name == null) {
+        if (name == null || name.trim().length() == 0) {
             throw new IllegalArgumentException("Did not specify the name of the bundle");
         }
 
-        if (version == null) {
+        if (version == null || version.trim().length() == 0) {
             throw new IllegalArgumentException("Did not specify the description of the bundle");
         }
 
@@ -93,8 +93,8 @@ public class BundleRecipeCommand implements RecipeCommand {
             throw new IllegalArgumentException("Cannot specify multiple bundle commands in the same recipe");
         }
 
-        props.setBundleName(name);
-        props.setBundleVersion(version);
+        props.setBundleName(name.trim());
+        props.setBundleVersion(version.trim());
         if (description != null) {
             props.setDescription(description);
         }

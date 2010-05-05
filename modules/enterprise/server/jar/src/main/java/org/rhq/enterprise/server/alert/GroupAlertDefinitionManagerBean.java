@@ -42,7 +42,6 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 
 /**
  * @author Joseph Marques
@@ -56,8 +55,6 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @EJB
-    private AuthorizationManagerLocal authorizationManager;
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
     @EJB
@@ -121,21 +118,6 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         return modified;
     }
 
-    public void updateAlertDefinitionsForResource(Subject subject, AlertDefinition groupAlertDefinition,
-        Integer resourceId) throws AlertDefinitionCreationException, InvalidAlertDefinitionException {
-        if (authorizationManager.isOverlord(subject) == false) {
-            throw new AlertDefinitionCreationException("Updating the alert definitions for a resource "
-                + "is an implicit system operation and must only be performed by the overlord");
-        }
-
-        // construct the child
-        AlertDefinition childAlertDefinition = new AlertDefinition(groupAlertDefinition);
-        childAlertDefinition.setGroupAlertDefinition(groupAlertDefinition);
-
-        // persist the child
-        alertDefinitionManager.createAlertDefinition(subject, childAlertDefinition, resourceId);
-    }
-
     @SuppressWarnings("unchecked")
     private List<Integer> getCommittedResourceIdsNeedingGroupAlertDefinitionApplication(Subject subject,
         int groupAlertDefinitionId, int resourceGroupId) {
@@ -148,35 +130,29 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         return list;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public int createGroupAlertDefinitions(Subject subject, AlertDefinition groupAlertDefinition,
-        Integer resourceGroupId) throws InvalidAlertDefinitionException {
+        Integer resourceGroupId) throws InvalidAlertDefinitionException, AlertDefinitionCreationException {
         ResourceGroup group = entityManager.find(ResourceGroup.class, resourceGroupId);
         groupAlertDefinition.setResourceGroup(group);
         int groupAlertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, groupAlertDefinition, null);
         group = entityManager.merge(group);
 
-        int definitionCount = 0;
         Subject overlord = subjectManager.getOverlord();
         List<Integer> resourceIdsForGroup = getCommittedResourceIdsNeedingGroupAlertDefinitionApplication(subject,
             groupAlertDefinitionId, resourceGroupId);
 
         for (Integer resourceId : resourceIdsForGroup) {
             try {
-                // make sure we perform the system side-effects as the overlord
-                updateAlertDefinitionsForResource(overlord, groupAlertDefinition, resourceId);
+                // construct the child
+                AlertDefinition childAlertDefinition = new AlertDefinition(groupAlertDefinition);
+                childAlertDefinition.setGroupAlertDefinition(groupAlertDefinition);
 
-                // rev2804 - flush/clear after 250 definitions for good performance
-                if (++definitionCount % 250 == 0) {
-                    entityManager.flush();
-                    entityManager.clear();
-                }
-            } catch (AlertDefinitionCreationException adce) {
-                /* should never happen because AlertDefinitionCreationException is only ever
-                 * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-                 *
-                 * but we'll log it anyway, just in case, so it isn't just swallowed
-                 */
-                LOG.error(adce);
+                // persist the child
+                alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
+            } catch (Throwable t) {
+                throw new AlertDefinitionCreationException("Could not create alert definition child for Resource[id="
+                    + resourceId + "] with group " + groupAlertDefinition.toSimpleString());
             }
         }
 
@@ -220,81 +196,59 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         return modified;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public AlertDefinition updateGroupAlertDefinitions(Subject subject, AlertDefinition groupAlertDefinition,
-        boolean purgeInternals) throws InvalidAlertDefinitionException {
-        AlertDefinition updatedTemplate = null;
-
-        try {
-            updatedTemplate = alertDefinitionManager.updateAlertDefinition(subject, groupAlertDefinition.getId(),
-                groupAlertDefinition, purgeInternals); // do not allow direct undeletes of an alert definition
-        } catch (AlertDefinitionUpdateException adue) {
-            /* jmarques (Oct 10, 2007)
-             *
-             * this should never happen, there is currently no way to update a deleted alert template via the JON UI
-             */
-            LOG.error("Attempt to update a deleted groupAlertDefinition " + groupAlertDefinition.toSimpleString());
+        boolean purgeInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("updateGroupAlertDefinition: " + groupAlertDefinition);
         }
 
-        Subject overlord = subjectManager.getOverlord();
-        int definitionCount = 0;
+        // first update the actual alert group alert definition
+        AlertDefinition updated = null;
+        try {
+            updated = alertDefinitionManager.updateAlertDefinition(subject, groupAlertDefinition.getId(),
+                groupAlertDefinition, purgeInternals); // do not allow direct undeletes of an alert definition
+        } catch (Throwable t) {
+            throw new AlertDefinitionUpdateException("Failed to update a GroupAlertDefinition: "
+                + groupAlertDefinition.toSimpleString(), t);
+        }
 
-        /*
-         * update all of the definitions that were spawned from this groupAlertDefinition
-         */
+        // overlord will be used for all system-side effects as a result of updating this alert template
+        Subject overlord = subjectManager.getOverlord();
+
+        // update all of the definitions that were spawned from this group alert definition
         List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(overlord, groupAlertDefinition.getId());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Need to update the following children alert definition ids: " + alertDefinitions);
+        }
         for (Integer alertDefinitionId : alertDefinitions) {
             try {
-
                 alertDefinitionManager.updateAlertDefinition(overlord, alertDefinitionId, groupAlertDefinition,
-                    purgeInternals); // if the child is deleted, we will undelete is as part of the update
-            } catch (AlertDefinitionUpdateException adue) {
-                /* jmarques (Oct 10, 2007), as of this writing...
-                 *
-                 * this should not happen, because the call to getAlertDefinitionIdsByTemplateId only returns
-                 * non-deleted definitions.
-                 *
-                 * if a definition was deleted, then it will signify to the system that a new definition has to be
-                 * created in its place, which is what the call out to
-                 * getResourceIdsWithNoDefinitionFromThisTemplate is all about.
-                 *
-                 * but, it's conceivable that in the future an AlertDefinitionUpdateException can be thrown for other
-                 * reasons, so we want to catch that here and, at the very least, log it.
-                 */
-                LOG.error("Attempt to update a deleted template " + groupAlertDefinition.toSimpleString());
-            }
-
-            // rev2804 - flush/clear after 250 definitions for good performance
-            if (++definitionCount % 250 == 0) {
-                entityManager.flush();
-                entityManager.clear();
+                    purgeInternals);
+            } catch (Throwable t) {
+                throw new AlertDefinitionUpdateException("Failed to update child AlertDefinition[id="
+                    + alertDefinitionId + "] with group " + groupAlertDefinition.toSimpleString(), t);
             }
         }
 
-        /*
-         * if the subject deleted the alertDefinition spawned from a groupAlertDefinition, cascade update will recreate it
-         */
+        // if the subject deleted the alertDefinition spawned from a groupAlertDefinition, cascade update will recreate it
         List<Integer> resourceIds = getCommittedResourceIdsNeedingGroupAlertDefinitionApplication(overlord,
-            groupAlertDefinition.getId(), getResourceGroupIdAlertTemplateId(groupAlertDefinition.getId()));
-        try {
-            for (Integer resourceId : resourceIds) {
-                updateAlertDefinitionsForResource(overlord, groupAlertDefinition, resourceId);
+            groupAlertDefinition.getId(), getResourceGroupIdForAlertDefinitionId(groupAlertDefinition.getId()));
+        for (Integer resourceId : resourceIds) {
+            try {
+                // construct the child
+                AlertDefinition childAlertDefinition = new AlertDefinition(groupAlertDefinition);
+                childAlertDefinition.setGroupAlertDefinition(groupAlertDefinition);
 
-                // rev2804 - flush/clear after 250 definitions for good performance
-                if (++definitionCount % 250 == 0) {
-                    entityManager.flush();
-                    entityManager.clear();
-                }
+                // persist the child
+                alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
+            } catch (Throwable t) {
+                throw new AlertDefinitionUpdateException("Failed to re-create child AlertDefinition for Resource[id="
+                    + resourceId + "] with group" + groupAlertDefinition.toSimpleString(), t);
             }
-        } catch (AlertDefinitionCreationException adce) {
-            /* should never happen because AlertDefinitionCreationException is only ever
-             * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-             *
-             * but we'll log it anyway, just in case, so it isn't just swallowed
-             */
-            LOG.error(adce);
         }
 
-        return updatedTemplate;
+        return updated;
     }
 
     public void addGroupAlertDefinitions(Subject subject, int resourceGroupId, int[] resourcesIdsToAdd) {
@@ -305,35 +259,21 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         List<AlertDefinition> groupAlertDefinitions = findGroupAlertDefinitions(subject, resourceGroupId, PageControl
             .getUnlimitedInstance());
 
-        int definitionCount = 0;
         Subject overlord = subjectManager.getOverlord();
         for (AlertDefinition groupAlertDefinition : groupAlertDefinitions) {
             for (Integer resourceId : resourcesIdsToAdd) {
                 try {
-                    // make sure we perform the system side-effects as the overlord
-                    updateAlertDefinitionsForResource(overlord, groupAlertDefinition, resourceId);
+                    // construct the child
+                    AlertDefinition childAlertDefinition = new AlertDefinition(groupAlertDefinition);
+                    childAlertDefinition.setGroupAlertDefinition(groupAlertDefinition);
 
-                    // rev2804 - flush/clear after 250 definitions for good performance
-                    if (++definitionCount % 250 == 0) {
-                        entityManager.flush();
-                        entityManager.clear();
-                    }
-                } catch (AlertDefinitionCreationException adce) {
-                    /* should never happen because AlertDefinitionCreationException is only ever
-                     * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-                     *
-                     * but we'll log it anyway, just in case, so it isn't just swallowed
-                     */
-                    LOG.error(adce);
-                } catch (InvalidAlertDefinitionException iade) {
-                    /*
-                     * should never happen because the alert definitions we're creating already exist on the resourceGroup
-                     * as well as it's current resource members; children are spawned from the parent groupAlertDefinition,
-                     * and so should also be valid
-                     * 
-                     *  but we'll log it anyway, just in case, so it isn't just swallowed
-                     */
-                    LOG.error(iade);
+                    // persist the child
+                    alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
+                } catch (Throwable t) {
+                    throw new AlertDefinitionCreationException(
+                        "Could not create child alert definition for Resource[id=" + resourceId
+                            + "] under ResourceGroup[id=" + resourceGroupId + "] with group"
+                            + groupAlertDefinition.toSimpleString());
                 }
             }
         }
@@ -381,7 +321,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         }
     }
 
-    private int getResourceGroupIdAlertTemplateId(int groupAlertDefinitionId) {
+    private int getResourceGroupIdForAlertDefinitionId(int groupAlertDefinitionId) {
         Query query = entityManager.createQuery("" //
             + "SELECT groupAlertDefinition.resourceGroup.id " //
             + "  FROM AlertDefinition groupAlertDefinition " //

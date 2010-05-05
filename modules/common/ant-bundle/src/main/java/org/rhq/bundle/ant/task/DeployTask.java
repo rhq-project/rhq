@@ -40,6 +40,7 @@ import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.template.TemplateEngine;
 import org.rhq.core.util.updater.DeployDifferences;
 import org.rhq.core.util.updater.Deployer;
+import org.rhq.core.util.updater.DeploymentData;
 import org.rhq.core.util.updater.DeploymentProperties;
 
 /**
@@ -78,15 +79,14 @@ public class DeployTask extends AbstractBundleTask {
         }
 
         // for now, apply the pattern to all files in the deployment
-        Map<File, Pattern> fileReplacePatterns = new HashMap<File, Pattern>();
-        for (File file : this.files.keySet()) {
-            fileReplacePatterns.put(file, this.replacePattern);
-        }
+        Map<File, Pattern> archiveReplacePatterns = new HashMap<File, Pattern>();
         for (File file : this.archives) {
-            fileReplacePatterns.put(file, this.replacePattern);
+            archiveReplacePatterns.put(file, this.replacePattern);
         }
-        Deployer deployer = new Deployer(deploymentProps, this.archives, this.files, deployDir, fileReplacePatterns,
-            templateEngine, this.ignorePattern);
+        Set<File> rawFilesToReplace = this.files.keySet(); // TODO: CHANGE ME! only replace those raw files marked as "replace=true"
+        DeploymentData dd = new DeploymentData(deploymentProps, this.archives, this.files, deployDir,
+            archiveReplacePatterns, rawFilesToReplace, templateEngine, this.ignorePattern);
+        Deployer deployer = new Deployer(dd);
         try {
             DeployDifferences diffs = getProject().getDeployDifferences();
             deployer.deploy(diffs);

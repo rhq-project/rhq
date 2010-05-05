@@ -92,7 +92,9 @@ public class SimpleDeployerRawFileTest {
         this.sourceRawFiles = new HashMap<File, File>(1);
         this.sourceRawFiles.put(sourceRawFile, new File(extDir, originalFileName)); // note we name it different than the source file
         this.originalDeployProps = new DeploymentProperties(1, "simple", "1.0", "original test deployment");
-        Deployer deployer = new Deployer(originalDeployProps, null, sourceRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(originalDeployProps, null, sourceRawFiles, deployDir, null, null, null,
+            null);
+        Deployer deployer = new Deployer(dd);
         this.originalFileHashcodeMap = deployer.deploy(null);
         this.currentFile = sourceRawFiles.get(sourceRawFile);
         this.currentAbsPath = this.currentFile.getAbsolutePath();
@@ -196,7 +198,8 @@ public class SimpleDeployerRawFileTest {
     }
 
     private void baseX_X_X(boolean dryRun) throws Exception {
-        Deployer deployer = new Deployer(newDeployProps, null, sourceRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, sourceRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -235,7 +238,8 @@ public class SimpleDeployerRawFileTest {
         Map<File, File> newRawFiles = new HashMap<File, File>(1);
         newRawFiles.put(newRawFile, this.currentFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -280,7 +284,8 @@ public class SimpleDeployerRawFileTest {
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         writeFile(newContent, this.currentFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, sourceRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, sourceRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -327,7 +332,8 @@ public class SimpleDeployerRawFileTest {
         Map<File, File> newRawFiles = new HashMap<File, File>(1);
         newRawFiles.put(newRawFile, this.currentFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -374,7 +380,8 @@ public class SimpleDeployerRawFileTest {
         Map<File, File> newRawFiles = new HashMap<File, File>(1);
         newRawFiles.put(newRawFile, this.currentFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -436,7 +443,8 @@ public class SimpleDeployerRawFileTest {
         File newDestRawFile = new File(extDir, newFileName);
         newRawFiles.put(newRawFile, newDestRawFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -497,7 +505,8 @@ public class SimpleDeployerRawFileTest {
         String inTheWayHashcode = MessageDigestGenerator.getDigestString(inTheWayContent);
         writeFile(inTheWayContent, inTheWayFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -556,7 +565,8 @@ public class SimpleDeployerRawFileTest {
     private void baseNoCurrent(boolean dryRun) throws Exception {
         assert this.currentFile.delete() : "Failed to delete the current file, cannot prepare the test";
 
-        Deployer deployer = new Deployer(newDeployProps, null, sourceRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, sourceRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -606,7 +616,8 @@ public class SimpleDeployerRawFileTest {
         File newDestRawFile = new File(extDir, newFileName);
         newRawFiles.put(newRawFile, newDestRawFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -669,7 +680,8 @@ public class SimpleDeployerRawFileTest {
         File newDestRawFile = new File(extDir, newFileName);
         newRawFiles.put(newRawFile, newDestRawFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);

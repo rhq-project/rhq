@@ -55,6 +55,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
     private DynamicForm mainCanvasForm;
     private TextItem urlTextItem;
     private BundleDistributionFileUploadForm uploadDistroForm;
+    private RadioGroupWithComponentsItem radioGroup;
 
     public BundleUploadDistroFileStep(AbstractBundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
@@ -68,8 +69,8 @@ public class BundleUploadDistroFileStep implements WizardStep {
             radioItems.put("Recipe", createRecipeForm());
 
             mainCanvasForm = new DynamicForm();
-            RadioGroupWithComponentsItem radioGroup = new RadioGroupWithComponentsItem("bundleDistroRadioGroup",
-                "Bundle Distribution", radioItems, mainCanvasForm);
+            radioGroup = new RadioGroupWithComponentsItem("bundleDistroRadioGroup", "Bundle Distribution", radioItems,
+                mainCanvasForm);
             radioGroup.setShowTitle(false);
             mainCanvasForm.setItems(radioGroup);
         }
@@ -77,7 +78,19 @@ public class BundleUploadDistroFileStep implements WizardStep {
     }
 
     public boolean nextPage() {
-        return true;
+        String selected = radioGroup.getSelected();
+
+        if ("URL".equals(selected)) {
+            this.processUrl();
+        } else if ("Upload".equals(selected)) {
+            this.processUpload();
+        } else if ("Recipe".equals(selected)) {
+            this.processRecipe();
+        } else {
+            return false;
+        }
+
+        return false;
     }
 
     public String getName() {

@@ -36,8 +36,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
-/** Temporary step pending creation of BundleVersion navigation screen */
-
 public class SelectBundleVersionStep implements WizardStep {
 
     static private final String LATEST_VERSION = "latest";

@@ -2687,21 +2687,21 @@
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Inserting global default saved search 'Downed Platforms'">
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
-                        VALUES (1, 'Resource', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, true)
+                        VALUES (1, 'RESOURCE', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, true)
                     </statement>
                     <statement targetDBVendor="oracle" desc="Inserting global default saved search 'Downed Platforms'">
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
-                        VALUES (1, 'Resource', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, 1)
+                        VALUES (1, 'RESOURCE', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, 1)
                     </statement>
                 </schema-directSQL>
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Inserting global default saved search 'Downed Servers'">
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
-                        VALUES (2, 'Resource', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, true)
+                        VALUES (2, 'RESOURCE', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, true)
                     </statement>
                     <statement targetDBVendor="oracle" desc="Inserting global default saved search 'Downed Servers'">
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
-                        VALUES (2, 'Resource', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, 1)
+                        VALUES (2, 'RESOURCE', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, 1)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>

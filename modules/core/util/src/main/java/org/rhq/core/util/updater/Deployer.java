@@ -93,7 +93,7 @@ public class Deployer {
     private final Set<File> zipFiles;
     private final Map<File, File> rawFiles;
     private final File destDir;
-    private final Pattern filesToRealizeRegex;
+    private final Map<File, Pattern> filesToRealizeRegex;
     private final TemplateEngine templateEngine;
     private final Pattern ignoreRegex;
     private final DeploymentsMetadata deploymentsMetadata;
@@ -110,13 +110,14 @@ public class Deployer {
      * @param destDir the root directory where the content is to be deployed
      * @param filesToRealizeRegex the patterns of files (whose paths are relative to destDir) that
      *                            must have replacement variables within them replaced with values
-     *                            obtained via the given template engine
+     *                            obtained via the given template engine. The key is the name of the zip or raw
+     *                            file that the regex must be applied to.
      * @param templateEngine if one or more filesToRealize are specified, this template engine is used to determine
      *                       the values that should replace all replacement variables found in those files
      * @param ignoreRegex the files/directories to ignore when updating an existing deployment
      */
     public Deployer(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, File> rawFiles, File destDir,
-        Pattern filesToRealizeRegex, TemplateEngine templateEngine, Pattern ignoreRegex) {
+        Map<File, Pattern> filesToRealizeRegex, TemplateEngine templateEngine, Pattern ignoreRegex) {
 
         if (deploymentProps == null) {
             throw new IllegalArgumentException("deploymentProps == null");
@@ -426,7 +427,12 @@ public class Deployer {
         ExtractorZipFileVisitor visitor;
         for (File zipFile : this.zipFiles) {
             debug("Extracting zip [", zipFile, "] entries. dryRun=", dryRun);
-            visitor = new ExtractorZipFileVisitor(this.destDir, this.filesToRealizeRegex, this.templateEngine,
+
+            Pattern realizeRegex = null;
+            if (this.filesToRealizeRegex != null) {
+                realizeRegex = this.filesToRealizeRegex.get(zipFile);
+            }
+            visitor = new ExtractorZipFileVisitor(this.destDir, realizeRegex, this.templateEngine,
                 currentFilesToLeaveAlone.keySet(), diff, dryRun);
             ZipUtil.walkZipFile(zipFile, visitor);
             newFileHashCodeMap.putAll(visitor.getFileHashcodeMap());
@@ -457,7 +463,12 @@ public class Deployer {
 
             String hashcode;
 
-            if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocationPath).matches()) {
+            Pattern realizeRegex = null;
+            if (this.filesToRealizeRegex != null) {
+                realizeRegex = this.filesToRealizeRegex.get(currentLocationFile);
+            }
+
+            if (realizeRegex != null && realizeRegex.matcher(newLocationPath).matches()) {
                 debug("Realizing file [", currentLocationFile, "] to [", newLocationFile, "]. dryRun=", dryRun);
 
                 // this entry needs to be realized, do it now in-memory (we assume realizable files will not be large)
@@ -536,7 +547,11 @@ public class Deployer {
         InMemoryZipFileVisitor visitor;
         for (File zipFile : this.zipFiles) {
             debug("Extracting zip [", zipFile, "] in-memory to determine hashcodes for all entries");
-            visitor = new InMemoryZipFileVisitor(this.filesToRealizeRegex, this.templateEngine);
+            Pattern realizeRegex = null;
+            if (this.filesToRealizeRegex != null) {
+                realizeRegex = this.filesToRealizeRegex.get(zipFile);
+            }
+            visitor = new InMemoryZipFileVisitor(realizeRegex, this.templateEngine);
             ZipUtil.walkZipFile(zipFile, visitor);
             fileHashcodeMap.putAll(visitor.getFileHashcodeMap());
         }
@@ -555,7 +570,12 @@ public class Deployer {
 
             String hashcode;
 
-            if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocationPath).matches()) {
+            Pattern realizeRegex = null;
+            if (this.filesToRealizeRegex != null) {
+                realizeRegex = this.filesToRealizeRegex.get(currentLocationFile);
+            }
+
+            if (realizeRegex != null && realizeRegex.matcher(newLocationPath).matches()) {
                 debug("Realizing file [", currentLocationFile, "] in-memory to determine its hashcode");
 
                 // this entry needs to be realized, do it now in-memory (we assume realizable files will not be large)

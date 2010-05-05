@@ -207,7 +207,7 @@ public class DeployerTest {
     private void baseUpdateTest(boolean realize, boolean ignore) throws Exception {
         DeployDifferences diff;
 
-        final Pattern filesToRealizeRegex = realize ? Pattern.compile("fileA") : null;
+        final Pattern realizeRegex = realize ? Pattern.compile("fileA") : null;
         final Pattern ignoreRegex = ignore ? Pattern.compile("ignoreme.*") : null;
         File fileToIgnore = null;
 
@@ -253,7 +253,9 @@ public class DeployerTest {
             Map<File, File> rawFiles = new HashMap<File, File>(1);
             rawFiles.put(testRawFileA, updaterAabsolute); // raw file to absolute path
             File destDir = tmpDir;
-            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
+            Map<File, Pattern> filesToRealizeRegex1 = new HashMap<File, Pattern>(1);
+            filesToRealizeRegex1.put(testZipFile1, realizeRegex);
+            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex1,
                 templateEngine, ignoreRegex);
             diff = new DeployDifferences();
             deployer.deploy(diff);
@@ -280,7 +282,9 @@ public class DeployerTest {
             zipFiles.add(testZipFile2);
             rawFiles = new HashMap<File, File>(1);
             rawFiles.put(testRawFileB, updaterBabsolute); // raw file to absolute path
-            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
+            Map<File, Pattern> filesToRealizeRegex2 = new HashMap<File, Pattern>(1);
+            filesToRealizeRegex2.put(testZipFile2, realizeRegex);
+            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex2, templateEngine,
                 ignoreRegex);
             diff = new DeployDifferences();
             deployer.deploy(diff);
@@ -399,7 +403,7 @@ public class DeployerTest {
             rawFiles = new HashMap<File, File>(2);
             rawFiles.put(testRawFileA, updaterAabsolute); // source raw file to absolute path
             rawFiles.put(testRawFileBChange1, updaterBabsolute); // source raw file to absolute path
-            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
+            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex2, templateEngine,
                 ignoreRegex);
             diff = new DeployDifferences();
             deployer.deploy(diff);
@@ -438,7 +442,7 @@ public class DeployerTest {
             rawFiles = new HashMap<File, File>(2);
             rawFiles.put(testRawFileAChange, updaterAabsolute); // source raw file to absolute path
             rawFiles.put(testRawFileBChange2, updaterBabsolute); // source raw file to absolute path
-            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
+            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex2, templateEngine,
                 ignoreRegex);
             diff = new DeployDifferences();
             deployer.deploy(diff);
@@ -489,8 +493,9 @@ public class DeployerTest {
             rawFiles.put(testRawFileB, rawFileDestination); // we will realize this one
             File destDir = tmpDir;
             Pattern ignoreRegex = null;
-
-            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
+            Map<File, Pattern> realizeRegex1 = new HashMap<File, Pattern>(1);
+            realizeRegex1.put(testRawFileB, filesToRealizeRegex);
+            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, realizeRegex1,
                 templateEngine, ignoreRegex);
             DeployDifferences diff = new DeployDifferences();
             FileHashcodeMap map = deployer.deploy(diff);
@@ -539,7 +544,11 @@ public class DeployerTest {
             File destDir = tmpDir;
             Pattern ignoreRegex = null;
 
-            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
+            Map<File, Pattern> realizeRegex1 = new HashMap<File, Pattern>(3);
+            realizeRegex1.put(testZipFile1, filesToRealizeRegex);
+            realizeRegex1.put(testZipFile2, filesToRealizeRegex);
+            realizeRegex1.put(testRawFileB, filesToRealizeRegex);
+            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, realizeRegex1,
                 templateEngine, ignoreRegex);
             DeployDifferences listener = new DeployDifferences();
             deployer.deploy(listener);
@@ -633,7 +642,10 @@ public class DeployerTest {
             File destDir = tmpDir;
             Pattern ignoreRegex = null;
 
-            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
+            Map<File, Pattern> realizeRegex1 = new HashMap<File, Pattern>(1);
+            realizeRegex1.put(testZipFile1, filesToRealizeRegex);
+
+            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, realizeRegex1,
                 templateEngine, ignoreRegex);
             DeployDifferences listener = new DeployDifferences();
             deployer.deploy(listener);

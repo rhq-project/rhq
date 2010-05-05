@@ -18,6 +18,7 @@
 package org.rhq.bundle.ant.task;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -75,7 +76,16 @@ public class DeployTask extends AbstractBundleTask {
         if (!this.archives.isEmpty()) {
             log("Deploying archives " + this.archives + "...", Project.MSG_VERBOSE);
         }
-        Deployer deployer = new Deployer(deploymentProps, this.archives, this.files, deployDir, this.replacePattern,
+
+        // for now, apply the pattern to all files in the deployment
+        Map<File, Pattern> fileReplacePatterns = new HashMap<File, Pattern>();
+        for (File file : this.files.keySet()) {
+            fileReplacePatterns.put(file, this.replacePattern);
+        }
+        for (File file : this.archives) {
+            fileReplacePatterns.put(file, this.replacePattern);
+        }
+        Deployer deployer = new Deployer(deploymentProps, this.archives, this.files, deployDir, fileReplacePatterns,
             templateEngine, this.ignorePattern);
         try {
             DeployDifferences diffs = getProject().getDeployDifferences();

@@ -2683,6 +2683,8 @@
                 <schema-addColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" columnType="BOOLEAN" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" nullable="FALSE" />
 
+                <schema-createSequence name="RHQ_SAVED_SEARCH_ID_SEQ" initial="10001" />
+
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Inserting global default saved search 'Downed Platforms'">
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)

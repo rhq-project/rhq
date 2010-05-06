@@ -155,7 +155,8 @@ public class BundleServerPluginManager extends ServerPluginManager {
                     info = new BundleDistributionInfo(recipe, results, null);
                     info.setBundleTypeName(descriptor.getBundle().getType());
                     break;
-                } catch (Exception e) {
+                } catch (UnknownRecipeException ure) {
+                    // the recipe is not a type that the plugin can handle, go on to the next
                     info = null;
                 }
             } finally {
@@ -205,7 +206,8 @@ public class BundleServerPluginManager extends ServerPluginManager {
                     info = facet.processBundleDistributionFile(distributionFile);
                     info.setBundleTypeName(descriptor.getBundle().getType());
                     break;
-                } catch (Exception e) {
+                } catch (UnknownRecipeException ure) {
+                    // the recipe is not a type that the plugin can handle, go on to the next
                     info = null;
                 }
             } finally {

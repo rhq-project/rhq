@@ -191,6 +191,8 @@ public class BundleView extends VLayout implements BookmarkableView {
                 });
             }
         });
+        tagEditor.setAlwaysEdit(true);
+        tagEditor.setVertical(true);
         layout.addMember(tagEditor);
 
 

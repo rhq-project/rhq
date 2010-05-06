@@ -182,6 +182,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
         criteria.fetchBundleFiles(true);
         criteria.fetchBundleDeployments(true);
         criteria.fetchConfigurationDefinition(true);
+        criteria.fetchTags(true);
 
         GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria,
                 new AsyncCallback<PageList<BundleVersion>>() {

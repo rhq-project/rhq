@@ -2091,7 +2091,6 @@
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="email_address" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="role_id" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="subject_id" />
-                <schema-deleteColumn table="RHQ_ALERT_DEFINITION" column="operation_def_id" />
             </schemaSpec>
             <schemaSpec version="2.70.4">
                 <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="roles" />

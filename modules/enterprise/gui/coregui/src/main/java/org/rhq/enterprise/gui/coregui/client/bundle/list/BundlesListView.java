@@ -26,14 +26,11 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreateWizard;
-import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleUpdateWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -100,35 +97,6 @@ public class BundlesListView extends VLayout {
                         }
                     });
                 }
-            }
-        });
-
-        table.addTableAction("New Version", Table.SelectionEnablement.SINGLE, null, new TableAction() {
-            public void executeAction(ListGridRecord[] selection) {
-                BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) table.getDataSource();
-                final BundleWithLatestVersionComposite object = ds.copyValues(selection[0]);
-                BundleVersionCriteria bvc = new BundleVersionCriteria();
-                bvc.addFilterBundleId(object.getBundleId());
-                bvc.addFilterVersion(object.getLatestVersion());
-                BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
-                bundleManager.findBundleVersionsByCriteria(bvc, new AsyncCallback<PageList<BundleVersion>>() {
-                    public void onSuccess(PageList<BundleVersion> result) {
-                        if (result == null || result.size() != 1) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Failed to get last bundle version [" + object.getLatestVersion() + "]",
-                                    Severity.Error));
-                            return;
-                        }
-
-                        BundleUpdateWizard bundleUpdateWizard = new BundleUpdateWizard(result.get(0));
-                        bundleUpdateWizard.startBundleWizard();
-                    }
-
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            "Failed to load last bundle version [" + object.getLatestVersion() + "]", caught);
-                    }
-                });
             }
         });
 

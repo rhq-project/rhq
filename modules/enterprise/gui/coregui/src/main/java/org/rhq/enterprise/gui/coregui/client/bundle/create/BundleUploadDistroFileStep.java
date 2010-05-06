@@ -84,18 +84,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
         if ("URL".equals(selected)) {
             processUrl();
         } else if ("Upload".equals(selected)) {
-            uploadDistroForm.addFormHandler(new DynamicFormHandler() {
-                public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
-                    processUpload();
-                }
-            });
-            uploadDistroForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
-                public void onFormSubmitFailed(FormSubmitFailedEvent event) {
-                    return;
-                }
-            });
             uploadDistroForm.submitForm();
-
         } else if ("Recipe".equals(selected)) {
             processRecipe();
         } else {
@@ -124,6 +113,16 @@ public class BundleUploadDistroFileStep implements WizardStep {
     private BundleDistributionFileUploadForm createUploadForm() {
         uploadDistroForm = new BundleDistributionFileUploadForm(false);
         uploadDistroForm.setPadding(20);
+        uploadDistroForm.addFormHandler(new DynamicFormHandler() {
+            public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                processUpload();
+            }
+        });
+        uploadDistroForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
+            public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                return; // the distro form component will log an error for us
+            }
+        });
         return uploadDistroForm;
     }
 

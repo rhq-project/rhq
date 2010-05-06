@@ -66,9 +66,9 @@ public class GroupCreateStep implements WizardStep {
 
             CheckboxItem recursive = new CheckboxItem("recursive","Recursive");
 
-            LinkedHashMap<String, Object> options = new LinkedHashMap<String, Object>();
+            LinkedHashMap<String, Canvas> options = new LinkedHashMap<String, Canvas>();
 
-            options.put("Mixed Resources", null);
+            options.put("Mixed", null);
 
             IPickTreeItem typeSelectItem = new IPickTreeItem("type", "Type");
             typeSelectItem.setDataSource(new ResourceTypePluginTreeDataSource());
@@ -81,10 +81,10 @@ public class GroupCreateStep implements WizardStep {
             DynamicForm form2 = new DynamicForm();
             form2.setValuesManager(form.getValuesManager());
             form2.setFields(typeSelectItem);
-            options.put("Compatible Resources", form2);
+            options.put("Compatible", form2);
 
 
-            RadioGroupWithComponentsItem kind = new RadioGroupWithComponentsItem("kind", "Contains", options, form);
+            RadioGroupWithComponentsItem kind = new RadioGroupWithComponentsItem("kind", "Group Type", options, form);
             kind.setValue("Mixed Resources");
 
             form.setFields(name, location, description, recursive, kind);

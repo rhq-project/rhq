@@ -65,6 +65,9 @@ public class BundleUploadDataStep implements WizardStep {
                 public void onSuccess(HashMap<String, Boolean> result) {
                     wizard.setAllBundleFilesStatus(result);
                     prepareForm(mainLayout);
+                    if (noFilesNeedToBeUploaded) {
+                        wizard.getView().incrementStep();
+                    }
                 }
 
                 public void onFailure(Throwable caught) {
@@ -111,8 +114,22 @@ public class BundleUploadDataStep implements WizardStep {
     }
 
     private void prepareForm(VLayout mainLayout) {
-        // if there are no files to upload, immediately skip this step
+        // if there are no files to upload, immediately skip this step       
         final HashMap<String, Boolean> allFilesStatus = wizard.getAllBundleFilesStatus();
+        noFilesNeedToBeUploaded = Boolean.TRUE;
+
+        if (null == allFilesStatus || allFilesStatus.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, Boolean> entry : allFilesStatus.entrySet()) {
+            if (!entry.getValue()) {
+                noFilesNeedToBeUploaded = Boolean.FALSE;
+                break;
+            }
+        }
+        if (noFilesNeedToBeUploaded) {
+            return;
+        }
 
         if (allFilesStatus != null && allFilesStatus.size() == 0) {
             HeaderLabel label = new HeaderLabel("No files need to be uploaded for this bundle");

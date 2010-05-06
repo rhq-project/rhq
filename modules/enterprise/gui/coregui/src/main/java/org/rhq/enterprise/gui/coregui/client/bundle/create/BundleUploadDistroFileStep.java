@@ -23,6 +23,8 @@ import java.util.LinkedHashMap;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
+import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
@@ -49,9 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 public class BundleUploadDistroFileStep implements WizardStep {
 
     private final AbstractBundleCreateWizard wizard;
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
-    private BundleDistributionFileUploadForm distroUploadForm;
     private DynamicForm mainCanvasForm;
     private TextItem urlTextItem;
     private BundleDistributionFileUploadForm uploadDistroForm;
@@ -81,11 +81,22 @@ public class BundleUploadDistroFileStep implements WizardStep {
         String selected = radioGroup.getSelected();
 
         if ("URL".equals(selected)) {
-            this.processUrl();
+            processUrl();
         } else if ("Upload".equals(selected)) {
-            this.processUpload();
+            uploadDistroForm.addFormHandler(new DynamicFormHandler() {
+                public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                    processUpload();
+                }
+            });
+            uploadDistroForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
+                public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                    return;
+                }
+            });
+            uploadDistroForm.submitForm();
+
         } else if ("Recipe".equals(selected)) {
-            this.processRecipe();
+            processRecipe();
         } else {
             return false;
         }

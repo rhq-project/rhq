@@ -54,7 +54,7 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
         this.showUploadButton = showUploadButton;
 
         setEncoding(Encoding.MULTIPART);
-        setAction(GWT.getModuleBaseURL() + "/BundleDistributionFileUploadServlet");
+        setAction(GWT.getModuleBaseURL() + "BundleDistributionFileUploadServlet");
 
         iconLoading = new FormItemIcon();
         iconLoading.setSrc("ajax-loader.gif");
@@ -149,7 +149,7 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
         addFormHandler(new DynamicFormHandler() {
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                 String results = event.getResults();
-                int bundleVersionId = parseIdFromResponse(results);
+                bundleVersionId = parseIdFromResponse(results);
                 if (bundleVersionId > 0) {
                     uploadResults = Boolean.TRUE;
                     icon.setIcons(iconGreen);

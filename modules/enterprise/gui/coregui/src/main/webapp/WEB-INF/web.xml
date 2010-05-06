@@ -60,8 +60,8 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleFileUploadServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI UberBundleFileUploadServlet</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.UberBundleFileUploadServlet</servlet-class>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleDistributionFileUploadServlet</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleDistributionFileUploadServlet</servlet-class>
     </servlet>
 
     <servlet>
@@ -134,8 +134,8 @@
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/BundleFileUploadServlet</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI UberBundleFileUploadServlet</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/UberBundleFileUploadServlet</url-pattern>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleDistributionFileUploadServlet</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/BundleDistributionFileUploadServlet</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

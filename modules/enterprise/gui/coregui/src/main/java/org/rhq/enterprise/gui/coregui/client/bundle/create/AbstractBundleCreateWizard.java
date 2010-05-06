@@ -51,6 +51,9 @@ public abstract class AbstractBundleCreateWizard extends AbstractBundleWizard {
 
     public void setBundleVersion(BundleVersion bv) {
         this.bundleVersion = bv;
+        if (bv != null) {
+            setSubtitle(bv.getName() + " (" + bv.getVersion() + ")");
+        }
     }
 
     public HashMap<String, Boolean> getAllBundleFilesStatus() {

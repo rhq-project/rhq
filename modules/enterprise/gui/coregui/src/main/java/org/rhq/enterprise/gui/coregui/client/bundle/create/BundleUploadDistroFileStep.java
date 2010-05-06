@@ -55,6 +55,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
     private DynamicForm mainCanvasForm;
     private TextItem urlTextItem;
     private BundleDistributionFileUploadForm uploadDistroForm;
+    private DynamicCallbackForm recipeForm;
     private RadioGroupWithComponentsItem radioGroup;
 
     public BundleUploadDistroFileStep(AbstractBundleCreateWizard bundleCreationWizard) {
@@ -112,6 +113,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
         urlTextItem = new TextItem("url", "URL");
         urlTextItem.setRequired(false);
         urlTextItem.setShowTitle(false);
+        urlTextItem.setWidth(400);
         DynamicForm urlForm = new DynamicForm();
         urlForm.setPadding(20);
         urlForm.setWidth100();
@@ -122,15 +124,13 @@ public class BundleUploadDistroFileStep implements WizardStep {
     private BundleDistributionFileUploadForm createUploadForm() {
         uploadDistroForm = new BundleDistributionFileUploadForm(false);
         uploadDistroForm.setPadding(20);
-        uploadDistroForm.setWidth100();
         return uploadDistroForm;
     }
 
     private DynamicForm createRecipeForm() {
-        final DynamicCallbackForm form = new DynamicCallbackForm("recipeForm");
-        form.setWidth100();
-        form.setMargin(Integer.valueOf(20));
-        form.setShowInlineErrors(false);
+        recipeForm = new DynamicCallbackForm("recipeForm");
+        recipeForm.setMargin(Integer.valueOf(20));
+        recipeForm.setShowInlineErrors(false);
 
         final LinkItem showUpload = new LinkItem("recipeUploadLink");
         showUpload.setValue("Click To Upload A Recipe File");
@@ -145,8 +145,8 @@ public class BundleUploadDistroFileStep implements WizardStep {
 
         showUpload.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                form.hideItem(showUpload.getName());
-                form.showItem(upload.getName());
+                recipeForm.hideItem(showUpload.getName());
+                recipeForm.showItem(upload.getName());
             }
         });
 
@@ -154,7 +154,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
         recipe.setShowTitle(false);
         recipe.setRequired(false);
         recipe.setColSpan(4);
-        recipe.setWidth("*");
+        recipe.setWidth(400);
         recipe.setHeight(150);
 
         textFileRetrieverForm.addFormHandler(new DynamicFormHandler() {
@@ -162,14 +162,14 @@ public class BundleUploadDistroFileStep implements WizardStep {
                 wizard.setRecipe(event.getResults());
                 recipe.setValue(event.getResults());
                 textFileRetrieverForm.retrievalStatus(true);
-                form.showItem(showUpload.getName());
-                form.hideItem(upload.getName());
+                recipeForm.showItem(showUpload.getName());
+                recipeForm.hideItem(upload.getName());
             }
         });
 
-        form.setItems(showUpload, upload, recipe);
+        recipeForm.setItems(showUpload, upload, recipe);
 
-        return form;
+        return recipeForm;
     }
 
     private void processUrl() {
@@ -226,6 +226,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
     }
 
     private void processRecipe() {
+        this.wizard.setRecipe((String) this.recipeForm.getItem("recipeText").getValue());
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
         bundleServer.createBundleVersionViaRecipe(this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
             public void onSuccess(BundleVersion result) {

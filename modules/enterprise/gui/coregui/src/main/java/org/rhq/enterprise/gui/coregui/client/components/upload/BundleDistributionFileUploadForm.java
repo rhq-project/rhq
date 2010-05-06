@@ -146,7 +146,8 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
 
         setItems(sessionIdField, bundleUploadItem, uploadButton, icon);
 
-        addFormHandler(new DynamicFormHandler() {
+        // make sure this handler is executed first
+        pushFormHandler(new DynamicFormHandler() {
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                 String results = event.getResults();
                 bundleVersionId = parseIdFromResponse(results);

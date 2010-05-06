@@ -51,26 +51,18 @@ public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackF
             createFrame();
             Document.get().getBody().appendChild(synthesizedFrame);
             //
-            // Hook up the underlying iframe's onLoad event when attached to the
-            // DOM.
-            // Making this connection only when attached avoids memory-leak
-            // issues.
-            // The FormPanel cannot use the built-in GWT event-handling
-            // mechanism
-            // because there is no standard onLoad event on iframes that works
-            // across
-            // browsers.
+            // Hook up the underlying iframe's onLoad event when attached to the DOM.
+            // Making this connection only when attached avoids memory-leak issues.
+            // The FormPanel cannot use the built-in GWT event-handling mechanism
+            // because there is no standard onLoad event on iframes that works across browsers.
             impl.hookEvents(synthesizedFrame, this);
         }
     }
 
     private void createFrame() {
-        // Attach a hidden IFrame to the form. This is the target iframe to
-        // which
-        // the form will be submitted. We have to create the iframe using
-        // innerHTML,
-        // because setting an iframe's 'name' property dynamically doesn't work
-        // on
+        // Attach a hidden IFrame to the form. This is the target iframe to which
+        // the form will be submitted. We have to create the iframe using innerHTML,
+        // because setting an iframe's 'name' property dynamically doesn't work on
         // most browsers.
         Element dummy = Document.get().createDivElement();
         dummy.setInnerHTML("<iframe src=\"javascript:''\" name='" + frameName
@@ -131,11 +123,18 @@ public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackF
         super.destroy();
     }
 
-    public void addFormHandler(DynamicFormHandler handler) {
+    public synchronized void addFormHandler(DynamicFormHandler handler) {
         if (formHandlers == null) {
             formHandlers = new DynamicCallbackFormHandlerCollection();
         }
         formHandlers.add(handler);
+    }
+
+    public synchronized void pushFormHandler(DynamicFormHandler handler) {
+        if (formHandlers == null) {
+            formHandlers = new DynamicCallbackFormHandlerCollection();
+        }
+        formHandlers.add(0, handler);
     }
 
     public void removeFormHandler(DynamicFormHandler handler) {

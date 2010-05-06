@@ -123,6 +123,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
                 return; // the distro form component will log an error for us
             }
         });
+
         return uploadDistroForm;
     }
 

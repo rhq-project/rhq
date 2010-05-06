@@ -199,6 +199,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
             int bvId = uploadDistroForm.getBundleVersionId();
             BundleVersionCriteria criteria = new BundleVersionCriteria();
             criteria.addFilterId(bvId);
+            criteria.fetchBundle(true);
             BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
             bundleServer.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
                 public void onSuccess(PageList<BundleVersion> result) {

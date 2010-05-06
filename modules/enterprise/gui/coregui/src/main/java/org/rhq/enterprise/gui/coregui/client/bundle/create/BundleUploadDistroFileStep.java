@@ -55,6 +55,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
     private DynamicForm mainCanvasForm;
     private TextItem urlTextItem;
     private BundleDistributionFileUploadForm uploadDistroForm;
+    private boolean uploadDistroFormHandlersInstalled = false;
     private RadioGroupWithComponentsItem radioGroup;
 
     public BundleUploadDistroFileStep(AbstractBundleCreateWizard bundleCreationWizard) {
@@ -74,23 +75,49 @@ public class BundleUploadDistroFileStep implements WizardStep {
             radioGroup.setShowTitle(false);
             mainCanvasForm.setItems(radioGroup);
         }
+
+        // If we've already created a bundle verison, don't allow the user to submit something else.
+        // The user must hit the cancel button and start over if they want to use a different bundle distribution file.
+        if (wizard.getBundleVersion() != null) {
+            mainCanvasForm.setDisabled(true);
+        }
+
         return mainCanvasForm;
     }
 
     public boolean nextPage() {
-        String selected = radioGroup.getSelected();
+        if (wizard.getBundleVersion() == null) {
+            String selected = radioGroup.getSelected();
 
-        if ("URL".equals(selected)) {
-            processUrl();
-        } else if ("Upload".equals(selected)) {
-            uploadDistroForm.submitForm();
-        } else if ("Recipe".equals(selected)) {
-            processRecipe();
-        } else {
+            if ("URL".equals(selected)) {
+                processUrl();
+            } else if ("Upload".equals(selected)) {
+                if (!uploadDistroFormHandlersInstalled) {
+                    uploadDistroForm.addFormHandler(new DynamicFormHandler() {
+                        public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                            processUpload();
+                        }
+                    });
+                    uploadDistroForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
+                        public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                            return; // the distro form component will log an error for us
+                        }
+                    });
+                    uploadDistroFormHandlersInstalled = true;
+                }
+                uploadDistroForm.submitForm();
+            } else if ("Recipe".equals(selected)) {
+                processRecipe();
+            } else {
+                return false;
+            }
             return false;
+        } else {
+            // there is already a bundle version, so we must have created it already
+            // and the user must have reached here after hitting the previous button earlier;
+            // just move to the next step to let the user peruse the wizard steps
+            return true;
         }
-
-        return false;
     }
 
     public String getName() {
@@ -112,16 +139,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
         uploadDistroForm = new BundleDistributionFileUploadForm(false);
         uploadDistroForm.setPadding(20);
         uploadDistroForm.setWidth100();
-        uploadDistroForm.addFormHandler(new DynamicFormHandler() {
-            public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
-                processUpload();
-            }
-        });
-        uploadDistroForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
-            public void onFormSubmitFailed(FormSubmitFailedEvent event) {
-                return; // the distro form component will log an error for us
-            }
-        });
+        uploadDistroFormHandlersInstalled = false;
         return uploadDistroForm;
     }
 

@@ -18,6 +18,7 @@
 package org.rhq.bundle.ant.task;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,6 +40,7 @@ import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.template.TemplateEngine;
 import org.rhq.core.util.updater.DeployDifferences;
 import org.rhq.core.util.updater.Deployer;
+import org.rhq.core.util.updater.DeploymentData;
 import org.rhq.core.util.updater.DeploymentProperties;
 
 /**
@@ -75,8 +77,16 @@ public class DeployTask extends AbstractBundleTask {
         if (!this.archives.isEmpty()) {
             log("Deploying archives " + this.archives + "...", Project.MSG_VERBOSE);
         }
-        Deployer deployer = new Deployer(deploymentProps, this.archives, this.files, deployDir, this.replacePattern,
-            templateEngine, this.ignorePattern);
+
+        // for now, apply the pattern to all files in the deployment
+        Map<File, Pattern> archiveReplacePatterns = new HashMap<File, Pattern>();
+        for (File file : this.archives) {
+            archiveReplacePatterns.put(file, this.replacePattern);
+        }
+        Set<File> rawFilesToReplace = this.files.keySet(); // TODO: CHANGE ME! only replace those raw files marked as "replace=true"
+        DeploymentData dd = new DeploymentData(deploymentProps, this.archives, this.files, deployDir,
+            archiveReplacePatterns, rawFilesToReplace, templateEngine, this.ignorePattern);
+        Deployer deployer = new Deployer(dd);
         try {
             DeployDifferences diffs = getProject().getDeployDifferences();
             deployer.deploy(diffs);

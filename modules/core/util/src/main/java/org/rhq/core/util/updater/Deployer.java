@@ -37,7 +37,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.template.TemplateEngine;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
@@ -89,68 +88,21 @@ import org.rhq.core.util.stream.StreamUtil;
 public class Deployer {
     private final Log log = LogFactory.getLog(Deployer.class);
 
-    private final DeploymentProperties deploymentProps;
-    private final Set<File> zipFiles;
-    private final Map<File, File> rawFiles;
-    private final File destDir;
-    private final Pattern filesToRealizeRegex;
-    private final TemplateEngine templateEngine;
-    private final Pattern ignoreRegex;
+    private final DeploymentData deploymentData;
     private final DeploymentsMetadata deploymentsMetadata;
 
     /**
-     * Constructors that prepares this object to deploy the given archive's content to the destination directory.
+     * Constructors that prepares this object to deploy content to a destination on the local file system.
      *  
-     * @param deploymentProps metadata about this deployment
-     * @param zipFiles the archives containing the content to be deployed
-     * @param rawFiles files that are to be copied into the destination directory - the keys are the current
-     *                 locations of the files, the values are where the files should be copied (the values may be relative
-     *                 in which case they are relative to destDir and can have subdirectories and/or a different filename
-     *                 than what the file is named currently)
-     * @param destDir the root directory where the content is to be deployed
-     * @param filesToRealizeRegex the patterns of files (whose paths are relative to destDir) that
-     *                            must have replacement variables within them replaced with values
-     *                            obtained via the given template engine
-     * @param templateEngine if one or more filesToRealize are specified, this template engine is used to determine
-     *                       the values that should replace all replacement variables found in those files
-     * @param ignoreRegex the files/directories to ignore when updating an existing deployment
+     * @param deploymentData the data needed to know what to do for this deployment
      */
-    public Deployer(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, File> rawFiles, File destDir,
-        Pattern filesToRealizeRegex, TemplateEngine templateEngine, Pattern ignoreRegex) {
-
-        if (deploymentProps == null) {
-            throw new IllegalArgumentException("deploymentProps == null");
-        }
-        if (destDir == null) {
-            throw new IllegalArgumentException("destDir == null");
+    public Deployer(DeploymentData deploymentData) {
+        if (deploymentData == null) {
+            throw new IllegalArgumentException("deploymentData == null");
         }
 
-        if (zipFiles == null) {
-            zipFiles = new HashSet<File>();
-        }
-        if (rawFiles == null) {
-            rawFiles = new HashMap<File, File>();
-        }
-        if ((zipFiles.size() == 0) && (rawFiles.size() == 0)) {
-            throw new IllegalArgumentException("zipFiles/rawFiles are empty - nothing to do");
-        }
-
-        this.deploymentProps = deploymentProps;
-        this.zipFiles = zipFiles;
-        this.rawFiles = rawFiles;
-        this.destDir = destDir;
-        this.ignoreRegex = ignoreRegex;
-
-        if (filesToRealizeRegex == null || templateEngine == null) {
-            // we don't need these if there is nothing to realize or we have no template engine to obtain replacement values
-            this.filesToRealizeRegex = null;
-            this.templateEngine = null;
-        } else {
-            this.filesToRealizeRegex = filesToRealizeRegex;
-            this.templateEngine = templateEngine;
-        }
-
-        this.deploymentsMetadata = new DeploymentsMetadata(destDir);
+        this.deploymentData = deploymentData;
+        this.deploymentsMetadata = new DeploymentsMetadata(deploymentData.getDestinationDir());
         return;
     }
 
@@ -208,7 +160,8 @@ public class Deployer {
         DeploymentProperties originalDeploymentProps = this.deploymentsMetadata.getCurrentDeploymentProperties();
 
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
-        ChangesFileHashcodeMap current = original.rescan(this.destDir, this.ignoreRegex);
+        ChangesFileHashcodeMap current = original.rescan(this.deploymentData.getDestinationDir(), this.deploymentData
+            .getIgnoreRegex());
         FileHashcodeMap newFiles = getNewDeploymentFileHashcodeMap();
 
         if (current.getUnknownContent() != null) {
@@ -330,7 +283,7 @@ public class Deployer {
             for (String fileToDeletePath : currentFilesToDelete) {
                 File doomedFile = new File(fileToDeletePath);
                 if (!doomedFile.isAbsolute()) {
-                    doomedFile = new File(this.destDir, fileToDeletePath);
+                    doomedFile = new File(this.deploymentData.getDestinationDir(), fileToDeletePath);
                 }
                 boolean deleted;
                 if (!dryRun) {
@@ -385,19 +338,21 @@ public class Deployer {
         } else {
             File backupDir = this.deploymentsMetadata.getDeploymentBackupDirectory(deploymentId);
             if (isWindows && driveLetter != null) {
-                StringBuilder destDirAbsPathBuilder = new StringBuilder(this.destDir.getAbsolutePath());
+                StringBuilder destDirAbsPathBuilder = new StringBuilder(this.deploymentData.getDestinationDir()
+                    .getAbsolutePath());
                 String destDirDriveLetter = FileUtil.stripDriveLetter(destDirAbsPathBuilder);
                 if (destDirDriveLetter == null || driveLetter.equals(destDirDriveLetter)) {
                     bakFile = new File(backupDir, fileToBackupPath);
-                    fileToBackup = new File(this.destDir, fileToBackupPathNoDriveLetter.toString());
+                    fileToBackup = new File(this.deploymentData.getDestinationDir(), fileToBackupPathNoDriveLetter
+                        .toString());
                 } else {
                     throw new Exception("Cannot backup relative path [" + fileToBackupPath
                         + "] whose drive letter is different than the destination directory ["
-                        + this.destDir.getAbsolutePath() + "]");
+                        + this.deploymentData.getDestinationDir().getAbsolutePath() + "]");
                 }
             } else {
                 bakFile = new File(backupDir, fileToBackupPath);
-                fileToBackup = new File(this.destDir, fileToBackupPath);
+                fileToBackup = new File(this.deploymentData.getDestinationDir(), fileToBackupPath);
             }
         }
 
@@ -424,17 +379,22 @@ public class Deployer {
 
         // extract all zip files
         ExtractorZipFileVisitor visitor;
-        for (File zipFile : this.zipFiles) {
+        for (File zipFile : this.deploymentData.getZipFiles()) {
             debug("Extracting zip [", zipFile, "] entries. dryRun=", dryRun);
-            visitor = new ExtractorZipFileVisitor(this.destDir, this.filesToRealizeRegex, this.templateEngine,
-                currentFilesToLeaveAlone.keySet(), diff, dryRun);
+
+            Pattern realizeRegex = null;
+            if (this.deploymentData.getZipEntriesToRealizeRegex() != null) {
+                realizeRegex = this.deploymentData.getZipEntriesToRealizeRegex().get(zipFile);
+            }
+            visitor = new ExtractorZipFileVisitor(this.deploymentData.getDestinationDir(), realizeRegex,
+                this.deploymentData.getTemplateEngine(), currentFilesToLeaveAlone.keySet(), diff, dryRun);
             ZipUtil.walkZipFile(zipFile, visitor);
             newFileHashCodeMap.putAll(visitor.getFileHashcodeMap());
         }
 
         // copy all raw files
         StreamCopyDigest copyDigester = new StreamCopyDigest();
-        for (Map.Entry<File, File> rawFile : this.rawFiles.entrySet()) {
+        for (Map.Entry<File, File> rawFile : this.deploymentData.getRawFiles().entrySet()) {
             // determine where the original file is and where it needs to go
             File currentLocationFile = rawFile.getKey();
             File newLocationFile = rawFile.getValue();
@@ -444,7 +404,7 @@ public class Deployer {
                 continue;
             }
             if (!newLocationFile.isAbsolute()) {
-                newLocationFile = new File(this.destDir, newLocationFile.getPath());
+                newLocationFile = new File(this.deploymentData.getDestinationDir(), newLocationFile.getPath());
             }
 
             if (!dryRun) {
@@ -457,14 +417,19 @@ public class Deployer {
 
             String hashcode;
 
-            if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocationPath).matches()) {
+            boolean realize = false;
+            if (this.deploymentData.getRawFilesToRealize() != null) {
+                realize = this.deploymentData.getRawFilesToRealize().contains(currentLocationFile);
+            }
+
+            if (realize) {
                 debug("Realizing file [", currentLocationFile, "] to [", newLocationFile, "]. dryRun=", dryRun);
 
                 // this entry needs to be realized, do it now in-memory (we assume realizable files will not be large)
                 // note: tempateEngine will never be null if we got here
                 FileInputStream in = new FileInputStream(currentLocationFile);
                 byte[] rawFileContent = StreamUtil.slurp(in);
-                String content = this.templateEngine.replaceTokens(new String(rawFileContent));
+                String content = this.deploymentData.getTemplateEngine().replaceTokens(new String(rawFileContent));
 
                 if (diff != null) {
                     diff.addRealizedFile(newLocationPath, content);
@@ -516,7 +481,7 @@ public class Deployer {
         newFileHashCodeMap.putAll(currentFilesToLeaveAlone); // remember that these are still there
 
         if (!dryRun) {
-            this.deploymentsMetadata.setCurrentDeployment(deploymentProps, newFileHashCodeMap);
+            this.deploymentsMetadata.setCurrentDeployment(this.deploymentData.getDeploymentProps(), newFileHashCodeMap);
         }
 
         return newFileHashCodeMap;
@@ -534,9 +499,13 @@ public class Deployer {
 
         // perform in-memory extraction and calculate hashcodes for all zip files 
         InMemoryZipFileVisitor visitor;
-        for (File zipFile : this.zipFiles) {
+        for (File zipFile : this.deploymentData.getZipFiles()) {
             debug("Extracting zip [", zipFile, "] in-memory to determine hashcodes for all entries");
-            visitor = new InMemoryZipFileVisitor(this.filesToRealizeRegex, this.templateEngine);
+            Pattern realizeRegex = null;
+            if (this.deploymentData.getZipEntriesToRealizeRegex() != null) {
+                realizeRegex = this.deploymentData.getZipEntriesToRealizeRegex().get(zipFile);
+            }
+            visitor = new InMemoryZipFileVisitor(realizeRegex, this.deploymentData.getTemplateEngine());
             ZipUtil.walkZipFile(zipFile, visitor);
             fileHashcodeMap.putAll(visitor.getFileHashcodeMap());
         }
@@ -544,25 +513,30 @@ public class Deployer {
         MessageDigestGenerator generator = new MessageDigestGenerator();
 
         // calculate hashcodes for all raw files, perform in-memory realization when necessary
-        for (Map.Entry<File, File> rawFile : this.rawFiles.entrySet()) {
+        for (Map.Entry<File, File> rawFile : this.deploymentData.getRawFiles().entrySet()) {
             // determine where the original file is and where it would go if we were writing it to disk
             File currentLocationFile = rawFile.getKey();
             File newLocationFile = rawFile.getValue();
             String newLocationPath = rawFile.getValue().getPath();
             if (!newLocationFile.isAbsolute()) {
-                newLocationFile = new File(this.destDir, newLocationFile.getPath());
+                newLocationFile = new File(this.deploymentData.getDestinationDir(), newLocationFile.getPath());
             }
 
             String hashcode;
 
-            if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocationPath).matches()) {
+            boolean realize = false;
+            if (this.deploymentData.getRawFilesToRealize() != null) {
+                realize = this.deploymentData.getRawFilesToRealize().contains(currentLocationFile);
+            }
+
+            if (realize) {
                 debug("Realizing file [", currentLocationFile, "] in-memory to determine its hashcode");
 
                 // this entry needs to be realized, do it now in-memory (we assume realizable files will not be large)
                 // note: tempateEngine will never be null if we got here
                 FileInputStream in = new FileInputStream(currentLocationFile);
                 byte[] rawFileContent = StreamUtil.slurp(in);
-                String content = this.templateEngine.replaceTokens(new String(rawFileContent));
+                String content = this.deploymentData.getTemplateEngine().replaceTokens(new String(rawFileContent));
 
                 // now calculate the hashcode of the realized content
                 generator.add(content.getBytes());
@@ -592,9 +566,9 @@ public class Deployer {
     private void debug(Object... objs) {
         if (log.isDebugEnabled()) {
             StringBuilder str = new StringBuilder();
-            String bundleName = this.deploymentProps.getBundleName();
-            String bundleVersion = this.deploymentProps.getBundleVersion();
-            int deploymentId = this.deploymentProps.getDeploymentId();
+            String bundleName = this.deploymentData.getDeploymentProps().getBundleName();
+            String bundleVersion = this.deploymentData.getDeploymentProps().getBundleVersion();
+            int deploymentId = this.deploymentData.getDeploymentProps().getDeploymentId();
             str.append("Bundle [").append(bundleName).append(" v").append(bundleVersion).append(']');
             str.append("; Deployment [").append(deploymentId).append("]: ");
             for (Object o : objs) {

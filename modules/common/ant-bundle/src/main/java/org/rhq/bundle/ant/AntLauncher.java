@@ -22,12 +22,25 @@
  */
 package org.rhq.bundle.ant;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tools.ant.*;
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.BuildListener;
+import org.apache.tools.ant.MagicNames;
+import org.apache.tools.ant.ProjectHelper;
+import org.apache.tools.ant.Target;
+import org.apache.tools.ant.Task;
+import org.apache.tools.ant.UnknownElement;
 import org.apache.tools.ant.helper.AntXMLContext;
 import org.apache.tools.ant.helper.ProjectHelper2;
 
@@ -42,7 +55,7 @@ import org.rhq.bundle.ant.task.InputPropertyTask;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-public class AntLauncher {        
+public class AntLauncher {
     private final Log log = LogFactory.getLog(this.getClass());
 
     // "out of box" we will provide the ant contrib optional tasks (from ant-contrib.jar)
@@ -72,10 +85,9 @@ public class AntLauncher {
      * @throws InvalidBuildFileException if the build file is invalid
      */
     public BundleAntProject executeBundleDeployFile(File buildFile, String targetName, Properties buildProperties,
-                                                    List<BuildListener> buildListeners)
-            throws InvalidBuildFileException {
+        List<BuildListener> buildListeners) throws InvalidBuildFileException {
         parseBundleDeployFile(buildFile);
-                
+
         BundleAntProject project = new BundleAntProject();
         ClassLoader classLoader = getClass().getClassLoader();
         project.setCoreLoader(classLoader);
@@ -91,10 +103,8 @@ public class AntLauncher {
                         "\\\\"));
                 }
             }
-            project.setUserProperty(MagicNames.ANT_FILE,
-                                buildFile.getAbsolutePath());
-            project.setUserProperty(MagicNames.ANT_FILE_TYPE,
-                                    MagicNames.ANT_FILE_TYPE_FILE);
+            project.setUserProperty(MagicNames.ANT_FILE, buildFile.getAbsolutePath());
+            project.setUserProperty(MagicNames.ANT_FILE_TYPE, MagicNames.ANT_FILE_TYPE_FILE);
             ProjectHelper.configureProject(project, buildFile);
 
             if (buildListeners != null) {
@@ -116,7 +126,8 @@ public class AntLauncher {
 
             return project;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to execute bundle deploy file [" + buildFile.getAbsolutePath() + "]. Cause: " + e, e);
+            throw new RuntimeException("Failed to execute bundle deploy file [" + buildFile.getAbsolutePath()
+                + "]. Cause: " + e, e);
         }
     }
 
@@ -162,13 +173,13 @@ public class AntLauncher {
     private void addTaskDefsForBundledTasks(BundleAntProject project) throws IOException, ClassNotFoundException {
         Properties taskDefs = buildTaskDefProperties(project.getCoreLoader());
         for (Map.Entry<Object, Object> taskDef : taskDefs.entrySet()) {
-            project.addTaskDefinition(taskDef.getKey().toString(), Class.forName(taskDef.getValue().toString(),
-                true, project.getCoreLoader()));
+            project.addTaskDefinition(taskDef.getKey().toString(), Class.forName(taskDef.getValue().toString(), true,
+                project.getCoreLoader()));
         }
     }
 
     private Properties buildTaskDefProperties(ClassLoader classLoader) throws IOException {
-        Set<String> customTaskDefs = new HashSet<String>(1);
+        Set<String> customTaskDefs = new HashSet<String>(2);
 
         customTaskDefs.add(ANTCONTRIB_ANT_TASKS);
         customTaskDefs.add(LIQUIBASE_ANT_TASKS);
@@ -176,10 +187,17 @@ public class AntLauncher {
         Properties taskDefProps = new Properties();
         for (String customTaskDef : customTaskDefs) {
             InputStream taskDefsStream = classLoader.getResourceAsStream(customTaskDef);
-            try {
-                taskDefProps.load(taskDefsStream);
-            } finally {
-                taskDefsStream.close();
+            if (taskDefsStream != null) {
+                try {
+                    taskDefProps.load(taskDefsStream);
+                } catch (Exception e) {
+                    log.warn("Ant task definitions [" + customTaskDef
+                        + "] failed to load - ant bundles cannot use their tasks", e);
+                } finally {
+                    taskDefsStream.close();
+                }
+            } else {
+                log.warn("Missing ant task definitions [" + customTaskDef + "] - ant bundles cannot use their tasks");
             }
         }
         return taskDefProps;

@@ -72,22 +72,41 @@ public class ResourcePartialLineageRenderer extends Renderer {
     }
     
     private void encodeUrl(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
+        encodePreName(writer, parent);
         writer.startElement("a", null);
         writer.writeAttribute("href", getUrl(parent), null);
-        encodeSimple(writer, parent);
+        writer.writeText(parent.getName(), null);
         writer.endElement("a");
+        encodePostName(writer, parent);
     }
     
     private void encodeSimple(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
+        encodePreName(writer, parent);
         writer.writeText(parent.getName(), null);
-        if (!parent.getType().isSingleton()) {
-            writer.writeText(" (", null);
-            writer.writeText(parent.getType().getName(), null);
-            writer.writeText(")", null);
-        }
+        encodePostName(writer, parent);
     }
     
     private static String getUrl(DisambiguationReport.Resource parent) {
         return RESOURCE_URL + "?id=" + parent.getId();
+    }
+    
+    private void encodePreName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
+        if (!parent.getType().isSingleton()) {
+            writer.writeText(parent.getType().getName(), null);
+            writer.writeText(" ", null);
+            if (parent.getType().getPlugin() != null) {
+                writer.writeText(" (", null);
+                writer.writeText(parent.getType().getPlugin(), null);
+                writer.writeText(" plugin) ", null);
+            }
+        }
+    }
+
+    private void encodePostName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
+        if (parent.getType().isSingleton() && parent.getType().getPlugin() != null) {
+            writer.writeText(" (", null);
+            writer.writeText(parent.getType().getPlugin(), null);
+            writer.writeText(" plugin) ", null);
+        }
     }
 }

@@ -28,7 +28,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
-import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -68,7 +67,7 @@ public class ResourceSelectUIBean {
          * @param resourceTypePluginName
          */
         public DisambiguationReportWrapper(DisambiguationReport<ResourceComposite> report, boolean typeResolutionNeeded, boolean parentResolutionNeeded, boolean pluginResolutionNeeded) {
-            super(report.getOriginal(), report.getParents(), report.getResourceTypeName(), report.getResourceTypePluginName());
+            super(report.getOriginal(), report.getParents(), report.getResourceType());
             this.typeResolutionNeeded = typeResolutionNeeded;
             this.parentResolutionNeeded = parentResolutionNeeded;
             this.pluginResolutionNeeded = pluginResolutionNeeded;

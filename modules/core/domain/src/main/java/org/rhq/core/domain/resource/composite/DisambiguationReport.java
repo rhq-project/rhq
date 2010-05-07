@@ -61,9 +61,15 @@ public class DisambiguationReport<T> implements Serializable {
         public String getName() {
             return name;
         }
+        
+        /**
+         * @return the plugin that defines this type or null if such information
+         * isn't needed to disambiguate this type.
+         */
         public String getPlugin() {
             return plugin;
         }
+
         public boolean isSingleton() {
             return singleton;
         }
@@ -99,6 +105,10 @@ public class DisambiguationReport<T> implements Serializable {
             return name;
         }
 
+        /**
+         * @return the resource type to use to disambiguate the concrete resource or null
+         * if no type disambiguation is needed.
+         */
         public ResourceType getType() {
             return type;
         }
@@ -118,6 +128,10 @@ public class DisambiguationReport<T> implements Serializable {
         return original;
     }
     
+    /**
+     * @return the list of parents to disambiguate the original. Empty if no disambiguation using
+     * parents is needed.
+     */
     public List<Resource> getParents() {
         return parents;
     }
@@ -134,6 +148,7 @@ public class DisambiguationReport<T> implements Serializable {
 
     /**
      * @return the ResourceType of the resource represented by the {@link #getOriginal()}
+     * or null if type disambiguation isn't needed.
      */
     public ResourceType getResourceType() {
         return resourceType;

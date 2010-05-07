@@ -51,6 +51,7 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
+import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 
 /**
@@ -454,25 +455,7 @@ public interface ResourceManagerLocal {
     Resource getParentResource(Subject subject, int resourceId);
 
     /**
-     * Given a list of results, this method produces an object decorates the provided original results
-     * with data needed to disambiguate the results with respect to resource names, their types and ancestory.
-     * <p>
-     * The disambiguation result contains information on what types of information are needed to make the resources
-     * in the original result unambiguous and contains the decorated original data in the same order as the 
-     * supplied result list.
-     * <p>
-     * The objects in results do not necessarily need to correspond to a resource. In case of such objects,
-     * the resourceIdExtractor should return 0. In the resulting report such objects will still be wrapped
-     * in a {@link DisambiguationReport} but the parent list will be empty and resource type and plugin name will
-     * be null.
-     *  
-     * @see ResourceNamesDisambiguationResult
-     * 
-     * @param <T> the type of the result elements
-     * @param results the results to disambiguate
-     * @param alwayIncludeParent if true, the parent disambiguation will always be included in the result
-     * even if the results wouldn't have to be disambiguated using parents.
-     * @param resourceIdExtractor an object able to extract resource id from an instance of type parameter.
+     * @see Disambiguator#disambiguate(List, boolean, IntExtractor, javax.persistence.EntityManager)
      * @return the disambiguation result or null on error
      */
     <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwayIncludeParent,

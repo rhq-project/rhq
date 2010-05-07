@@ -78,7 +78,15 @@ public final class CriteriaQueryGenerator {
     private String projection;
     private static String NL = System.getProperty("line.separator");
 
+    private static List<String> EXPRESSION_START_KEYWORDS;
+
     private List<Field> persistentBagFields = new ArrayList<Field>();
+
+    static {
+        EXPRESSION_START_KEYWORDS = new ArrayList<String>(2);
+        EXPRESSION_START_KEYWORDS.add("NOT");
+        EXPRESSION_START_KEYWORDS.add("EXISTS");
+    }
 
     public CriteriaQueryGenerator(Criteria criteria) {
         this.criteria = criteria;
@@ -111,12 +119,17 @@ public final class CriteriaQueryGenerator {
             expression = expression.replaceFirst("\\?", replacement);
         }
 
-        if (wantCaseInsensitiveMatch) {
-            int indexOfFirstSpace = expression.indexOf(" ");
-            String filterToken = expression.substring(0, indexOfFirstSpace);
-            expression = "LOWER( " + alias + "." + filterToken + " ) " + expression.substring(indexOfFirstSpace);
-        } else {
-            expression = alias + "." + expression;
+        // if the override expression does not follow the usual format of ( field operator expression )
+        // then don't prepend the alias or deal with other special handling. The override must be left
+        // explicit.
+        if (!expressionStartsWithKeyword(expression)) {
+            if (wantCaseInsensitiveMatch) {
+                int indexOfFirstSpace = expression.indexOf(" ");
+                String filterToken = expression.substring(0, indexOfFirstSpace);
+                expression = "LOWER( " + alias + "." + filterToken + " ) " + expression.substring(indexOfFirstSpace);
+            } else {
+                expression = alias + "." + expression;
+            }
         }
 
         if (fuzzyMatch) {
@@ -124,6 +137,13 @@ public final class CriteriaQueryGenerator {
         }
 
         return expression;
+    }
+
+    private boolean expressionStartsWithKeyword(String expression) {
+        expression = expression.trim();
+        int i = expression.trim().indexOf(" ");
+        String startToken = expression.substring(0, i);
+        return EXPRESSION_START_KEYWORDS.contains(startToken.toUpperCase());
     }
 
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {

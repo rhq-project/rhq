@@ -157,6 +157,7 @@ public class BundleResourceDeploymentHistory implements Serializable {
         str.append(", time=[").append(this.auditTime).append("]");
         str.append(", rd=[").append(this.resourceDeployment).append("]");
         str.append(", action=[").append(this.auditAction).append("]");
+        str.append(", status=[").append(this.auditStatus).append("]");
         str.append(", message=[").append(this.auditMessage).append("]");
         return str.toString();
     }

@@ -56,7 +56,6 @@ public class BundleUploadDistroFileStep implements WizardStep {
     private TextItem urlTextItem;
     private BundleDistributionFileUploadForm uploadDistroForm;
     private DynamicCallbackForm recipeForm;
-    private boolean uploadDistroFormHandlersInstalled = false;
     private RadioGroupWithComponentsItem radioGroup;
 
     public BundleUploadDistroFileStep(AbstractBundleCreateWizard bundleCreationWizard) {
@@ -127,19 +126,16 @@ public class BundleUploadDistroFileStep implements WizardStep {
     private BundleDistributionFileUploadForm createUploadForm() {
         uploadDistroForm = new BundleDistributionFileUploadForm(false);
         uploadDistroForm.setPadding(20);
-        if (!uploadDistroFormHandlersInstalled) {
-            uploadDistroForm.addFormHandler(new DynamicFormHandler() {
-                public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
-                    processUpload();
-                }
-            });
-            uploadDistroForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
-                public void onFormSubmitFailed(FormSubmitFailedEvent event) {
-                    return; // the distro form component will log an error for us
-                }
-            });
-            uploadDistroFormHandlersInstalled = true;
-        }
+        uploadDistroForm.addFormHandler(new DynamicFormHandler() {
+            public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                processUpload();
+            }
+        });
+        uploadDistroForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
+            public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                return; // the distro form component will log an error for us
+            }
+        });
         return uploadDistroForm;
     }
 

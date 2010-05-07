@@ -20,6 +20,9 @@ package org.rhq.enterprise.server.plugin.pc.bundle;
 
 import java.io.File;
 
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.enterprise.server.bundle.BundleDistributionInfo;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -114,6 +117,7 @@ public class BundleServerPluginManager extends ServerPluginManager {
         try {
             Thread.currentThread().setContextClassLoader(pluginEnv.getPluginClassLoader());
             RecipeParseResults results = facet.parseRecipe(recipe);
+            ensureDisplayNameIsSet(results);
             return results;
         } finally {
             Thread.currentThread().setContextClassLoader(originalContextClassLoader);
@@ -155,7 +159,8 @@ public class BundleServerPluginManager extends ServerPluginManager {
                     info = new BundleDistributionInfo(recipe, results, null);
                     info.setBundleTypeName(descriptor.getBundle().getType());
                     break;
-                } catch (Exception e) {
+                } catch (UnknownRecipeException ure) {
+                    // the recipe is not a type that the plugin can handle, go on to the next
                     info = null;
                 }
             } finally {
@@ -166,6 +171,8 @@ public class BundleServerPluginManager extends ServerPluginManager {
         if (null == info) {
             throw new IllegalArgumentException("Invalid recipe not recognized by any deployed server bundle plugin.");
         }
+
+        ensureDisplayNameIsSet(info.getRecipeParseResults());
 
         return info;
     }
@@ -205,7 +212,8 @@ public class BundleServerPluginManager extends ServerPluginManager {
                     info = facet.processBundleDistributionFile(distributionFile);
                     info.setBundleTypeName(descriptor.getBundle().getType());
                     break;
-                } catch (Exception e) {
+                } catch (UnknownRecipeException ure) {
+                    // the recipe is not a type that the plugin can handle, go on to the next
                     info = null;
                 }
             } finally {
@@ -217,6 +225,22 @@ public class BundleServerPluginManager extends ServerPluginManager {
                 "Invalid bundle distribution file. BundleType/Recipe not recognized by any deployed server bundle plugin.");
         }
 
+        ensureDisplayNameIsSet(info.getRecipeParseResults());
+
         return info;
+    }
+
+    private void ensureDisplayNameIsSet(RecipeParseResults recipeParseResults) {
+        if (recipeParseResults != null && recipeParseResults.getConfigurationDefinition() != null) {
+            ConfigurationDefinition configDef = recipeParseResults.getConfigurationDefinition();
+            for (PropertyDefinition propDef : configDef.getPropertyDefinitions().values()) {
+                if (propDef instanceof PropertyDefinitionSimple) {
+                    if (propDef.getDisplayName() == null) {
+                        propDef.setDisplayName(propDef.getName());
+                    }
+                }
+            }
+        }
+        return;
     }
 }

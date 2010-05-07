@@ -28,6 +28,7 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageOrdering;
@@ -50,6 +51,9 @@ public class ResourceGroupCriteria extends Criteria {
     private GroupCategory filterGroupCategory;
     private List<Integer> filterExplicitResourceIds; // requires overrides
     private List<Integer> filterImplicitResourceIds; // requires overrides
+    private ResourceCategory filterExplicitResourceCategory; // requires overrides    
+    private Integer filterExplicitResourceTypeId; // requires overrides    
+    private String filterExplicitResourceTypeName; // requires overrides    
 
     private boolean fetchExplicitResources;
     private boolean fetchImplicitResources;
@@ -84,6 +88,24 @@ public class ResourceGroupCriteria extends Criteria {
             + "          FROM Resource res " //
             + "          JOIN res.implicitGroups implicitGroup " //
             + "         WHERE res.id IN ( ? ) )");
+        filterOverrides.put("explicitResourceCategory", "" //
+            + "NOT EXISTS " //
+            + "(  SELECT res " //
+            + "   FROM Resource res " //
+            + "   JOIN res.explicitGroups explicitGroup " //
+            + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.category = ? )");
+        filterOverrides.put("explicitResourceTypeId", "" //
+            + "NOT EXISTS " //
+            + "(  SELECT res " //
+            + "   FROM Resource res " //
+            + "   JOIN res.explicitGroups explicitGroup " //
+            + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.id = ? )");
+        filterOverrides.put("explicitResourceTypeName", "" //
+            + "NOT EXISTS " //
+            + "(  SELECT res " //
+            + "   FROM Resource res " //
+            + "   JOIN res.explicitGroups explicitGroup " //
+            + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.name = ? )");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
     }
@@ -136,6 +158,33 @@ public class ResourceGroupCriteria extends Criteria {
         this.filterImplicitResourceIds = Arrays.asList(filterImplicitResourceIds);
     }
 
+    /** A somewhat special case filter that ensures that all explicit group members
+     * are of the specified category (e.g. PLATFORM). Useful for filtering Mixed groups.
+     * 
+     * @param filterExplicitResourceCategory
+     */
+    public void addFilterExplicitResourceCategory(ResourceCategory filterExplicitResourceCategory) {
+        this.filterExplicitResourceCategory = filterExplicitResourceCategory;
+    }
+
+    /** A somewhat special case filter that ensures that all explicit group members
+     * are of the specified resource type (id). Useful for filtering Mixed groups.
+     * 
+     * @param filterExplicitResourceTypeId
+     */
+    public void addFilterExplicitResourceTypeId(Integer filterExplicitResourceTypeId) {
+        this.filterExplicitResourceTypeId = filterExplicitResourceTypeId;
+    }
+
+    /** A somewhat special case filter that ensures that all explicit group members
+     * are of the specified resource type (id). Useful for filtering Mixed groups.
+     * 
+     * @param filterExplicitResourceTypeName
+     */
+    public void addFilterExplicitResourceTypeName(String filterExplicitResourceTypeName) {
+        this.filterExplicitResourceTypeName = filterExplicitResourceTypeName;
+    }
+
     public void fetchExplicitResources(boolean fetchExplicitResources) {
         this.fetchExplicitResources = fetchExplicitResources;
     }
@@ -163,7 +212,6 @@ public class ResourceGroupCriteria extends Criteria {
     public void fetchTags(boolean fetchTags) {
         this.fetchTags = fetchTags;
     }
-
 
     /**
      * Requires MANAGE_SECURITY

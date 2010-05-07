@@ -67,7 +67,7 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         return latestCriteria;
     }
 
-    private class SelectedResourceGroupsDataSource extends ResourceGroupsDataSource {
+    protected class SelectedResourceGroupsDataSource extends ResourceGroupsDataSource {
 
         @Override
         public ListGridRecord[] buildRecords(Collection<ResourceGroup> resourceGroups) {

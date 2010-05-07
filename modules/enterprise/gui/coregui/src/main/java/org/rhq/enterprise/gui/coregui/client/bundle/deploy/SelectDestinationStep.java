@@ -24,9 +24,9 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.PlatformResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.AbstractSelector;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 
 public class SelectDestinationStep implements WizardStep {
 
@@ -43,7 +43,7 @@ public class SelectDestinationStep implements WizardStep {
     }
 
     public Canvas getCanvas() {
-        this.selector = new ResourceGroupSelector();
+        this.selector = new PlatformResourceGroupSelector();
         return this.selector;
     }
 

@@ -134,7 +134,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                     + bundleType + "]. Ensure it is imported into inventory.");
             }
             File pluginTmpDir = resourceContainer.getResourceContext().getTemporaryDirectory();
-            File bundleFilesDir = new File(pluginTmpDir, "" + bundleDeployment.getBundleVersion().getId());
+            File bundleFilesDir = new File(pluginTmpDir, "bundle-versions/"
+                + bundleDeployment.getBundleVersion().getId());
             Map<PackageVersion, File> downloadedFiles = downloadBundleFiles(resourceDeployment, bundleFilesDir);
 
             // get the bundle facet object that will process the bundle

@@ -144,82 +144,21 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
 
             //We cannot reuse the PageControl mechanism as there are no database calls to retrieve list
             // must replicate paging using existing web params, formula etc.
-
-            //determine count to return up to 15|30|45 and page index
-            int returnAmount = pca.getPageSize();
-            int returnIndex = pca.getPageNumber();
-
-            //determine sort order
-            PageOrdering sortOrder = pca.getPrimarySortOrder();
-            if (sortOrder == null) {
-                sortOrder = PageOrdering.ASC;
-                pca.setPrimarySortOrder(sortOrder);//reset on pc
-            }
-
-            //determine which column to sort on
-            String sortColumn = pca.getPrimarySortColumn();
-            if (sortColumn == null) {
-                sortColumn = "lg.name";
-                pca.setPrimarySort(sortColumn, sortOrder);//reset on pc
-            }
-
-            //now sort based off these values and populate sizedAvailableGroups accordingly
-            ArrayList<Map<String, String>> groupsValues = availableGroups.getValues();
-
-            //store maps based off the keys and sort()
-            Map<Integer, Map> groupLookup = new HashMap<Integer, Map>();
-            TreeMap<String, Integer> groupNames = new TreeMap<String, Integer>();
-            TreeMap<String, Integer> groupDescriptions = new TreeMap<String, Integer>();
-            for (int i = 0; i < groupsValues.size(); i++) {
-                Map<String, String> entry = groupsValues.get(i);
-                Integer key = Integer.valueOf(i);
-                groupLookup.put(key, entry);
-                groupNames.put(entry.get("name"), key);
-                groupDescriptions.put(entry.get("description"), key);
-            }
-
-            //do calculations to determine how many sorted values to return.
-            int start, end;
-            start = (int) (returnIndex * returnAmount);
-            end = start + returnAmount;
             PageList<Map<String, String>> sizedAvailableGroups = new PageList<Map<String, String>>();
+            sizedAvailableGroups = paginateLdapGroupData(sizedAvailableGroups, availableGroups, pca);
 
-            //detect sort order
-            boolean descending = false;
-            if (sortOrder.DESC == sortOrder) {
-                descending = true;
-            }
-            //use sort column to determine which list to use
-            if (sortColumn.equalsIgnoreCase("lg.name")) {
-                int i = 0;
-                NavigableSet<String> keyList = groupNames.navigableKeySet();
-                if (descending) {
-                    keyList = groupNames.descendingKeySet();
-                }
-                for (String key : keyList) {
-                    if ((i >= start) && (i < end)) {
-                        sizedAvailableGroups.add(groupLookup.get(groupNames.get(key)));
-                    }
-                    i++;
-                }
-            } else {
-                int i = 0;
-                NavigableSet<String> keyList = groupDescriptions.navigableKeySet();
-                if (descending) {
-                    keyList = groupNames.descendingKeySet();
-                }
-                for (String key : keyList) {
-                    if ((i >= start) && (i < end)) {
-                        sizedAvailableGroups.add(groupLookup.get(groupDescriptions.get(key)));
-                    }
-                    i++;
-                }
-            }
             //make sizedAvailableGroup the new reference to return.
             availableGroups = sizedAvailableGroups;
             //populate pagination elements for loaded elements.
-            availableGroups.setTotalSize(groupLookup.size());
+            availableGroups.setTotalSize(availableGroupsSet.size());
             availableGroups.setPageControl(pca);
+            //now do the same thing for Pending Groups.
+            PageList<Map<String, String>> pagedPendingGroups = new PageList<Map<String, String>>();
+            pagedPendingGroups = paginateLdapGroupData(pagedPendingGroups, pendingGroups, pcp);
+            pendingGroups = pagedPendingGroups;
+            //populate pagination elements for loaded elements.
+            pendingGroups.setTotalSize(pendingSet.size());
+            pendingGroups.setPageControl(pcp);
 
         } catch (EJBException ejx) {
             //this is the exception type thrown now that we use SLSB.Local methods
@@ -303,5 +242,100 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
             }
         }
         return ret;
+    }
+
+    /** Method duplicates pageControl/pagination mechanism for LdapGroup data. This data has not been moved into the
+     *  database yet so the PageList and PageControl mechanism does not yet work properly.
+     *  There are only two columns so the pagination code uses Maps and Sorted Lists for efficient sorting.
+     *  
+     * @param pagedGroupData Pagelist of Maps to be populated.
+     * @param fullGroupData Full list of Maps available for paging
+     * @param pc the pagination control from the web session reflecting user selections.
+     * @return Pagelist includes datapoints matching pagination information passed in.
+     */
+    private PageList<Map<String, String>> paginateLdapGroupData(PageList<Map<String, String>> pagedGroupData,
+        PageList<Map<String, String>> fullGroupData, PageControl pc) {
+        if (pagedGroupData == null) { //
+            pagedGroupData = new PageList<Map<String, String>>();
+        }
+        if ((fullGroupData == null) || (fullGroupData.isEmpty())) {
+            return pagedGroupData;
+        }
+        if (pc == null) {
+            pc = new PageControl(0, 15);
+        }//npe defense
+
+        //determine count to return up to 15|30|45 and page index
+        int returnAmount = pc.getPageSize();
+        int returnIndex = pc.getPageNumber();
+
+        //determine sort order
+        PageOrdering sortOrder = pc.getPrimarySortOrder();
+        if (sortOrder == null) {
+            sortOrder = PageOrdering.ASC;
+            pc.setPrimarySortOrder(sortOrder);//reset on pc
+        }
+
+        //determine which column to sort on
+        String sortColumn = pc.getPrimarySortColumn();
+        if (sortColumn == null) {
+            sortColumn = "lg.name";
+            pc.setPrimarySort(sortColumn, sortOrder);//reset on pc
+        }
+
+        //now sort based off these values and populate sizedAvailableGroups accordingly
+        ArrayList<Map<String, String>> groupsValues = fullGroupData.getValues();
+
+        //store maps based off the keys and sort()
+        Map<Integer, Map> groupLookup = new HashMap<Integer, Map>();
+        TreeMap<String, Integer> groupNames = new TreeMap<String, Integer>();
+        TreeMap<String, Integer> groupDescriptions = new TreeMap<String, Integer>();
+        for (int i = 0; i < groupsValues.size(); i++) {
+            Map<String, String> entry = groupsValues.get(i);
+            Integer key = Integer.valueOf(i);
+            groupLookup.put(key, entry);
+            groupNames.put(entry.get("name"), key);
+            groupDescriptions.put(entry.get("description"), key);
+        }
+
+        //do calculations to determine how many sorted values to return.
+        int start, end;
+        start = (int) (returnIndex * returnAmount);
+        end = start + returnAmount;
+        //        PageList<Map<String, String>> sizedAvailableGroups = new PageList<Map<String, String>>();
+
+        //detect sort order
+        boolean descending = false;
+        if (sortOrder.DESC == sortOrder) {
+            descending = true;
+        }
+        //use sort column to determine which list to use
+        if (sortColumn.equalsIgnoreCase("lg.name")) {
+            int i = 0;
+            NavigableSet<String> keyList = groupNames.navigableKeySet();
+            if (descending) {
+                keyList = groupNames.descendingKeySet();
+            }
+            for (String key : keyList) {
+                if ((i >= start) && (i < end)) {
+                    pagedGroupData.add(groupLookup.get(groupNames.get(key)));
+                }
+                i++;
+            }
+        } else {
+            int i = 0;
+            NavigableSet<String> keyList = groupDescriptions.navigableKeySet();
+            if (descending) {
+                keyList = groupDescriptions.descendingKeySet();
+            }
+            for (String key : keyList) {
+                if ((i >= start) && (i < end)) {
+                    pagedGroupData.add(groupLookup.get(groupDescriptions.get(key)));
+                }
+                i++;
+            }
+        }
+
+        return pagedGroupData;
     }
 }

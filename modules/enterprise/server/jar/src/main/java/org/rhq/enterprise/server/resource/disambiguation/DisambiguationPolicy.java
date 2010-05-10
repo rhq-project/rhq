@@ -24,7 +24,6 @@
 package org.rhq.enterprise.server.resource.disambiguation;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 
 /**
  * A disambiguation policy determines whether two disambiguation reports are still ambiguous or not.
@@ -175,7 +174,7 @@ public class DisambiguationPolicy extends ArrayList<ResourceResolution> {
 
         //don't replicate the plugin information on the parents if it was reported
         //on the resource already.
-        //this has to be done on all the parents, not just the ones that are immediatelly needed
+        //this has to be done on all the parents, not just the ones that are immediately needed
         //for disambiguation. The parents update strategies might leave more parents than those needed.
         if (resourceResolution == ResourceResolution.PLUGIN) {
             for (MutableDisambiguationReport.Resource parent : report.parents) {

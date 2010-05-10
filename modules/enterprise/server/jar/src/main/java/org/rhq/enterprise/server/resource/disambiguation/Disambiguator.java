@@ -32,11 +32,9 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.util.IntExtractor;
-import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
  * This is basically a helper class that provides the disambiguation method.

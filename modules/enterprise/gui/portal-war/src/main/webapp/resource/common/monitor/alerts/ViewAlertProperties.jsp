@@ -40,20 +40,22 @@
     <td class="BlockContent" colspan="2"><hq:dateFormatter time="false" value="${alert.ctime}"/></td>
   </tr>
   <c:choose>
-      <c:when test="${not empty alert.ackBy}">
+      <c:when test="${not empty alert.acknowledgingSubject}">
           <tr valign="top">
               <td class="BlockLabel">Acknowledged by:</td>
               <td class="BlockContent">
-                      <c:out value="${alert.ackBy.firstName}"/>
+                      <c:out value="${alert.acknowledgingSubject}"/>
+                      <%--
                       <c:out value=" "/>
-                      <c:out value="${alert.ackBy.lastName}"/>
+                      <c:out value="${alert.acknowledgingSubject.lastName}"/>
                       <c:out value=" ("/>
-                      <c:out value="${alert.ackBy.name}"/>
+                      <c:out value="${alert.acknowledgingSubject.name}"/>
                       <c:out value=")"/>
+                      --%>
               </td>
               <td class="BlockLabel">Acknowledged at:</td>
               <td class="BlockContent">
-                      <hq:dateFormatter time="false" value="${alert.ackTime}"/>
+                      <hq:dateFormatter time="false" value="${alert.acknowledgeTime}"/>
               </td>
           </tr>
           </c:when>

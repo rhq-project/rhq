@@ -23,6 +23,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.rhq.core.domain.bundle.BundleDeployment;
+
 /**
  * @author Jay Shaughnessy
  */
@@ -35,19 +37,26 @@ public class BundleDeploymentCriteria extends Criteria {
     private Integer filterId;
     private String filterName;
     private String filterDescription;
+    private Integer filterBundleId; // needs override
+    private Integer filterBundleVersionId; // needs override
+
 
     private boolean fetchBundleVersion;
     private boolean fetchConfiguration;
-    private boolean fetchDeployments;
+    private boolean fetchResourceDeployments;
     private boolean fetchGroupDeployments;
     private boolean fetchTags;
 
     public BundleDeploymentCriteria() {
+
+        filterOverrides.put("bundleId", "bundleVersion.bundle.id = ?");
+        filterOverrides.put("bundleVersionId", "bundleVersion.id = ?");
+
     }
 
     @Override
     public Class<?> getPersistentClass() {
-        return BundleDeploymentCriteria.class;
+        return BundleDeployment.class;
     }
 
     public void addFilterId(Integer filterId) {
@@ -62,6 +71,16 @@ public class BundleDeploymentCriteria extends Criteria {
         this.filterDescription = filterDescription;
     }
 
+
+    public void addFilterBundleId(Integer filterBundleId) {
+        this.filterBundleId = filterBundleId;
+    }
+
+    public void addFilterBundleVersionId(Integer filterBundleVersionId) {
+        this.filterBundleVersionId = filterBundleVersionId;
+    }
+
+
     public void fetchBundleVersion(boolean fetchBundleVersion) {
         this.fetchBundleVersion = fetchBundleVersion;
     }
@@ -70,8 +89,8 @@ public class BundleDeploymentCriteria extends Criteria {
         this.fetchConfiguration = fetchConfiguration;
     }
 
-    public void fetchDeployments(boolean fetchDeployments) {
-        this.fetchDeployments = fetchDeployments;
+    public void fetchResourceDeployments(boolean fetchResourceDeployments) {
+        this.fetchResourceDeployments = fetchResourceDeployments;
     }
 
     public void fetchGroupDeployments(boolean fetchGroupDeployments) {

@@ -47,8 +47,8 @@ public class BundleResourceDeploymentCriteria extends Criteria {
     private boolean fetchHistories;
 
     public BundleResourceDeploymentCriteria() {
-        filterOverrides.put("bundleDeploymentId", "parentResource.id = ?");
-        filterOverrides.put("bundleDeploymentName", "parentResource.name like ?");
+        filterOverrides.put("bundleDeploymentId", "bundleDeployment.id = ?");
+        filterOverrides.put("bundleDeploymentName", "bundleDeployment.name like ?");
         filterOverrides.put("groupDeploymentId", "groupDeployment.id = ?");
         filterOverrides.put("resourceId", "resource.id = ?");
         filterOverrides.put("resourceName", "resource.name like ?");

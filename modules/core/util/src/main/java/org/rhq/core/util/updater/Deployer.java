@@ -157,8 +157,6 @@ public class Deployer {
         //       * if a file is realized on the filesystem before its stored on the file system
         //       * if a current file is backed up
 
-        DeploymentProperties originalDeploymentProps = this.deploymentsMetadata.getCurrentDeploymentProperties();
-
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
         ChangesFileHashcodeMap current = original.rescan(this.deploymentData.getDestinationDir(), this.deploymentData
             .getIgnoreRegex());
@@ -270,10 +268,11 @@ public class Deployer {
 
         // 1. backup the files we want to retain for the admin to review
         if (!currentFilesToBackup.isEmpty()) {
-            int deploymentId = originalDeploymentProps.getDeploymentId();
+            DeploymentProperties props = this.deploymentData.getDeploymentProps(); // changed from: deploymentsMetadata.getCurrentDeploymentProperties
+            int backupDeploymentId = props.getDeploymentId();
             debug("Backing up files as part of update deployment. dryRun=", dryRun);
             for (String fileToBackupPath : currentFilesToBackup) {
-                backupFile(diff, deploymentId, fileToBackupPath, dryRun);
+                backupFile(diff, backupDeploymentId, fileToBackupPath, dryRun);
             }
         }
 

@@ -27,8 +27,6 @@ import java.io.File;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.rhq.core.util.file.FileUtil;
-
 /**
  * This loads and stores metadata about installs of a particular bundle deployment.
  * 
@@ -258,11 +256,9 @@ public class DeploymentsMetadata {
         throws Exception {
 
         // determine where we need to put the metadata and create its empty directory 
-        // TODO: if the directory exists, it means somehow we are initializing the same deployment again
-        //       for now I'm just purging the old data, but is that the correct thing to do?
+        // Don't worry if the directory already exists, we probably backed up files there ahead of time.
         getMetadataDirectory().mkdirs();
         File deploymentMetadataDir = getDeploymentMetadataDirectory(deploymentProps.getDeploymentId());
-        FileUtil.purge(deploymentMetadataDir, true);
         deploymentMetadataDir.mkdirs();
         if (!deploymentMetadataDir.isDirectory()) {
             throw new Exception("Failed to create deployment metadata directory: " + deploymentMetadataDir);

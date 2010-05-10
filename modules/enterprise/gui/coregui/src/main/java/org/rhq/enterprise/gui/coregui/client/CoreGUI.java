@@ -9,6 +9,7 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -158,8 +159,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-        System.out.println("Handling history event: " + stringValueChangeEvent.getValue());
-        currentViewPath = new ViewPath(stringValueChangeEvent.getValue());
+
+        String event = URL.decodeComponent(stringValueChangeEvent.getValue());
+        System.out.println("Handling history event: " + event);
+
+        currentViewPath = new ViewPath(event);
 
         rootCanvas.renderView(currentViewPath);
 

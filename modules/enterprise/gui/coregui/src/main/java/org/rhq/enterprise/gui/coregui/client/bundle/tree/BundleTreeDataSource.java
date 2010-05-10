@@ -38,6 +38,7 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -113,7 +114,25 @@ public class BundleTreeDataSource extends RPCDataSource {
                         processResponse(request.getRequestId(), response);
                     }
                 });
+            } else if (p.endsWith(":deployments")) {
+                int bundleId = Integer.parseInt(p.substring(0, p.indexOf(":")));
+                BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
+                criteria.fetchBundleVersion(true);
+                criteria.addFilterBundleId(bundleId);
+                bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed ot load bundle",caught);
+                    }
+
+                    public void onSuccess(PageList<BundleDeployment> result) {
+                        response.setData(buildRecords(result));
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
+
+
             }
+
         }
 
 
@@ -169,7 +188,7 @@ public class BundleTreeDataSource extends RPCDataSource {
 
         } else if (from instanceof BundleVersion) {
             BundleVersion version = (BundleVersion) from;
-            node.setName(version.getName() + " (" + version.getVersion() + ")");
+            node.setName(version.getVersion());
             node.setID(version.getBundle().getId() + ":versions:" + version.getId());
             node.setParentID(version.getBundle().getId() + ":versions");
             node.setIsFolder(false);
@@ -178,7 +197,7 @@ public class BundleTreeDataSource extends RPCDataSource {
         } else if (from instanceof BundleDeployment) {
             BundleDeployment deployment = (BundleDeployment) from;
             node.setName(deployment.getName() + " (" + deployment.getBundleVersion().getVersion() + ")");
-            node.setParentID(deployment.getBundleVersion().getBundle().getId() + ":deployments:" + deployment.getId());
+            node.setID(deployment.getBundleVersion().getBundle().getId() + ":deployments:" + deployment.getId());
             node.setParentID(deployment.getBundleVersion().getBundle().getId() + ":deployments");
             node.setIsFolder(false);
             node.setIcon("subsystems/bundle/BundleDeployment_16.png");

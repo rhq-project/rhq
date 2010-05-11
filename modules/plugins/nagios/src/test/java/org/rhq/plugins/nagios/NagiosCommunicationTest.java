@@ -24,6 +24,9 @@ import org.rhq.plugins.nagios.error.InvalidHostRequestException;
 import org.rhq.plugins.nagios.error.InvalidMetricRequestException;
 import org.rhq.plugins.nagios.error.InvalidReplyTypeException;
 import org.rhq.plugins.nagios.error.InvalidServiceRequestException;
+import org.rhq.plugins.nagios.network.NetworkConnection;
+import org.rhq.plugins.nagios.reply.LqlReply;
+import org.rhq.plugins.nagios.request.LqlResourceTypeRequest;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -42,38 +45,47 @@ public class NagiosCommunicationTest
 		logger.setLevel(Level.INFO);
 		BasicConfigurator.configure();
 
-		String ip = "127.0.0.1";
+		String ip = "172.31.127.218";
 		int port = 6557;
-
-		NagiosManagementInterface nagiosManagementInterface= new NagiosManagementInterface(ip,port);
-		NagiosSystemData nagiosSystemData= null;
-
-		try
+		LqlResourceTypeRequest resourceTypeRequest = new LqlResourceTypeRequest();
+		
+		NetworkConnection livestatusConnectionInterface = new NetworkConnection(ip, port);
+		LqlReply reply = livestatusConnectionInterface.sendAndReceive(resourceTypeRequest);
+		
+		for(int i = 0; i < reply.getLqlReply().size(); i++)
 		{
-			nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
-
-			logger.info("nagiosComTest: " + nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getId());
-			logger.info("nagiosComTest: " + nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue());
-
-			logger.info("nagiosComTest: " + nagiosSystemData.getSingleStatusMetric("requests").getId());
-			logger.info("nagiosComTest: " + nagiosSystemData.getSingleStatusMetric("requests").getValue());
+			System.out.println(reply.getLqlReply().get(i));
 		}
-		catch (InvalidReplyTypeException e)
-		{
-			logger.info(e);
-		}
-		catch (InvalidMetricRequestException e)
-		{
-			logger.info(e);
-		}
-		catch (InvalidServiceRequestException e)
-		{
-			logger.info(e);
-		}
-		catch (InvalidHostRequestException e)
-		{
-			logger.info(e);
-		}
+	
+//		NagiosManagementInterface nagiosManagementInterface= new NagiosManagementInterface(ip,port);
+//		NagiosSystemData nagiosSystemData= null;
+//
+//		try
+//		{
+//			nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
+//
+//			logger.info("nagiosComTest: " + nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getId());
+//			logger.info("nagiosComTest: " + nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue());
+//
+//			logger.info("nagiosComTest: " + nagiosSystemData.getSingleStatusMetric("requests").getId());
+//			logger.info("nagiosComTest: " + nagiosSystemData.getSingleStatusMetric("requests").getValue());
+//		}
+//		catch (InvalidReplyTypeException e)
+//		{
+//			logger.info(e);
+//		}
+//		catch (InvalidMetricRequestException e)
+//		{
+//			logger.info(e);
+//		}
+//		catch (InvalidServiceRequestException e)
+//		{
+//			logger.info(e);
+//		}
+//		catch (InvalidHostRequestException e)
+//		{
+//			logger.info(e);
+//		}
 	}
 
 	/**

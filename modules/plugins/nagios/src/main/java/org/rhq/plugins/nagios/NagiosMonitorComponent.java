@@ -52,9 +52,10 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
 {
 	private final Log log = LogFactory.getLog(this.getClass());
 
-    public static final String DEFAULT_NAGIOSIP = "127.0.0.1";
+    public static final String DEFAULT_NAGIOSIP = "172.31.127.218";
     public static final String DEFAULT_NAGIOSPORT = "6557";
-
+    
+    private ResourceContext context;
     private NagiosManagementInterface nagiosManagementInterface;
 
    /**
@@ -73,15 +74,19 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
      */
     public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception
     {
-		Configuration conf = context.getPluginConfiguration();
-       String nagiosHost = conf.getSimpleValue("nagiosHost", DEFAULT_NAGIOSIP);
-       String tmp = conf.getSimpleValue("nagiosPort", DEFAULT_NAGIOSPORT);
-       int nagiosPort = Integer.parseInt(tmp);
-
+    	//get context of this component instance
+    	this.context = context;
+    	
+    	//get config
+    	Configuration conf = context.getPluginConfiguration();
+    	String nagiosHost = conf.getSimpleValue("nagiosHost", DEFAULT_NAGIOSIP);
+    	String tmp = conf.getSimpleValue("nagiosPort", DEFAULT_NAGIOSPORT);
+    	int nagiosPort = Integer.parseInt(tmp);
+    	
         //Interface class to the nagios system
         nagiosManagementInterface = new NagiosManagementInterface(nagiosHost, nagiosPort);
 
-		log.info("nagios Plugin started");
+		//log.info("nagios Plugin started");
     }
 
 
@@ -105,40 +110,67 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         try
         {
             nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
+            log.info("ResourceType: " + this.context.getResourceType().toString());
+//            log.info(nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue());
+//            log.info(nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue());
+//            log.info(nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue());
 
-            log.info(nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue());
-            log.info(nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue());
-            log.info(nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue());
-
-        } catch (Exception e) {
+        } catch (Exception e) 
+        {
             log.warn(" Can not get information from Nagios: ", e);
             return;
         }
 
 
-
-
         for (MeasurementScheduleRequest req : metrics)
         {
-            try { // Don't let one bad egg spoil the cake
-                if("execution_time".equals(req.getName()) )
-                {
-                    String value = nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue();
-                    MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
-                    report.addData(res);
-                }
-                else if("host_check_period".equals(req.getName()) )
-                {
-                    String value = nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue();
-                    MeasurementDataTrait res = new MeasurementDataTrait(req, value);
-                    report.addData(res);
-                }
-                else if("host_execution_time".equals(req.getName()) )
-                {
-                    String value = nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue();
-                    MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
-                    report.addData(res);
-                }
+           try { // Don't let one bad egg spoil the cake
+               
+        	   //Check which ResourceType it is and then decide which metrics to monitor
+        	   //Metrics are still equal now and have to be changed
+        	   if(this.context.getResourceType().toString().equalsIgnoreCase("check_eth"))
+        	   {
+        		   if("execution_time".equals(req.getName()) )
+                   {
+                       String value = nagiosSystemData.getSingleHostServiceMetric("execution_time", "check_eth", "localhost").getValue();
+                       MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
+                       report.addData(res);
+                   }
+                   else if("host_check_period".equals(req.getName()) )
+                   {
+                       String value = nagiosSystemData.getSingleHostServiceMetric("host_check_period", "check_eth", "localhost").getValue();
+                       MeasurementDataTrait res = new MeasurementDataTrait(req, value);
+                       report.addData(res);
+                   }
+                   else if("host_execution_time".equals(req.getName()) )
+                   {
+                       String value = nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "check_eth", "localhost").getValue();
+                       MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
+                       report.addData(res);
+                   }
+        	   }
+        	   if(this.context.getResourceType().toString().equalsIgnoreCase("check_hdd"))
+        	   {
+        		   if("execution_time".equals(req.getName()) )
+                   {
+                       String value = nagiosSystemData.getSingleHostServiceMetric("execution_time", "check_hdd", "localhost").getValue();
+                       MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
+                       report.addData(res);
+                   }
+                   else if("host_check_period".equals(req.getName()) )
+                   {
+                       String value = nagiosSystemData.getSingleHostServiceMetric("host_check_period", "check_hdd", "localhost").getValue();
+                       MeasurementDataTrait res = new MeasurementDataTrait(req, value);
+                       report.addData(res);
+                   }
+                   else if("host_execution_time".equals(req.getName()) )
+                   {
+                       String value = nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "check_hdd", "localhost").getValue();
+                       MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
+                       report.addData(res);
+                   }
+        	   }
+        	   	
             }
             catch (InvalidMetricRequestException e)
             {

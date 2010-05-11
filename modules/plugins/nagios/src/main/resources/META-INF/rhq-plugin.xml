@@ -26,8 +26,10 @@
             </plugin-configuration>
 
         <!-- TODO process scans -->
+       
             <metric property="execution_time" displayName="execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
 			<metric property="host_execution_time" displayName="host_execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
 			<metric property="host_check_period" displayName="host_check_period" dataType="trait" displayType="summary"/>
+		
 	</server>
 </plugin>

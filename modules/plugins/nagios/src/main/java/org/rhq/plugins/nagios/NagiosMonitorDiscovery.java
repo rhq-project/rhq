@@ -24,11 +24,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.nagios.network.NetworkConnection;
+import org.rhq.plugins.nagios.reply.LqlReply;
+import org.rhq.plugins.nagios.request.LqlResourceTypeRequest;
 
 
 /**
@@ -77,8 +82,42 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
     	Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
-
+    	
+    	//Method requests available nagios services an returns the names of them
+    	LqlReply resourceTypeReply = getResourceTypeInformation("172.31.127.218", Integer.parseInt(NagiosMonitorComponent.DEFAULT_NAGIOSPORT));
+		
+    	//for each available service
+		for(int i = 0; i < resourceTypeReply.getLqlReply().size(); i++)
+		{
+			//create new DiscoveredResourceDetails instance
+			DiscoveredResourceDetails detail = new DiscoveredResourceDetails 
+			(
+				//new ResourceType instance per service
+				new ResourceType(resourceTypeReply.getLqlReply().get(i),"NagiosMonitor", ResourceCategory.SERVICE, null), 
+				"nagiosKey@" + ":" + i + ":" + resourceTypeReply.getLqlReply().get(i),
+				"Nagios@" + ":" + i + ":" + resourceTypeReply.getLqlReply().get(i),
+	            null,
+	            "NagiosService: " + resourceTypeReply.getLqlReply().get(i),
+	            null,
+            	null
+			);
+			
+			//add DiscoveredResourceDetails instance to Set
+			discoveredResources.add(detail);
+		}
+    	
         return discoveredResources;
+    }
+    
+    private LqlReply getResourceTypeInformation(String nagiosIp, int nagiosPort)
+    {
+    	LqlResourceTypeRequest resourceTypeRequest = new LqlResourceTypeRequest();
+		LqlReply resourceTypeReply = new LqlReply(resourceTypeRequest.getRequestType());
+		
+		NetworkConnection connection = new NetworkConnection(nagiosIp, nagiosPort);
+		resourceTypeReply = connection.sendAndReceive(resourceTypeRequest);
+    	
+		return resourceTypeReply;
     }
 
 }

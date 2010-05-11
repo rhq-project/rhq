@@ -37,7 +37,8 @@ public class NagiosRequestType
 		HOSTGROUP_REQUEST,
 		SERVICEGROUP_REQUEST,
 		CONTACTGROUP_REQUEST,
-		STATUS_REQUEST;
+		STATUS_REQUEST,
+		RESOURCE_TYPE_REQUEST;
 	}
 
 	private NagiosRequestTypes nagiosRequestType;

@@ -25,7 +25,6 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
@@ -117,14 +116,14 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * This is typically not called directly, typically scheduleBundleResourceDeployment() is called externally. This executes
      * in a New Transaction and supports scheduleBundleResourceDeployment. 
      */
-    BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId, int resourceId,
-        int groupDeploymentId) throws Exception;
+    BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId, int resourceId)
+        throws Exception;
 
     /**
      * This is typically not called directly, typically scheduleBundleGroupDeployment() is called externally.
      * This executes in a New Transaction and supports scheduleBundleGroupDeployment. 
      */
-    BundleGroupDeployment createBundleGroupDeployment(BundleGroupDeployment groupDeployment) throws Exception;
+    //BundleGroupDeployment createBundleGroupDeployment(BundleGroupDeployment groupDeployment) throws Exception;
 
     // added here because the same method in @Remote was commented out to bypass a WSProvide issue
     HashMap<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception;

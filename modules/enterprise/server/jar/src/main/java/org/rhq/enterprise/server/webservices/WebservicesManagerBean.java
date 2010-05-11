@@ -40,8 +40,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleFile;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -339,10 +339,15 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.addBundleFileViaPackageVersion(subject, bundleVersionId, name, packageVersionId);
     }
 
-    public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, String name,
-        String description, String installDir, Configuration configuration) throws Exception {
-        return bundleManager.createBundleDeployment(subject, bundleVersionId, name, description, installDir,
+    public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, int bundleDestinationId,
+        String name, String description, Configuration configuration) throws Exception {
+        return bundleManager.createBundleDeployment(subject, bundleVersionId, bundleDestinationId, name, description,
             configuration);
+    }
+
+    public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
+        String deployDir, Integer groupId) throws Exception {
+        return bundleManager.createBundleDestination(subject, bundleId, name, description, deployDir, groupId);
     }
 
     public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {
@@ -404,15 +409,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.getBundleVersionFilenames(subject, bundleVersionId, withoutBundleFileOnly);
     }
 
-    /*
-    public Map<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception {
-        return bundleManager.getAllBundleVersionFilenames(subject, bundleVersionId);
-    }
-    */
-
-    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeploymentId,
-        int resourceGroupId) throws Exception {
-        return bundleManager.scheduleBundleGroupDeployment(subject, bundleDeploymentId, resourceGroupId);
+    public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeploymentId) throws Exception {
+        return bundleManager.scheduleBundleDeployment(subject, bundleDeploymentId);
     }
 
     //BUNDLEMANAGER: END ----------------------------------  

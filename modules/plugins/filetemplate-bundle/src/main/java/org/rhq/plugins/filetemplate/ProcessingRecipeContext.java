@@ -34,8 +34,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bundle.filetemplate.recipe.RecipeContext;
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
-import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.system.OperatingSystemType;
@@ -81,26 +81,27 @@ public class ProcessingRecipeContext extends RecipeContext {
             ProcessExecutionResults results = this.systemInfo.executeProcess(pe);
             if (results.getError() != null) {
                 msg = "Could not unbundle file [" + pe + "]: " + results;
-                audit("deploy", BundleDeploymentStatus.FAILURE, msg);
+                audit("deploy", BundleResourceDeploymentHistory.Status.FAILURE, msg);
                 throw new RuntimeException(msg, results.getError());
             } else if (results.getExitCode() == null || results.getExitCode().intValue() > 0) {
                 msg = "Failed to unbundle file [" + pe + "]: " + results;
-                audit("deploy", BundleDeploymentStatus.FAILURE, msg);
+                audit("deploy", BundleResourceDeploymentHistory.Status.FAILURE, msg);
                 throw new RuntimeException(msg);
             } else {
                 msg = "extracted files from [" + existingFile + "] to [" + directory + "]";
             }
             // existingFile.delete(); WOULD WE WANT TO REMOVE THE COMPRESSED FILE?
-            audit("deploy", BundleDeploymentStatus.SUCCESS, msg);
+            audit("deploy", BundleResourceDeploymentHistory.Status.SUCCESS, msg);
         } else {
             // not a zipped format - just move the file to the directory as-is
             File newFile = new File(directory, filename);
             if (!existingFile.renameTo(newFile)) {
                 msg = "Failed to move [" + existingFile + "] to [" + newFile + "]";
-                audit("deploy", BundleDeploymentStatus.FAILURE, msg);
+                audit("deploy", BundleResourceDeploymentHistory.Status.FAILURE, msg);
                 throw new RuntimeException(msg);
             }
-            audit("deploy", BundleDeploymentStatus.SUCCESS, "renamed [" + existingFile + "] to [" + newFile + "]");
+            audit("deploy", BundleResourceDeploymentHistory.Status.SUCCESS, "renamed [" + existingFile + "] to ["
+                + newFile + "]");
         }
     }
 
@@ -114,11 +115,11 @@ public class ProcessingRecipeContext extends RecipeContext {
         try {
             destinationFile.getParentFile().mkdirs();
             FileUtil.copyFile(sourceFile, destinationFile);
-            audit("file", BundleDeploymentStatus.SUCCESS, "copied file [" + sourceFile + "] to [" + destinationFile
-                + "]");
+            audit("file", BundleResourceDeploymentHistory.Status.SUCCESS, "copied file [" + sourceFile + "] to ["
+                + destinationFile + "]");
         } catch (Exception e) {
             String msg = "Failed to copy file [" + sourceFile + "] to [" + destinationFile + "]";
-            audit("file", BundleDeploymentStatus.FAILURE, msg);
+            audit("file", BundleResourceDeploymentHistory.Status.FAILURE, msg);
             throw new RuntimeException(msg, e);
         }
 
@@ -155,20 +156,20 @@ public class ProcessingRecipeContext extends RecipeContext {
             reader.close();
             reader = null;
 
-            audit("realize", BundleDeploymentStatus.SUCCESS, "realized [" + file + "]");
+            audit("realize", BundleResourceDeploymentHistory.Status.SUCCESS, "realized [" + file + "]");
 
             trueFile.delete(); // remove the one with the replacement variables in it
             if (!realizedTmpFile.renameTo(trueFile)) {
                 msg = "Failed to rename realized tmp file [" + realizedTmpFile + "] to [" + trueFile + "]";
-                audit("realize", BundleDeploymentStatus.FAILURE, msg);
+                audit("realize", BundleResourceDeploymentHistory.Status.FAILURE, msg);
                 throw new RuntimeException(msg);
             }
 
-            audit("realize", BundleDeploymentStatus.SUCCESS, "renamed realized file [" + realizedTmpFile + "] to ["
-                + trueFile + "]");
+            audit("realize", BundleResourceDeploymentHistory.Status.SUCCESS, "renamed realized file ["
+                + realizedTmpFile + "] to [" + trueFile + "]");
         } catch (Exception e) {
             msg = "Cannot realize file [" + file + "]";
-            audit("realize", BundleDeploymentStatus.FAILURE, msg);
+            audit("realize", BundleResourceDeploymentHistory.Status.FAILURE, msg);
             throw new RuntimeException(msg, e);
         } finally {
             if (realizedTmpFileWriter != null) {
@@ -211,11 +212,11 @@ public class ProcessingRecipeContext extends RecipeContext {
         ProcessExecutionResults results = this.systemInfo.executeProcess(pe);
         if (results.getError() != null) {
             msg = "Could not execute script [" + pe + "]: " + results;
-            audit("script", BundleDeploymentStatus.FAILURE, msg);
+            audit("script", BundleResourceDeploymentHistory.Status.FAILURE, msg);
             throw new RuntimeException(msg, results.getError());
         } else {
             msg = "Executed script [" + pe + "]";
-            audit("script", BundleDeploymentStatus.SUCCESS, msg);
+            audit("script", BundleResourceDeploymentHistory.Status.SUCCESS, msg);
         }
 
         return;
@@ -235,19 +236,20 @@ public class ProcessingRecipeContext extends RecipeContext {
         ProcessExecutionResults results = this.systemInfo.executeProcess(pe);
         if (results.getError() != null) {
             msg = "Could not execute command [" + pe + "]: " + results;
-            audit("command", BundleDeploymentStatus.FAILURE, msg);
+            audit("command", BundleResourceDeploymentHistory.Status.FAILURE, msg);
             throw new RuntimeException(msg, results.getError());
         } else {
             msg = "Executed command [" + pe + "]";
-            audit("command", BundleDeploymentStatus.SUCCESS, msg);
+            audit("command", BundleResourceDeploymentHistory.Status.SUCCESS, msg);
         }
 
         return;
     }
 
-    private void audit(String action, BundleDeploymentStatus status, String message) {
+    private void audit(String action, BundleResourceDeploymentHistory.Status status, String message) {
         try {
-            bundleManagerProvider.auditDeployment(bundleResourceDeployment, action, status, message);
+            bundleManagerProvider.auditDeployment(bundleResourceDeployment, action, "recipe", null, status, message,
+                null);
             if (log.isDebugEnabled()) {
                 log.debug("Deployment [" + bundleResourceDeployment.getBundleDeployment().getBundleVersion()
                     + "] audit: action=[" + action + "], status=[" + status + "], message: " + message);
@@ -283,7 +285,7 @@ public class ProcessingRecipeContext extends RecipeContext {
 
         if (!success) {
             String msg = "Cannot ensure that script [" + scriptFile + "] is executable";
-            audit("ensureExecutable", BundleDeploymentStatus.FAILURE, msg);
+            audit("ensureExecutable", BundleResourceDeploymentHistory.Status.FAILURE, msg);
             throw new RuntimeException(msg);
         }
 

@@ -32,8 +32,8 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleFile;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -121,21 +121,39 @@ public interface BundleManagerRemote {
     /**
      * @param subject user that must have proper permissions
      * @param BundleVersionId the BundleVersion being deployed by this deployment
+     * @param BundleDestinationId the BundleDestination for the deployment
      * @param name a name for this deployment. not null or empty
      * @param description an optional longer description describing this deployment 
      * @param configuration a Configuration (pojo) to be associated with this deployment. Although
      *        it is not enforceable must be that of the associated BundleVersion.
-     * @param installDir the root dir for the deployment
      * @return the persisted deployment
      * @throws Exception
      */
     BundleDeployment createBundleDeployment( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleVersionid") int bundleVersionId, //
+        @WebParam(name = "bundleVersionId") int bundleVersionId, //
+        @WebParam(name = "bundleDestinationId") int bundleDestinationId, //        
+        @WebParam(name = "name") String name, //
+        @WebParam(name = "description") String description, //        
+        @WebParam(name = "configuration") Configuration configuration) throws Exception;
+
+    /**
+     * @param subject user must have MANAGE_INVENTORY permission
+     * @param BundleId the Bundle to be deployed to this Destination
+     * @param name a name for this destination. not null or empty
+     * @param description an optional longer description describing this destination 
+     * @param deployDir the root dir for deployments to this destination
+     * @param groupIf the target platforms for deployments to this destination 
+     * @return the persisted destination
+     * @throws Exception
+     */
+    BundleDestination createBundleDestination( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleId") int bundleId, //
         @WebParam(name = "name") String name, //
         @WebParam(name = "description") String description, //
-        @WebParam(name = "installDir") String installDir, //        
-        @WebParam(name = "configuration") Configuration configuration) throws Exception;
+        @WebParam(name = "deployDir") String deployDir, //        
+        @WebParam(name = "groupId") Integer groupId) throws Exception;
 
     /**
      * Creates a bundle version based on single recipe string. The recipe specifies the bundle name,
@@ -291,22 +309,19 @@ public interface BundleManagerRemote {
      */
 
     /**
-     * Deploy the bundle as described in the provided deployment to all of the resources in the
-     * specified resource group.
-     * Deployment is asynchronous so return of this method does not indicate deployments are complete. The
-     * returned BundleGroupDeployment can be used to track the history of the deployments.
+     * Deploy the bundle to the destination, as described in the provided deployment.
+     * Deployment is asynchronous so return of this method does not indicate individual resource deployments are
+     * complete. The returned BundleDeployment can be used to track the history of the individual deployments.
      * 
      *  TODO: Add the scheduling capability, currently it's Immediate. 
      * 
      * @param subject user that must have proper permissions
      * @param bundleDeploymentId the BundleDeployment being used to guide the deployments
-     * @param resourceGroupId the target resourceGroup (must exist), typically platforms, for the deployments
-     * @return the BundleGroupDeployment created to track the deployments. 
+     * @return the BundleDeployment record, updated with status and (resource) deployments. 
      * @throws Exception
      */
     @WebMethod
-    BundleGroupDeployment scheduleBundleGroupDeployment( //
+    BundleDeployment scheduleBundleDeployment( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleDeploymentId") int bundleDeploymentId, //
-        @WebParam(name = "resourceGroupId") int resourceGroupId) throws Exception;
+        @WebParam(name = "bundleDeploymentId") int bundleDeploymentId) throws Exception;
 }

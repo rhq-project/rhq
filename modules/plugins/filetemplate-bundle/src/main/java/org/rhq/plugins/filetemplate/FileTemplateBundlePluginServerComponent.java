@@ -23,7 +23,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -76,17 +75,17 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
                 .getPackageVersionFiles(), this.resourceContext.getSystemInformation(), request
                 .getBundleFilesLocation().getAbsolutePath(), resourceDeployment, bundleManagerProvider);
 
-            bundleManagerProvider.auditDeployment(resourceDeployment, "Configuration Variable Replacement",
-                BundleDeploymentStatus.SUCCESS, "setting replacement variable values using ["
-                    + bundleDeployment.getConfiguration().toString(true) + "]");
+            bundleManagerProvider.auditDeployment(resourceDeployment, "Configurtion Variable Replacement",
+                bundleDeployment.getName(), null, null, "setting replacement variable values using ["
+                    + bundleDeployment.getConfiguration().toString(true) + "]", null);
             recipeContext.setReplacementVariableValues(bundleDeployment.getConfiguration());
-            recipeContext.addReplacementVariableValue(DEPLOY_DIR, bundleDeployment.getInstallDir());
+            recipeContext.addReplacementVariableValue(DEPLOY_DIR, bundleDeployment.getDestination().getDeployDir());
             recipeContext.addReplacementVariableValue(DEPLOY_ID, Integer.toString(bundleDeployment.getId()));
 
             parser.setReplaceReplacementVariables(true);
 
-            bundleManagerProvider.auditDeployment(resourceDeployment, "Parse Recipe", BundleDeploymentStatus.SUCCESS,
-                "Parsing Recipe using context [" + recipeContext + "]");
+            bundleManagerProvider.auditDeployment(resourceDeployment, "Parse Recipe", bundleDeployment.getName(), null,
+                null, "Parsing Recipe using context [" + recipeContext + "]", null);
             parser.parseRecipe(recipeContext);
         } catch (Throwable t) {
             log.error("Failed to deploy bundle [" + request + "]", t);

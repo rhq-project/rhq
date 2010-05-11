@@ -38,7 +38,6 @@ import org.rhq.bundle.ant.BundleAntProject;
 import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.bundle.ant.LoggerAntBuildListener;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
@@ -124,8 +123,8 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 // Send the diffs to the Server so it can store them as an entry in the deployment history.
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
                 DeployDifferences diffs = project.getDeployDifferences();
-                bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences",
-                    BundleDeploymentStatus.SUCCESS, diffs.toString());
+                bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", bundleDeployment
+                    .getName(), null, null, diffs.toString(), null);
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {
@@ -152,11 +151,11 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
     private Properties createAntProperties(BundleDeployment bundleDeployment) {
         Properties antProps = new Properties();
 
-        String installDir = bundleDeployment.getInstallDir();
-        if (installDir == null) {
+        String deployDir = bundleDeployment.getDestination().getDeployDir();
+        if (deployDir == null) {
             throw new IllegalStateException("Bundle deployment does not specify install dir: " + bundleDeployment);
         }
-        antProps.setProperty(DeployPropertyNames.DEPLOY_DIR, installDir);
+        antProps.setProperty(DeployPropertyNames.DEPLOY_DIR, deployDir);
 
         int deploymentId = bundleDeployment.getId();
         antProps.setProperty(DeployPropertyNames.DEPLOY_ID, Integer.toString(deploymentId));

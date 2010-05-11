@@ -19,7 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -34,12 +34,12 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
     // the things we build up in the wizard
     private Integer bundleId;
     private BundleVersion bundleVersion;
+    private BundleDestination bundleDestination;
     private Integer platformGroupId;
     private BundleDeployment bundleDeployment;
-    private BundleGroupDeployment groupDeployment;
     private String name;
     private String description;
-    private String installDir;
+    private String deployDir;
     private ConfigurationTemplate template;
     private Configuration config;
 
@@ -60,6 +60,14 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     public void setBundleVersion(BundleVersion bundleVersion) {
         this.bundleVersion = bundleVersion;
+    }
+
+    public BundleDestination getBundleDestination() {
+        return bundleDestination;
+    }
+
+    public void setBundleDestination(BundleDestination bundleDestination) {
+        this.bundleDestination = bundleDestination;
     }
 
     public String getName() {
@@ -130,20 +138,12 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
         this.deployNow = deployNow;
     }
 
-    public BundleGroupDeployment getGroupDeployment() {
-        return groupDeployment;
+    public String getDeployDir() {
+        return deployDir;
     }
 
-    public void setGroupDeployment(BundleGroupDeployment groupDeployment) {
-        this.groupDeployment = groupDeployment;
-    }
-
-    public String getInstallDir() {
-        return installDir;
-    }
-
-    public void setInstallDir(String installDir) {
-        this.installDir = installDir;
+    public void setDeployDir(String installDir) {
+        this.deployDir = installDir;
     }
 
 }

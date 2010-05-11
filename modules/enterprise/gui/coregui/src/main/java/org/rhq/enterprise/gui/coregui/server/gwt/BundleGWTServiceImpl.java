@@ -23,7 +23,6 @@ import java.util.HashMap;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -62,13 +61,13 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         return SerialUtility.prepare(results, "createBundleVersionViaRecipe");
     }
 
-    public BundleDeployment createBundleDeployment(int bundleVersionId, String name, String description,
-        String installDir, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
+    public BundleDeployment createBundleDeployment(int bundleVersionId, int bundleDestinationId, String name,
+        String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
         boolean pinToBundle) throws Exception {
 
         try {
-            BundleDeployment result = bundleManager.createBundleDeployment(getSessionSubject(), bundleVersionId, name,
-                description, installDir, configuration);
+            BundleDeployment result = bundleManager.createBundleDeployment(getSessionSubject(), bundleVersionId,
+                bundleDestinationId, name, description, configuration);
 
             return SerialUtility.prepare(result, "createBundleDeployment");
         } catch (Exception e) {
@@ -151,25 +150,10 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         return SerialUtility.prepare(results, "getAllBundleVersionFilenames");
     }
 
-    /*
-    public BundleResourceDeployment scheduleBundleResourceDeployment(int bundleDeploymentId, int resourceId)
-        throws Exception {
+    public BundleDeployment scheduleBundleDeployment(int bundleDeploymentId) throws Exception {
         try {
-            BundleResourceDeployment result = bundleManager.scheduleBundleResourceDeployment(getSessionSubject(),
-                bundleDeploymentId, resourceId);
-            return SerialUtility.prepare(result, "scheduleBundleResourceDeployment");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-        }
-    }
-    */
-
-    public BundleGroupDeployment scheduleBundleGroupDeployment(int bundleDeploymentId, int resourceGroupId)
-        throws Exception {
-        try {
-            BundleGroupDeployment result = bundleManager.scheduleBundleGroupDeployment(getSessionSubject(),
-                bundleDeploymentId, resourceGroupId);
-            return SerialUtility.prepare(result, "scheduleBundleGroupDeployment");
+            BundleDeployment result = bundleManager.scheduleBundleDeployment(getSessionSubject(), bundleDeploymentId);
+            return SerialUtility.prepare(result, "scheduleBundleDeployment");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

@@ -74,20 +74,13 @@ public class BundleResourceDeployment implements Serializable {
     @Id
     private int id;
 
-    @JoinColumn(name = "BUNDLE_DEPLOY_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "BUNDLE_DEPLOYMENT_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private BundleDeployment bundleDeployment;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private Resource resource;
-
-    @JoinColumn(name = "BUNDLE_GROUP_DEPLOY_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne
-    private BundleGroupDeployment groupDeployment;
-
-    @Column(name = "IS_CURRENT")
-    private boolean isCurrent = false;
 
     @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -103,15 +96,9 @@ public class BundleResourceDeployment implements Serializable {
     }
 
     public BundleResourceDeployment(BundleDeployment bundleDeployment, Resource resource) {
-        this(bundleDeployment, resource, null);
-    }
-
-    public BundleResourceDeployment(BundleDeployment bundleDeployment, Resource resource,
-        BundleGroupDeployment groupDeployment) {
         this.bundleDeployment = bundleDeployment;
         this.resource = resource;
-        this.groupDeployment = groupDeployment;
-        this.status = BundleDeploymentStatus.INPROGRESS;
+        this.status = BundleDeploymentStatus.IN_PROGRESS;
     }
 
     public int getId() {
@@ -160,14 +147,6 @@ public class BundleResourceDeployment implements Serializable {
         this.histories.add(history);
     }
 
-    public BundleGroupDeployment getGroupDeployment() {
-        return groupDeployment;
-    }
-
-    public void setGroupDeployment(BundleGroupDeployment groupDeployment) {
-        this.groupDeployment = groupDeployment;
-    }
-
     /**
      * The status of the request which indicates that the request is either still in progress, or it has completed and
      * either succeeded or failed.
@@ -180,14 +159,6 @@ public class BundleResourceDeployment implements Serializable {
 
     public void setStatus(BundleDeploymentStatus status) {
         this.status = status;
-    }
-
-    public boolean isCurrent() {
-        return isCurrent;
-    }
-
-    public void setCurrent(boolean isCurrent) {
-        this.isCurrent = isCurrent;
     }
 
     @Override

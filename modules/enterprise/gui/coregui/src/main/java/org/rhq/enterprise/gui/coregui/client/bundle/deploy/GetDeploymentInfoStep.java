@@ -86,7 +86,7 @@ public class GetDeploymentInfoStep implements WizardStep {
                     if (value == null) {
                         value = "";
                     }
-                    wizard.setInstallDir(value.toString());
+                    wizard.setDeployDir(value.toString());
                 }
             });
 

@@ -318,6 +318,7 @@
                                 <property name="rhq.ds.password" value="${rhq.ds.password}" />
                                 <property name="project.version" value="${project.version}" />
                                 <property name="db.schema.version" value="${db.schema.version}" />
+				<property name="release" value="${release}"/>
                              </ant>
                           </tasks>
             	       </configuration>

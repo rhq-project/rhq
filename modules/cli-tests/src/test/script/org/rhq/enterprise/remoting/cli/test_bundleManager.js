@@ -37,7 +37,7 @@ executeAllTests();
 
 rhq.logout();
 
-function testGroupDeployment() {
+function testDeployment() {
    if ( !TestsEnabled ) {
       return;
    }
@@ -52,18 +52,22 @@ function testGroupDeployment() {
          
    // there in no required config, it uses only the built in rhq.deploy.dir property
 
-   // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", new Configuration());
-
    // Find a target platform group
    var rgc = new ResourceGroupCriteria();
    rgc.addFilterName("platforms"); // wINdows, lINux
    var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
    Assert.assertTrue( groups.size() > 0 );
    var groupId = groups.get(0).getId();
-   
-   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
-   Assert.assertNotNull( bgd );      
+
+   // create a destination to deploy to
+   var testDest = BundleManager.createBundleDestination( testBundleVersion.getBundle().getId(), "Deployment Test Dest", "test Dest", "/tmp/bundle-test", groupId);
+
+   // create a deployment using the above config
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Deployment Test", "Deployment Test of testBundle WAR", new Configuration());
+
+   // deploy to the destination
+   var bd = BundleManager.scheduleBundleDeployment(testDeployment.getId());
+   Assert.assertNotNull( bd );      
    
    // delete the test bundle if it exists (after allowing agent audit messages to complete)
    sleep( 5000 );

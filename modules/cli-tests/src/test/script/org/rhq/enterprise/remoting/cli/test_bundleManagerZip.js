@@ -37,7 +37,7 @@ executeAllTests();
 
 rhq.logout();
 
-function testGroupDeployment() {
+function testDeployment() {
    if ( !TestsEnabled ) {
       return;
    }
@@ -63,18 +63,21 @@ function testGroupDeployment() {
    var property = new PropertySimple("dummy.description", "FLOPPY!!!");
    config.put( property );
 
-   // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", "/tmp/bundle-test", config);
-
    // Find a target platform group
    var rgc = new ResourceGroupCriteria();
    rgc.addFilterName("platforms");
    var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
    Assert.assertTrue( groups.size() > 0 );
    var groupId = groups.get(0).getId();
+
+   // create a destination to deploy to
+   var testDest = BundleManager.createBundleDestination( testBundleVersion.getBundle().getId(), "Deployment Test Dest", "test Dest", "/tmp/bundle-test", groupId);
    
-   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
-   Assert.assertNotNull( bgd );      
+   // create a deployment using the above config
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Deployment Test", "Deployment Test of dummy ZIP", config);
+   
+   var bd = BundleManager.scheduleBundleDeployment(testDeployment.getId());
+   Assert.assertNotNull( bd );      
 }
 
 function getBundleType() {

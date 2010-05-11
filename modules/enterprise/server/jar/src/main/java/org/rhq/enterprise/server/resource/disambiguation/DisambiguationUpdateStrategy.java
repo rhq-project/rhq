@@ -26,107 +26,36 @@ package org.rhq.enterprise.server.resource.disambiguation;
 import java.util.EnumSet;
 
 /**
- * This enumerates different strategies that can be used to update the results to produce disambiguated list.
+ * Defines a strategy for updating a results list with the disambiguation information.
  * 
  * @author Lukas Krejci
  */
-public enum DisambiguationUpdateStrategy {
+public interface DisambiguationUpdateStrategy {
 
     /**
-     * The disambiguation policy is followed precisely.
-     */
-    EXACT {
-        public <T> void update(DisambiguationPolicy policy, MutableDisambiguationReport<T> report) {
-            int nofParents = policy.size() - 1;
-            if (nofParents < 0)
-                nofParents = 0;
-
-            if (nofParents == 0) {
-                report.parents.clear();
-            } else {
-                while (report.parents.size() > nofParents) {
-                    report.parents.remove(report.parents.size() - 1);
-                }
-            }
-        }
-    },
-
-    /**
-     * Even if the disambiguation policy determined that parents are not needed to disambiguate the 
-     * results, at least one of them is kept in the report.
-     */
-    KEEP_AT_LEAST_ONE_PARENT {
-        public <T> void update(DisambiguationPolicy policy, MutableDisambiguationReport<T> report) {
-            int nofParents = policy.size() - 1;
-            if (nofParents < 1)
-                nofParents = 1;
-
-            while (report.parents.size() > nofParents) {
-                report.parents.remove(report.parents.size() - 1);
-            }
-        }
-
-        @Override
-        public EnumSet<ResourceResolution> resourceLevelRepartitionableResolutions() {
-            return EnumSet.allOf(ResourceResolution.class);
-        }
-    },
-
-    /**
-     * The parentage of the report is retained at least up to the server/service directly under platform.
-     * If the policy needs the platform to stay, it is of course preserved.
-     */
-    KEEP_PARENTS_TO_TOPMOST_SERVERS {
-        public <T> void update(DisambiguationPolicy policy, MutableDisambiguationReport<T> report) {
-            //only remove the platform, if the policy doesn't dictate its presence...
-            if (policy.size() > 1 && report.parents.size() > policy.size() - 1) {
-                report.parents.remove(report.parents.size() - 1);
-            }
-        }
-
-        @Override
-        public EnumSet<ResourceResolution> resourceLevelRepartitionableResolutions() {
-            return EnumSet.allOf(ResourceResolution.class);
-        }
-    },
-
-    /**
-     * All parents are preserved no matter what the policy says.
-     */
-    KEEP_ALL_PARENTS {
-        public <T> void update(DisambiguationPolicy policy, MutableDisambiguationReport<T> report) {
-            //do nothing to the parents, keep them as they are...
-        }
-
-        @Override
-        public EnumSet<ResourceResolution> resourceLevelRepartitionableResolutions() {
-            return EnumSet.allOf(ResourceResolution.class);
-        }
-    };
-
-    /**
-     * Updates the report using the policy.
+     * Updates the report using the policy. It is guaranteed that the resource and its parents
+     * in the report are already processed using the 
+     * {@link ResourceResolution#update(MutableDisambiguationReport.Resource)}
+     * method. This method is then called to ensure that the report as a whole conforms to the policy *and* this
+     * strategy. This might entail removing some elements from the parent list for example.
      * 
      * @param <T>
      * @param policy
      * @param report
      */
-    public abstract <T> void update(DisambiguationPolicy policy, MutableDisambiguationReport<T> report);
+    <T> void update(DisambiguationPolicy policy, MutableDisambiguationReport<T> report);
 
     /**
      * @return a set of resolutions for which the unique reports need to be repartitioned at the resource level.
      * In another words this forces the disambiguation to continue on up the disambiguation chain even if the 
      * it disambiguates the resuts successfully at the resource level.
      */
-    public EnumSet<ResourceResolution> resourceLevelRepartitionableResolutions() {
-        return EnumSet.noneOf(ResourceResolution.class);
-    }
+    EnumSet<ResourceResolution> resourceLevelRepartitionableResolutions();
 
     /**
      * @return a set of resolutions for which uniquely disambiguated reports are to be repartitioned further.
      * The resolutions from this set apply on the parents (on any level), unlike the resolutions from {@link #resourceLevelRepartitionableResolutions()}.
      */
-    public EnumSet<ResourceResolution> alwaysRepartitionableResolutions() {
-        return EnumSet.noneOf(ResourceResolution.class);
-    }
+    EnumSet<ResourceResolution> alwaysRepartitionableResolutions();
+
 }

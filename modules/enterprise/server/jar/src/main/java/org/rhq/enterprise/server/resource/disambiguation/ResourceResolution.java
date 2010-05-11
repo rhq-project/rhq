@@ -28,21 +28,11 @@ public enum ResourceResolution {
         public boolean areAmbiguous(MutableDisambiguationReport.Resource a, MutableDisambiguationReport.Resource b) {
             return (a.id != b.id && a.name.equals(b.name));
         }
-        
-        @Override
-        public void update(MutableDisambiguationReport.Resource resource) {
-            resource.resourceType.plugin = null;
-        }
     },
     TYPE {
         public boolean areAmbiguous(MutableDisambiguationReport.Resource a, MutableDisambiguationReport.Resource b) {
             return ((a.resourceType.id != b.resourceType.id) && (a.resourceType.name.equals(b.resourceType.name))) 
                     || (a.resourceType.id == b.resourceType.id && NAME.areAmbiguous(a, b));
-        }
-        
-        @Override
-        public void update(MutableDisambiguationReport.Resource resource) {
-            resource.resourceType.plugin = null;
         }
     },
     PLUGIN {
@@ -52,9 +42,5 @@ public enum ResourceResolution {
         }
     };
                 
-    public abstract boolean areAmbiguous(MutableDisambiguationReport.Resource a, MutableDisambiguationReport.Resource b);
-    
-    public void update(MutableDisambiguationReport.Resource resource) {
-        //by default do nothing
-    }
+    public abstract boolean areAmbiguous(MutableDisambiguationReport.Resource a, MutableDisambiguationReport.Resource b);    
 }

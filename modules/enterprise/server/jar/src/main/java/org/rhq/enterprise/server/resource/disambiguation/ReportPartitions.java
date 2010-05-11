@@ -24,9 +24,8 @@
 package org.rhq.enterprise.server.resource.disambiguation;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class partitions the reports inserted into it by chunking them up 
@@ -41,18 +40,30 @@ public class ReportPartitions<T> {
 
     private static final long serialVersionUID = 1L;
     private DisambiguationPolicy disambiguationPolicy;
-    private Map<Integer, List<MutableDisambiguationReport<T>>> partitions;
+    private List<List<MutableDisambiguationReport<T>>> partitions;
 
     /**
-     * @see MutableDisambiguationReport#getComparisonForLevel(int)
+     * Constructs a new instance with no partitions in it.
      * 
-     * @param comparisonLevel
+     * @param disambiguationPolicy the policy that decides if reports are ambiguous.
      */
     public ReportPartitions(DisambiguationPolicy disambiguationPolicy) {
         this.disambiguationPolicy = disambiguationPolicy;
-        partitions = new HashMap<Integer, List<MutableDisambiguationReport<T>>>();
+        partitions = new ArrayList<List<MutableDisambiguationReport<T>>>();
     }
 
+    public ReportPartitions(DisambiguationPolicy disambiguationPolicy, ReportPartitions<T> other) {
+        this(disambiguationPolicy);
+        putAll(other);
+    }
+    
+    public ReportPartitions(DisambiguationPolicy disambiguationPolicy, List<List<MutableDisambiguationReport<T>>> partitions) {
+        this(disambiguationPolicy);
+        for(List<MutableDisambiguationReport<T>> partition : partitions) {
+            putAll(partition);
+        }
+    }
+    
     public DisambiguationPolicy getDisambiguationPolicy() {
         return disambiguationPolicy;
     }
@@ -60,7 +71,7 @@ public class ReportPartitions<T> {
     public List<List<MutableDisambiguationReport<T>>> getAmbiguousPartitions() {
         List<List<MutableDisambiguationReport<T>>> ret = new ArrayList<List<MutableDisambiguationReport<T>>>();
 
-        for (List<MutableDisambiguationReport<T>> partition : partitions.values()) {
+        for (List<MutableDisambiguationReport<T>> partition : partitions) {
             if (partition.size() > 1) {
                 ret.add(partition);
             }
@@ -72,7 +83,7 @@ public class ReportPartitions<T> {
     public List<List<MutableDisambiguationReport<T>>> getUniquePartitions() {
         List<List<MutableDisambiguationReport<T>>> ret = new ArrayList<List<MutableDisambiguationReport<T>>>();
 
-        for (List<MutableDisambiguationReport<T>> partition : partitions.values()) {
+        for (List<MutableDisambiguationReport<T>> partition : partitions) {
             if (partition.size() == 1) {
                 ret.add(partition);
             }
@@ -81,17 +92,21 @@ public class ReportPartitions<T> {
         return ret;
     }
 
+    public List<List<MutableDisambiguationReport<T>>> getAllPartitions() {
+        return Collections.unmodifiableList(partitions);
+    }
+    
     public void put(MutableDisambiguationReport<T> value) {
         boolean found = false;
-        for (Map.Entry<Integer, List<MutableDisambiguationReport<T>>> entry : partitions.entrySet()) {
-            for (MutableDisambiguationReport<T> partitionPrototype : entry.getValue()) {
+        for (List<MutableDisambiguationReport<T>> partition : partitions) {
+            for (MutableDisambiguationReport<T> partitionPrototype : partition) {
                 if (disambiguationPolicy.areAmbiguous(partitionPrototype, value)) {
                     found = true;
                     break;
                 }
             }
             if (found) {
-                entry.getValue().add(value);
+                partition.add(value);
                 break;
             }
         }
@@ -99,7 +114,7 @@ public class ReportPartitions<T> {
         if (!found) {
             List<MutableDisambiguationReport<T>> newPartition = new ArrayList<MutableDisambiguationReport<T>>();
             newPartition.add(value);
-            partitions.put(partitions.size(), newPartition);
+            partitions.add(newPartition);
         }
     }
 
@@ -109,37 +124,14 @@ public class ReportPartitions<T> {
         }
     }
 
-    /**
-     * Updates the reports in the unique partitions.
-     * 
-     * @return if the current policy is determined "repartitionable", the returned partitions instance splits the current
-     * unique reports by some other policy. If the current policy is not repartitionable, a null value is returned.
-     */
-    public ReportPartitions<T> updateUniqueReports() {
-        List<MutableDisambiguationReport<T>> uniqueReports = new ArrayList<MutableDisambiguationReport<T>>();
-        for (List<MutableDisambiguationReport<T>> val : partitions.values()) {
-            if (val.size() == 1) {
-                uniqueReports.addAll(val);
-            }
+    public void putAll(ReportPartitions<T> other) {
+        for (List<MutableDisambiguationReport<T>> partition : other.getAllPartitions()) {
+            putAll(partition);
         }
-
-        DisambiguationPolicy repartitioningPolicy = disambiguationPolicy.getNextRepartitioningPolicy();
-        if (repartitioningPolicy != null) {
-            ReportPartitions<T> ret = new ReportPartitions<T>(repartitioningPolicy);
-            ret.putAll(uniqueReports);
-
-            return ret;
-        }
-
-        for (MutableDisambiguationReport<T> report : uniqueReports) {
-            disambiguationPolicy.update(report);            
-        }
-
-        return null;
     }
-
+    
     public boolean isPartitionsUnique() {
-        for (List<MutableDisambiguationReport<T>> partition : partitions.values()) {
+        for (List<MutableDisambiguationReport<T>> partition : partitions) {
             if (partition.size() > 1) {
                 return false;
             }

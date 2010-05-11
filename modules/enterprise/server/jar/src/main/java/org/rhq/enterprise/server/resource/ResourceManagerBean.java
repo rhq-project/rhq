@@ -124,7 +124,7 @@ import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DisambiguationPolicy;
 import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
 import org.rhq.enterprise.server.resource.disambiguation.MutableDisambiguationReport;
-import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.resource.disambiguation.ReportPartitions;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -2106,8 +2106,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwaysIncludeParent,
         IntExtractor<? super T> extractor) {
         //TODO the alwaysIncludeParents is obsolete and ignored
-        //DisambiguationUpdateStrategy strategy = DisambiguationUpdateStrategy.KEEP_PARENTS_TO_TOPMOST_SERVERS;
-        DisambiguationUpdateStrategy strategy = DisambiguationUpdateStrategy.KEEP_ALL_PARENTS;
+        //DefaultDisambiguationUpdateStrategies strategy = DefaultDisambiguationUpdateStrategies.KEEP_PARENTS_TO_TOPMOST_SERVERS;
+        DefaultDisambiguationUpdateStrategies strategy = DefaultDisambiguationUpdateStrategies.KEEP_ALL_PARENTS;
         return Disambiguator.disambiguate(results, strategy, extractor, entityManager);
     }
 }

@@ -45,11 +45,11 @@ import org.rhq.core.util.IntExtractor;
 public class Disambiguator {
 
     public static final int MAXIMUM_DISAMBIGUATED_TREE_DEPTH = 7;
-    
+
     private Disambiguator() {
-        
+
     }
-    
+
     /**
      * Given a list of results, this method produces an object decorates the provided original results
      * with data needed to disambiguate the results with respect to resource names, their types and ancestory.
@@ -67,13 +67,14 @@ public class Disambiguator {
      * 
      * @param <T> the type of the result elements
      * @param results the results to disambiguate
-     * @param parentsDisambiguationStrategy how are the parents going to be disambiguated
+     * @param disambiguationUpdateStrategy how is the disambiguation info going to be applied to the results.
      * @param resourceIdExtractor an object able to extract resource id from an instance of type parameter.
      * @param entityManager an entityManager to be used to access the database
      * @return the disambiguation result or null on error
      */
-    public static <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, DisambiguationUpdateStrategy parentsDisambiguationStrategy,
-        IntExtractor<? super T> extractor, EntityManager entityManager) {
+    public static <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results,
+        DisambiguationUpdateStrategy disambiguationUpdateStrategy, IntExtractor<? super T> extractor,
+        EntityManager entityManager) {
 
         if (results.isEmpty()) {
             return new ResourceNamesDisambiguationResult<T>(new ArrayList<DisambiguationReport<T>>(), false, false,
@@ -124,7 +125,7 @@ public class Disambiguator {
                 selectBuilder.append(", rt").append(i).append(".name");
                 selectBuilder.append(", rt").append(i).append(".plugin");
                 selectBuilder.append(", rt").append(i).append(".singleton");
-                
+
                 fromBuilder.append(" left join r").append(pi).append(".parentResource r").append(i);
                 fromBuilder.append(" left join r").append(i).append(".resourceType rt").append(i);
             }
@@ -140,31 +141,33 @@ public class Disambiguator {
             //I will partition the resulting reports by resource name.to create groups of
             //resources that are "mutually ambiguous". Because each such group potenitally
             //requires different level of disambiguation, I will then process them individually.
-            
-            ReportPartitions<T> partitionedReports = new ReportPartitions<T>(DisambiguationPolicy.getUniqueNamePolicy(parentsDisambiguationStrategy));
-            
+
+            ReportPartitions<T> partitionedReports = new ReportPartitions<T>(DisambiguationPolicy
+                .getUniqueNamePolicy(disambiguationUpdateStrategy));
+
             @SuppressWarnings("unchecked")
             List<Object[]> parentsResults = (List<Object[]>) parentsQuery.getResultList();
             for (Object[] parentsResult : parentsResults) {
-                List<MutableDisambiguationReport.Resource> parents = new ArrayList<MutableDisambiguationReport.Resource>(MAXIMUM_DISAMBIGUATED_TREE_DEPTH);
+                List<MutableDisambiguationReport.Resource> parents = new ArrayList<MutableDisambiguationReport.Resource>(
+                    MAXIMUM_DISAMBIGUATED_TREE_DEPTH);
                 Integer resourceId = (Integer) parentsResult[0];
                 String resourceName = (String) parentsResult[1];
                 Integer typeId = (Integer) parentsResult[2];
                 String typeName = (String) parentsResult[3];
                 String pluginName = (String) parentsResult[4];
                 Boolean singleton = (Boolean) parentsResult[5];
-                
+
                 MutableDisambiguationReport.ResourceType resourceType = new MutableDisambiguationReport.ResourceType();
                 resourceType.id = typeId;
                 resourceType.name = typeName;
                 resourceType.plugin = pluginName;
                 resourceType.singleton = singleton;
-                
+
                 MutableDisambiguationReport.Resource resource = new MutableDisambiguationReport.Resource();
                 resource.id = resourceId;
                 resource.name = resourceName;
                 resource.resourceType = resourceType;
-                
+
                 for (int i = 0; i < MAXIMUM_DISAMBIGUATED_TREE_DEPTH; ++i) {
                     Integer parentId = (Integer) parentsResult[6 + 6 * i];
                     if (parentId == null)
@@ -174,18 +177,18 @@ public class Disambiguator {
                     String parentType = (String) parentsResult[6 + 6 * i + 3];
                     String parentPlugin = (String) parentsResult[6 + 6 * i + 4];
                     Boolean parentSingleton = (Boolean) parentsResult[6 + 6 * i + 5];
-                    
+
                     MutableDisambiguationReport.ResourceType type = new MutableDisambiguationReport.ResourceType();
                     type.id = parentTypeId;
                     type.name = parentType;
                     type.plugin = parentPlugin;
                     type.singleton = parentSingleton;
-                    
+
                     MutableDisambiguationReport.Resource parent = new MutableDisambiguationReport.Resource();
                     parent.id = parentId;
                     parent.name = parentName;
                     parent.resourceType = type;
-                    
+
                     parents.add(parent);
                 }
 
@@ -193,68 +196,45 @@ public class Disambiguator {
                 for (MutableDisambiguationReport<T> report : reportsByResourceId.get(resourceId)) {
                     report.resource = resource;
                     report.parents = parents;
-                    
+
                     partitionedReports.put(report);
                 }
             }
-            
+
             //ok, now I have the reports partitioned by resource name. let's go through each partition
             //and figure out the disambiguation needed for it.
-            
+
             List<ReportPartitions<T>> ambiguousSubPartitions = new ArrayList<ReportPartitions<T>>();
-            
+
             if (!partitionedReports.isPartitionsUnique()) {
                 ambiguousSubPartitions.add(partitionedReports);
             } else {
-                ReportPartitions<T> repartition = partitionedReports.updateUniqueReports();
-                while (repartition != null) {
-                    if(!repartition.isPartitionsUnique()) {
-                        ambiguousSubPartitions.add(repartition);
-                        repartition = null;
-                    } else {
-                        repartition = repartition.updateUniqueReports();
-                    }
-                }
+                repartitionUnique(partitionedReports, disambiguationUpdateStrategy, ambiguousSubPartitions);                
             }
-            
+
             while (ambiguousSubPartitions.size() > 0) {
                 Iterator<ReportPartitions<T>> subPartitionIterator = ambiguousSubPartitions.iterator();
                 List<ReportPartitions<T>> newAmbiguousPartitions = new ArrayList<ReportPartitions<T>>();
-                
-                while(subPartitionIterator.hasNext()) {
+
+                while (subPartitionIterator.hasNext()) {
                     ReportPartitions<T> subPartition = subPartitionIterator.next();
 
-                    ReportPartitions<T> repartition = subPartition.updateUniqueReports();
-                    while (repartition != null) {
-                        if(!repartition.isPartitionsUnique()) {
-                            newAmbiguousPartitions.add(repartition);
-                            repartition = null;
-                        } else {
-                            repartition = repartition.updateUniqueReports();
-                        }
-                    }
-                    
-                    for(List<MutableDisambiguationReport<T>> partitionReports : subPartition.getAmbiguousPartitions()) {
-                        ReportPartitions<T> replacementSubpartition = new ReportPartitions<T>(subPartition.getDisambiguationPolicy().getNext());
+                    repartitionUnique(subPartition, disambiguationUpdateStrategy, newAmbiguousPartitions);                
+
+                    for (List<MutableDisambiguationReport<T>> partitionReports : subPartition.getAmbiguousPartitions()) {
+                        ReportPartitions<T> replacementSubpartition = new ReportPartitions<T>(subPartition
+                            .getDisambiguationPolicy().getNext());
                         replacementSubpartition.putAll(partitionReports);
                         if (!replacementSubpartition.isPartitionsUnique()) {
                             newAmbiguousPartitions.add(replacementSubpartition);
                         } else {
-                            repartition = replacementSubpartition.updateUniqueReports();
-                            while (repartition != null) {
-                                if(!repartition.isPartitionsUnique()) {
-                                    newAmbiguousPartitions.add(repartition);
-                                    repartition = null;
-                                } else {
-                                    repartition = repartition.updateUniqueReports();
-                                }
-                            }
+                            repartitionUnique(replacementSubpartition, disambiguationUpdateStrategy, newAmbiguousPartitions);            
                         }
                     }
                     subPartitionIterator.remove();
                 }
-                
-                for(ReportPartitions<T> newPartition : newAmbiguousPartitions) {
+
+                for (ReportPartitions<T> newPartition : newAmbiguousPartitions) {
                     ambiguousSubPartitions.add(newPartition);
                 }
             }
@@ -267,6 +247,34 @@ public class Disambiguator {
         }
 
         return new ResourceNamesDisambiguationResult<T>(resolution, typeResolutionNeeded, parentResolutionNeeded,
-            pluginResolutionNeeded);        
+            pluginResolutionNeeded);
+    }
+
+    private static <T> void repartitionUnique(ReportPartitions<T> partitions, DisambiguationUpdateStrategy updateStrategy, List<ReportPartitions<T>> ambigousPartitions) {
+
+        while (true) {
+            //try to repartition
+            DisambiguationPolicy repartitionPolicy = partitions.getDisambiguationPolicy().getNextRepartitioningPolicy();
+            if (repartitionPolicy != null) {
+                //ok, we have a new policy to try... let's see if it makes any difference.
+                partitions = new ReportPartitions<T>(repartitionPolicy, partitions.getUniquePartitions());
+
+                //bail out if we have partitions that are not unique
+                if (!partitions.isPartitionsUnique()) {
+                    ambigousPartitions.add(partitions);
+                    return;
+                }
+            } else {
+                //ok, there is no other repartitioning policy that we can try. 
+                //Let's update the reports in the unique partitions...
+                for (List<MutableDisambiguationReport<T>> partition : partitions.getUniquePartitions()) {
+                    for (MutableDisambiguationReport<T> report : partition) {
+                        updateStrategy.update(partitions.getDisambiguationPolicy(), report);
+                    }
+                }
+                
+                return;
+            }
+        }
     }
 }

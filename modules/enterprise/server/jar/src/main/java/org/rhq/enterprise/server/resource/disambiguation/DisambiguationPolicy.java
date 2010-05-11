@@ -150,44 +150,6 @@ public class DisambiguationPolicy extends ArrayList<ResourceResolution> {
         return null;
     }
     
-    public <T> void update(MutableDisambiguationReport<T> report) {
-        ResourceResolution resourceResolution = this.get(0);
-        resourceResolution.update(report.resource);
-
-        int disambiguationPolicyIndex = 1;
-        while (disambiguationPolicyIndex < this.size() && disambiguationPolicyIndex - 1 < report.parents.size()) {
-            ResourceResolution parentResolution = this.get(disambiguationPolicyIndex);
-            MutableDisambiguationReport.Resource parent = report.parents.get(disambiguationPolicyIndex - 1);
-            parentResolution.update(parent);
-
-            disambiguationPolicyIndex++;
-        }
-
-        disambiguationPolicyIndex--;
-
-        //because the parents update strategy might leave more parents than this policy requires for disambiguation
-        //we need to treat those parents as well. Because they are not needed for disambiguation, treat them as
-        //if only the name and type was needed for them.
-        for (; disambiguationPolicyIndex < report.parents.size(); ++disambiguationPolicyIndex) {
-            ResourceResolution.TYPE.update(report.parents.get(disambiguationPolicyIndex));
-        }
-
-        //don't replicate the plugin information on the parents if it was reported
-        //on the resource already.
-        //this has to be done on all the parents, not just the ones that are immediately needed
-        //for disambiguation. The parents update strategies might leave more parents than those needed.
-        if (resourceResolution == ResourceResolution.PLUGIN) {
-            for (MutableDisambiguationReport.Resource parent : report.parents) {
-                if (report.resource.resourceType.plugin.equals(parent.resourceType.plugin)) {
-
-                    parent.resourceType.plugin = null;
-                }
-            }
-        }
-        
-        parentsUpdateStrategy.update(this, report);
-    }
-
     private <T> MutableDisambiguationReport.Resource getComparingResource(MutableDisambiguationReport<T> report) {
         int size = size();
         if (size == 0)

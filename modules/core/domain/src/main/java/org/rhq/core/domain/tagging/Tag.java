@@ -41,6 +41,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -86,9 +87,13 @@ public class Tag implements Serializable {
     @ManyToMany
     private Set<BundleVersion> bundleVersions;
 
-    @JoinTable(name = "RHQ_TAGGING_BUNDLE_DEPLOY_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_DEPLOY_ID") })
+    @JoinTable(name = "RHQ_TAGGING_BUNDLE_DEPLOY_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_DEPLOYMENT_ID") })
     @ManyToMany
     private Set<BundleDeployment> bundleDeployments;
+
+    @JoinTable(name = "RHQ_TAGGING_BUNDLE_DEST_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_DESTINATION_ID") })
+    @ManyToMany
+    private Set<BundleDestination> bundleDestinations;
 
     protected Tag() {
     }
@@ -260,6 +265,31 @@ public class Tag implements Serializable {
         if (bundleDeployments != null) {
             bundleDeployment.removeTag(this);
             return bundleDeployments.remove(bundleDeployment);
+        } else {
+            return false;
+        }
+    }
+
+    public Set<BundleDestination> getBundleDestinations() {
+        return bundleDestinations;
+    }
+
+    public void setBundleDestinations(Set<BundleDestination> bundleDestinations) {
+        this.bundleDestinations = bundleDestinations;
+    }
+
+    public void addBundleDestination(BundleDestination bundleDestination) {
+        if (bundleDestinations == null) {
+            bundleDestinations = new HashSet<BundleDestination>();
+        }
+        bundleDestination.addTag(this);
+        bundleDestinations.add(bundleDestination);
+    }
+
+    public boolean removeBundleDestination(BundleDestination bundleDestination) {
+        if (bundleDestinations != null) {
+            bundleDestination.removeTag(this);
+            return bundleDestinations.remove(bundleDestination);
         } else {
             return false;
         }

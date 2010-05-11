@@ -43,6 +43,7 @@ public class BundleCriteria extends Criteria {
     private String filterPackageTypeName; // needs override    
 
     private boolean fetchBundleVersions;
+    private boolean fetchDestinations;
     private boolean fetchPackageType;
     private boolean fetchRepo;
     private boolean fetchTags;
@@ -59,7 +60,7 @@ public class BundleCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<?> getPersistentClass() {
         return Bundle.class;
     }
 
@@ -95,6 +96,10 @@ public class BundleCriteria extends Criteria {
         this.fetchBundleVersions = fetchBundleVersions;
     }
 
+    public void fetchDestinations(boolean fetchDestinations) {
+        this.fetchDestinations = fetchDestinations;
+    }
+
     public void fetchPackageType(boolean fetchPackageType) {
         this.fetchPackageType = fetchPackageType;
     }
@@ -106,7 +111,6 @@ public class BundleCriteria extends Criteria {
     public void fetchTags(boolean fetchTags) {
         this.fetchTags = fetchTags;
     }
-
 
     public void addSortName(PageOrdering sortName) {
         addSortField("name");

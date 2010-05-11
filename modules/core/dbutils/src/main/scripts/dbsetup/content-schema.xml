@@ -565,7 +565,7 @@
         <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
         <column name="BUNDLE_DESTINATION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DESTINATION"/>        
         <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />        
-        <column name="SUBJECT_NAME" type="VARCHAR2" required="true" size="255"/>
+        <column name="SUBJECT_NAME" type="VARCHAR2" required="false" size="255"/>
         <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
         <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>        
         <column name="IS_LIVE" type="BOOLEAN" required="true"/>        
@@ -587,12 +587,12 @@
 
     <table name="RHQ_BUNDLE_RES_DEP_HIST">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="BUNDLE_RES_DEPLOYMENT_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_RES_DEPLOY" />        
+        <column name="BUNDLE_RES_DEPLOY_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_RES_DEPLOY" />        
         <column name="SUBJECT_NAME" required="false" size="255" type="VARCHAR2"/>
         <column name="AUDIT_TIME" required="true" type="LONG"/>
         <column name="ACTION" required="true" size="128" type="VARCHAR2"/>
         <column name="INFO" required="true" size="512" type="VARCHAR2"/>        
-        <column name="CATEGORY" required="true" size="32" type="VARCHAR2"/>        
+        <column name="CATEGORY" required="false" size="32" type="VARCHAR2"/>        
         <column name="STATUS" required="true" type="VARCHAR2" size="16"/>        
         <column name="MESSAGE" required="false" type="LONGVARCHAR"/>
         <column name="ATTACHMENT" required="false" type="LONGVARCHAR"/>        

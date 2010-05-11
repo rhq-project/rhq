@@ -715,7 +715,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             deployment.addResourceDeployment(resourceDeployment);
         }
 
-        entityManager.persist(deployment);
         return deployment;
     }
 
@@ -767,13 +766,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
             // Handle Schedule Failures. This may include deployment failures for immediate deployment request
             if (!response.isSuccess()) {
-                history = new BundleResourceDeploymentHistory(subject.getName(), AUDIT_ACTION_DEPLOYMENT, deployment
-                    .getName(), null, BundleResourceDeploymentHistory.Status.FAILURE, response.getErrorMessage(), null);
                 bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
                     BundleDeploymentStatus.FAILURE);
+                history = new BundleResourceDeploymentHistory(subject.getName(), AUDIT_ACTION_DEPLOYMENT, deployment
+                    .getName(), null, BundleResourceDeploymentHistory.Status.FAILURE, response.getErrorMessage(), null);
                 bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
             }
         } else {
+            bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
+                BundleDeploymentStatus.FAILURE);
             BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
                 AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE,
                 "Target resource is not a platform [id=" + resource.getId() + "]. Fix target group for destination ["

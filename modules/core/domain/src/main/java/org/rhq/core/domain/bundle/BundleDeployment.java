@@ -116,7 +116,7 @@ public class BundleDeployment implements Serializable {
     private BundleDestination destination;
 
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
+    private List<BundleResourceDeployment> resourceDeployments;
 
     @ManyToMany(mappedBy = "bundleDeployments", fetch = FetchType.LAZY)
     private Set<Tag> tags;
@@ -130,6 +130,7 @@ public class BundleDeployment implements Serializable {
         this.destination = destination;
         this.name = name;
         this.status = BundleDeploymentStatus.PENDING;
+        this.isLive = false;
     }
 
     public int getId() {
@@ -294,6 +295,9 @@ public class BundleDeployment implements Serializable {
     }
 
     public void addResourceDeployment(BundleResourceDeployment resourceDeployment) {
+        if (null == this.resourceDeployments) {
+            resourceDeployments = new ArrayList<BundleResourceDeployment>();
+        }
         this.resourceDeployments.add(resourceDeployment);
         resourceDeployment.setBundleDeployment(this);
     }

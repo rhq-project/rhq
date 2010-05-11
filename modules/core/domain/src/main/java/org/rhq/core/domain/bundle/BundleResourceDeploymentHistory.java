@@ -63,7 +63,7 @@ public class BundleResourceDeploymentHistory implements Serializable {
     @Id
     private int id;
 
-    @JoinColumn(name = "BUNDLE_RES_DEPLOYMENT_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "BUNDLE_RES_DEPLOY_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private BundleResourceDeployment resourceDeployment;
 

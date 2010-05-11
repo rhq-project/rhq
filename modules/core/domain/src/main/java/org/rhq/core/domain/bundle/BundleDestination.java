@@ -95,12 +95,8 @@ public class BundleDestination implements Serializable {
     @ManyToOne
     private ResourceGroup group;
 
-    @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private BundleVersion bundleVersion;
-
-    @OneToMany(mappedBy = "bundleDestination", fetch = FetchType.LAZY)
-    private List<BundleDeployment> deployments = new ArrayList<BundleDeployment>();
+    @OneToMany(mappedBy = "destination", fetch = FetchType.LAZY)
+    private List<BundleDeployment> deployments;
 
     @ManyToMany(mappedBy = "bundleDestinations", fetch = FetchType.LAZY)
     private Set<Tag> tags;
@@ -186,14 +182,6 @@ public class BundleDestination implements Serializable {
         this.group = group;
     }
 
-    public BundleVersion getBundleVersion() {
-        return bundleVersion;
-    }
-
-    public void setBundleVersion(BundleVersion bundleVersion) {
-        this.bundleVersion = bundleVersion;
-    }
-
     public List<BundleDeployment> getDeployments() {
         return deployments;
     }
@@ -203,6 +191,9 @@ public class BundleDestination implements Serializable {
     }
 
     public void addDeployment(BundleDeployment deployment) {
+        if (null == this.deployments) {
+            this.deployments = new ArrayList<BundleDeployment>();
+        }
         this.deployments.add(deployment);
         deployment.setDestination(this);
     }
@@ -249,25 +240,25 @@ public class BundleDestination implements Serializable {
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof BundleDeployment)) {
+        if (!(obj instanceof BundleDestination)) {
             return false;
         }
 
         BundleDestination other = (BundleDestination) obj;
 
-        if (bundle == null) {
+        if (this.bundle == null) {
             if (other.bundle != null) {
                 return false;
             }
-        } else if (!bundle.equals(other.bundle)) {
+        } else if (!this.bundle.equals(other.bundle)) {
             return false;
         }
 
-        if (name == null) {
+        if (this.name == null) {
             if (other.name != null) {
                 return false;
             }
-        } else if (!name.equals(other.name)) {
+        } else if (!this.name.equals(other.name)) {
             return false;
         }
 

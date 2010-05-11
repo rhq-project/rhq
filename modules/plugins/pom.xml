@@ -101,7 +101,7 @@
 
         <modules>
            <!--  NOTE: Order is important. -->
-           <module>augeas</module>           
+           <module>augeas</module>
            <module>apache</module>
            <module>tomcat</module>
            <module>jboss-as</module>
@@ -177,6 +177,7 @@
            <module>perftest</module>
            <module>snmptrapd</module>
            <module>twitter</module>
+           <module>nagios</module>
         </modules>
     </profile>
 

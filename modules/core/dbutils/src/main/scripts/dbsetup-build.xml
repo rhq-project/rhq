@@ -172,11 +172,30 @@ To run the default target, you must set one of the following properties to true:
    <target name="dbsetup-create-schema"
            depends="dbsetup-init,dbsetup-replace"
            description="Initialize the database schema but not the data - assumes the schema does not yet exist">
-
+      
       <antcall target="dbsetup-process-file">
          <param name="_xmlfile" value="${dbsetup.combined.schema}"/>
          <param name="_dataonly" value="false"/>
          <param name="_uninstall" value="false"/>
+      </antcall>
+   </target>
+
+   <target name="create-release-schema" depends="dbsetup-init">
+      <fail unless="release" message="The release property must be set for this target"/>	   
+
+      <property name="schema-file" value="${basedir}/src/main/scripts/dbsetup/${release}/db-schema-combined-${release}.xml"/>
+      <property name="data-file" value="${basedir}/src/main/scripts/dbsetup/${release}/db-data-combined-${release}.xml"/>
+
+      <antcall target="dbsetup-process-file">
+         <param name="_xmlfile" value="${schema-file}"/>
+	 <param name="_dataonly" value="false"/>
+	 <param name="_uninstall" value="false"/>
+      </antcall>
+
+      <antcall target="dbsetup-process-file">
+         <param name="_xmlfile" value="${data-file}"/>
+	 <param name="_dataonly" value="true"/>
+	 <param name="_uninstall" value="false"/>
       </antcall>
    </target>
 

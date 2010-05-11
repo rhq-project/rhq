@@ -102,7 +102,7 @@
         </dependencies>
         <executions>
           <execution>
-            <phase>test</phase>
+            <phase>compile</phase>
             <goals>
               <goal>execute</goal>
             </goals>
@@ -115,14 +115,7 @@
                   return
                 }
 
-                db = project.properties.db
-                if (db == 'dev') {
-		//database = project.properties['rhq.dev.ds.db-name']    
 		database = project.properties['rhq.db.name']    
-                } else {
-		  database = project.properties['rhq.db.name']    
-		  //database = project.properties['rhq.test.ds.db-name']
-                }
                 project.properties.dbsetup = 'true'
 
                 sql = Sql.newInstance(

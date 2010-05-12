@@ -30,6 +30,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,6 +44,7 @@ import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.tagging.Tag;
+import org.rhq.core.domain.tagging.compsite.TagReportComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -55,7 +57,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  * @author Greg Hinkle
  */
 @Stateless
-public class TagManagerBean implements TagManagerLocal {
+public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
 
     private final Log log = LogFactory.getLog(TagManagerBean.class);
 
@@ -201,5 +203,17 @@ public class TagManagerBean implements TagManagerLocal {
         for (Tag tag : definedTags) {
             tag.addBundleDeployment(bundleDeployment);
         }
+    }
+
+    public PageList<TagReportComposite> findTagReportCompositesByCriteria(Subject subject, TagCriteria tagCriteria) {
+        // TODO criteria stuff
+
+        Query query = entityManager.createNamedQuery(Tag.QUERY_TAG_COMPOSITE_REPORT);
+
+        PageList<TagReportComposite> result = new PageList<TagReportComposite>();
+
+        result.addAll(query.getResultList());
+
+        return result;
     }
 }

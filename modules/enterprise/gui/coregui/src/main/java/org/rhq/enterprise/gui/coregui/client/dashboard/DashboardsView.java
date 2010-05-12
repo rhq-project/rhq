@@ -32,6 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.Platfor
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.store.DashboardStore;
 import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredDashboard;
 import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
@@ -94,8 +95,11 @@ public class DashboardsView extends VLayout {
 
 
 
-        StoredPortlet summary = new StoredPortlet("Inventory Summary", InventorySummaryView.KEY, 300);
+        StoredPortlet summary = new StoredPortlet("Inventory Summary", InventorySummaryView.KEY, 250);
         col1.add(summary);
+
+        StoredPortlet tagCloud = new StoredPortlet("Tag Cloud", TagCloudPortlet.KEY, 250);
+        col1.add(tagCloud);
 
         StoredPortlet graph = new StoredPortlet("ghinkle (MAC OS X) CPU", GraphPortlet.KEY, 250);
         graph.setProperty("resourceId","10001");

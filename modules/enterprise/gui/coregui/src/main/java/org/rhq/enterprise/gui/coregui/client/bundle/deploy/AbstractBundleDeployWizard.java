@@ -33,17 +33,15 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     // the things we build up in the wizard
     private Integer bundleId;
-    private BundleVersion bundleVersion;
+    private Integer destinationId;
     private BundleDestination bundleDestination;
-    private Integer platformGroupId;
+    private BundleVersion bundleVersion;
+    private boolean newDestination = false;
+    private String deploymentName;
+    private String deploymentDescription;
     private BundleDeployment bundleDeployment;
-    private String name;
-    private String description;
-    private String deployDir;
     private ConfigurationTemplate template;
     private Configuration config;
-
-    private Boolean newDefinition = Boolean.TRUE;
     private boolean deployNow = true;
 
     public Integer getBundleId() {
@@ -62,28 +60,28 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
         this.bundleVersion = bundleVersion;
     }
 
-    public BundleDestination getBundleDestination() {
-        return bundleDestination;
+    public Integer getDestinationId() {
+        return destinationId;
     }
 
-    public void setBundleDestination(BundleDestination bundleDestination) {
-        this.bundleDestination = bundleDestination;
+    public void setDestinationId(Integer destinationId) {
+        this.destinationId = destinationId;
     }
 
     public String getName() {
-        return name;
+        return deploymentName;
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.deploymentName = name;
     }
 
     public String getDescription() {
-        return description;
+        return deploymentDescription;
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        this.deploymentDescription = description;
     }
 
     public Configuration getConfig() {
@@ -110,24 +108,20 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
         this.bundleDeployment = bundleDeployment;
     }
 
-    public boolean isNewDefinition() {
-        return Boolean.TRUE.equals(newDefinition);
+    public BundleDestination getBundleDestination() {
+        return bundleDestination;
     }
 
-    public Boolean getNewDefinition() {
-        return newDefinition;
+    public void setBundleDestination(BundleDestination bundleDestination) {
+        this.bundleDestination = bundleDestination;
     }
 
-    public void setNewDefinition(Boolean newDefinition) {
-        this.newDefinition = newDefinition;
+    public boolean isNewDestination() {
+        return newDestination;
     }
 
-    public Integer getPlatformGroupId() {
-        return platformGroupId;
-    }
-
-    public void setPlatformGroupId(Integer platformGroupId) {
-        this.platformGroupId = platformGroupId;
+    public void setNewDestination(boolean newDestination) {
+        this.newDestination = newDestination;
     }
 
     public Boolean isDeployNow() {
@@ -137,13 +131,4 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
     public void setDeployNow(Boolean deployNow) {
         this.deployNow = deployNow;
     }
-
-    public String getDeployDir() {
-        return deployDir;
-    }
-
-    public void setDeployDir(String installDir) {
-        this.deployDir = installDir;
-    }
-
 }

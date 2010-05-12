@@ -88,6 +88,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         form.setNumCols(4);
 
         LinkItem bundleName = new LinkItem("bundle");
+        bundleName.setTitle("Bundle");
         bundleName.setTarget("#Bundles/Bundle/" + bundle.getId());
         bundleName.setValue(bundle.getName());
 

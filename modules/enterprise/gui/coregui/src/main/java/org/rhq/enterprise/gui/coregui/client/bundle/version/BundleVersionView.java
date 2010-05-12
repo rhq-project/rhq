@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.file.FileListView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -78,6 +79,8 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
 
         tabs.addTab(createUpdateHistoryTab());
 
+
+        addMember(new BackButton("Back to Bundle","#Bundles/mybundle"));
 
         addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png") + "\"/> " + version.getName()));
         addMember(tabs);

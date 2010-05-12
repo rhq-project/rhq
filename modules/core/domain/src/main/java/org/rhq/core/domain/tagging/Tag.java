@@ -34,6 +34,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -49,12 +51,23 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  * @author Greg Hinkle
  */
 @Entity
+@NamedQueries( {
+        @NamedQuery(name = Tag.QUERY_TAG_COMPOSITE_REPORT,
+                query = "SELECT t.id, t.namespace, t.semantic, t.name,\n" +
+                        "  (count(r) + count(g) + count(b) + count(bv) + count(bd)) AS Total,\n" +
+                        "  count(r) AS Resources, count(g) AS ResourceGroups, count(b) AS Bundles, count(bv) AS BundleVersions, count(bd) AS BundleDeployments\n" +
+                        "FROM Tag t LEFT JOIN t.resources r  LEFT JOIN t.resourceGroups g LEFT JOIN t.bundles b LEFT JOIN t.bundleVersions bv LEFT JOIN t.bundleDeployments bd\n" +
+                        "GROUP BY t.id, t.namespace, t.semantic, t.name\n" +
+                        "ORDER BY (count(r) + count(g) + count(b) + count(bv) + count(bd)) desc")
+})
 @SequenceGenerator(name = "RHQ_TAGGING_SEQ", sequenceName = "RHQ_TAGGING_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_TAGGING")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Tag implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_TAG_COMPOSITE_REPORT = "Tag.compositeReport";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_TAGGING_SEQ")
@@ -90,7 +103,7 @@ public class Tag implements Serializable {
     @ManyToMany
     private Set<BundleDeployment> bundleDeployments;
 
-    protected Tag() {
+    public Tag() {
     }
 
     public Tag(String namespace, String semantic, String name) {

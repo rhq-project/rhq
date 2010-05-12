@@ -49,7 +49,7 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
 
     public BundleDeploymentDataSource() {
 
-        DataSourceIntegerField id = new DataSourceIntegerField("id","ID");
+        DataSourceIntegerField id = new DataSourceIntegerField("id", "ID");
         id.setPrimaryKey(true);
         addField(id);
 
@@ -65,13 +65,11 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         DataSourceTextField bundleVersion = new DataSourceTextField("bundleVersion", "Bundle Version");
         addField(bundleVersion);
 
-
     }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
-
 
         if (request.getCriteria().getValues().containsKey("bundleId")) {
             criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttribute("bundleId")));
@@ -83,7 +81,7 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
 
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load bundle deployments",caught);
+                CoreGUI.getErrorHandler().handleError("Failed to load bundle deployments", caught);
             }
 
             public void onSuccess(PageList<BundleDeployment> result) {
@@ -92,12 +90,11 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
             }
         });
 
-
     }
 
     @Override
     public BundleDeployment copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override
@@ -107,17 +104,15 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
 
         record.setAttribute("id", from.getId());
         record.setAttribute("name", from.getName());
-        record.setAttribute("installDir", from.getInstallDir());
+        record.setAttribute("deployDir", from.getDestination().getDeployDir());
         record.setAttribute("description", from.getDescription());
         record.setAttribute("createdTime", new Date(from.getCtime()));
         record.setAttribute("configuration", from.getConfiguration());
-
 
         if (from.getBundleVersion() != null) {
             record.setAttribute("bundleVersionVersion", from.getBundleVersion().getVersion());
             record.setAttribute("bundleVersionId", from.getBundleVersion().getId());
         }
-
 
         return record;
     }

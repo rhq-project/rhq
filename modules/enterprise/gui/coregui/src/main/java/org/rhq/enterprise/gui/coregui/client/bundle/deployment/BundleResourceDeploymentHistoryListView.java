@@ -37,7 +37,6 @@ import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
  */
 public class BundleResourceDeploymentHistoryListView extends VLayout {
 
-
     private BundleResourceDeployment resourceDeployment;
 
     public BundleResourceDeploymentHistoryListView(BundleResourceDeployment resourceDeployment) {
@@ -51,7 +50,6 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
     protected void onInit() {
         super.onInit();
 
-
         ListGrid grid = new ListGrid();
         grid.setWidth100();
         grid.setHeight100();
@@ -60,17 +58,13 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
         ListGridField message = new ListGridField("message", "Message");
         ListGridField status = new ListGridField("status", "status");
 
-
         grid.setFields(action, message, status);
 
         grid.setData(buildRecords());
 
         addMember(grid);
 
-
     }
-
-
 
     public ListGridRecord[] buildRecords() {
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
@@ -80,11 +74,17 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
             ListGridRecord record = new ListGridRecord();
             record.setAttribute("id", step.getId());
 
-            record.setAttribute("action", step.getAuditAction());
+            record.setAttribute("action", step.getAction());
 
-            record.setAttribute("message",step.getAuditMessage());
+            record.setAttribute("info", step.getInfo());
 
-            record.setAttribute("status", step.getAuditStatus().name());
+            record.setAttribute("category", step.getCategory().toString());
+
+            record.setAttribute("message", step.getMessage());
+
+            record.setAttribute("attachment", step.getAttachment());
+
+            record.setAttribute("status", step.getStatus().name());
 
             records.add(record);
         }

@@ -78,11 +78,8 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         this.version = bundleDeployment.getBundleVersion();
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
 
-
-
-        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png") + "\"/> " + deployment.getName()));
-
-
+        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png")
+            + "\"/> " + deployment.getName()));
 
         DynamicForm form = new DynamicForm();
         form.setNumCols(4);
@@ -92,44 +89,39 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         bundleName.setTarget("#Bundles/Bundle/" + bundle.getId());
         bundleName.setValue(bundle.getName());
 
-
-
         CanvasItem tagItem = new CanvasItem("tag");
         tagItem.setShowTitle(false);
         TagEditorView tagEditor = new TagEditorView(version.getTags(), false, new TagsChangedCallback() {
             public void tagsChanged(HashSet<Tag> tags) {
-                GWTServiceLookup.getTagService().updateBundleDeploymentTags(deployment.getId(), tags, new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to update bundle deployment's tags", caught);
-                    }
+                GWTServiceLookup.getTagService().updateBundleDeploymentTags(deployment.getId(), tags,
+                    new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to update bundle deployment's tags", caught);
+                        }
 
-                    public void onSuccess(Void result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Bundle Deployment Tags updated", Message.Severity.Info));
-                    }
-                });
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Bundle Deployment Tags updated", Message.Severity.Info));
+                        }
+                    });
             }
         });
         tagItem.setCanvas(tagEditor);
         tagItem.setRowSpan(4);
 
-
-        StaticTextItem deployed = new StaticTextItem("deployed","Deployed");
+        StaticTextItem deployed = new StaticTextItem("deployed", "Deployed");
         deployed.setValue(new Date(deployment.getCtime()));
 
-
         LinkItem destinationGroup = new LinkItem("group");
-        destinationGroup.setTarget("#ResourceGroup/" + deployment.getGroupDeployments().get(0).getGroup().getId());
+        destinationGroup.setTarget("#ResourceGroup/" + deployment.getDestination().getGroup().getId());
         destinationGroup.setValue("Group");
 
-
-        StaticTextItem path = new StaticTextItem("path","Path");
-        path.setValue(deployment.getInstallDir());
-
+        StaticTextItem path = new StaticTextItem("path", "Path");
+        path.setValue(deployment.getDestination().getDeployDir());
 
         form.setFields(bundleName, tagItem, deployed, destinationGroup, path);
 
         addMember(form);
-
 
         Table deployments = createDeploymentsTable();
         deployments.setHeight100();
@@ -155,46 +147,42 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         for (BundleResourceDeployment rd : deployment.getResourceDeployments()) {
             ListGridRecord record = new ListGridRecord();
             record.setAttribute("resource", rd.getResource().getName());
-            record.setAttribute("status",rd.getStatus().name());
-            record.setAttribute("id",rd.getId());
-            record.setAttribute("entity",rd);
+            record.setAttribute("status", rd.getStatus().name());
+            record.setAttribute("id", rd.getId());
+            record.setAttribute("entity", rd);
             records.add(record);
         }
 
         table.getListGrid().setData(records.toArray(new ListGridRecord[records.size()]));
 
-
         table.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
 
-
-                    BundleResourceDeployment bundleResourceDeployment =
-                            (BundleResourceDeployment) selectionEvent.getRecord().getAttributeAsObject("entity");
-                    BundleResourceDeploymentHistoryListView detailView =
-                            new BundleResourceDeploymentHistoryListView(bundleResourceDeployment);
+                    BundleResourceDeployment bundleResourceDeployment = (BundleResourceDeployment) selectionEvent
+                        .getRecord().getAttributeAsObject("entity");
+                    BundleResourceDeploymentHistoryListView detailView = new BundleResourceDeploymentHistoryListView(
+                        bundleResourceDeployment);
 
                     detail.addChild(detailView);
                     detail.animateShow(AnimationEffect.SLIDE);
 
+                    /*
+                                        BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
+                                        criteria.addFilterId(selectionEvent.getRecord().getAttributeAsInt("id"));
+                                        criteria.fetchHistories(true);
+                                        criteria.fetchResource(true);
+                                        criteria.fetchBundleDeployment(true);
+                                        bundleService.findBundleResourceDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleResourceDeployment>>() {
+                                            public void onFailure(Throwable caught) {
+                                                CoreGUI.getErrorHandler().handleError("Failed to load resource deployment history details",caught);
+                                            }
 
-/*
-                    BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
-                    criteria.addFilterId(selectionEvent.getRecord().getAttributeAsInt("id"));
-                    criteria.fetchHistories(true);
-                    criteria.fetchResource(true);
-                    criteria.fetchBundleDeployment(true);
-                    bundleService.findBundleResourceDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleResourceDeployment>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to load resource deployment history details",caught);
-                        }
+                                            public void onSuccess(PageList<BundleResourceDeployment> result) {
 
-                        public void onSuccess(PageList<BundleResourceDeployment> result) {
-
-                        }
-                    });
-*/
-
+                                            }
+                                        });
+                    */
 
                 } else {
                     detail.animateHide(AnimationEffect.SLIDE);
@@ -205,71 +193,64 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         return table;
     }
 
-
-
     public void renderView(final ViewPath viewPath) {
         int bundleDeploymentId = Integer.parseInt(viewPath.getCurrent().getPath());
-
 
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.addFilterId(bundleDeploymentId);
         criteria.fetchBundleVersion(true);
         criteria.fetchConfiguration(true);
         criteria.fetchResourceDeployments(true);
-        criteria.fetchGroupDeployments(true);
         criteria.fetchTags(true);
 
         bundleService = GWTServiceLookup.getBundleService();
-        bundleService.findBundleDeploymentsByCriteria(criteria,
-                new AsyncCallback<PageList<BundleDeployment>>() {
+        bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to load budle version", caught);
+            }
+
+            public void onSuccess(PageList<BundleDeployment> result) {
+
+                final BundleDeployment deployment = result.get(0);
+
+                BundleCriteria bundleCriteria = new BundleCriteria();
+                bundleCriteria.addFilterId(deployment.getBundleVersion().getBundle().getId());
+                bundleService.findBundlesByCriteria(bundleCriteria, new AsyncCallback<PageList<Bundle>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load budle version", caught);
+                        CoreGUI.getErrorHandler().handleError("Failed to find bundle", caught);
                     }
 
-                    public void onSuccess(PageList<BundleDeployment> result) {
+                    public void onSuccess(PageList<Bundle> result) {
 
-                        final BundleDeployment deployment = result.get(0);
+                        deployment.getBundleVersion().setBundle(result.get(0));
 
-                        BundleCriteria bundleCriteria = new BundleCriteria();
-                        bundleCriteria.addFilterId(deployment.getBundleVersion().getBundle().getId());
-                        bundleService.findBundlesByCriteria(bundleCriteria, new AsyncCallback<PageList<Bundle>>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to find bundle",caught);
-                            }
+                        BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
+                        criteria.addFilterBundleDeploymentId(deployment.getId());
+                        criteria.fetchHistories(true);
+                        criteria.fetchResource(true);
+                        criteria.fetchBundleDeployment(true);
+                        bundleService.findBundleResourceDeploymentsByCriteria(criteria,
+                            new AsyncCallback<PageList<BundleResourceDeployment>>() {
 
-                            public void onSuccess(PageList<Bundle> result) {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError("Failed to load deployment detail", caught);
+                                }
 
-                                deployment.getBundleVersion().setBundle(result.get(0));
+                                public void onSuccess(PageList<BundleResourceDeployment> result) {
 
+                                    deployment.setResourceDeployments(result);
 
-                                BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
-                                criteria.addFilterBundleDeploymentId(deployment.getId());
-                                criteria.fetchHistories(true);
-                                criteria.fetchResource(true);
-                                criteria.fetchBundleDeployment(true);
-                                bundleService.findBundleResourceDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleResourceDeployment>>() {
+                                    viewBundleDeployment(deployment, viewPath.getCurrent());
 
-                                    public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError("Failed to load deployment detail",caught);
-                                    }
-
-                                    public void onSuccess(PageList<BundleResourceDeployment> result) {
-
-                                        deployment.setResourceDeployments(result);
-
-                                        viewBundleDeployment(deployment, viewPath.getCurrent());
-
-                                    }
-                                });
-
-                            }
-                        });
+                                }
+                            });
 
                     }
                 });
 
+            }
+        });
 
     }
-
 
 }

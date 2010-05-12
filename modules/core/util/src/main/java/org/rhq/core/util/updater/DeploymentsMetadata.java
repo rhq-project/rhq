@@ -27,6 +27,8 @@ import java.io.File;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.rhq.core.util.file.FileUtil;
+
 /**
  * This loads and stores metadata about installs of a particular bundle deployment.
  * 
@@ -35,6 +37,7 @@ import java.util.regex.Pattern;
 public class DeploymentsMetadata {
     public static final String METADATA_DIR = ".rhqdeployments";
     public static final String CURRENT_DEPLOYMENT_FILE = "current-deployment.properties";
+    public static final String PREVIOUS_DEPLOYMENT_FILE = "previous-deployment.properties";
     public static final String DEPLOYMENT_FILE = "deployment.properties";
     public static final String HASHCODES_FILE = "file-hashcodes.dat";
     public static final String BACKUP_DIR = "backup";
@@ -271,7 +274,12 @@ public class DeploymentsMetadata {
         fileHashcodeMap.storeToFile(new File(deploymentMetadataDir, HASHCODES_FILE));
 
         // since we are being told this is the live deployment, this deployment should be considered the current one 
-        deploymentProps.saveToFile(new File(getMetadataDirectory(), CURRENT_DEPLOYMENT_FILE));
+        File currentDeploymentPropertiesFile = new File(getMetadataDirectory(), CURRENT_DEPLOYMENT_FILE);
+        File previousDeploymentPropertiesFile = new File(deploymentMetadataDir, PREVIOUS_DEPLOYMENT_FILE);
+        if (currentDeploymentPropertiesFile.exists()) {
+            FileUtil.copyFile(currentDeploymentPropertiesFile, previousDeploymentPropertiesFile);
+        }
+        deploymentProps.saveToFile(currentDeploymentPropertiesFile);
 
         return;
     }

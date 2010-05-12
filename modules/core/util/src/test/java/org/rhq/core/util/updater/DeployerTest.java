@@ -479,6 +479,18 @@ public class DeployerTest {
             } else {
                 assert diff.getRealizedFiles().size() == 0 : diff;
             }
+
+            File previousDeployment1 = new File(metadir, "1/previous-deployment.properties");
+            File previousDeployment2 = new File(metadir, "2/previous-deployment.properties");
+            File previousDeployment3 = new File(metadir, "3/previous-deployment.properties");
+            File previousDeployment4 = new File(metadir, "4/previous-deployment.properties");
+            assert !previousDeployment1.exists() : "there was no previous deployment for #1";
+            assert previousDeployment2.exists() : "there was a previous deployment";
+            assert previousDeployment3.exists() : "there was a previous deployment";
+            assert previousDeployment4.exists() : "there was a previous deployment";
+            assert DeploymentProperties.loadFromFile(previousDeployment2).getDeploymentId() == 1;
+            assert DeploymentProperties.loadFromFile(previousDeployment3).getDeploymentId() == 2;
+            assert DeploymentProperties.loadFromFile(previousDeployment4).getDeploymentId() == 3;
         } finally {
             FileUtil.purge(tmpDir, true);
             FileUtil.purge(tmpDir2, true);

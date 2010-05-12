@@ -43,7 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -229,6 +228,7 @@ public class BundleView extends VLayout implements BookmarkableView {
 
                             public void onSuccess(PageList<Bundle> result) {
                                 Bundle bundle = result.get(0);
+                                viewId.getBreadcrumbs().set(0,new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                                 viewBundle(bundle, viewPath.getCurrent());
                                 viewId.getBreadcrumbs().add(new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                                 CoreGUI.refreshBreadCrumbTrail();
@@ -254,7 +254,7 @@ public class BundleView extends VLayout implements BookmarkableView {
                 } else {
                     // one version
                     removeMembers(getMembers());
-                    BundleDeploymentView view = new BundleDeploymentView();
+                    BundleVersionView view = new BundleVersionView();
                     addMember(view);
                     view.renderView(viewPath.next());
                 }

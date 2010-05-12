@@ -20,39 +20,38 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.gwt;
+package org.rhq.enterprise.gui.coregui.client.components.buttons;
 
-import java.util.Set;
-
-import com.google.gwt.user.client.rpc.RemoteService;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.TagCriteria;
-import org.rhq.core.domain.tagging.Tag;
-import org.rhq.core.domain.tagging.compsite.TagReportComposite;
-import org.rhq.core.domain.util.PageList;
+import com.google.gwt.user.client.History;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.StretchImgButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 
 /**
  * @author Greg Hinkle
  */
-public interface TagGWTService extends RemoteService {
+public class BackButton extends StretchImgButton {
 
 
-    PageList<Tag> findTagsByCriteria(TagCriteria tagCriteria);
+    public BackButton() {
+        setSrc("buttons/back/back.png");
+    }
 
-    Set<Tag> addTags(Set<Tag> tags);
+    public BackButton(String title, final String anchor) {
+        this();
+        setTitle("<b>" + title + "</b>");
+        addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                History.newItem(anchor);
+            }
+        });
+        setAutoFit(true);
+        setHeight(22);
+        setWrap(false);
+        setShowDown(false);
 
-    void removeTags(Set<Tag> tags);
-
-    void updateResourceTags(int resourceId, Set<Tag> tags);
-
-    void updateResourceGroupTags(int resourceGroupId, Set<Tag> tags);
-
-    void updateBundleTags(int bundleId, Set<Tag> tags);
-
-    void updateBundleVersionTags(int bundleVersionId, Set<Tag> tags);
-
-    void updateBundleDeploymentTags(int bundleDeploymentId, Set<Tag> tags);
-
-    PageList<TagReportComposite> findTagReportCompositesByCriteria(TagCriteria tagCriteria);
+        setCapSize(20);
+        setStyleName("backLink");
+    }
 }

@@ -38,7 +38,7 @@ import org.rhq.core.domain.util.PageOrdering;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class ResourceGroupCriteria extends Criteria {
+public class ResourceGroupCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;

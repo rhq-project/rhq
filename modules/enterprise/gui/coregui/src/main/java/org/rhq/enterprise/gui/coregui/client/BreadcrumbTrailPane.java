@@ -55,11 +55,13 @@ public class BreadcrumbTrailPane extends HTMLPane {
 
             for (ViewId viewId : viewPath.getViewPath()) {
 
-                if (!first) {
-                    path.append("/");
-                    content.append(" > ");
-                } else {
-                    first = false;
+                if (!viewId.getBreadcrumbs().isEmpty()) {
+                    if (!first) {
+                        path.append("/");
+                        content.append(" > ");
+                    } else {
+                        first = false;
+                    }
                 }
 
                 boolean firstBC = true;

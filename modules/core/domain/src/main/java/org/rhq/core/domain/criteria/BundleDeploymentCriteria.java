@@ -31,7 +31,7 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class BundleDeploymentCriteria extends Criteria {
+public class BundleDeploymentCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;

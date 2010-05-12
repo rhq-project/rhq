@@ -230,7 +230,9 @@ public abstract class AbstractSelector<T> extends VLayout {
 
         if (initialSelection != null) {
             assignedGrid.setData(initialSelection);
-            select(initialSelection);
+            for (ListGridRecord record : initialSelection) {
+                selection.add(record.getAttributeAsInt("id"));
+            }
         }
 
         addMember(hlayout);

@@ -44,6 +44,8 @@ import org.rhq.plugins.nagios.request.LqlResourceTypeRequest;
 public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, ManualAddFacet
 {
     private final Log log = LogFactory.getLog(this.getClass());
+    static String nagiosHost;
+    static String nagiosPort;
 
     /**
     * Support manually adding this resource type via Platform's inventory tab
@@ -52,11 +54,10 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
     * @return
     * @throws org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException
      */
-   public DiscoveredResourceDetails discoverResource(Configuration configuration,
-                                                     ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException {
+   public DiscoveredResourceDetails discoverResource(Configuration configuration, ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException {
 
-      String nagiosHost = configuration.getSimpleValue("nagiosHost",NagiosMonitorComponent.DEFAULT_NAGIOSIP);
-      String nagiosPort = configuration.getSimpleValue("nagiosPort",NagiosMonitorComponent.DEFAULT_NAGIOSPORT);
+      NagiosMonitorDiscovery.nagiosHost = configuration.getSimpleValue("nagiosHost",NagiosMonitorComponent.DEFAULT_NAGIOSIP);
+      NagiosMonitorDiscovery.nagiosPort = configuration.getSimpleValue("nagiosPort",NagiosMonitorComponent.DEFAULT_NAGIOSPORT);
 
 
         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
@@ -73,8 +74,6 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
       return detail;
    }
 
-
-
     /**
      * Don't run the auto-discovery of this "nagios" server type,
      * as we probably won't have one on each platform. Rather have the admin
@@ -82,11 +81,11 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
     	Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
-    	
-    	//Method requests available nagios services an returns the names of them
-    	LqlReply resourceTypeReply = getResourceTypeInformation("172.31.127.218", Integer.parseInt(NagiosMonitorComponent.DEFAULT_NAGIOSPORT));
-		
-    	//for each available service
+    	    	
+       	//Method requests available nagios services an returns the names of them
+       	LqlReply resourceTypeReply = getResourceTypeInformation(nagiosHost, Integer.parseInt(nagiosPort));
+    		
+       	//for each available service
 		for(int i = 0; i < resourceTypeReply.getLqlReply().size(); i++)
 		{
 			//create new DiscoveredResourceDetails instance
@@ -94,18 +93,18 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
 			(
 				//new ResourceType instance per service
 				new ResourceType(resourceTypeReply.getLqlReply().get(i),"NagiosMonitor", ResourceCategory.SERVICE, null), 
-				"nagiosKey@" + ":" + i + ":" + resourceTypeReply.getLqlReply().get(i),
-				"Nagios@" + ":" + i + ":" + resourceTypeReply.getLqlReply().get(i),
+				"nagiosKey@" + "Nr:" + i + ":" + nagiosHost + ":" + nagiosPort,
+				"Nagios@" + "Nr:" + i + ":" + nagiosHost + ":" + nagiosPort,
 	            null,
 	            "NagiosService: " + resourceTypeReply.getLqlReply().get(i),
 	            null,
-            	null
+	            null
 			);
 			
 			//add DiscoveredResourceDetails instance to Set
 			discoveredResources.add(detail);
 		}
-    	
+     	
         return discoveredResources;
     }
     

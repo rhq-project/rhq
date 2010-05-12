@@ -22,7 +22,6 @@
  */
 package org.rhq.plugins.apache;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -35,7 +34,6 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -45,7 +43,6 @@ import org.rhq.plugins.apache.util.AugeasNodeSearch;
 public class ApacheIfModuleDirectoryComponent implements ResourceComponent<ApacheDirectoryComponent>, ConfigurationFacet { 
 
     private ResourceContext<ApacheDirectoryComponent> context;
-    private List<String> position;
     private ApacheDirectoryComponent parentComponent; 
     private final Log log = LogFactory.getLog(this.getClass());
     private static final String IFMODULE_DIRECTIVE_NAME="<IfModule"; 
@@ -55,12 +52,7 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
         
       this.context = context;    
       parentComponent = context.getParentResourceComponent();
-      String resourceKey = context.getResourceKey();
-      position = new ArrayList<String>();
-      
-      for (String pm : resourceKey.split(";")){
-          position.add(pm);
-      }
+
     }
 
     public void stop() {
@@ -104,13 +96,8 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
    }
     
     private AugeasNode getNode(AugeasNode virtualHost) {
-        List<AugeasNode> directories = AugeasNodeSearch.getNodeByParentParams(virtualHost, IFMODULE_DIRECTIVE_NAME, position);
-        if (directories.isEmpty())
-        {
-            log.warn("Parent directive of ifmodule was probably deleted in configuration file.");
-            throw new RuntimeException("Parent directive of ifmodule was probably deleted in configuration file.");
-        }
-        return directories.get(0);
+        AugeasNode directory = AugeasNodeSearch.findNodeById(virtualHost, context.getResourceKey());
+        return directory;
       }
 }
 

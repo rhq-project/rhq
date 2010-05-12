@@ -60,6 +60,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
+import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
@@ -253,23 +254,33 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             AugeasTree tree = getServerConfigurationTree();
             AugeasNode myNode = getNode(tree);
             List<AugeasNode> directories = myNode.getChildByLabel("<Directory");
-            int seq = 0;
+            int seq = 1;
+            /*
+             * myNode will be parent node of the new Directory node.
+             * We need to create a new node for directory node which will contain child nodes.
+             * To create a node we can call method from AugeasTree which will create a node. In this method is 
+             * parameter sequence, if we will leave this parameter empty and there will be more nodes with 
+             * the same label, new node will be created but the method createNode will return node with index 0 resp 1.
+             * If that will happen we can not update the node anymore because we are updating wrong node.
+             * To avoid this situation we need to know what is the last sequence nr. of virtual host's child (directory) nodes.
+             * We can not just count child nodes with the same label because some of the child nodes
+             * could be stored in another file. So that in httpd configurationstructure they are child nodes of virtual host,
+             *  but in augeas configuration structure they can be child nodes of node Include[];. 
+             */
+           
             for (AugeasNode n : directories) {
-                if (n.getSeq() > seq) {
-                    seq = n.getSeq();
+                String param = n.getFullPath();
+                int end = param.lastIndexOf(File.separatorChar);
+                if (end != -1)
+                  if (myNode.getFullPath().equals(param.substring(0,end)))
+                      seq++;
                 }
-            }
-            seq++;
             
-            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, seq));
+            //pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, seq));
             //we don't support this yet... need to figure out how...
             pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, false));
-
-            //set the resource key and name
             String dirNameToSet = AugeasNodeValueUtil.escape(directoryName);
-            report.setResourceKey(dirNameToSet + "|" + seq); 
-            report.setResourceName(directoryName);
-            
+                        
             //now actually create the data in augeas
             try {
                 ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
@@ -278,6 +289,12 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 mapping.updateAugeas(directoryNode, resourceConfiguration, resourceType.getResourceConfigurationDefinition());
                 tree.save();
                 
+                
+                tree = getServerConfigurationTree();
+                String key = AugeasNodeSearch.getNodeKey(myNode, directoryNode);
+                report.setResourceKey(key); 
+                report.setResourceName(directoryName);
+    
                 report.setStatus(CreateResourceStatus.SUCCESS);
                 
                 resourceContext.getParentResourceComponent().finishChildResourceCreate(report);

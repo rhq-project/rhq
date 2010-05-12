@@ -13,7 +13,8 @@
    <service name="Sudoers"
             description="The static table lookup for host names"
             discovery="SudoersDiscoveryComponent"
-            class="SudoersComponent">
+            class="SudoersComponent"
+            singleton="true">
 
        <runs-inside>
          <parent-resource-type name="Linux"    plugin="Platforms"/>

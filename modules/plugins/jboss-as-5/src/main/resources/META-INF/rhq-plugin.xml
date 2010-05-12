@@ -1168,7 +1168,7 @@
              </configuration>
           </content>
 
-          <server name="JBoss AS JVM"
+          <server name="JVM"
                   description="JVM of the JBossAS"
                   sourcePlugin="JMX"
                   sourceType="JMX Server"

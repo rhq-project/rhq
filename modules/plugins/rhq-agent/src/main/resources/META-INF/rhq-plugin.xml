@@ -614,7 +614,7 @@
          </c:group>
       </resource-configuration>
 
-      <server name="RHQ Agent JVM"
+      <server name="JVM"
               description="JVM of the Management Agent"
               sourcePlugin="JMX"
               sourceType="JMX Server"

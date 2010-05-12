@@ -85,9 +85,12 @@
     <quartz.version>1.6.5</quartz.version>
     <jna.version>3.2.2</jna.version>
 
-    <!-- defaults for datasource used by integration tests -
-         these may be overridden in ~/.m2/settings.xml -->
-    <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhq</rhq.test.ds.connection-url>
+    <!--
+       defaults for datasource used by integration tests -
+       these may be overridden in ~/.m2/settings.xml 
+    -->
+    <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
+    <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/${rhq.test.ds.db-name}</rhq.test.ds.connection-url>
     <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
     <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
     <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
@@ -95,15 +98,19 @@
     <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
     <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
     <rhq.test.ds.port>5432</rhq.test.ds.port>
-    <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
     <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
     <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
-    <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
+    <rhq.test.quartz.selectWithLockSQL>
+       SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE
+    </rhq.test.quartz.selectWithLockSQL>
     <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
 
-    <!-- defaults for datasource used by the dev container build (see dev docs on the 'dev' profile) -
-         these may be overridden in ~/.m2/settings.xml -->
-    <rhq.dev.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhqdev</rhq.dev.ds.connection-url>
+    <!--
+       defaults for datasource used by the dev container build (see dev docs on the 'dev' profile) -
+       these may be overridden in ~/.m2/settings.xml 
+    -->
+    <rhq.dev.ds.db-name>rhqdev</rhq.dev.ds.db-name>
+    <rhq.dev.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/${rhq.dev.ds.db-name}</rhq.dev.ds.connection-url>
     <rhq.dev.ds.driver-class>org.postgresql.Driver</rhq.dev.ds.driver-class>
     <rhq.dev.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.dev.ds.xa-datasource-class>
     <rhq.dev.ds.user-name>rhqadmin</rhq.dev.ds.user-name>
@@ -112,10 +119,11 @@
     <rhq.dev.ds.type-mapping>PostgreSQL</rhq.dev.ds.type-mapping>
     <rhq.dev.ds.server-name>127.0.0.1</rhq.dev.ds.server-name>
     <rhq.dev.ds.port>5432</rhq.dev.ds.port>
-    <rhq.dev.ds.db-name>rhqdev</rhq.dev.ds.db-name>
     <rhq.dev.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.dev.ds.hibernate-dialect>
     <rhq.dev.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.dev.quartz.driverDelegateClass>
-    <rhq.dev.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.dev.quartz.selectWithLockSQL>
+    <rhq.dev.quartz.selectWithLockSQL>
+       SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE
+    </rhq.dev.quartz.selectWithLockSQL>
     <rhq.dev.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.dev.quartz.lockHandlerClass>
 
      <!-- default port numbers for RHQ server -->
@@ -514,7 +522,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-site-plugin</artifactId>
-           <version>2.1</version>
+           <version>2.0.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-source-plugin</artifactId>

@@ -340,10 +340,7 @@ public class AlertCondition implements Serializable {
      *
      * @param cond the alert condition to be copied
      */
-    public AlertCondition(AlertCondition cond, boolean copyIds) {
-        if (copyIds) {
-            this.id = cond.id;
-        }
+    public AlertCondition(AlertCondition cond) {
         this.category = cond.category;
         this.measurementDefinition = cond.measurementDefinition;
         this.name = cond.name;

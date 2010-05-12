@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.faces.application.FacesMessage;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.In;
@@ -34,6 +36,7 @@ import org.jboss.seam.annotations.web.RequestParameter;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.alert.converter.AlertNotificationConverter;
 import org.rhq.enterprise.gui.common.framework.EnterpriseFacesContextUIBean;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
@@ -160,39 +163,54 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
     }
 
     public String addAlertSender() {
-        Configuration newSenderConfig = null;
-        ConfigurationDefinition configDefinition = this.alertNotificationManager
-            .getConfigurationDefinitionForSender(selectedNewSender);
+        try {
+            Configuration newSenderConfig = null;
+            ConfigurationDefinition configDefinition = this.alertNotificationManager
+                .getConfigurationDefinitionForSender(this.selectedNewSender);
 
-        if (configDefinition != null) {
-            newSenderConfig = configDefinition.getDefaultTemplate().createConfiguration();
-        } else {
-            newSenderConfig = new Configuration();
+            if (configDefinition != null) {
+                newSenderConfig = configDefinition.getDefaultTemplate().createConfiguration();
+            } else {
+                newSenderConfig = new Configuration();
+            }
+
+            AlertNotification newNotification = new AlertNotification(this.selectedNewSender, newSenderConfig);
+
+            AlertNotification newlyCreated = this.alertNotificationManager.addAlertNotification(getSubject(),
+                this.contextId, newNotification);
+
+            reloadAlertNotifications();
+            this.activeNotification = newlyCreated;
+            this.selectedNotifications.clear();
+            this.selectedNotifications.add(this.activeNotification);
+        } catch (Throwable t) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create alert notification", t);
         }
-
-        AlertNotification newlyCreated = this.alertNotificationManager.addAlertNotification(getSubject(),
-            this.contextId, this.selectedNewSender, newSenderConfig);
-
-        this.alertNotifications.add(newlyCreated); // only add if no errors
-        this.activeNotification = newlyCreated;
-        this.selectedNotifications.clear();
-        this.selectedNotifications.add(this.activeNotification);
 
         return OUTCOME_SUCCESS;
     }
 
     public String saveConfiguration() {
-        if (this.activeNotification != null) {
-            this.alertNotificationManager.updateAlertNotification(this.activeNotification);
+        try {
+            if (this.activeNotification != null) {
+                this.alertNotificationManager.updateAlertNotification(getSubject(), this.contextId,
+                    this.activeNotification);
+            }
+        } catch (Throwable t) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to save alert notification", t);
         }
 
         return OUTCOME_SUCCESS;
     }
 
     public String removeSelected() {
-        this.alertNotificationManager.removeNotifications(getSubject(), contextId, getSelectedIds());
-        this.alertNotifications.removeAll(this.selectedNotifications); // only remove if no errors
-        this.activeNotification = null;
+        try {
+            this.alertNotificationManager.removeNotifications(getSubject(), this.contextId, getSelectedIds());
+            this.alertNotifications.removeAll(this.selectedNotifications); // only remove if no errors
+            this.activeNotification = null;
+        } catch (Throwable t) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to save remove notifications", t);
+        }
 
         return OUTCOME_SUCCESS;
     }

@@ -712,7 +712,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                         } else {
                             alNoLo = new AlertNotificationLog(alert, senderName, result);
                         }
-                        log.info(result);
+                        log.debug(result);
                     } catch (Throwable t) {
                         log.error("Sender failed: " + t.getMessage());
                         if (log.isDebugEnabled())

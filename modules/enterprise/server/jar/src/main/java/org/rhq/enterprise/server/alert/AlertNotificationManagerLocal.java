@@ -38,6 +38,22 @@ import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 public interface AlertNotificationManagerLocal {
 
     /**
+     * Add a new AlertNotification to the passed definition
+     * @param user subject of the caller
+     * @param alertDefinitionId Id of the alert definition
+     * @param senderName shortName of the {@link AlertSender}
+     * @param configuration Properties for this alert sender.
+     */
+    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, AlertNotification notification);
+
+    /**
+     * Persist changes to the passed {@link AlertNotification}
+     *
+     * @param notification
+     */
+    void updateAlertNotification(Subject subject, int alertDefinitionId, AlertNotification notification);
+
+    /**
      * Remove the passed notifications from the passed alert definition (all identified by their id)
      * @param subject Caller
      * @param alertDefinitionId alert definition to modify
@@ -59,16 +75,6 @@ public interface AlertNotificationManagerLocal {
     ConfigurationDefinition getConfigurationDefinitionForSender(String shortName);
 
     /**
-     * Add a new AlertNotification to the passed definition
-     * @param user subject of the caller
-     * @param alertDefinitionId Id of the alert definition
-     * @param senderName shortName of the {@link AlertSender}
-     * @param configuration Properties for this alert sender.
-     */
-    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName,
-        Configuration configuration);
-
-    /**
      * Return notifications for a certain alertDefinitionId
      *
      * NOTE: this only returns notifications that have an AlertSender defined.
@@ -80,13 +86,6 @@ public interface AlertNotificationManagerLocal {
      *
      */
     List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId);
-
-    /**
-     * Persist changes to the passed {@link AlertNotification}
-     *
-     * @param notification
-     */
-    void updateAlertNotification(AlertNotification notification);
 
     AlertSenderInfo getAlertInfoForSender(String shortName);
 

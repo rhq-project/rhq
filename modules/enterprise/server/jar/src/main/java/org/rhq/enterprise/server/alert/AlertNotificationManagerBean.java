@@ -146,12 +146,14 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         for (AlertNotification notification : toBeRemoved) {
             CustomAlertSenderBackingBean bb = getBackingBeanForSender(notification.getSenderName(), notification
                 .getId());
-            try {
-                bb.internalCleanup();
-            } catch (Throwable t) {
-                LOG
-                    .error("removeNotifications, calling backingBean.internalCleanup() resulted in " + t.getMessage(),
-                        t);
+            if (bb!=null) { // Not all alert senders have custom backing beans
+                try {
+                    bb.internalCleanup();
+                } catch (Throwable t) {
+                    LOG
+                        .error("removeNotifications, calling backingBean.internalCleanup() resulted in " + t.getMessage(),
+                            t);
+                }
             }
         }
 

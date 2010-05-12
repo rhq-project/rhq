@@ -70,7 +70,7 @@
       <plugin>
         <groupId>org.codehaus.groovy.maven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-        <version>1.0</version>
+        <version>1.0-rc-5</version>
         <dependencies>
           <dependency>
             <groupId>postgresql</groupId>
@@ -93,10 +93,22 @@
                   return
                 }
 
+		println "DB = ${project.properties.db}"
+
                 db = project.properties.db
                 if (db == 'dev') {
                   database = project.properties['rhq.dev.ds.db-name']    
-                } else {
+		  } 
+		  // This is a bit of a temporary hack to work around 
+		  // https://cvs.codehaus.org/browse/GMAVEN-46 which results in
+		  // groovy scripts not being able to get the correct values of
+		  // build properties that are overridden on the command line.
+		  // This is being done in support of the hudson job which is
+		  // trying to use a database named rhqupgrade.
+		  else if (project.properties['upgrade.db']) {
+                    database = 'rhqupgrade'
+		  } 
+		  else {
                   database = project.properties['rhq.test.ds.db-name']
                 }
                 project.properties.dbsetup = 'true'
@@ -197,11 +209,6 @@
                             <equals arg1="${db}" arg2="dev"/>
                          </condition>
 
-			 <echo message="URL = ${rhq.test.ds.connection-url}"/>
-			 <echo message="URL = ${rhq.ds.connection.url}"/>
-
-			 <fail unless="rhq.dev.ds.connection-url" message="PROP NOT SET"/>
-			 
                          <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
                             <property name="settings.localRepository" value="${settings.localRepository}" />
                             <property name="ojdbc5.version" value="${ojdbc5.version}" />
@@ -249,8 +256,6 @@
                          <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
                             <equals arg1="${db}" arg2="dev"/>
 		         </condition>
-
-			 <echo message="URL = ${rhq.ds.connection.url}"/>
 
                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
                            <property name="settings.localRepository" value="${settings.localRepository}" />
@@ -445,50 +450,18 @@
            </plugins>
          </build>
       </profile>
-
-      <!--
-      <profile>
-         <id>rhq-dev-db</id>
-	 <activation>
-            <activeByDefault>true</activeByDefault>
-            <property>
-               <name>rhq.db</name>
-	       <value>dev</value>
-	    </property>
-	 </activation>  
-	 <properties>
-            <rhq.db.name>rhqdev</rhq.db.name>
-         </properties>
-      </profile>
-
-      <profile>
-         <id>rhq-test-db</id>
-	 <activation>
-            <property>
-               <name>rhq.db</name>
-	       <value>test</value>
-	    </property>
-	 </activation>  
-	 <properties>
-            <rhq.db.name>rhq</rhq.db.name>
-	 </properties>
-      </profile>
-
-      <profile>
-         <id>rhq-upgrade-db</id>
-	 <activation>
-            <property>
-               <name>rhq.db</name>
-	       <value>upgrade</value>
-	    </property>
-	 </activation>  
-	 <properties>
-            <rhq.db.name>rhqupgrade</rhq.db.name>
-	 </properties>
-      </profile>
-      -->
-
    </profiles>
+
+   <pluginRepositories>
+      <pluginRepository>
+         <id>codehaus-snapshots</id>
+	 <name>codehaus snapshots</name>
+	 <url>http://snapshots.repository.codehaus.org</url>
+	 <snapshots>
+            <enabled>true</enabled>
+	 </snapshots>
+      </pluginRepository>
+   </pluginRepositories>
 
 </project>
 

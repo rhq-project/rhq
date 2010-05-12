@@ -77,12 +77,8 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
 
         for (AugeasNode node : directories) {
             Configuration pluginConfiguration = new Configuration();
-            
-            int idx = node.getSeq();
-            
-            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, idx));
-            String ifmoduleParams = AugeasNodeSearch.getParamsString(node, parentNode);
-            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.PARAMS_PROPERTY_NAME, ifmoduleParams));
+                     
+            String ifmoduleParams = AugeasNodeSearch.getNodeKey(node, parentNode);           
             List<AugeasNode> params = node.getChildByLabel("param");
             
             String directoryParam;
@@ -98,7 +94,7 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
             
             pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, isRegexp));
             
-            String resourceKey = directoryParam + "|" + idx;
+            String resourceKey = ifmoduleParams;
             String resourceName = AugeasNodeValueUtil.unescape(directoryParam);
 
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,

@@ -57,15 +57,9 @@ public class ApacheIfModuleDiscoveryComponent  implements ResourceDiscoveryCompo
 
     for (AugeasNode node : ifModuleNodes) {
         
-        String resourceKey = AugeasNodeSearch.getParamsString(node,parentNode);
-        
-        int separatorPosition = resourceKey.indexOf(";");
-        String resourceName = null;
-        
-        if (separatorPosition!=-1)
-         resourceName = resourceKey.substring(0,separatorPosition);
-        else
-         resourceName = resourceKey.toString();
+        String resourceKey = AugeasNodeSearch.getNodeKey(node,parentNode);
+        String [] paramArray = resourceKey.split("\\|");
+        String resourceName = paramArray[1];
 
         discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
         null, null));

@@ -197,6 +197,8 @@ To run the default target, you must set one of the following properties to true:
 	 <param name="_dataonly" value="true"/>
 	 <param name="_uninstall" value="false"/>
       </antcall>
+
+      <antcall target="dbsetup-upgrade"/>
    </target>
 
    <!-- Inserts the dbsetup data.  Assumes the schema already exists. -->

@@ -25,11 +25,14 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 
@@ -61,4 +64,8 @@ public interface BundleGWTService extends RemoteService {
     ArrayList<BundleType> getAllBundleTypes() throws Exception;
 
     BundleDeployment scheduleBundleDeployment(int bundleDeploymentId) throws Exception;
+
+    PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria);
+
+    PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(BundleResourceDeploymentCriteria criteria);
 }

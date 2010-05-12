@@ -83,7 +83,9 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
                 Canvas value = valueMap.get(label);
                 CanvasItem ci = new CanvasItem();
                 ci.setShowTitle(false);
-                ci.setCanvas(value);
+                if (value != null) {
+                    ci.setCanvas(value);
+                }
                 ci.setDisabled(true);
                 items.add(ci);
 

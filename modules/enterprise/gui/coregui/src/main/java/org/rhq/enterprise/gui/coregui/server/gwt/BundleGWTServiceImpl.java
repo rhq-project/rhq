@@ -23,11 +23,14 @@ import java.util.HashMap;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -157,5 +160,17 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
+    }
+
+    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria) {
+        return SerialUtility.prepare(bundleManager.findBundleDeploymentsByCriteria(getSessionSubject(), criteria),
+            "BundleService.findBundleDeploymentsByCriteria");
+    }
+
+    public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(
+        BundleResourceDeploymentCriteria criteria) {
+        return SerialUtility.prepare(bundleManager.findBundleResourceDeploymentsByCriteria(getSessionSubject(),
+            criteria), "BundleService.findBundleResourceDeploymentsByCriteria");
+
     }
 }

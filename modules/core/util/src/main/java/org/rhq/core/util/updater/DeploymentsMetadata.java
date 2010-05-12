@@ -37,6 +37,7 @@ import org.rhq.core.util.file.FileUtil;
 public class DeploymentsMetadata {
     public static final String METADATA_DIR = ".rhqdeployments";
     public static final String CURRENT_DEPLOYMENT_FILE = "current-deployment.properties";
+    public static final String PREVIOUS_DEPLOYMENT_FILE = "previous-deployment.properties";
     public static final String DEPLOYMENT_FILE = "deployment.properties";
     public static final String HASHCODES_FILE = "file-hashcodes.dat";
     public static final String BACKUP_DIR = "backup";
@@ -258,11 +259,9 @@ public class DeploymentsMetadata {
         throws Exception {
 
         // determine where we need to put the metadata and create its empty directory 
-        // TODO: if the directory exists, it means somehow we are initializing the same deployment again
-        //       for now I'm just purging the old data, but is that the correct thing to do?
+        // Don't worry if the directory already exists, we probably backed up files there ahead of time.
         getMetadataDirectory().mkdirs();
         File deploymentMetadataDir = getDeploymentMetadataDirectory(deploymentProps.getDeploymentId());
-        FileUtil.purge(deploymentMetadataDir, true);
         deploymentMetadataDir.mkdirs();
         if (!deploymentMetadataDir.isDirectory()) {
             throw new Exception("Failed to create deployment metadata directory: " + deploymentMetadataDir);
@@ -275,7 +274,12 @@ public class DeploymentsMetadata {
         fileHashcodeMap.storeToFile(new File(deploymentMetadataDir, HASHCODES_FILE));
 
         // since we are being told this is the live deployment, this deployment should be considered the current one 
-        deploymentProps.saveToFile(new File(getMetadataDirectory(), CURRENT_DEPLOYMENT_FILE));
+        File currentDeploymentPropertiesFile = new File(getMetadataDirectory(), CURRENT_DEPLOYMENT_FILE);
+        File previousDeploymentPropertiesFile = new File(deploymentMetadataDir, PREVIOUS_DEPLOYMENT_FILE);
+        if (currentDeploymentPropertiesFile.exists()) {
+            FileUtil.copyFile(currentDeploymentPropertiesFile, previousDeploymentPropertiesFile);
+        }
+        deploymentProps.saveToFile(currentDeploymentPropertiesFile);
 
         return;
     }

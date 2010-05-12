@@ -117,6 +117,12 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             criteria.addFilterResourceTypeId(Integer.parseInt(((String)request.getCriteria().getValues().get("type"))));
         }
 
+        if (request.getCriteria().getValues().get("plugin") != null) {
+            criteria.addFilterPluginName((String)request.getCriteria().getValues().get("plugin"));
+        }
+
+
+
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to fetch resource data", caught);

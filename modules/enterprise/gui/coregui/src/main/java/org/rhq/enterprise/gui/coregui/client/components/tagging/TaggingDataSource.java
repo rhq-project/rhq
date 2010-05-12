@@ -42,6 +42,14 @@ public class TaggingDataSource extends RPCDataSource<Tag> {
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
+        TagCriteria criteria = new TagCriteria();
+
+        String search = (String) request.getCriteria().getValues().get("tag");
+        if (search != null) {
+            // todo
+//            criteria.addFilter
+        }
+
         GWTServiceLookup.getTagService().findTagsByCriteria(new TagCriteria(),
                 new AsyncCallback<PageList<Tag>>() {
                     public void onFailure(Throwable caught) {

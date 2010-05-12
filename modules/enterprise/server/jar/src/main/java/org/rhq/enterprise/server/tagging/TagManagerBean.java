@@ -113,6 +113,15 @@ public class TagManagerBean implements TagManagerLocal {
 
         Set<Tag> definedTags = addTags(subject, tags);
         Resource resource = entityManager.find(Resource.class, resourceId);
+
+        Set<Tag> previousTags = new HashSet<Tag>(resource.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeResource(resource);
+        }
+
+
+
         for (Tag tag : definedTags) {
             tag.addResource(resource);
         }
@@ -125,7 +134,14 @@ public class TagManagerBean implements TagManagerLocal {
 
         Set<Tag> definedTags = addTags(subject, tags);
         ResourceGroup group = entityManager.find(ResourceGroup.class, resourceGroupId);
-        group.setTags(definedTags);
+
+        Set<Tag> previousTags = new HashSet<Tag>(group.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeResourceGroup(group);
+        }
+
+
         for (Tag tag : definedTags) {
             tag.addResourceGroup(group);
         }
@@ -137,6 +153,14 @@ public class TagManagerBean implements TagManagerLocal {
 
         Set<Tag> definedTags = addTags(subject, tags);
         Bundle bundle = entityManager.find(Bundle.class, bundleId);
+
+        Set<Tag> previousTags = new HashSet<Tag>(bundle.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeBundle(bundle);
+        }
+
+
         for (Tag tag : definedTags) {
             tag.addBundle(bundle);
         }
@@ -148,7 +172,14 @@ public class TagManagerBean implements TagManagerLocal {
 
         Set<Tag> definedTags = addTags(subject, tags);
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
-        bundleVersion.setTags(definedTags);
+
+        Set<Tag> previousTags = new HashSet<Tag>(bundleVersion.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeBundleVersion(bundleVersion);
+        }
+
+
         for (Tag tag : definedTags) {
             tag.addBundleVersion(bundleVersion);
         }
@@ -160,7 +191,13 @@ public class TagManagerBean implements TagManagerLocal {
 
         Set<Tag> definedTags = addTags(subject, tags);
         BundleDeployment bundleDeployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
-        bundleDeployment.setTags(definedTags);
+
+        Set<Tag> previousTags = new HashSet<Tag>(bundleDeployment.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeBundleDeployment(bundleDeployment);
+        }
+
         for (Tag tag : definedTags) {
             tag.addBundleDeployment(bundleDeployment);
         }

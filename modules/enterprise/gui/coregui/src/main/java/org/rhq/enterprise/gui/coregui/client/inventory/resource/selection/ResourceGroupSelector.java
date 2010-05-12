@@ -23,11 +23,12 @@ import java.util.Collection;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
@@ -42,13 +43,14 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
     protected DynamicForm getAvailableFilterForm() {
         DynamicForm availableFilterForm = new DynamicForm();
-        availableFilterForm.setNumCols(4);
+        availableFilterForm.setNumCols(5);
+
         final TextItem search = new TextItem("search", "Search");
 
-        SelectItem groupCategorySelect = new SelectItem("category", "Category");
-        groupCategorySelect.setValueMap(GroupCategory.COMPATIBLE.toString(), GroupCategory.MIXED.toString());
+        SelectItem groupCategorySelect = new SelectItem("groupCategory", "Group Category");
+        groupCategorySelect.setValueMap("Compatible", "Mixed");
         groupCategorySelect.setAllowEmptyValue(true);
-        availableFilterForm.setItems(search, groupCategorySelect);
+        availableFilterForm.setItems(search, groupCategorySelect, new SpacerItem());
 
         return availableFilterForm;
     }
@@ -60,14 +62,14 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
         Criteria latestCriteria = new Criteria();
         Object search = availableFilterForm.getValue("search");
-        Object category = availableFilterForm.getValue("category");
+        Object category = availableFilterForm.getValue("groupCategory");
         latestCriteria.setAttribute("name", search);
         latestCriteria.setAttribute("category", category);
 
         return latestCriteria;
     }
 
-    protected class SelectedResourceGroupsDataSource extends ResourceGroupsDataSource {
+    public class SelectedResourceGroupsDataSource extends ResourceGroupsDataSource {
 
         @Override
         public ListGridRecord[] buildRecords(Collection<ResourceGroup> resourceGroups) {

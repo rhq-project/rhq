@@ -191,6 +191,8 @@ public class BundleView extends VLayout implements BookmarkableView {
                 });
             }
         });
+        tagEditor.setAlwaysEdit(true);
+        tagEditor.setVertical(true);
         layout.addMember(tagEditor);
 
 
@@ -226,6 +228,7 @@ public class BundleView extends VLayout implements BookmarkableView {
 
                             public void onSuccess(PageList<Bundle> result) {
                                 Bundle bundle = result.get(0);
+                                viewId.getBreadcrumbs().set(0,new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                                 viewBundle(bundle, viewPath.getCurrent());
                                 viewId.getBreadcrumbs().add(new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                                 CoreGUI.refreshBreadCrumbTrail();
@@ -234,6 +237,17 @@ public class BundleView extends VLayout implements BookmarkableView {
             }
         } else {
             if (viewPath.getCurrent().getPath().equals("versions")) {
+                if (viewPath.isEnd()) {
+
+                    // versions list screen
+                } else {
+                    // one version
+                    removeMembers(getMembers());
+                    BundleVersionView view = new BundleVersionView();
+                    addMember(view);
+                    view.renderView(viewPath.next());
+                }
+            } else if (viewPath.getCurrent().getPath().equals("deployments")) {
                 if (viewPath.isEnd()) {
 
                     // versions list screen

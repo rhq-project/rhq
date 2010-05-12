@@ -26,9 +26,9 @@
       <!-- The 'dev' profile enables automatic copying of artifacts to a dev RHQ container. -->
       <activeProfile>dev</activeProfile>
 
-      <!-- The 'jdk6' profile can be used to build RHQ using JDK6, while still enforcing that
-           only Java 5 APIs are used - see the 'jdk6' profile block below. -->
-      <!--<activeProfile>jdk6</activeProfile>-->
+      <!-- The 'check-java-api' profile can be used to build RHQ using JDK6, while still enforcing that
+           only Java 5 APIs are used - see the 'check-java-api' profile block below. -->
+      <!--<activeProfile>check-java-api</activeProfile>-->
 
       <!-- The 'dist' profile is for release builds and enables things such as JSP precompilation. -->
       <!--<activeProfile>dist</activeProfile>-->
@@ -172,10 +172,10 @@
       <!-- This can be used to build RHQ using JDK6, while still enforcing that
            only Java 5 APIs are used. -->
       <profile>
-         <id>jdk6</id>
+         <id>check-java-api</id>
          <properties>
-            <!-- Set this to your a JRE5 installation dir (e.g. /opt/jdk-1.5.0_15/jre). -->
-            <java5.home>/opt/jdk-1.5.0_15/jre</java5.home>
+            <!-- Set this to your a JRE5 installation dir (e.g. /usr/java/jdk-1.5.0_21/jre). -->
+            <java5.home>/usr/java/jdk-1.5.0_21/jre</java5.home>
          </properties>
       </profile>
 

@@ -41,7 +41,7 @@ import java.util.List;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class ResourceCriteria extends Criteria {
+public class ResourceCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;

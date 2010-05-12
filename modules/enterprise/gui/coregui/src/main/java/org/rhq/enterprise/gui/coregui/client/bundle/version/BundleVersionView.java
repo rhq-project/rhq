@@ -31,6 +31,8 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -43,8 +45,10 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.file.FileListView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -76,6 +80,8 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
         tabs.addTab(createUpdateHistoryTab());
 
 
+        addMember(new BackButton("Back to Bundle","#Bundles/mybundle"));
+
         addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png") + "\"/> " + version.getName()));
         addMember(tabs);
 
@@ -98,6 +104,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
 
         DynamicForm form = new DynamicForm();
         form.setWidth100();
+        form.setHeight100();
         form.setNumCols(4);
 
         StaticTextItem versionItem = new StaticTextItem("version","Version");
@@ -134,9 +141,11 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
 
 
         TextAreaItem recipeItem = new TextAreaItem("recipe","Recipe");
+        recipeItem.setDisabled(true);
         recipeItem.setTitleOrientation(TitleOrientation.TOP);
         recipeItem.setColSpan(4);
-        recipeItem.setWidth("100%");
+        recipeItem.setWidth("*");
+        recipeItem.setHeight("*");
         recipeItem.setValue(version.getRecipe());
 
 
@@ -148,7 +157,11 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
     }
 
     private Tab createLiveDeploymentsTab() {
-        Tab tab = new Tab("Live Deployments");
+        Tab tab = new Tab("Deployments");
+
+        BundleDeploymentListView table = new BundleDeploymentListView(version);
+
+        tab.setPane(table);
 
         return tab;
     }
@@ -182,6 +195,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
         criteria.fetchBundleFiles(true);
         criteria.fetchBundleDeployments(true);
         criteria.fetchConfigurationDefinition(true);
+        criteria.fetchTags(true);
 
         GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria,
                 new AsyncCallback<PageList<BundleVersion>>() {

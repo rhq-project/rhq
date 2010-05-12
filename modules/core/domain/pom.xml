@@ -27,6 +27,7 @@
      <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
    </properties>
 
+    
    <dependencies>
 
       <!-- the notorious util jar -->
@@ -224,6 +225,7 @@
 
    </dependencies>
 
+    
    <build>
 
       <finalName>rhq-core-domain-ejb3</finalName>
@@ -298,6 +300,7 @@
       </plugins>
    </build>
 
+    
    <profiles>
 
        <profile>
@@ -403,17 +406,7 @@
    </profiles>
 
 
-    <repositories>
-
-        <!-- This is needed for the old version of Hibernate that we use. -->
-        <repository>
-          <id>jboss-deprecated-repository</id>
-          <name>JBoss Deprecated Maven Repository</name>
-          <url>https://repository.jboss.org/nexus/content/repositories/deprecated/</url>
-          <snapshots>
-             <enabled>false</enabled>
-          </snapshots>
-        </repository>
+   <repositories>
 
         <repository>
             <id>codehaus</id>
@@ -424,6 +417,6 @@
             </snapshots>
         </repository>
 
-    </repositories>
+   </repositories>
 
 </project>

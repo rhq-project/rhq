@@ -32,13 +32,15 @@ import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class BundleDeploymentCriteria extends Criteria {
+public class BundleDeploymentCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
     private Boolean filterIsLive;
     private String filterName;
     private String filterDescription;
+    private Integer filterBundleId; // needs override
+    private Integer filterBundleVersionId; // needs override    
     private Integer filterDestinationId; // needs override
     private String filterDestinationName; // needs override
     private BundleDeploymentStatus filterStatus;
@@ -51,6 +53,8 @@ public class BundleDeploymentCriteria extends Criteria {
     private boolean fetchTags;
 
     public BundleDeploymentCriteria() {
+        filterOverrides.put("bundleId", "bundleVersion.bundle.id = ?");
+        filterOverrides.put("bundleVersionId", "bundleVersion.id = ?");
         filterOverrides.put("destinationId", "destination.id = ?");
         filterOverrides.put("destinationName", "destination.name like ?");
     }
@@ -90,6 +94,14 @@ public class BundleDeploymentCriteria extends Criteria {
 
     public void addFilterDescription(String filterDescription) {
         this.filterDescription = filterDescription;
+    }
+
+    public void addFilterBundleId(Integer filterBundleId) {
+        this.filterBundleId = filterBundleId;
+    }
+
+    public void addFilterBundleVersionId(Integer filterBundleVersionId) {
+        this.filterBundleVersionId = filterBundleVersionId;
     }
 
     public void fetchBundleVersion(boolean fetchBundleVersion) {

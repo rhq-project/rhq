@@ -102,7 +102,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
         if (request.getCriteria().getValues().get("category") != null) {
             criteria.addFilterGroupCategory(GroupCategory.valueOf(((String) request.getCriteria().getValues().get(
-                "groupCategory")).toUpperCase()));
+                "category")).toUpperCase()));
         }
 
         if (request.getCriteria().getValues().get("downMemberCount") != null) {

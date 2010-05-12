@@ -22,94 +22,52 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
+    // New Deployment, No Bundle Selected
     public BundleDeployWizard() {
+        this.setNewDestination(true);
+
         List<WizardStep> steps = init();
-        steps.add(new SelectDestinationStep(this));
         steps.add(new SelectBundleStep(this));
+        steps.add(new GetDestinationStep(this));
         steps.add(new SelectBundleVersionStep(this));
         steps.add(new GetDeploymentInfoStep(this));
         steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
     }
 
-    public BundleDeployWizard(Integer platformGroupId) {
-        this.setPlatformGroupId(platformGroupId);
-
-        List<WizardStep> steps = init();
-        if (null == this.getPlatformGroupId()) {
-            steps.add(new SelectDestinationStep(this));
+    // New Deployment, Seeded with Bundle
+    public BundleDeployWizard(Integer bundleId) {
+        if (null == bundleId) {
+            throw new IllegalArgumentException("bundleId is null");
         }
-        steps.add(new SelectBundleStep(this));
-        steps.add(new SelectBundleVersionStep(this));
-        steps.add(new GetDeploymentInfoStep(this));
-        steps.add(new GetDeploymentConfigStep(this));
-        steps.add(new DeployStep(this));
-    }
 
-    public BundleDeployWizard(Integer platformGroupId, Integer bundleId) {
-        this.setPlatformGroupId(platformGroupId);
+        this.setNewDestination(true);
         this.setBundleId(bundleId);
 
         List<WizardStep> steps = init();
-        if (null == this.getPlatformGroupId()) {
-            steps.add(new SelectDestinationStep(this));
-        }
-        if (null == this.getBundleId()) {
-            steps.add(new SelectBundleStep(this));
-        }
+        steps.add(new GetDestinationStep(this));
         steps.add(new SelectBundleVersionStep(this));
         steps.add(new GetDeploymentInfoStep(this));
         steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
     }
 
-    public BundleDeployWizard(Integer platformGroupId, Integer bundleId, BundleVersion bundleVersion) {
-        this.setPlatformGroupId(platformGroupId);
+    // Redeploy
+    public BundleDeployWizard(Integer bundleId, Integer destinationId) {
+        if (null == destinationId) {
+            throw new IllegalArgumentException("destinationId is null");
+        }
+
         this.setBundleId(bundleId);
-        this.setBundleVersion(bundleVersion);
+        this.setDestinationId(destinationId);
 
         List<WizardStep> steps = init();
-        if (null == this.getPlatformGroupId()) {
-            steps.add(new SelectDestinationStep(this));
-        }
-        if (null == this.getBundleId()) {
-            steps.add(new SelectBundleStep(this));
-        }
-        if (null == this.getBundleVersion()) {
-            steps.add(new SelectBundleVersionStep(this));
-        }
+        steps.add(new SelectBundleVersionStep(this));
         steps.add(new GetDeploymentInfoStep(this));
-        steps.add(new GetDeploymentConfigStep(this));
-        steps.add(new DeployStep(this));
-    }
-
-    public BundleDeployWizard(BundleDeployment bundleDeployment) {
-        List<WizardStep> steps = init();
-        this.setBundleId(bundleDeployment.getBundleVersion().getBundle().getId());
-        this.setBundleVersion(bundleDeployment.getBundleVersion());
-        this.setBundleDeployment(bundleDeployment);
-        setNewDefinition(Boolean.FALSE);
-
-        steps.add(new SelectDestinationStep(this));
-        steps.add(new GetDeploymentConfigStep(this));
-        steps.add(new DeployStep(this));
-    }
-
-    public BundleDeployWizard(Integer platformGroupId, BundleDeployment bundleDeployment) {
-        List<WizardStep> steps = init();
-        this.setBundleId(bundleDeployment.getBundleVersion().getBundle().getId());
-        this.setBundleVersion(bundleDeployment.getBundleVersion());
-        this.setBundleDeployment(bundleDeployment);
-        setNewDefinition(Boolean.FALSE);
-
-        if (null == this.getPlatformGroupId()) {
-            steps.add(new SelectDestinationStep(this));
-        }
         steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
     }
@@ -125,7 +83,7 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
     public void cancel() {
         BundleDeployment bd = getBundleDeployment();
-        if (bd != null && isNewDefinition()) {
+        if (bd != null && isNewDestination()) {
             // the user must have created it already after verification step, delete it
             // TODO
         }

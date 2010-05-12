@@ -77,20 +77,7 @@ public class GetDeploymentInfoStep implements WizardStep {
                 }
             });
 
-            final TextItem installDirTextItem = new TextItem("installDir",
-                "Root Installation Directory (on destination platform)");
-            installDirTextItem.setRequired(true);
-            installDirTextItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
-                    }
-                    wizard.setDeployDir(value.toString());
-                }
-            });
-
-            form.setItems(nameTextItem, descriptionTextAreaItem, installDirTextItem);
+            form.setItems(nameTextItem, descriptionTextAreaItem);
         }
 
         return form;

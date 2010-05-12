@@ -23,6 +23,7 @@ import java.util.HashMap;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -73,6 +74,19 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
                 bundleDestinationId, name, description, configuration);
 
             return SerialUtility.prepare(result, "createBundleDeployment");
+        } catch (Exception e) {
+            throw new Exception(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public BundleDestination createBundleDestination(int bundleId, String name, String description, String deployDir,
+        int groupId) throws Exception {
+
+        try {
+            BundleDestination result = bundleManager.createBundleDestination(getSessionSubject(), bundleId, name,
+                description, deployDir, groupId);
+
+            return SerialUtility.prepare(result, "createBundleDestination");
         } catch (Exception e) {
             throw new Exception(ThrowableUtil.getAllMessages(e));
         }

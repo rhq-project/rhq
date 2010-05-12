@@ -28,7 +28,9 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -39,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 public class SelectBundleVersionStep implements WizardStep {
 
     static private final String LATEST_VERSION = "latest";
+    static private final String LIVE_VERSION = "live";
     static private final String SELECT_VERSION = "select";
 
     private final BundleDeployWizard wizard;
@@ -51,6 +54,7 @@ public class SelectBundleVersionStep implements WizardStep {
     private LinkedHashMap<String, String> selectVersionValues = new LinkedHashMap<String, String>();
     private PageList<BundleVersion> bundleVersions = null;
     private BundleVersion latestVersion;
+    private BundleVersion liveVersion;
 
     public SelectBundleVersionStep(BundleDeployWizard bundleDeployWizard) {
         this.wizard = bundleDeployWizard;
@@ -77,8 +81,12 @@ public class SelectBundleVersionStep implements WizardStep {
                     if (isLatestVersion) {
                         wizard.setBundleVersion(latestVersion);
                     }
-                    selectVersionItem.setDisabled(isLatestVersion);
-                    selectVersionItem.setRequired(!isLatestVersion);
+                    boolean isLiveVersion = LIVE_VERSION.equals(event.getValue());
+                    if (isLiveVersion) {
+                        wizard.setBundleVersion(liveVersion);
+                    }
+                    selectVersionItem.setDisabled(isLatestVersion || isLiveVersion);
+                    selectVersionItem.setRequired(!(isLatestVersion || isLiveVersion));
                     selectVersionItem.redraw();
                     form.markForRedraw();
                 }
@@ -127,6 +135,27 @@ public class SelectBundleVersionStep implements WizardStep {
 
                     radioGroupValues.put(LATEST_VERSION, "Latest Version  [ " + latestVersion.getVersion() + " ]");
                     radioGroupValues.put(SELECT_VERSION, "Select Version");
+
+                    BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
+                    criteria.addFilterBundleId(wizard.getBundleId());
+                    criteria.addFilterIsLive(true);
+                    criteria.fetchBundleVersion(true);
+                    bundleServer.findBundleDeploymentsByCriteria(criteria, //
+                        new AsyncCallback<PageList<BundleDeployment>>() {
+
+                            public void onSuccess(PageList<BundleDeployment> result) {
+                                if (!result.isEmpty()) {
+                                    liveVersion = result.get(0).getBundleVersion();
+                                    radioGroupValues.put(LIVE_VERSION, "Live Version  [ " + liveVersion.getVersion()
+                                        + " ]");
+                                }
+                            }
+
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to find defined deployments.", caught);
+                            }
+                        });
+
                     radioGroupItem.setValueMap(radioGroupValues);
                     radioGroupItem.setValue(LATEST_VERSION);
                     wizard.setBundleVersion(latestVersion);

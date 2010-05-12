@@ -127,7 +127,7 @@ public class BundlesListView extends VLayout {
                                     Severity.Error));
                             return;
                         }
-                        new BundleDeployWizard(null, result.get(0).getId()).startBundleWizard();
+                        new BundleDeployWizard(result.get(0).getId()).startBundleWizard();
                     }
                 });
             }

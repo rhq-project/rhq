@@ -24,8 +24,6 @@
     <scm.module.path>modules/core/dbutils/</scm.module.path>
     <db.schema.version>2.85</db.schema.version>
 
-    <dbutils.mode>latest</dbutils.mode>
-    
     <!-- 
       The rhq.db property determines which database profile to use. Possible
       values include dev, test, upgrade
@@ -161,10 +159,8 @@
       <profile>
          <id>latest</id>
 	 <activation>
-            <activeByDefault>true</activeByDefault>
             <property>
-	       <name>dbutils.mode</name>
-	       <value>latest</value>
+	       <name>!jon.release</name>
 	    </property>
 	 </activation>
 
@@ -291,8 +287,7 @@
          <id>release</id>
 	 <activation>
             <property>
-	       <name>dbutils.mode</name>
-	       <value>release</value>
+	       <name>jon.release</name>
 	    </property>
 	 </activation>
 	 <build>
@@ -411,21 +406,6 @@
 	 </activation>  
 	 <properties>
             <rhq.db.name>rhq</rhq.db.name>
-		 <!--
-             <rhq.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhq</rhq.ds.connection-url>
-             <rhq.ds.driver-class>org.postgresql.Driver</rhq.ds.driver-class>
-             <rhq.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.ds.xa-datasource-class>
-             <rhq.ds.user-name>rhqadmin</rhq.ds.user-name>
-             <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
-    <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
-    <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
-    <rhq.test.ds.port>5432</rhq.test.ds.port>
-    <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
-    <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
-    <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
-    <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
-    <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
-    -->
 	 </properties>
       </profile>
 

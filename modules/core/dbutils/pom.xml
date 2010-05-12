@@ -95,7 +95,7 @@
 
                 db = project.properties.db
                 if (db == 'dev') {
-                  database = project.properties['rhq.dev.ds.db-name']    
+                  database = project.properties['rhq.dev.ds.db-name']
                 } else {
                   database = project.properties['rhq.test.ds.db-name']
                 }
@@ -251,6 +251,10 @@
                    <equals arg1="${db}" arg2="dev"/>
                 </condition>
 
+                <condition property="rhq.ds.driver-class" value="${rhq.dev.ds.driver-class}" else="${rhq.test.ds.driver-class}">
+                   <equals arg1="${db}" arg2="dev"/>
+                </condition>
+
                 <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
                   <property name="settings.localRepository" value="${settings.localRepository}" />
                   <property name="ojdbc5.version" value="${ojdbc5.version}" />
@@ -264,7 +268,7 @@
                   <property name="rhq.ds.password" value="${rhq.ds.password}" />
                   <property name="project.version" value="${project.version}" />
                   <property name="db.schema.version" value="${db.schema.version}" />
-                  <property name="rhq.ds.driver-class" value="${rhq.test.ds.driver-class}" />
+                  <property name="rhq.ds.driver-class" value="${rhq.ds.driver-class}" />
                   <property name="dbsetup-do-not-check-schema" value="${dbsetup-do-not-check-schema}" />
                 </ant>
               </tasks>

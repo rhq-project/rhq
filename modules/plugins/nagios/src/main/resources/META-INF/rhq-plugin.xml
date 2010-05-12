@@ -26,12 +26,7 @@
             </plugin-configuration>
 
         <!-- TODO process scans -->
-        <service name="check_eth" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="ping Service">
-            <metric property="execution_time" displayName="execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
-			<metric property="host_execution_time" displayName="host_execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
-			<metric property="host_check_period" displayName="host_check_period" dataType="trait" displayType="summary"/>
-		</service>
-		<service name="check_hdd" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="DNS Service">
+        <service name="check_disc_root" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="check_disc_root service">
             <metric property="execution_time" displayName="execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
 			<metric property="host_execution_time" displayName="host_execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
 			<metric property="host_check_period" displayName="host_check_period" dataType="trait" displayType="summary"/>

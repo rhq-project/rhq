@@ -52,7 +52,7 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
 {
 	private final Log log = LogFactory.getLog(this.getClass());
 
-    public static final String DEFAULT_NAGIOSIP = "172.31.127.218";
+    public static final String DEFAULT_NAGIOSIP = "127.0.0.1";
     public static final String DEFAULT_NAGIOSPORT = "6557";
     
     private ResourceContext context;
@@ -106,72 +106,54 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics)
     {
         NagiosSystemData nagiosSystemData = null;
+        log.info("getValues() of ResourceType: " + this.context.getResourceType().getName());
 
         try
         {
-            nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
-            log.info("ResourceType: " + this.context.getResourceType().toString());
+            //Getting all Nagios system information
+        	nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
+            
 //            log.info(nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue());
 //            log.info(nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue());
 //            log.info(nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue());
 
-        } catch (Exception e) 
+        } 
+        catch (Exception e) 
         {
             log.warn(" Can not get information from Nagios: ", e);
             return;
         }
 
-
+        //iterating over the metrics
         for (MeasurementScheduleRequest req : metrics)
-        {
-           try { // Don't let one bad egg spoil the cake
+        {	
+        	try 
+    		{ // Don't let one bad egg spoil the cake
                
-        	   //Check which ResourceType it is and then decide which metrics to monitor
-        	   //Metrics are still equal now and have to be changed
-        	   if(this.context.getResourceType().toString().equalsIgnoreCase("check_eth"))
-        	   {
-        		   if("execution_time".equals(req.getName()) )
-                   {
-                       String value = nagiosSystemData.getSingleHostServiceMetric("execution_time", "check_eth", "localhost").getValue();
-                       MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
-                       report.addData(res);
-                   }
-                   else if("host_check_period".equals(req.getName()) )
-                   {
-                       String value = nagiosSystemData.getSingleHostServiceMetric("host_check_period", "check_eth", "localhost").getValue();
-                       MeasurementDataTrait res = new MeasurementDataTrait(req, value);
-                       report.addData(res);
-                   }
-                   else if("host_execution_time".equals(req.getName()) )
-                   {
-                       String value = nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "check_eth", "localhost").getValue();
-                       MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
-                       report.addData(res);
-                   }
-        	   }
-        	   if(this.context.getResourceType().toString().equalsIgnoreCase("check_hdd"))
-        	   {
-        		   if("execution_time".equals(req.getName()) )
-                   {
-                       String value = nagiosSystemData.getSingleHostServiceMetric("execution_time", "check_hdd", "localhost").getValue();
-                       MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
-                       report.addData(res);
-                   }
-                   else if("host_check_period".equals(req.getName()) )
-                   {
-                       String value = nagiosSystemData.getSingleHostServiceMetric("host_check_period", "check_hdd", "localhost").getValue();
-                       MeasurementDataTrait res = new MeasurementDataTrait(req, value);
-                       report.addData(res);
-                   }
-                   else if("host_execution_time".equals(req.getName()) )
-                   {
-                       String value = nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "check_hdd", "localhost").getValue();
-                       MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
-                       report.addData(res);
-                   }
-        	   }
-        	   	
-            }
+        		//Check which ResourceType it is and then decide which metrics to monitor
+        		//Metrics are still equal now and have to be changed
+        		if(this.context.getResourceType().getName().equalsIgnoreCase("check_disc_root"))
+        	   	{
+    		   		if("execution_time".equals(req.getName()) )
+        		   	{
+        		   		String value = nagiosSystemData.getSingleHostServiceMetric("execution_time", "ping", "localhost").getValue();
+        		   		MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
+        		   		report.addData(res);
+                   	}
+                   	else if("host_check_period".equals(req.getName()) )
+                   	{
+                   		String value = nagiosSystemData.getSingleHostServiceMetric("host_check_period", "ping", "localhost").getValue();
+                   		MeasurementDataTrait res = new MeasurementDataTrait(req, value);
+                   		report.addData(res);
+                   	}
+               		else if("host_execution_time".equals(req.getName()) )
+           			{
+               			String value = nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "ping", "localhost").getValue();
+               			MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
+               			report.addData(res);
+       				}
+        	   	}
+        	}
             catch (InvalidMetricRequestException e)
             {
                 log.error(e);
@@ -185,6 +167,5 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
                 log.error(e);
             }
         }
-
     }
 }

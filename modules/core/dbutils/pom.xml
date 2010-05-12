@@ -70,7 +70,7 @@
       <plugin>
         <groupId>org.codehaus.groovy.maven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-        <version>1.0-rc-5</version>
+        <version>1.0</version>
         <dependencies>
           <dependency>
             <groupId>postgresql</groupId>
@@ -92,8 +92,6 @@
                 if (!project.properties.dbreset) {
                   return
                 }
-
-		println "DB = ${project.properties.db}"
 
                 db = project.properties.db
                 if (db == 'dev') {

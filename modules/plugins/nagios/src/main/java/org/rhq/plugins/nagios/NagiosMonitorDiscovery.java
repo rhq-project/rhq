@@ -44,9 +44,7 @@ import org.rhq.plugins.nagios.request.LqlResourceTypeRequest;
 public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, ManualAddFacet
 {
     private final Log log = LogFactory.getLog(this.getClass());
-    static String nagiosHost;
-    static String nagiosPort;
-
+  
     /**
     * Support manually adding this resource type via Platform's inventory tab
     * @param configuration
@@ -56,19 +54,18 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
      */
    public DiscoveredResourceDetails discoverResource(Configuration configuration, ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException {
 
-      NagiosMonitorDiscovery.nagiosHost = configuration.getSimpleValue("nagiosHost",NagiosMonitorComponent.DEFAULT_NAGIOSIP);
-      NagiosMonitorDiscovery.nagiosPort = configuration.getSimpleValue("nagiosPort",NagiosMonitorComponent.DEFAULT_NAGIOSPORT);
+	   String nagiosHost = configuration.getSimpleValue("nagiosHost",NagiosMonitorComponent.DEFAULT_NAGIOSIP);
+	   String nagiosPort = configuration.getSimpleValue("nagiosPort",NagiosMonitorComponent.DEFAULT_NAGIOSPORT);
 
-
-        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-
-         resourceDiscoveryContext.getResourceType(),
-          "nagios@"+nagiosHost+":"+nagiosPort,
-          "Nagios@"+nagiosHost+":"+nagiosPort,
-            null,
-          "Nagios server @ " + nagiosHost + ":" + nagiosPort,
-          configuration,
-            null
+        DiscoveredResourceDetails detail = new DiscoveredResourceDetails
+        (
+        		resourceDiscoveryContext.getResourceType(),
+        		"nagios@"+nagiosHost+":"+nagiosPort,
+        		"Nagios@"+nagiosHost+":"+nagiosPort,
+        		null,
+        		"Nagios server @ " + nagiosHost + ":" + nagiosPort,
+        		configuration,
+        		null
         );
 
       return detail;
@@ -83,7 +80,7 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
     	Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
     	    	
        	//Method requests available nagios services an returns the names of them
-       	LqlReply resourceTypeReply = getResourceTypeInformation(nagiosHost, Integer.parseInt(nagiosPort));
+       	LqlReply resourceTypeReply = getResourceTypeInformation(NagiosMonitorComponent.DEFAULT_NAGIOSIP, Integer.parseInt(NagiosMonitorComponent.DEFAULT_NAGIOSPORT));
     		
        	//for each available service
 		for(int i = 0; i < resourceTypeReply.getLqlReply().size(); i++)
@@ -93,8 +90,8 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
 			(
 				//new ResourceType instance per service
 				new ResourceType(resourceTypeReply.getLqlReply().get(i),"NagiosMonitor", ResourceCategory.SERVICE, null), 
-				"nagiosKey@" + "Nr:" + i + ":" + nagiosHost + ":" + nagiosPort,
-				"Nagios@" + "Nr:" + i + ":" + nagiosHost + ":" + nagiosPort,
+				"nagiosKey@" + "Nr:" + i + ":" + resourceTypeReply.getLqlReply().get(i),
+				"Nagios@" + "Nr:" + i + ":" + resourceTypeReply.getLqlReply().get(i),
 	            null,
 	            "NagiosService: " + resourceTypeReply.getLqlReply().get(i),
 	            null,

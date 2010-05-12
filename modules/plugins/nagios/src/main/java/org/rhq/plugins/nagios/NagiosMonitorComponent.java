@@ -52,7 +52,7 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
 {
 	private final Log log = LogFactory.getLog(this.getClass());
 
-    public static final String DEFAULT_NAGIOSIP = "127.0.0.1";
+    public static final String DEFAULT_NAGIOSIP = "172.31.127.218";
     public static final String DEFAULT_NAGIOSPORT = "6557";
     
     private ResourceContext context;

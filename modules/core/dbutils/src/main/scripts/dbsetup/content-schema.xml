@@ -549,8 +549,9 @@
 
         <!--  This index is for constraint, not performance -->
         <index name="RHQ_BUNDLE_DESTINATION_UNIQUE" unique="true">
-            <field ref="BUNDLE_ID"/>
-            <field ref="NAME"/>            
+            <field ref="BUNDLE_ID"/>            
+            <field ref="GROUP_ID"/>            
+            <field ref="DEPLOY_DIR"/>
         </index>
     </table>
 

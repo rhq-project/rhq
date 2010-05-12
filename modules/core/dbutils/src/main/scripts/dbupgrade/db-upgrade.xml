@@ -2487,20 +2487,20 @@
                        CREATE TABLE RHQ_BUNDLE_DESTINATION ( ID INTEGER PRIMARY KEY )
                    </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="ID" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="NAME" columnType="VARCHAR2" precision="200" />
-                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="NAME" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
-                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="CTIME" columnType="LONG" />
-                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="CTIME" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="MTIME" columnType="LONG" />
-                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="MTIME" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="BUNDLE_ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="BUNDLE_ID" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="GROUP_ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="GROUP_ID" nullable="FALSE" />                
-                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="DEPLOY_DIR" columnType="VARCHAR2" precision="256" />
-                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="DEPLOY_DIR" nullable="FALSE" />                
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="ID" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_BUNDLE_DESTINATION" column="NAME" columnType="VARCHAR2" precision="200" />
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="NAME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_BUNDLE_DESTINATION" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
+                <schema-addColumn   table="RHQ_BUNDLE_DESTINATION" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="CTIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_BUNDLE_DESTINATION" column="MTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="MTIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_BUNDLE_DESTINATION" column="BUNDLE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="BUNDLE_ID" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_BUNDLE_DESTINATION" column="GROUP_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="GROUP_ID" nullable="FALSE" />                
+                <schema-addColumn   table="RHQ_BUNDLE_DESTINATION" column="DEPLOY_DIR" columnType="VARCHAR2" precision="256" />
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="DEPLOY_DIR" nullable="FALSE" />                
 
                 <schema-directSQL>
                     <statement desc="Creating RHQ_BUNDLE_DESTINATION foreign key relation to RHQ_BUNDLE">
@@ -2515,9 +2515,9 @@
                         FOREIGN KEY (GROUP_ID)
                         REFERENCES RHQ_RESOURCE_GROUP (ID)
                     </statement>
-                    <statement desc="Creating RHQ_BUNDLE_DEPLOY unique constraint">
+                    <statement desc="Creating RHQ_BUNDLE_DESTINATION unique constraint">
                         CREATE UNIQUE INDEX RHQ_BUNDLE_DESTINATION_UNIQUE
-                        ON RHQ_BUNDLE_DEPLOY (bundle_id, name)
+                        ON RHQ_BUNDLE_DESTINATION (bundle_id, group_id, deploy_dir)
                     </statement>
                 </schema-directSQL>
                 
@@ -2876,7 +2876,7 @@
 
                 <schema-directSQL>
                     <statement>
-                        CREATE TABLE RHQ_TAGGING_BUNDLE_DEPLOY_MAP ( BUNDLE_DEPLOY_ID INTEGER )
+                        CREATE TABLE RHQ_TAGGING_BUNDLE_DEPLOY_MAP ( BUNDLE_DEPLOYMENT_ID INTEGER )
                     </statement>
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_TAGGING_BUNDLE_DEPLOY_MAP" column="BUNDLE_DEPLOYMENT_ID" nullable="false" />
@@ -2924,7 +2924,7 @@
                     </statement>
                     <statement>
                         ALTER TABLE RHQ_TAGGING_BUNDLE_DEST_MAP
-                        ADD CONSTRAINT RHQ_TBDM_TAG_ID_FK
+                        ADD CONSTRAINT RHQ_TBDESTM_TAG_ID_FK
                         FOREIGN KEY ( TAG_ID )
                         REFERENCES RHQ_TAGGING ( ID )
                     </statement>

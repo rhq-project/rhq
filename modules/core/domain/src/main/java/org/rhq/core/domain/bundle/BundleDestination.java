@@ -223,7 +223,8 @@ public class BundleDestination implements Serializable {
 
     @Override
     public String toString() {
-        return "BundleDeployment[id=" + id + ", bundle=" + bundle.getName() + ", name=" + name + "]";
+        return "BundleDeployment[id=" + id + ", bundle=" + bundle.getName() + ", group=" + group.getName() + ", name="
+            + name + "]";
     }
 
     @Override
@@ -231,7 +232,8 @@ public class BundleDestination implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((bundle == null) ? 0 : bundle.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((group == null) ? 0 : group.hashCode());
+        result = prime * result + ((deployDir == null) ? 0 : deployDir.hashCode());
         return result;
     }
 
@@ -254,11 +256,19 @@ public class BundleDestination implements Serializable {
             return false;
         }
 
-        if (this.name == null) {
-            if (other.name != null) {
+        if (this.group == null) {
+            if (other.group != null) {
                 return false;
             }
-        } else if (!this.name.equals(other.name)) {
+        } else if (!this.group.equals(other.group)) {
+            return false;
+        }
+
+        if (this.deployDir == null) {
+            if (other.deployDir != null) {
+                return false;
+            }
+        } else if (!this.deployDir.equalsIgnoreCase(other.deployDir)) {
             return false;
         }
 

@@ -390,7 +390,7 @@
          </service>
       </server>
 
-      <server name="JVM"
+      <server name="JBoss AS JVM"
               description="JVM of the JBossAS"
               sourcePlugin="JMX"
               sourceType="JMX Server"

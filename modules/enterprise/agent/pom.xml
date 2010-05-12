@@ -231,6 +231,18 @@ Build-Number=${buildNumber}
     </plugins>
   </build>
 
+  <repositories>
+     <!-- This is for SIGAR 1.6.4. -->
+     <repository>
+          <id>jboss-thirdparty-uploads</id>
+          <name>JBoss Third Party Uploads</name>
+          <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-uploads/</url>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+     </repository>
+  </repositories>
+
   <reporting>
     <plugins>
 
@@ -242,3 +254,4 @@ Build-Number=${buildNumber}
   </reporting>
     
 </project>
+

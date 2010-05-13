@@ -76,7 +76,7 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         }
 
         if (request.getCriteria().getValues().containsKey("bundleVersionId")) {
-            criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttribute("bundleVersionId")));
+            criteria.addFilterBundleVersionId(Integer.parseInt(request.getCriteria().getAttribute("bundleVersionId")));
         }
 
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {

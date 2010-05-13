@@ -32,12 +32,15 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
@@ -54,6 +57,7 @@ import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -73,6 +77,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
+    @EJB
+    @IgnoreDependency
+    private AlertNotificationManagerLocal alertNotificationManager;
 
     @EJB
     private StatusManagerLocal agentStatusManager;
@@ -126,10 +133,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     public AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId) {
         AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
-
-        // avoid NPEs l8er if the caller passed an invalid id
-        if (alertDefinition == null)
-            return null;
+        if (alertDefinition == null) {
+            return null; // fail-fast to avoid downstream NPEs
+        }
 
         if (checkViewPermission(subject, alertDefinition) == false) {
             throw new PermissionException("User[" + subject.getName()
@@ -146,7 +152,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
         // DO NOT LOAD ALL ALERTS FOR A DEFINITION... This would be all alerts that have been fired
         //alertDefinition.getAlerts().size();
-        alertDefinition.getAlertNotifications().size();
+        for (AlertNotification notification : alertDefinition.getAlertNotifications()) {
+            notification.getConfiguration().getProperties().size(); // eager load configuration and properties too
+        }
 
         return alertDefinition;
     }
@@ -498,7 +506,37 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             alertDefinition.setConditionExpression(BooleanExpression.ANY);
         }
 
-        oldAlertDefinition.update(alertDefinition, false);
+        /*
+         * Since the algorithm removes all existing notifications and adds them all back, 
+         * we need to clean up all of them
+         */
+        for (AlertNotification notification : oldAlertDefinition.getAlertNotifications()) {
+            CustomAlertSenderBackingBean customBackingBean = alertNotificationManager.getBackingBeanForSender(
+                notification.getSenderName(), notification.getId());
+            if (customBackingBean != null) { // alert senders only have customBackingBeans if they have custom UIs
+                try {
+                    customBackingBean.internalCleanup();
+                } catch (Throwable t) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Error cleaning up custom alert sender data for " + notification, t);
+                    } else {
+                        LOG.error("Error cleaning up custom alert sender data for " + notification);
+                    }
+                }
+            }
+        }
+
+        oldAlertDefinition.update(alertDefinition);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Updating: " + oldAlertDefinition);
+            for (AlertCondition nextCondition : oldAlertDefinition.getConditions()) {
+                LOG.debug("Condition: " + nextCondition);
+            }
+            for (AlertNotification nextNotification : oldAlertDefinition.getAlertNotifications()) {
+                LOG.debug("Notification: " + nextNotification);
+                LOG.debug("Notification-Configuration: " + nextNotification.getConfiguration().toString(true));
+            }
+        }
         fixRecoveryId(oldAlertDefinition);
         AlertDefinition newAlertDefinition = entityManager.merge(oldAlertDefinition);
 
@@ -608,28 +646,32 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void purgeInternals(int alertDefinitionId) {
-        Query alertDampeningEventPurgeQuery = entityManager
-            .createNamedQuery(AlertDampeningEvent.QUERY_DELETE_BY_ALERT_DEFINITION_ID);
-        Query unmatchedAlertConditionLogPurgeQuery = entityManager
-            .createNamedQuery(AlertConditionLog.QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID);
+        try {
+            Query alertDampeningEventPurgeQuery = entityManager
+                .createNamedQuery(AlertDampeningEvent.QUERY_DELETE_BY_ALERT_DEFINITION_ID);
+            Query unmatchedAlertConditionLogPurgeQuery = entityManager
+                .createNamedQuery(AlertConditionLog.QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID);
 
-        alertDampeningEventPurgeQuery.setParameter("alertDefinitionId", alertDefinitionId);
-        unmatchedAlertConditionLogPurgeQuery.setParameter("alertDefinitionId", alertDefinitionId);
+            alertDampeningEventPurgeQuery.setParameter("alertDefinitionId", alertDefinitionId);
+            unmatchedAlertConditionLogPurgeQuery.setParameter("alertDefinitionId", alertDefinitionId);
 
-        int alertDampeningEventPurgeCount = alertDampeningEventPurgeQuery.executeUpdate();
-        int unmatchedAlertConditionLogPurgeCount = unmatchedAlertConditionLogPurgeQuery.executeUpdate();
+            int alertDampeningEventPurgeCount = alertDampeningEventPurgeQuery.executeUpdate();
+            int unmatchedAlertConditionLogPurgeCount = unmatchedAlertConditionLogPurgeQuery.executeUpdate();
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Update to AlertDefinition[id=" + alertDefinitionId
-                + " caused a purge of internal, dampening constructs.");
-            if (alertDampeningEventPurgeCount > 0) {
-                LOG.debug("Removed " + alertDampeningEventPurgeCount + " AlertDampeningEvent"
-                    + (alertDampeningEventPurgeCount == 1 ? "" : "s"));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Update to AlertDefinition[id=" + alertDefinitionId
+                    + " caused a purge of internal, dampening constructs.");
+                if (alertDampeningEventPurgeCount > 0) {
+                    LOG.debug("Removed " + alertDampeningEventPurgeCount + " AlertDampeningEvent"
+                        + (alertDampeningEventPurgeCount == 1 ? "" : "s"));
+                }
+                if (unmatchedAlertConditionLogPurgeCount > 0) {
+                    LOG.debug("Removed " + unmatchedAlertConditionLogPurgeCount + " unmatched AlertConditionLog"
+                        + (unmatchedAlertConditionLogPurgeCount == 1 ? "" : "s"));
+                }
             }
-            if (unmatchedAlertConditionLogPurgeCount > 0) {
-                LOG.debug("Removed " + unmatchedAlertConditionLogPurgeCount + " unmatched AlertConditionLog"
-                    + (unmatchedAlertConditionLogPurgeCount == 1 ? "" : "s"));
-            }
+        } catch (Throwable t) {
+            LOG.debug("Could not purge internal alerting constructs for: " + alertDefinitionId, t);
         }
     }
 

@@ -19,6 +19,7 @@
       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/portal-war/</developerConnection>
    </scm>
 
+
    <properties>
       <scm.module.path>modules/enterprise/gui/portal-war/</scm.module.path>
 
@@ -39,6 +40,7 @@
       <product.version>${project.version}</product.version>
       <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
    </properties>
+
 
    <dependencies>
 
@@ -392,6 +394,7 @@
 
    </dependencies>
 
+    
    <build>
       <finalName>rhq-portal</finalName>
       <plugins>
@@ -472,6 +475,7 @@
 
    </build>
 
+    
    <profiles>
 
       <profile>
@@ -581,6 +585,7 @@
 
    </profiles>
 
+    
    <repositories>
 
       <repository>
@@ -589,22 +594,6 @@
          <url>http://download.java.net/maven/1/</url>
          <layout>legacy</layout>
       </repository>
-
-        <!-- This is needed for the org.jvnet:inflector dep. 
-             TODO: Publish the inflector artifact to the JBoss 3rd party repo. -->
-        <repository>
-          <id>jboss-deprecated-repository</id>
-          <name>JBoss Deprecated Maven Repository</name>
-          <url>https://repository.jboss.org/nexus/content/repositories/deprecated/</url>
-          <layout>default</layout>
-          <releases>
-             <enabled>true</enabled>
-             <updatePolicy>never</updatePolicy>
-          </releases>
-          <snapshots>
-             <enabled>false</enabled>
-          </snapshots>
-        </repository>
 
    </repositories>
 

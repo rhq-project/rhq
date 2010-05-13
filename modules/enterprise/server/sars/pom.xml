@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -12,17 +14,13 @@
   <artifactId>rhq-enterprise-server-sars-parent</artifactId>
   <packaging>pom</packaging>
 
-  <name>RHQ Enterprise Server JBossAS Services</name>
-  <description>parent POM for all JBossAS services</description>
+  <name>RHQ Enterprise Server JBoss AS SARs</name>
+  <description>parent POM for all JBoss AS SARs</description>
 
   <scm>
     <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/sars/</connection>
     <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/sars/</developerConnection>
   </scm>
-
-  <properties>
-    <scm.module.path>modules/enterprise/server/sars/</scm.module.path>
-  </properties>
 
   <build>
     <plugins>
@@ -37,18 +35,20 @@
     </plugins>
   </build>
 
-  <profiles>
+  <modules>
+    <module>agent-sar</module>
+  </modules>
 
-    <profile>
-      <id>default</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <modules>
-        <module>agent-sar</module>
-      </modules>
-    </profile>
-
-  </profiles>
+  <pluginRepositories>
+     <pluginRepository>
+       <id>jboss-deprecated-repository</id>
+       <name>JBoss Deprecated</name>
+       <url>https://repository.jboss.org/maven2/</url>
+       <snapshots>
+         <enabled>false</enabled>
+       </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
 
 </project>
+

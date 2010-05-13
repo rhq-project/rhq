@@ -940,7 +940,7 @@
             classLoader="instance"
             class="ApplicationServerComponent"
             discovery="ApplicationServerDiscoveryComponent"
-            description="JBoss Application Server (AS) or Enterprise Application Platform (EAP) 5.x"
+            description="JBoss Application Server (AS), Enterprise Application Platform (EAP), Enterprise SOA Platform (SOA-P), or Enterprise Web Platform (EWP) 5.x or 6.x instance"
             supportsManualAdd="true">
 
         <subcategories>

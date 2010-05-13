@@ -24,6 +24,7 @@ import java.util.HashMap;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
+import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -31,6 +32,8 @@ import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleDestinationCriteria;
+import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -66,12 +69,12 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     public BundleDeployment createBundleDeployment(int bundleVersionId, int bundleDestinationId, String name,
-        String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
-        boolean pinToBundle) throws Exception {
+                                                   String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
+                                                   boolean pinToBundle) throws Exception {
 
         try {
             BundleDeployment result = bundleManager.createBundleDeployment(getSessionSubject(), bundleVersionId,
-                bundleDestinationId, name, description, configuration);
+                    bundleDestinationId, name, description, configuration);
 
             return SerialUtility.prepare(result, "createBundleDeployment");
         } catch (Exception e) {
@@ -137,7 +140,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
-        BundleCriteria criteria) throws Exception {
+            BundleCriteria criteria) throws Exception {
         try {
             PageList<BundleWithLatestVersionComposite> results;
             results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(getSessionSubject(), criteria);
@@ -178,13 +181,25 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria) {
         return SerialUtility.prepare(bundleManager.findBundleDeploymentsByCriteria(getSessionSubject(), criteria),
-            "BundleService.findBundleDeploymentsByCriteria");
+                "BundleService.findBundleDeploymentsByCriteria");
     }
 
     public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(
-        BundleResourceDeploymentCriteria criteria) {
+            BundleResourceDeploymentCriteria criteria) {
         return SerialUtility.prepare(bundleManager.findBundleResourceDeploymentsByCriteria(getSessionSubject(),
-            criteria), "BundleService.findBundleResourceDeploymentsByCriteria");
+                criteria), "BundleService.findBundleResourceDeploymentsByCriteria");
 
     }
+
+    public PageList<BundleDestination> findBundleDestinationsByCriteria(BundleDestinationCriteria criteria) {
+        return SerialUtility.prepare(bundleManager.findBundleDestinationsByCriteria(getSessionSubject(),
+                criteria), "BundleService.findBundleDestinationsByCriteria");
+
+    }
+
+    public PageList<BundleFile> findBundleFilesByCriteria(BundleFileCriteria criteria) {
+        return SerialUtility.prepare(bundleManager.findBundleFilesByCriteria(getSessionSubject(),
+                       criteria), "BundleService.findBundleFilesByCriteria");
+    }
+
 }

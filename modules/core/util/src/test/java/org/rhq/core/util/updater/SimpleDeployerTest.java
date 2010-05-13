@@ -128,6 +128,10 @@ public class SimpleDeployerTest {
         baseX_Y_Z(false);
     }
 
+    public void testX_Y_Z_Restore() throws Exception {
+        baseX_Y_Z_Restore(false);
+    }
+
     public void testNoOriginalNoCurrentWithNew() throws Exception {
         baseNoOriginalNoCurrentWithNew(false);
     }
@@ -166,6 +170,10 @@ public class SimpleDeployerTest {
 
     public void testX_Y_Z_DryRun() throws Exception {
         baseX_Y_Z(true);
+    }
+
+    public void testX_Y_Z_Restore_DryRun() throws Exception {
+        baseX_Y_Z_Restore(true);
     }
 
     public void testNoOriginalNoCurrentWithNew_DryRun() throws Exception {
@@ -383,8 +391,8 @@ public class SimpleDeployerTest {
         }
 
         // The new file changed the original, and our current file has been manually updated
-        // but that current file's change does not match to new file. Therefore, the current file
-        // it out of date. The safest thing to do is backup the current and copy the new file
+        // but that current file's change does not match the new file. Therefore, the current file
+        // is out of date. The safest thing to do is backup the current and copy the new file
         // to become the current file.
 
         assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
@@ -728,6 +736,87 @@ public class SimpleDeployerTest {
             assert !backupFile.exists() : "dry run should not create backup";
         } else {
             assert readFile(backupFile).equals(currentContent) : "did not backup the correct file?";
+        }
+    }
+
+    private void baseX_Y_Z_Restore(boolean dryRun) throws Exception {
+        String newContentY = "testX_Y_Z_YYY";
+        writeFile(newContentY, this.currentFile);
+        String newHashcodeY = MessageDigestGenerator.getDigestString(newContentY);
+
+        String newContentZ = "testX_Y_Z_ZZZ";
+        String newHashcodeZ = MessageDigestGenerator.getDigestString(newContentZ);
+        File newZipFile = createZip(newContentZ, tmpDir, "new-content.zip", originalFileName);
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
+
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
+        FileHashcodeMap newFileHashcodeMap;
+        newFileHashcodeMap = deployer.deploy(this.diff); // no dry run - we need to do this to force backup file creation
+
+        // The new file changed the original, and our current file has been manually updated
+        // but that current file's change does not match the new file. Therefore, the current file
+        // is out of date. The safest thing to do is backup the current and copy the new file
+        // to become the current file.
+
+        assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
+        assert newFileHashcodeMap.size() == 1;
+        assert newFileHashcodeMap.get(originalFileName).equals(newHashcodeZ);
+        String[] contentHash = getOriginalFilenameContentHashcode();
+        assert contentHash[0].equals(newContentZ);
+        assert contentHash[1].equals(newHashcodeZ);
+
+        assert this.diff.getAddedFiles().isEmpty() : this.diff;
+        assert this.diff.getDeletedFiles().isEmpty() : this.diff;
+        assert this.diff.getChangedFiles().size() == 1 : this.diff;
+        assert this.diff.getChangedFiles().contains(originalFileName) : this.diff;
+        assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
+        assert this.diff.getBackedUpFiles().containsKey(originalFileName) : this.diff;
+        assert this.diff.getRestoredFiles().isEmpty() : this.diff;
+        assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
+        assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.getErrors().isEmpty() : this.diff;
+
+        assert this.metadata.getCurrentDeploymentProperties().equals(newDeployProps);
+        assert this.metadata.getCurrentDeploymentFileHashcodes().equals(newFileHashcodeMap);
+
+        // verify the backup copy
+        File backupFile = new File(this.diff.getBackedUpFiles().get(originalFileName));
+        assert readFile(backupFile).equals(newContentY) : "did not backup the correct file?";
+
+        // all we did so far was upgrade to v2 and created a backup file, now we need to redeploy v1 and see the backup restored
+        DeploymentProperties v1Duplicate = new DeploymentProperties();
+        v1Duplicate.putAll(this.originalDeployProps);
+        v1Duplicate.setDeploymentId(3); // this is the same as v1, but it needs a unique deployment ID
+        dd = new DeploymentData(v1Duplicate, originalZipFiles, null, deployDir, null, null, null, null);
+        deployer = new Deployer(dd);
+        this.diff = new DeployDifferences();
+        FileHashcodeMap restoreFileHashcodeMap;
+        restoreFileHashcodeMap = deployer.redeployAndRestoreBackupFiles(this.diff, dryRun);
+
+        assert this.diff.getAddedFiles().isEmpty() : this.diff;
+        assert this.diff.getDeletedFiles().isEmpty() : this.diff;
+        assert this.diff.getChangedFiles().size() == 1 : this.diff;
+        assert this.diff.getChangedFiles().contains(originalFileName) : this.diff;
+        assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
+        assert this.diff.getRestoredFiles().size() == 1 : this.diff;
+        assert this.diff.getRestoredFiles().containsKey(originalFileName) : this.diff;
+        assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
+        assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.getErrors().isEmpty() : this.diff;
+
+        assert restoreFileHashcodeMap.get(originalFileName).equals(newHashcodeY) : "hashcode doesn't reflect restored backup";
+
+        if (dryRun) {
+            // still our v2
+            assert this.metadata.getCurrentDeploymentProperties().equals(newDeployProps);
+            assert this.metadata.getCurrentDeploymentFileHashcodes().equals(newFileHashcodeMap);
+        } else {
+            // we reverted back to v1 with the manual changes
+            assert this.metadata.getCurrentDeploymentProperties().equals(v1Duplicate);
+            assert this.metadata.getCurrentDeploymentFileHashcodes().equals(restoreFileHashcodeMap);
+            assert MessageDigestGenerator.getDigestString(this.currentFile).equals(newHashcodeY) : "file wasn't restored";
         }
     }
 

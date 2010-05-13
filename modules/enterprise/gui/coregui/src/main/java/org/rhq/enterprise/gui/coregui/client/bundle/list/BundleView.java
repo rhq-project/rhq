@@ -43,6 +43,8 @@ import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
+import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -254,7 +256,18 @@ public class BundleView extends VLayout implements BookmarkableView {
                 } else {
                     // one version
                     removeMembers(getMembers());
-                    BundleVersionView view = new BundleVersionView();
+                    BundleDeploymentView view = new BundleDeploymentView();
+                    addMember(view);
+                    view.renderView(viewPath.next());
+                }
+            } else if (viewPath.getCurrent().getPath().equals("destinations")) {
+                if (viewPath.isEnd()) {
+
+                    // versions list screen
+                } else {
+                    // one version
+                    removeMembers(getMembers());
+                    BundleDestinationView view = new BundleDestinationView();
                     addMember(view);
                     view.renderView(viewPath.next());
                 }

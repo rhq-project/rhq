@@ -201,6 +201,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         criteria.fetchBundleVersion(true);
         criteria.fetchConfiguration(true);
         criteria.fetchResourceDeployments(true);
+        criteria.fetchDestination(true);
         criteria.fetchTags(true);
 
         bundleService = GWTServiceLookup.getBundleService();

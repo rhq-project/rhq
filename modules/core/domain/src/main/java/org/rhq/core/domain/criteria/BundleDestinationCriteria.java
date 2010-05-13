@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.core.domain.bundle.BundleDestination;
 
 /**
  * @author Jay Shaughnessy
@@ -32,92 +33,76 @@ import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class BundleDeploymentCriteria extends TaggedCriteria {
+public class BundleDestinationCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
-    private Boolean filterIsLive;
     private String filterName;
     private String filterDescription;
     private Integer filterBundleId; // needs override
-    private Integer filterBundleVersionId; // needs override    
-    private Integer filterDestinationId; // needs override
-    private String filterDestinationName; // needs override
-    private BundleDeploymentStatus filterStatus;
-    private String filterSubjectName;
+    private Integer filterBundleVersionId; // needs override
+    private BundleDeploymentStatus filterStatus; // needs override
+    private String filterDeployDir;
+    private Integer filterGroupId; // needs override
 
-    private boolean fetchBundleVersion;
-    private boolean fetchConfiguration;
-    private boolean fetchDestination;
-    private boolean fetchResourceDeployments;
 
-    public BundleDeploymentCriteria() {
-        filterOverrides.put("bundleId", "bundleVersion.bundle.id = ?");
-        filterOverrides.put("bundleVersionId", "bundleVersion.id = ?");
-        filterOverrides.put("destinationId", "destination.id = ?");
-        filterOverrides.put("destinationName", "destination.name like ?");
+    private boolean fetchBundle;
+    private boolean fetchDeployments;
+    private boolean fetchGroup;
+
+    public BundleDestinationCriteria() {
+
+        filterOverrides.put("bundleId", "bundle.id = ?");
+        filterOverrides.put("bundleVersionId", "deployments.bundleVersion.id = ?");
+        filterOverrides.put("status", "deployment.status like ?");
+        filterOverrides.put("groupId", "group.id = ?");
+
     }
 
     @Override
     public Class<?> getPersistentClass() {
-        return BundleDeployment.class;
+        return BundleDestination.class;
     }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }
 
-    public void addFilterIsLive(Boolean filterIsLive) {
-        this.filterIsLive = filterIsLive;
-    }
-
     public void addFilterName(String filterName) {
         this.filterName = filterName;
-    }
-
-    public void addFilterDestinationId(Integer filterDestinationId) {
-        this.filterDestinationId = filterDestinationId;
-    }
-
-    public void addFilterDestinationName(String filterDestinationName) {
-        this.filterDestinationName = filterDestinationName;
-    }
-
-    public void addFilterStatus(BundleDeploymentStatus filterStatus) {
-        this.filterStatus = filterStatus;
-    }
-
-    public void addFilterSubjectName(String filterSubjectName) {
-        this.filterSubjectName = filterSubjectName;
-    }
-
-    public void addFilterDescription(String filterDescription) {
-        this.filterDescription = filterDescription;
     }
 
     public void addFilterBundleId(Integer filterBundleId) {
         this.filterBundleId = filterBundleId;
     }
 
+    public void addFilterStatus(BundleDeploymentStatus filterStatus) {
+        this.filterStatus = filterStatus;
+    }
+
+    public void addFilterDescription(String filterDescription) {
+        this.filterDescription = filterDescription;
+    }
+
+
     public void addFilterBundleVersionId(Integer filterBundleVersionId) {
         this.filterBundleVersionId = filterBundleVersionId;
     }
 
-    public void fetchBundleVersion(boolean fetchBundleVersion) {
-        this.fetchBundleVersion = fetchBundleVersion;
+
+    public void addFilterGroupId(Integer filterGroupId) {
+        this.filterGroupId = filterGroupId;
     }
 
-    public void fetchConfiguration(boolean fetchConfiguration) {
-        this.fetchConfiguration = fetchConfiguration;
+    public void fetchBundle(boolean fetchBundle) {
+        this.fetchBundle = fetchBundle;
     }
 
-    public void fetchDestination(boolean fetchDestination) {
-        this.fetchDestination = fetchDestination;
+    public void fetchDeployments(boolean fetchDeployments) {
+        this.fetchDeployments = fetchDeployments;
     }
 
-    public void fetchResourceDeployments(boolean fetchResourceDeployments) {
-        this.fetchResourceDeployments = fetchResourceDeployments;
+    public void fetchGroup(boolean fetchGroup) {
+        this.fetchGroup = fetchGroup;
     }
-
-
 }

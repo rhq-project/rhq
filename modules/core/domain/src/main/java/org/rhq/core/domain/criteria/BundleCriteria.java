@@ -46,7 +46,6 @@ public class BundleCriteria extends TaggedCriteria {
     private boolean fetchDestinations;
     private boolean fetchPackageType;
     private boolean fetchRepo;
-    private boolean fetchTags;
 
     private PageOrdering sortName;
     private PageOrdering sortDescription;
@@ -108,9 +107,6 @@ public class BundleCriteria extends TaggedCriteria {
         this.fetchRepo = fetchRepo;
     }
 
-    public void fetchTags(boolean fetchTags) {
-        this.fetchTags = fetchTags;
-    }
 
     public void addSortName(PageOrdering sortName) {
         addSortField("name");

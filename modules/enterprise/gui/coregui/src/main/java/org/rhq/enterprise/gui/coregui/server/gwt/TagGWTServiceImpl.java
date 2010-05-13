@@ -73,4 +73,9 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
     public void updateBundleDeploymentTags(int bundleDeploymentId, Set<Tag> tags) {
         tagManager.updateBundleDeploymentTags(getSessionSubject(), bundleDeploymentId, tags);
     }
+
+    public void updateBundleDestinationTags(int bundleDestinationId, Set<Tag> tags) {
+        tagManager.updateBundleDestinationTags(getSessionSubject(), bundleDestinationId, tags);
+    }
+
 }

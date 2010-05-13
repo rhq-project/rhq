@@ -53,5 +53,7 @@ public interface TagGWTService extends RemoteService {
 
     void updateBundleDeploymentTags(int bundleDeploymentId, Set<Tag> tags);
 
+    void updateBundleDestinationTags(int bundleDestinationId, Set<Tag> tags);
+
 
 }

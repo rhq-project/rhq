@@ -25,7 +25,6 @@ package org.rhq.plugins.jmx;
 import java.util.HashSet;
 import java.util.Set;
 import java.lang.reflect.Method;
-import java.lang.reflect.InvocationTargetException;
 
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
@@ -42,7 +41,10 @@ import org.rhq.core.system.ProcessInfo;
 /**
  * This discovery component can be used to include JVM information under a parent Process oriented server that supports
  * JMX (e.g. JBoss AS or Tomcat). The parent resource type's component must implement JMXComponent.
- *
+ * <p>
+ * The discovered resource is called the same name as its type or according to the "embeddedJvmName" property
+ * from the parent server's plugin configuration.
+ * 
  * @author Greg Hinkle
  */
 public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryComponent<JMXComponent> {    
@@ -96,7 +98,7 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
         if (runtimeMBean != null) {
             String version = getSystemProperty(runtimeMBean, "java.version");
             DiscoveredResourceDetails server = new DiscoveredResourceDetails(context.getResourceType(), "JVM",
-                    context.getResourceType().getName(), version, context.getResourceType().getDescription(),
+                ParentDefinedJMXServerNamingUtility.getJVMName(context), version, context.getResourceType().getDescription(),
                     configuration, null);
             discoveredServers.add(server);
         }

@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -33,6 +34,7 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -124,8 +126,9 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         addMember(form);
 
         Table deployments = createDeploymentsTable();
-        deployments.setHeight100();
+        deployments.setHeight("50%");
         deployments.setShowResizeBar(true);
+        deployments.setResizeBarTarget("next");
         addMember(createDeploymentsTable());
 
         detail = new Canvas();
@@ -138,15 +141,41 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
     private Table createDeploymentsTable() {
         Table table = new Table("Deployment Machines");
 
-        ListGridField resource = new ListGridField("resource", "Resource");
+
+        ListGridField resourceIcon = new ListGridField("resourceAvailabity");
+        HashMap<String,String> icons = new HashMap<String, String>();
+        icons.put("UP","types/Platform_up_16.png");
+        icons.put("DOWN","types/Platform_down_16.png");
+        resourceIcon.setValueIcons(icons);
+        resourceIcon.setValueIconSize(16);
+        resourceIcon.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return "";
+            }
+        });
+        resourceIcon.setWidth(30);
+
+
+        ListGridField resource = new ListGridField("resource", "Platform");
+        resource.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
+            }
+        });
+        ListGridField resourceVersion = new ListGridField("resourceVersion", "Operating System");
         ListGridField status = new ListGridField("status", "Status");
 
-        table.getListGrid().setFields(resource, status);
+        table.getListGrid().setFields(resourceIcon, resource, resourceVersion, status);
 
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
         for (BundleResourceDeployment rd : deployment.getResourceDeployments()) {
             ListGridRecord record = new ListGridRecord();
             record.setAttribute("resource", rd.getResource().getName());
+
+
+            record.setAttribute("resourceAvailabity", rd.getResource().getCurrentAvailability().getAvailabilityType().name());
+            record.setAttribute("resourceId", rd.getResource().getId());
+            record.setAttribute("resourceVersion", rd.getResource().getVersion());
             record.setAttribute("status", rd.getStatus().name());
             record.setAttribute("id", rd.getId());
             record.setAttribute("entity", rd);

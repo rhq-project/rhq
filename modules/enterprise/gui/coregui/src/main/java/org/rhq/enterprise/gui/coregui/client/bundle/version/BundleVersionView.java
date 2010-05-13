@@ -80,9 +80,9 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
         tabs.addTab(createUpdateHistoryTab());
 
 
-        addMember(new BackButton("Back to Bundle","#Bundles/mybundle"));
+        addMember(new BackButton("Back to Bundle: " + version.getBundle().getName(),"Bundles/" + version.getBundle().getId()));
 
-        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png") + "\"/> " + version.getName()));
+        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png") + "\"/> " + version.getName() + ": " + version.getVersion()));
         addMember(tabs);
 
         if (nextViewId != null) {
@@ -169,7 +169,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
     private Tab createFilesTab() {
         Tab tab = new Tab("Files");
 
-        FileListView filesView = new FileListView(version.getBundleFiles());
+        FileListView filesView = new FileListView(version.getId());
 
         tab.setPane(filesView);
 

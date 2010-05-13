@@ -78,7 +78,9 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
 
             record.setAttribute("info", step.getInfo());
 
-            record.setAttribute("category", step.getCategory().toString());
+            if (step.getCategory() != null) {
+                record.setAttribute("category", step.getCategory().toString());
+            }
 
             record.setAttribute("message", step.getMessage());
 

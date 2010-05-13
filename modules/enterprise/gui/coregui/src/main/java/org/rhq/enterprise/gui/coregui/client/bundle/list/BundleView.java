@@ -92,7 +92,7 @@ public class BundleView extends VLayout implements BookmarkableView {
         Tab versionsTab = createVersionsTab();
         tabs.addTab(versionsTab);
 
-        Tab deploymentsTab = createDeploymentsTab();
+        Tab deploymentsTab = createDestinationsTab();
         tabs.addTab(deploymentsTab);
 
         addMember(headerLabel);
@@ -101,7 +101,7 @@ public class BundleView extends VLayout implements BookmarkableView {
         if (nextViewId != null) {
             if (nextViewId.getPath().equals("versions")) {
                 tabs.selectTab(versionsTab);
-            } else if (nextViewId.getPath().equals("deployments")) {
+            } else if (nextViewId.getPath().equals("desinations")) {
                 tabs.selectTab(deploymentsTab);
             }
         }
@@ -109,13 +109,13 @@ public class BundleView extends VLayout implements BookmarkableView {
         markForRedraw();
     }
 
-    private Tab createDeploymentsTab() {
-        Tab deploymentsTab = new Tab("Deployments");
+    private Tab createDestinationsTab() {
+        Tab destinationsTab = new Tab("Destinations");
 
 
-        deploymentsTab.setPane(new BundleDestinationListView(bundle.getId()));
+        destinationsTab.setPane(new BundleDestinationListView(bundle.getId()));
 
-        return deploymentsTab;
+        return destinationsTab;
     }
 
     private Tab createVersionsTab() {

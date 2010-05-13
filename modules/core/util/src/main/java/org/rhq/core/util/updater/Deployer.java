@@ -40,6 +40,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamCopyDigest;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -106,29 +107,92 @@ public class Deployer {
         return;
     }
 
+    /**
+     * Convienence method that is equivalent to {@link #deploy(DeployDifferences, boolean) deploy(diff, false)}.
+     * @see #deploy(DeployDifferences, boolean) 
+     */
     public FileHashcodeMap deploy(DeployDifferences diff) throws Exception {
+        return deploy(diff, false);
+    }
+
+    /**
+     * Convienence method that is equivalent to {@link #deploy(DeployDifferences, boolean) deploy(diff, true)}.
+     * @see #deploy(DeployDifferences, boolean) 
+     */
+    public FileHashcodeMap dryRun(DeployDifferences diff) throws Exception {
+        return deploy(diff, true);
+    }
+
+    /**
+     * Deploys all files to their destinations. Everything this method has to do is determined
+     * by the data passed into this object's constructor.
+     * 
+     * @param diff this method will populate this object with information about what
+     *             changed on the file system due to this deployment
+     * @param dryRun if <code>true</code>, the file system won't actually be changed; however,
+     *               the <code>diff</code> object will still be populated with information about
+     *               what would have occurred on the file system had it not been a dry run
+     * @return file/hashcode information for all files that were deployed
+     * @throws Exception if the deployment failed for some reason
+     */
+    public FileHashcodeMap deploy(DeployDifferences diff, boolean dryRun) throws Exception {
         FileHashcodeMap map = null;
 
         if (!this.deploymentsMetadata.isManaged()) {
             // the destination dir has not been used to deploy a bundle yet, therefore, this is the first deployment
-            map = performInitialDeployment(diff, false);
+            map = performInitialDeployment(diff, dryRun);
         } else {
             // we have metadata in the destination directory, therefore, this deployment is updating a current one
-            map = performUpdateDeployment(diff, false);
+            map = performUpdateDeployment(diff, dryRun);
         }
 
         return map;
     }
 
-    public FileHashcodeMap dryRun(DeployDifferences diff) throws Exception {
+    /**
+     * This will first perform a deploy (e.g. {@link #deploy(DeployDifferences, boolean) deploy(diff, dryRun)}) and
+     * then, if there are backup files from the previous deployment, those backup files will be restored to their
+     * original locations.
+     * 
+     * This is useful when you want to "undeploy" something where "undeploy" infers you want to go back to
+     * how the file system looked previously to a subsequent deployment (the one this method is being told
+     * to "redeploy"), including manual changes that were made over top the previous deployment.
+     * 
+     * For example, suppose you deployed deployment ID #1 and then the user manually changed some files
+     * within that #1 deployment. Later on, you deploy deployment ID #2 (which will not only deploy
+     * #2's files but will also backup the files that were manually changed within deployment #1).
+     * You find that deployment #2 is bad and you want to revert back to how the file system looked
+     * previously. You could opt to rollback to deployment ID #1 minus those manual changes - to do
+     * this you simply {@link #deploy(DeployDifferences) deploy} #1 again. However, if you want to
+     * go back to the previous content including those manual changes, you first deploy #1 and
+     * then restore the backup files - essentially overlaying the manual changes over top #1 files. This
+     * method accomplishes that latter task.
+     *
+     * @param diff see {@link #deploy(DeployDifferences, boolean)}
+     * @param dryRun see {@link #deploy(DeployDifferences, boolean)}
+     * @return see {@link #deploy(DeployDifferences, boolean)}
+     * @throws Exception if either the deployment or backup file restoration failed
+     */
+    public FileHashcodeMap redeployAndRestoreBackupFiles(DeployDifferences diff, boolean dryRun) throws Exception {
         FileHashcodeMap map = null;
 
         if (!this.deploymentsMetadata.isManaged()) {
             // the destination dir has not been used to deploy a bundle yet, therefore, this is the first deployment
-            map = performInitialDeployment(diff, true);
+            map = performInitialDeployment(diff, dryRun);
         } else {
-            // we have metadata in the destination directory, therefore, this deployment is updating a current one
-            map = performUpdateDeployment(diff, true);
+            // we have metadata in the destination directory, therefore, this deployment is updating a current one.
+            // First get the ID of the currently existing deployment - this is where our backup files exist.
+            // Then we update the current deployment with the new deployment (which actually should be restoring to the previous one).
+            // Finally, we restore the backup files into the new deployment, overlaying them over top the new deployment.
+            int id = this.deploymentsMetadata.getCurrentDeploymentProperties().getDeploymentId();
+            map = performUpdateDeployment(diff, dryRun);
+            restoreBackupFiles(id, map, diff, dryRun);
+            if (!dryRun) {
+                // if we restored one or more files, we need to persist the new deployment hashcode data with the restored hashcodes
+                if (!diff.getRestoredFiles().isEmpty()) {
+                    this.deploymentsMetadata.setCurrentDeployment(this.deploymentData.getDeploymentProps(), map, false);
+                }
+            }
         }
 
         return map;
@@ -329,7 +393,8 @@ public class Deployer {
         if (fileToBackup.isAbsolute()) {
             File backupDir = this.deploymentsMetadata.getDeploymentExternalBackupDirectory(deploymentId);
             if (isWindows && driveLetter != null) {
-                backupDir = new File(backupDir, "_" + driveLetter.toUpperCase());
+                String dirName = this.deploymentsMetadata.getExternalBackupDirectoryNameForWindows(driveLetter);
+                backupDir = new File(backupDir, dirName);
                 bakFile = new File(backupDir, fileToBackupPathNoDriveLetter.toString());
             } else {
                 bakFile = new File(backupDir, fileToBackupPath);
@@ -480,7 +545,8 @@ public class Deployer {
         newFileHashCodeMap.putAll(currentFilesToLeaveAlone); // remember that these are still there
 
         if (!dryRun) {
-            this.deploymentsMetadata.setCurrentDeployment(this.deploymentData.getDeploymentProps(), newFileHashCodeMap);
+            this.deploymentsMetadata.setCurrentDeployment(this.deploymentData.getDeploymentProps(), newFileHashCodeMap,
+                true);
         }
 
         return newFileHashCodeMap;
@@ -562,12 +628,141 @@ public class Deployer {
         return fileHashcodeMap;
     }
 
+    /**
+     * Takes all backup files found in a previous deployment and restores those files to their
+     * original locations.
+     * 
+     * This method is usually called after a {@link #deploy(DeployDifferences, boolean)} has been completed
+     * because it would be at that time when the previous deployment's information has been persisted
+     * and is available. Rarely will you ever want to restore backup files without first deploying
+     * content.
+     *
+     * @param prevDeploymentId the previous deployment ID which contains the backup files 
+     * @param map the map containing filenames/hashcodes that will be adjusted to reflect the restored file hashcodes
+     * @param diff used to store information about the restored files
+     * @param dryRun if <code>true</code>, don't really restore the files, but log the files that would
+     *               have been restored; <code>false</code> means you really want to restore the files
+     * @throws Exception
+     */
+    private void restoreBackupFiles(int prevDeploymentId, FileHashcodeMap map, DeployDifferences diff, boolean dryRun)
+        throws Exception {
+
+        // do the relative backup files first - these go into the destination directory
+        File backupDir = this.deploymentsMetadata.getDeploymentBackupDirectory(prevDeploymentId);
+        String backupDirBase = backupDir.getAbsolutePath();
+        if (!backupDirBase.endsWith(File.separator)) {
+            backupDirBase += File.separator; // make sure it ends with a file separator so our string manipulation works
+        }
+        File destDir = this.deploymentData.getDestinationDir();
+        restoreBackupFilesRecursive(backupDir, backupDirBase, destDir, map, diff, dryRun);
+
+        // now do the external backup files - these go into directories external to the destination directory
+        // note that if we are on windows, we have to do special things due to the existence of multiple root
+        // directories (i.e. drive letters).
+        Map<String, File> extBackupDirs;
+        extBackupDirs = this.deploymentsMetadata.getDeploymentExternalBackupDirectoriesForWindows(prevDeploymentId);
+        if (extBackupDirs == null) {
+            // we are on a non-windows platform; there is only one main root directory - "/"
+            File extBackupDir = this.deploymentsMetadata.getDeploymentExternalBackupDirectory(prevDeploymentId);
+            extBackupDirs = new HashMap<String, File>(1);
+            extBackupDirs.put("/", extBackupDir);
+        }
+
+        for (Map.Entry<String, File> entry : extBackupDirs.entrySet()) {
+            String rootDir = entry.getKey();
+            File extBackupDir = entry.getValue();
+            String extBackupDirBase = extBackupDir.getAbsolutePath();
+            if (!extBackupDirBase.endsWith(File.separator)) {
+                extBackupDirBase += File.separator;
+            }
+            restoreExternalBackupFilesRecursive(rootDir, extBackupDir, extBackupDirBase, map, diff, dryRun);
+        }
+
+        return;
+    }
+
+    private void restoreBackupFilesRecursive(File file, String base, File destDir, FileHashcodeMap map,
+        DeployDifferences diff, boolean dryRun) throws Exception {
+
+        File[] children = file.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                if (child.isDirectory()) {
+                    restoreBackupFilesRecursive(child, base, destDir, map, diff, dryRun);
+                } else {
+                    String childRelativePath = child.getAbsolutePath().substring(base.length());
+                    File restoredFile = new File(destDir, childRelativePath);
+                    debug("Restoring backup file [" + child + "] to [" + restoredFile + "]. dryRun=" + dryRun);
+                    if (!dryRun) {
+                        restoredFile.getParentFile().mkdirs();
+                        String hashcode = copyFileAndCalcHashcode(child, restoredFile);
+                        map.put(childRelativePath, hashcode);
+                    } else {
+                        map.put(childRelativePath, MessageDigestGenerator.getDigestString(child));
+                    }
+                    diff.addRestoredFile(childRelativePath, child.getAbsolutePath());
+                }
+            }
+        }
+        return;
+    }
+
+    private void restoreExternalBackupFilesRecursive(String rootDir, File backupDir, String base, FileHashcodeMap map,
+        DeployDifferences diff, boolean dryRun) throws Exception {
+
+        File[] children = backupDir.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                if (child.isDirectory()) {
+                    restoreExternalBackupFilesRecursive(rootDir, child, base, map, diff, dryRun);
+                } else {
+                    String childRelativePath = child.getAbsolutePath().substring(base.length());
+                    File restoredFile = new File(rootDir, childRelativePath);
+                    debug("Restoring backup file [" + child + "] to external location [" + restoredFile + "]. dryRun="
+                        + dryRun);
+                    if (!dryRun) {
+                        restoredFile.getParentFile().mkdirs();
+                        String hashcode = copyFileAndCalcHashcode(child, restoredFile);
+                        map.put(restoredFile.getAbsolutePath(), hashcode);
+                    } else {
+                        map.put(restoredFile.getAbsolutePath(), MessageDigestGenerator.getDigestString(child));
+                    }
+                    diff.addRestoredFile(restoredFile.getAbsolutePath(), child.getAbsolutePath());
+                }
+            }
+        }
+        return;
+    }
+
+    private String copyFileAndCalcHashcode(File src, File dest) throws Exception {
+        BufferedInputStream is = null;
+        BufferedOutputStream os = null;
+        try {
+            is = new BufferedInputStream(new FileInputStream(src));
+            os = new BufferedOutputStream(new FileOutputStream(dest));
+            StreamCopyDigest copier = new StreamCopyDigest();
+            return copier.copyAndCalculateHashcode(is, os);
+        } finally {
+            try {
+                if (is != null)
+                    is.close();
+            } catch (Exception ignore) {
+            }
+
+            try {
+                if (os != null)
+                    os.close();
+            } catch (Exception ignore) {
+            }
+        }
+    }
+
     private void debug(Object... objs) {
         if (log.isDebugEnabled()) {
-            StringBuilder str = new StringBuilder();
             String bundleName = this.deploymentData.getDeploymentProps().getBundleName();
             String bundleVersion = this.deploymentData.getDeploymentProps().getBundleVersion();
             int deploymentId = this.deploymentData.getDeploymentProps().getDeploymentId();
+            StringBuilder str = new StringBuilder();
             str.append("Bundle [").append(bundleName).append(" v").append(bundleVersion).append(']');
             str.append("; Deployment [").append(deploymentId).append("]: ");
             for (Object o : objs) {

@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.util.updater;
+package org.rhq.core.util.stream;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

@@ -24,7 +24,10 @@
 package org.rhq.core.util.updater;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.rhq.core.util.file.FileUtil;
@@ -54,16 +57,17 @@ public class DeploymentsMetadata {
         if (rootDirectory == null) {
             throw new NullPointerException("rootDirectory == null");
         }
-        this.rootDirectory = rootDirectory;
+        this.rootDirectory = rootDirectory.getAbsoluteFile(); // ensure it has an absolute path
     }
 
     @Override
     public String toString() {
-        return "DeploymentMetadata [" + getRootDirectory().getAbsolutePath() + "]";
+        return "DeploymentMetadata [" + getRootDirectory() + "]";
     }
 
     /**
      * @return the root directory where the bundle deployments are and where the metadata directory is located.
+     *         The returned File will have an absolute path.
      */
     public File getRootDirectory() {
         return rootDirectory;
@@ -108,8 +112,7 @@ public class DeploymentsMetadata {
     public File getMetadataDirectoryOnlyIfExists() throws Exception {
         File metaDir = getMetadataDirectory();
         if (!metaDir.isDirectory()) {
-            throw new IllegalStateException("Not a managed deployment location: "
-                + getRootDirectory().getAbsolutePath());
+            throw new IllegalStateException("Not a managed deployment location: " + getRootDirectory());
         }
         return metaDir;
     }
@@ -143,6 +146,27 @@ public class DeploymentsMetadata {
             File deploymentSubdir = getDeploymentMetadataDirectory(deploymentId);
             File propertiesFile = new File(deploymentSubdir, DEPLOYMENT_FILE);
             DeploymentProperties props = DeploymentProperties.loadFromFile(propertiesFile);
+            return props;
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot get deployment info", e);
+        }
+    }
+
+    /**
+     * Returns information about the previous deployment given a specific deployment ID.
+     * 
+     * @param id identifies which deployment whose previous deployment props are to be returned
+     * @return props with previous deployment information, or <code>null</code> if there was no previous deployment
+     * @throws Exception if could not load the previous deployment information or the given deployment ID is invalid
+     */
+    public DeploymentProperties getPreviousDeploymentProperties(int deploymentId) throws Exception {
+        try {
+            File deploymentSubdir = getDeploymentMetadataDirectory(deploymentId);
+            File propertiesFile = new File(deploymentSubdir, PREVIOUS_DEPLOYMENT_FILE);
+            DeploymentProperties props = null;
+            if (propertiesFile.exists()) {
+                props = DeploymentProperties.loadFromFile(propertiesFile);
+            }
             return props;
         } catch (Exception e) {
             throw new IllegalStateException("Cannot get deployment info", e);
@@ -248,15 +272,80 @@ public class DeploymentsMetadata {
     }
 
     /**
+     * Returns all the metadata directories that contain backup files for external directories
+     * (i.e. outside the deployment directory). The returned map has driver letter root directories
+     * as their keys (e.g. "C:\"); the values are the backup directories that contain files that were stored on their
+     * associated drive. 
+     * 
+     * Obviously, this method is only appropriate to be called on Windows platforms. If this method is
+     * called while the Java VM is running in a non-Windows environment, <code>null</code> is returned.
+     * 
+     * @param deploymentId the ID of the deployment whose backup directories are to be returned
+     * @return backup directories for the deployment's external files, keyed on the drive letter root directory
+     */
+    public Map<String, File> getDeploymentExternalBackupDirectoriesForWindows(int deploymentId) throws Exception {
+
+        boolean isWindows = (File.separatorChar == '\\');
+        if (!isWindows) {
+            return null;
+        }
+
+        try {
+            // find all the direct children directories of the main external backup directory; if any of them
+            // have the name "_X" where "X" is a letter from A to Z, that denotes a drive letter and
+            // that directory contains all the backup files for that drive.
+            Map<String, File> backupDirs = new HashMap<String, File>();
+            Pattern driveLetterPattern = Pattern.compile("_([a-zA-Z])");
+            File dir = getDeploymentExternalBackupDirectory(deploymentId);
+            File[] children = dir.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    if (child.isDirectory()) {
+                        String dirName = child.getName();
+                        Matcher m = driveLetterPattern.matcher(dirName);
+                        if (m.matches()) {
+                            String driveLetter = m.group(1).toUpperCase();
+                            backupDirs.put(driveLetter + ":\\", child);
+                        }
+                    }
+                }
+            }
+            return backupDirs;
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot determine deployment external backup dir for [" + deploymentId
+                + "]", e);
+        }
+    }
+
+    /**
+     * Given a Windows drive letter, this will return the name of the external backup directory
+     * where all backups for external files should be copied to. This method involves no relative or
+     * absolute paths, this only returns the short name of the directory. The returned name should
+     * be appended to the end of a {@link #getDeploymentExternalBackupDirectory(int) external backup directory}
+     * to obtain the full path.
+     *  
+     * @param driveLetter
+     * @return the name of the directory that should be used when storing external files for backup.
+     */
+    public String getExternalBackupDirectoryNameForWindows(String driveLetter) {
+        return "_" + driveLetter.toUpperCase();
+    }
+
+    /**
      * Call this when you already know the properties, and files/hashcodes for the current live deployment.
      * This method will also mark this initialized, live deployment as the "current" deployment.
-     *
+     * In addition, if <code>rememberPrevious</code> is <code>true</code>,  this will take the previous
+     * deployment information and backup that data - pass <code>false</code> if you merely want to update
+     * the current deployment properties without affecting anything else, specifically the backed up
+     * previous deployment data.
+     * 
      * @param deploymentProps identifies the deployment information for the live deployment
      * @param fileHashcodeMap the files and their hashcodes of the current live deployment
+     * @param rememberPrevious if <code>true</code>, this will create a backup of the previous deployment data
      * @throws Exception if failed to write out the necessary metadata about the given live data information
      */
-    public void setCurrentDeployment(DeploymentProperties deploymentProps, FileHashcodeMap fileHashcodeMap)
-        throws Exception {
+    public void setCurrentDeployment(DeploymentProperties deploymentProps, FileHashcodeMap fileHashcodeMap,
+        boolean rememberPrevious) throws Exception {
 
         // determine where we need to put the metadata and create its empty directory 
         // Don't worry if the directory already exists, we probably backed up files there ahead of time.
@@ -275,10 +364,14 @@ public class DeploymentsMetadata {
 
         // since we are being told this is the live deployment, this deployment should be considered the current one 
         File currentDeploymentPropertiesFile = new File(getMetadataDirectory(), CURRENT_DEPLOYMENT_FILE);
-        File previousDeploymentPropertiesFile = new File(deploymentMetadataDir, PREVIOUS_DEPLOYMENT_FILE);
-        if (currentDeploymentPropertiesFile.exists()) {
-            FileUtil.copyFile(currentDeploymentPropertiesFile, previousDeploymentPropertiesFile);
+
+        if (rememberPrevious) {
+            File previousDeploymentPropertiesFile = new File(deploymentMetadataDir, PREVIOUS_DEPLOYMENT_FILE);
+            if (currentDeploymentPropertiesFile.exists()) {
+                FileUtil.copyFile(currentDeploymentPropertiesFile, previousDeploymentPropertiesFile);
+            }
         }
+
         deploymentProps.saveToFile(currentDeploymentPropertiesFile);
 
         return;
@@ -300,7 +393,7 @@ public class DeploymentsMetadata {
 
         // calculate the hashcodes from the live files and write the data to the proper file
         FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(getRootDirectory(), ignoreRegex, ignored);
-        setCurrentDeployment(deploymentProps, map);
+        setCurrentDeployment(deploymentProps, map, true);
         return map;
     }
 

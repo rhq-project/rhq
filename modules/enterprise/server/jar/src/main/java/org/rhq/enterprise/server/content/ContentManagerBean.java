@@ -1233,7 +1233,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             log.error("Error savinf the package.", e);
         }
         newPackageVersion.setPackageBits(bits);
-
+        newPackageVersion.setFileSize((long) bits.getBits().length);
         newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
 
         existingPackage.addVersion(newPackageVersion);

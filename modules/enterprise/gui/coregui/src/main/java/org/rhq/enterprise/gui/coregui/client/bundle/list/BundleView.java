@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
+import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
@@ -77,6 +78,8 @@ public class BundleView extends VLayout implements BookmarkableView {
     }
 
     public void viewBundle(Bundle bundle, ViewId nextViewId) {
+        removeMembers(getMembers());
+
         this.bundle = bundle;
 
         headerLabel = new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/Bundle_24.png") + "\"/> " + bundle.getName());
@@ -108,6 +111,10 @@ public class BundleView extends VLayout implements BookmarkableView {
 
     private Tab createDeploymentsTab() {
         Tab deploymentsTab = new Tab("Deployments");
+
+
+        deploymentsTab.setPane(new BundleDestinationListView(bundle.getId()));
+
         return deploymentsTab;
     }
 

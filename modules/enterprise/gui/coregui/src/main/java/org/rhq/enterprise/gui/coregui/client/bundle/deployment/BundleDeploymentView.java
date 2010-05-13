@@ -55,6 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
@@ -72,13 +73,17 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
     private BundleVersion version;
     private Bundle bundle;
 
-    private Canvas detail;
+    private VLayout detail;
 
     private void viewBundleDeployment(BundleDeployment bundleDeployment, ViewId current) {
 
         this.deployment = bundleDeployment;
         this.version = bundleDeployment.getBundleVersion();
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
+
+        addMember(new BackButton("Back to Destination: " + deployment.getDestination().getName(),"Bundles/" + version.getBundle().getId() + "/destinations/" + deployment.getDestination().getId()));
+
+
 
         addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png")
             + "\"/> " + deployment.getName()));
@@ -89,7 +94,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle("Bundle");
         bundleName.setTarget("#Bundles/Bundle/" + bundle.getId());
-        bundleName.setValue(bundle.getName());
+        bundleName.setLinkTitle(bundle.getName());
 
         CanvasItem tagItem = new CanvasItem("tag");
         tagItem.setShowTitle(false);
@@ -116,7 +121,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
 
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTarget("#ResourceGroup/" + deployment.getDestination().getGroup().getId());
-        destinationGroup.setValue("Group");
+        destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
 
         StaticTextItem path = new StaticTextItem("path", "Path");
         path.setValue(deployment.getDestination().getDeployDir());
@@ -126,13 +131,13 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         addMember(form);
 
         Table deployments = createDeploymentsTable();
-        deployments.setHeight("50%");
+        deployments.setHeight("*");
         deployments.setShowResizeBar(true);
         deployments.setResizeBarTarget("next");
         addMember(createDeploymentsTable());
 
-        detail = new Canvas();
-        detail.setHeight("50%");
+        detail = new VLayout();
+        detail.setAutoHeight();
         detail.hide();
         addMember(detail);
 
@@ -193,7 +198,9 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
                     BundleResourceDeploymentHistoryListView detailView = new BundleResourceDeploymentHistoryListView(
                         bundleResourceDeployment);
 
-                    detail.addChild(detailView);
+                    detail.removeMembers(detail.getMembers());
+                    detail.addMember(detailView);
+                    detail.setHeight("50%");
                     detail.animateShow(AnimationEffect.SLIDE);
 
                     /*

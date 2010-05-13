@@ -77,6 +77,7 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -372,6 +373,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
         return bundleManager.findBundleDeploymentsByCriteria(subject, criteria);
+    }
+
+    public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject,
+        BundleDestinationCriteria criteria) {
+        return bundleManager.findBundleDestinationsByCriteria(subject, criteria);
     }
 
     public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(Subject subject,

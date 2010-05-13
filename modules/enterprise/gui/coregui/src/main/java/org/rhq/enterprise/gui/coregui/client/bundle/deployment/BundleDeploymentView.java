@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -33,6 +34,7 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -53,6 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
@@ -70,13 +73,17 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
     private BundleVersion version;
     private Bundle bundle;
 
-    private Canvas detail;
+    private VLayout detail;
 
     private void viewBundleDeployment(BundleDeployment bundleDeployment, ViewId current) {
 
         this.deployment = bundleDeployment;
         this.version = bundleDeployment.getBundleVersion();
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
+
+        addMember(new BackButton("Back to Destination: " + deployment.getDestination().getName(),"Bundles/" + version.getBundle().getId() + "/destinations/" + deployment.getDestination().getId()));
+
+
 
         addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png")
             + "\"/> " + deployment.getName()));
@@ -87,7 +94,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle("Bundle");
         bundleName.setTarget("#Bundles/Bundle/" + bundle.getId());
-        bundleName.setValue(bundle.getName());
+        bundleName.setLinkTitle(bundle.getName());
 
         CanvasItem tagItem = new CanvasItem("tag");
         tagItem.setShowTitle(false);
@@ -114,7 +121,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
 
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTarget("#ResourceGroup/" + deployment.getDestination().getGroup().getId());
-        destinationGroup.setValue("Group");
+        destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
 
         StaticTextItem path = new StaticTextItem("path", "Path");
         path.setValue(deployment.getDestination().getDeployDir());
@@ -124,12 +131,13 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         addMember(form);
 
         Table deployments = createDeploymentsTable();
-        deployments.setHeight100();
+        deployments.setHeight("*");
         deployments.setShowResizeBar(true);
+        deployments.setResizeBarTarget("next");
         addMember(createDeploymentsTable());
 
-        detail = new Canvas();
-        detail.setHeight("50%");
+        detail = new VLayout();
+        detail.setAutoHeight();
         detail.hide();
         addMember(detail);
 
@@ -138,15 +146,41 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
     private Table createDeploymentsTable() {
         Table table = new Table("Deployment Machines");
 
-        ListGridField resource = new ListGridField("resource", "Resource");
+
+        ListGridField resourceIcon = new ListGridField("resourceAvailabity");
+        HashMap<String,String> icons = new HashMap<String, String>();
+        icons.put("UP","types/Platform_up_16.png");
+        icons.put("DOWN","types/Platform_down_16.png");
+        resourceIcon.setValueIcons(icons);
+        resourceIcon.setValueIconSize(16);
+        resourceIcon.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return "";
+            }
+        });
+        resourceIcon.setWidth(30);
+
+
+        ListGridField resource = new ListGridField("resource", "Platform");
+        resource.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
+            }
+        });
+        ListGridField resourceVersion = new ListGridField("resourceVersion", "Operating System");
         ListGridField status = new ListGridField("status", "Status");
 
-        table.getListGrid().setFields(resource, status);
+        table.getListGrid().setFields(resourceIcon, resource, resourceVersion, status);
 
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
         for (BundleResourceDeployment rd : deployment.getResourceDeployments()) {
             ListGridRecord record = new ListGridRecord();
             record.setAttribute("resource", rd.getResource().getName());
+
+
+            record.setAttribute("resourceAvailabity", rd.getResource().getCurrentAvailability().getAvailabilityType().name());
+            record.setAttribute("resourceId", rd.getResource().getId());
+            record.setAttribute("resourceVersion", rd.getResource().getVersion());
             record.setAttribute("status", rd.getStatus().name());
             record.setAttribute("id", rd.getId());
             record.setAttribute("entity", rd);
@@ -164,7 +198,9 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
                     BundleResourceDeploymentHistoryListView detailView = new BundleResourceDeploymentHistoryListView(
                         bundleResourceDeployment);
 
-                    detail.addChild(detailView);
+                    detail.removeMembers(detail.getMembers());
+                    detail.addMember(detailView);
+                    detail.setHeight("50%");
                     detail.animateShow(AnimationEffect.SLIDE);
 
                     /*

@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 
 import java.util.ArrayList;
 
+import com.smartgwt.client.types.ExpansionMode;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -55,8 +56,13 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
         grid.setHeight100();
 
         ListGridField action = new ListGridField("action", "Action");
-        ListGridField message = new ListGridField("message", "Message");
+        ListGridField message = new ListGridField("info", "Info");
         ListGridField status = new ListGridField("status", "status");
+
+        grid.setCanExpandRecords(true);
+        grid.setExpansionMode(ExpansionMode.DETAIL_FIELD);
+        grid.setDetailField("message");
+
 
         grid.setFields(action, message, status);
 
@@ -78,7 +84,9 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
 
             record.setAttribute("info", step.getInfo());
 
-            record.setAttribute("category", step.getCategory().toString());
+            if (step.getCategory() != null) {
+                record.setAttribute("category", step.getCategory().toString());
+            }
 
             record.setAttribute("message", step.getMessage());
 

@@ -75,7 +75,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         this.destination = bundleDestination;
         this.bundle = bundleDestination.getBundle();
 
-        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png")
+        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png")
             + "\"/> " + destination.getName()));
 
         DynamicForm form = new DynamicForm();
@@ -83,7 +83,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
 
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle("Bundle");
-        bundleName.setTarget("#Bundles/Bundle/" + bundle.getId());
+        bundleName.setValue("#Bundles/Bundle/" + bundle.getId());
         bundleName.setLinkTitle(bundle.getName());
 
         CanvasItem tagItem = new CanvasItem("tag");
@@ -111,7 +111,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
 
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle("Group");
-        destinationGroup.setTarget("#ResourceGroup/" + destination.getGroup().getId());
+        destinationGroup.setValue("#ResourceGroup/" + destination.getGroup().getId());
         destinationGroup.setLinkTitle(destination.getGroup().getName());
 
         StaticTextItem path = new StaticTextItem("path", "Path");

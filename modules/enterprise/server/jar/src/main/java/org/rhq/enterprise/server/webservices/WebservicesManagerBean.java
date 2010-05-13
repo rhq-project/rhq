@@ -375,6 +375,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.findBundleDeploymentsByCriteria(subject, criteria);
     }
 
+    public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject,
+        BundleDestinationCriteria criteria) {
+        return bundleManager.findBundleDestinationsByCriteria(subject, criteria);
+    }
+
     public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(Subject subject,
         BundleResourceDeploymentCriteria criteria) {
         return bundleManager.findBundleResourceDeploymentsByCriteria(subject, criteria);

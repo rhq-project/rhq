@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
+import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
@@ -77,6 +78,8 @@ public class BundleView extends VLayout implements BookmarkableView {
     }
 
     public void viewBundle(Bundle bundle, ViewId nextViewId) {
+        removeMembers(getMembers());
+
         this.bundle = bundle;
 
         headerLabel = new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/Bundle_24.png") + "\"/> " + bundle.getName());
@@ -89,7 +92,7 @@ public class BundleView extends VLayout implements BookmarkableView {
         Tab versionsTab = createVersionsTab();
         tabs.addTab(versionsTab);
 
-        Tab deploymentsTab = createDeploymentsTab();
+        Tab deploymentsTab = createDestinationsTab();
         tabs.addTab(deploymentsTab);
 
         addMember(headerLabel);
@@ -98,7 +101,7 @@ public class BundleView extends VLayout implements BookmarkableView {
         if (nextViewId != null) {
             if (nextViewId.getPath().equals("versions")) {
                 tabs.selectTab(versionsTab);
-            } else if (nextViewId.getPath().equals("deployments")) {
+            } else if (nextViewId.getPath().equals("desinations")) {
                 tabs.selectTab(deploymentsTab);
             }
         }
@@ -106,9 +109,13 @@ public class BundleView extends VLayout implements BookmarkableView {
         markForRedraw();
     }
 
-    private Tab createDeploymentsTab() {
-        Tab deploymentsTab = new Tab("Deployments");
-        return deploymentsTab;
+    private Tab createDestinationsTab() {
+        Tab destinationsTab = new Tab("Destinations");
+
+
+        destinationsTab.setPane(new BundleDestinationListView(bundle.getId()));
+
+        return destinationsTab;
     }
 
     private Tab createVersionsTab() {

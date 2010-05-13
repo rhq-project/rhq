@@ -30,14 +30,14 @@ import org.rhq.core.domain.tagging.Tag;
 public class TagReportComposite extends Tag {
 
     private Tag tag;
-    private long total, resourceCount, resourceGroupCount, bundleCount, bundleVersionCount, bundleDeploymentCount;
+    private long total, resourceCount, resourceGroupCount, bundleCount, bundleVersionCount, bundleDeploymentCount, bundleDestinationCount;
 
     public TagReportComposite() {
     }
 
     public TagReportComposite(int id, String namespace, String semantic, String name,
                               long total,
-                              long resourceCount, long resourceGroupCount, long bundleCount, long bundleVersionCount, long bundleDeploymentCount) {
+                              long resourceCount, long resourceGroupCount, long bundleCount, long bundleVersionCount, long bundleDeploymentCount, long bundleDestinationCount) {
         tag = new Tag(namespace, semantic, name);
         tag.setId(id);
         this.total = total;
@@ -46,6 +46,7 @@ public class TagReportComposite extends Tag {
         this.bundleCount = bundleCount;
         this.bundleVersionCount = bundleVersionCount;
         this.bundleDeploymentCount = bundleDeploymentCount;
+        this.bundleDestinationCount = bundleDestinationCount;
     }
 
     public Tag getTag() {
@@ -74,5 +75,9 @@ public class TagReportComposite extends Tag {
 
     public long getBundleDeploymentCount() {
         return bundleDeploymentCount;
+    }
+
+    public long getBundleDestinationCount() {
+        return bundleDestinationCount;
     }
 }

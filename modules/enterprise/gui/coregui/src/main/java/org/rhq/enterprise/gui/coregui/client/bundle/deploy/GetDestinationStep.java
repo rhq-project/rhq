@@ -29,12 +29,15 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
+import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.PlatformResourceGroupSelector;
+import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SinglePlatformResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -46,7 +49,7 @@ public class GetDestinationStep implements WizardStep {
     private final BundleDeployWizard wizard;
     private VLayout form;
     DynamicForm valForm = new DynamicForm();
-    private AbstractSelector<ResourceGroup> selector;
+    private SinglePlatformResourceGroupSelector selector;
     private BundleDestination dest = new BundleDestination();
 
     public GetDestinationStep(BundleDeployWizard wizard) {
@@ -90,7 +93,7 @@ public class GetDestinationStep implements WizardStep {
             });
 
             final TextItem deployDirTextItem = new TextItem("deployDir",
-                "Root Deployment Directory (on destination platforms)");
+                    "Root Deployment Directory (on destination platforms)");
             deployDirTextItem.setRequired(true);
             deployDirTextItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -102,44 +105,46 @@ public class GetDestinationStep implements WizardStep {
                 }
             });
 
-            this.valForm.setItems(nameTextItem, descriptionTextAreaItem, deployDirTextItem);
+
+            this.selector = new SinglePlatformResourceGroupSelector("group", "Resource Group");
+            this.selector.setRequired(true);
+            Validator validator = new IsIntegerValidator();
+            validator.setErrorMessage("You must select a valid resource group from the drop down");
+            this.selector.setValidators(validator);
+
+            this.valForm.setItems(nameTextItem, descriptionTextAreaItem, deployDirTextItem, selector);
             CanvasItem ci1 = new CanvasItem();
             ci1.setShowTitle(false);
             ci1.setCanvas(valForm);
             ci1.setDisabled(true);
 
-            this.selector = new PlatformResourceGroupSelector();
-            CanvasItem ci2 = new CanvasItem();
-            ci2.setShowTitle(false);
-            ci2.setCanvas(this.selector);
-            ci2.setDisabled(true);
 
             this.form.addMember(this.valForm);
-            this.form.addMember(this.selector);
         }
 
         return this.form;
     }
 
     public boolean nextPage() {
-        HashSet<Integer> selection = this.selector.getSelection();
-        if (selection.size() != 1) {
-            SC.warn("Select only a single destination group for deployment.");
+
+        if (!valForm.validate()) {
             return false;
         }
 
-        bundleServer.createBundleDestination(wizard.getBundleId(), this.dest.getName(), this.dest.getDescription(),
-            this.dest.getDeployDir(), selection.iterator().next(), //
-            new AsyncCallback<BundleDestination>() {
-                public void onSuccess(BundleDestination result) {
-                    wizard.setBundleDestination(result);
-                }
+        int selectedGroup = (Integer) this.valForm.getValue("group");
 
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to create destination: " + caught.getMessage(),
-                        caught);
-                }
-            });
+        bundleServer.createBundleDestination(wizard.getBundleId(), this.dest.getName(), this.dest.getDescription(),
+                this.dest.getDeployDir(), selectedGroup, //
+                new AsyncCallback<BundleDestination>() {
+                    public void onSuccess(BundleDestination result) {
+                        wizard.setBundleDestination(result);
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to create destination: " + caught.getMessage(),
+                                caught);
+                    }
+                });
 
         return true;
     }

@@ -56,9 +56,9 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         @NamedQuery(name = Tag.QUERY_TAG_COMPOSITE_REPORT,
                 query = "SELECT new org.rhq.core.domain.tagging.compsite.TagReportComposite( \n" +
                         "   t.id, t.namespace, t.semantic, t.name,\n" +
-                        "  (count(r) + count(g) + count(b) + count(bv) + count(bd)) AS Total,\n" +
-                        "  count(r) AS Resources, count(g) AS ResourceGroups, count(b) AS Bundles, count(bv) AS BundleVersions, count(bd) AS BundleDeployments )\n" +
-                        "FROM Tag t LEFT JOIN t.resources r  LEFT JOIN t.resourceGroups g LEFT JOIN t.bundles b LEFT JOIN t.bundleVersions bv LEFT JOIN t.bundleDeployments bd\n" +
+                        "  (count(r) + count(g) + count(b) + count(bv) + count(bd) + count(bds)) AS Total,\n" +
+                        "  count(r) AS Resources, count(g) AS ResourceGroups, count(b) AS Bundles, count(bv) AS BundleVersions, count(bd) AS BundleDeployments, count(bds) AS BundleDestinations )\n" +
+                        "FROM Tag t LEFT JOIN t.resources r  LEFT JOIN t.resourceGroups g LEFT JOIN t.bundles b LEFT JOIN t.bundleVersions bv LEFT JOIN t.bundleDeployments bd LEFT JOIN t.bundleDestinations bds \n" +
                         "GROUP BY t.id, t.namespace, t.semantic, t.name\n" +
                         "ORDER BY (count(r) + count(g) + count(b) + count(bv) + count(bd)) desc")
 })

@@ -114,8 +114,8 @@ public final class CriteriaQueryGenerator {
     }
 
     private String fixFilterOverride(String expression, String fieldName) {
-        boolean fuzzyMatch = expression.toLowerCase().contains(" like ") && !expression.toLowerCase().contains("select");  // Don't fuzzy match subselects
-        boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive() && fuzzyMatch;
+        boolean fuzzyMatch = expression.toLowerCase().contains(" like ");
+        boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive() && fuzzyMatch && !expression.toLowerCase().contains("select");  // Don't case change subselects
 
         while (expression.indexOf('?') != -1) {
             String replacement = ":" + fieldName;

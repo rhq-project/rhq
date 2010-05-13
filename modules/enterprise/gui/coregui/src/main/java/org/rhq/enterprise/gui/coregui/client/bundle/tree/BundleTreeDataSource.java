@@ -220,7 +220,7 @@ public class BundleTreeDataSource extends RPCDataSource {
             node.setID(destination.getBundle().getId() + ":destinations:" +destination.getId());
             node.setParentID(destination.getBundle().getId() + ":destinations");
             node.setIsFolder(false);
-            node.setIcon("subsystems/bundle/BundleDeployment_16.png");
+            node.setIcon("subsystems/bundle/BundleDestination_16.png");
         }
         return node;
     }

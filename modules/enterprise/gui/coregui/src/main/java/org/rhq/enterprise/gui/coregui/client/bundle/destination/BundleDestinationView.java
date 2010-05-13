@@ -78,7 +78,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         this.destination = bundleDestination;
         this.bundle = bundleDestination.getBundle();
 
-        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png")
+        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png")
                 + "\"/> " + destination.getName()));
 
         DynamicForm form = new DynamicForm();

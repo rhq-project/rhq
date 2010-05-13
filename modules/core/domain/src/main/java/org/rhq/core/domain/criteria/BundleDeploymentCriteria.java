@@ -50,7 +50,6 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
     private boolean fetchConfiguration;
     private boolean fetchDestination;
     private boolean fetchResourceDeployments;
-    private boolean fetchTags;
 
     public BundleDeploymentCriteria() {
         filterOverrides.put("bundleId", "bundleVersion.bundle.id = ?");
@@ -120,8 +119,5 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
         this.fetchResourceDeployments = fetchResourceDeployments;
     }
 
-    public void fetchTags(boolean fetchTags) {
-        this.fetchTags = fetchTags;
-    }
 
 }

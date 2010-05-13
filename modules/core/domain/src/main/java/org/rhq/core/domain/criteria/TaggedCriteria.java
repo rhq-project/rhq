@@ -31,6 +31,9 @@ public abstract class TaggedCriteria extends Criteria {
 
     private Tag filterTag;
 
+    private boolean fetchTags;
+
+
     protected TaggedCriteria() {
 
         String entityName = getPersistentClass().getName();
@@ -71,6 +74,11 @@ public abstract class TaggedCriteria extends Criteria {
 
     public boolean isTagFiltered() {
         return this.filterTag != null;
+    }
+
+
+    public void fetchTags(boolean fetchTags) {
+        this.fetchTags = fetchTags;
     }
 
 }

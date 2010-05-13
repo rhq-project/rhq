@@ -22,13 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
-    // New Deployment, No Bundle Selected
+    // Initial Deployment, No Bundle Selected
     public BundleDeployWizard() {
-        this.setNewDestination(true);
+        this.setInitialDeployment(true);
 
         List<WizardStep> steps = init();
         steps.add(new SelectBundleStep(this));
@@ -39,13 +40,9 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         steps.add(new DeployStep(this));
     }
 
-    // New Deployment, Seeded with Bundle
-    public BundleDeployWizard(Integer bundleId) {
-        if (null == bundleId) {
-            throw new IllegalArgumentException("bundleId is null");
-        }
-
-        this.setNewDestination(true);
+    // Initial Deployment, Seeded with Bundle
+    public BundleDeployWizard(int bundleId) {
+        this.setInitialDeployment(true);
         this.setBundleId(bundleId);
 
         List<WizardStep> steps = init();
@@ -56,14 +53,15 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         steps.add(new DeployStep(this));
     }
 
-    // Redeploy
-    public BundleDeployWizard(Integer bundleId, Integer destinationId) {
-        if (null == destinationId) {
-            throw new IllegalArgumentException("destinationId is null");
+    // Redeploy to existing destination
+    public BundleDeployWizard(BundleDestination destination) {
+        if (null == destination) {
+            throw new IllegalArgumentException("destination is null");
         }
 
-        this.setBundleId(bundleId);
-        this.setDestinationId(destinationId);
+        this.setInitialDeployment(false);
+        this.setBundleId(destination.getBundle().getId());
+        this.setBundleDestination(destination);
 
         List<WizardStep> steps = init();
         steps.add(new SelectBundleVersionStep(this));
@@ -82,8 +80,8 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
     }
 
     public void cancel() {
-        BundleDeployment bd = getBundleDeployment();
-        if (bd != null && isNewDestination()) {
+        BundleDeployment bd = getNewDeployment();
+        if (bd != null && isInitialDeployment()) {
             // the user must have created it already after verification step, delete it
             // TODO
         }

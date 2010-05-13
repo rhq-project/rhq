@@ -40,26 +40,40 @@ public class GetDeploymentConfigStep implements WizardStep {
 
     public Canvas getCanvas() {
         if (null == editor) {
-            ConfigurationDefinition configDef = wizard.getBundleVersion().getConfigurationDefinition();
-            Configuration startingConfig = (null != this.wizard.getTemplate()) ? this.wizard.getTemplate()
-                .getConfiguration() : new Configuration();
+            ConfigurationDefinition configDef = this.wizard.getBundleVersion().getConfigurationDefinition();
 
             // if there are no prop defs for this config def then we can skip this step entirely. just
             // set an empty config.
             if (configDef.getPropertyDefinitions().isEmpty()) {
-                this.wizard.setConfig(startingConfig);
+                this.wizard.setNewDeploymentConfig(new Configuration());
                 this.wizard.getView().incrementStep();
+            } else {
+                // otherwise, pop up the config editor to get the needed config
+                Configuration startingConfig = (null == this.wizard.getLiveDeployment()) ? new Configuration()
+                    : getNormalizedLiveConfig(configDef);
+                editor = new ConfigurationEditor(configDef, startingConfig);
             }
-
-            // otherwise, pop up the config editor to get the needed config
-            editor = new ConfigurationEditor(configDef, startingConfig);
         }
 
         return editor;
     }
 
+    private Configuration getNormalizedLiveConfig(ConfigurationDefinition configDef) {
+        Configuration config = this.wizard.getLiveDeployment().getConfiguration();
+        if (null == config) {
+            config = new Configuration();
+        } else {
+            config = config.deepCopy(false);
+            //TODO: get access to this method, may need to add slsb call
+            //      also, may need to enhance this drop unnecessary config (maybe it can just stay around) 
+            //ConfigurationUtility.normalizeConfiguration(config, configDef);
+        }
+
+        return config;
+    }
+
     public boolean nextPage() {
-        wizard.setConfig(editor.getConfiguration());
+        wizard.setNewDeploymentConfig(editor.getConfiguration());
         return true;
     }
 }

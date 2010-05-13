@@ -27,8 +27,10 @@ import java.util.Date;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -36,15 +38,11 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
-import org.rhq.core.domain.bundle.BundleResourceDeployment;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
@@ -52,7 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleResourceDeploymentHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
@@ -68,7 +66,6 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
     private BundleGWTServiceAsync bundleService;
 
     private BundleDestination destination;
-    private BundleVersion version;
     private Bundle bundle;
 
     private Canvas detail;
@@ -79,7 +76,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         this.bundle = bundleDestination.getBundle();
 
         addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png")
-                + "\"/> " + destination.getName()));
+            + "\"/> " + destination.getName()));
 
         DynamicForm form = new DynamicForm();
         form.setNumCols(4);
@@ -94,16 +91,16 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         TagEditorView tagEditor = new TagEditorView(destination.getTags(), false, new TagsChangedCallback() {
             public void tagsChanged(HashSet<Tag> tags) {
                 GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to update bundle destination's tags", caught);
-                            }
+                    new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to update bundle destination's tags", caught);
+                        }
 
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                        new Message("Bundle Destination Tags updated", Message.Severity.Info));
-                            }
-                        });
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Bundle Destination Tags updated", Message.Severity.Info));
+                        }
+                    });
             }
         });
         tagItem.setCanvas(tagEditor);
@@ -129,11 +126,18 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         deployments.setShowResizeBar(true);
         addMember(createDeploymentsTable());
 
+        IButton deployButton = new IButton("Deploy...");
+        deployButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                new BundleDeployWizard(destination).startBundleWizard();
+            }
+        });
+        addMember(deployButton);
+
         detail = new Canvas();
         detail.setHeight("50%");
         detail.hide();
         addMember(detail);
-
     }
 
     private Table createDeploymentsTable() {
@@ -142,7 +146,8 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         ListGridField name = new ListGridField("name", "Name");
         name.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + bundle.getId() + "/deployments/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+                return "<a href=\"#Bundles/Bundle/" + bundle.getId() + "/deployments/"
+                    + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
             }
         });
 
@@ -169,7 +174,6 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
 
         table.getListGrid().setData(records.toArray(new ListGridRecord[records.size()]));
 
-
         return table;
     }
 
@@ -191,7 +195,6 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
             public void onSuccess(PageList<BundleDestination> result) {
 
                 final BundleDestination destination = result.get(0);
-
 
                 viewBundleDestination(destination, viewPath.getCurrent());
 

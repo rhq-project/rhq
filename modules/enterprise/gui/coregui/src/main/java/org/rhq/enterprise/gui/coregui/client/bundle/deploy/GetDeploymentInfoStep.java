@@ -62,7 +62,7 @@ public class GetDeploymentInfoStep implements WizardStep {
                         value = "";
                     }
                     wizard.setSubtitle(value.toString());
-                    wizard.setName(value.toString());
+                    wizard.setNewDeploymentName(value.toString());
                 }
             });
 
@@ -73,7 +73,7 @@ public class GetDeploymentInfoStep implements WizardStep {
                     if (value == null) {
                         value = "";
                     }
-                    wizard.setDescription(value.toString());
+                    wizard.setNewDeploymentDescription(value.toString());
                 }
             });
 

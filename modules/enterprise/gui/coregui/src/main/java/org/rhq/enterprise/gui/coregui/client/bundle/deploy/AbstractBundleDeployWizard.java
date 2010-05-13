@@ -22,7 +22,6 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
 
 /**
@@ -33,15 +32,15 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     // the things we build up in the wizard
     private Integer bundleId;
-    private Integer destinationId;
     private BundleDestination bundleDestination;
     private BundleVersion bundleVersion;
-    private boolean newDestination = false;
-    private String deploymentName;
-    private String deploymentDescription;
-    private BundleDeployment bundleDeployment;
-    private ConfigurationTemplate template;
-    private Configuration config;
+    private boolean initialDeployment = false;
+    private Configuration newDeploymentConfig;
+    private String newDeploymentName;
+    private String newDeploymentDescription;
+    private BundleDeployment newDeployment;
+    private BundleDeployment liveDeployment;
+
     private boolean deployNow = true;
 
     public Integer getBundleId() {
@@ -60,52 +59,52 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
         this.bundleVersion = bundleVersion;
     }
 
-    public Integer getDestinationId() {
-        return destinationId;
+    public String getNewDeploymentName() {
+        return newDeploymentName;
     }
 
-    public void setDestinationId(Integer destinationId) {
-        this.destinationId = destinationId;
+    public void setNewDeploymentName(String newDeploymentName) {
+        this.newDeploymentName = newDeploymentName;
     }
 
-    public String getName() {
-        return deploymentName;
+    public String getNewDeploymentDescription() {
+        return newDeploymentDescription;
     }
 
-    public void setName(String name) {
-        this.deploymentName = name;
+    public void setNewDeploymentDescription(String newDeploymentDescription) {
+        this.newDeploymentDescription = newDeploymentDescription;
     }
 
-    public String getDescription() {
-        return deploymentDescription;
+    public Configuration getNewDeploymentConfig() {
+        return newDeploymentConfig;
     }
 
-    public void setDescription(String description) {
-        this.deploymentDescription = description;
+    public void setNewDeploymentConfig(Configuration newDeploymentConfig) {
+        this.newDeploymentConfig = newDeploymentConfig;
     }
 
-    public Configuration getConfig() {
-        return config;
+    public BundleDeployment getNewDeployment() {
+        return newDeployment;
     }
 
-    public ConfigurationTemplate getTemplate() {
-        return template;
+    public void setNewDeployment(BundleDeployment newDeployment) {
+        this.newDeployment = newDeployment;
     }
 
-    public void setTemplate(ConfigurationTemplate template) {
-        this.template = template;
+    public BundleDeployment getLiveDeployment() {
+        return liveDeployment;
     }
 
-    public void setConfig(Configuration config) {
-        this.config = config;
+    public void setLiveDeployment(BundleDeployment liveDeployment) {
+        this.liveDeployment = liveDeployment;
     }
 
-    public BundleDeployment getBundleDeployment() {
-        return bundleDeployment;
+    public boolean isInitialDeployment() {
+        return initialDeployment;
     }
 
-    public void setBundleDeployment(BundleDeployment bundleDeployment) {
-        this.bundleDeployment = bundleDeployment;
+    public void setInitialDeployment(boolean initialDeployment) {
+        this.initialDeployment = initialDeployment;
     }
 
     public BundleDestination getBundleDestination() {
@@ -114,14 +113,6 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     public void setBundleDestination(BundleDestination bundleDestination) {
         this.bundleDestination = bundleDestination;
-    }
-
-    public boolean isNewDestination() {
-        return newDestination;
-    }
-
-    public void setNewDestination(boolean newDestination) {
-        this.newDestination = newDestination;
     }
 
     public Boolean isDeployNow() {

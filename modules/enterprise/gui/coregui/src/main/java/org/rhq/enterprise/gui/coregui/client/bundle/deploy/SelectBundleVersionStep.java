@@ -133,40 +133,47 @@ public class SelectBundleVersionStep implements WizardStep {
                         selectVersionValues.put(bundleVersion.getVersion(), bundleVersion.getVersion());
                     }
 
-                    radioGroupValues.put(LATEST_VERSION, "Latest Version  [ " + latestVersion.getVersion() + " ]");
-                    radioGroupValues.put(SELECT_VERSION, "Select Version");
-
                     BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
-                    criteria.addFilterBundleId(wizard.getBundleId());
+                    criteria.addFilterDestinationId(wizard.getBundleDestination().getId());
                     criteria.addFilterIsLive(true);
                     criteria.fetchBundleVersion(true);
+                    criteria.fetchConfiguration(true);
                     bundleServer.findBundleDeploymentsByCriteria(criteria, //
                         new AsyncCallback<PageList<BundleDeployment>>() {
 
                             public void onSuccess(PageList<BundleDeployment> result) {
+                                radioGroupValues.put(LATEST_VERSION, "Latest Version  [ " + latestVersion.getVersion()
+                                    + " ]");
+
                                 if (!result.isEmpty()) {
-                                    liveVersion = result.get(0).getBundleVersion();
+                                    BundleDeployment liveDeployment = result.get(0);
+                                    // make sure the liveDeployment record has a bundleversion with configdef loaded
+                                    BundleVersion liveBundleVersion = liveDeployment.getBundleVersion();
+                                    int i = bundleVersions.indexOf(liveBundleVersion);
+                                    liveDeployment.setBundleVersion(bundleVersions.get(i));
+                                    wizard.setLiveDeployment(liveDeployment);
+                                    liveVersion = liveDeployment.getBundleVersion();
                                     radioGroupValues.put(LIVE_VERSION, "Live Version  [ " + liveVersion.getVersion()
                                         + " ]");
                                 }
+
+                                radioGroupValues.put(SELECT_VERSION, "Select Version from List:");
+                                selectVersionItem.setValueMap(selectVersionValues);
+                                selectVersionItem.setValue(latestVersion.getVersion());
+                                selectVersionItem.redraw();
+
+                                radioGroupItem.setValueMap(radioGroupValues);
+                                radioGroupItem.setValue(LATEST_VERSION);
+                                wizard.setBundleVersion(latestVersion);
+                                radioGroupItem.setDisabled(false);
+                                radioGroupItem.redraw();
+                                form.markForRedraw();
                             }
 
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError("Failed to find defined deployments.", caught);
                             }
                         });
-
-                    radioGroupItem.setValueMap(radioGroupValues);
-                    radioGroupItem.setValue(LATEST_VERSION);
-                    wizard.setBundleVersion(latestVersion);
-                    radioGroupItem.setDisabled(false);
-                    radioGroupItem.redraw();
-
-                    selectVersionItem.setValueMap(selectVersionValues);
-                    selectVersionItem.setValue(latestVersion.getVersion());
-                    selectVersionItem.redraw();
-
-                    form.markForRedraw();
                 }
 
                 public void onFailure(Throwable caught) {

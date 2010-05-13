@@ -33,12 +33,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
+import org.rhq.core.util.ZipUtil.ZipEntryVisitor;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamCopyDigest;
 import org.rhq.core.util.stream.StreamUtil;
@@ -196,6 +199,38 @@ public class Deployer {
         }
 
         return map;
+    }
+
+    /**
+     * Returns an estimated amount of disk space the deployment will need if it gets installed.
+     * @return information on the estimated disk usage
+     * @throws Exception if cannot determine the estimated disk usage
+     */
+    public DeploymentDiskUsage estimateDiskUsage() throws Exception {
+        final DeploymentDiskUsage diskUsage = new DeploymentDiskUsage();
+
+        diskUsage.setMaxDiskUsable(this.deploymentData.getDestinationDir().getUsableSpace());
+
+        Set<File> zipFiles = this.deploymentData.getZipFiles();
+        for (File zipFile : zipFiles) {
+            ZipUtil.walkZipFile(zipFile, new ZipEntryVisitor() {
+                public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+                    if (!entry.isDirectory()) {
+                        diskUsage.increaseDiskUsage(entry.getSize());
+                        diskUsage.incrementFileCount();
+                    }
+                    return true;
+                }
+            });
+        }
+
+        Map<File, File> rawFiles = this.deploymentData.getRawFiles();
+        for (File rawFile : rawFiles.keySet()) {
+            diskUsage.increaseDiskUsage(rawFile.length());
+            diskUsage.incrementFileCount();
+        }
+
+        return diskUsage;
     }
 
     private FileHashcodeMap performInitialDeployment(DeployDifferences diff, boolean dryRun) throws Exception {

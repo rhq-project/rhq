@@ -259,6 +259,12 @@ public class DeployerTest {
                 null, templateEngine, ignoreRegex);
             Deployer deployer = new Deployer(dd);
             diff = new DeployDifferences();
+
+            DeploymentDiskUsage diskUsage = deployer.estimateDiskUsage();
+            assert diskUsage.getMaxDiskUsable() > 0L;
+            assert diskUsage.getDiskUsage() > 0L;
+            assert diskUsage.getFileCount() == 6 : "should have been 5 files in zip and 1 raw file";
+
             deployer.deploy(diff);
 
             if (ignore) {

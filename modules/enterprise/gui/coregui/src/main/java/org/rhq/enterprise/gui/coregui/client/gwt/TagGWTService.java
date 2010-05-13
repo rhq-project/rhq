@@ -29,6 +29,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.Tag;
+import org.rhq.core.domain.tagging.compsite.TagReportComposite;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -55,5 +56,5 @@ public interface TagGWTService extends RemoteService {
 
     void updateBundleDestinationTags(int bundleDestinationId, Set<Tag> tags);
 
-
+    PageList<TagReportComposite> findTagReportCompositesByCriteria(TagCriteria tagCriteria);
 }

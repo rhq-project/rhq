@@ -52,12 +52,16 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  * @author Greg Hinkle
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = Tag.QUERY_TAG_COMPOSITE_REPORT, query = "SELECT t.id, t.namespace, t.semantic, t.name,\n"
-    + "  (count(r) + count(g) + count(b) + count(bv) + count(bd)) AS Total,\n"
-    + "  count(r) AS Resources, count(g) AS ResourceGroups, count(b) AS Bundles, count(bv) AS BundleVersions, count(bd) AS BundleDeployments\n"
-    + "FROM Tag t LEFT JOIN t.resources r  LEFT JOIN t.resourceGroups g LEFT JOIN t.bundles b LEFT JOIN t.bundleVersions bv LEFT JOIN t.bundleDeployments bd\n"
-    + "GROUP BY t.id, t.namespace, t.semantic, t.name\n"
-    + "ORDER BY (count(r) + count(g) + count(b) + count(bv) + count(bd)) desc") })
+@NamedQueries( {
+        @NamedQuery(name = Tag.QUERY_TAG_COMPOSITE_REPORT,
+                query = "SELECT new org.rhq.core.domain.tagging.compsite.TagReportComposite( \n" +
+                        "   t.id, t.namespace, t.semantic, t.name,\n" +
+                        "  (count(r) + count(g) + count(b) + count(bv) + count(bd)) AS Total,\n" +
+                        "  count(r) AS Resources, count(g) AS ResourceGroups, count(b) AS Bundles, count(bv) AS BundleVersions, count(bd) AS BundleDeployments )\n" +
+                        "FROM Tag t LEFT JOIN t.resources r  LEFT JOIN t.resourceGroups g LEFT JOIN t.bundles b LEFT JOIN t.bundleVersions bv LEFT JOIN t.bundleDeployments bd\n" +
+                        "GROUP BY t.id, t.namespace, t.semantic, t.name\n" +
+                        "ORDER BY (count(r) + count(g) + count(b) + count(bv) + count(bd)) desc")
+})
 @SequenceGenerator(name = "RHQ_TAGGING_SEQ", sequenceName = "RHQ_TAGGING_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_TAGGING")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -130,6 +134,10 @@ public class Tag implements Serializable {
     public int getId() {
         return id;
     }
+
+    public void setId(int id) {
+        this.id = id;
+    }    
 
     public String getNamespace() {
         return namespace;

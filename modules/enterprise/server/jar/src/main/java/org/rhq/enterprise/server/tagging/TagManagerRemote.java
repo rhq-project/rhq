@@ -56,6 +56,8 @@ public interface TagManagerRemote {
 
     void updateBundleDeploymentTags(Subject subject, int bundleDeploymentId, Set<Tag> tags);
 
+    void updateBundleDestinationTags(Subject subject, int bundleDestinationId, Set<Tag> tags);
+
 
 
 }

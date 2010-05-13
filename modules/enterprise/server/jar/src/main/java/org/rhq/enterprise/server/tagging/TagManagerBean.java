@@ -38,6 +38,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -202,4 +203,28 @@ public class TagManagerBean implements TagManagerLocal {
             tag.addBundleDeployment(bundleDeployment);
         }
     }
+
+
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    // todo verify
+    public void updateBundleDestinationTags(Subject subject, int bundleDestinationId, Set<Tag> tags) {
+
+        Set<Tag> definedTags = addTags(subject, tags);
+        BundleDestination bundleDestination = entityManager.find(BundleDestination.class, bundleDestinationId);
+
+        Set<Tag> previousTags = new HashSet<Tag>(bundleDestination.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeBundleDestination(bundleDestination);
+        }
+
+        for (Tag tag : definedTags) {
+            tag.addBundleDestination(bundleDestination);
+        }
+    }
+
+
+
+
 }

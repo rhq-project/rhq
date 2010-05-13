@@ -42,6 +42,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -246,6 +247,12 @@ public interface BundleManagerRemote {
     PageList<BundleDeployment> findBundleDeploymentsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") BundleDeploymentCriteria criteria);
+
+    @WebMethod
+    PageList<BundleDestination> findBundleDestinationsByCriteria(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "criteria") BundleDestinationCriteria criteria);
+
 
     @WebMethod
     PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria( //

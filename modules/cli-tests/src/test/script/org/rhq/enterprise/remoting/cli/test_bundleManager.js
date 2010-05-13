@@ -56,8 +56,23 @@ function testDeployment() {
    var rgc = new ResourceGroupCriteria();
    rgc.addFilterName("platforms"); // wINdows, lINux
    var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
-   Assert.assertTrue( groups.size() > 0 );
-   var groupId = groups.get(0).getId();
+   var groupId;
+   // create if needed (and possible)
+   if ( groups.isEmpty() ) {
+      var c = new ResourceCriteria();
+      c.addFilterResourceCategory(ResourceCategory.PLATFORM);
+      var platforms = ResourceManager.findResourcesByCriteria(c);
+      Assert.assertTrue( platforms.size() > 0 );
+      
+      var rg = new ResourceGroup("platforms");
+      var platformSet = new java.util.HashSet();
+      platformSet.addAll( platforms );
+      rg.setExplicitResources(platformSet);
+      rg = ResourceGroupManager.createResourceGroup(rg);
+      groupId = rg.getId();
+   } else { 
+      groupId = groups.get(0).getId();
+   }
 
    // create a destination to deploy to
    var testDest = BundleManager.createBundleDestination( testBundleVersion.getBundle().getId(), "Deployment Test Dest", "test Dest", "/tmp/bundle-test", groupId);
@@ -89,6 +104,7 @@ function getBundleType() {
 function cleanupTestBundle() {
    // delete the test bundle if it exists
    var bc = new BundleCriteria();
+   bc.setStrict( true );
    bc.addFilterName( bundleName );
    var bundles = BundleManager.findBundlesByCriteria( bc );
    if ( null != bundles && bundles.size() > 0 ) {

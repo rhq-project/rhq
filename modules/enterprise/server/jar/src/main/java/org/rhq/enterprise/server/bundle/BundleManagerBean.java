@@ -700,22 +700,44 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeploymentId) throws Exception {
 
-        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
-        if (null == deployment) {
+        BundleDeployment newDeployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
+        if (null == newDeployment) {
             throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
         }
+        newDeployment.setStatus(BundleDeploymentStatus.IN_PROGRESS);
 
-        BundleDestination destination = deployment.getDestination();
+        BundleDestination destination = newDeployment.getDestination();
         ResourceGroup group = destination.getGroup();
 
         // Create and persist updates for each of the group members.
         for (Resource resource : group.getExplicitResources()) {
-            BundleResourceDeployment resourceDeployment = scheduleBundleResourceDeployment(subject, deployment,
-                resource);
-            deployment.addResourceDeployment(resourceDeployment);
+            try {
+                BundleResourceDeployment resourceDeployment = scheduleBundleResourceDeployment(subject, newDeployment,
+                    resource);
+                newDeployment.addResourceDeployment(resourceDeployment);
+            } catch (Throwable t) {
+                log.error("Failed to complete scheduling of platform deployment to [" + resource
+                    + "]. Other platforms may have been scheduled. ", t);
+            }
         }
 
-        return deployment;
+        entityManager.flush();
+
+        // make sure the new deployment is set as the live deployment.
+        destination = entityManager.find(BundleDestination.class, destination.getId());
+        List<BundleDeployment> currentDeployments = destination.getDeployments();
+        if (null != currentDeployments) {
+            for (BundleDeployment d : currentDeployments) {
+                if (d.isLive()) {
+                    d.setLive(false);
+                    break;
+                }
+            }
+        }
+        newDeployment.setLive(true);
+        entityManager.merge(newDeployment);
+
+        return newDeployment;
     }
 
     private BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, BundleDeployment deployment,
@@ -816,7 +838,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid bundleDeploymentId: " + resourceDeploymentId);
         }
 
-        // set the status on the overall deployment
+        // update the status
+        resourceDeployment.setStatus(status);
+
+        // update the status on the overall deployment
         BundleDeployment deployment = resourceDeployment.getBundleDeployment();
         List<BundleResourceDeployment> deployments = deployment.getResourceDeployments();
         boolean someInProgress = false;
@@ -836,7 +861,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             }
         }
         if (someInProgress) {
-            // should actually be at this status already by what the heck
+            // should actually be at this status already but what the heck
             deployment.setStatus(BundleDeploymentStatus.IN_PROGRESS);
         } else if (someSuccess) {
             deployment.setStatus(someFailure ? BundleDeploymentStatus.MIXED : BundleDeploymentStatus.SUCCESS);

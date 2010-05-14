@@ -103,6 +103,10 @@ public class BundleDeployment implements Serializable {
     @Column(name = "MTIME")
     private Long mtime = System.currentTimeMillis();
 
+    @JoinColumn(name = "REPLACED_BUNDLE_DEPLOYMENT_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
+    private BundleDeployment replacedBundleDeployment;
+
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private Configuration configuration;
@@ -260,6 +264,17 @@ public class BundleDeployment implements Serializable {
         }
 
         return end - start;
+    }
+
+    /** 
+     * @return The previously "live" BundleDeployment.
+     */
+    public BundleDeployment getReplacedBundleDeployment() {
+        return replacedBundleDeployment;
+    }
+
+    public void setReplacedBundleDeployment(BundleDeployment replacedBundleDeployment) {
+        this.replacedBundleDeployment = replacedBundleDeployment;
     }
 
     public Configuration getConfiguration() {

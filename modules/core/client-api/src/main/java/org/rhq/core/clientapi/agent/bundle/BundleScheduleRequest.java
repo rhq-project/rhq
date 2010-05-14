@@ -37,6 +37,8 @@ public class BundleScheduleRequest implements Serializable {
 
     private BundleResourceDeployment resourceDeployment;
     private long requestedDeployTime = System.currentTimeMillis();
+    private boolean isCleanDeployment = false;
+    private boolean isRevert = false;
 
     public BundleScheduleRequest(BundleResourceDeployment resourceDeployment) {
         this.resourceDeployment = resourceDeployment;
@@ -53,6 +55,22 @@ public class BundleScheduleRequest implements Serializable {
 
     public String getRequestedDeployTimeAsString() {
         return DateFormat.getInstance().format(new Date(requestedDeployTime));
+    }
+
+    public boolean isCleanDeployment() {
+        return isCleanDeployment;
+    }
+
+    public void setCleanDeployment(boolean isCleanDeployment) {
+        this.isCleanDeployment = isCleanDeployment;
+    }
+
+    public boolean isRevert() {
+        return isRevert;
+    }
+
+    public void setRevert(boolean isRevert) {
+        this.isRevert = isRevert;
     }
 
     @Override

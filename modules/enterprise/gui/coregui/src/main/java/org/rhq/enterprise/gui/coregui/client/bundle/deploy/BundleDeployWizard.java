@@ -32,10 +32,10 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         this.setInitialDeployment(true);
 
         List<WizardStep> steps = init();
+        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new SelectBundleStep(this));
         steps.add(new GetDestinationStep(this));
         steps.add(new SelectBundleVersionStep(this));
-        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
     }
@@ -46,9 +46,9 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         this.setBundleId(bundleId);
 
         List<WizardStep> steps = init();
+        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new GetDestinationStep(this));
         steps.add(new SelectBundleVersionStep(this));
-        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
     }
@@ -64,8 +64,8 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         this.setBundleDestination(destination);
 
         List<WizardStep> steps = init();
-        steps.add(new SelectBundleVersionStep(this));
         steps.add(new GetDeploymentInfoStep(this));
+        steps.add(new SelectBundleVersionStep(this));
         steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
     }

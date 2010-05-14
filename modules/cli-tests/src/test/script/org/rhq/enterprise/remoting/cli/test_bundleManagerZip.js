@@ -85,7 +85,7 @@ function testDeployment() {
    // create a deployment using the above config
    var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Deployment Zip Test", "Deployment Test of dummy ZIP", config);
    
-   var bd = BundleManager.scheduleBundleDeployment(testDeployment.getId());
+   var bd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), false);
    Assert.assertNotNull( bd );      
 
    // Now performa redeploy, the same thing but a change to the config
@@ -99,7 +99,7 @@ function testDeployment() {
    // create a deployment using the above config   
    var testRedeploy = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Redeployment Zip Test", "Redeploy Test of dummy ZIP", config2);
       
-   var bd2 = BundleManager.scheduleBundleDeployment(testRedeploy.getId());
+   var bd2 = BundleManager.scheduleBundleDeployment(testRedeploy.getId(), false);
    Assert.assertNotNull( bd2 );
 
    // delete the test bundle if it exists (after allowing agent audit messages to complete)

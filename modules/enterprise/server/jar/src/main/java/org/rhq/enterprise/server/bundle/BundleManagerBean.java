@@ -699,7 +699,36 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     */
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeploymentId) throws Exception {
+    public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeploymentId, boolean isCleanDeployment)
+        throws Exception {
+        return scheduleBundleDeploymentImpl(subject, bundleDeploymentId, isCleanDeployment, false);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleDeployment scheduleRevertBundleDeployment(Subject subject, int bundleDestinationId,
+        boolean isCleanDeployment) throws Exception {
+
+        BundleDeploymentCriteria c = new BundleDeploymentCriteria();
+        c.addFilterDestinationId(bundleDestinationId);
+        c.addFilterIsLive(true);
+        c.fetchReplacedBundleDeployment(true);
+        List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, c);
+        if (1 != liveDeployments.size()) {
+            throw new IllegalArgumentException("No live deployment found for destinationId [" + bundleDestinationId
+                + "]");
+        }
+        BundleDeployment liveDeployment = liveDeployments.get(0);
+        if (null == liveDeployment.getReplacedBundleDeployment()) {
+            throw new IllegalArgumentException("Live deployment [" + liveDeployment
+                + "] can not be reverted. There is no prior deployment for destinationId [" + bundleDestinationId + "]");
+        }
+
+        return scheduleBundleDeploymentImpl(subject, liveDeployment.getReplacedBundleDeployment().getId(),
+            isCleanDeployment, true);
+    }
+
+    private BundleDeployment scheduleBundleDeploymentImpl(Subject subject, int bundleDeploymentId,
+        boolean isCleanDeployment, boolean isRevert) throws Exception {
 
         BundleDeployment newDeployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
         if (null == newDeployment) {
@@ -714,7 +743,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         for (Resource resource : group.getExplicitResources()) {
             try {
                 BundleResourceDeployment resourceDeployment = scheduleBundleResourceDeployment(subject, newDeployment,
-                    resource);
+                    resource, isCleanDeployment, isRevert);
                 newDeployment.addResourceDeployment(resourceDeployment);
             } catch (Throwable t) {
                 log.error("Failed to complete scheduling of platform deployment to [" + resource
@@ -731,6 +760,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             for (BundleDeployment d : currentDeployments) {
                 if (d.isLive()) {
                     d.setLive(false);
+                    newDeployment.setReplacedBundleDeployment(d);
                     break;
                 }
             }
@@ -742,7 +772,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     private BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, BundleDeployment deployment,
-        Resource resource) throws Exception {
+        Resource resource, boolean isCleanDeployment, boolean isRevert) throws Exception {
 
         int resourceId = resource.getId();
         AgentClient agentClient = agentManager.getAgentClient(resourceId);
@@ -773,6 +803,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             HibernateDetachUtility.nullOutUninitializedFields(resourceDeployment, SerializationType.SERIALIZATION);
 
             BundleScheduleRequest request = new BundleScheduleRequest(resourceDeployment);
+            request.setCleanDeployment(isCleanDeployment);
+            request.setRevert(isRevert);
 
             // add the deployment request history (in a new trans)
             BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
@@ -976,8 +1008,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return queryRunner.execute();
     }
 
-
-    public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject, BundleDestinationCriteria criteria) {
+    public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject,
+        BundleDestinationCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
         CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,

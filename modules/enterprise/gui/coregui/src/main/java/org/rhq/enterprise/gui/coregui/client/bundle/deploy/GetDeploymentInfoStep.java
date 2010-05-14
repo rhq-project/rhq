@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -77,7 +78,16 @@ public class GetDeploymentInfoStep implements WizardStep {
                 }
             });
 
-            form.setItems(nameTextItem, descriptionTextAreaItem);
+            final CheckboxItem cleanDeploymentCBItem = new CheckboxItem("cleanDeployment",
+                "Clean Deployment? (wipe deploy directory on destination platform)");
+            cleanDeploymentCBItem.setValue(wizard.isCleanDeployment());
+            cleanDeploymentCBItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    wizard.setCleanDeployment((Boolean) event.getValue());
+                }
+            });
+
+            form.setItems(nameTextItem, descriptionTextAreaItem, cleanDeploymentCBItem);
         }
 
         return form;

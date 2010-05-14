@@ -83,7 +83,8 @@ public class DeployStep implements WizardStep {
                                 + result.getDescription(), Severity.Info));
                         wizard.setNewDeployment(result);
 
-                        bundleServer.scheduleBundleDeployment(wizard.getNewDeployment().getId(), //
+                        bundleServer.scheduleBundleDeployment(wizard.getNewDeployment().getId(), wizard
+                            .isCleanDeployment(), //
                             new AsyncCallback<BundleDeployment>() {
                                 public void onSuccess(BundleDeployment result) {
                                     deployingImage.setSrc("/images/status_complete.gif");

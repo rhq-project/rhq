@@ -49,6 +49,7 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
     private boolean fetchBundleVersion;
     private boolean fetchConfiguration;
     private boolean fetchDestination;
+    private boolean fetchReplacedBundleDeployment;
     private boolean fetchResourceDeployments;
 
     public BundleDeploymentCriteria() {
@@ -115,9 +116,12 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
         this.fetchDestination = fetchDestination;
     }
 
+    public void fetchReplacedBundleDeployment(boolean fetchReplacedBundleDeployment) {
+        this.fetchReplacedBundleDeployment = fetchReplacedBundleDeployment;
+    }
+
     public void fetchResourceDeployments(boolean fetchResourceDeployments) {
         this.fetchResourceDeployments = fetchResourceDeployments;
     }
-
 
 }

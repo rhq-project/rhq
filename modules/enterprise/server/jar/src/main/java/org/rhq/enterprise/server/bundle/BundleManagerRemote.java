@@ -249,10 +249,8 @@ public interface BundleManagerRemote {
         @WebParam(name = "criteria") BundleDeploymentCriteria criteria);
 
     @WebMethod
-    PageList<BundleDestination> findBundleDestinationsByCriteria(
-        @WebParam(name = "subject") Subject subject,
+    PageList<BundleDestination> findBundleDestinationsByCriteria(@WebParam(name = "subject") Subject subject,
         @WebParam(name = "criteria") BundleDestinationCriteria criteria);
-
 
     @WebMethod
     PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria( //
@@ -319,16 +317,41 @@ public interface BundleManagerRemote {
      * Deploy the bundle to the destination, as described in the provided deployment.
      * Deployment is asynchronous so return of this method does not indicate individual resource deployments are
      * complete. The returned BundleDeployment can be used to track the history of the individual deployments.
-     * 
-     *  TODO: Add the scheduling capability, currently it's Immediate. 
-     * 
+     * <br/><br/>
+     * TODO: Add the scheduling capability, currently it's Immediate.
+     * <br/> 
      * @param subject user that must have proper permissions
      * @param bundleDeploymentId the BundleDeployment being used to guide the deployments
+     * @param isCleanDeployment if true perform a wipe of the deploy directory prior to the deployment. If false
+     *                        perform as an upgrade to the existing deployment, if any. 
      * @return the BundleDeployment record, updated with status and (resource) deployments. 
      * @throws Exception
      */
     @WebMethod
-    BundleDeployment scheduleBundleDeployment( //
+    BundleDeployment scheduleBundleDeployment(
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleDeploymentId") int bundleDeploymentId) throws Exception;
+        @WebParam(name = "bundleDeploymentId") int bundleDeploymentId,
+        @WebParam(name = "isCleanDeployment") boolean isCleanDeployment) throws Exception;
+
+    /**
+     * For the specified destination, revert from the current live deployment to the deployment it had replaced.
+     * A revert first rolls back to the previous deployment (bundle version and configuration) and then rolls forward
+     * by replacing changed files that had been backed up during the most recent (live) deployment.
+     * The returned BundleDeployment represents the new live deployment and can be used to track the history of the 
+     * individual revert deployments.
+     * <br/><br/>
+     * TODO: Add the scheduling capability, currently it's Immediate. 
+     * <br/>
+     * @param subject user that must have proper permissions
+     * @param isCleanDeployment if true perform a wipe of the deploy directory prior to the revert deployment. Backed up
+     *                        files will still be applied. If false perform as an upgrade to the existing deployment.
+     * @return the BundleDeployment record, updated with status and (resource) deployments. 
+     * @throws Exception
+     */
+    @WebMethod
+    BundleDeployment scheduleRevertBundleDeployment( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleDestinationId") int bundleDestinationId, //        
+        @WebParam(name = "isCleanDeployment") boolean isCleanDeployment) throws Exception;
+
 }

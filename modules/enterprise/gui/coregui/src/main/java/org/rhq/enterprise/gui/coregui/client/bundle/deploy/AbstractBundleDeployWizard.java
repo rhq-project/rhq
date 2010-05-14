@@ -39,6 +39,7 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
     private String newDeploymentName;
     private String newDeploymentDescription;
     private BundleDeployment newDeployment;
+    private boolean isCleanDeployment = false;
     private BundleDeployment liveDeployment;
 
     private boolean deployNow = true;
@@ -122,4 +123,13 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
     public void setDeployNow(Boolean deployNow) {
         this.deployNow = deployNow;
     }
+
+    public boolean isCleanDeployment() {
+        return isCleanDeployment;
+    }
+
+    public void setCleanDeployment(boolean isCleanDeployment) {
+        this.isCleanDeployment = isCleanDeployment;
+    }
+
 }

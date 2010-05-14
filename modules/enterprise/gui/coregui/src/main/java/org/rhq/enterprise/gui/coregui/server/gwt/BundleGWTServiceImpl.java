@@ -69,12 +69,12 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     public BundleDeployment createBundleDeployment(int bundleVersionId, int bundleDestinationId, String name,
-                                                   String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
-                                                   boolean pinToBundle) throws Exception {
+        String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
+        boolean pinToBundle) throws Exception {
 
         try {
             BundleDeployment result = bundleManager.createBundleDeployment(getSessionSubject(), bundleVersionId,
-                    bundleDestinationId, name, description, configuration);
+                bundleDestinationId, name, description, configuration);
 
             return SerialUtility.prepare(result, "createBundleDeployment");
         } catch (Exception e) {
@@ -140,7 +140,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
-            BundleCriteria criteria) throws Exception {
+        BundleCriteria criteria) throws Exception {
         try {
             PageList<BundleWithLatestVersionComposite> results;
             results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(getSessionSubject(), criteria);
@@ -170,9 +170,11 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         return SerialUtility.prepare(results, "getAllBundleVersionFilenames");
     }
 
-    public BundleDeployment scheduleBundleDeployment(int bundleDeploymentId) throws Exception {
+    public BundleDeployment scheduleBundleDeployment(int bundleDeploymentId, boolean isCleanDeployment)
+        throws Exception {
         try {
-            BundleDeployment result = bundleManager.scheduleBundleDeployment(getSessionSubject(), bundleDeploymentId);
+            BundleDeployment result = bundleManager.scheduleBundleDeployment(getSessionSubject(), bundleDeploymentId,
+                isCleanDeployment);
             return SerialUtility.prepare(result, "scheduleBundleDeployment");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
@@ -181,25 +183,25 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria) {
         return SerialUtility.prepare(bundleManager.findBundleDeploymentsByCriteria(getSessionSubject(), criteria),
-                "BundleService.findBundleDeploymentsByCriteria");
+            "BundleService.findBundleDeploymentsByCriteria");
     }
 
     public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(
-            BundleResourceDeploymentCriteria criteria) {
+        BundleResourceDeploymentCriteria criteria) {
         return SerialUtility.prepare(bundleManager.findBundleResourceDeploymentsByCriteria(getSessionSubject(),
-                criteria), "BundleService.findBundleResourceDeploymentsByCriteria");
+            criteria), "BundleService.findBundleResourceDeploymentsByCriteria");
 
     }
 
     public PageList<BundleDestination> findBundleDestinationsByCriteria(BundleDestinationCriteria criteria) {
-        return SerialUtility.prepare(bundleManager.findBundleDestinationsByCriteria(getSessionSubject(),
-                criteria), "BundleService.findBundleDestinationsByCriteria");
+        return SerialUtility.prepare(bundleManager.findBundleDestinationsByCriteria(getSessionSubject(), criteria),
+            "BundleService.findBundleDestinationsByCriteria");
 
     }
 
     public PageList<BundleFile> findBundleFilesByCriteria(BundleFileCriteria criteria) {
-        return SerialUtility.prepare(bundleManager.findBundleFilesByCriteria(getSessionSubject(),
-                       criteria), "BundleService.findBundleFilesByCriteria");
+        return SerialUtility.prepare(bundleManager.findBundleFilesByCriteria(getSessionSubject(), criteria),
+            "BundleService.findBundleFilesByCriteria");
     }
 
 }

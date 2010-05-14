@@ -70,7 +70,7 @@ public interface BundleGWTService extends RemoteService {
 
     ArrayList<BundleType> getAllBundleTypes() throws Exception;
 
-    BundleDeployment scheduleBundleDeployment(int bundleDeploymentId) throws Exception;
+    BundleDeployment scheduleBundleDeployment(int bundleDeploymentId, boolean isCleanDeployment) throws Exception;
 
     PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria);
 

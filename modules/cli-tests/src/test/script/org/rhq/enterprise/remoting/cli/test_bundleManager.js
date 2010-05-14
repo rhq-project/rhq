@@ -81,7 +81,7 @@ function testDeployment() {
    var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Deployment Test", "Deployment Test of testBundle WAR", new Configuration());
 
    // deploy to the destination
-   var bd = BundleManager.scheduleBundleDeployment(testDeployment.getId());
+   var bd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), false);
    Assert.assertNotNull( bd );      
    
    // delete the test bundle if it exists (after allowing agent audit messages to complete)

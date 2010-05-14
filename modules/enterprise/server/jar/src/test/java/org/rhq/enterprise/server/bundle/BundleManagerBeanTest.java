@@ -728,7 +728,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(bd1);
         assertEquals(BundleDeploymentStatus.PENDING, bd1.getStatus());
 
-        BundleDeployment bd1d = bundleManager.scheduleBundleDeployment(overlord, bd1.getId());
+        BundleDeployment bd1d = bundleManager.scheduleBundleDeployment(overlord, bd1.getId(), false);
         assertNotNull(bd1d);
         assertEquals(bd1.getId(), bd1d.getId());
 

@@ -137,4 +137,21 @@ public class ResourceGroupTreeNode implements Comparable<ResourceGroupTreeNode> 
     public void addChildren(Collection<ResourceGroupTreeNode> resourceGroupTreeNodes) {
         this.children.addAll(resourceGroupTreeNodes);
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        ResourceGroupTreeNode that = (ResourceGroupTreeNode) o;
+
+        return level.equals(that.level);
+    }
+
+    @Override
+    public int hashCode() {
+        return level.hashCode();
+    }    
 }

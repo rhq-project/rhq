@@ -44,8 +44,9 @@ public interface GroupAlertDefinitionManagerLocal {
     AlertDefinition updateGroupAlertDefinitions(Subject subject, AlertDefinition groupAlertDefinition,
         boolean purgeInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 
-    // methods requires to implement system side-effects as a result of modifying group membership or deleting groups
-    void addGroupAlertDefinitions(Subject subject, int groupId, int[] resourcesIdsToAdd);
+    // required to implement system side-effects as a result of modifying group membership or deleting groups
+    void addGroupAlertDefinitions(Subject subject, int groupId, int[] resourcesIdsToAdd)
+        throws AlertDefinitionCreationException;
 
     void removeGroupAlertDefinitions(Subject subject, int groupId, int[] resourceIdsToRemove);
 

@@ -80,7 +80,7 @@
         </dependencies>
         <executions>
           <execution>
-            <phase>test</phase>
+            <phase>compile</phase>
             <goals>
               <goal>execute</goal>
             </goals>
@@ -96,16 +96,26 @@
                 db = project.properties.db
                 if (db == 'dev') {
                   database = project.properties['rhq.dev.ds.db-name']    
-                } else {
+		  } 
+		  // This is a bit of a temporary hack to work around 
+		  // https://cvs.codehaus.org/browse/GMAVEN-46 which results in
+		  // groovy scripts not being able to get the correct values of
+		  // build properties that are overridden on the command line.
+		  // This is being done in support of the hudson job which is
+		  // trying to use a database named rhqupgrade.
+		  else if (project.properties['upgrade.db']) {
+                    database = 'rhqupgrade'
+		  } 
+		  else {
                   database = project.properties['rhq.test.ds.db-name']
                 }
                 project.properties.dbsetup = 'true'
 
                 sql = Sql.newInstance(
-                    "jdbc:postgresql://127.0.0.1:5432/postgres",
-                    "postgres",
-                    "postgres",
-                    "org.postgresql.Driver")
+                     "jdbc:postgresql://127.0.0.1:5432/postgres",
+                     "postgres",
+                     "postgres",
+                     "org.postgresql.Driver")
 
                 sql.execute("drop database if exists ${Sql.expand(database)};")
                 log.info("dropped database $database")
@@ -114,166 +124,6 @@
               </source>
             </configuration>
           </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>process-classes</phase>
-            <configuration>
-              <tasks>
-                <!-- generate the I18N resource bundles -->
-                <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
-
-                <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
-                   <classpath refid="maven.runtime.classpath" />
-                   <classfileset dir="${project.build.outputDirectory}">
-                      <include name="**/*I18NResourceKeys.class" />
-                   </classfileset>
-                </i18n>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-
-          <execution>
-            <id>dbsetup-worker</id>
-            <phase>test</phase>
-            <configuration>
-              <tasks>
-                <property name="settings.localRepository" location="${user.home}/.m2/repository" />
-
-                <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-                <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-                <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-                <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-
-                <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
-                  <property name="settings.localRepository" value="${settings.localRepository}" />
-                  <property name="ojdbc5.version" value="${ojdbc5.version}" />
-                  <property name="postgresql.version" value="${postgresql.version}" />
-                  <property name="h2.version" value="${h2.version}" />
-                  <property name="jtds.version" value="${jtds.version}" />
-                  <property name="task.classpath.property" refid="maven.test.classpath" />
-                  <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
-                  <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
-                  <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
-                  <property name="rhq.ds.password" value="${rhq.ds.password}" />
-                  <property name="project.version" value="${project.version}" />
-                  <property name="db.schema.version" value="${db.schema.version}" />
-                  <property name="dbsetup" value="${dbsetup}" />
-                  <property name="dbsetup-uninstall" value="${dbsetup-uninstall}" />
-                  <property name="dbsetup-upgrade" value="${dbsetup-upgrade}" />
-                  <property name="dbsetup-export" value="${dbsetup-export}" />
-                </ant>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-
-          <execution>
-            <id>generate-dbsetup-dbupgrade-xml-files</id>
-            <phase>process-classes</phase>
-            <configuration>
-              <tasks>
-                <property name="settings.localRepository" location="${user.home}/.m2/repository" />
-
-                <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-                <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-                <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-                <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-
-                <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
-                  <property name="settings.localRepository" value="${settings.localRepository}" />
-                  <property name="ojdbc5.version" value="${ojdbc5.version}" />
-                  <property name="postgresql.version" value="${postgresql.version}" />
-                  <property name="h2.version" value="${h2.version}" />
-                  <property name="jtds.version" value="${jtds.version}" />
-                  <property name="task.classpath.property" refid="maven.test.classpath" />
-                  <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
-                  <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
-                  <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
-                  <property name="rhq.ds.password" value="${rhq.ds.password}" />
-                  <property name="project.version" value="${project.version}" />
-                  <property name="db.schema.version" value="${db.schema.version}" />
-                </ant>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-
-          <execution>
-            <!--
-                 This execution will abort the build if the database schema is not up to date.
-                 If you want the build to continue, regardless of your currently installed schema,
-                 then pass -Ddbsetup-do-not-check-schema to the mvn command line.
-            -->
-            <id>test-db-schema-version</id>
-            <phase>test</phase>
-            <configuration>
-              <tasks>
-                <property name="settings.localRepository" location="${user.home}/.m2/repository" />
-
-                <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-                <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-                <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-                <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                   <equals arg1="${db}" arg2="dev"/>
-                </condition>
-
-                <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
-                  <property name="settings.localRepository" value="${settings.localRepository}" />
-                  <property name="ojdbc5.version" value="${ojdbc5.version}" />
-                  <property name="postgresql.version" value="${postgresql.version}" />
-                  <property name="h2.version" value="${h2.version}" />
-                  <property name="jtds.version" value="${jtds.version}" />
-                  <property name="task.classpath.property" refid="maven.test.classpath" />
-                  <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
-                  <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
-                  <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
-                  <property name="rhq.ds.password" value="${rhq.ds.password}" />
-                  <property name="project.version" value="${project.version}" />
-                  <property name="db.schema.version" value="${db.schema.version}" />
-                  <property name="rhq.ds.driver-class" value="${rhq.test.ds.driver-class}" />
-                  <property name="dbsetup-do-not-check-schema" value="${dbsetup-do-not-check-schema}" />
-                </ant>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-
         </executions>
       </plugin>
 
@@ -301,6 +151,252 @@
   </build>
 
    <profiles>
+      <profile>
+         <id>latest</id>
+	 <activation>
+            <property>
+	       <name>!jon.release</name>
+	    </property>
+	 </activation>
+
+	 <build>
+            <plugins>
+	       <plugin>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <phase>process-classes</phase>
+                        <configuration>
+                           <tasks>
+                              <!-- generate the I18N resource bundles -->
+                              <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
+
+                              <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
+                              <classpath refid="maven.runtime.classpath" />
+                              <classfileset dir="${project.build.outputDirectory}">
+                                 <include name="**/*I18NResourceKeys.class" />
+                              </classfileset>
+                           </i18n>
+                       </tasks>
+                    </configuration>
+                    <goals>
+                       <goal>run</goal>
+                   </goals>
+                </execution>
+
+                <execution>
+                   <id>dbsetup-worker</id>
+                   <phase>test</phase>
+                   <configuration>
+                      <tasks>
+                         <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
+
+                         <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
+                            <equals arg1="${db}" arg2="dev"/>
+                         </condition>
+
+                         <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
+                            <equals arg1="${db}" arg2="dev"/>
+                         </condition>
+
+                         <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
+                            <equals arg1="${db}" arg2="dev"/>
+                         </condition>
+
+                         <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
+                            <equals arg1="${db}" arg2="dev"/>
+                         </condition>
+
+                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
+                            <property name="settings.localRepository" value="${settings.localRepository}" />
+                            <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                            <property name="postgresql.version" value="${postgresql.version}" />
+                            <property name="h2.version" value="${h2.version}" />
+                            <property name="jtds.version" value="${jtds.version}" />
+                            <property name="task.classpath.property" refid="maven.test.classpath" />
+                            <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                            <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
+                            <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
+                            <property name="rhq.ds.password" value="${rhq.ds.password}" />
+                            <property name="project.version" value="${project.version}" />
+                            <property name="db.schema.version" value="${db.schema.version}" />
+                            <property name="dbsetup" value="${dbsetup}" />
+                            <property name="dbsetup-uninstall" value="${dbsetup-uninstall}" />
+                            <property name="dbsetup-upgrade" value="${dbsetup-upgrade}" />
+                            <property name="dbsetup-export" value="${dbsetup-export}" />
+                         </ant>
+                      </tasks>
+                   </configuration>
+                   <goals>
+                      <goal>run</goal>
+                  </goals>
+               </execution>
+
+               <execution>
+                  <id>generate-dbsetup-dbupgrade-xml-files</id>
+                  <phase>process-classes</phase>
+                  <configuration>
+                     <tasks>
+                        <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
+
+			<condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
+                            <equals arg1="${db}" arg2="dev"/>
+                         </condition>
+
+                         <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
+                            <equals arg1="${db}" arg2="dev"/>
+                         </condition>
+
+                         <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
+                            <equals arg1="${db}" arg2="dev"/>
+                         </condition>
+
+                         <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
+                            <equals arg1="${db}" arg2="dev"/>
+		         </condition>
+
+                        <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
+                           <property name="settings.localRepository" value="${settings.localRepository}" />
+                           <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                           <property name="postgresql.version" value="${postgresql.version}" />
+                           <property name="h2.version" value="${h2.version}" />
+                           <property name="jtds.version" value="${jtds.version}" />
+                           <property name="task.classpath.property" refid="maven.test.classpath" />
+                           <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                           <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
+                           <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
+                           <property name="rhq.ds.password" value="${rhq.ds.password}" />
+                           <property name="project.version" value="${project.version}" />
+                           <property name="db.schema.version" value="${db.schema.version}" />
+                       </ant>
+                    </tasks>
+                 </configuration>
+                 <goals>
+                    <goal>run</goal>
+                </goals>
+             </execution>
+   
+             <execution>
+               <!--
+                  This execution will abort the build if the database schema is not up to date.
+                  If you want the build to continue, regardless of your currently installed schema,
+                  then pass -Ddbsetup-do-not-check-schema to the mvn command line.
+               -->
+               <id>test-db-schema-version</id>
+               <phase>test</phase>
+            <configuration>
+              <tasks>
+	         <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
+
+		 <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
+                    <equals arg1="${db}" arg2="dev"/>
+                 </condition>
+
+                 <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
+                    <equals arg1="${db}" arg2="dev"/>
+                 </condition>
+
+                 <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
+                    <equals arg1="${db}" arg2="dev"/>
+                 </condition>
+
+                 <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
+                    <equals arg1="${db}" arg2="dev"/>
+		 </condition>
+
+                <condition property="rhq.ds.driver-class" value="${rhq.dev.ds.driver-class}" else="${rhq.test.ds.driver-class}">
+                   <equals arg1="${db}" arg2="dev"/>
+                </condition>
+
+                <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
+                  <property name="settings.localRepository" value="${settings.localRepository}" />
+                  <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                  <property name="postgresql.version" value="${postgresql.version}" />
+                  <property name="h2.version" value="${h2.version}" />
+                  <property name="jtds.version" value="${jtds.version}" />
+                  <property name="task.classpath.property" refid="maven.test.classpath" />
+                  <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                  <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
+                  <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
+                  <property name="rhq.ds.password" value="${rhq.ds.password}" />
+                  <property name="project.version" value="${project.version}" />
+                  <property name="db.schema.version" value="${db.schema.version}" />
+                  <property name="rhq.ds.driver-class" value="${rhq.ds.driver-class}" />
+                  <property name="dbsetup-do-not-check-schema" value="${dbsetup-do-not-check-schema}" />
+                </ant>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+	    </plugins>
+	 </build>
+      </profile>
+
+      <profile>
+         <id>jon.release</id>
+	 <activation>
+            <property>
+	       <name>jon.release</name>
+	    </property>
+	 </activation>
+	 <build>
+            <plugins>
+	       <plugin>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                     <execution>
+                       <id>generate-schema</id>
+	               <phase>test</phase>
+	               <configuration>
+                          <tasks>
+		             <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
+
+			     <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
+                               <equals arg1="${db}" arg2="dev"/>
+                             </condition>
+
+                             <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
+                               <equals arg1="${db}" arg2="dev"/>
+                             </condition>
+
+                             <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
+                               <equals arg1="${db}" arg2="dev"/>
+                             </condition>
+
+                            <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
+                               <equals arg1="${db}" arg2="dev"/>
+                            </condition>
+
+                             <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="create-release-schema">
+                                <property name="settings.localRepository" value="${settings.localRepository}" />
+                                <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                                <property name="postgresql.version" value="${postgresql.version}" />
+                                <property name="h2.version" value="${h2.version}" />
+                                <property name="jtds.version" value="${jtds.version}" />
+                                <property name="task.classpath.property" refid="maven.test.classpath" />
+                                <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                                <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
+                                <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
+                                <property name="rhq.ds.password" value="${rhq.ds.password}" />
+                                <property name="project.version" value="${project.version}" />
+                                <property name="db.schema.version" value="${db.schema.version}" />
+				<property name="jon.release" value="${jon.release}"/>
+                             </ant>
+                          </tasks>
+            	       </configuration>
+           	       <goals>
+                          <goal>run</goal>
+	               </goals>
+         	     </execution>
+                  </executions>
+               </plugin>
+	    </plugins>
+         </build>
+      </profile>
 
       <profile>
          <id>dev</id>
@@ -356,8 +452,18 @@
            </plugins>
          </build>
       </profile>
-
    </profiles>
+
+   <pluginRepositories>
+      <pluginRepository>
+         <id>codehaus-snapshots</id>
+	 <name>codehaus snapshots</name>
+	 <url>http://snapshots.repository.codehaus.org</url>
+	 <snapshots>
+            <enabled>true</enabled>
+	 </snapshots>
+      </pluginRepository>
+   </pluginRepositories>
 
 </project>
 

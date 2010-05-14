@@ -26,6 +26,17 @@
     </ui:define>
 
     <ui:define name="body">
+        <!-- Shows the results of the last action executed. -->
+        <h:messages showSummary="true"
+                    showDetail="true"
+                    infoClass="InfoBlock"
+                    warnClass="WarnBlock"
+                    errorClass="ErrorBlock"
+                    fatalClass="FatalBlock"
+                    globalOnly="true"
+                    layout="table"
+                    width="100%"/>
+    
         <a4j:keepAlive beanName="AlertNotificationContextUIBean" />
         <a4j:keepAlive beanName="alertNotificationsUIBean" />
         <a4j:keepAlive beanName="customContentUIBean" />
@@ -163,6 +174,7 @@
                     <h:panelGrid columns="4" styleClass="buttons-table" columnClasses="button-cell">
                         <a4j:commandButton value="OK" action="#{alertNotificationsUIBean.addAlertSender}"
                                            styleClass="buttonmed" id="addAlertButton"
+                                           status="commonStatus" 
                                            reRender="sendersList">
                            <rich:componentControl for="addAlertPanel" attachTo="addAlertButton" operation="hide" event="onclick" />
                         </a4j:commandButton>

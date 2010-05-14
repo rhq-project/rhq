@@ -14,7 +14,8 @@
             description="the local file used for mapping host names to IP addresses"
             discovery="HostsDiscoveryComponent"
             class="HostsComponent"
-            supportsManualAdd="true">
+            supportsManualAdd="true"
+            singleton="true">
       
       <runs-inside>
          <parent-resource-type name="Linux"    plugin="Platforms"/>

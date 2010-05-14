@@ -459,7 +459,7 @@ import org.rhq.core.domain.util.Summary;
         + "          WHERE rc.repo.id = :repoId ) " //
         + "     AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "     AND (res.inventoryStatus = :inventoryStatus) " //
-        + "     AND (:search is null OR UPPER(res.name) LIKE :search ESCAPE :escapeChar) "),
+        + "     AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar) OR (UPPER(res.resourceType.name) LIKE :search ESCAPE :escapeChar) OR :search is null"),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //
@@ -1114,7 +1114,6 @@ public class Resource implements Comparable<Resource>, Serializable {
     //    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     //    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
 
-
     @ManyToMany(mappedBy = "resources", fetch = FetchType.LAZY)
     private Set<Tag> tags;
 
@@ -1707,9 +1706,10 @@ public class Resource implements Comparable<Resource>, Serializable {
         }
         tags.add(tag);
     }
-    public boolean removeTag (Tag tag) {
+
+    public boolean removeTag(Tag tag) {
         if (tags != null) {
-            return tags.remove (tag);
+            return tags.remove(tag);
         } else {
             return false;
         }

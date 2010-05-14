@@ -22,8 +22,6 @@
  */
 package org.rhq.core.domain.operation;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 
 import javax.persistence.CascadeType;
@@ -107,14 +105,14 @@ import org.rhq.core.domain.configuration.Configuration;
         + " WHERE go.status != 'INPROGRESS' AND s = :subject "),
     @NamedQuery(name = OperationHistory.QUERY_GET_PARAMETER_CONFIGURATION_IDS, query = "" //
         + "SELECT params.id " //
-        + "  FROM OperationHistory oh " //
+        + "  FROM OperationHistory oh " // both resource and group operations have parameters
         + "  JOIN oh.parameters params " //
         + " WHERE oh.id = :historyId"), //
     @NamedQuery(name = OperationHistory.QUERY_GET_RESULT_CONFIGURATION_IDS, query = "" //
         + "SELECT res.id " //
-        + "  FROM OperationHistory oh " //
-        + "  JOIN oh.results res " //
-        + " WHERE oh.id = :historyId"), //
+        + "  FROM ResourceOperationHistory roh " // only resource operations have results
+        + "  JOIN roh.results res " //
+        + " WHERE roh.id = :historyId"), //
     @NamedQuery(name = OperationHistory.QUERY_DELETE_BY_HISTORY_IDS, query = "" //
         + "DELETE FROM OperationHistory oh " //
         + " WHERE oh.id = :historyId ") })
@@ -129,7 +127,7 @@ public abstract class OperationHistory implements Serializable {
     public static final String QUERY_GET_RECENTLY_COMPLETED_GROUP_ADMIN = "OperationHistory.getRecentlyCompletedGroup_admin";
 
     public static final String QUERY_GET_PARAMETER_CONFIGURATION_IDS = "OperationHistory.getParameterConfigurationIds";
-    public static final String QUERY_GET_RESULT_CONFIGURATION_IDS = "OperationHistory.getResultConfigurationIds";
+    public static final String QUERY_GET_RESULT_CONFIGURATION_IDS = "ResourceOperationHistory.getResultConfigurationIds";
     public static final String QUERY_DELETE_BY_HISTORY_IDS = "OperationHistory.deleteByHistoryIds";
 
     private static final long serialVersionUID = 1L;

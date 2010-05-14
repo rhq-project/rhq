@@ -159,4 +159,48 @@ public class AutoGroupCompositeFlyweight implements Serializable {
         return "AutoGroupCompositeFlyweight[" + ((this.resourceType != null) ? "Resource: " : "Subcategory: ")
             + "name=" + this.name + ", members=" + this.memberCount + ", availability=" + this.availability + "]";
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        
+        if (!(o instanceof AutoGroupCompositeFlyweight)) {
+            return false;
+        }
+        
+        AutoGroupCompositeFlyweight other = (AutoGroupCompositeFlyweight) o;
+        
+        if (!parentResource.equals(other.parentResource)) {
+            return false;
+        }
+        
+        if (resourceType != null) {
+            if (!resourceType.equals(other.resourceType)) {
+                return false;
+            }
+        }
+        
+        if (subcategory != null) {
+            if (!subcategory.equals(other.subcategory)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    @Override
+    public int hashCode() {
+        int hash = parentResource.hashCode();
+        
+        if (resourceType != null) {
+            hash *= resourceType.hashCode();
+        }
+        
+        if (subcategory != null) {
+            hash *= subcategory.hashCode();
+        }
+        
+        return hash;
+    }
 }

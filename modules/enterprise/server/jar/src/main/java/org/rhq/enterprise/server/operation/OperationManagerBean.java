@@ -980,6 +980,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         List<Integer> allConfigurationIdsToDelete = new ArrayList<Integer>(historyArgumentConfigurationIds.size()
             + historyResultConfigurationIds.size());
+        allConfigurationIdsToDelete.addAll(historyArgumentConfigurationIds);
+        allConfigurationIdsToDelete.addAll(historyResultConfigurationIds);
         configurationManager.deleteConfigurations(allConfigurationIdsToDelete);
 
         return;

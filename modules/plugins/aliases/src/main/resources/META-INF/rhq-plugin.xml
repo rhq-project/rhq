@@ -14,7 +14,8 @@
             description="the local file used for mapping aliases to usernames"
             discovery="AliasesDiscoveryComponent"
             class="AliasesComponent"
-            supportsManualAdd="true">
+            supportsManualAdd="true"
+            singleton="true">
 
        <runs-inside>
          <parent-resource-type name="Linux"  plugin="Platforms"/>

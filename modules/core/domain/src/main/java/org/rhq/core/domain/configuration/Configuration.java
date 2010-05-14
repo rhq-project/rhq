@@ -22,9 +22,13 @@
  */
 package org.rhq.core.domain.configuration;
 
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
-import org.jetbrains.annotations.NotNull;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -47,13 +51,9 @@ import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This is the root object for the storage of a hierarchical value set of data. This data may represent configurations
@@ -112,10 +112,17 @@ import java.util.Set;
         + "  FROM PluginConfigurationUpdate cu " //
         + "  JOIN cu.resource res " //
         + " WHERE cu.groupConfigurationUpdate.id = :groupConfigurationUpdateId"),
-    @NamedQuery(name = Configuration.QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS, query = "" //
-        + "DELETE FROM Property p WHERE p.configuration.id IN ( :configurationIds )"),
+    @NamedQuery(name = Configuration.QUERY_BREAK_PROPERTY_RECURSION_BY_CONFIGURATION_IDS, query = "" //
+        + "UPDATE Property p " //
+        + "   SET p.parentMap = NULL, " //
+        + "       p.parentList = NULL " //
+        + " WHERE p.configuration.id IN ( :configurationIds )"),
+    @NamedQuery(name = Configuration.QUERY_DELETE_RAW_CONFIGURATIONS_CONFIGURATION_IDS, query = "" //
+        + "DELETE FROM RawConfiguration rc " //
+        + " WHERE rc.configuration.id IN ( :configurationIds )"),
     @NamedQuery(name = Configuration.QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs, query = "" //
-        + "DELETE FROM Configuration c WHERE c.id IN ( :configurationIds )") })
+        + "DELETE FROM Configuration c " //
+        + " WHERE c.id IN ( :configurationIds )") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_ID_SEQ")
 @Table(name = "RHQ_CONFIG")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -130,7 +137,8 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     public static final String QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_UPDATE_ID = "Configuration.getResourceConfigMapByGroupUpdateId";
     public static final String QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_UPDATE_ID = "Configuration.getPluginConfigMapByGroupUpdateId";
 
-    public static final String QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS = "Property.deleteByConfigurationIds";
+    public static final String QUERY_BREAK_PROPERTY_RECURSION_BY_CONFIGURATION_IDS = "Property.breakPropertyRecursionByConfigurationIds";
+    public static final String QUERY_DELETE_RAW_CONFIGURATIONS_CONFIGURATION_IDS = "Configuration.deleteRawByConfigurationIds";
     public static final String QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs = "Configuration.deleteByConfigurationIdS";
 
     @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
@@ -145,7 +153,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     private Map<String, Property> properties = new LinkedHashMap<String, Property>();
 
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
-    @Cascade({CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN})
+    @Cascade( { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
     private Set<RawConfiguration> rawConfigurations = new HashSet<RawConfiguration>();
 
     @Column(name = "NOTES")
@@ -478,7 +486,6 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         }
     }
 
-
     /**
      * Clones this object in the same manner as {@link #deepCopy()}.
      *
@@ -491,30 +498,30 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     public Configuration clone() {
         return deepCopy();
 
-/*      TODO: GWT
+        /*      TODO: GWT
 
-        // TODO GH: This may be a performance problem when it comes to runtime scans...
-        // do some profiling
-        Object obj = null;
-        try {
-            // Write the object out to a byte array
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream out = new ObjectOutputStream(bos);
-            out.writeObject(this);
-            out.flush();
-            out.close();
+                // TODO GH: This may be a performance problem when it comes to runtime scans...
+                // do some profiling
+                Object obj = null;
+                try {
+                    // Write the object out to a byte array
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutputStream out = new ObjectOutputStream(bos);
+                    out.writeObject(this);
+                    out.flush();
+                    out.close();
 
-            // Make an input stream from the byte array and read
-            // a copy of the object back in.
-            ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
-            obj = in.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException cnfe) {
-            cnfe.printStackTrace();
-        }
+                    // Make an input stream from the byte array and read
+                    // a copy of the object back in.
+                    ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
+                    obj = in.readObject();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException cnfe) {
+                    cnfe.printStackTrace();
+                }
 
-        return (Configuration) obj;*/
+                return (Configuration) obj;*/
     }
 
     /**
@@ -578,99 +585,98 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             builder.append("], rawConfigurations[");
 
             for (RawConfiguration rawConfig : rawConfigurations) {
-                builder.append("[")
-                       .append(rawConfig.getPath())
-                       .append(", ")
-                       .append(rawConfig.getSha256())
-                       .append("]");
+                builder.append("[").append(rawConfig.getPath()).append(", ").append(rawConfig.getSha256()).append("]");
             }
             builder.append("]");
         }
         return builder.append("]").toString();
     }
-/*
 
-    public void writeExternal(ObjectOutput out) throws IOException {
-        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
-        out.writeChar(strategy.id());
+    /*
 
-        if (isAgentOrRemoteAPISerialization(strategy.id())) {
-            writeExternalAgentOrRemote(out);
+        public void writeExternal(ObjectOutput out) throws IOException {
+            ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+            out.writeChar(strategy.id());
+
+            if (isAgentOrRemoteAPISerialization(strategy.id())) {
+                writeExternalAgentOrRemote(out);
+            }
+            else {
+                EntitySerializer.writeExternalRemote(this, out);            
+            }
         }
-        else {
-            EntitySerializer.writeExternalRemote(this, out);            
+
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            char c = in.readChar();
+
+            if (isAgentOrRemoteAPISerialization(c)) {
+                readExternalAgentOrRemote(in);
+            }
+            else {
+                EntitySerializer.readExternalRemote(this, in);
+            }
         }
-    }
 
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        char c = in.readChar();
-
-        if (isAgentOrRemoteAPISerialization(c)) {
-            readExternalAgentOrRemote(in);
+        private boolean isAgentOrRemoteAPISerialization(char strategy) {
+            return strategy == ExternalizableStrategy.Subsystem.AGENT.id() ||
+                   strategy == ExternalizableStrategy.Subsystem.REMOTEAPI.id();
         }
-        else {
-            EntitySerializer.readExternalRemote(this, in);
-        }
-    }
 
-    private boolean isAgentOrRemoteAPISerialization(char strategy) {
-        return strategy == ExternalizableStrategy.Subsystem.AGENT.id() ||
-               strategy == ExternalizableStrategy.Subsystem.REMOTEAPI.id();
-    }
-
-    */
-/**
-     * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
-     *//*
+        */
+    /**
+         * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
+         */
+    /*
 
     public void writeExternalAgentOrRemote(ObjectOutput out) throws IOException {
-        Configuration copy = deepCopyWithoutProxies();
+     Configuration copy = deepCopyWithoutProxies();
 
-        out.writeInt(id);
-        out.writeObject(createDeepCopyOfMap());
-        out.writeObject(createDeepCopyOfRawConfigs());
-        out.writeUTF((notes == null) ? "null" : notes);
-        out.writeLong(version);
-        out.writeLong(ctime);
-        out.writeLong(mtime);
+     out.writeInt(id);
+     out.writeObject(createDeepCopyOfMap());
+     out.writeObject(createDeepCopyOfRawConfigs());
+     out.writeUTF((notes == null) ? "null" : notes);
+     out.writeLong(version);
+     out.writeLong(ctime);
+     out.writeLong(mtime);
     }
 
     private Map<String, Property> createDeepCopyOfMap() {
-        Map<String, Property> copy = new HashMap<String, Property>();
-        for (Map.Entry<String, Property> entry : this.properties.entrySet()) {
-            Property copiedProperty = entry.getValue().deepCopy(true);
-            copiedProperty.setConfiguration(this);
-            copy.put(entry.getKey(), copiedProperty);
-        }
-        return copy;
+     Map<String, Property> copy = new HashMap<String, Property>();
+     for (Map.Entry<String, Property> entry : this.properties.entrySet()) {
+         Property copiedProperty = entry.getValue().deepCopy(true);
+         copiedProperty.setConfiguration(this);
+         copy.put(entry.getKey(), copiedProperty);
+     }
+     return copy;
     }
 
     private Set<RawConfiguration> createDeepCopyOfRawConfigs() {
-        Set<RawConfiguration> copy = new HashSet<RawConfiguration>();
-        for (RawConfiguration rawConfig : this.rawConfigurations) {
-            RawConfiguration copiedRawConfig = rawConfig.deepCopy(true);
-            copiedRawConfig.setConfiguration(this);
-            copy.add(copiedRawConfig);
-        }
-        return copy;
+     Set<RawConfiguration> copy = new HashSet<RawConfiguration>();
+     for (RawConfiguration rawConfig : this.rawConfigurations) {
+         RawConfiguration copiedRawConfig = rawConfig.deepCopy(true);
+         copiedRawConfig.setConfiguration(this);
+         copy.add(copiedRawConfig);
+     }
+     return copy;
     }
 
     */
-/**
-     * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
-     *//*
+    /**
+         * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
+         */
+    /*
 
     @SuppressWarnings("unchecked")
     public void readExternalAgentOrRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-        id = in.readInt();
-        properties = (HashMap<String, Property>) in.readObject();
-        rawConfigurations = (Set<RawConfiguration>) in.readObject();
-        notes = in.readUTF();
-        version = in.readLong();
-        ctime = in.readLong();
-        mtime = in.readLong();
+     id = in.readInt();
+     properties = (HashMap<String, Property>) in.readObject();
+     rawConfigurations = (Set<RawConfiguration>) in.readObject();
+     notes = in.readUTF();
+     version = in.readLong();
+     ctime = in.readLong();
+     mtime = in.readLong();
     }
-*/
+    */
 
     /**
      * This listener runs after jaxb unmarshalling and reconnects children properties to their parent configurations (as

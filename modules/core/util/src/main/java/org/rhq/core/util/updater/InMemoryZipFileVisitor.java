@@ -75,7 +75,6 @@ public class InMemoryZipFileVisitor implements ZipUtil.ZipEntryVisitor {
         return fileHashcodeMap;
     }
 
-    @Override
     public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
 
         if (entry.isDirectory()) {

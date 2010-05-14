@@ -115,7 +115,7 @@ public class Deployer {
      * @see #deploy(DeployDifferences, boolean) 
      */
     public FileHashcodeMap deploy(DeployDifferences diff) throws Exception {
-        return deploy(diff, false);
+        return deploy(diff, false, false);
     }
 
     /**
@@ -123,22 +123,34 @@ public class Deployer {
      * @see #deploy(DeployDifferences, boolean) 
      */
     public FileHashcodeMap dryRun(DeployDifferences diff) throws Exception {
-        return deploy(diff, true);
+        return deploy(diff, false, true);
     }
 
     /**
      * Deploys all files to their destinations. Everything this method has to do is determined
      * by the data passed into this object's constructor.
      * 
+     * This method allows one to ask for a dry run to be performed; meaning don't actually change
+     * the file system, just populate the <code>diff</code> object with what would have been done.
+     * 
+     * The caller can ask that an existing deployment directory be cleaned (i.e. wiped from the file system)
+     * before the new deployment is laid down. This is useful if there are ignored files/directories
+     * that would be left alone as-is, had a clean not been requested. Note that the <code>clean</code>
+     * parameter is ignored if a dry run is being requested.
+     * 
      * @param diff this method will populate this object with information about what
      *             changed on the file system due to this deployment
+     * @param clean if <code>true</code>, the caller is telling this method to first wipe clean
+     *              any existing deployment files found in the destination directory before installing the
+     *              new deployment. Note that this will have no effect if <code>dryRun</code>
+     *              is <code>true</code> since a dry run by definition never affects the file system.
      * @param dryRun if <code>true</code>, the file system won't actually be changed; however,
      *               the <code>diff</code> object will still be populated with information about
      *               what would have occurred on the file system had it not been a dry run
      * @return file/hashcode information for all files that were deployed
      * @throws Exception if the deployment failed for some reason
      */
-    public FileHashcodeMap deploy(DeployDifferences diff, boolean dryRun) throws Exception {
+    public FileHashcodeMap deploy(DeployDifferences diff, boolean clean, boolean dryRun) throws Exception {
         FileHashcodeMap map = null;
 
         // fail-fast if we don't have enough disk space
@@ -149,15 +161,15 @@ public class Deployer {
             map = performInitialDeployment(diff, dryRun);
         } else {
             // we have metadata in the destination directory, therefore, this deployment is updating a current one
-            map = performUpdateDeployment(diff, dryRun);
+            map = performUpdateDeployment(diff, clean, dryRun);
         }
 
         return map;
     }
 
     /**
-     * This will first perform a deploy (e.g. {@link #deploy(DeployDifferences, boolean) deploy(diff, dryRun)}) and
-     * then, if there are backup files from the previous deployment, those backup files will be restored to their
+     * This will first perform a deploy (e.g. {@link #deploy(DeployDifferences, boolean, boolean) deploy(diff, clean, dryRun)})
+     * and then, if there are backup files from the previous deployment, those backup files will be restored to their
      * original locations.
      * 
      * This is useful when you want to "undeploy" something where "undeploy" infers you want to go back to
@@ -174,12 +186,14 @@ public class Deployer {
      * then restore the backup files - essentially overlaying the manual changes over top #1 files. This
      * method accomplishes that latter task.
      *
-     * @param diff see {@link #deploy(DeployDifferences, boolean)}
-     * @param dryRun see {@link #deploy(DeployDifferences, boolean)}
-     * @return see {@link #deploy(DeployDifferences, boolean)}
+     * @param diff see {@link #deploy(DeployDifferences, boolean, boolean)}
+     * @param clean see {@link #deploy(DeployDifferences, boolean, boolean)}
+     * @param dryRun see {@link #deploy(DeployDifferences, boolean, boolean)}
+     * @return see {@link #deploy(DeployDifferences, boolean, boolean)}
      * @throws Exception if either the deployment or backup file restoration failed
      */
-    public FileHashcodeMap redeployAndRestoreBackupFiles(DeployDifferences diff, boolean dryRun) throws Exception {
+    public FileHashcodeMap redeployAndRestoreBackupFiles(DeployDifferences diff, boolean clean, boolean dryRun)
+        throws Exception {
         FileHashcodeMap map = null;
 
         // fail-fast if we don't have enough disk space
@@ -194,7 +208,7 @@ public class Deployer {
             // Then we update the current deployment with the new deployment (which actually should be restoring to the previous one).
             // Finally, we restore the backup files into the new deployment, overlaying them over top the new deployment.
             int id = this.deploymentsMetadata.getCurrentDeploymentProperties().getDeploymentId();
-            map = performUpdateDeployment(diff, dryRun);
+            map = performUpdateDeployment(diff, clean, dryRun);
             restoreBackupFiles(id, map, diff, dryRun);
             if (!dryRun) {
                 // if we restored one or more files, we need to persist the new deployment hashcode data with the restored hashcodes
@@ -286,7 +300,8 @@ public class Deployer {
         return newFileHashcodeMap;
     }
 
-    private FileHashcodeMap performUpdateDeployment(DeployDifferences diff, boolean dryRun) throws Exception {
+    private FileHashcodeMap performUpdateDeployment(DeployDifferences diff, boolean clean, boolean dryRun)
+        throws Exception {
         debug("Analyzing original, current and new files as part of update deployment. dryRun=", dryRun);
 
         // NOTE: remember that data that goes in diff are only things affecting the current file set such as:
@@ -442,7 +457,15 @@ public class Deployer {
             }
         }
 
-        // 3. copy all new files except for those to be kept as-is
+        // 3. copy all new files except for those to be kept as-is (perform a clean first, if requested)
+        if (clean) {
+            debug("Cleaning the existing deployment's files found in the destination directory. dryRun=", dryRun);
+            if (!dryRun) {
+                purgeFileOrDirectory(this.deploymentData.getDestinationDir(), false);
+            }
+        }
+        diff.setCleaned(clean);
+
         debug("Copying new files as part of update deployment. dryRun=", dryRun);
         FileHashcodeMap newFileHashCodeMap = extractZipAndRawFiles(currentFilesToLeaveAlone, diff, dryRun);
 
@@ -831,6 +854,26 @@ public class Deployer {
             } catch (Exception ignore) {
             }
         }
+    }
+
+    private void purgeFileOrDirectory(File fileOrDir, boolean deleteIt) {
+        // make sure we only purge deployment files, never the metadata directory or its files
+        if (fileOrDir != null && !fileOrDir.getName().equals(DeploymentsMetadata.METADATA_DIR)) {
+            if (fileOrDir.isDirectory()) {
+                File[] doomedFiles = fileOrDir.listFiles();
+                if (doomedFiles != null) {
+                    for (File doomedFile : doomedFiles) {
+                        purgeFileOrDirectory(doomedFile, true); // call this method recursively
+                    }
+                }
+            }
+
+            if (deleteIt) {
+                fileOrDir.delete();
+            }
+        }
+
+        return;
     }
 
     private void debug(Object... objs) {

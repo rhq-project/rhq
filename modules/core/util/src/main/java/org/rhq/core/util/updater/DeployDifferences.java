@@ -51,6 +51,7 @@ public class DeployDifferences {
     private final Map<String, String> restoredFiles = new HashMap<String, String>();
     private final Map<String, String> realizedFiles = new HashMap<String, String>();
     private final Map<String, String> errors = new HashMap<String, String>();
+    private boolean cleaned = false;
 
     public void addIgnoredFile(String path) {
         this.ignoredFiles.add(convertPath(path));
@@ -140,6 +141,10 @@ public class DeployDifferences {
         this.errors.put(convertPath(path), errorMsg);
     }
 
+    public void setCleaned(boolean cleaned) {
+        this.cleaned = cleaned;
+    }
+
     /**
      * Returns the set of files that have been ignored.
      * 
@@ -227,6 +232,18 @@ public class DeployDifferences {
         return this.errors;
     }
 
+    /**
+     * Returns <code>true</code> if the delpoyment's destination directory was
+     * wiped of all files/directories before the new deployment files were
+     * copied to it. This means any ignored files or directories that were
+     * in the deployment's destination directory will have been deleted.
+     *  
+     * @return the cleaned flag
+     */
+    public boolean wasCleaned() {
+        return cleaned;
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
@@ -237,6 +254,7 @@ public class DeployDifferences {
         str.append("backed-up=").append(this.backedUpFiles).append('\n');
         str.append("restored=").append(this.restoredFiles).append('\n');
         str.append("realized=").append(this.realizedFiles.keySet()).append('\n');
+        str.append("cleaned=[").append(this.cleaned).append(']').append('\n');
         str.append("errors=").append(this.errors);
         return str.toString();
     }

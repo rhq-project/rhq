@@ -29,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -132,6 +133,10 @@ public class SimpleDeployerTest {
         baseX_Y_Z_Restore(false);
     }
 
+    public void testX_Y_Z_Clean() throws Exception {
+        baseX_Y_Z_Clean(false);
+    }
+
     public void testNoOriginalNoCurrentWithNew() throws Exception {
         baseNoOriginalNoCurrentWithNew(false);
     }
@@ -174,6 +179,10 @@ public class SimpleDeployerTest {
 
     public void testX_Y_Z_Restore_DryRun() throws Exception {
         baseX_Y_Z_Restore(true);
+    }
+
+    public void testX_Y_Z_Clean_DryRun() throws Exception {
+        baseX_Y_Z_Clean(true);
     }
 
     public void testNoOriginalNoCurrentWithNew_DryRun() throws Exception {
@@ -220,6 +229,8 @@ public class SimpleDeployerTest {
         assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.getRestoredFiles().isEmpty() : this.diff;
+        assert !this.diff.wasCleaned() : this.diff;
         assert this.diff.getErrors().isEmpty() : this.diff;
 
         if (dryRun) {
@@ -793,7 +804,7 @@ public class SimpleDeployerTest {
         deployer = new Deployer(dd);
         this.diff = new DeployDifferences();
         FileHashcodeMap restoreFileHashcodeMap;
-        restoreFileHashcodeMap = deployer.redeployAndRestoreBackupFiles(this.diff, dryRun);
+        restoreFileHashcodeMap = deployer.redeployAndRestoreBackupFiles(this.diff, false, dryRun);
 
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
@@ -817,6 +828,84 @@ public class SimpleDeployerTest {
             assert this.metadata.getCurrentDeploymentProperties().equals(v1Duplicate);
             assert this.metadata.getCurrentDeploymentFileHashcodes().equals(restoreFileHashcodeMap);
             assert MessageDigestGenerator.getDigestString(this.currentFile).equals(newHashcodeY) : "file wasn't restored";
+        }
+    }
+
+    private void baseX_Y_Z_Clean(boolean dryRun) throws Exception {
+        String newContentY = "testX_Y_Z_YYY";
+        writeFile(newContentY, this.currentFile);
+        String newHashcodeY = MessageDigestGenerator.getDigestString(newContentY);
+
+        String newContentZ = "testX_Y_Z_ZZZ";
+        String newHashcodeZ = MessageDigestGenerator.getDigestString(newContentZ);
+        File newZipFile = createZip(newContentZ, tmpDir, "new-content.zip", originalFileName);
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
+
+        File ignoredSubdir = new File(this.deployDir, "ignoreSubdir");
+        File ignoredFile = new File(ignoredSubdir, "ignore-me.txt");
+        ignoredSubdir.mkdirs();
+        writeFile("ignored content", ignoredFile);
+        Pattern iRegex = Pattern.compile(".*ignoreSubdir.*"); // this matches the subdirectory name, thus everything under it is ignored
+        assert ignoredFile.exists() : "for some reason we couldn't create our test file; cannot know if clean worked";
+
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, iRegex);
+        Deployer deployer = new Deployer(dd);
+        FileHashcodeMap newFileHashcodeMap;
+        newFileHashcodeMap = deployer.deploy(this.diff, true, dryRun); // note: clean is true
+
+        // The new file changed the original, and our current file has been manually updated
+        // but that current file's change does not match the new file. Therefore, the current file
+        // is out of date. The safest thing to do is backup the current and copy the new file
+        // to become the current file.
+
+        assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
+        assert newFileHashcodeMap.size() == 1;
+        assert newFileHashcodeMap.get(originalFileName).equals(newHashcodeZ);
+        String[] contentHash = getOriginalFilenameContentHashcode();
+        if (dryRun) {
+            assert contentHash[0].equals(newContentY);
+            assert contentHash[1].equals(newHashcodeY);
+        } else {
+            assert contentHash[0].equals(newContentZ);
+            assert contentHash[1].equals(newHashcodeZ);
+        }
+
+        assert this.diff.getAddedFiles().isEmpty() : this.diff;
+        assert this.diff.getDeletedFiles().isEmpty() : this.diff;
+        assert this.diff.getChangedFiles().size() == 1 : this.diff;
+        assert this.diff.getChangedFiles().contains(originalFileName) : this.diff;
+        assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
+        assert this.diff.getBackedUpFiles().containsKey(originalFileName) : this.diff;
+        assert this.diff.getIgnoredFiles().size() == 1 : this.diff;
+        assert this.diff.getIgnoredFiles().contains(ignoredSubdir.getName()) : this.diff;
+        assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.wasCleaned() : this.diff;
+        assert this.diff.getErrors().isEmpty() : this.diff;
+
+        if (dryRun) {
+            assert this.metadata.getCurrentDeploymentProperties().equals(originalDeployProps);
+            assert this.metadata.getCurrentDeploymentFileHashcodes().equals(originalFileHashcodeMap);
+        } else {
+            assert this.metadata.getCurrentDeploymentProperties().equals(newDeployProps);
+            assert this.metadata.getCurrentDeploymentFileHashcodes().equals(newFileHashcodeMap);
+        }
+
+        // verify the backup copy
+        File backupFile = new File(this.diff.getBackedUpFiles().get(originalFileName));
+        if (dryRun) {
+            assert !backupFile.exists() : "dry run should not create backup";
+        } else {
+            assert readFile(backupFile).equals(newContentY) : "did not backup the correct file?";
+        }
+
+        // if we cleaned, the ignored subdir and its file should no longer exist
+        if (dryRun) {
+            assert ignoredSubdir.isDirectory() : "dry run should not have really cleaned";
+            assert ignoredFile.exists() : "dry run should not have really cleaned";
+        } else {
+            assert !ignoredSubdir.exists() : "directory should have been deleted due to the clean option";
+            assert !ignoredFile.exists() : "file should have been deleted due to the clean option";
         }
     }
 

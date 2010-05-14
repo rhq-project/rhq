@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Autofit;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
@@ -39,6 +40,7 @@ import com.smartgwt.client.widgets.grid.events.FieldStateChangedEvent;
 import com.smartgwt.client.widgets.grid.events.FieldStateChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
@@ -54,6 +56,9 @@ public class Table extends VLayout {
     private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
 
     private HTMLFlow title;
+
+    private Canvas titleComponent;
+
     private ListGrid listGrid;
     private ToolStrip footer;
     private Label tableInfo;
@@ -111,7 +116,7 @@ public class Table extends VLayout {
     }
 
     public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames,
-        boolean autoFetchData) {
+                 boolean autoFetchData) {
         super();
 
         setWidth100();
@@ -161,7 +166,17 @@ public class Table extends VLayout {
             }
         }
 
-        addMember(title);
+        HLayout titleLayout = new HLayout();
+        titleLayout.setAutoHeight();
+        titleLayout.setAlign(VerticalAlignment.BOTTOM);
+        titleLayout.addMember(title);
+
+        if (titleComponent != null) {
+            titleLayout.addMember(new LayoutSpacer());
+            titleLayout.addMember(titleComponent);
+        }
+
+        addMember(titleLayout);
         addMember(listGrid);
         addMember(footer);
 
@@ -175,7 +190,7 @@ public class Table extends VLayout {
                     if (tableAction.confirmMessage != null) {
 
                         String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                            .getSelection().length));
+                                .getSelection().length));
 
                         SC.ask(message, new BooleanCallback() {
                             public void execute(Boolean confirmed) {
@@ -322,12 +337,17 @@ public class Table extends VLayout {
         return listGrid;
     }
 
+
+    public void setTitleComponent(Canvas canvas) {
+        this.titleComponent = canvas;
+    }
+
     public void addTableAction(String title, TableAction tableAction) {
         this.addTableAction(title, null, null, tableAction);
     }
 
     public void addTableAction(String title, SelectionEnablement enablement, String confirmation,
-        TableAction tableAction) {
+                               TableAction tableAction) {
         if (enablement == null) {
             enablement = DEFAULT_SELECTION_ENABLEMENT;
         }
@@ -341,26 +361,25 @@ public class Table extends VLayout {
     }
 
 
-
     private void refreshTableInfo() {
         int count = this.listGrid.getSelection().length;
         for (TableActionInfo tableAction : tableActions) {
             boolean enabled;
             switch (tableAction.enablement) {
-            case ALWAYS:
-                enabled = true;
-                break;
-            case ANY:
-                enabled = (count >= 1);
-                break;
-            case SINGLE:
-                enabled = (count == 1);
-                break;
-            case MULTIPLE:
-                enabled = (count > 1);
-                break;
-            default:
-                throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
+                case ALWAYS:
+                    enabled = true;
+                    break;
+                case ANY:
+                    enabled = (count >= 1);
+                    break;
+                case SINGLE:
+                    enabled = (count == 1);
+                    break;
+                case MULTIPLE:
+                    enabled = (count > 1);
+                    break;
+                default:
+                    throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
             }
             tableAction.actionButton.setDisabled(!enabled);
         }

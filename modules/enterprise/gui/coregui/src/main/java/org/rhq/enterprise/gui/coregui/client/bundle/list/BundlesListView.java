@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -44,16 +45,18 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class BundlesListView extends VLayout {
 
+    private Table table;
+
     public BundlesListView() {
         setWidth100();
         setHeight100();
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
-        final Table table = new Table("Bundles");
+        table = new Table("Bundles");
 
         table.setDataSource(new BundlesWithLatestVersionDataSource());
 
@@ -135,5 +138,13 @@ public class BundlesListView extends VLayout {
 
         addMember(table);
 
+    }
+
+    public void setCriteria(Criteria criteria) {
+        this.table.getListGrid().fetchData(criteria);
+    }
+
+    public int getMatches() {
+        return this.table.getListGrid().getTotalRows();
     }
 }

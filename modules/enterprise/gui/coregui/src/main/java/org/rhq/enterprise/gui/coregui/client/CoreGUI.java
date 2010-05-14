@@ -32,6 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
+import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
@@ -186,6 +187,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new BundleTopView();
         } else if (breadcrumbName.equals("LogOut")) {
             canvas = new LoginView();
+        } else if (breadcrumbName.equals("Tag")) {
+            canvas = new TaggedView();
         } else {
             canvas = null;
         }

@@ -81,11 +81,11 @@ import org.rhq.core.util.stream.StreamUtil;
  * from the original; the second is when there was no original file, but there is now a current
  * file on disk and a new file to be installed. In either case, the current file is backed up
  * before the new file is copied over top the current file. Files that need to be
- * backed up that are located under the destination directory will have its backup copied
- * to its original deployment's backup metadata directory. If a file that needs to be backed up
- * is referred to via an absolute path (that is, outside the destination directory), it
- * will be copied with the {@link #BACKUP_EXTENSION} extension added to the end
- * of the backup file's filename but in the same directory as its original. 
+ * backed up will have its backup copied to new deployment's metadata directory, under
+ * the backup subdirectory called {@link DeploymentsMetadata#BACKUP_DIR}. If a file
+ * that needs to be backed up is referred to via an absolute path (that is, outside the destination
+ * directory), it will be copied to the {@link DeploymentsMetadata#EXT_BACKUP_DIR} directory found
+ * in the metadata directory. 
  * 
  * @author John Mazzitelli
  */

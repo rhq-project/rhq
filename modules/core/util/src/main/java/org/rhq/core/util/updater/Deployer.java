@@ -141,6 +141,9 @@ public class Deployer {
     public FileHashcodeMap deploy(DeployDifferences diff, boolean dryRun) throws Exception {
         FileHashcodeMap map = null;
 
+        // fail-fast if we don't have enough disk space
+        checkDiskUsage();
+
         if (!this.deploymentsMetadata.isManaged()) {
             // the destination dir has not been used to deploy a bundle yet, therefore, this is the first deployment
             map = performInitialDeployment(diff, dryRun);
@@ -178,6 +181,9 @@ public class Deployer {
      */
     public FileHashcodeMap redeployAndRestoreBackupFiles(DeployDifferences diff, boolean dryRun) throws Exception {
         FileHashcodeMap map = null;
+
+        // fail-fast if we don't have enough disk space
+        checkDiskUsage();
 
         if (!this.deploymentsMetadata.isManaged()) {
             // the destination dir has not been used to deploy a bundle yet, therefore, this is the first deployment
@@ -231,6 +237,41 @@ public class Deployer {
         }
 
         return diskUsage;
+    }
+
+    /**
+     * This will get an {@link #estimateDiskUsage() estimate} of how much disk space the deployment will need
+     * and compare it to the amount of estimated disk space is currently usable. If there does not appear to be
+     * enough usable disk space to fit the deployment, this method will thrown an exception. Otherwise, this
+     * method will simply return normally.
+     * 
+     * This can be used to fail-fast a deployment - there is no need to process the deployment if there is not
+     * enough disk space to start with.
+     * 
+     * @throws Exception if there does not appear to be enough disk space to store the deployment content
+     */
+    public void checkDiskUsage() throws Exception {
+        DeploymentDiskUsage usage;
+
+        try {
+            usage = estimateDiskUsage();
+        } catch (Exception e) {
+            debug("Cannot estimate disk usage - will assume there is enough space and will continue. Cause: ", e);
+            return;
+        }
+
+        debug("Estimated disk usage for this deployment is [", usage.getDiskUsage(), "] bytes (file count=[", usage
+            .getFileCount(), "]). The maximum disk space currently usable is estimated to be [", usage
+            .getMaxDiskUsable(), "] bytes.");
+
+        if (usage.getDiskUsage() > usage.getMaxDiskUsable()) {
+            throw new Exception(
+                "There does not appear to be enough disk space for this deployment. Its estimated disk usage ["
+                    + usage.getDiskUsage() + "] is larger than the estimated amount of usable disk space ["
+                    + usage.getMaxDiskUsable() + "].");
+        }
+
+        return;
     }
 
     private FileHashcodeMap performInitialDeployment(DeployDifferences diff, boolean dryRun) throws Exception {

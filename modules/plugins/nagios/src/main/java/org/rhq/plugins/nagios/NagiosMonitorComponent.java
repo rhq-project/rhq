@@ -52,13 +52,15 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
 {
 	private final Log log = LogFactory.getLog(this.getClass());
 
-    public static final String DEFAULT_NAGIOSIP = "172.31.127.218";
+    public static final String DEFAULT_NAGIOSIP = "127.0.0.1";
     public static final String DEFAULT_NAGIOSPORT = "6557";
-    
+
     private ResourceContext context;
     private NagiosManagementInterface nagiosManagementInterface;
+    private String nagiosHost;
+    private int nagiosPort;
 
-   /**
+    /**
      * Return availability of this resource
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
@@ -76,13 +78,13 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
     {
     	//get context of this component instance
     	this.context = context;
-    	
+
     	//get config
     	Configuration conf = context.getPluginConfiguration();
-    	String nagiosHost = conf.getSimpleValue("nagiosHost", DEFAULT_NAGIOSIP);
+        nagiosHost = conf.getSimpleValue("nagiosHost", DEFAULT_NAGIOSIP);
     	String tmp = conf.getSimpleValue("nagiosPort", DEFAULT_NAGIOSPORT);
-    	int nagiosPort = Integer.parseInt(tmp);
-    	
+        nagiosPort = Integer.parseInt(tmp);
+
         //Interface class to the nagios system
         nagiosManagementInterface = new NagiosManagementInterface(nagiosHost, nagiosPort);
 
@@ -112,13 +114,13 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         {
             //Getting all Nagios system information
         	nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
-            
+
 //            log.info(nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue());
 //            log.info(nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue());
 //            log.info(nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue());
 
-        } 
-        catch (Exception e) 
+        }
+        catch (Exception e)
         {
             log.warn(" Can not get information from Nagios: ", e);
             return;
@@ -126,10 +128,10 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
 
         //iterating over the metrics
         for (MeasurementScheduleRequest req : metrics)
-        {	
-        	try 
+        {
+        	try
     		{ // Don't let one bad egg spoil the cake
-               
+
         		//Check which ResourceType it is and then decide which metrics to monitor
         		//Metrics are still equal now and have to be changed
         		if(this.context.getResourceType().getName().equalsIgnoreCase("check_disc_root"))
@@ -167,5 +169,13 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
                 log.error(e);
             }
         }
+    }
+
+    public String getNagiosHost() {
+        return nagiosHost;
+    }
+
+    public int getNagiosPort() {
+        return nagiosPort;
     }
 }

@@ -29,6 +29,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.nagios.network.NetworkConnection;
@@ -44,7 +45,7 @@ import org.rhq.plugins.nagios.request.LqlResourceTypeRequest;
 public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, ManualAddFacet
 {
     private final Log log = LogFactory.getLog(this.getClass());
-  
+
     /**
     * Support manually adding this resource type via Platform's inventory tab
     * @param configuration
@@ -78,18 +79,33 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
     	Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
-    	    	
+
+        // If we have no parent, it means the NagioMonitoring server type is not yet up.
+        ResourceComponent tmpComponent = discoveryContext.getParentResourceComponent();
+        if (tmpComponent ==null || !(tmpComponent instanceof NagiosMonitorComponent))
+                return discoveredResources;
+
+        NagiosMonitorComponent parentComponent = (NagiosMonitorComponent) tmpComponent;
+       String nagiosHost = parentComponent.getNagiosHost();
+	   int nagiosPort = parentComponent.getNagiosPort();
+
        	//Method requests available nagios services an returns the names of them
-       	LqlReply resourceTypeReply = getResourceTypeInformation(NagiosMonitorComponent.DEFAULT_NAGIOSIP, Integer.parseInt(NagiosMonitorComponent.DEFAULT_NAGIOSPORT));
-    		
+       	LqlReply resourceTypeReply = getResourceTypeInformation(nagiosHost, nagiosPort);
+
        	//for each available service
 		for(int i = 0; i < resourceTypeReply.getLqlReply().size(); i++)
 		{
-			//create new DiscoveredResourceDetails instance
-			DiscoveredResourceDetails detail = new DiscoveredResourceDetails 
+
+            ResourceType wanted = discoveryContext.getResourceType();
+            String nagiosType = resourceTypeReply.getLqlReply().get(i);
+            if (!nagiosType.equals(wanted.getName()))
+                    continue;
+
+            //create new DiscoveredResourceDetails instance
+            DiscoveredResourceDetails detail = new DiscoveredResourceDetails
 			(
 				//new ResourceType instance per service
-				new ResourceType(resourceTypeReply.getLqlReply().get(i),"NagiosMonitor", ResourceCategory.SERVICE, null), 
+				wanted,
 				"nagiosKey@" + "Nr:" + i + ":" + resourceTypeReply.getLqlReply().get(i),
 				"Nagios@" + "Nr:" + i + ":" + resourceTypeReply.getLqlReply().get(i),
 	            null,
@@ -97,11 +113,11 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
 	            null,
 	            null
 			);
-			
+
 			//add DiscoveredResourceDetails instance to Set
 			discoveredResources.add(detail);
 		}
-   	
+
        return discoveredResources;
    }
 
@@ -110,15 +126,15 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
      * as we probably won't have one on each platform. Rather have the admin
      * explicitly add it to one platform.
      */
-   
+
     private LqlReply getResourceTypeInformation(String nagiosIp, int nagiosPort)
     {
     	LqlResourceTypeRequest resourceTypeRequest = new LqlResourceTypeRequest();
 		LqlReply resourceTypeReply = new LqlReply(resourceTypeRequest.getRequestType());
-		
+
 		NetworkConnection connection = new NetworkConnection(nagiosIp, nagiosPort);
 		resourceTypeReply = connection.sendAndReceive(resourceTypeRequest);
-    	
+
 		return resourceTypeReply;
     }
 

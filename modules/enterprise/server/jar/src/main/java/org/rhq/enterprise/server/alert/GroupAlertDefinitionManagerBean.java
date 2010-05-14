@@ -32,6 +32,8 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -42,6 +44,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 
 /**
  * @author Joseph Marques
@@ -57,6 +60,9 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
 
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
+    @EJB
+    @IgnoreDependency
+    private ResourceGroupManagerLocal resourceGroupManager;
     @EJB
     private SubjectManagerLocal subjectManager;
 
@@ -133,7 +139,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public int createGroupAlertDefinitions(Subject subject, AlertDefinition groupAlertDefinition,
         Integer resourceGroupId) throws InvalidAlertDefinitionException, AlertDefinitionCreationException {
-        ResourceGroup group = entityManager.find(ResourceGroup.class, resourceGroupId);
+        ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, resourceGroupId, null);
         groupAlertDefinition.setResourceGroup(group);
 
         int groupAlertDefinitionId = 0;
@@ -141,7 +147,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
             groupAlertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, groupAlertDefinition, null);
         } catch (Throwable t) {
             throw new AlertDefinitionCreationException("Could not create groupAlertDefinitions for " + group
-                + " with data " + groupAlertDefinition.toSimpleString());
+                + " with data " + groupAlertDefinition.toSimpleString(), t);
         }
 
         Subject overlord = subjectManager.getOverlord();

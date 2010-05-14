@@ -124,7 +124,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             alertTemplateId = alertDefinitionManager.createAlertDefinition(user, alertTemplate, null);
         } catch (Throwable t) {
             throw new AlertDefinitionCreationException("Could not create alertTemplate for " + type + " with data "
-                + alertTemplate.toSimpleString());
+                + alertTemplate.toSimpleString(), t);
         }
 
         Subject overlord = subjectManager.getOverlord();

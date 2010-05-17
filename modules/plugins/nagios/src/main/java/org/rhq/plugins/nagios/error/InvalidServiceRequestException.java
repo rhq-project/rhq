@@ -23,7 +23,7 @@ package org.rhq.plugins.nagios.error;
  *
  * @author Alexander Kiefer
  */
-public class InvalidServiceRequestException extends Exception
+public class InvalidServiceRequestException extends NagiosException
 {
 	/**
 	 * Default Constructor is private because it should not be used

@@ -1,7 +1,6 @@
-package org.rhq.plugins.nagios.error;
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,30 +16,18 @@ package org.rhq.plugins.nagios.error;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+package org.rhq.plugins.nagios.error;
 
 /**
- * This class implements an Exception that is thrown if a metric is requested that does not exist
- *
- * @author Alexander Kiefer
+ * General Nagios Exception
+ * @author Heiko W. Rupp
  */
-public class InvalidMetricRequestException extends NagiosException
-{
-	/**
-	 * Default Constructor is private because it should not be used
-	 */
-	@SuppressWarnings("unused")
-	private InvalidMetricRequestException()
-	{
+public class NagiosException extends Exception {
 
-	}
+    public NagiosException() {
+    }
 
-	/**
-	 *
-	 * @param metricName - Name of metric that was called is given to
-	 * super constructor to maintain more detailed information in case of error
-	 */
-	public InvalidMetricRequestException(String metricName )
-	{
-		super("REQUESTED METRIC <" +  metricName + "> DOES NOT EXIST");
-	}
+    public NagiosException(String message) {
+        super(message);
+    }
 }

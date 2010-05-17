@@ -6,14 +6,14 @@ package org.rhq.plugins.nagios.error;
  *
  * @author Alexander Kiefer
  */
-public class InvalidReplyTypeException extends Exception
+public class InvalidReplyTypeException extends NagiosException
 {
 	/**
 	 * Constructor is private because it should not be used
 	 */
 	private InvalidReplyTypeException()
 	{
-
+        super();
 	}
 
 	/**

@@ -154,6 +154,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             deployRequest.setResourceDeployment(resourceDeployment);
             deployRequest.setBundleFilesLocation(bundleFilesDir);
             deployRequest.setPackageVersionFiles(downloadedFiles);
+            deployRequest.setCleanDeployment(request.isCleanDeployment());
+            deployRequest.setRevert(request.isRevert());
             BundleDeployResult result = bundlePluginComponent.deployBundle(deployRequest);
             if (!result.isSuccess()) {
                 response.setErrorMessage(result.getErrorMessage());

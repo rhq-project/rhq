@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.filetemplate;
 
+import java.io.File;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -32,6 +34,7 @@ import org.rhq.core.pluginapi.bundle.BundleFacet;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.util.FileUtils;
 
 /**
  * @author John Mazzitelli
@@ -62,11 +65,27 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
 
     public BundleDeployResult deployBundle(BundleDeployRequest request) {
         BundleDeployResult result = new BundleDeployResult();
+
+        // the file template recipe processor does not support reverting deployments
+        // thus we need to fail-fast if a revert deployment is being requested
+        if (request.isRevert()) {
+            result.setErrorMessage("File template bundles cannot be reverted");
+            return result;
+        }
+
         try {
             BundleResourceDeployment resourceDeployment = request.getResourceDeployment();
             BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
             BundleVersion bundleVersion = bundleDeployment.getBundleVersion();
             BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
+
+            // before processing the recipe, wipe the dest dir if we need to perform a clean deployment
+            if (request.isCleanDeployment()) {
+                File deployDir = new File(bundleDeployment.getDestination().getDeployDir());
+                if (deployDir.exists()) {
+                    FileUtils.purge(deployDir, true);
+                }
+            }
 
             // process the recipe
             String recipe = bundleVersion.getRecipe();

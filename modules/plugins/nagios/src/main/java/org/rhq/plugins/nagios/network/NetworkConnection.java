@@ -57,6 +57,7 @@ public class NetworkConnection
 	 *
 	 * @param destinationAdress - Adress of Host where MK_livestatus runs
 	 * @param destinationPort - Port to communicate with Mk_livetstatus
+	 * @param lqlRequest -  LivestatusQueryLanguage request which is sent to MK_livetstatus
 	 */
 	public NetworkConnection(String destinationAdress, int destinationPort)
 	{
@@ -101,7 +102,6 @@ public class NetworkConnection
     /**
      * Method sends all commands which are contained in the query,
 	 * receives the answers an writes them to the reply object
- 	 * @param lqlRequest -  LivestatusQueryLanguage request which is sent to MK_livetstatus
      */
 	public LqlReply sendAndReceive(LqlRequest lqlRequest)
     {
@@ -109,29 +109,37 @@ public class NetworkConnection
 		ArrayList<String> resultList = new ArrayList<String>();
 		String lineRead = "";
 
-        try {
+    	//Iterate all query commands contained in the array list
+		for(Iterator<String> it = lqlRequest.getRequestQueryList().iterator(); it.hasNext(); )
+    	{
+    		try
+    		{
+    			//TODO change the socket handling in livestatus
+				openConnection(); // TODO move outside the loop to inprove performance -- needs keepalives enabled?
 
-            openConnection();
+				String s = it.next();
 
-            //Iterate all query commands contained in the array list
-            for (String s : lqlRequest.getRequestQueryList()) {
+				//Write query out to Nagios
+				printWriter.println(s);
+	    		printWriter.flush();
 
-                //Write query out to Nagios
-                printWriter.println(s);
-                printWriter.flush();
+	    		//Receive answer and write it to result list
+				while((lineRead = bufferedReader.readLine()) != null)
+				{
+					resultList.add(lineRead);
+				}
 
-                //Receive answer and write it to result list
-                while ((lineRead = bufferedReader.readLine()) != null) {
-                    resultList.add(lineRead);
-                }
-
-            }
-            closeConnection();
-        }
-        catch (IOException e) {
-            System.err.println(e);
-        }
-
+				closeConnection();
+			}
+    		catch (UnknownHostException e)
+    		{
+				//log.error(e);
+			}
+    		catch (IOException e)
+    		{
+  			   //log.error(e);
+			}
+		}
 		//Write whole result list to LqlReply object
     	livestatusReply.setLqlReply(resultList);
 

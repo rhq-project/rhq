@@ -130,7 +130,7 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
     private LqlReply getResourceTypeInformation(String nagiosIp, int nagiosPort)
     {
     	LqlResourceTypeRequest resourceTypeRequest = new LqlResourceTypeRequest();
-		LqlReply resourceTypeReply = new LqlReply(resourceTypeRequest.getRequestType());
+		LqlReply resourceTypeReply;
 
 		NetworkConnection connection = new NetworkConnection(nagiosIp, nagiosPort);
 		resourceTypeReply = connection.sendAndReceive(resourceTypeRequest);

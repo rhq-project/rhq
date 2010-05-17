@@ -7,6 +7,7 @@
         xmlns:c="urn:xmlns:rhq-configuration"
         description="Interface to Nagios monitoring system. Nagios needs to be equipped with
             mk_livestatus module for this plugin to work"
+        version="3.0.0.B05"
         >
 
 
@@ -25,8 +26,22 @@
                         description="Port on which mk_livestatus is listening"/>
             </plugin-configuration>
 
-        <!-- TODO process scans -->
-        <service name="check_disc_root" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="check_disc_root service">
+        <service name="Root Partition" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="check_disc_root service">
+            <metric property="execution_time" displayName="execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
+			<metric property="host_execution_time" displayName="host_execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
+			<metric property="host_check_period" displayName="host_check_period" dataType="trait" displayType="summary"/>
+		</service>
+        <service name="Current Load" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="check_disc_root service">
+            <metric property="execution_time" displayName="execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
+			<metric property="host_execution_time" displayName="host_execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
+			<metric property="host_check_period" displayName="host_check_period" dataType="trait" displayType="summary"/>
+		</service>
+        <service name="Current users" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="check_disc_root service">
+            <metric property="execution_time" displayName="execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
+			<metric property="host_execution_time" displayName="host_execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
+			<metric property="host_check_period" displayName="host_check_period" dataType="trait" displayType="summary"/>
+		</service>
+        <service name="SSH" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="check_disc_root service">
             <metric property="execution_time" displayName="execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
 			<metric property="host_execution_time" displayName="host_execution_time" measurementType="dynamic" units="milliseconds" displayType="summary"/>
 			<metric property="host_check_period" displayName="host_check_period" dataType="trait" displayType="summary"/>

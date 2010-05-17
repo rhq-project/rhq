@@ -115,7 +115,7 @@ public class NetworkConnection
     		try
     		{
     			//TODO change the socket handling in livestatus
-				openConnection();
+				openConnection(); // TODO move outside the loop to inprove performance
 
 				String s = it.next();
 

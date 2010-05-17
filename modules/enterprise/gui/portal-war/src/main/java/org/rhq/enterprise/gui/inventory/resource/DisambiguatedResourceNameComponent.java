@@ -26,28 +26,39 @@ package org.rhq.enterprise.gui.inventory.resource;
 import javax.faces.component.UIComponentBase;
 
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.gui.util.FacesComponentUtility;
 
 /**
- * 
+ * Component for displaying a resource name together with disambiguation
+ * information.
  * 
  * @author Lukas Krejci
  */
 public class DisambiguatedResourceNameComponent extends UIComponentBase {
     public static final String COMPONENT_TYPE = "org.jboss.on.DisambiguatedResourceName";
     public static final String COMPONENT_FAMILY = "org.jboss.on.DisambiguatedResourceName";
-
+    private static final String DISAMBIGUATION_REPORT_ATTRIBUTE = "disambiguationReport";
+    private static final String RESOURCE_NAME_ATTRIBUTE = "resourceName";
+    private static final String RESOURCE_ID_ATTRIBUTE = "resourceId";
+    private static final String NAME_AS_LINK_ATTRIBUTE = "nameAsLink";
+    
     private DisambiguationReport<?> disambiguationReport;
     private String resourceName;
-    private int resourceId;
-    private boolean nameAsLink = true;
-    
+    private Integer resourceId;
+    private Boolean nameAsLink;
+
     @Override
     public String getFamily() {
         return COMPONENT_FAMILY;
     }
 
     public DisambiguationReport<?> getDisambiguationReport() {
-        return disambiguationReport;
+        if (disambiguationReport == null) {
+            return FacesComponentUtility.getExpressionAttribute(this, DISAMBIGUATION_REPORT_ATTRIBUTE,
+                DisambiguationReport.class);
+        } else {
+            return disambiguationReport;
+        }
     }
 
     public void setDisambiguationReport(DisambiguationReport<?> disambiguationReport) {
@@ -55,7 +66,11 @@ public class DisambiguatedResourceNameComponent extends UIComponentBase {
     }
 
     public String getResourceName() {
-        return resourceName;
+        if (resourceName == null) {
+            return FacesComponentUtility.getExpressionAttribute(this, RESOURCE_NAME_ATTRIBUTE);
+        } else {
+            return resourceName;
+        }
     }
 
     public void setResourceName(String resourceName) {
@@ -63,7 +78,12 @@ public class DisambiguatedResourceNameComponent extends UIComponentBase {
     }
 
     public boolean isNameAsLink() {
-        return nameAsLink;
+        if (nameAsLink == null) {
+            Boolean ret = FacesComponentUtility.getExpressionAttribute(this, NAME_AS_LINK_ATTRIBUTE, Boolean.class);
+            return ret == null ? true : ret;
+        } else {
+            return nameAsLink;
+        }
     }
 
     public void setNameAsLink(boolean nameAsLink) {
@@ -71,7 +91,12 @@ public class DisambiguatedResourceNameComponent extends UIComponentBase {
     }
 
     public int getResourceId() {
-        return resourceId;
+        if (resourceId == null) {
+            Integer ret = FacesComponentUtility.getExpressionAttribute(this, RESOURCE_ID_ATTRIBUTE, Integer.class);
+            return ret == null ? 0 : ret;
+        } else {
+            return resourceId;
+        }
     }
 
     public void setResourceId(int resourceId) {

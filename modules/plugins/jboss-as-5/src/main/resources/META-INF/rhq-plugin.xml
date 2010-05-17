@@ -1028,6 +1028,10 @@
                              <c:integer-constraint minimum="60"/>
                          </c:constraint>
                      </c:simple-property>
+
+                     <c:simple-property name="childJmxServerName" displayName="JBoss AS JVM Name" default="JVM" 
+                                        readOnly="true" required="false" 
+                                        description="The name of the JBoss AS JVM resource."/>
             </c:group>
 
              <c:group name="events">

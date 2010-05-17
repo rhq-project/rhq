@@ -56,6 +56,11 @@
             <c:simple-property name="snapshotLogEnabled" type="boolean" default="true" description="If true, take a snapshot of the log files"/>
             <c:simple-property name="snapshotDataEnabled" type="boolean" default="true" description="If true, take a snapshot of the data files"/>
          </c:group>         
+         <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+            <c:simple-property name="childJmxServerName" displayName="JVM Name" default="JVM" 
+                               readOnly="true" required="false" 
+                               description="The name of the child JVM resource."/>
+         </c:group>
       </plugin-configuration>
 
       <operation name="restart"

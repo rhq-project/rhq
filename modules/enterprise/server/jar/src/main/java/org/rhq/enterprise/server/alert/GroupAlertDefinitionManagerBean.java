@@ -32,6 +32,8 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -42,6 +44,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 
 /**
  * @author Joseph Marques
@@ -57,6 +60,9 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
 
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
+    @EJB
+    @IgnoreDependency
+    private ResourceGroupManagerLocal resourceGroupManager;
     @EJB
     private SubjectManagerLocal subjectManager;
 
@@ -133,15 +139,23 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public int createGroupAlertDefinitions(Subject subject, AlertDefinition groupAlertDefinition,
         Integer resourceGroupId) throws InvalidAlertDefinitionException, AlertDefinitionCreationException {
-        ResourceGroup group = entityManager.find(ResourceGroup.class, resourceGroupId);
+        ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, resourceGroupId, null);
         groupAlertDefinition.setResourceGroup(group);
-        int groupAlertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, groupAlertDefinition, null);
-        group = entityManager.merge(group);
+
+        int groupAlertDefinitionId = 0;
+        try {
+            groupAlertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, groupAlertDefinition, null);
+        } catch (Throwable t) {
+            throw new AlertDefinitionCreationException("Could not create groupAlertDefinitions for " + group
+                + " with data " + groupAlertDefinition.toSimpleString(), t);
+        }
 
         Subject overlord = subjectManager.getOverlord();
+        Throwable firstThrowable = null;
+
         List<Integer> resourceIdsForGroup = getCommittedResourceIdsNeedingGroupAlertDefinitionApplication(subject,
             groupAlertDefinitionId, resourceGroupId);
-
+        List<Integer> resourceIdsInError = new ArrayList<Integer>();
         for (Integer resourceId : resourceIdsForGroup) {
             try {
                 // construct the child
@@ -151,9 +165,16 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
                 // persist the child
                 alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
             } catch (Throwable t) {
-                throw new AlertDefinitionCreationException("Could not create alert definition child for Resource[id="
-                    + resourceId + "] with group " + groupAlertDefinition.toSimpleString());
+                // continue on error, create as many as possible
+                if (firstThrowable == null) {
+                    firstThrowable = t;
+                }
+                resourceIdsInError.add(resourceId);
             }
+        }
+        if (firstThrowable != null) {
+            throw new AlertDefinitionCreationException("Could not create alert definition child for Resources "
+                + resourceIdsInError + " with group " + groupAlertDefinition.toSimpleString(), firstThrowable);
         }
 
         return groupAlertDefinitionId;
@@ -215,25 +236,31 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
 
         // overlord will be used for all system-side effects as a result of updating this alert template
         Subject overlord = subjectManager.getOverlord();
+        Throwable firstThrowable = null;
 
         // update all of the definitions that were spawned from this group alert definition
         List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(overlord, groupAlertDefinition.getId());
         if (LOG.isDebugEnabled()) {
             LOG.debug("Need to update the following children alert definition ids: " + alertDefinitions);
         }
+        List<Integer> alertDefinitionIdsInError = new ArrayList<Integer>();
         for (Integer alertDefinitionId : alertDefinitions) {
             try {
                 alertDefinitionManager.updateAlertDefinition(overlord, alertDefinitionId, groupAlertDefinition,
                     purgeInternals);
             } catch (Throwable t) {
-                throw new AlertDefinitionUpdateException("Failed to update child AlertDefinition[id="
-                    + alertDefinitionId + "] with group " + groupAlertDefinition.toSimpleString(), t);
+                // continue on error, update as many as possible
+                if (firstThrowable == null) {
+                    firstThrowable = t;
+                }
+                alertDefinitionIdsInError.add(alertDefinitionId);
             }
         }
 
         // if the subject deleted the alertDefinition spawned from a groupAlertDefinition, cascade update will recreate it
         List<Integer> resourceIds = getCommittedResourceIdsNeedingGroupAlertDefinitionApplication(overlord,
             groupAlertDefinition.getId(), getResourceGroupIdForAlertDefinitionId(groupAlertDefinition.getId()));
+        List<Integer> resourceIdsInError = new ArrayList<Integer>();
         for (Integer resourceId : resourceIds) {
             try {
                 // construct the child
@@ -243,23 +270,39 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
                 // persist the child
                 alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
             } catch (Throwable t) {
-                throw new AlertDefinitionUpdateException("Failed to re-create child AlertDefinition for Resource[id="
-                    + resourceId + "] with group" + groupAlertDefinition.toSimpleString(), t);
+                // continue on error, update as many as possible
+                if (firstThrowable == null) {
+                    firstThrowable = t;
+                }
+                resourceIdsInError.add(resourceId);
             }
+        }
+        if (firstThrowable != null) {
+            StringBuilder error = new StringBuilder();
+            if (alertDefinitionIdsInError.size() != 0) {
+                error.append("Failed to update child AlertDefinitions " + alertDefinitionIdsInError + " ; ");
+            }
+            if (resourceIdsInError.size() != 0) {
+                error.append("Failed to re-create child AlertDefinition for Resources " + resourceIdsInError + "; ");
+            }
+            throw new AlertDefinitionUpdateException(error.toString(), firstThrowable);
         }
 
         return updated;
     }
 
-    public void addGroupAlertDefinitions(Subject subject, int resourceGroupId, int[] resourcesIdsToAdd) {
+    public void addGroupAlertDefinitions(Subject subject, int resourceGroupId, int[] resourcesIdsToAdd)
+        throws AlertDefinitionCreationException {
         if (resourcesIdsToAdd == null || resourcesIdsToAdd.length == 0) {
             return;
         }
 
+        Subject overlord = subjectManager.getOverlord();
+        Throwable firstThrowable = null;
+
         List<AlertDefinition> groupAlertDefinitions = findGroupAlertDefinitions(subject, resourceGroupId, PageControl
             .getUnlimitedInstance());
-
-        Subject overlord = subjectManager.getOverlord();
+        List<Integer> resourceIdsInError = new ArrayList<Integer>();
         for (AlertDefinition groupAlertDefinition : groupAlertDefinitions) {
             for (Integer resourceId : resourcesIdsToAdd) {
                 try {
@@ -270,12 +313,18 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
                     // persist the child
                     alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
                 } catch (Throwable t) {
-                    throw new AlertDefinitionCreationException(
-                        "Could not create child alert definition for Resource[id=" + resourceId
-                            + "] under ResourceGroup[id=" + resourceGroupId + "] with group"
-                            + groupAlertDefinition.toSimpleString());
+                    // continue on error, create as many as possible
+                    if (firstThrowable == null) {
+                        firstThrowable = t;
+                    }
+                    resourceIdsInError.add(resourceId);
                 }
             }
+        }
+        if (firstThrowable != null) {
+            throw new AlertDefinitionCreationException(
+                "Could not create group alert definition children for Resources " + resourceIdsInError
+                    + " under ResourceGroup[id=" + resourceGroupId + "]", firstThrowable);
         }
     }
 

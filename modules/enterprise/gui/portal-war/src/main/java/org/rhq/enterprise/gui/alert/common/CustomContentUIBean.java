@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.alert.common;
 
+import javax.faces.application.FacesMessage;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.In;
@@ -96,7 +98,13 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
     }
 
     public String saveConfiguration() {
-        customBackingBean.saveView();
+        try {
+            customBackingBean.saveView();
+            int alertDefinitionId = Integer.parseInt(customBackingBean.getContextId());
+            alertNotificationManager.updateAlertNotification(getSubject(), alertDefinitionId, null);
+        } catch (Throwable t) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to save alert notification", t);
+        }
 
         return OUTCOME_SUCCESS;
     }

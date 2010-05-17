@@ -11,7 +11,8 @@
    <service name="RHQ Server Alerts Engine Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="AlertsCacheResourceComponent"
-            description="RHQ Server Alerts Engine Subsystem">
+            description="RHQ Server Alerts Engine Subsystem"
+            singleton="true">
 
       <runs-inside>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
@@ -80,7 +81,8 @@
    <service name="RHQ Server Measurement Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="org.rhq.plugins.jmx.MBeanResourceComponent"
-            description="RHQ Server Measurement Subsystem">
+            description="RHQ Server Measurement Subsystem"
+            singleton="true">
 
       <runs-inside>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
@@ -136,7 +138,8 @@
    <service name="RHQ Server Group Definition / DynaGroups Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="GroupDefinitionResourceComponent"
-            description="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem">
+            description="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem"
+            singleton="true">
 
       <runs-inside>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
@@ -181,7 +184,8 @@
    <service name="RHQ Server Communications Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="CommunicationsResourceComponent"
-            description="Details on communications with agents">
+            description="Details on communications with agents"
+            singleton="true">
 
       <runs-inside>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
@@ -257,7 +261,8 @@
    <service name="RHQ Server Remote API Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="RemoteAPIResourceComponent"
-            description="Details on remote API communications with external clients, including the CLI">
+            description="Details on remote API communications with external clients, including the CLI"
+            singleton="true">
 
       <runs-inside>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
@@ -301,7 +306,8 @@
    <service name="RHQ Server Plugin Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="org.rhq.plugins.jmx.MBeanResourceComponent"
-            description="Details on the server-side plugin container subsystem">
+            description="Details on the server-side plugin container subsystem"
+            singleton="true">
 
       <runs-inside>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>

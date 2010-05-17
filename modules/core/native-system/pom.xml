@@ -43,7 +43,7 @@
     <dependency>
       <groupId>org.hyperic</groupId>
       <artifactId>sigar-dist</artifactId>
-      <version>${sigar.version}</version>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->      
       <type>zip</type>
     </dependency>
 
@@ -60,8 +60,8 @@
             <phase>process-test-resources</phase>
             <configuration>
               <tasks>
-                 <echo>SIGAR java library version used is ${sigar.version}</echo>
-                 <echo>Copying/unzipping SIGAR native libraries (version ${sigar.version}) to local build directory</echo>
+                 <echo>SIGAR Java library version used is ${sigar.version}.</echo>
+                 <echo>Copying/unzipping SIGAR native libraries (version ${sigar.version}) to local build directory...</echo>
                  <mkdir dir="${project.build.directory}/jboss-sigar" />
                  <copy toDir="${project.build.directory}/jboss-sigar">
                     <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
@@ -107,4 +107,17 @@
     </plugins>
   </build>
 
+  <repositories>
+     <!-- This is for SIGAR 1.6.4. -->
+     <repository>
+          <id>jboss-thirdparty-uploads</id>
+          <name>JBoss Third Party Uploads</name>
+          <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-uploads/</url>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+     </repository>
+  </repositories>
+
 </project>
+

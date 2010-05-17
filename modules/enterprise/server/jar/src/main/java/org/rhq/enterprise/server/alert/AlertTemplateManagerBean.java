@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.alert;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -122,14 +123,16 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         try {
             alertTemplateId = alertDefinitionManager.createAlertDefinition(user, alertTemplate, null);
         } catch (Throwable t) {
-            throw new AlertDefinitionCreationException("Could not create template for " + type + " with template"
-                + alertTemplate.toSimpleString());
+            throw new AlertDefinitionCreationException("Could not create alertTemplate for " + type + " with data "
+                + alertTemplate.toSimpleString(), t);
         }
 
         Subject overlord = subjectManager.getOverlord();
+        Throwable firstThrowable = null;
+
         List<Integer> resourceIdsForType = getCommittedResourceIdsNeedingTemplateApplication(user, alertTemplateId,
             resourceTypeId);
-
+        List<Integer> resourceIdsInError = new ArrayList<Integer>();
         for (Integer resourceId : resourceIdsForType) {
             try {
                 // construct the child
@@ -139,9 +142,16 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                 // persist the child using overlord
                 alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
             } catch (Throwable t) {
-                throw new AlertDefinitionCreationException("Could not create child alert definition for Resource[id="
-                    + resourceId + "] with template" + alertTemplate.toSimpleString());
+                // continue on error, create as many as possible
+                if (firstThrowable == null) {
+                    firstThrowable = t;
+                }
+                resourceIdsInError.add(resourceId);
             }
+        }
+        if (firstThrowable != null) {
+            throw new AlertDefinitionCreationException("Could not create child alert definition for Resources "
+                + resourceIdsInError + " with template" + alertTemplate.toSimpleString(), firstThrowable);
         }
 
         return alertTemplateId;
@@ -235,25 +245,30 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             updated = alertDefinitionManager.updateAlertDefinition(user, alertTemplate.getId(), alertTemplate,
                 purgeInternals); // do not allow direct undeletes of an alert definition
         } catch (Throwable t) {
-            throw new AlertDefinitionUpdateException("Failed to update a AlertTemplate "
+            throw new AlertDefinitionUpdateException("Failed to update an AlertTemplate "
                 + alertTemplate.toSimpleString(), t);
         }
 
         // overlord will be used for all system-side effects as a result of updating this alert template
         Subject overlord = subjectManager.getOverlord();
+        Throwable firstThrowable = null;
 
         // update all of the definitions that were spawned from alert templates
         List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(overlord, alertTemplate.getId());
         if (LOG.isDebugEnabled()) {
             LOG.debug("Need to update the following children alert definition ids: " + alertDefinitions);
         }
+        List<Integer> alertDefinitionIdsInError = new ArrayList<Integer>();
         for (Integer alertDefinitionId : alertDefinitions) {
             try {
                 alertDefinitionManager
                     .updateAlertDefinition(overlord, alertDefinitionId, alertTemplate, purgeInternals);
             } catch (Throwable t) {
-                throw new AlertDefinitionUpdateException("Failed to update child AlertDefinition[id="
-                    + alertDefinitionId + "] with template " + alertTemplate.toSimpleString(), t);
+                // continue on error, update as many as possible
+                if (firstThrowable == null) {
+                    firstThrowable = t;
+                }
+                alertDefinitionIdsInError.add(alertDefinitionId);
             }
         }
 
@@ -263,6 +278,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Need to re-create alert definitions for the following resource ids: " + resourceIds);
         }
+        List<Integer> resourceIdsInError = new ArrayList<Integer>();
         for (Integer resourceId : resourceIds) {
             try {
                 // construct the child
@@ -272,9 +288,22 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                 // persist the child
                 alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
             } catch (Throwable t) {
-                throw new AlertDefinitionUpdateException("Failed to re-create child AlertDefinition for Resource[id="
-                    + resourceId + "] with template" + alertTemplate.toSimpleString(), t);
+                // continue on error, update as many as possible
+                if (firstThrowable == null) {
+                    firstThrowable = t;
+                }
+                resourceIdsInError.add(resourceId);
             }
+        }
+        if (firstThrowable != null) {
+            StringBuilder error = new StringBuilder();
+            if (alertDefinitionIdsInError.size() != 0) {
+                error.append("Failed to update child AlertDefinitions " + alertDefinitionIdsInError + "; ");
+            }
+            if (resourceIdsInError.size() != 0) {
+                error.append("Failed to re-create child AlertDefinition for Resources " + resourceIdsInError + "; ");
+            }
+            throw new AlertDefinitionUpdateException(error.toString(), firstThrowable);
         }
 
         return updated;

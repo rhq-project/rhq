@@ -92,13 +92,18 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     }
 
     private static final String[] CLIENT_JARS = new String[] {
+            // NOTE: The jbossall-client.jar aggregates a whole bunch of other jars from the client dir via its
+            // MANIFEST.MF Class-Path.
             "client/jbossall-client.jar",
             "client/trove.jar",
             "client/javassist.jar",
             "common/lib/jboss-security-aspects.jar",
             "lib/jboss-managed.jar",
             "lib/jboss-metatype.jar",
-            "lib/jboss-dependency.jar"
+            "lib/jboss-dependency.jar",
+            // The below jars are required for JBoss AS 6.0 M1, M2, and M3.
+            "lib/jboss-classpool.jar",
+            "lib/jboss-classpool-scoped.jar"
     };
 
     private final Log log = LogFactory.getLog(this.getClass());

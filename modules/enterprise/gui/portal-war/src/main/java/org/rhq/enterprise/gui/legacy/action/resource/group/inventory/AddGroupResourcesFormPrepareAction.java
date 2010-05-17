@@ -44,8 +44,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
-import org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageComponent;
-import org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageRenderer;
+import org.rhq.enterprise.gui.inventory.resource.DisambiguatedResourceLineageComponent;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.util.DisambiguatedResourceListUtil;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -223,7 +222,7 @@ public class AddGroupResourcesFormPrepareAction extends Action {
         StringBuilder bld = new StringBuilder(it.next().getName());
         
         while (it.hasNext()) {
-            bld.append(ResourcePartialLineageComponent.DEFAULT_SEPARATOR).append(it.next().getName());
+            bld.append(DisambiguatedResourceLineageComponent.DEFAULT_SEPARATOR).append(it.next().getName());
         }
         
         return bld.toString();

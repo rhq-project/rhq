@@ -130,26 +130,8 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.resourceType.singleton ? '' : item.resourceType.name}" />
-                  <h:outputText value="#{item.resourceType.singleton ? '' : ' '}" />
-                  <h:outputText value="#{not item.resourceType.singleton and item.resourceType.plugin != null ? '(' : ''}" />
-                  <h:outputText value="#{not item.resourceType.singleton and item.resourceType.plugin != null ? item.resourceType.plugin : ''}" />
-                  <h:outputText value="#{not item.resourceType.singleton and item.resourceType.plugin != null ? ' plugin) ' : ''}" />
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{item.original.resource.id}" />
-                     <!--
-                     <h:outputText value="#{item.original.resource.name}" />                     
-                     <h:outputText value="#{item.resourceType.singleton ? '' : ' ('}" />
-                     <h:outputText value="#{item.resourceType.singleton ? '' : item.original.resource.resourceType.name}" />
-                     <h:outputText value="#{not item.resourceType.singleton and browseResourcesDataModel.currentPageNeedsPluginResolution ? ', plugin ' : ''}" />
-                     <h:outputText value="#{not item.resourceType.singleton and browseResourcesDataModel.currentPageNeedsPluginResolution ? item.resourceType.plugin : ''}" />
-                     <h:outputText value="#{item.resourceType.singleton ? '' : ')'}" />
-                      -->
-                     <h:outputText value="#{item.original.resource.name}" />                     
-                  </h:outputLink>
-                  <h:outputText value="#{item.resourceType.singleton and item.resourceType.plugin != null ? ' (' : ''}" />
-                  <h:outputText value="#{item.resourceType.singleton and item.resourceType.plugin != null ? item.resourceType.plugin : ''}" />
-                  <h:outputText value="#{item.resourceType.singleton and item.resourceType.plugin != null ? ' plugin)' : ''}" />
+                  <onc:disambiguatedResourceName resourceName="#{item.original.resource.name}" 
+                      resourceId="#{item.original.resource.id}" disambiguationReport="#{item}"/>
                </rich:column>
 <!--                
                <rich:column>
@@ -167,7 +149,7 @@
                      <h:outputText styleClass="headerText" value="Location" />
                   </f:facet>
 
-                  <onc:resourcePartialLineage parents="#{item.parents}" renderLinks="true"/>
+                  <onc:disambiguatedResourceLineage parents="#{item.parents}" renderLinks="true"/>
                </rich:column>
 
                <rich:column>

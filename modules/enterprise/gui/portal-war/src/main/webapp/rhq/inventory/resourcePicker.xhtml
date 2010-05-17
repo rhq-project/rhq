@@ -98,7 +98,9 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                     <h:outputText value="#{item.original.resource.name}" />
+                  <onc:disambiguatedResourceName resourceName="#{item.original.resource.name}"
+                     resourceId="#{item.original.resource.id}" disambiguationReport="#{item}"
+                     nameAsLink="false" />
                </rich:column>
 
                <rich:column>
@@ -106,7 +108,7 @@
                      <h:outputText styleClass="headerText" value="Parent" />
                   </f:facet>
 
-                  <onc:resourcePartialLineage parents="#{item.parents}" renderLinks="false"/>
+                  <onc:disambiguatedResourceLineage parents="#{item.parents}" renderLinks="false"/>
                </rich:column>
 
                <rich:column>

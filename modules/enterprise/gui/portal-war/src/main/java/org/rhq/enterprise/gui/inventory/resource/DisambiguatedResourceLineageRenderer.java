@@ -35,16 +35,16 @@ import javax.faces.render.Renderer;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 
 /**
- * Renderer for {@link ResourcePartialLineageComponent}
+ * Renderer for {@link DisambiguatedResourceLineageComponent}
  * 
  * @author Lukas Krejci
  */
-public class ResourcePartialLineageRenderer extends Renderer {
+public class DisambiguatedResourceLineageRenderer extends Renderer {
     private static final String RESOURCE_URL = "/rhq/resource/summary/overview.xhtml";
     
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
-        ResourcePartialLineageComponent lineageComponent = (ResourcePartialLineageComponent) component;
+        DisambiguatedResourceLineageComponent lineageComponent = (DisambiguatedResourceLineageComponent) component;
         
         String separator = lineageComponent.getSeparator();
         List<DisambiguationReport.Resource> parents = lineageComponent.getParents();
@@ -71,7 +71,7 @@ public class ResourcePartialLineageRenderer extends Renderer {
         }
     }
     
-    private void encodeUrl(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
+    public static void encodeUrl(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         encodePreName(writer, parent);
         writer.startElement("a", null);
         writer.writeAttribute("href", getUrl(parent), null);
@@ -80,7 +80,7 @@ public class ResourcePartialLineageRenderer extends Renderer {
         encodePostName(writer, parent);
     }
     
-    private void encodeSimple(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
+    public static void encodeSimple(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         encodePreName(writer, parent);
         writer.writeText(parent.getName(), null);
         encodePostName(writer, parent);
@@ -90,19 +90,19 @@ public class ResourcePartialLineageRenderer extends Renderer {
         return RESOURCE_URL + "?id=" + parent.getId();
     }
     
-    private void encodePreName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
+    private static void encodePreName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         if (!parent.getType().isSingleton()) {
             writer.writeText(parent.getType().getName(), null);
             writer.writeText(" ", null);
             if (parent.getType().getPlugin() != null) {
-                writer.writeText(" (", null);
+                writer.writeText("(", null);
                 writer.writeText(parent.getType().getPlugin(), null);
                 writer.writeText(" plugin) ", null);
             }
         }
     }
 
-    private void encodePostName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
+    private static void encodePostName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         if (parent.getType().isSingleton() && parent.getType().getPlugin() != null) {
             writer.writeText(" (", null);
             writer.writeText(parent.getType().getPlugin(), null);

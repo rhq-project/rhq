@@ -229,10 +229,8 @@
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-         <f:param name="id" value="#{resourceWithAvailability.original.resource.id}"/>
-         <h:outputText value="#{resourceWithAvailability.original.resource.name}"/>
-      </h:outputLink>
+      <onc:disambiguatedResourceName resourceName="#{resourceWithAvailability.original.resource.name}"
+         resourceId="#{resourceWithAvailability.original.resource.id}" disambiguationReport="#{resourceWithAvailability}" />
    </rich:column>
 
    <rich:column >
@@ -240,7 +238,7 @@
          <h:outputText styleClass="headerText" value="Parent"/>
       </f:facet>
 
-      <onc:resourcePartialLineage parents="#{resourceWithAvailability.parents}" />
+      <onc:disambiguatedResourceLineage parents="#{resourceWithAvailability.parents}" />
    </rich:column>
 
    <rich:column>

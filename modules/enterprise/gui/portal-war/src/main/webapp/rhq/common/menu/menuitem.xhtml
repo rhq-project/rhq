@@ -234,6 +234,9 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                         <h:column>
                            <f:facet name="header">Resource</f:facet>
                            <h:outputText value="#{result.original.resource.name}" />
+                           <onc:disambiguatedResourceName resourceName="#{result.original.resource.name}"
+                              resourceId="#{result.original.resource.id}" disambiguationReport="#{result}"
+                              nameAsLink="false" />
                         </h:column>
                         <h:column rendered="#{result.typeResolutionNeeded}">
                             <f:facet name="header">Type</f:facet>
@@ -241,7 +244,7 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                         </h:column>
                         <h:column rendered="#{result.parentResolutionNeeded}">
                            <f:facet name="header">Parent</f:facet>
-                           <onc:resourcePartialLineage parents="#{result.parents}" renderLinks="false" />
+                           <onc:disambiguatedResourceLineage parents="#{result.parents}" renderLinks="false" />
                         </h:column>
                      </rich:suggestionbox>
                   </h:panelGroup>

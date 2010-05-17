@@ -15,15 +15,25 @@
    </component>
    
    <component>
-      <component-type>org.jboss.on.ResourcePartialLineage</component-type>
-      <component-class>org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageComponent</component-class>
+      <component-type>org.jboss.on.DisambiguatedResourceLineage</component-type>
+      <component-class>org.rhq.enterprise.gui.inventory.resource.DisambiguatedResourceLineageComponent</component-class>
 
       <component-extension>
-         <component-family>org.jboss.on.ResourcePartialLineage</component-family>
-         <renderer-type>org.jboss.on.ResourcePartialLineage</renderer-type>
+         <component-family>org.jboss.on.DisambiguatedResourceLineage</component-family>
+         <renderer-type>org.jboss.on.DisambiguatedResourceLineage</renderer-type>
       </component-extension>
    </component>
    
+   <component>
+      <component-type>org.jboss.on.DisambiguatedResourceName</component-type>
+      <component-class>org.rhq.enterprise.gui.inventory.resource.DisambiguatedResourceNameComponent</component-class>
+
+      <component-extension>
+         <component-family>org.jboss.on.DisambiguatedResourceName</component-family>
+         <renderer-type>org.jboss.on.DisambiguatedResourceName</renderer-type>
+      </component-extension>
+   </component>
+
    <render-kit>
       <renderer>
          <description>renderer for a ResourceLineage component</description>
@@ -32,10 +42,16 @@
          <renderer-class>org.rhq.enterprise.gui.inventory.resource.ResourceLineageRenderer</renderer-class>
       </renderer>
       <renderer>
-         <description>renderer for a ResourcePartialLineage component</description>
-         <component-family>org.jboss.on.ResourcePartialLineage</component-family>
-         <renderer-type>org.jboss.on.ResourcePartialLineage</renderer-type>
-         <renderer-class>org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageRenderer</renderer-class>
+         <description>renderer for a DisambiguatedResourceLineage component</description>
+         <component-family>org.jboss.on.DisambiguatedResourceLineage</component-family>
+         <renderer-type>org.jboss.on.DisambiguatedResourceLineage</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.inventory.resource.DisambiguatedResourceLineageRenderer</renderer-class>
+      </renderer>
+      <renderer>
+         <description>renderer for a DisambiguatedResourceName component</description>
+         <component-family>org.jboss.on.DisambiguatedResourceName</component-family>
+         <renderer-type>org.jboss.on.DisambiguatedResourceName</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.inventory.resource.DisambiguatedResourceNameRenderer</renderer-class>
       </renderer>
    </render-kit>
 

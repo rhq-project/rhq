@@ -103,17 +103,15 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{resourceitem.original.id}"/>
-                     <h:outputText value="#{resourceitem.original.name}" />
-                  </h:outputLink>
+                  <onc:disambiguatedResourceName resourceName="#{resourceitem.original.name}"
+                     resourceId="#{resourceitem.original.id}" disambiguationReport="#{resourceitem}" />
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
                      <h:outputText value="Parent" />
                   </f:facet> 
-                  <onc:resourcePartialLineage parents="#{resourceitem.parents}" />
+                  <onc:disambiguatedResourceLineage parents="#{resourceitem.parents}" />
                </rich:column>
                
                <rich:column>
@@ -246,10 +244,8 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{availableitem.original.id}"/>
-                     <h:outputText value="#{availableitem.original.name}" />
-                  </h:outputLink>
+                  <onc:disambiguatedResourceName resourceName="#{resourceitem.original.name}"
+                     resourceId="#{resourceitem.original.id}" disambiguationReport="#{resourceitem}" />
                </rich:column>
 
                <rich:column>
@@ -257,7 +253,7 @@
                      <h:outputText value="Parent"/>
                   </f:facet>
                   
-                  <onc:resourcePartialLineage parents="#{availableitem.parents}"/>
+                  <onc:disambiguatedResourceLineage parents="#{availableitem.parents}"/>
                </rich:column>
                
                <rich:column>

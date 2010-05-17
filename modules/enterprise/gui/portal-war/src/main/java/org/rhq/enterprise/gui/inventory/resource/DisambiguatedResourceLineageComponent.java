@@ -37,9 +37,9 @@ import org.rhq.core.gui.util.FacesComponentUtility;
  * 
  * @author Lukas Krejci
  */
-public class ResourcePartialLineageComponent extends UIComponentBase {
-    public static final String COMPONENT_TYPE = "org.jboss.on.ResourcePartialLineage";
-    public static final String COMPONENT_FAMILY = "org.jboss.on.ResourcePartialLineage";
+public class DisambiguatedResourceLineageComponent extends UIComponentBase {
+    public static final String COMPONENT_TYPE = "org.jboss.on.DisambiguatedResourceLineage";
+    public static final String COMPONENT_FAMILY = "org.jboss.on.DisambiguatedResourceLineage";
 
     public static final String DEFAULT_SEPARATOR = " > ";
     

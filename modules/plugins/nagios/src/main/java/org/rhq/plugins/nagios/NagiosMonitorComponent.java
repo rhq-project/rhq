@@ -23,6 +23,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.plugins.nagios.controller.NagiosManagementInterface;
 import org.rhq.plugins.nagios.data.NagiosSystemData;
 import org.rhq.plugins.nagios.error.InvalidHostRequestException;
@@ -140,26 +141,19 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         	try
     		{ // Don't let one bad egg spoil the cake
 
-        		//Check which ResourceType it is and then decide which metrics to monitor
-        		//Metrics are still equal now and have to be changed
-                if("execution_time".equals(req.getName()) )
-                {
+                if (req.getDataType() == DataType.MEASUREMENT) {
                     String value = nagiosSystemData.getSingleHostServiceMetric(req.getName(), serviceName, "localhost").getValue(); // TODO use 'real' host
                     MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
                     report.addData(res);
                 }
-                else if("host_check_period".equals(req.getName()) )
+                else if(req.getDataType() == DataType.TRAIT)
                 {
-                    String value = nagiosSystemData.getSingleHostServiceMetric(req.getName(), serviceName, "localhost").getValue();
+                    String value = nagiosSystemData.getSingleHostServiceMetric(req.getName(), serviceName, "localhost").getValue(); // TODO use 'real' host
                     MeasurementDataTrait res = new MeasurementDataTrait(req, value);
                     report.addData(res);
                 }
-                else if("host_execution_time".equals(req.getName()) )
-                {
-                    String value = nagiosSystemData.getSingleHostServiceMetric(req.getName(), serviceName, "localhost").getValue();
-                    MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
-                    report.addData(res);
-                }
+                else
+                    log.error("Unknown DataType for request " + req);
         	}
             catch (NagiosException e)
             {

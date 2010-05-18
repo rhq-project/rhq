@@ -188,7 +188,10 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
     private CacheEntry getCacheEntry(Subject subject) {
         Integer sessionId = subject.getSessionId();
-        CacheEntry cacheEntry = CACHE.get(sessionId);
+        CacheEntry cacheEntry;
+        synchronized (CACHE) {
+            cacheEntry = CACHE.get(sessionId);
+        }
         long metadataLastModifiedTime = getPluginMetadataManager().getLastModifiedTime();
         if (cacheEntry == null || cacheEntry.getMetadataLastModifiedTime() < metadataLastModifiedTime) {
             // Take this opportunity to clean expired sessions from the cache.
@@ -207,7 +210,9 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
             List<PageLink> filteredPageLinks = applyActivatorsToPageLinks(context, scopes, basePageLinks);
 
             cacheEntry = new CacheEntry(metadataLastModifiedTime, filteredMenu, filteredTabs, filteredPageLinks);
-            CACHE.put(sessionId, cacheEntry);
+            synchronized (CACHE) {
+                CACHE.put(sessionId, cacheEntry);
+            }
         }
         return cacheEntry;
     }
@@ -222,16 +227,18 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     private void cleanCache() {
         Subject subject;
 
-        for (Integer sessionId : CACHE.keySet()) {
-            try {
-                subject = subjectManager.getSubjectBySessionId(sessionId);
-                if (null == subject) {
+        synchronized (CACHE) {
+            for (Integer sessionId : CACHE.keySet()) {
+                try {
+                    subject = subjectManager.getSubjectBySessionId(sessionId);
+                    if (null == subject) {
+                        log.debug("Removing perspective cache entry for session " + sessionId);
+                        CACHE.remove(sessionId);
+                    }
+                } catch (Exception e) {
                     log.debug("Removing perspective cache entry for session " + sessionId);
                     CACHE.remove(sessionId);
                 }
-            } catch (Exception e) {
-                log.debug("Removing perspective cache entry for session " + sessionId);
-                CACHE.remove(sessionId);
             }
         }
     }

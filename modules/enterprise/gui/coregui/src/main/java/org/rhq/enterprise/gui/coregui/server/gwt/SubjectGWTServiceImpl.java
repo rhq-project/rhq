@@ -27,9 +27,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
-
-import javax.jws.WebParam;
 
 /**
  * @author Greg Hinkle

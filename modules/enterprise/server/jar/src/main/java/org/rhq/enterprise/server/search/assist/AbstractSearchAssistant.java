@@ -22,17 +22,14 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
         this.maxResultCount = maxResultCount;
     }
 
-    @Override
     public List<String> getSimpleContexts() {
         return Collections.emptyList();
     }
 
-    @Override
     public List<String> getParameterizedContexts() {
         return Collections.emptyList();
     }
 
-    @Override
     public List<String> getParameters(String context, String filter) {
         if (getParameterizedContexts().contains(context) == false) {
             throw new IllegalArgumentException("context[" + context
@@ -41,7 +38,6 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
         return Collections.emptyList();
     }
 
-    @Override
     public List<String> getValues(String context, String param, String filter) {
         if (getSimpleContexts().contains(context) && param != null) {
             throw new IllegalArgumentException("context[" + context + "] is simple, param[" + param

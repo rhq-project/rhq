@@ -66,7 +66,7 @@ public class RhnSSLTransport extends XmlRpcSun15HttpTransport
             {
                 e.printStackTrace();
                 log.error(e);
-                throw new IOException(e);
+                throw new IOException(e.getMessage());
             }
             log.debug("SSLSocketFactory has been set with a custom version using cert path: " + sslCertPath);
         }

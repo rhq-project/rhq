@@ -25,8 +25,6 @@ import java.util.List;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -46,10 +44,8 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
@@ -62,9 +58,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Jason Dobies
  */
 public class CreateNewPackageUIBean {
-
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    private EntityManager entityManager;
 
     /**
      * Option value for deploying the package to a repo the resource is already subscribed to.
@@ -82,12 +75,6 @@ public class CreateNewPackageUIBean {
      * repo.
      */
     private static final String REPO_OPTION_NEW = "new";
-
-    /**
-     * Option value for no repo.  This is a standalone war that may not be related to any repo.
-     * 
-     */
-    private static final String REPO_OPTION_NONE = "none";
 
     private String packageName;
     private String version;
@@ -162,7 +149,6 @@ public class CreateNewPackageUIBean {
 
         String repoOption = request.getParameter("repoOption");
         UploadItem fileItem = uploadUIBean.getFileItem();
-        boolean usingARepo = true;
 
         // Validate
         if (packageName == null || packageName.trim().equals("")) {
@@ -191,21 +177,16 @@ public class CreateNewPackageUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be uploaded");
             return null;
         }
-        if (repoOption.equalsIgnoreCase(REPO_OPTION_NONE)) {
-            usingARepo = false;
-        }
 
         // Determine which repo the package will go into
         String repoId = null;
-        if (usingARepo) {
-            try {
-                repoId = determineRepo(repoOption, subject, resource.getId());
-            } catch (ContentException ce) {
-                String errorMessages = ThrowableUtil.getAllMessages(ce);
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repository. Cause: "
-                    + errorMessages);
-                return "failure";
-            }
+        try {
+            repoId = determineRepo(repoOption, subject, resource.getId());
+        } catch (ContentException ce) {
+            String errorMessages = ThrowableUtil.getAllMessages(ce);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repository. Cause: "
+                + errorMessages);
+            return "failure";
         }
 
         try {
@@ -235,20 +216,6 @@ public class CreateNewPackageUIBean {
                 ContentManagerLocal contentManager = LookupUtil.getContentManager();
                 packageVersion = contentManager.createPackageVersion(packageName, packageTypeId, version,
                     architectureId, packageStream);
-
-                //locate the file upload UI bean and populate installedPackage, then persist.
-                InstalledPackage installed = new InstalledPackage();
-                UploadItem fileItemForPackage = uploadUIBean.getFileItem();
-                packageVersion.setFileSize(Long.valueOf(fileItemForPackage.getFileSize()));
-                //Calculate SHA256
-                String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
-                    .calcDigestString(packageStream);
-                packageVersion.setSHA256(sha256);
-                installed.setInstallationDate(fileItemForPackage.getFile().lastModified());
-                installed.setUser(subject);
-                installed.setPackageVersion(packageVersion);
-                entityManager.persist(installed);
-
             } catch (Exception e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName
@@ -259,18 +226,16 @@ public class CreateNewPackageUIBean {
             int[] packageVersionList = new int[] { packageVersion.getId() };
 
             // Add the package to the repo
-            if (usingARepo) {
-                try {
-                    int iRepoId = Integer.parseInt(repoId);
+            try {
+                int iRepoId = Integer.parseInt(repoId);
 
-                    RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-                    repoManager.addPackageVersionsToRepo(subject, iRepoId, packageVersionList);
-                } catch (Exception e) {
-                    String errorMessages = ThrowableUtil.getAllMessages(e);
-                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package ["
-                        + packageName + "] with repository ID [" + repoId + "]. Cause: " + errorMessages);
-                    return "failure";
-                }
+                RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+                repoManager.addPackageVersionsToRepo(subject, iRepoId, packageVersionList);
+            } catch (Exception e) {
+                String errorMessages = ThrowableUtil.getAllMessages(e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package ["
+                    + packageName + "] with repository ID [" + repoId + "]. Cause: " + errorMessages);
+                return "failure";
             }
 
             // Put the package ID in the session so it can fit into the deploy existing package workflow

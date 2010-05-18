@@ -75,6 +75,7 @@ import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -93,6 +94,7 @@ import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginManager;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -133,6 +135,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @EJB
     private RepoManagerLocal repoManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager;
 
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
@@ -648,56 +653,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleFile;
     }
 
-    /** TODO: Remove after we finalize the move to group only deployment in the public API
-     * 
-     *  
-    public BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, int bundleDeploymentId,
-        int resourceId) throws Exception {
-        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
-        if (null == deployment) {
-            throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
-        }
-
-        Resource resource = (Resource) entityManager.find(Resource.class, resourceId);
-        if (null == resource) {
-            throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
-        }
-
-        return scheduleBundleResourceDeployment(subject, deployment, resource, null);
-    }
-
-        @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeploymentId,
-        int resourceGroupId) throws Exception {
-
-        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
-        if (null == deployment) {
-            throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
-        }
-        ResourceGroup resourceGroup = (ResourceGroup) entityManager.find(ResourceGroup.class, resourceGroupId);
-        if (null == resourceGroup) {
-            throw new IllegalArgumentException("Invalid resourceGroupId (ResourceGroup does not exist): "
-                + resourceGroupId);
-        }
-
-        //
-        // we need to create the group deployment entity in a new transaction before the rest of the
-        // processing of this method; the individual deployments need to reference it.
-        //
-        BundleGroupDeployment groupDeployment = new BundleGroupDeployment(subject.getName(), deployment, resourceGroup);
-        groupDeployment = bundleManager.createBundleGroupDeployment(groupDeployment);
-
-        // Create and persist updates for each of the group members.
-        for (Resource resource : resourceGroup.getExplicitResources()) {
-            BundleResourceDeployment resourceDeployment = scheduleBundleResourceDeployment(subject, deployment,
-                resource, groupDeployment);
-            groupDeployment.addResourceDeployment(resourceDeployment);
-        }
-
-        return groupDeployment;
-    }
-    */
-
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeploymentId, boolean isCleanDeployment)
         throws Exception {
@@ -734,26 +689,28 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (null == newDeployment) {
             throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
         }
-        newDeployment.setStatus(BundleDeploymentStatus.IN_PROGRESS);
 
         BundleDestination destination = newDeployment.getDestination();
         ResourceGroup group = destination.getGroup();
 
         // Create and persist updates for each of the group members.
-        for (Resource resource : group.getExplicitResources()) {
+        Set<Resource> platforms = group.getExplicitResources();
+        if (platforms.isEmpty()) {
+            throw new IllegalArgumentException("Destination [" + destination
+                + "] group has no platforms. Invalid deployment destination");
+        }
+
+        for (Resource platform : platforms) {
             try {
-                BundleResourceDeployment resourceDeployment = scheduleBundleResourceDeployment(subject, newDeployment,
-                    resource, isCleanDeployment, isRevert);
-                newDeployment.addResourceDeployment(resourceDeployment);
+                scheduleBundleResourceDeployment(subject, newDeployment, platform, isCleanDeployment, isRevert);
             } catch (Throwable t) {
-                log.error("Failed to complete scheduling of platform deployment to [" + resource
+                log.error("Failed to complete scheduling of platform deployment to [" + platform
                     + "]. Other platforms may have been scheduled. ", t);
             }
         }
 
-        entityManager.flush();
-
-        // make sure the new deployment is set as the live deployment.
+        // make sure the new deployment is set as the live deployment and properly replaces the
+        // previously live deployment.
         destination = entityManager.find(BundleDestination.class, destination.getId());
         List<BundleDeployment> currentDeployments = destination.getDeployments();
         if (null != currentDeployments) {
@@ -766,78 +723,133 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             }
         }
         newDeployment.setLive(true);
-        entityManager.merge(newDeployment);
 
         return newDeployment;
     }
 
     private BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, BundleDeployment deployment,
-        Resource resource, boolean isCleanDeployment, boolean isRevert) throws Exception {
+        Resource platform, boolean isCleanDeployment, boolean isRevert) throws Exception {
 
-        int resourceId = resource.getId();
-        AgentClient agentClient = agentManager.getAgentClient(resourceId);
+        int platformId = platform.getId();
+        AgentClient agentClient = agentManager.getAgentClient(platformId);
         BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
 
-        // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try to
-        // add History to it during immediate deployments. So, create and persist it (requires a new trans).
+        // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try        
+        // to add History to it during immediate deployments. So, create and persist it (requires a new trans).
         BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeployment(subject, deployment
-            .getId(), resourceId);
+            .getId(), platformId);
 
-        if (ResourceCategory.PLATFORM.equals(resource.getResourceType().getCategory())) {
-            // make sure the deployment contains the info required by the schedule service
-            BundleVersion bundleVersion = entityManager
-                .find(BundleVersion.class, deployment.getBundleVersion().getId());
-            Configuration config = entityManager.find(Configuration.class, deployment.getConfiguration().getId());
-            Bundle bundle = entityManager.find(Bundle.class, bundleVersion.getBundle().getId());
-            BundleType bundleType = entityManager.find(BundleType.class, bundle.getBundleType().getId());
-            ResourceType resourceType = entityManager.find(ResourceType.class, bundleType.getResourceType().getId());
-            bundleType.setResourceType(resourceType);
-            bundle.setBundleType(bundleType);
-            bundleVersion.setBundle(bundle);
-            deployment.setBundleVersion(bundleVersion);
-            deployment.setConfiguration(config);
-            resourceDeployment.setBundleDeployment(deployment);
-            resourceDeployment.setResource(resource);
-
-            // now scrub the hibernate entity to make it a pojo suitable for sending to the client
-            HibernateDetachUtility.nullOutUninitializedFields(resourceDeployment, SerializationType.SERIALIZATION);
-
-            BundleScheduleRequest request = new BundleScheduleRequest(resourceDeployment);
-            request.setCleanDeployment(isCleanDeployment);
-            request.setRevert(isRevert);
-
-            // add the deployment request history (in a new trans)
-            BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
-                AUDIT_ACTION_DEPLOYMENT_REQUESTED, deployment.getName(), null,
-                BundleResourceDeploymentHistory.Status.SUCCESS, "Requested deployment time: "
-                    + request.getRequestedDeployTimeAsString(), null);
-            bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
+        if (ResourceCategory.PLATFORM.equals(platform.getResourceType().getCategory())) {
 
             // Ask the agent to schedule the request. The agent should add history as needed.
-            BundleScheduleResponse response = bundleAgentService.schedule(request);
+            try {
+                BundleScheduleRequest request = bundleManager.getScheduleRequest(subject, resourceDeployment.getId(),
+                    isCleanDeployment, isRevert);
 
-            // we don't want to commit the scrubbed entities so clear the changes
-            this.entityManager.clear();
+                // add the deployment request history (in a new trans)
+                BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
+                    AUDIT_ACTION_DEPLOYMENT_REQUESTED, deployment.getName(), null,
+                    BundleResourceDeploymentHistory.Status.SUCCESS, "Requested deployment time: "
+                        + request.getRequestedDeployTimeAsString(), null);
+                bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
 
-            // Handle Schedule Failures. This may include deployment failures for immediate deployment request
-            if (!response.isSuccess()) {
+                BundleScheduleResponse response = bundleAgentService.schedule(request);
+
+                // Handle Schedule Failures. This may include deployment failures for immediate deployment request
+                if (!response.isSuccess()) {
+                    bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
+                        BundleDeploymentStatus.FAILURE);
+                    history = new BundleResourceDeploymentHistory(subject.getName(), AUDIT_ACTION_DEPLOYMENT,
+                        deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE, response
+                            .getErrorMessage(), null);
+                    bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
+                }
+            } catch (Throwable t) {
+                // fail the unlaunched resource deployment
+                BundleResourceDeploymentHistory failureHistory = new BundleResourceDeploymentHistory(subject.getName(),
+                    this.AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null,
+                    BundleResourceDeploymentHistory.Status.FAILURE, "Failed to schedule, agent on [" + platform
+                        + "] may be down: " + t, null);
+                bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), failureHistory);
                 bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
                     BundleDeploymentStatus.FAILURE);
-                history = new BundleResourceDeploymentHistory(subject.getName(), AUDIT_ACTION_DEPLOYMENT, deployment
-                    .getName(), null, BundleResourceDeploymentHistory.Status.FAILURE, response.getErrorMessage(), null);
-                bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
             }
+
         } else {
             bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
                 BundleDeploymentStatus.FAILURE);
             BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
                 AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE,
-                "Target resource is not a platform [id=" + resource.getId() + "]. Fix target group for destination ["
+                "Target resource is not a platform [id=" + platform.getId() + "]. Fix target group for destination ["
                     + deployment.getDestination().getName() + "]", null);
             bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
         }
 
         return resourceDeployment;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleScheduleRequest getScheduleRequest(Subject subject, int resourceDeploymentId,
+        boolean isCleanDeployment, boolean isRevert) throws Exception {
+
+        // make sure the deployment contains the info required by the schedule service
+        BundleResourceDeploymentCriteria brdc = new BundleResourceDeploymentCriteria();
+        brdc.addFilterId(resourceDeploymentId);
+        brdc.fetchResource(true);
+        brdc.fetchBundleDeployment(true);
+        List<BundleResourceDeployment> resourceDeployments = bundleManager.findBundleResourceDeploymentsByCriteria(
+            subject, brdc);
+        if (null == resourceDeployments || resourceDeployments.isEmpty()) {
+            throw new IllegalArgumentException("Can not deploy using invalid resourceDeploymentId ["
+                + resourceDeploymentId + "].");
+        }
+        BundleResourceDeployment resourceDeployment = resourceDeployments.get(0);
+
+        // make sure the deployment contains the info required by the schedule service
+        BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
+        bdc.addFilterId(resourceDeployment.getId());
+        bdc.fetchBundleVersion(true);
+        bdc.fetchConfiguration(true);
+        bdc.fetchDestination(true);
+        BundleDeployment deployment = bundleManager.findBundleDeploymentsByCriteria(subject, bdc).get(0);
+
+        BundleCriteria bc = new BundleCriteria();
+        bc.addFilterDestinationId(deployment.getDestination().getId());
+        Bundle bundle = bundleManager.findBundlesByCriteria(subject, bc).get(0);
+
+        ResourceTypeCriteria rtc = new ResourceTypeCriteria();
+        rtc.addFilterBundleTypeId(bundle.getBundleType().getId());
+        ResourceType resourceType = resourceTypeManager.findResourceTypesByCriteria(subject, rtc).get(0);
+        bundle.getBundleType().setResourceType(resourceType);
+
+        deployment.getBundleVersion().setBundle(bundle);
+        deployment.getDestination().setBundle(bundle);
+
+        //            BundleVersion bundleVersion = entityManager
+        //                .find(BundleVersion.class, deployment.getBundleVersion().getId());
+        //            Configuration config = entityManager.find(Configuration.class, deployment.getConfiguration().getId());
+        //            Bundle bundle = entityManager.find(Bundle.class, bundleVersion.getBundle().getId());
+        //            BundleType bundleType = entityManager.find(BundleType.class, bundle.getBundleType().getId());
+        //            ResourceType resourceType = entityManager.find(ResourceType.class, bundleType.getResourceType().getId());
+        //            bundleType.setResourceType(resourceType);
+        //            bundle.setBundleType(bundleType);
+        //            bundleVersion.setBundle(bundle);
+
+        //deployment.setBundleVersion(bundleVersion);
+        //deployment.setConfiguration(config);
+        resourceDeployment.setBundleDeployment(deployment);
+        //resourceDeployment.setResource(platform);
+
+        // now scrub the hibernate entity to make it a pojo suitable for sending to the client
+        HibernateDetachUtility.nullOutUninitializedFields(resourceDeployment, SerializationType.SERIALIZATION);
+
+        BundleScheduleRequest request = new BundleScheduleRequest(resourceDeployment);
+        request.setCleanDeployment(isCleanDeployment);
+        request.setRevert(isRevert);
+
+        entityManager.clear();
+        return request;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -876,6 +888,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // update the status on the overall deployment
         BundleDeployment deployment = resourceDeployment.getBundleDeployment();
+
         List<BundleResourceDeployment> deployments = deployment.getResourceDeployments();
         boolean someInProgress = false;
         boolean someSuccess = false;
@@ -894,7 +907,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             }
         }
         if (someInProgress) {
-            // should actually be at this status already but what the heck
             deployment.setStatus(BundleDeploymentStatus.IN_PROGRESS);
         } else if (someSuccess) {
             deployment.setStatus(someFailure ? BundleDeploymentStatus.MIXED : BundleDeploymentStatus.SUCCESS);
@@ -1101,6 +1113,29 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         this.entityManager.flush();
 
         repoManager.deleteRepo(subject, bundleRepo.getId());
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteBundleDeployment(Subject subject, int bundleDeploymentId) throws Exception {
+        BundleDeployment doomed = this.entityManager.find(BundleDeployment.class, bundleDeploymentId);
+        if (null == doomed) {
+            return;
+        }
+        if (!BundleDeploymentStatus.PENDING.equals(doomed.getStatus())) {
+            throw new IllegalArgumentException("Can not delete deployment with status [" + doomed.getStatus() + "]");
+        }
+
+        entityManager.remove(doomed);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteBundleDestination(Subject subject, int bundleDestinationId) throws Exception {
+        BundleDestination doomed = this.entityManager.find(BundleDestination.class, bundleDestinationId);
+        if (null == doomed) {
+            return;
+        }
+
+        entityManager.remove(doomed);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

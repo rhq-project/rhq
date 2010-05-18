@@ -33,6 +33,7 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
     // the things we build up in the wizard
     private Integer bundleId;
     private BundleDestination bundleDestination;
+    private boolean isNewDestination = false;
     private BundleVersion bundleVersion;
     private boolean initialDeployment = false;
     private Configuration newDeploymentConfig;
@@ -130,6 +131,14 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     public void setCleanDeployment(boolean isCleanDeployment) {
         this.isCleanDeployment = isCleanDeployment;
+    }
+
+    public boolean isNewDestination() {
+        return isNewDestination;
+    }
+
+    public void setNewDestination(boolean isNewDestination) {
+        this.isNewDestination = isNewDestination;
     }
 
 }

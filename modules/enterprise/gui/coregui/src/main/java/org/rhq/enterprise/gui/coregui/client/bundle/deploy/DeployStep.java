@@ -80,7 +80,7 @@ public class DeployStep implements WizardStep {
                         deployingMessage.setText("Created Deployment...");
                         CoreGUI.getMessageCenter().notify(
                             new Message("Created deployment [" + result.getName() + "] description ["
-                                + result.getDescription(), Severity.Info));
+                                + result.getDescription() + "]", Severity.Info));
                         wizard.setNewDeployment(result);
 
                         bundleServer.scheduleBundleDeployment(wizard.getNewDeployment().getId(), wizard

@@ -18,6 +18,9 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -35,9 +38,11 @@ public class BundleCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private List<Integer> filterBundleVersionIds; // needs overrides    
     private Integer filterBundleTypeId; // needs override
     private String filterBundleTypeName; // needs override    
     private String filterDescription;
+    private List<Integer> filterDestinationIds; // needs overrides
     private String filterName;
     private Integer filterPackageTypeId; // needs override
     private String filterPackageTypeName; // needs override    
@@ -51,11 +56,18 @@ public class BundleCriteria extends TaggedCriteria {
     private PageOrdering sortDescription;
 
     public BundleCriteria() {
+        filterOverrides.put("bundleVersionIds", "" //
+            + "id IN ( SELECT bv.bundle.id " //
+            + "          FROM BundleVersion bv " //
+            + "         WHERE bv.id IN ( ? ) )");
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
         filterOverrides.put("bundleTypeName", "bundleType.name like ?");
+        filterOverrides.put("destinationIds", "" //
+            + "id IN ( SELECT bd.bundle.id " //
+            + "          FROM BundleDestination bd " //
+            + "         WHERE bd.id IN ( ? ) )");
         filterOverrides.put("packageTypeId", "packageType.id = ?");
         filterOverrides.put("packageTypeName", "packageType.name like ?");
-
     }
 
     @Override
@@ -65,6 +77,17 @@ public class BundleCriteria extends TaggedCriteria {
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
+    }
+
+    /** Convenience routine calls addFilterBundleVersionIds */
+    public void addFilterBundleVersionId(Integer filterBundleVersionId) {
+        List<Integer> ids = new ArrayList<Integer>(1);
+        ids.add(filterBundleVersionId);
+        this.addFilterBundleVersionIds(ids);
+    }
+
+    public void addFilterBundleVersionIds(List<Integer> filterBundleVersionIds) {
+        this.filterBundleVersionIds = filterBundleVersionIds;
     }
 
     public void addFilterBundleTypeId(Integer filterBundleTypeId) {
@@ -77,6 +100,17 @@ public class BundleCriteria extends TaggedCriteria {
 
     public void addFilterDescription(String filterDescription) {
         this.filterDescription = filterDescription;
+    }
+
+    /** Convenience routine calls addFilterDestinationIds */
+    public void addFilterDestinationId(Integer filterDestinationId) {
+        List<Integer> ids = new ArrayList<Integer>(1);
+        ids.add(filterDestinationId);
+        this.addFilterDestinationIds(ids);
+    }
+
+    public void addFilterDestinationIds(List<Integer> filterDestinationIds) {
+        this.filterDestinationIds = filterDestinationIds;
     }
 
     public void addFilterName(String filterName) {
@@ -106,7 +140,6 @@ public class BundleCriteria extends TaggedCriteria {
     public void fetchRepo(boolean fetchRepo) {
         this.fetchRepo = fetchRepo;
     }
-
 
     public void addSortName(PageOrdering sortName) {
         addSortField("name");

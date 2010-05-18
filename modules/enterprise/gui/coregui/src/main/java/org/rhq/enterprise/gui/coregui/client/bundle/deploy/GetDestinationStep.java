@@ -18,10 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
-import java.util.HashSet;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
@@ -34,14 +31,13 @@ import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDestination;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.PlatformResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SinglePlatformResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.AbstractSelector;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 public class GetDestinationStep implements WizardStep {
 
@@ -93,7 +89,7 @@ public class GetDestinationStep implements WizardStep {
             });
 
             final TextItem deployDirTextItem = new TextItem("deployDir",
-                    "Root Deployment Directory (on destination platforms)");
+                "Root Deployment Directory (on destination platforms)");
             deployDirTextItem.setRequired(true);
             deployDirTextItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -104,7 +100,6 @@ public class GetDestinationStep implements WizardStep {
                     dest.setDeployDir(value.toString());
                 }
             });
-
 
             this.selector = new SinglePlatformResourceGroupSelector("group", "Resource Group");
             this.selector.setRequired(true);
@@ -117,7 +112,6 @@ public class GetDestinationStep implements WizardStep {
             ci1.setShowTitle(false);
             ci1.setCanvas(valForm);
             ci1.setDisabled(true);
-
 
             this.form.addMember(this.valForm);
         }
@@ -134,17 +128,22 @@ public class GetDestinationStep implements WizardStep {
         int selectedGroup = (Integer) this.valForm.getValue("group");
 
         bundleServer.createBundleDestination(wizard.getBundleId(), this.dest.getName(), this.dest.getDescription(),
-                this.dest.getDeployDir(), selectedGroup, //
-                new AsyncCallback<BundleDestination>() {
-                    public void onSuccess(BundleDestination result) {
-                        wizard.setBundleDestination(result);
-                    }
+            this.dest.getDeployDir(), selectedGroup, //
+            new AsyncCallback<BundleDestination>() {
+                public void onSuccess(BundleDestination result) {
+                    wizard.setBundleDestination(result);
+                    wizard.setNewDestination(true);
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Created destination [" + result.getName() + "] description ["
+                            + result.getDescription() + "]", Severity.Info));
+                }
 
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to create destination: " + caught.getMessage(),
-                                caught);
-                    }
-                });
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to create destination: " + caught.getMessage(),
+                        caught);
+                    wizard.getView().decrementStep();
+                }
+            });
 
         return true;
     }

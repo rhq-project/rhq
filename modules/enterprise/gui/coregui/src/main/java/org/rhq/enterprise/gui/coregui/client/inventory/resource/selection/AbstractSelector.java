@@ -31,6 +31,8 @@ import com.smartgwt.client.widgets.ImgProperties;
 import com.smartgwt.client.widgets.TransferImgButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.events.KeyPressEvent;
 import com.smartgwt.client.widgets.events.KeyPressHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -44,7 +46,6 @@ import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.layout.VStack;
 
@@ -76,7 +77,6 @@ public abstract class AbstractSelector<T> extends VLayout {
         initialSelection = assignedRecords;
     }
 
-
     public HashSet<Integer> getSelection() {
         return selection;
     }
@@ -91,15 +91,12 @@ public abstract class AbstractSelector<T> extends VLayout {
     protected void onDraw() {
         super.onDraw();
 
-
         final DynamicForm availableFilterForm = getAvailableFilterForm();
 
         addMember(availableFilterForm);
 
-
         HLayout hlayout = new HLayout();
         hlayout.setAlign(VerticalAlignment.BOTTOM);
-
 
         // LEFT SIDE
         availableGrid = new ListGrid();
@@ -134,7 +131,6 @@ public abstract class AbstractSelector<T> extends VLayout {
             }
         });
 
-
         // CENTER BUTTONS
         VStack moveButtonStack = new VStack(6);
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
@@ -154,7 +150,6 @@ public abstract class AbstractSelector<T> extends VLayout {
         moveButtonStack.addMember(removeAllButton);
 
         hlayout.addMember(moveButtonStack);
-
 
         // RIGHT SIDE
 
@@ -201,6 +196,22 @@ public abstract class AbstractSelector<T> extends VLayout {
             }
         });
 
+        availableGrid.addDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
+                assignedGrid.transferSelectedData(availableGrid);
+                select(assignedGrid.getSelection());
+                updateButtons();
+            }
+        });
+
+        assignedGrid.addDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
+                deselect(assignedGrid.getSelection());
+                assignedGrid.removeSelectedData();
+                updateButtons();
+            }
+        });
+
         availableGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 updateButtons();
@@ -236,7 +247,6 @@ public abstract class AbstractSelector<T> extends VLayout {
         }
 
         addMember(hlayout);
-
 
     }
 

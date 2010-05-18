@@ -21,9 +21,17 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleDestination;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
@@ -32,9 +40,9 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         this.setInitialDeployment(true);
 
         List<WizardStep> steps = init();
-        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new SelectBundleStep(this));
         steps.add(new GetDestinationStep(this));
+        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new SelectBundleVersionStep(this));
         steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
@@ -46,8 +54,8 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         this.setBundleId(bundleId);
 
         List<WizardStep> steps = init();
-        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new GetDestinationStep(this));
+        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new SelectBundleVersionStep(this));
         steps.add(new GetDeploymentConfigStep(this));
         steps.add(new DeployStep(this));
@@ -80,11 +88,73 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
     }
 
     public void cancel() {
-        BundleDeployment bd = getNewDeployment();
-        if (bd != null && isInitialDeployment()) {
-            // the user must have created it already after verification step, delete it
-            // TODO
+        // delete a newly created deployment but only if it's status is failure and it has
+        // no deployments.  This should be rare, or maybe impossible, but in an odd case that
+        // the deployment fails and they user wants to Cancel as opposed to Finish, let's
+        // clean up as best as possible.
+        if ((null != getNewDeployment()) && (0 < getNewDeployment().getId())) {
+            BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+            BundleDeploymentCriteria c = new BundleDeploymentCriteria();
+            c.addFilterId(getNewDeployment().getId());
+            c.fetchResourceDeployments(true);
+            bundleServer.findBundleDeploymentsByCriteria(c, //
+                new AsyncCallback<PageList<BundleDeployment>>() {
+                    public void onSuccess(PageList<BundleDeployment> newDeploymentList) {
+                        if (!newDeploymentList.isEmpty()) {
+                            BundleDeployment newDeployment = newDeploymentList.get(0);
+                            boolean isFailedToLaunch = BundleDeploymentStatus.FAILURE.equals(newDeployment.getStatus())
+                                || BundleDeploymentStatus.PENDING.equals(newDeployment.getStatus());
+                            boolean hasNoResourceDeployments = ((null == newDeployment.getResourceDeployments()) || newDeployment
+                                .getResourceDeployments().isEmpty());
+
+                            // go ahead and delete it if it hasn't really done anything but get created.
+                            // otherwise, let folks inspect via the ui and take further action.
+                            // if the deployment can't be deleted then don't try to delete the destination,
+                            // it's now in use by the deployment
+                            if (isFailedToLaunch && hasNoResourceDeployments) {
+                                BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+                                bundleServer.deleteBundleDeployment(newDeployment.getId(), //
+                                    new AsyncCallback<Void>() {
+                                        public void onSuccess(Void voidReturn) {
+                                            deleteNewDestination();
+                                        }
+
+                                        public void onFailure(Throwable caught) {
+                                            CoreGUI.getErrorHandler().handleError(
+                                                "Failed to delete new deployment on Cancel: " + caught.getMessage(),
+                                                caught);
+                                        }
+                                    });
+                            }
+                        }
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        // should not really get here
+                        CoreGUI.getErrorHandler().handleError(
+                            "Failed to delete new deployment on Cancel: " + caught.getMessage(), caught);
+                        deleteNewDestination();
+                    }
+                });
+        } else {
+            deleteNewDestination();
         }
     }
 
+    private void deleteNewDestination() {
+        if (this.isNewDestination() && (null != this.getBundleDestination())) {
+            BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+
+            bundleServer.deleteBundleDestination(this.getBundleDestination().getId(), //
+                new AsyncCallback<Void>() {
+                    public void onSuccess(Void voidReturn) {
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            "Failed to delete new destination on Cancel: " + caught.getMessage(), caught);
+                    }
+                });
+        }
+    }
 }

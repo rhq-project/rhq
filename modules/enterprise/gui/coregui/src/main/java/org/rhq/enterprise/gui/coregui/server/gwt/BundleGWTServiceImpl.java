@@ -113,6 +113,22 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         }
     }
 
+    public void deleteBundleDeployment(int bundleDeploymentId) throws Exception {
+        try {
+            bundleManager.deleteBundleDeployment(getSessionSubject(), bundleDeploymentId);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public void deleteBundleDestination(int bundleDestinationId) throws Exception {
+        try {
+            bundleManager.deleteBundleDestination(getSessionSubject(), bundleDestinationId);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public void deleteBundleVersion(int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
         try {
             bundleManager.deleteBundleVersion(getSessionSubject(), bundleVersionId, deleteBundleIfEmpty);

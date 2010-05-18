@@ -80,8 +80,8 @@
 
    <!--  !!! -->
    <!--  These profile groupings need to also be mirrored in server/ear/pom.xml -->
-   <!--  !!! -->   
-      
+   <!--  !!! -->
+
    <modules>
       <!--  core plugins  -->
       <module>platform</module>
@@ -101,7 +101,7 @@
 
         <modules>
            <!--  NOTE: Order is important. -->
-           <module>augeas</module>           
+           <module>augeas</module>
            <module>apache</module>
            <module>tomcat</module>
            <module>jboss-as</module>
@@ -140,7 +140,6 @@
            <module>augeas</module>
            <module>cron</module>
            <module>script</module>
-           <module>script2</module>
            <module>grub</module>
            <!-- not behaving       <module>hardware</module> -->
            <module>hosts</module>
@@ -151,9 +150,32 @@
            <module>postfix</module>
            <module>aliases</module>
            <module>sshd</module>
-           <module>virt</module>
-           <module>kickstart</module>
         </modules>
+    </profile>
+
+    <profile>
+        <id>jdk6-only-plugins</id>
+        <activation>
+            <jdk>1.6</jdk>
+        </activation>
+        <modules>
+            <module>script2</module>
+        </modules>
+    </profile>
+
+    <profile>
+        <id>jdk6-linux-plugins</id>
+        <activation>
+            <jdk>1.6</jdk>
+            <property>
+               <name>java.home</name>
+            </property>
+        </activation>
+        <modules>
+            <module>virt</module>
+            <module>kickstart</module>
+        </modules>
+
     </profile>
 
     <profile>

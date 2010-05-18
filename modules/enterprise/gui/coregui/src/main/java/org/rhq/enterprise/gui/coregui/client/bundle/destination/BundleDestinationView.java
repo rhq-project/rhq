@@ -160,11 +160,12 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
             }
         });
 
+        ListGridField version = new ListGridField("version", "Version");
         ListGridField description = new ListGridField("description", "Description");
         ListGridField installDate = new ListGridField("installDate", "Install Date");
         ListGridField status = new ListGridField("status", "Status");
 
-        table.getListGrid().setFields(name, description, installDate, status);
+        table.getListGrid().setFields(name, version, description, installDate, status);
 
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
         for (BundleDeployment rd : destination.getDeployments()) {

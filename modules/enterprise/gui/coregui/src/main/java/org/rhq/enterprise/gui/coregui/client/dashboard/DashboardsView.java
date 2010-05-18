@@ -103,12 +103,12 @@ public class DashboardsView extends VLayout {
 
         StoredPortlet graph = new StoredPortlet("ghinkle (MAC OS X) CPU", GraphPortlet.KEY, 250);
         graph.setProperty("resourceId","10001");
-        graph.setProperty("definitionId","10139");
+        graph.setProperty("definitionId","10100");
         col1.add(graph);
 
         StoredPortlet graphTwo = new StoredPortlet("JBoss AS Txn / Min", GraphPortlet.KEY, 250);
         graphTwo.setProperty("resourceId","10003");
-        graphTwo.setProperty("definitionId","10971");
+        graphTwo.setProperty("definitionId","10916");
         col1.add(graphTwo);
 
 

@@ -33,6 +33,7 @@ import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.compsite.TagReportComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
@@ -62,6 +63,8 @@ public class TagCloudView extends VLayout {
 
 
     private void drawTags(PageList<TagReportComposite> tags) {
+
+        addMember(new HeaderLabel("Tag Cloud"));
 
         long max = 0;
         long total = 0;

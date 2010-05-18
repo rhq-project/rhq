@@ -67,7 +67,7 @@ public class BundleView extends VLayout implements BookmarkableView {
         super();
         setWidth100();
         setHeight100();
-        setPadding(10);
+//        setPadding(10);
         setOverflow(Overflow.AUTO);
     }
 
@@ -82,7 +82,7 @@ public class BundleView extends VLayout implements BookmarkableView {
 
         this.bundle = bundle;
 
-        headerLabel = new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/Bundle_24.png") + "\"/> " + bundle.getName());
+        headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
 
 
         TabSet tabs = new TabSet();
@@ -200,7 +200,7 @@ public class BundleView extends VLayout implements BookmarkableView {
                 });
             }
         });
-        tagEditor.setAlwaysEdit(true);
+//        tagEditor.setAlwaysEdit(true);
         tagEditor.setVertical(true);
         layout.addMember(tagEditor);
 

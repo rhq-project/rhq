@@ -64,6 +64,18 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
 
         BundleCriteria criteria = new BundleCriteria();
         criteria.setPageControl(getPageControl(request));
+        if (request.getCriteria().getValues().get("tagNamespace") != null) {
+            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
+        }
+
+        if (request.getCriteria().getValues().get("tagSemantic") != null) {
+            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
+        }
+
+        if (request.getCriteria().getValues().get("tagName") != null) {
+            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
+        }
+
 
         bundleService.findBundlesWithLatestVersionCompositesByCriteria(criteria,
             new AsyncCallback<PageList<BundleWithLatestVersionComposite>>() {

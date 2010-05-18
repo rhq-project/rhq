@@ -114,7 +114,8 @@ public class TagEditorView extends Layout {
         }
 
         Layout layout = vertical ? new VLayout() : new HLayout();
-        layout.setMembersMargin(8);
+        if (vertical)
+            layout.setMembersMargin(8);
 
         HTMLFlow title = new HTMLFlow("<b>Tags:</b>");
         title.setAutoWidth();
@@ -122,6 +123,7 @@ public class TagEditorView extends Layout {
 
         for (final Tag tag : tags) {
             HLayout tagLayout = new HLayout();
+            tagLayout.setHeight(18);
             //tagLayout.set
 
             HTMLFlow tagString = new HTMLFlow(tag.toString());

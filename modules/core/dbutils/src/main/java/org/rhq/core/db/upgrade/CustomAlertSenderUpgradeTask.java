@@ -28,22 +28,22 @@ import org.rhq.core.db.DatabaseType;
  * The introduction of custom alert senders brought with it the denormalization of the AlertNotification schema.
  * Instead of the AlertNotification entity storing the notification-related data itself (through referential integrity)
  * it has been subsumed inside of configuration objects, which are then associated back to the entity.
- * 
+ *
  * Each custom alert sender has full control over the structure within that configuration object.  This task represents
- * the work necessary to translate the first-class notification data (previously stored in the rhq_alert_notification 
- * table itself) into appropriate configuration objects to be used by the custom senders that will be shipped with the 
+ * the work necessary to translate the first-class notification data (previously stored in the rhq_alert_notification
+ * table itself) into appropriate configuration objects to be used by the custom senders that will be shipped with the
  * product by default.
- * 
+ *
  * In particular, this task handles the upgrade tasks for alert notifications setup against the following types of data:
- * 
+ *
  * <ul>
  *   <li>RHQ Subjects</li>
  *   <li>RHQ Roles</li>
  *   <li>Direct Email Addresses</li>
  *   <li>SNMP Trap Receivers</li>
  *   <li>Resource Operations</li>
- * </ul> 
- * 
+ * </ul>
+ *
  * @author Joseph Marques
  */
 public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
@@ -53,7 +53,6 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
 
     private final long NOW = System.currentTimeMillis();
 
-    @Override
     public void execute(DatabaseType databaseType, Connection connection) throws SQLException {
         this.databaseType = databaseType;
         this.connection = connection;

@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@ import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
+import org.rhq.plugins.jbossas5.helper.JBossProductType;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 import org.jboss.deployers.spi.management.ManagementView;
@@ -45,13 +46,10 @@ import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
 
 /**
- * A helper class for discovering an in-process JBossAS server.
+ * A helper class for discovering an in-process JBoss app server.
  */
 public class InProcessJBossASDiscovery {
     private final Log log = LogFactory.getLog(this.getClass());
-
-    private static final String DEFAULT_RESOURCE_DESCRIPTION_AS = "JBoss Application Server (AS)";
-    private static final String DEFAULT_RESOURCE_DESCRIPTION_EAP = "JBoss Enterprise Application Platform (EAP)";
 
     private static final String JAVA_HOME_ENV_VAR = "JAVA_HOME";
 
@@ -70,7 +68,7 @@ public class InProcessJBossASDiscovery {
         try {
             connection = connectionProvider.connect();
         } catch (Exception e) {
-            // This most likely just means we're not embedded inside a JBoss AS 5.x instance.
+            // This most likely just means we're not embedded inside a JBoss 5.x or 6.x app server instance.
             log.debug("Unable to connect to in-process ProfileService.", e);
             return null;
         }
@@ -95,12 +93,13 @@ public class InProcessJBossASDiscovery {
         } catch (IOException e) {
             throw new InvalidPluginConfigurationException(e);
         }
-        String resourceName = "JBoss ";
-        resourceName += installInfo.isEap() ? "EAP " : "AS ";
-        resourceName += installInfo.getMajorVersion();
+
+        JBossProductType productType = installInfo.getProductType();
+        String resourceName = productType.NAME;
+        resourceName += " " + installInfo.getMajorVersion();
         resourceName += " (" + serverName + ")";
 
-        String description = installInfo.isEap() ? DEFAULT_RESOURCE_DESCRIPTION_EAP : DEFAULT_RESOURCE_DESCRIPTION_AS;
+        String description = productType.DESCRIPTION;
 
         String version = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent,
             "specificationVersion");

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.bundle.ant.task;
+package org.rhq.bundle.ant.type;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -35,18 +35,14 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
  *
  * @author Ian Springer
  */
-public class InputPropertyTask extends AbstractBundleTask {
+public class InputPropertyType extends AbstractBundleType {
     private String name;
     private String description;
     private boolean required = true;
     private String defaultValue;
     private String type = PropertySimpleType.STRING.xmlName();
 
-    @Override
-    public void maybeConfigure() throws BuildException {
-        // The below call will init the attribute fields.
-        super.maybeConfigure();
-
+    public void init() {
         validateAttributes();
 
         ConfigurationDefinition configDef = getProject().getConfigurationDefinition();
@@ -56,7 +52,6 @@ public class InputPropertyTask extends AbstractBundleTask {
         configDef.put(propDef);
     }
     
-    @Override
     public void execute() throws BuildException {
         String value = getProject().getProperty(this.name);
         if (value == null) {

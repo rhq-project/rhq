@@ -156,7 +156,7 @@
     <profile>
         <id>jdk6-only-plugins</id>
         <activation>
-            <jdk>1.6</jdk>
+            <jdk>[1.6,)</jdk>
         </activation>
         <modules>
             <module>script2</module>
@@ -166,7 +166,7 @@
     <profile>
         <id>jdk6-linux-plugins</id>
         <activation>
-            <jdk>1.6</jdk>
+            <jdk>[1.6,)</jdk>
             <property>
                <name>java.home</name>
             </property>

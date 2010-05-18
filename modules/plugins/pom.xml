@@ -167,13 +167,16 @@
         <id>jdk6-linux-plugins</id>
         <activation>
             <jdk>[1.6,)</jdk>
+<!--
             <property>
                <name>java.home</name>
             </property>
+-->
         </activation>
         <modules>
             <module>virt</module>
             <module>kickstart</module>
+            <module>byteman</module>
         </modules>
 
     </profile>
@@ -187,7 +190,6 @@
          </activation>
 
         <modules>
-           <module>byteman</module>
            <module>iis</module>
            <module>database</module>
            <module>postgres</module>

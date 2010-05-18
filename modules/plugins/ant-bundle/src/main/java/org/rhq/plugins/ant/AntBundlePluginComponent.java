@@ -105,8 +105,10 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 StreamUtil.copy(in, out);
 
                 // Get the bundle's configuration values and the global system facts and
-                // add them as Ant properties so the ant script can get their values.
+                // add them as Ant properties so the Ant script can get their values.
                 Properties antProps = createAntProperties(bundleDeployment);
+                // TODO: Eventually the phase to be executed should be passed in by the PC when it calls us.
+                antProps.setProperty(DeployPropertyNames.DEPLOY_PHASE, "INSTALL");
 
                 List<BuildListener> buildListeners = new ArrayList();
                 LoggerAntBuildListener logger = new LoggerAntBuildListener(null, logFileOutput, Project.MSG_DEBUG);
@@ -159,6 +161,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
         int deploymentId = bundleDeployment.getId();
         antProps.setProperty(DeployPropertyNames.DEPLOY_ID, Integer.toString(deploymentId));
+        antProps.setProperty(DeployPropertyNames.DEPLOY_NAME, bundleDeployment.getName());
 
         Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
         for (Map.Entry<String, String> fact : sysFacts.entrySet()) {

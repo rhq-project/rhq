@@ -227,6 +227,8 @@ public class SimpleDeployerRawRelativeFileTest {
         assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.getRestoredFiles().isEmpty() : this.diff;
+        assert !this.diff.wasCleaned() : this.diff;
         assert this.diff.getErrors().isEmpty() : this.diff;
 
         if (dryRun) {
@@ -802,7 +804,7 @@ public class SimpleDeployerRawRelativeFileTest {
         deployer = new Deployer(dd);
         this.diff = new DeployDifferences();
         FileHashcodeMap restoreFileHashcodeMap;
-        restoreFileHashcodeMap = deployer.redeployAndRestoreBackupFiles(this.diff, dryRun);
+        restoreFileHashcodeMap = deployer.redeployAndRestoreBackupFiles(this.diff, false, dryRun);
 
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;

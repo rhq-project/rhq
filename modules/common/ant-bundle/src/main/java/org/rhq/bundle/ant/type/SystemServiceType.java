@@ -15,10 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.bundle.ant.task;
+package org.rhq.bundle.ant.type;
 
 import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Chmod;
 import org.apache.tools.ant.taskdefs.Copy;
 import org.apache.tools.ant.taskdefs.optional.unix.Symlink;
@@ -33,7 +32,7 @@ import java.util.TreeSet;
  *
  * @author Ian Springer
  */
-public class InstallSystemServiceTask extends Task {
+public class SystemServiceType extends AbstractBundleType {
     private static final String OS_NAME = System.getProperty("os.name");
     private static final File REDHAT_RELEASE_FILE = new File("/etc/redhat-release");
     private static final Set<Character> REDHAT_RUN_LEVELS = new HashSet<Character>();
@@ -71,10 +70,9 @@ public class InstallSystemServiceTask extends Task {
     private Set<Character> startLevelChars;
     private Set<Character> stopLevelChars;
 
-    @Override
-    public void execute() throws BuildException {
+    public void install() {
         if (!OS_NAME.equals("Linux") || !REDHAT_RELEASE_FILE.exists() ) {
-            throw new BuildException("This task can only be run on Red Hat Linux systems.");
+            throw new BuildException("The system-service element is only supported on Red Hat Linux systems.");
         }
         validateAttributes();
 
@@ -242,8 +240,15 @@ public class InstallSystemServiceTask extends Task {
             throw new BuildException("The 'startPriority' attribute must be >=0 and <= 99.");
         }
 
+        if (!this.root.exists()) {
+            this.root.mkdirs();
+            if (!this.root.exists()) {
+                throw new BuildException("Failed to create root directory " + this.root
+                        + " as specified by 'root' attribute.");
+            }
+        }
         if (!this.root.isDirectory()) {
-            throw new BuildException("The 'root' attribute must be set to the path of an existing directory.");
+            throw new BuildException("The 'root' attribute must be set to the path of a directory.");
         }
         if (!this.root.equals(DEFAULT_ROOT)) {
             getProject().log("Using root " + this.root + ".");

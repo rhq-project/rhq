@@ -125,7 +125,7 @@
 '>
 
 <!ENTITY ServerName '
-    <c:simple-property name="ServerName" required="false">
+    <c:simple-property name="ServerName" required="false" readOnly="true">
         <c:description>
             Sets the request scheme, hostname and port that the server uses to identify itself. This is used when creating redirection URLs.
             If no ServerName is specified, then the server attempts to deduce the hostname by performing a reverse lookup on the IP address. If no port is specified in the ServerName, then the server will use the port from the incoming request. For optimal reliability and predictability, you should specify an explicit hostname and port using the ServerName directive.

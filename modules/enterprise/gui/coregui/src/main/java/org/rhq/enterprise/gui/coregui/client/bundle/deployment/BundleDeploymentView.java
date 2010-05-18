@@ -131,10 +131,10 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         addMember(form);
 
         Table deployments = createDeploymentsTable();
-        deployments.setHeight("*");
+        deployments.setHeight("30%");
         deployments.setShowResizeBar(true);
         deployments.setResizeBarTarget("next");
-        addMember(createDeploymentsTable());
+        addMember(deployments);
 
         detail = new VLayout();
         detail.setAutoHeight();

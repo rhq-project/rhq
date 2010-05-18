@@ -114,7 +114,7 @@ public class TagEditorView extends Layout {
         }
 
         Layout layout = vertical ? new VLayout() : new HLayout();
-        if (vertical)
+        if (!vertical)
             layout.setMembersMargin(8);
 
         HTMLFlow title = new HTMLFlow("<b>Tags:</b>");

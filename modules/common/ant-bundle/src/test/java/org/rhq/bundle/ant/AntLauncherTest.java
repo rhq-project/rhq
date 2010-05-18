@@ -74,7 +74,7 @@ public class AntLauncherTest {
         Properties inputProps = createInputProperties("/test-bundle-v1-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v1.xml"), "deploy", inputProps,
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v1.xml"), null, inputProps,
                 buildListeners);
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
@@ -91,6 +91,9 @@ public class AntLauncherTest {
         Configuration config = project.getConfiguration();
         assert config.getProperties().size() == 1 : config.getProperties();
         assert "10000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
+        
+        String preinstallTargetExecuted = (String) project.getProperties().get("preinstallTargetExecuted");
+        assert preinstallTargetExecuted.equals("true");
     }
 
     private List<BuildListener> createBuildListeners() {
@@ -111,7 +114,7 @@ public class AntLauncherTest {
         Properties inputProps = createInputProperties("/test-bundle-v2-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v2.xml"), "deploy", inputProps,
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v2.xml"), null, inputProps,
                 buildListeners);
         /*Map<String, String> bundleFiles = project.getBundleFiles();
         assert bundleFiles != null;
@@ -134,6 +137,8 @@ public class AntLauncherTest {
         Properties inputProps = new Properties();
         inputProps.setProperty(DeployPropertyNames.DEPLOY_DIR, DEPLOY_DIR.getPath());
         inputProps.setProperty(DeployPropertyNames.DEPLOY_ID, "100");
+        inputProps.setProperty(DeployPropertyNames.DEPLOY_NAME, "appserver");
+        inputProps.setProperty(DeployPropertyNames.DEPLOY_PHASE, DeploymentPhase.INSTALL.name());
         InputStream inputStream = this.getClass().getResourceAsStream(resourcePath);
         try {
             inputProps.load(inputStream);

@@ -15,7 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.bundle.ant.task;
+package org.rhq.bundle.ant.type;
+
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Target;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.template.TemplateEngine;
+import org.rhq.core.util.updater.DeployDifferences;
+import org.rhq.core.util.updater.Deployer;
+import org.rhq.core.util.updater.DeploymentData;
+import org.rhq.core.util.updater.DeploymentProperties;
 
 import java.io.File;
 import java.util.HashMap;
@@ -26,43 +38,30 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.apache.tools.ant.BuildException;
-
-import org.apache.tools.ant.Project;
-import org.rhq.bundle.ant.type.ArchiveType;
-import org.rhq.bundle.ant.type.FileSet;
-import org.rhq.bundle.ant.type.FileType;
-import org.rhq.bundle.ant.type.IgnoreType;
-import org.rhq.bundle.ant.type.ReplaceType;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.core.template.TemplateEngine;
-import org.rhq.core.util.updater.DeployDifferences;
-import org.rhq.core.util.updater.Deployer;
-import org.rhq.core.util.updater.DeploymentData;
-import org.rhq.core.util.updater.DeploymentProperties;
-
 /**
  * An Ant task for deploying a bundle or previewing the deployment.
  *
  * @author Ian Springer
  */
-public class DeployTask extends AbstractBundleTask {
+public class DeploymentType extends AbstractBundleType {
+    private String name;
     private Map<File, File> files = new LinkedHashMap<File, File>();
     private Set<File> archives = new LinkedHashSet<File>();
+    private SystemServiceType systemService;
     private Pattern ignorePattern;
     private Pattern replacePattern;
     private boolean preview;
+    private String preinstallTarget;
 
-    @Override
-    public void maybeConfigure() throws BuildException {
-        // The below call will init the attribute fields.
-        super.maybeConfigure();
-    }
+    public void install() throws BuildException {
+        if (this.preinstallTarget != null) {
+            Target target = (Target) getProject().getTargets().get(this.preinstallTarget);
+            if (target == null) {
+                throw new BuildException("Specified preinstall target (" + this.preinstallTarget + ") does not exist.");
+            }
+            target.performTasks();
+        }
 
-    @Override
-    public void execute() throws BuildException {
         int deploymentId = getProject().getDeploymentId();
         DeploymentProperties deploymentProps = new DeploymentProperties(deploymentId, getProject().getBundleName(),
             getProject().getBundleVersion(), getProject().getBundleDescription());
@@ -96,7 +95,35 @@ public class DeployTask extends AbstractBundleTask {
                 + getProject().getBundleVersion() + ": " + e, e);
         }
 
+        if (this.systemService != null) {
+            this.systemService.install();
+        }
+
         return;
+    }
+
+    public void start() throws BuildException {
+
+    }
+
+    public void stop() throws BuildException {
+
+    }
+
+    public void upgrade() throws BuildException {
+
+    }
+
+    public void uninstall() throws BuildException {
+        // TODO
+    }
+        
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Map<File, File> getFiles() {
@@ -113,6 +140,21 @@ public class DeployTask extends AbstractBundleTask {
 
     public void setPreview(boolean preview) {
         this.preview = preview;
+    }
+
+    public String getPreinstallTarget() {
+        return preinstallTarget;
+    }
+
+    public void setPreinstallTarget(String preinstallTarget) {
+        this.preinstallTarget = preinstallTarget;
+    }
+
+    public void addConfigured(SystemServiceType systemService) {
+        if (this.systemService != null) {
+            throw new IllegalStateException("A deployment can only have one system-service child element.");
+        }
+        this.systemService = systemService;
     }
 
     public void addConfigured(FileType file) {

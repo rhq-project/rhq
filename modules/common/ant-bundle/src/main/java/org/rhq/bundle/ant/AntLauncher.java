@@ -25,6 +25,7 @@ package org.rhq.bundle.ant;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +46,7 @@ import org.apache.tools.ant.helper.AntXMLContext;
 import org.apache.tools.ant.helper.ProjectHelper2;
 
 import org.rhq.bundle.ant.task.BundleTask;
-import org.rhq.bundle.ant.task.DeployTask;
-import org.rhq.bundle.ant.task.InputPropertyTask;
+import org.rhq.bundle.ant.type.DeploymentType;
 
 /**
  * This object enables you to invoke an Ant script within the running VM. You can fully run the script
@@ -151,9 +151,8 @@ public class AntLauncher {
         project.addReference(REFID_CONTEXT, context);
         project.addReference(ProjectHelper2.REFID_TARGETS, context.getTargets());
 
-        ProjectHelper2 helper = new ProjectHelper2();
         try {
-            helper.parse(project, buildFile);
+            ProjectHelper.configureProject(project, buildFile);
         } catch (BuildException e) {
             throw new InvalidBuildFileException("Failed to parse bundle Ant build file.", e);
         }
@@ -211,25 +210,11 @@ public class AntLauncher {
         for (Object targetObj : targets) {
             Target target = (Target) targetObj;
             Task[] tasks = target.getTasks();
-            for (Task task : tasks) {
-                // NOTE: For rhq:inputProperty tasks, the below call will add propDefs to the project configDef.
+            for (Task task : tasks) {                
                 if (task.getTaskName().equals(BUNDLE_TASK_NAME)) {
                     abortIfTaskWithinTarget(target, task);
                     bundleTaskCount++;
                     unconfiguredBundleTask = task;
-                } else if (task.getTaskName().equals(INPUT_PROPERTY_TASK_NAME)) {
-                    abortIfTaskWithinTarget(target, task);
-                    InputPropertyTask inputPropertyTask = (InputPropertyTask) preconfigureTask(task);
-                } else if (task.getTaskName().equals(DEPLOY_TASK_NAME)) {
-                    DeployTask deployTask = (DeployTask) preconfigureTask(task);
-                    Map<File, File> files = deployTask.getFiles();
-                    for (File file : files.values()) {
-                        project.getBundleFileNames().add(file.getName());
-                    }
-                    Set<File> archives = deployTask.getArchives();
-                    for (File archive : archives) {
-                        project.getBundleFileNames().add(archive.getName());
-                    }
                 }
             }
         }
@@ -243,6 +228,19 @@ public class AntLauncher {
         }
 
         BundleTask bundleTask = (BundleTask) preconfigureTask(unconfiguredBundleTask);
+        Collection<DeploymentType> deployments = bundleTask.getDeployments().values();
+        if (deployments.isEmpty()) {
+            throw new InvalidBuildFileException("The bundle task must contain at least one deployment child element.");
+        }
+        DeploymentType deployment = deployments.iterator().next();
+        Map<File, File> files = deployment.getFiles();
+        for (File file : files.values()) {
+            project.getBundleFileNames().add(file.getName());
+        }
+        Set<File> archives = deployment.getArchives();
+        for (File archive : archives) {
+            project.getBundleFileNames().add(archive.getName());
+        }
     }
 
     private void abortIfTaskWithinTarget(Target target, Task task) throws InvalidBuildFileException {

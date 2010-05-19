@@ -46,6 +46,31 @@ public class Disambiguator {
 
     public static final int MAXIMUM_DISAMBIGUATED_TREE_DEPTH = 7;
 
+    private static final String PARENT_INFO_QUERY;
+    
+    static {
+        StringBuilder selectBuilder = new StringBuilder(
+            "SELECT r0.id, r0.name, r0.resourceType.id, r0.resourceType.name, r0.resourceType.plugin, r0.resourceType.singleton");
+        StringBuilder fromBuilder = new StringBuilder("FROM Resource r0");
+
+        for (int i = 1; i <= MAXIMUM_DISAMBIGUATED_TREE_DEPTH; ++i) {
+            int pi = i - 1;
+            selectBuilder.append(", r").append(i).append(".id");
+            selectBuilder.append(", r").append(i).append(".name");
+            selectBuilder.append(", rt").append(i).append(".id");
+            selectBuilder.append(", rt").append(i).append(".name");
+            selectBuilder.append(", rt").append(i).append(".plugin");
+            selectBuilder.append(", rt").append(i).append(".singleton");
+
+            fromBuilder.append(" left join r").append(pi).append(".parentResource r").append(i);
+            fromBuilder.append(" left join r").append(i).append(".resourceType rt").append(i);
+        }
+
+        fromBuilder.append(" WHERE r0.id IN (:resourceIds)");
+
+        PARENT_INFO_QUERY = selectBuilder.append(" ").append(fromBuilder).toString();
+    }
+    
     private Disambiguator() {
 
     }
@@ -77,14 +102,8 @@ public class Disambiguator {
         EntityManager entityManager) {
 
         if (results.isEmpty()) {
-            return new ResourceNamesDisambiguationResult<T>(new ArrayList<DisambiguationReport<T>>(), false, false,
-                false);
+            return new ResourceNamesDisambiguationResult<T>(new ArrayList<DisambiguationReport<T>>());
         }
-
-        //this is obsolete
-        boolean typeResolutionNeeded = true;
-        boolean pluginResolutionNeeded = true;
-        boolean parentResolutionNeeded = true;
 
         //we can't assume the ordering of the provided results and the disambiguation query results
         //will be the same.
@@ -113,26 +132,7 @@ public class Disambiguator {
         //check that we still have something to disambiguate
         if (reportsByResourceId.size() > 0) {
             //k, now let's construct the JPQL query to get the parents and type infos...
-            StringBuilder selectBuilder = new StringBuilder(
-                "SELECT r0.id, r0.name, r0.resourceType.id, r0.resourceType.name, r0.resourceType.plugin, r0.resourceType.singleton");
-            StringBuilder fromBuilder = new StringBuilder("FROM Resource r0");
-
-            for (int i = 1; i <= MAXIMUM_DISAMBIGUATED_TREE_DEPTH; ++i) {
-                int pi = i - 1;
-                selectBuilder.append(", r").append(i).append(".id");
-                selectBuilder.append(", r").append(i).append(".name");
-                selectBuilder.append(", rt").append(i).append(".id");
-                selectBuilder.append(", rt").append(i).append(".name");
-                selectBuilder.append(", rt").append(i).append(".plugin");
-                selectBuilder.append(", rt").append(i).append(".singleton");
-
-                fromBuilder.append(" left join r").append(pi).append(".parentResource r").append(i);
-                fromBuilder.append(" left join r").append(i).append(".resourceType rt").append(i);
-            }
-
-            fromBuilder.append(" WHERE r0.id IN (:resourceIds)");
-
-            Query parentsQuery = entityManager.createQuery(selectBuilder.append(" ").append(fromBuilder).toString());
+            Query parentsQuery = entityManager.createQuery(PARENT_INFO_QUERY);
 
             parentsQuery.setParameter("resourceIds", reportsByResourceId.keySet());
 
@@ -246,8 +246,7 @@ public class Disambiguator {
             resolution.add(report.getReport());
         }
 
-        return new ResourceNamesDisambiguationResult<T>(resolution, typeResolutionNeeded, parentResolutionNeeded,
-            pluginResolutionNeeded);
+        return new ResourceNamesDisambiguationResult<T>(resolution);
     }
 
     private static <T> void repartitionUnique(ReportPartitions<T> partitions, DisambiguationUpdateStrategy updateStrategy, List<ReportPartitions<T>> ambigousPartitions) {

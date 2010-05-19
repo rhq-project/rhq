@@ -136,16 +136,6 @@ public class DisambiguationReport<T> implements Serializable {
         return parents;
     }
 
-    @Deprecated
-    public String getResourceTypeName() {
-        return resourceType.getName();
-    }
-
-    @Deprecated
-    public String getResourceTypePluginName() {
-        return resourceType.getPlugin();
-    }
-
     /**
      * @return the ResourceType of the resource represented by the {@link #getOriginal()}
      * or null if type disambiguation isn't needed.

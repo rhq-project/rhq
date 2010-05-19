@@ -45,9 +45,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public abstract class ResourceNameDisambiguatingPagedListDataModel<T> extends
     PagedListDataModel<DisambiguationReport<T>> {
 
-    private boolean currentPageNeedsTypeResolution;
-    private boolean currentPageNeedsPluginResolution;
-    private boolean currentPageNeedsParentResolution;
     private boolean alwaysIncludeParents;
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -70,36 +67,8 @@ public abstract class ResourceNameDisambiguatingPagedListDataModel<T> extends
         ResourceNamesDisambiguationResult<T> disambiguation = resourceManager.disambiguate(data, alwaysIncludeParents,
             getResourceIdExtractor());
 
-        currentPageNeedsParentResolution = disambiguation.isParentResolutionNeeded();
-        currentPageNeedsPluginResolution = disambiguation.isPluginResolutionNeeded();
-        currentPageNeedsTypeResolution = disambiguation.isTypeResolutionNeeded();
-
         return new PageList<DisambiguationReport<T>>(disambiguation.getResolution(), data.getTotalSize(), data
             .getPageControl());
-    }
-
-    /**
-     * @return true if the current page contains resources that need parent resolution 
-     * in order to become uniquely named.
-     */
-    public boolean isCurrentPageNeedsParentResolution() {
-        return currentPageNeedsParentResolution;
-    }
-
-    /**
-     * @return true if the current page contains resources of types that have the same name
-     * and thus need to resolve those types using their plugin names.
-     */
-    public boolean isCurrentPageNeedsPluginResolution() {
-        return currentPageNeedsPluginResolution;
-    }
-
-    /**
-     * @return true if the current page contains resources that need type resolution
-     * in order to become uniquely named.
-     */
-    public boolean isCurrentPageNeedsTypeResolution() {
-        return currentPageNeedsTypeResolution;
     }
 
     /**

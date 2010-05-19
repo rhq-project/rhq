@@ -24,6 +24,7 @@
 package org.rhq.enterprise.gui.inventory.resource;
 
 import javax.faces.component.UIComponentBase;
+import javax.faces.context.FacesContext;
 
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.gui.util.FacesComponentUtility;
@@ -77,16 +78,17 @@ public class DisambiguatedResourceNameComponent extends UIComponentBase {
         this.resourceName = resourceName;
     }
 
-    public boolean isNameAsLink() {
+    public Boolean getNameAsLink() {
         if (nameAsLink == null) {
-            Boolean ret = FacesComponentUtility.getExpressionAttribute(this, NAME_AS_LINK_ATTRIBUTE, Boolean.class);
-            return ret == null ? true : ret;
-        } else {
-            return nameAsLink;
+             nameAsLink = FacesComponentUtility.getExpressionAttribute(this, NAME_AS_LINK_ATTRIBUTE, Boolean.class);
+             if (nameAsLink == null) {
+                 nameAsLink = true;
+             }
         }
+        return nameAsLink;
     }
 
-    public void setNameAsLink(boolean nameAsLink) {
+    public void setNameAsLink(Boolean nameAsLink) {
         this.nameAsLink = nameAsLink;
     }
 
@@ -102,4 +104,17 @@ public class DisambiguatedResourceNameComponent extends UIComponentBase {
     public void setResourceId(int resourceId) {
         this.resourceId = resourceId;
     }
+    
+    public Object saveState(FacesContext facesContext) {
+        Object[] state = new Object[2];
+        state[0] = super.saveState(facesContext);
+        state[1] = this.nameAsLink;
+        return state;
+    }
+
+    public void restoreState(FacesContext facesContext, Object stateValues) {
+        Object[] state = (Object[]) stateValues;
+        super.restoreState(facesContext, state[0]);
+        this.nameAsLink = (Boolean) state[1];
+    }    
 }

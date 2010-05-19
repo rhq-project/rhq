@@ -53,7 +53,7 @@ public class DisambiguatedResourceNameRenderer extends Renderer {
         
         DisambiguationReport.Resource resource = new DisambiguationReport.Resource(resourceId, resourceName, resourceType);
         
-        if (nameComponent.isNameAsLink()) {
+        if (nameComponent.getNameAsLink()) {
             DisambiguatedResourceLineageRenderer.encodeUrl(writer, resource);
         } else {
             DisambiguatedResourceLineageRenderer.encodeSimple(writer, resource);

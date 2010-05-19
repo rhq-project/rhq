@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.perspective;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -228,16 +229,18 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         Subject subject;
 
         synchronized (CACHE) {
-            for (Integer sessionId : CACHE.keySet()) {
+            Iterator<Integer> iterator = CACHE.keySet().iterator(); // so we can use iterator.remove and avoid concurrent-mod-exception
+            while (iterator.hasNext()) {
+                Integer sessionId = iterator.next();
                 try {
                     subject = subjectManager.getSubjectBySessionId(sessionId);
                     if (null == subject) {
-                        log.debug("Removing perspective cache entry for session " + sessionId);
-                        CACHE.remove(sessionId);
+                        log.debug("Removing perspective cache entry for session. " + sessionId);
+                        iterator.remove();
                     }
                 } catch (Exception e) {
-                    log.debug("Removing perspective cache entry for session " + sessionId);
-                    CACHE.remove(sessionId);
+                    log.debug("Removing perspective cache entry for session: " + sessionId);
+                    iterator.remove();
                 }
             }
         }

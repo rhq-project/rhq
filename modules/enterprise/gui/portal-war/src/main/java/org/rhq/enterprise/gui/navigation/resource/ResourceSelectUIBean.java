@@ -31,6 +31,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -78,6 +79,6 @@ public class ResourceSelectUIBean {
         result = resourceManager.findResourceComposites(EnterpriseFacesContextUtility.getSubject(), null, null, null,
             null, pref, true, pc);
 
-        return resourceManager.disambiguate(result, false, RESOURCE_ID_EXTRACTOR).getResolution();
+        return resourceManager.disambiguate(result, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
     }
 }

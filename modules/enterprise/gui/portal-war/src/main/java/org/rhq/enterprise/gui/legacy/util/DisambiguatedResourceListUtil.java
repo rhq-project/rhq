@@ -28,6 +28,7 @@ import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 
 /**
  * A utility class to provide page lists of disambiguated resource lists for the 
@@ -42,7 +43,7 @@ public class DisambiguatedResourceListUtil {
     }
     
     public static <T> PageList<DisambiguationReport<T>> disambiguate(ResourceManagerLocal resourceManager, PageList<T> results, IntExtractor<T> resourceIdExtractor) {
-        ResourceNamesDisambiguationResult<T> result = resourceManager.disambiguate(results, true, resourceIdExtractor);
+        ResourceNamesDisambiguationResult<T> result = resourceManager.disambiguate(results, resourceIdExtractor, DefaultDisambiguationUpdateStrategies.getDefault());
         return new PageList<DisambiguationReport<T>>(result.getResolution(), results.getTotalSize(), results.getPageControl());
     }
 }

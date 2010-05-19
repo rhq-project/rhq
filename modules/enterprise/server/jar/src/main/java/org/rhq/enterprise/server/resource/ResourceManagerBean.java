@@ -122,6 +122,7 @@ import org.rhq.enterprise.server.jaxb.adapter.ResourceListAdapter;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DisambiguationPolicy;
+import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
 import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
 import org.rhq.enterprise.server.resource.disambiguation.MutableDisambiguationReport;
 import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
@@ -2103,11 +2104,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return (findChildResources(subject, parentResource, pageControl));
     }
 
-    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwaysIncludeParent,
-        IntExtractor<? super T> extractor) {
-        //TODO the alwaysIncludeParents is obsolete and ignored
-        //DefaultDisambiguationUpdateStrategies strategy = DefaultDisambiguationUpdateStrategies.KEEP_PARENTS_TO_TOPMOST_SERVERS;
-        DefaultDisambiguationUpdateStrategies strategy = DefaultDisambiguationUpdateStrategies.KEEP_ALL_PARENTS;
-        return Disambiguator.disambiguate(results, strategy, extractor, entityManager);
+    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> extractor,
+        DisambiguationUpdateStrategy updateStrategy) {
+        return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager);
     }
 }

@@ -27,6 +27,10 @@ import java.util.EnumSet;
 
 /**
  * Defines a strategy for updating a results list with the disambiguation information.
+ * <p>
+ * See {@link DefaultDisambiguationUpdateStrategies} for a couple of implemented strategies.
+ * 
+ * @see DefaultDisambiguationUpdateStrategies
  * 
  * @author Lukas Krejci
  */

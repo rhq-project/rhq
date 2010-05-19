@@ -180,4 +180,8 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
             resource.resourceType.plugin = null;
         }
     }    
+    
+    public static DefaultDisambiguationUpdateStrategies getDefault() {
+        return DefaultDisambiguationUpdateStrategies.KEEP_ALL_PARENTS;
+    }
 }

@@ -29,6 +29,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
+import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -37,7 +39,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * <p> 
  * This class implements the {@link PagedListDataModel#fetchPage(PageControl)} method and defers
  * the actual loading of the data to a new {@link #fetchDataForPage(PageControl)} method. The result
- * of that call is supplied to the {@link ResourceManagerLocal#disambiguate(java.util.List, boolean, IntExtractor)}
+ * of that call is supplied to the {@link ResourceManagerLocal#disambiguate(java.util.List, IntExtractor, DisambiguationUpdateStrategy)}
  * method and the disambiguated results are then returned from the {@link #fetchPage(PageControl)} method.
  * 
  * @author Lukas Krejci
@@ -64,8 +66,8 @@ public abstract class ResourceNameDisambiguatingPagedListDataModel<T> extends
     public PageList<DisambiguationReport<T>> fetchPage(PageControl pc) {
         PageList<T> data = fetchDataForPage(pc);
 
-        ResourceNamesDisambiguationResult<T> disambiguation = resourceManager.disambiguate(data, alwaysIncludeParents,
-            getResourceIdExtractor());
+        ResourceNamesDisambiguationResult<T> disambiguation = resourceManager.disambiguate(data, getResourceIdExtractor(),
+            DefaultDisambiguationUpdateStrategies.getDefault());
 
         return new PageList<DisambiguationReport<T>>(disambiguation.getResolution(), data.getTotalSize(), data
             .getPageControl());

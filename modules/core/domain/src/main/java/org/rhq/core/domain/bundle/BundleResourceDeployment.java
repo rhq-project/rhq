@@ -164,7 +164,7 @@ public class BundleResourceDeployment implements Serializable {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("BundleResourceDeployment: ");
-        str.append(", bdd=[").append(this.bundleDeployment).append("]");
+        str.append("bdd=[").append(this.bundleDeployment).append("]");
         str.append(", resource=[").append(this.resource).append("]");
         return str.toString();
     }

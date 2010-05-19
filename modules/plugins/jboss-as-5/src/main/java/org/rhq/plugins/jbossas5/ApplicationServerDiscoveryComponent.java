@@ -84,14 +84,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private static final String JAVA_HOME_ENV_VAR = "JAVA_HOME";
 
     private static final Map<JBossProductType, ComparableVersion> MINIMUM_PRODUCT_VERSIONS = new HashMap(3);
-    static {
-        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.AS, new ComparableVersion("5.2.0.Beta1"));
-        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EAP, new ComparableVersion("5.0.0.Beta"));
-        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EWP, new ComparableVersion("5.0.0.CR1"));
-        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.SOA, new ComparableVersion("5.0.0.Beta"));
-    }
 
-    private static final String[] CLIENT_JARS = new String[] {
+    private static final List<String> CLIENT_JARS = Arrays.asList(
             // NOTE: The jbossall-client.jar aggregates a whole bunch of other jars from the client dir via its
             // MANIFEST.MF Class-Path.
             "client/jbossall-client.jar",
@@ -100,11 +94,21 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             "common/lib/jboss-security-aspects.jar",
             "lib/jboss-managed.jar",
             "lib/jboss-metatype.jar",
-            "lib/jboss-dependency.jar",
-            // The below jars are required for JBoss AS 6.0 M1, M2, and M3.
-            "lib/jboss-classpool.jar",
-            "lib/jboss-classpool-scoped.jar"
-    };
+            "lib/jboss-dependency.jar"
+    );
+
+    private static final List<String> AS6_CLIENT_JARS = new ArrayList<String>(CLIENT_JARS);
+
+    static {
+        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.AS, new ComparableVersion("5.2.0.Beta1"));
+        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EAP, new ComparableVersion("5.0.0.Beta"));
+        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EWP, new ComparableVersion("5.0.0.CR1"));
+        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.SOA, new ComparableVersion("5.0.0.Beta"));
+
+        // The below jars are required for JBoss AS 6.0 M1, M2, and M3.
+        AS6_CLIENT_JARS.add("lib/jboss-classpool.jar");
+        AS6_CLIENT_JARS.add("lib/jboss-classpool-scoped.jar");
+    }
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -151,7 +155,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
         List<URL> clientJars = new ArrayList<URL>();
 
-        for (String jarFileName : CLIENT_JARS) {
+        for (String jarFileName : getClientJars(pluginConfig)) {
             File clientJar = new File(homeDir, jarFileName);
             if (!clientJar.exists()) {
                 throw new FileNotFoundException("Cannot find [" + clientJar + "] - unable to manage server.");
@@ -163,6 +167,17 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         }
 
         return clientJars;
+    }
+
+    private List<String> getClientJars(Configuration pluginConfig) throws IOException {
+        PropertySimple jbossHomeDir = pluginConfig.getSimple("homeDir");
+        JBossInstallationInfo installationInfo = new JBossInstallationInfo(new File(jbossHomeDir.getStringValue()));
+
+        if (installationInfo.getMajorVersion().equals("6")) {
+            return AS6_CLIENT_JARS;
+        }
+
+        return CLIENT_JARS;
     }
 
     private Set<DiscoveredResourceDetails> discoverExternalJBossAsProcesses(ResourceDiscoveryContext discoveryContext) {

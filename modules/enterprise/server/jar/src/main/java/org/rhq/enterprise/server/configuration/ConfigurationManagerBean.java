@@ -1084,6 +1084,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public void executeResourceConfigurationUpdate(int updateId) {
         ResourceConfigurationUpdate update = getResourceConfigurationUpdate(subjectManager.getOverlord(), updateId);
+        Configuration originalConfig = update.getConfiguration();
+        update.setConfiguration(originalConfig.deepCopy(false));
         executeResourceConfigurationUpdate(update, true);
     }
 

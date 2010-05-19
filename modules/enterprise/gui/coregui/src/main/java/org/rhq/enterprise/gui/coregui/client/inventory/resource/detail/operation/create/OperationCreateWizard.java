@@ -141,7 +141,6 @@ public class OperationCreateWizard implements Wizard {
         view.closeDialog();
     }
 
-    @Override
     public void cancel() {
         // TODO: revert back to original state
     }

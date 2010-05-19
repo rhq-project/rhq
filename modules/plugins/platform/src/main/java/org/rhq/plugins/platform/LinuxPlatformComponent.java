@@ -256,7 +256,7 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
             List<String> pkgs = new ArrayList<String>();
             for (ResourcePackageDetails p : packages) {
                 String pkgInfo = p.getName();
-                if ((p.getVersion() != null) && (!p.getVersion().isEmpty())) {
+                if ((p.getVersion() != null) && (!p.getVersion().equals(""))) {
                     pkgInfo = pkgInfo + "-" + p.getVersion();
                 }
                 log.info("Adding <" + pkgInfo + "> to list of packages to deploy, original package object was: " + p);

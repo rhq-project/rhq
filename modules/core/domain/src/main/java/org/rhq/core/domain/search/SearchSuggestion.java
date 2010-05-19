@@ -76,7 +76,6 @@ public class SearchSuggestion implements Serializable, Comparable<SearchSuggesti
         return endIndex;
     }
 
-    @Override
     public int compareTo(SearchSuggestion other) {
         int kindComparision = (this.kind.ordinal() - other.kind.ordinal());
         if (kindComparision != 0) {

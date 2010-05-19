@@ -39,7 +39,7 @@ import org.rhq.core.util.stream.StreamUtil;
 /**
  * A visitor object that will extract each zip entry it visits, realizing files that
  * need to have their replacement variables replaced.
- * 
+ *
  * @author John Mazzitelli
  */
 public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
@@ -59,7 +59,7 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
      * If you just want this visitor to walk a zip file without realizing any files, pass in
      * a null pattern or pass in a null template engine. This will, in effect,
      * have this visitor extract all file entries as-is.
-     * 
+     *
      * @param rootDir the top level directory where all zip file entries will be extracted to.
      *                In other words, all zip file entries' paths are relative to this directory.
      * @param filesToRealizeRegex pattern of files that are to be realized prior to hashcodes being computed
@@ -97,7 +97,6 @@ public class ExtractorZipFileVisitor implements ZipUtil.ZipEntryVisitor {
         return fileHashcodeMap;
     }
 
-    @Override
     public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
 
         String pathname = entry.getName();

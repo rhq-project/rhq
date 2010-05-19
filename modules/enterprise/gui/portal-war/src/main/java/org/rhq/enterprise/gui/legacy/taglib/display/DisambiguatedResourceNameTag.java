@@ -24,6 +24,7 @@
 package org.rhq.enterprise.gui.legacy.taglib.display;
 
 import java.io.IOException;
+import java.io.Writer;
 
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspTagException;
@@ -40,18 +41,19 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport;
 public class DisambiguatedResourceNameTag extends TagSupport {
 
     private static final long serialVersionUID = 1L;
-    
-    private DisambiguationReport<?> disambiguatedReport;
+
+    private DisambiguationReport<?> disambiguationReport;
     private String resourceName;
     private Integer resourceId;
     private Boolean nameAsLink;
+    private String url;
 
-    public DisambiguationReport<?> getDisambiguatedReport() {
-        return disambiguatedReport;
+    public DisambiguationReport<?> getDisambiguationReport() {
+        return disambiguationReport;
     }
 
-    public void setDisambiguatedReport(DisambiguationReport<?> disambiguatedReport) {
-        this.disambiguatedReport = disambiguatedReport;
+    public void setDisambiguationReport(DisambiguationReport<?> disambiguationReport) {
+        this.disambiguationReport = disambiguationReport;
     }
 
     public String getResourceName() {
@@ -70,6 +72,14 @@ public class DisambiguatedResourceNameTag extends TagSupport {
         this.resourceId = resourceId;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
     public Boolean getNameAsLink() {
         return nameAsLink;
     }
@@ -83,47 +93,83 @@ public class DisambiguatedResourceNameTag extends TagSupport {
         JspWriter writer = pageContext.getOut();
 
         try {
-            if (disambiguatedReport != null) {
+            if (disambiguationReport != null) {
 
-                DisambiguationReport.ResourceType resourceType = disambiguatedReport.getResourceType();
+                DisambiguationReport.ResourceType resourceType = disambiguationReport.getResourceType();
 
                 //default to true
                 boolean renderLink = nameAsLink == null || nameAsLink.booleanValue();
 
-                writeResource(writer, renderLink, resourceId, resourceName, resourceType);
+                String renderedUrl = null;
+                if (renderLink) {
+                    renderedUrl = this.url;
+                    if (renderedUrl == null) {
+                        renderedUrl = getDefaultResourceUrl(resourceId);
+                    }
+                }
+                writeResource(writer, renderedUrl, resourceName, resourceType, true);
             }
-            
+
             return super.doEndTag();
         } catch (IOException e) {
             throw new JspTagException(e);
         }
     }
-    
-    public static void writeResource(JspWriter writer, boolean renderLink, int resourceId, String resourceName, DisambiguationReport.ResourceType resourceType) throws IOException {
+
+    public static void writeResource(Writer writer, String url, String resourceName,
+        DisambiguationReport.ResourceType resourceType, boolean htmlOutput) throws IOException {
         if (!resourceType.isSingleton()) {
-            writer.append(resourceType.getName()).append(" ");
+            if (htmlOutput) {
+                writer.append("<span class=\"disambiguated-resource-type\">");
+            }
             
+            writer.append(resourceType.getName()).append(" ");
+
             if (resourceType.getPlugin() != null) {
-                writer.append("(").append(resourceType.getPlugin())
-                    .append(" plugin) ");
+                if (htmlOutput) {
+                    writer.append("<span class=\"disambiguated-resource-plugin\">");
+                }
+                writer.append("(").append(resourceType.getPlugin()).append(" plugin) ");
+                if (htmlOutput) {
+                    writer.append("</span>");
+                }
+            }
+            
+            if (htmlOutput) {
+                writer.append("</span>");
             }
         }
-        
-        if (renderLink) {
-            writer.append("<a href=\"/rhq/resource/summary/overview.xhtml?id=");
-            writer.print(resourceId);
-            writer.append("\">");
+
+        if (url != null) {
+            writer.append("<a href=\"").append(url).append("\">");
+        }
+
+        if (htmlOutput) {
+            writer.append("<span class=\"disambiguated-resource-name\">");
+        }
+        writer.append(resourceName);
+        if (htmlOutput) {
+            writer.append("</span>");
         }
         
-        writer.append(resourceName);
-     
-        if (renderLink) {
+        if (url != null) {
             writer.append("</a>");
         }
-        
+
         if (resourceType.isSingleton() && resourceType.getPlugin() != null) {
-            writer.append(" ").append(resourceType.getPlugin())
-                .append(" plugin)");
+            if (htmlOutput) {
+                writer.append("<span class=\"disambiguated-resource-plugin\">");
+            }
+            
+            writer.append(" (").append(resourceType.getPlugin()).append(" plugin)");
+
+            if (htmlOutput) {
+                writer.append("</span>");
+            }
         }
+    }
+    
+    public static String getDefaultResourceUrl(int resourceId) {
+        return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
     }
 }

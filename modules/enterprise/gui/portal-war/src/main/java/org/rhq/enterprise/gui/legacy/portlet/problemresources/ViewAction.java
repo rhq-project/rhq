@@ -36,6 +36,7 @@ import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -64,7 +65,7 @@ public class ViewAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        List<DisambiguatedResourceListUtil.Record<ProblemResourceComposite>> disambiguatedList = new ArrayList<DisambiguatedResourceListUtil.Record<ProblemResourceComposite>>();
+        List<DisambiguationReport<ProblemResourceComposite>> disambiguatedList = new ArrayList<DisambiguationReport<ProblemResourceComposite>>();
 
         String timeRange = getResources(request).getMessage("dash.home.ProblemResources.timeRangeUnlimited");
         try {
@@ -103,9 +104,8 @@ public class ViewAction extends TilesAction {
                 PageList<ProblemResourceComposite> list = problemManager.findProblemResources(subject, begin, new PageControl(0,
                     problemResourcePreferences.range));
                 
-                disambiguatedList = DisambiguatedResourceListUtil.buildResourceList(
-                    resourceManager.disambiguate(list, true, RESOURCE_ID_EXTRACTOR), 
-                    list.getTotalSize(), list.getPageControl(), true);
+                disambiguatedList = DisambiguatedResourceListUtil.disambiguate(
+                    resourceManager, list, RESOURCE_ID_EXTRACTOR);
                 
                 long end = System.currentTimeMillis();
                 log.debug("Performance: Took [" + (end - start) + "]ms to find " + problemResourcePreferences.range

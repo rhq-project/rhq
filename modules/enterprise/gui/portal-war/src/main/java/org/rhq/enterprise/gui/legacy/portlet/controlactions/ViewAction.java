@@ -33,6 +33,7 @@ import org.rhq.core.domain.operation.composite.GroupOperationLastCompletedCompos
 import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -69,9 +70,9 @@ public class ViewAction extends TilesAction {
         boolean displayLastCompleted = false;
         boolean displayNextScheduled = false;
 
-        PageList<DisambiguatedResourceListUtil.Record<ResourceOperationLastCompletedComposite>> disambiguatedLastCompletedResourceOps = new PageList<DisambiguatedResourceListUtil.Record<ResourceOperationLastCompletedComposite>>();
+        PageList<DisambiguationReport<ResourceOperationLastCompletedComposite>> disambiguatedLastCompletedResourceOps = new PageList<DisambiguationReport<ResourceOperationLastCompletedComposite>>();
         PageList<GroupOperationLastCompletedComposite> lastCompletedGroupOps = new PageList<GroupOperationLastCompletedComposite>();
-        PageList<DisambiguatedResourceListUtil.Record<ResourceOperationScheduleComposite>> disambiguatedNextScheduledResourceOps = new PageList<DisambiguatedResourceListUtil.Record<ResourceOperationScheduleComposite>>();
+        PageList<DisambiguationReport<ResourceOperationScheduleComposite>> disambiguatedNextScheduledResourceOps = new PageList<DisambiguationReport<ResourceOperationScheduleComposite>>();
         PageList<GroupOperationScheduleComposite> nextScheduledGroupOps = new PageList<GroupOperationScheduleComposite>();
 
         try {
@@ -97,9 +98,8 @@ public class ViewAction extends TilesAction {
                 PageList<ResourceOperationLastCompletedComposite> lastCompletedResourceOps = 
                     manager.findRecentlyCompletedResourceOperations(user.getSubject(), null, pageControl);
 
-                disambiguatedLastCompletedResourceOps = DisambiguatedResourceListUtil.buildResourceList(
-                    resourceManager.disambiguate(lastCompletedResourceOps, true, RESOURCE_OPERATION_RESOURCE_ID_EXTRACTOR), 
-                    lastCompletedResourceOps.getTotalSize(), lastCompletedResourceOps.getPageControl(), true);
+                disambiguatedLastCompletedResourceOps = DisambiguatedResourceListUtil.disambiguate(
+                    resourceManager, lastCompletedResourceOps, RESOURCE_OPERATION_RESOURCE_ID_EXTRACTOR);
                 
                 pageControl = new PageControl(0, operationPreferences.lastCompleted);
                 pageControl.initDefaultOrderingField("go.createdTime", PageOrdering.DESC);
@@ -112,9 +112,8 @@ public class ViewAction extends TilesAction {
                     manager.findCurrentlyScheduledResourceOperations(user.getSubject(),
                     pageControl);
 
-                disambiguatedNextScheduledResourceOps = DisambiguatedResourceListUtil.buildResourceList(
-                    resourceManager.disambiguate(nextScheduledResourceOps, true, RESOURCE_OPERATION_SCHEDULE_RESOURCE_ID_EXTRACTOR), 
-                    nextScheduledResourceOps.getTotalSize(), nextScheduledResourceOps.getPageControl(), true);
+                disambiguatedNextScheduledResourceOps = DisambiguatedResourceListUtil.disambiguate(
+                    resourceManager, nextScheduledResourceOps, RESOURCE_OPERATION_SCHEDULE_RESOURCE_ID_EXTRACTOR);
                 
                 pageControl = new PageControl(0, operationPreferences.nextScheduled);
                 nextScheduledGroupOps = manager.findCurrentlyScheduledGroupOperations(user.getSubject(), pageControl);

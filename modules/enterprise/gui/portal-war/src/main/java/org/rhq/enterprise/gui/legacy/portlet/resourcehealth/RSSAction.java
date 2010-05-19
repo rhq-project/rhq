@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Iterator;
+
 import javax.security.auth.login.LoginException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -41,6 +45,7 @@ import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.BaseRSSAction;
 import org.rhq.enterprise.gui.legacy.portlet.RSSFeed;
+import org.rhq.enterprise.gui.legacy.taglib.display.DisambiguatedResourceLineageTag;
 import org.rhq.enterprise.gui.legacy.util.DisambiguatedResourceListUtil;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -69,11 +74,9 @@ public class RSSAction extends BaseRSSAction {
                 favoriteResourcePreferences.asArray(), PageControl.getUnlimitedInstance());
 
             if ((results != null) && (results.size() > 0)) {
-                ResourceNamesDisambiguationResult<ResourceHealthComposite> disambiguatedLResults = manager.disambiguate(results, true, ViewAction.RESOURCE_ID_EXTRACTOR);
-
-                PageList<DisambiguatedResourceListUtil.Record<ResourceHealthComposite>> list = DisambiguatedResourceListUtil.buildResourceList(disambiguatedLResults, results.getTotalSize(), results.getPageControl(), false);
+                PageList<DisambiguationReport<ResourceHealthComposite>> list = DisambiguatedResourceListUtil.disambiguate(manager, results, ViewAction.RESOURCE_ID_EXTRACTOR);
                 
-                for (DisambiguatedResourceListUtil.Record<ResourceHealthComposite> summary : list) {
+                for (DisambiguationReport<ResourceHealthComposite> summary : list) {
                     String link = feed.getBaseUrl() + FunctionTagLibrary.getDefaultResourceTabURL() + "?id="
                         + summary.getOriginal().getId();
 
@@ -83,7 +86,7 @@ public class RSSAction extends BaseRSSAction {
                         .getOriginal().getAlerts()));
                     String typeText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceType", summary
                         .getOriginal().getTypeName());
-                    String parentsText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceParents", summary.getLineage());
+                    String parentsText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceParents", getLineage(summary));
                     
                     long now = System.currentTimeMillis();
 
@@ -112,6 +115,15 @@ public class RSSAction extends BaseRSSAction {
         } else {
             throw new LoginException("RSS access requires authentication");
         }
-
+    }
+    
+    private static String getLineage(DisambiguationReport<?> report) {
+        StringWriter writer = new StringWriter();
+        try {
+            DisambiguatedResourceLineageTag.writeParents(writer, report.getParents(), false, false);
+            return writer.toString();
+        } catch (IOException e) {
+            return "";
+        }
     }
 }

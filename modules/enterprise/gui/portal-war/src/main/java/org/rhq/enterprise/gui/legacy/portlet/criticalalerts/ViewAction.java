@@ -31,6 +31,7 @@ import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
@@ -58,7 +59,7 @@ public class ViewAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        PageList<DisambiguatedResourceListUtil.Record<Alert>> disambiguatedAlerts = new PageList<DisambiguatedResourceListUtil.Record<Alert>>();
+        PageList<DisambiguationReport<Alert>> disambiguatedAlerts = new PageList<DisambiguationReport<Alert>>();
         try {
             WebUser user = SessionUtils.getWebUser(request.getSession());
             if (user == null) {
@@ -78,8 +79,7 @@ public class ViewAction extends TilesAction {
                 : ArrayUtils.wrapInArray(alertPrefs.asArray())), AlertPriority.getByLegacyIndex(alertPrefs.priority),
                 alertPrefs.timeRange, pageControl);
             
-            disambiguatedAlerts = DisambiguatedResourceListUtil.buildResourceList(resourceManager.disambiguate(alerts, true, RESOURCE_ID_EXTRACTOR)
-                , alerts.getTotalSize(), alerts.getPageControl(), true);
+            disambiguatedAlerts = DisambiguatedResourceListUtil.disambiguate(resourceManager, alerts, RESOURCE_ID_EXTRACTOR);
         } catch (Exception e) {
             if (log.isDebugEnabled()) {
                 log.debug("Dashboard Portlet [CriticalAlerts] experienced an error: " + e.getMessage(), e);

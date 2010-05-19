@@ -30,6 +30,7 @@ import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
@@ -75,9 +76,8 @@ public class PrepareAction extends TilesAction {
         PageList<Resource> resources = resourceManager.findResourceByIds(user.getSubject(), alertPrefs.asArray(), false,
             pageControl);
 
-        PageList<DisambiguatedResourceListUtil.Record<Resource>> disambiguatedResources = 
-            DisambiguatedResourceListUtil.buildResourceList(resourceManager.disambiguate(resources, true, RESOURCE_ID_EXTRACTOR),
-                resources.getTotalSize(), resources.getPageControl(), false);
+        PageList<DisambiguationReport<Resource>> disambiguatedResources = 
+            DisambiguatedResourceListUtil.disambiguate(resourceManager, resources, RESOURCE_ID_EXTRACTOR);
         
         request.setAttribute("criticalAlertsList", disambiguatedResources);
         request.setAttribute("criticalAlertsTotalSize", disambiguatedResources.getTotalSize());

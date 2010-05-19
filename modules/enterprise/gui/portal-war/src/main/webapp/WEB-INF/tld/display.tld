@@ -893,7 +893,7 @@
   <tag>
     <name>disambiguatedResourceName</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.DisambiguatedResourceNameTag</tag-class>
-    <body-content>JSP</body-content>
+    <body-content>empty</body-content>
     <attribute>
         <name>disambiguationReport</name>
         <required>true</required>
@@ -908,9 +908,15 @@
     </attribute>
     <attribute>
         <name>resourceId</name>
-        <required>true</required>
+        <required>false</required>
         <rtexprvalue>true</rtexprvalue>
         <type>Integer</type>
+    </attribute>
+    <attribute>
+        <name>url</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <type>String</type>
     </attribute>
     <attribute>
         <name>nameAsLink</name>
@@ -923,7 +929,61 @@
   <tag>
     <name>disambiguatedResourceLineage</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.DisambiguatedResourceLineageTag</tag-class>
-    <body-content>JSP</body-content>
+    <body-content>empty</body-content>
+    <attribute>
+        <name>parents</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+        <type>java.util.List</type>
+    </attribute>
+    <attribute>
+        <name>renderLinks</name>
+        <required>false</required>
+        <rtexprvalue>false</rtexprvalue>
+        <type>Boolean</type>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>disambiguatedResourceNameDecorator</name>
+    <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.DisambiguatedResourceNameDecorator</tag-class>
+    <body-content>empty</body-content>
+    <attribute>
+        <name>disambiguationReport</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+        <type>org.rhq.core.domain.resource.composite.DisambiguationReport</type>
+    </attribute>
+    <attribute>
+        <name>resourceName</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+        <type>String</type>
+    </attribute>
+    <attribute>
+        <name>resourceId</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <type>Integer</type>
+    </attribute>
+    <attribute>
+        <name>url</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <type>String</type>
+    </attribute>
+    <attribute>
+        <name>nameAsLink</name>
+        <required>false</required>
+        <rtexprvalue>false</rtexprvalue>
+        <type>Boolean</type>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>disambiguatedResourceLineageDecorator</name>
+    <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.DisambiguatedResourceLineageDecorator</tag-class>
+    <body-content>empty</body-content>
     <attribute>
         <name>parents</name>
         <required>true</required>

@@ -23,16 +23,11 @@
 
 package org.rhq.enterprise.gui.legacy.util;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
-import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageComponent;
+import org.rhq.core.util.IntExtractor;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 /**
  * A utility class to provide page lists of disambiguated resource lists for the 
@@ -42,79 +37,12 @@ import org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageComponent
  */
 public class DisambiguatedResourceListUtil {
 
-    private static final String RESOURCE_URL = "/rhq/resource/summary/overview.xhtml";
-    
     private DisambiguatedResourceListUtil() {
         
     }
     
-    public static class Record<T> {
-    
-        private T original;
-        private String lineage;
-        private String originalResourceTypeName;
-        
-        public Record(T original, String resourceTypeName, String lineage) {
-            this.original = original;
-            this.lineage = lineage;
-            this.originalResourceTypeName = resourceTypeName;
-        }
-        
-        public T getOriginal() {
-            return original;
-        }
-        
-        public String getLineage() {
-            return lineage;
-        }
-
-        public String getOriginalResourceTypeName() {
-            return originalResourceTypeName;
-        }
-    }
-    
-    public static <T> PageList<Record<T>> buildResourceList(ResourceNamesDisambiguationResult<T> results, int totalSize, PageControl pageControl, boolean renderLinks) {
-        ArrayList<Record<T>> convertedResults = new ArrayList<Record<T>>(results.getResolution().size());
-        
-        for(DisambiguationReport<T> dr : results.getResolution()) {
-            String typeName = dr.getResourceTypeName();
-            if (results.isPluginResolutionNeeded()) {
-                typeName += " (" + dr.getResourceTypePluginName() + " plugin)";
-            }
-            convertedResults.add(new Record<T>(dr.getOriginal(), typeName, buildLineage(dr.getParents(), renderLinks)));
-        }
-        return new PageList<Record<T>>(convertedResults, totalSize, pageControl);
-    }
-    
-    private static String buildLineage(List<ResourceParentFlyweight> parents, boolean renderLinks) {
-        if (parents == null || parents.size() == 0) {
-            return "";
-        }
-        
-        Iterator<ResourceParentFlyweight> it = parents.iterator();
-        
-        StringBuilder bld = new StringBuilder();
-        
-        appendParentName(bld, it.next(), renderLinks);
-        
-        while (it.hasNext()) {
-            bld.append(ResourcePartialLineageComponent.DEFAULT_SEPARATOR);
-            appendParentName(bld, it.next(), renderLinks);
-        }
-        
-        return bld.toString();
-    }
-    
-    private static void appendParentName(StringBuilder bld, ResourceParentFlyweight parent, boolean renderLinks) {
-        if (renderLinks) {
-            bld.append("<a href=\"").append(RESOURCE_URL).append("?id=").append(parent.getParentId())
-                .append("\">");
-        }
-        
-        bld.append(parent.getParentName());
-        
-        if (renderLinks) {
-            bld.append("</a>");
-        }
+    public static <T> PageList<DisambiguationReport<T>> disambiguate(ResourceManagerLocal resourceManager, PageList<T> results, IntExtractor<T> resourceIdExtractor) {
+        ResourceNamesDisambiguationResult<T> result = resourceManager.disambiguate(results, true, resourceIdExtractor);
+        return new PageList<DisambiguationReport<T>>(result.getResolution(), results.getTotalSize(), results.getPageControl());
     }
 }

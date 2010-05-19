@@ -37,6 +37,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.StringUtility;
@@ -109,9 +110,8 @@ public class AddResourcesPrepareAction extends Action {
         PageList<Resource> pendingResources = resourceManager.findResourceByIds(subject, pendingResourceArray, false,
             pcPending);
 
-        PageList<DisambiguatedResourceListUtil.Record<Resource>> disambiguatedPendingResources = 
-            DisambiguatedResourceListUtil.buildResourceList(resourceManager.disambiguate(pendingResources, true, RESOURCE_ID_EXTRACTOR),
-                pendingResources.getTotalSize(), pendingResources.getPageControl(), false);
+        PageList<DisambiguationReport<Resource>> disambiguatedPendingResources = 
+            DisambiguatedResourceListUtil.disambiguate(resourceManager, pendingResources, RESOURCE_ID_EXTRACTOR);
         
         // give 'em to the jsp page
         log.debug("put selected page of pending resources in request");
@@ -131,11 +131,9 @@ public class AddResourcesPrepareAction extends Action {
         availableResources = resourceManager.findAvailableResourcesForDashboardPortlet(subject, typeIdFilter,
             categoryFilter, excludeIds, pcAvail);
 
-        PageList<DisambiguatedResourceListUtil.Record<Resource>> disambiguatedAvailableResources = 
-            DisambiguatedResourceListUtil.buildResourceList(resourceManager.disambiguate(availableResources, true, RESOURCE_ID_EXTRACTOR),
-                availableResources.getTotalSize(), availableResources.getPageControl(), false);
-        
-        
+        PageList<DisambiguationReport<Resource>> disambiguatedAvailableResources = 
+            DisambiguatedResourceListUtil.disambiguate(resourceManager, availableResources, RESOURCE_ID_EXTRACTOR);
+                
         log.debug("put selected page of available resources in request");
         request.setAttribute(Constants.AVAIL_RESOURCES_ATTR, disambiguatedAvailableResources);
         request.setAttribute(Constants.NUM_AVAIL_RESOURCES_ATTR, disambiguatedAvailableResources.getTotalSize());

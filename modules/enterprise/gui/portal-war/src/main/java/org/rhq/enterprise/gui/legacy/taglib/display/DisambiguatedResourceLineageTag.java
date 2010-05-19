@@ -24,6 +24,7 @@
 package org.rhq.enterprise.gui.legacy.taglib.display;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 
@@ -67,20 +68,8 @@ public class DisambiguatedResourceLineageTag extends TagSupport {
         JspWriter writer = pageContext.getOut();
 
         try {
-            if (parents != null && parents.size() > 0) {
-
-                Iterator<DisambiguationReport.Resource> it = parents.iterator();
-                DisambiguationReport.Resource parent = it.next();
-                DisambiguatedResourceNameTag.writeResource(writer, renderLinks, parent.getId(), parent.getName(),
-                    parent.getType());
-                
-                while (it.hasNext()) {
-                    writer.append(DisambiguatedResourceLineageComponent.DEFAULT_SEPARATOR);
-                    parent = it.next();
-                    DisambiguatedResourceNameTag.writeResource(writer, renderLinks, parent.getId(), parent.getName(),
-                        parent.getType());                    
-                }
-            }
+            boolean renderLinks = this.renderLinks == null || this.renderLinks;
+            writeParents(writer, parents, renderLinks, true);
 
             return super.doEndTag();
         } catch (IOException e) {
@@ -88,4 +77,24 @@ public class DisambiguatedResourceLineageTag extends TagSupport {
         }
     }
 
+    private static String getUrl(DisambiguationReport.Resource resource) {
+        return DisambiguatedResourceNameTag.getDefaultResourceUrl(resource.getId());
+    }
+    
+    public static void writeParents(Writer writer, List<DisambiguationReport.Resource> parents, boolean renderLinks, boolean htmlOuptut) throws IOException {
+        if (parents != null && parents.size() > 0) {
+
+            Iterator<DisambiguationReport.Resource> it = parents.iterator();
+            DisambiguationReport.Resource parent = it.next();
+            DisambiguatedResourceNameTag.writeResource(writer, renderLinks ? getUrl(parent) : null,  parent.getName(),
+                parent.getType(), htmlOuptut);
+            
+            while (it.hasNext()) {
+                writer.append(DisambiguatedResourceLineageComponent.DEFAULT_SEPARATOR);
+                parent = it.next();
+                DisambiguatedResourceNameTag.writeResource(writer, renderLinks ? getUrl(parent) : null, parent.getName(),
+                    parent.getType(), htmlOuptut);                    
+            }
+        }
+    }
 }

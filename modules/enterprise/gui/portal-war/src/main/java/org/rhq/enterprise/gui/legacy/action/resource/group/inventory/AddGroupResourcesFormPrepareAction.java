@@ -120,11 +120,8 @@ public class AddGroupResourcesFormPrepareAction extends Action {
         PageList<Resource> pendingResources = resourceManager.findResourceByIds(user, pendingResourceIds, true,
             pcPending);
 
-        ResourceNamesDisambiguationResult<Resource> pendingResourcesDisambiguation =
-            resourceManager.disambiguate(pendingResources, true, RESOURCE_ID_EXTRACTOR);
-
-        PageList<DisambiguatedResourceListUtil.Record<Resource>> disambiguatedpeningResources = 
-            DisambiguatedResourceListUtil.buildResourceList(pendingResourcesDisambiguation, pendingResources.getTotalSize(), pendingResources.getPageControl(), false);
+        PageList<DisambiguationReport<Resource>> disambiguatedpeningResources = 
+            DisambiguatedResourceListUtil.disambiguate(resourceManager, pendingResources, RESOURCE_ID_EXTRACTOR);
         
         request.setAttribute(Constants.PENDING_RESOURCES_ATTR, disambiguatedpeningResources);
         request.setAttribute(Constants.NUM_PENDING_RESOURCES_ATTR, disambiguatedpeningResources.size());
@@ -152,11 +149,8 @@ public class AddGroupResourcesFormPrepareAction extends Action {
                 + resourceGroup.getClass().getSimpleName() + " group type");
         }
 
-        ResourceNamesDisambiguationResult<Resource> availableResourcesDisambiguation =
-            resourceManager.disambiguate(availableResources, true, RESOURCE_ID_EXTRACTOR);
-        
-        PageList<DisambiguatedResourceListUtil.Record<Resource>> disambiguatedAvailResources = 
-            DisambiguatedResourceListUtil.buildResourceList(availableResourcesDisambiguation, availableResources.getTotalSize(), availableResources.getPageControl(), false);
+        PageList<DisambiguationReport<Resource>> disambiguatedAvailResources = 
+            DisambiguatedResourceListUtil.disambiguate(resourceManager, availableResources, RESOURCE_ID_EXTRACTOR);
                 
         request.setAttribute(Constants.AVAIL_RESOURCES_ATTR, disambiguatedAvailResources);
         request.setAttribute(Constants.NUM_AVAIL_RESOURCES_ATTR, disambiguatedAvailResources.size());

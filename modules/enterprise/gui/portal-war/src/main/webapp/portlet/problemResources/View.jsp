@@ -33,9 +33,12 @@
   <c:when test="${not empty problemResources}">   
     <display:table cellspacing="0" cellpadding="0" width="100%" action="/Dashboard.do"
                    var="obj" items="${problemResources}" >
-       <display:column width="20%" href="/rhq/resource/summary/overview.xhtml?id=${obj.original.resourceId}" property="original.resourceName" title="dash.home.TableHeader.ResourceName"/>
-       <display:column width="20%" property="originalResourceTypeName" title="dash.home.TableHeader.Type"/>
-       <display:column width="20%" property="lineage" title="dash.home.TableHeader.Location"/>
+       <display:column width="20%" title="dash.home.TableHeader.ResourceName">
+         <display:disambiguatedResourceNameDecorator resourceName="${obj.original.resourceName}" resourceId="${obj.original.resourceId}" disambiguationReport="${obj}"/>
+       </display:column>
+       <display:column width="20%" title="dash.home.TableHeader.Location">
+         <display:disambiguatedResourceLineageDecorator parents="${obj.parents}"/>
+       </display:column>
        <display:column width="10%" property="original.numAlerts" title="dash.home.TableHeader.Alerts" align="center"/>
        <display:column width="10%" property="original.availabilityType" title="resource.common.monitor.visibility.CAvailabilityTH" align="center" >
          <display:availabilitydecorator/> 

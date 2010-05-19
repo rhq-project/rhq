@@ -99,9 +99,12 @@ var help = '<hq:help/>';
           <display:checkboxdecorator name="ids" onclick="ToggleSelection(this, widgetProperties, true)" styleClass="listMember"/>
         </display:column>
       
-        <display:column width="25%" property="original.name" sortAttr="res.name" title="dash.settings.ListHeader.Resource" /> 
-        <display:column width="25%" property="original.resourceType.name" title="dash.settings.ListHeader.Type" /> 
-        <display:column width="25%" property="lineage" title="dash.settings.ListHeader.Location" /> 
+        <display:column width="25%" sortAttr="res.name" title="dash.settings.ListHeader.Resource">
+          <display:disambiguatedResourceNameDecorator resourceName="${resource.original.name}" resourceId="${resource.original.id}" disambiguationReport="${resource}"/>
+        </display:column> 
+        <display:column width="25%" title="dash.settings.ListHeader.Location">
+          <display:disambiguatedResourceLineageDecorator parents="${resource.parents}"/>
+        </display:column> 
         <display:column width="25%" property="original.description" sortAttr="res.description" title="common.header.Description" /> 
 
       </display:table>

@@ -75,14 +75,14 @@ public class DisambiguatedResourceLineageRenderer extends Renderer {
         encodePreName(writer, parent);
         writer.startElement("a", null);
         writer.writeAttribute("href", getUrl(parent), null);
-        writer.writeText(parent.getName(), null);
+        writeName(writer, parent);
         writer.endElement("a");
         encodePostName(writer, parent);
     }
     
     public static void encodeSimple(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         encodePreName(writer, parent);
-        writer.writeText(parent.getName(), null);
+        writeName(writer, parent);
         encodePostName(writer, parent);
     }
     
@@ -92,21 +92,37 @@ public class DisambiguatedResourceLineageRenderer extends Renderer {
     
     private static void encodePreName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         if (!parent.getType().isSingleton()) {
+            writer.startElement("span", null);
+            writer.writeAttribute("class", "disambiguated-resource-type", null);
             writer.writeText(parent.getType().getName(), null);
             writer.writeText(" ", null);
             if (parent.getType().getPlugin() != null) {
+                writer.startElement("span", null);
+                writer.writeAttribute("class", "disambiguated-resource-plugin", null);
                 writer.writeText("(", null);
                 writer.writeText(parent.getType().getPlugin(), null);
                 writer.writeText(" plugin) ", null);
+                writer.endElement("span");
             }
+            writer.endElement("span");
         }
     }
 
     private static void encodePostName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         if (parent.getType().isSingleton() && parent.getType().getPlugin() != null) {
+            writer.startElement("span", null);
+            writer.writeAttribute("class", "disambiguated-resource-plugin", null);
             writer.writeText(" (", null);
             writer.writeText(parent.getType().getPlugin(), null);
             writer.writeText(" plugin) ", null);
+            writer.endElement("span");
         }
+    }
+    
+    private static void writeName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
+        writer.startElement("span", null);
+        writer.writeAttribute("class", "disambiguated-resource-name", null);
+        writer.writeText(parent.getName(), null);
+        writer.endElement("span");
     }
 }

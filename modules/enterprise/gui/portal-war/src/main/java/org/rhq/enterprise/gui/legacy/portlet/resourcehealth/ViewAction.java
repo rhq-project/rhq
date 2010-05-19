@@ -59,7 +59,7 @@ public class ViewAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        PageList<DisambiguatedResourceListUtil.Record<ResourceHealthComposite>> list = new PageList<DisambiguatedResourceListUtil.Record<ResourceHealthComposite>>();
+        PageList<DisambiguationReport<ResourceHealthComposite>> list = new PageList<DisambiguationReport<ResourceHealthComposite>>();
         boolean showAvailability = true;
         boolean showAlerts = true;
         try {
@@ -78,9 +78,7 @@ public class ViewAction extends TilesAction {
             ResourceManagerLocal manager = LookupUtil.getResourceManager();
             PageList<ResourceHealthComposite> lst = manager.findResourceHealth(user.getSubject(), favoriteResourcePreferences.asArray(), pc);
             
-            ResourceNamesDisambiguationResult<ResourceHealthComposite> disambiguatedList = manager.disambiguate(lst, true, RESOURCE_ID_EXTRACTOR);
-            
-            list = DisambiguatedResourceListUtil.buildResourceList(disambiguatedList, lst.getTotalSize(), lst.getPageControl(), true);
+            list = DisambiguatedResourceListUtil.disambiguate(manager, lst, RESOURCE_ID_EXTRACTOR);
             
             showAvailability = favoriteResourcePreferences.showAvailability;
             showAlerts = favoriteResourcePreferences.showAlerts;

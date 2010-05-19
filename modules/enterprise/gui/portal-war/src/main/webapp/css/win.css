@@ -2371,3 +2371,17 @@ ul.radio-group .unspecified {
 .rich-tree-h-ic-img, .rich-tree-node-handleicon-collapsed, .rich-tree-node-handleicon-expanded {
    cursor:pointer;
 }
+
+/* Disambiguated resources formatting */
+.disambiguated-resource-type {
+    font-style: italic;
+}
+
+.disambiguated-resource-plugin {
+	font-style: italic;
+}
+
+.disambiguated-resource-name {
+}
+
+

@@ -20,9 +20,12 @@ package org.rhq.bundle.ant.type;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.taskdefs.Chmod;
 import org.apache.tools.ant.taskdefs.Copy;
+import org.apache.tools.ant.taskdefs.Execute;
 import org.apache.tools.ant.taskdefs.optional.unix.Symlink;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -70,7 +73,7 @@ public class SystemServiceType extends AbstractBundleType {
     private Set<Character> startLevelChars;
     private Set<Character> stopLevelChars;
 
-    public void install() {
+    public void install() throws BuildException {
         if (!OS_NAME.equals("Linux") || !REDHAT_RELEASE_FILE.exists() ) {
             throw new BuildException("The system-service element is only supported on Red Hat Linux systems.");
         }
@@ -106,6 +109,34 @@ public class SystemServiceType extends AbstractBundleType {
         // Create the symlinks in the rcX.d dirs (e.g. /etc/rc3.d/S24named -> ../init.d/named)
         createScriptSymlinks(scriptDestFile, this.startPriority, this.startLevelChars, 'S');
         createScriptSymlinks(scriptDestFile, this.stopPriority, this.stopLevelChars, 'K');
+    }
+
+    public void start() throws BuildException {
+        File initDir = new File(this.root, INIT_DIR.getPath().substring(1));
+        File scriptFile = new File(initDir, this.name);
+        String[] commandLine = {scriptFile.getAbsolutePath(), "start"};
+        try {
+            executeCommand(commandLine);
+        } catch (IOException e) {
+            throw new BuildException("Failed to start " + this.name + " system service via command [" + Arrays.toString(commandLine)
+                    + "].", e);
+        }
+    }
+
+    public void stop() throws BuildException {
+        File initDir = new File(this.root, INIT_DIR.getPath().substring(1));
+        File scriptFile = new File(initDir, this.name);
+        String[] commandLine = {scriptFile.getAbsolutePath(), "stop"};
+        try {
+            executeCommand(commandLine);
+        } catch (IOException e) {
+            throw new BuildException("Failed to stop " + this.name + " system service via command [" + Arrays.toString(commandLine)
+                    + "].", e);
+        }
+    }
+
+    public void uninstall() throws BuildException {
+        // TODO        
     }
 
     public String getName() {
@@ -325,6 +356,12 @@ public class SystemServiceType extends AbstractBundleType {
         symlinkTask.setLink(linkFile.getAbsolutePath());
         symlinkTask.setOverwrite(overwrite);
         symlinkTask.execute();
+    }
+
+    private int executeCommand(String[] commandLine) throws IOException {
+        Execute executeTask = new Execute();
+        executeTask.setCommandline(commandLine);        
+        return executeTask.execute();
     }
 
     private void setPermissions(File file, String perms) {

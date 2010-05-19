@@ -138,12 +138,20 @@ public class BundleTask extends AbstractBundleTask {
         for (InputPropertyType inputProperty : this.inputProperties) {
             inputProperty.execute();
         }
+
+        String dryRunString = (String) projectProps.get(DeployPropertyNames.DEPLOY_DRY_RUN);
+        boolean dryRun = (dryRunString != null) && dryRunString.equals(Boolean.TRUE.toString());
+        getProject().setDryRun(dryRun);
+
         log("Executing '" + deploymentPhase + "' phase for deployment '" + deploymentName + "' from bundle '"
                 + this.name + "' version " + this.version + " using config " + getProject().getConfiguration() + "...");
         switch (deploymentPhase) {
             case INSTALL:
-                deployment.install();
-
+                String revertString = (String) projectProps.get(DeployPropertyNames.DEPLOY_REVERT);
+                boolean revert = (revertString != null) && revertString.equals(Boolean.TRUE.toString());
+                String cleanString = (String) projectProps.get(DeployPropertyNames.DEPLOY_CLEAN);
+                boolean clean = (cleanString != null) && cleanString.equals(Boolean.TRUE.toString());
+                deployment.install(revert, clean);
                 break;
             case START:
                 deployment.start();

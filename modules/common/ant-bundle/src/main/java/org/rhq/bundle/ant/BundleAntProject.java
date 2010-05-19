@@ -61,6 +61,7 @@ public class BundleAntProject extends Project {
     private String deploymentName;
     private DeploymentPhase deploymentPhase;
     private DeployDifferences deployDiffs = new DeployDifferences();
+    private boolean dryRun;
 
     public Set<String> getBundleFileNames() {
         return bundleFileNames;
@@ -138,5 +139,13 @@ public class BundleAntProject extends Project {
 
     public DeployDifferences getDeployDifferences() {
         return deployDiffs;
+    }
+
+    public void setDryRun(boolean dryRun) {
+        this.dryRun = dryRun;
+    }
+
+    public boolean isDryRun() {
+        return dryRun;
     }
 }

@@ -106,7 +106,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
                 // Get the bundle's configuration values and the global system facts and
                 // add them as Ant properties so the Ant script can get their values.
-                Properties antProps = createAntProperties(bundleDeployment);
+                Properties antProps = createAntProperties(request);
                 // TODO: Eventually the phase to be executed should be passed in by the PC when it calls us.
                 antProps.setProperty(DeployPropertyNames.DEPLOY_PHASE, "INSTALL");
 
@@ -117,7 +117,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                     .getBundleManagerProvider(), resourceDeployment);
                 buildListeners.add(auditor);
 
-                // Parse & execute the Ant script.
+                // Parse and execute the Ant script.
                 AntLauncher antLauncher = new AntLauncher();
                 BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, antProps,
                     buildListeners);
@@ -150,9 +150,11 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         return result;
     }
 
-    private Properties createAntProperties(BundleDeployment bundleDeployment) {
+    private Properties createAntProperties(BundleDeployRequest request) {
         Properties antProps = new Properties();
 
+        BundleResourceDeployment resourceDeployment = request.getResourceDeployment();
+        BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
         String deployDir = bundleDeployment.getDestination().getDeployDir();
         if (deployDir == null) {
             throw new IllegalStateException("Bundle deployment does not specify install dir: " + bundleDeployment);
@@ -162,6 +164,8 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         int deploymentId = bundleDeployment.getId();
         antProps.setProperty(DeployPropertyNames.DEPLOY_ID, Integer.toString(deploymentId));
         antProps.setProperty(DeployPropertyNames.DEPLOY_NAME, bundleDeployment.getName());
+        antProps.setProperty(DeployPropertyNames.DEPLOY_REVERT, String.valueOf(request.isRevert()));
+        antProps.setProperty(DeployPropertyNames.DEPLOY_CLEAN, String.valueOf(request.isCleanDeployment()));
 
         Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
         for (Map.Entry<String, String> fact : sysFacts.entrySet()) {

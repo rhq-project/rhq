@@ -52,8 +52,9 @@ public class DeploymentType extends AbstractBundleType {
     private Pattern replacePattern;
     private boolean preview;
     private String preinstallTarget;
+    private String postinstallTarget;
 
-    public void install() throws BuildException {
+    public void install(boolean revert, boolean clean) throws BuildException {
         if (this.preinstallTarget != null) {
             Target target = (Target) getProject().getTargets().get(this.preinstallTarget);
             if (target == null) {
@@ -88,6 +89,12 @@ public class DeploymentType extends AbstractBundleType {
         Deployer deployer = new Deployer(dd);
         try {
             DeployDifferences diffs = getProject().getDeployDifferences();
+            boolean dryRun = getProject().isDryRun();
+            if (revert) {
+                deployer.redeployAndRestoreBackupFiles(diffs, clean, dryRun);
+            } else {
+                deployer.deploy(diffs, clean, dryRun);
+            }
             deployer.deploy(diffs);
             getProject().log("Results:\n" + diffs + "\n");            
         } catch (Exception e) {
@@ -97,6 +104,14 @@ public class DeploymentType extends AbstractBundleType {
 
         if (this.systemService != null) {
             this.systemService.install();
+        }
+
+        if (this.postinstallTarget != null) {
+            Target target = (Target) getProject().getTargets().get(this.postinstallTarget);
+            if (target == null) {
+                throw new BuildException("Specified postinstall target (" + this.postinstallTarget + ") does not exist.");
+            }
+            target.performTasks();
         }
 
         return;
@@ -148,6 +163,14 @@ public class DeploymentType extends AbstractBundleType {
 
     public void setPreinstallTarget(String preinstallTarget) {
         this.preinstallTarget = preinstallTarget;
+    }
+
+    public String getPostinstallTarget() {
+        return postinstallTarget;
+    }
+
+    public void setPostinstallTarget(String postinstallTarget) {
+        this.postinstallTarget = postinstallTarget;
     }
 
     public void addConfigured(SystemServiceType systemService) {

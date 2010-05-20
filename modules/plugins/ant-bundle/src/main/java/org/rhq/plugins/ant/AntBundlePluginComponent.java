@@ -39,6 +39,7 @@ import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.bundle.ant.LoggerAntBuildListener;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -108,7 +109,9 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 // add them as Ant properties so the Ant script can get their values.
                 Properties antProps = createAntProperties(request);
                 // TODO: Eventually the phase to be executed should be passed in by the PC when it calls us.
+                // TODO: Invoke STOP phase.
                 antProps.setProperty(DeployPropertyNames.DEPLOY_PHASE, "INSTALL");
+                // TODO: Invoke START phase.
 
                 List<BuildListener> buildListeners = new ArrayList();
                 LoggerAntBuildListener logger = new LoggerAntBuildListener(null, logFileOutput, Project.MSG_DEBUG);
@@ -125,8 +128,8 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 // Send the diffs to the Server so it can store them as an entry in the deployment history.
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
                 DeployDifferences diffs = project.getDeployDifferences();
-                bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", bundleDeployment
-                    .getName(), null, null, diffs.toString(), null);
+                bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", null,
+                        BundleResourceDeploymentHistory.Category.DEPLOY_STEP, null, diffs.toString(), null);
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {

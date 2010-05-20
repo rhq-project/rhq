@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.content;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -51,8 +52,6 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.lob.BlobImpl;
-import org.hibernate.lob.SerializableBlob;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.util.StringPropertyReplacer;
 import org.rhq.core.domain.auth.Subject;
@@ -789,7 +788,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             throw new RuntimeException(t);
         }
     }
-
+    
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     @TransactionTimeout(90 * 60)
@@ -901,6 +900,184 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                         bitsStream = null;
                     }
 
+                }
+            } finally {
+                if (ps != null) {
+                    try {
+                        ps.close();
+                    } catch (Exception e) {
+                        log.warn("Failed to close prepared statement for package bits [" + packageVersionLocation
+                            + "] on content source [" + contentSourceId + "]");
+                    }
+                }
+                
+                if (ps2 != null) {
+                    try {
+                        ps2.close();
+                    } catch (Exception e) {
+                        log.warn("Failed to close prepared statement for package bits [" + packageVersionLocation
+                            + "] on content source [" + contentSourceId + "]");
+                    }
+                }
+
+                if (conn != null) {
+                    try {
+                        conn.close();
+                    } catch (Exception e) {
+                        log.warn("Failed to close connection for package bits [" + packageVersionLocation
+                            + "] on content source [" + contentSourceId + "]");
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            // put the cause in here using ThrowableUtil because it'll dump SQL nextException messages too
+            throw new RuntimeException("Did not download the package bits for [" + pvcs + "]. Cause: "
+                + ThrowableUtil.getAllMessages(t), t);
+        } finally {
+            if (bitsStream != null) {
+                try {
+                    bitsStream.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close stream to package bits located at [" + packageVersionLocation
+                        + "] on content source [" + contentSourceId + "]");
+                }
+            }
+        }
+
+        return packageBits;
+    }
+
+    private InputStream preloadPackageBits(PackageVersionContentSource pvcs) throws Exception{
+        PackageVersionContentSourcePK pk = pvcs.getPackageVersionContentSourcePK();
+        int contentSourceId = pk.getContentSource().getId();     
+        int packageVersionId = pk.getPackageVersion().getId();
+        String packageVersionLocation = pvcs.getLocation();
+        
+        ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+        InputStream bitsStream = pc.getAdapterManager().loadPackageBits(contentSourceId, packageVersionLocation);
+        
+        PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
+        
+        switch (pk.getContentSource().getDownloadMode()) {
+        case NEVER: {
+            return null; // no-op, our content source was told to never download package bits
+        }
+
+        case DATABASE: {
+            log.debug("Downloading package bits to DB for package located at [" + packageVersionLocation
+                + "] on content source [" + contentSourceId + "]");
+            File tempFile = File.createTempFile("JonContent", "");
+            tempFile.deleteOnExit();
+            OutputStream tempStream = new BufferedOutputStream(new FileOutputStream(tempFile));
+            StreamUtil.copy(bitsStream, tempStream, true);
+            InputStream inp = new BufferedInputStream(new FileInputStream(tempFile));
+            return inp;         
+        }
+
+        case FILESYSTEM: {
+            log.debug("Downloading package bits to filesystem for package located at [" + packageVersionLocation
+                + "] on content source [" + contentSourceId + "]");
+            File outputFile = getPackageBitsLocalFileAndCreateParentDir(pv.getId(), pv.getFileName());
+            log.info("OutPutFile is located at: " + outputFile);
+            boolean download = false;
+
+            if (outputFile.exists()) {
+                // hmmm... it already exists, maybe we already have it?
+                // if the MD5's match, just ignore this download request and continue on
+                // If they are different we re-download
+                String expectedMD5 = (pv.getMD5() != null) ? pv.getMD5() : "<unspecified MD5>";
+                String actualMD5 = MessageDigestGenerator.getDigestString(outputFile);
+                if (!expectedMD5.trim().toLowerCase().equals(actualMD5.toLowerCase())) {
+                    log.error("Already have package bits for [" + pv + "] located at [" + outputFile
+                        + "] but the MD5 hashcodes do not match. Expected MD5=[" + expectedMD5
+                        + "], Actual MD5=[" + actualMD5 + "] - redownloading package");
+                    download = true;
+                } else {
+                    log.info("Asked to download package bits but we already have it at [" + outputFile
+                        + "] with matching MD5 of [" + actualMD5 + "]");
+                    download = false;
+                }
+            } else {
+                download = true;
+            }
+            if (download) {
+                StreamUtil.copy(bitsStream, new FileOutputStream(outputFile), true);
+                bitsStream = null;
+            }
+            break;
+        }
+
+        default: {
+            throw new IllegalStateException(" Unknown download mode - this is a bug, please report it: " + pvcs);
+        }
+        }
+       
+        return null;
+    }
+    
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(40 * 60)
+    private PackageBits preparePackageBits(Subject subject,InputStream bitsStream, PackageVersionContentSource pvcs) {
+        PackageVersionContentSourcePK pk = pvcs.getPackageVersionContentSourcePK();
+        int contentSourceId = pk.getContentSource().getId();
+        int packageVersionId = pk.getPackageVersion().getId();
+        String packageVersionLocation = pvcs.getLocation();     
+
+        PackageBits packageBits = null;
+
+        try {
+                
+            Connection conn = null;
+            PreparedStatement ps = null;
+            PreparedStatement ps2 = null;
+            try {
+                packageBits = new PackageBits();
+              
+                entityManager.persist(packageBits);
+
+                PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
+                pv.setPackageBits(packageBits);
+
+                entityManager.flush(); // push the new package bits row to the DB
+
+                if (pk.getContentSource().getDownloadMode() == DownloadMode.DATABASE) {
+                    packageBits = entityManager.find(PackageBits.class, packageBits.getId());
+                    //we need to save not null value so that we can in next step load the value as a Blob
+                    // packageBits.setBits(new String("a").getBytes());
+                    packageBits.setBits(new String("a").getBytes());
+                    entityManager.merge(packageBits);
+                    entityManager.flush();
+                    
+                    conn = dataSource.getConnection();
+                    //we are loading the PackageBits saved in the previous step
+                    //we need to lock the row which will be updated so we are using FOR UPDATE
+                    ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ? FOR UPDATE");
+                    ps.setInt(1, packageBits.getId());
+                    ResultSet rs = ps.executeQuery();
+                    if (rs != null) {
+                        while (rs.next()) {
+                                                                                   
+                            //We can not create a blob directly because BlobImpl from Hibernate is not acceptable
+                            //for oracle and Connection.createBlob is not working on postgres.
+                            //This blob will be not empty because we saved there a bytes from String("a").
+                            Blob blb = rs.getBlob(1);
+                         
+                            StreamUtil.copy(bitsStream, blb.setBinaryStream(1), false);
+                            bitsStream.close();
+                            ps2 = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET bits = ? where id = ?");
+                            ps2.setBlob(1, blb);
+                            ps2.setInt(2, packageBits.getId());
+                            if (ps2.execute()) {
+                                throw new Exception("Did not download the package bits to the DB for ");
+                             }
+                            ps2.close();
+                        }
+                    }
+                    ps.close();
+                    conn.close();
+
+                } else {
+                    //CONTENT IS ALLREADY LOADED
                 }
             } finally {
                 if (ps != null) {
@@ -1817,8 +1994,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             packageVersion.getId());
     }
     
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(90 * 60)
     public boolean downloadPackageBits(int resourceId, PackageDetailsKey packageDetailsKey){
         Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID);
         query.setParameter("packageName", packageDetailsKey.getName());
@@ -1887,8 +2062,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // won't affect the time we are in in this method's tx (I hope that's how it works).
             // This is because this method itself may take a long time to send the data to the output stream
             // and we don't want out tx timing out due to the time it takes downloading.
+            InputStream stream = preloadPackageBits(pvcs);
             PackageBits bits = null;
-            bits = contentSourceManager.downloadPackageBits(subjectManager.getOverlord(), pvcs);
+            bits = preparePackageBits(subjectManager.getOverlord(),stream, pvcs);
         }catch(Exception e){
            return false;    
         }
@@ -2010,8 +2186,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                         }
                     } else {                                                                   
                         long length = (endByte - startByte) + 1;                       
-                        InputStream stream = blob.getBinaryStream(startByte, length);
-                        bytesRetrieved = StreamUtil.copy(stream, outputStream, false);                       
+                        //InputStream stream = blob.getBinaryStream(startByte, length);  // JDK 6 api
+                        InputStream stream = blob.getBinaryStream();
+                        bytesRetrieved = StreamUtil.copy(stream, outputStream, startByte , length);                       
                     }
                     log.debug("Retrieved and sent [" + bytesRetrieved + "] bytes for [" + packageDetailsKey + "]");
                     ps.close();

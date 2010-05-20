@@ -143,7 +143,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     private ResourceGroupManagerLocal resourceGroupManager;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleResourceDeploymentHistory addBundleResourceDeploymentHistory(Subject subject, int bundleDeploymentId,
         BundleResourceDeploymentHistory history) throws Exception {
 
@@ -159,7 +159,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return history;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleName: " + name);
@@ -200,7 +200,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
         int bundleDestinationId, String name, String description, Configuration configuration) throws Exception {
 
@@ -208,7 +208,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             configuration);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, int bundleDestinationId,
         String name, String description, Configuration configuration) throws Exception {
 
@@ -244,7 +244,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return deployment;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
         String deployDir, Integer groupId) throws Exception {
 
@@ -271,7 +271,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return dest;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleType createBundleType(Subject subject, String name, int resourceTypeId) throws Exception {
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleTypeName: " + name);
@@ -287,7 +287,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleType;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
         int bundleTypeId, String bundleVersionName, String bundleVersionDescription, String version, String recipe)
         throws Exception {
@@ -311,7 +311,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
         String version, String recipe) throws Exception {
         if (null == name || "".equals(name.trim())) {
@@ -380,7 +380,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {
 
         BundleServerPluginManager manager = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager();
@@ -390,7 +390,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
 
@@ -401,7 +401,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
 
@@ -563,7 +563,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return newVersion;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, InputStream fileStream) throws Exception {
 
@@ -618,14 +618,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleFile;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFileViaByteArray(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, byte[] fileBytes) throws Exception {
 
         return addBundleFile(subject, bundleVersionId, name, version, architecture, new ByteArrayInputStream(fileBytes));
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, String bundleFileUrl) throws Exception {
 
@@ -635,7 +635,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return addBundleFile(subject, bundleVersionId, name, version, architecture, url.openStream());
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
         int packageVersionId) throws Exception {
 
@@ -662,13 +662,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleFile;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeploymentId, boolean isCleanDeployment)
         throws Exception {
         return scheduleBundleDeploymentImpl(subject, bundleDeploymentId, isCleanDeployment, false);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment scheduleRevertBundleDeployment(Subject subject, int bundleDestinationId,
         String deploymentName, String deploymentDescription, boolean isCleanDeployment) throws Exception {
 
@@ -822,7 +822,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleScheduleRequest getScheduleRequest(Subject subject, int resourceDeploymentId,
         boolean isCleanDeployment, boolean isRevert) throws Exception {
 
@@ -886,7 +886,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId,
         int resourceId) throws Exception {
 
@@ -905,7 +905,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return resourceDeployment;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleResourceDeployment setBundleResourceDeploymentStatus(Subject subject, int resourceDeploymentId,
         BundleDeploymentStatus status) throws Exception {
 
@@ -956,7 +956,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     //  return groupDeployment;
     //}
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)
         throws Exception {
 
@@ -995,7 +995,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public HashMap<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception {
 
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
@@ -1125,7 +1125,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundle(Subject subject, int bundleId) throws Exception {
         Bundle bundle = this.entityManager.find(Bundle.class, bundleId);
         if (null == bundle) {
@@ -1148,7 +1148,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         repoManager.deleteRepo(subject, bundleRepo.getId());
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundleDeployment(Subject subject, int bundleDeploymentId) throws Exception {
         BundleDeployment doomed = this.entityManager.find(BundleDeployment.class, bundleDeploymentId);
         if (null == doomed) {
@@ -1161,7 +1161,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         entityManager.remove(doomed);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundleDestination(Subject subject, int bundleDestinationId) throws Exception {
         BundleDestination doomed = this.entityManager.find(BundleDestination.class, bundleDestinationId);
         if (null == doomed) {
@@ -1171,7 +1171,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         entityManager.remove(doomed);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundleVersion(Subject subject, int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
         BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
         if (null == bundleVersion) {

@@ -2936,8 +2936,18 @@
                         REFERENCES RHQ_TAGGING ( ID )
                     </statement>
                 </schema-directSQL>                
-           </schemaSpec>
+            </schemaSpec>
 
+            <schemaSpec version="2.86">
+                <schema-directSQL>
+                    <statement desc="Adding MANAGE_BUNDLE permission to overlord">
+                        INSERT INTO RHQ_PERMISSION VALUES(1, 12)
+                    </statement>
+                    <statement desc="Adding MANAGE_BUNDLE permission to superuser">
+                        INSERT INTO RHQ_PERMISSION VALUES(2, 12)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

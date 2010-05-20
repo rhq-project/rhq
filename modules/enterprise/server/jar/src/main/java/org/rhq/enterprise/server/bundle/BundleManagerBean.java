@@ -841,7 +841,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // make sure the deployment contains the info required by the schedule service
         BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
-        bdc.addFilterId(resourceDeployment.getId());
+        bdc.addFilterId(resourceDeployment.getBundleDeployment().getId());
         bdc.fetchBundleVersion(true);
         bdc.fetchConfiguration(true);
         bdc.fetchDestination(true);

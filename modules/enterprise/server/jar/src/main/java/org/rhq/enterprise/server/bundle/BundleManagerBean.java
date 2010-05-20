@@ -859,20 +859,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         deployment.getBundleVersion().setBundle(bundle);
         deployment.getDestination().setBundle(bundle);
 
-        //            BundleVersion bundleVersion = entityManager
-        //                .find(BundleVersion.class, deployment.getBundleVersion().getId());
-        //            Configuration config = entityManager.find(Configuration.class, deployment.getConfiguration().getId());
-        //            Bundle bundle = entityManager.find(Bundle.class, bundleVersion.getBundle().getId());
-        //            BundleType bundleType = entityManager.find(BundleType.class, bundle.getBundleType().getId());
-        //            ResourceType resourceType = entityManager.find(ResourceType.class, bundleType.getResourceType().getId());
-        //            bundleType.setResourceType(resourceType);
-        //            bundle.setBundleType(bundleType);
-        //            bundleVersion.setBundle(bundle);
-
-        //deployment.setBundleVersion(bundleVersion);
-        //deployment.setConfiguration(config);
         resourceDeployment.setBundleDeployment(deployment);
-        //resourceDeployment.setResource(platform);
 
         // now scrub the hibernate entity to make it a pojo suitable for sending to the client
         HibernateDetachUtility.nullOutUninitializedFields(resourceDeployment, SerializationType.SERIALIZATION);

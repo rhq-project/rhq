@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
+package org.rhq.enterprise.gui.coregui.client.bundle.revert;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -32,17 +32,17 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
  * @author Jay Shaughnessy
  *
  */
-public class GetDeploymentInfoStep implements WizardStep {
+public class GetRevertInfoStep implements WizardStep {
 
     private DynamicForm form;
-    private final BundleDeployWizard wizard;
+    private final BundleRevertWizard wizard;
 
-    public GetDeploymentInfoStep(BundleDeployWizard wizard) {
+    public GetRevertInfoStep(BundleRevertWizard wizard) {
         this.wizard = wizard;
     }
 
     public String getName() {
-        return "Provide Deployment Information";
+        return "Provide Revert Information";
     }
 
     public Canvas getCanvas() {
@@ -52,9 +52,11 @@ public class GetDeploymentInfoStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            final TextItem nameTextItem = new TextItem("name", "Deployment Name");
-            nameTextItem.setWidth(300);
+            final TextItem nameTextItem = new TextItem("name", "Revert Deployment Name");
             nameTextItem.setRequired(true);
+            nameTextItem.setWidth(300);
+            wizard.setDeploymentName("[Reverted]  " + this.wizard.getPreviousDeployment().getName());
+            nameTextItem.setValue(wizard.getDeploymentName());
             nameTextItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     Object value = event.getValue();
@@ -62,24 +64,31 @@ public class GetDeploymentInfoStep implements WizardStep {
                         value = "";
                     }
                     wizard.setSubtitle(value.toString());
-                    wizard.setNewDeploymentName(value.toString());
+                    wizard.setDeploymentName(value.toString());
                 }
             });
 
-            final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", "Deployment Description");
+            final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description",
+                "revert Deployment Description");
             descriptionTextAreaItem.setWidth(300);
+            String liveDesc = this.wizard.getLiveDeployment().getDescription();
+            liveDesc = (null == liveDesc) ? this.wizard.getLiveDeployment().getName() : liveDesc;
+            String prevDesc = this.wizard.getPreviousDeployment().getDescription();
+            prevDesc = (null == prevDesc) ? this.wizard.getPreviousDeployment().getName() : prevDesc;
+            wizard.setDeploymentDescription("[Reverted From]\n" + liveDesc + "\n\n[Reverted To]\n" + prevDesc);
+            descriptionTextAreaItem.setValue(wizard.getDeploymentDescription());
             descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     Object value = event.getValue();
                     if (value == null) {
                         value = "";
                     }
-                    wizard.setNewDeploymentDescription(value.toString());
+                    wizard.setDeploymentDescription(value.toString());
                 }
             });
 
             final CheckboxItem cleanDeploymentCBItem = new CheckboxItem("cleanDeployment",
-                "Clean Deployment? (wipe deploy directory on destination platform)");
+                "Clean Deployment? (wipe deploy directory prior to the revert deploy)");
             cleanDeploymentCBItem.setValue(wizard.isCleanDeployment());
             cleanDeploymentCBItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {

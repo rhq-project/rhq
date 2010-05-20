@@ -30,8 +30,8 @@ public class GetDeploymentConfigStep implements WizardStep {
     private final BundleDeployWizard wizard;
     private ConfigurationEditor editor;
 
-    public GetDeploymentConfigStep(BundleDeployWizard bundleCreationWizard) {
-        this.wizard = bundleCreationWizard;
+    public GetDeploymentConfigStep(BundleDeployWizard wizard) {
+        this.wizard = wizard;
     }
 
     public String getName() {

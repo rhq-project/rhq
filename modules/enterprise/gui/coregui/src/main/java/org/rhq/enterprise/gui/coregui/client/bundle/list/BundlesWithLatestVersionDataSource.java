@@ -65,7 +65,7 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
         BundleCriteria criteria = new BundleCriteria();
         criteria.setPageControl(getPageControl(request));
 
-        bundleService.findBundlesWithLastestVersionCompositesByCriteria(criteria,
+        bundleService.findBundlesWithLatestVersionCompositesByCriteria(criteria,
             new AsyncCallback<PageList<BundleWithLatestVersionComposite>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError("Failed to load bundle-with-latest-version data", caught);

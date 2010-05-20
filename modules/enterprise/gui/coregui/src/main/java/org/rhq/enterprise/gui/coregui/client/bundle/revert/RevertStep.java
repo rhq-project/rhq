@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
+package org.rhq.enterprise.gui.coregui.client.bundle.revert;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -38,14 +38,14 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Jay Shaughnessy
  *
  */
-public class DeployStep implements WizardStep {
+public class RevertStep implements WizardStep {
 
     private VLayout canvas;
-    private final BundleDeployWizard wizard;
+    private final BundleRevertWizard wizard;
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
-    public DeployStep(BundleDeployWizard wizard) {
+    public RevertStep(BundleRevertWizard wizard) {
         this.wizard = wizard;
     }
 
@@ -65,51 +65,29 @@ public class DeployStep implements WizardStep {
             deployingImage.setWidth(50);
             deployingImage.setHeight(15);
 
-            final Label deployingMessage = new Label("Deploying...");
+            final Label deployingMessage = new Label("Reverting...");
             deployingMessage.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 
             canvas.addMember(deployingImage);
             canvas.addMember(deployingMessage);
 
-            bundleServer.createBundleDeployment(wizard.getBundleVersion().getId(), wizard.getDestination()
-                .getId(), wizard.getNewDeploymentName(), wizard.getNewDeploymentDescription(), wizard
-                .getNewDeploymentConfig(), false, -1, false, //
+            bundleServer.scheduleRevertBundleDeployment(this.wizard.getDestination().getId(), this.wizard
+                .getDeploymentName(), this.wizard.getDeploymentDescription(), this.wizard.isCleanDeployment(), //
                 new AsyncCallback<BundleDeployment>() {
                     public void onSuccess(BundleDeployment result) {
                         deployingImage.setSrc("/images/status_complete.gif");
-                        deployingMessage.setText("Created Deployment...");
+                        deployingMessage.setText("Revert Deployment Scheduled!");
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Created deployment [" + result.getName() + "] description ["
-                                + result.getDescription() + "]", Severity.Info));
-                        wizard.setNewDeployment(result);
-
-                        bundleServer.scheduleBundleDeployment(wizard.getNewDeployment().getId(), wizard
-                            .isCleanDeployment(), //
-                            new AsyncCallback<BundleDeployment>() {
-                                public void onSuccess(BundleDeployment result) {
-                                    deployingImage.setSrc("/images/status_complete.gif");
-                                    deployingMessage.setText("Bundle Deployment Scheduled!");
-                                    CoreGUI.getMessageCenter().notify(
-                                        new Message("Scheduled bundle deployment [" + wizard.getNewDeploymentName()
-                                            + "] resource group [" + result.getDestination().getGroup() + "]",
-                                            Severity.Info));
-                                    wizard.setNewDeployment(result);
-                                }
-
-                                public void onFailure(Throwable caught) {
-                                    deployingImage.setSrc("/images/status_error.gif");
-                                    deployingMessage.setText("Failed to Schedule Deployment!");
-                                    CoreGUI.getErrorHandler().handleError(
-                                        "Failed to schedule deployment: " + caught.getMessage(), caught);
-                                }
-                            });
+                            new Message("Scheduled revert bundle deployment [" + wizard.getDeploymentName()
+                                + "] resource group [" + result.getDestination().getGroup() + "]", Severity.Info));
+                        wizard.setDeployment(result);
                     }
 
                     public void onFailure(Throwable caught) {
                         deployingImage.setSrc("/images/status_error.gif");
-                        deployingMessage.setText("Failed to create deployment!");
-                        CoreGUI.getErrorHandler().handleError("Failed to create deployment: " + caught.getMessage(),
-                            caught);
+                        deployingMessage.setText("Failed to Schedule Revert Deployment!");
+                        CoreGUI.getErrorHandler().handleError(
+                            "Failed to schedule revert deployment: " + caught.getMessage(), caught);
                     }
                 });
         }

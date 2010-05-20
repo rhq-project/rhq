@@ -51,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.revert.BundleRevertWizard;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
@@ -126,13 +127,21 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         deployments.setShowResizeBar(true);
         addMember(createDeploymentsTable());
 
-        IButton deployButton = new IButton("Deploy...");
+        IButton deployButton = new IButton("Deploy");
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 new BundleDeployWizard(destination).startBundleWizard();
             }
         });
         addMember(deployButton);
+
+        IButton revertButton = new IButton("Revert");
+        revertButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                new BundleRevertWizard(destination).startBundleWizard();
+            }
+        });
+        addMember(revertButton);
 
         detail = new Canvas();
         detail.setHeight("50%");

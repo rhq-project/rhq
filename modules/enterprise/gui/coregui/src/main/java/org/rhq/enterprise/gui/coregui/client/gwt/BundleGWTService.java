@@ -42,6 +42,8 @@ import org.rhq.core.domain.util.PageList;
 
 public interface BundleGWTService extends RemoteService {
 
+    BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
+
     BundleVersion createBundleVersionViaURL(String url) throws Exception;
 
     BundleVersion createBundleVersionViaRecipe(String recipe) throws Exception;
@@ -53,8 +55,6 @@ public interface BundleGWTService extends RemoteService {
     BundleDestination createBundleDestination(int bundleId, String name, String description, String deployDir,
         int groupId) throws Exception;
 
-    BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
-
     void deleteBundle(int bundleId) throws Exception;
 
     void deleteBundleDeployment(int bundleDeploymentId) throws Exception;
@@ -65,9 +65,17 @@ public interface BundleGWTService extends RemoteService {
 
     PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception;
 
+    PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria);
+
+    PageList<BundleDestination> findBundleDestinationsByCriteria(BundleDestinationCriteria criteria);
+
+    PageList<BundleFile> findBundleFilesByCriteria(BundleFileCriteria criteria);
+
+    PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(BundleResourceDeploymentCriteria criteria);
+
     PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) throws Exception;
 
-    PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(BundleCriteria criteria)
+    PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(BundleCriteria criteria)
         throws Exception;
 
     HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception;
@@ -76,11 +84,7 @@ public interface BundleGWTService extends RemoteService {
 
     BundleDeployment scheduleBundleDeployment(int bundleDeploymentId, boolean isCleanDeployment) throws Exception;
 
-    PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria);
+    BundleDeployment scheduleRevertBundleDeployment(int bundleDestinationId, String deploymentName,
+        String deploymentDescription, boolean isCleanDeployment) throws Exception;
 
-    PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(BundleResourceDeploymentCriteria criteria);
-
-    PageList<BundleDestination> findBundleDestinationsByCriteria(BundleDestinationCriteria criteria);
-
-    PageList<BundleFile> findBundleFilesByCriteria(BundleFileCriteria criteria);
 }

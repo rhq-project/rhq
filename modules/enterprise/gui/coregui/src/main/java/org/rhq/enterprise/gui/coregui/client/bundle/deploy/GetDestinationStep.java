@@ -65,6 +65,7 @@ public class GetDestinationStep implements WizardStep {
             this.valForm.setColWidths("50%", "*");
 
             final TextItem nameTextItem = new TextItem("name", "Destination Name");
+            nameTextItem.setWidth(300);
             nameTextItem.setRequired(true);
             nameTextItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -78,6 +79,7 @@ public class GetDestinationStep implements WizardStep {
             });
 
             final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", "Destination Description");
+            descriptionTextAreaItem.setWidth(300);
             descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     Object value = event.getValue();
@@ -90,6 +92,7 @@ public class GetDestinationStep implements WizardStep {
 
             final TextItem deployDirTextItem = new TextItem("deployDir",
                 "Root Deployment Directory (on destination platforms)");
+            deployDirTextItem.setWidth(300);
             deployDirTextItem.setRequired(true);
             deployDirTextItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -102,6 +105,7 @@ public class GetDestinationStep implements WizardStep {
             });
 
             this.selector = new SinglePlatformResourceGroupSelector("group", "Resource Group");
+            this.selector.setWidth(300);
             this.selector.setRequired(true);
             Validator validator = new IsIntegerValidator();
             validator.setErrorMessage("You must select a valid resource group from the drop down");
@@ -131,7 +135,7 @@ public class GetDestinationStep implements WizardStep {
             this.dest.getDeployDir(), selectedGroup, //
             new AsyncCallback<BundleDestination>() {
                 public void onSuccess(BundleDestination result) {
-                    wizard.setBundleDestination(result);
+                    wizard.setDestination(result);
                     wizard.setNewDestination(true);
                     CoreGUI.getMessageCenter().notify(
                         new Message("Created destination [" + result.getName() + "] description ["

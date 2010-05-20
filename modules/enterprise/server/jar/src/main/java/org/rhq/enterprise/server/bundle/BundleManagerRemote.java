@@ -343,6 +343,10 @@ public interface BundleManagerRemote {
      * TODO: Add the scheduling capability, currently it's Immediate. 
      * <br/>
      * @param subject user that must have proper permissions
+     * @param deploymentName a name for this revert deployment. If null defaults to the name of the previous
+     *        deployment.
+     * @param deploymentDescription an optional longer description describing this deployment. If null defaults
+     *        to the description of the previous deployment. 
      * @param isCleanDeployment if true perform a wipe of the deploy directory prior to the revert deployment. Backed up
      *                        files will still be applied. If false perform as an upgrade to the existing deployment.
      * @return the BundleDeployment record, updated with status and (resource) deployments. 
@@ -351,7 +355,9 @@ public interface BundleManagerRemote {
     @WebMethod
     BundleDeployment scheduleRevertBundleDeployment( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "bundleDestinationId") int bundleDestinationId, //        
+        @WebParam(name = "bundleDestinationId") int bundleDestinationId, //
+        @WebParam(name = "deploymentName") String deploymentName, //
+        @WebParam(name = "deploymentDescription") String deploymentDescription, //        
         @WebParam(name = "isCleanDeployment") boolean isCleanDeployment) throws Exception;
 
 }

@@ -32,7 +32,7 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     // the things we build up in the wizard
     private Integer bundleId;
-    private BundleDestination bundleDestination;
+    private BundleDestination destination;
     private boolean isNewDestination = false;
     private BundleVersion bundleVersion;
     private boolean initialDeployment = false;
@@ -109,12 +109,12 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
         this.initialDeployment = initialDeployment;
     }
 
-    public BundleDestination getBundleDestination() {
-        return bundleDestination;
+    public BundleDestination getDestination() {
+        return destination;
     }
 
-    public void setBundleDestination(BundleDestination bundleDestination) {
-        this.bundleDestination = bundleDestination;
+    public void setDestination(BundleDestination destination) {
+        this.destination = destination;
     }
 
     public Boolean isDeployNow() {

@@ -199,6 +199,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundle;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
+        int bundleDestinationId, String name, String description, Configuration configuration) throws Exception {
+
+        return bundleManager.createBundleDeployment(subject, bundleVersionId, bundleDestinationId, name, description,
+            configuration);
+    }
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, int bundleDestinationId,
         String name, String description, Configuration configuration) throws Exception {
@@ -661,7 +670,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public BundleDeployment scheduleRevertBundleDeployment(Subject subject, int bundleDestinationId,
-        boolean isCleanDeployment) throws Exception {
+        String deploymentName, String deploymentDescription, boolean isCleanDeployment) throws Exception {
 
         BundleDeploymentCriteria c = new BundleDeploymentCriteria();
         c.addFilterDestinationId(bundleDestinationId);
@@ -673,13 +682,34 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 + "]");
         }
         BundleDeployment liveDeployment = liveDeployments.get(0);
-        if (null == liveDeployment.getReplacedBundleDeployment()) {
+        BundleDeployment prevDeployment = liveDeployment.getReplacedBundleDeployment();
+        if (null == prevDeployment) {
+            throw new IllegalArgumentException(
+                "Live deployment ["
+                    + liveDeployment
+                    + "] can not be reverted. The Live deployment is either an initial deployment or a reverted deployment for destinationId ["
+                    + bundleDestinationId + "]");
+        }
+        prevDeployment = entityManager.find(BundleDeployment.class, prevDeployment.getId());
+        if (null == prevDeployment) {
             throw new IllegalArgumentException("Live deployment [" + liveDeployment
                 + "] can not be reverted. There is no prior deployment for destinationId [" + bundleDestinationId + "]");
         }
 
-        return scheduleBundleDeploymentImpl(subject, liveDeployment.getReplacedBundleDeployment().getId(),
-            isCleanDeployment, true);
+        // A revert is done by deploying a new deployment that mirrors "prevDeployment". It uses the same
+        // bundleVersion, destination and config as prevDeployment.  It can have a new name and new desc, and
+        // may opt to clean the deploy dir.  It must be a new deployment so that all status/auditing/history starts
+        // fresh and can be tracked. The key difference in the schedule request is that we set isRevert=true,
+        // tell the bundle handler that we are in fact reverting from the current live deployment. The
+        // deployment creation is done in a new transaction so it can then be scheduled.
+        String name = (null != deploymentName) ? deploymentName : prevDeployment.getName();
+        String desc = (null != deploymentDescription) ? deploymentDescription : prevDeployment.getDescription();
+        Configuration config = (null == prevDeployment.getConfiguration()) ? null : prevDeployment.getConfiguration()
+            .deepCopy(false);
+        BundleDeployment revertDeployment = bundleManager.createBundleDeploymentInNewTrans(subject, prevDeployment
+            .getBundleVersion().getId(), bundleDestinationId, name, desc, config);
+
+        return scheduleBundleDeploymentImpl(subject, revertDeployment.getId(), isCleanDeployment, true);
     }
 
     private BundleDeployment scheduleBundleDeploymentImpl(Subject subject, int bundleDeploymentId,
@@ -717,7 +747,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             for (BundleDeployment d : currentDeployments) {
                 if (d.isLive()) {
                     d.setLive(false);
-                    newDeployment.setReplacedBundleDeployment(d);
+                    // you can not revert a revert, it does not logically replace anything, it is
+                    if (!isRevert) {
+                        newDeployment.setReplacedBundleDeployment(d);
+                    }
                     break;
                 }
             }

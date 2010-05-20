@@ -37,8 +37,8 @@ public class GetDeploymentOptionsStep implements WizardStep {
     private DynamicForm form;
     private RadioGroupItem rgDeployTimeItem;
 
-    public GetDeploymentOptionsStep(BundleDeployWizard bundleCreationWizard) {
-        this.wizard = bundleCreationWizard;
+    public GetDeploymentOptionsStep(BundleDeployWizard wizard) {
+        this.wizard = wizard;
     }
 
     public String getName() {

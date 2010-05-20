@@ -28,17 +28,14 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypePluginTreeDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceSelector extends AbstractSelector {
-
+public class ResourceSelector extends AbstractSelector<Resource> {
 
     private Integer requireTypeId;
 
@@ -54,7 +51,6 @@ public class ResourceSelector extends AbstractSelector {
         this.requireTypeId = requireTypeId;
         markForRedraw();
     }
-
 
     protected DynamicForm getAvailableFilterForm() {
         DynamicForm availableFilterForm = new DynamicForm();
@@ -84,7 +80,7 @@ public class ResourceSelector extends AbstractSelector {
         return availableFilterForm;
     }
 
-    protected RPCDataSource<?> getDataSource() {
+    protected RPCDataSource<Resource> getDataSource() {
         return new SelectedResourceDataSource();
     }
 

@@ -22,8 +22,11 @@
  */
 package org.rhq.core.pc.content;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -45,15 +48,15 @@ import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
+import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
+import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
@@ -72,6 +75,7 @@ import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.util.MessageDigestGenerator;
 
 public class ContentManager extends AgentService implements ContainerService, ContentAgentService, ContentServices {
 
@@ -264,11 +268,11 @@ public class ContentManager extends AgentService implements ContainerService, Co
         OutputStream outputStream, boolean resourceExists) {
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
         ContentServerService serverService = getContentServerService();
-        
+
         //we need to load the content to server before we will start download the content
         // it is because of timeout on remoteStreams
         serverService.preLoadRemoteContent(contextImpl.getResourceId(), packageDetailsKey);
-        
+
         outputStream = remoteOutputStream(outputStream);
         long count = 0;
         if (resourceExists) {
@@ -612,6 +616,8 @@ public class ContentManager extends AgentService implements ContainerService, Co
             if (log.isDebugEnabled()) {
                 log.debug("Found [" + updatedPackageSet.size() + "] new packages for resource id [" + resourceId + "]");
             }
+            //from set of new packages discovered, iterate through pkg details to get information for pkg version mapping.
+            updatedPackageSet = updateResourcePackageDetails(updatedPackageSet);
         }
 
         // Add new content (yes, existingInstalledPackagesSet is same as details, but use the container's reference)
@@ -639,6 +645,52 @@ public class ContentManager extends AgentService implements ContainerService, Co
         }
 
         return report;
+    }
+
+    /** Goes through newly discovered packages and calculates SHA256 for the packages discovered, updating
+     *  ResourcePackageDetails in the process.
+     *
+     * @param discoveredPackageSet
+     * @return updated discoveredPackageSet
+     */
+    private Set<ResourcePackageDetails> updateResourcePackageDetails(Set<ResourcePackageDetails> discoveredPackageSet) {
+        if (discoveredPackageSet != null && discoveredPackageSet.size() > 0) {
+            //iterate through pkg details list
+            ResourcePackageDetails list[] = new ResourcePackageDetails[discoveredPackageSet.size()];
+            ResourcePackageDetails[] recentlyDiscoveredArray = discoveredPackageSet.toArray(list);
+
+            for (ResourcePackageDetails detail : recentlyDiscoveredArray) {
+                try {
+                    //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
+                    if ((detail.getFileSize() == null) || (detail.getFileSize() == 0)) {
+                        //when deployed exploded then don't calculate digest but update string with message to that effect.
+                        //TODO: is this ok? Once exploded and run at all ... contents could be different.
+                        detail.setSHA256("(deployed exploded. no message digest possible)");
+                    }
+                    //and for each detail where size != null or non empty ... then an un-exploded war/ear
+                    if ((detail.getFileSize() != null) || (detail.getFileSize() > 0)) {
+                        File localCopy = null;
+                        if ((detail.getLocation() != null) && (!detail.getLocation().isEmpty())) {
+                            localCopy = new File(detail.getLocation());
+                            //calculate md5
+                            String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
+                                .calcDigestString(localCopy);
+                            //and attach it to the report returned to be picked up on server side in merge
+                            detail.setSHA256(sha256);
+                        }
+                    }
+                } catch (IOException iex) {
+                    //log exception but move on, discovery happens often. No reason to hold up anything.
+                    if (log.isDebugEnabled()) {
+                        log.debug("Problem calculating digest of package [" + detail.getName() + "]."
+                            + iex.getMessage());
+                    }
+                }
+            }
+            discoveredPackageSet.clear();
+            discoveredPackageSet.addAll(Arrays.asList(recentlyDiscoveredArray));
+        }
+        return discoveredPackageSet;
     }
 
     /**
@@ -704,4 +756,4 @@ public class ContentManager extends AgentService implements ContainerService, Co
             }
         }
     }
-} 
+}

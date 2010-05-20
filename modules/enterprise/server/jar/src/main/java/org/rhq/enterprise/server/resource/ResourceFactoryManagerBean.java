@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -483,6 +484,14 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     public void createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
         Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
         Configuration deploymentTimeConfiguration, InputStream packageBitStream) {
+        createResource(user, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
+            packageVersionNumber, architectureId, deploymentTimeConfiguration, packageBitStream, null);
+    }
+
+    public void createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
+        Configuration deploymentTimeConfiguration, InputStream packageBitStream,
+        Map<String, String> packageUploadDetails) {
         log.info("Received call to create package backed resource under parent [" + parentResourceId + "]");
 
         Resource resource = entityManager.find(Resource.class, parentResourceId);
@@ -510,9 +519,15 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         // default to no required architecture
         architectureId = (null != architectureId) ? architectureId : contentManager.getNoArchitecture().getId();
 
-        // Create package and package version        
-        PackageVersion packageVersion = contentManager.createPackageVersion(packageName, newPackageType.getId(),
-            packageVersionNumber, architectureId, packageBitStream);
+        // Create/locate package and package version
+        PackageVersion packageVersion = null;
+        if (packageUploadDetails == null) {
+            packageVersion = contentManager.createPackageVersion(packageName, newPackageType.getId(),
+                packageVersionNumber, architectureId, packageBitStream);
+        } else {
+            packageVersion = contentManager.getUploadedPackageVersion(packageName, newPackageType.getId(),
+                packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, newResourceTypeId);
+        }
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,

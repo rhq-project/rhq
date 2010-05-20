@@ -34,8 +34,8 @@ public class SelectBundleStep implements WizardStep {
 
     private AbstractSelector<Bundle> selector;
 
-    public SelectBundleStep(BundleDeployWizard bundleCreationWizard) {
-        this.wizard = bundleCreationWizard;
+    public SelectBundleStep(BundleDeployWizard wizard) {
+        this.wizard = wizard;
     }
 
     public String getName() {

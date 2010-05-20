@@ -45,8 +45,8 @@ public class DeployStep implements WizardStep {
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
-    public DeployStep(BundleDeployWizard bundleCreationWizard) {
-        this.wizard = bundleCreationWizard;
+    public DeployStep(BundleDeployWizard wizard) {
+        this.wizard = wizard;
     }
 
     public String getName() {
@@ -71,7 +71,7 @@ public class DeployStep implements WizardStep {
             canvas.addMember(deployingImage);
             canvas.addMember(deployingMessage);
 
-            bundleServer.createBundleDeployment(wizard.getBundleVersion().getId(), wizard.getBundleDestination()
+            bundleServer.createBundleDeployment(wizard.getBundleVersion().getId(), wizard.getDestination()
                 .getId(), wizard.getNewDeploymentName(), wizard.getNewDeploymentDescription(), wizard
                 .getNewDeploymentConfig(), false, -1, false, //
                 new AsyncCallback<BundleDeployment>() {

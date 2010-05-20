@@ -22,11 +22,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.destination;
 
+import java.util.HashMap;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 /**
@@ -61,7 +65,7 @@ public class BundleDestinationListView extends VLayout {
 
         table.setDataSource(new BundleDestinationDataSource());
 
-        table.getListGrid().getField("id").setWidth(25);
+        table.getListGrid().getField("id").setWidth(45);
         table.getListGrid().getField("name").setWidth("20%");
         table.getListGrid().getField("name").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -70,11 +74,23 @@ public class BundleDestinationListView extends VLayout {
         });
 
 
-        table.getListGrid().getField("description").setWidth("25%");
+        table.getListGrid().getField("description").setWidth("15%");
         //table.getListGrid().getField("bundleName").setWidth("20%");
         table.getListGrid().hideField("bundleName");
-        table.getListGrid().getField("groupName").setWidth("20%");
-        table.getListGrid().getField("deployDir").setWidth("20%");
+        table.getListGrid().getField("groupName").setWidth("15%");
+        table.getListGrid().getField("deployDir").setWidth("15%");
+
+        ListGridField status = table.getListGrid().getField("latestDeploymentStatus");
+        HashMap<String, String> statusIcons = new HashMap<String, String>();
+        statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
+        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
+        status.setValueIcons(statusIcons);
+        status.setValueIconHeight(11);
+        status.setWidth(80);
+
 
 
         addMember(table);

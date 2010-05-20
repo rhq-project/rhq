@@ -25,11 +25,13 @@ import javax.ejb.Local;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.configuration.Configuration;
 
 /**
  * Local interface to the manager responsible for creating and managing bundles.
@@ -119,6 +121,14 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      */
     BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId, int resourceId)
         throws Exception;
+
+    /**
+     * Equivalent to a all to {@link BundleManagerRemote#createBundleDeployment(Subject, int, int, String, String, Configuration)}
+     * with different transaction semantics. Useful when an slsb method needs to both create a deployment and schedules
+     * it prior to returning to an external caller.
+     */
+    public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
+        int bundleDestinationId, String name, String description, Configuration configuration) throws Exception;
 
     // added here because the same method in @Remote was commented out to bypass a WSProvide issue
     HashMap<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception;

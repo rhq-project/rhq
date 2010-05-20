@@ -155,12 +155,12 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         }
     }
 
-    public PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(
+    public PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(
         BundleCriteria criteria) throws Exception {
         try {
             PageList<BundleWithLatestVersionComposite> results;
             results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(getSessionSubject(), criteria);
-            return SerialUtility.prepare(results, "findBundlesWithLastestVersionCompositesByCriteria");
+            return SerialUtility.prepare(results, "findBundlesWithLatestVersionCompositesByCriteria");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
@@ -191,6 +191,17 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         try {
             BundleDeployment result = bundleManager.scheduleBundleDeployment(getSessionSubject(), bundleDeploymentId,
                 isCleanDeployment);
+            return SerialUtility.prepare(result, "scheduleBundleDeployment");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public BundleDeployment scheduleRevertBundleDeployment(int bundleDeploymentId, String deploymentName,
+        String deploymentDescription, boolean isCleanDeployment) throws Exception {
+        try {
+            BundleDeployment result = bundleManager.scheduleRevertBundleDeployment(getSessionSubject(),
+                bundleDeploymentId, deploymentName, deploymentDescription, isCleanDeployment);
             return SerialUtility.prepare(result, "scheduleBundleDeployment");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));

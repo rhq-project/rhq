@@ -69,7 +69,7 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
         this.setInitialDeployment(false);
         this.setBundleId(destination.getBundle().getId());
-        this.setBundleDestination(destination);
+        this.setDestination(destination);
 
         List<WizardStep> steps = init();
         steps.add(new GetDeploymentInfoStep(this));
@@ -142,10 +142,10 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
     }
 
     private void deleteNewDestination() {
-        if (this.isNewDestination() && (null != this.getBundleDestination())) {
+        if (this.isNewDestination() && (null != this.getDestination())) {
             BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
-            bundleServer.deleteBundleDestination(this.getBundleDestination().getId(), //
+            bundleServer.deleteBundleDestination(this.getDestination().getId(), //
                 new AsyncCallback<Void>() {
                     public void onSuccess(Void voidReturn) {
                     }

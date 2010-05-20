@@ -48,6 +48,9 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
     /** property that should always be available to scripts - it's the ID of the bundle deployment */
     private static final String DEPLOY_ID = "rhq.deploy.id";
 
+    /** property that should always be available to scripts - it's the name of the bundle deployment */
+    public static final String DEPLOY_NAME = "rhq.deploy.name";
+
     private final Log log = LogFactory.getLog(FileTemplateBundlePluginServerComponent.class);
 
     private ResourceContext resourceContext;
@@ -100,6 +103,7 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
             recipeContext.setReplacementVariableValues(bundleDeployment.getConfiguration());
             recipeContext.addReplacementVariableValue(DEPLOY_DIR, bundleDeployment.getDestination().getDeployDir());
             recipeContext.addReplacementVariableValue(DEPLOY_ID, Integer.toString(bundleDeployment.getId()));
+            recipeContext.addReplacementVariableValue(DEPLOY_NAME, bundleDeployment.getName());
 
             parser.setReplaceReplacementVariables(true);
 

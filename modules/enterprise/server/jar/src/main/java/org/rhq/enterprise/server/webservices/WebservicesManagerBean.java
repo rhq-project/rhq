@@ -421,8 +421,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public BundleDeployment scheduleRevertBundleDeployment(Subject subject, int bundleDestinationId,
-        boolean isCleanDeployment) throws Exception {
-        return bundleManager.scheduleRevertBundleDeployment(subject, bundleDestinationId, isCleanDeployment);
+        String deploymentName, String deploymentDescription, boolean isCleanDeployment) throws Exception {
+        return bundleManager.scheduleRevertBundleDeployment(subject, bundleDestinationId, deploymentName,
+            deploymentDescription, isCleanDeployment);
     }
 
     //BUNDLEMANAGER: END ----------------------------------  

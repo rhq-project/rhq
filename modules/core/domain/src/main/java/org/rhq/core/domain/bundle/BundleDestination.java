@@ -223,7 +223,7 @@ public class BundleDestination implements Serializable {
 
     @Override
     public String toString() {
-        return "BundleDeployment[id=" + id + ", bundle=" + bundle.getName() + ", group=" + group.getName() + ", name="
+        return "BundleDestination[id=" + id + ", bundle=" + bundle.getName() + ", group=" + group.getName() + ", name="
             + name + "]";
     }
 

@@ -37,10 +37,8 @@ public class GetDeploymentInfoStep implements WizardStep {
     private DynamicForm form;
     private final BundleDeployWizard wizard;
 
-    // private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-
-    public GetDeploymentInfoStep(BundleDeployWizard bundleDeployWizard) {
-        this.wizard = bundleDeployWizard;
+    public GetDeploymentInfoStep(BundleDeployWizard wizard) {
+        this.wizard = wizard;
     }
 
     public String getName() {
@@ -55,6 +53,7 @@ public class GetDeploymentInfoStep implements WizardStep {
             form.setColWidths("50%", "*");
 
             final TextItem nameTextItem = new TextItem("name", "Deployment Name");
+            nameTextItem.setWidth(300);
             nameTextItem.setRequired(true);
             nameTextItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -68,6 +67,7 @@ public class GetDeploymentInfoStep implements WizardStep {
             });
 
             final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", "Deployment Description");
+            descriptionTextAreaItem.setWidth(300);
             descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     Object value = event.getValue();

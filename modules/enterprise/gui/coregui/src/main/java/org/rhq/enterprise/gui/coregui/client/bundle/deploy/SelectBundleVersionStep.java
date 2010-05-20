@@ -56,8 +56,8 @@ public class SelectBundleVersionStep implements WizardStep {
     private BundleVersion latestVersion;
     private BundleVersion liveVersion;
 
-    public SelectBundleVersionStep(BundleDeployWizard bundleDeployWizard) {
-        this.wizard = bundleDeployWizard;
+    public SelectBundleVersionStep(BundleDeployWizard wizard) {
+        this.wizard = wizard;
     }
 
     public String getName() {
@@ -134,7 +134,7 @@ public class SelectBundleVersionStep implements WizardStep {
                     }
 
                     BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
-                    criteria.addFilterDestinationId(wizard.getBundleDestination().getId());
+                    criteria.addFilterDestinationId(wizard.getDestination().getId());
                     criteria.addFilterIsLive(true);
                     criteria.fetchBundleVersion(true);
                     criteria.fetchConfiguration(true);

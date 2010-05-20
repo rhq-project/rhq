@@ -23,13 +23,26 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.smartgwt.client.types.ExpansionMode;
+import com.smartgwt.client.types.TitleOrientation;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.AutoFitTextAreaItem;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 
@@ -59,18 +72,82 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
         ListGridField message = new ListGridField("info", "Info");
         ListGridField status = new ListGridField("status", "status");
 
+        HashMap<String, String> icons = new HashMap<String, String>();
+        icons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
+        icons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
+        icons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
+        icons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
+        icons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
+        status.setValueIcons(icons);
+        status.setValueIconHeight(11);
+        status.setWidth(80);
+
         grid.setCanExpandRecords(true);
         grid.setExpansionMode(ExpansionMode.DETAIL_FIELD);
         grid.setDetailField("message");
 
 
-        grid.setFields(action, message, status);
+        ListGridField details = new ListGridField("attachment", "Details");
+        details.setWidth(50);
+        details.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return "<img src=\"images/subsystems/bundle/Details_11.png\"/>";
+            }
+        });
+        details.addRecordClickHandler(new RecordClickHandler() {
+            public void onRecordClick(RecordClickEvent recordClickEvent) {
+                showDetails((ListGridRecord) recordClickEvent.getRecord());
+            }
+        });
 
+        grid.setFields(action, message, status, details);
         grid.setData(buildRecords());
-
         addMember(grid);
 
     }
+
+
+    private void showDetails(ListGridRecord record) {
+
+        DynamicForm form = new DynamicForm();
+
+        StaticTextItem action = new StaticTextItem("action", "Action");
+        StaticTextItem info = new StaticTextItem("info", "Info");
+        StaticTextItem category = new StaticTextItem("category", "Category");
+        StaticTextItem message = new StaticTextItem("message", "Message");
+
+
+        AutoFitTextAreaItem detail = new AutoFitTextAreaItem("attachement", "Detail");
+        detail.setTitleOrientation(TitleOrientation.TOP);
+        detail.setColSpan(2);
+
+
+        ButtonItem close = new ButtonItem("close", "Close");
+
+
+        form.setItems(action, info, category, message, detail, close);
+
+        form.editRecord(record);
+
+
+        final Window window = new Window();
+        window.setTitle("Install Details");
+        window.setWidth(800);
+        window.setHeight(600);
+        window.setIsModal(true);
+        window.setShowModalMask(true);
+        window.setCanDragResize(true);
+        window.centerInPage();
+        window.addItem(form);
+        window.show();
+
+        close.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                window.destroy();
+            }
+        });
+    }
+
 
     public ListGridRecord[] buildRecords() {
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();

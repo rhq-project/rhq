@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
+
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
 
@@ -25,6 +26,10 @@ import com.smartgwt.client.widgets.Label;
  * @author Greg Hinkle
  */
 public class HeaderLabel extends HTMLFlow {
+
+    public HeaderLabel(String icon, String contents) {
+        this("<img src=\"" + getImgURL(icon) + "\"/> " + contents);
+    }
 
     public HeaderLabel(String contents) {
         super(contents);

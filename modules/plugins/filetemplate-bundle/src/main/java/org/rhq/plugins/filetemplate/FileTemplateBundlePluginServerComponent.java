@@ -86,6 +86,9 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
             if (request.isCleanDeployment()) {
                 File deployDir = new File(bundleDeployment.getDestination().getDeployDir());
                 if (deployDir.exists()) {
+                    bundleManagerProvider.auditDeployment(resourceDeployment, "Cleaning Deployment", deployDir
+                        .getAbsolutePath(), null, null, "The existing deployment found at ["
+                        + deployDir.getAbsolutePath() + "] will be removed.", null);
                     FileUtils.purge(deployDir, true);
                 }
             }

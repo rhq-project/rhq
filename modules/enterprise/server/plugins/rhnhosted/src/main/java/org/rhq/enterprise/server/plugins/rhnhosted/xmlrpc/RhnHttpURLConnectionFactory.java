@@ -32,7 +32,7 @@ public class RhnHttpURLConnectionFactory {
             {
                 e.printStackTrace();
                 log.error(e);
-                throw new IOException(e);
+                throw new IOException(e.getMessage());
             }
             log.debug("SSLSocketFactory has been set with a custom version using certPath: " + sslCertPathIn);
         }

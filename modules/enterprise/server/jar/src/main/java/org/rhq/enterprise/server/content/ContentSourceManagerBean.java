@@ -856,7 +856,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                             //for oracle and Connection.createBlob is not working on postgres.
                             //This blob will be not empty because we saved there a bytes from String("a").
                             Blob blb = rs.getBlob(1);
-                         
+
                             StreamUtil.copy(bitsStream, blb.setBinaryStream(1), true);
                             ps2 = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET bits = ? where id = ?");
                             ps2.setBlob(1, blb);
@@ -910,7 +910,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                             + "] on content source [" + contentSourceId + "]");
                     }
                 }
-                
+
                 if (ps2 != null) {
                     try {
                         ps2.close();
@@ -1993,7 +1993,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return outputPackageVersionBitsRangeHelper(resourceId, packageDetailsKey, outputStream, startByte, endByte,
             packageVersion.getId());
     }
-    
+
     public boolean downloadPackageBits(int resourceId, PackageDetailsKey packageDetailsKey){
         Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID);
         query.setParameter("packageName", packageDetailsKey.getName());
@@ -2002,10 +2002,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         query.setParameter("version", packageDetailsKey.getVersion());
         query.setParameter("resourceId", resourceId);
         int packageVersionId = ((Integer) query.getSingleResult()).intValue();
-        
+
         Query queryA = entityManager.createNamedQuery(PackageBits.QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID);
         queryA.setParameter("id", packageVersionId);
-        
+
         LoadedPackageBitsComposite composite = (LoadedPackageBitsComposite) queryA.getSingleResult();
 
         boolean packageBitsAreAvailable = composite.isPackageBitsAvailable();
@@ -2066,7 +2066,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             PackageBits bits = null;
             bits = preparePackageBits(subjectManager.getOverlord(),stream, pvcs);
         }catch(Exception e){
-           return false;    
+           return false;
         }
         }
         return true;
@@ -2169,16 +2169,16 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 bitsStream = adapterMgr.loadPackageBits(contentSourceId, pvcs.getLocation());
             } else {
                 if (composite.isPackageBitsInDatabase()) {
-                    // this is  DownloadMode.DATABASE - put the bits in the database                                     
+                    // this is  DownloadMode.DATABASE - put the bits in the database
 
                     conn = dataSource.getConnection();
                     ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ?");
-                    
+
                     ps.setInt(1, composite.getPackageBitsId());
                     results = ps.executeQuery();
                     results.next();
                     Blob blob = results.getBlob(1);
-                    
+
                     long bytesRetrieved=0;
                     if (endByte < 0) {
                         if (startByte == 0) {
@@ -2194,7 +2194,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     ps.close();
                     conn.close();
                     return bytesRetrieved;
-                    
+
                 } else {
                     // this is  DownloadMode.FILESYSTEM - put the bits on the filesystem
                     File bitsFile = getPackageBitsLocalFileAndCreateParentDir(composite.getPackageVersionId(),
@@ -2429,4 +2429,4 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return numBytes;
     }
 }
- 
+

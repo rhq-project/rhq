@@ -35,7 +35,7 @@ import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * A visitor object that will perform some in-memory work for each zip entry it visits.
- * 
+ *
  * @author John Mazzitelli
  */
 public class InMemoryZipFileVisitor implements ZipUtil.ZipEntryVisitor {
@@ -53,7 +53,7 @@ public class InMemoryZipFileVisitor implements ZipUtil.ZipEntryVisitor {
      * a null pattern or pass in a null template engine. This will, in effect,
      * have this visitor collect all zip file entry names and calculate their hashcodes based on
      * all content within the zip file.
-     * 
+     *
      * @param filesToRealizeRegex pattern of files that are to be realized prior to hashcodes being computed
      * @param templateEngine the template engine that replaces replacement variables in files to be realized
      */
@@ -75,7 +75,6 @@ public class InMemoryZipFileVisitor implements ZipUtil.ZipEntryVisitor {
         return fileHashcodeMap;
     }
 
-    @Override
     public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
 
         if (entry.isDirectory()) {
@@ -86,7 +85,7 @@ public class InMemoryZipFileVisitor implements ZipUtil.ZipEntryVisitor {
         String hashcode;
 
         if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(pathname).matches()) {
-            // this entry needs to be realized, do it now, then calc the hashcode 
+            // this entry needs to be realized, do it now, then calc the hashcode
             // note: tempateEngine will never be null if we got here
             int contentSize = (int) entry.getSize();
             ByteArrayOutputStream baos = new ByteArrayOutputStream((contentSize > 0) ? contentSize : 32768);

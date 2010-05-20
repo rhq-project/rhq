@@ -19,14 +19,17 @@
 package org.rhq.enterprise.gui.admin.role;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.ejb.EJBException;
 import javax.servlet.http.HttpServletRequest;
@@ -66,14 +69,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class AddLdapGroupsFormPrepareAction extends TilesAction {
     final String LDAP_GROUP_CACHE = "ldapGroupCache";
 
-    RoleManagerLocal roleManager = LookupUtil.getRoleManager();
     LdapGroupManagerLocal ldapManager = LookupUtil.getLdapGroupManager();
 
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         Log log = LogFactory.getLog(AddLdapGroupsFormPrepareAction.class.getName());
 
-        Subject whoami = RequestUtils.getSubject(request);
         AddLdapGroupsForm addForm = (AddLdapGroupsForm) form;
         Integer roleId = addForm.getR();
 
@@ -95,7 +96,7 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
         PageControl pca = WebUtility.getPageControl(request, "a");
         PageControl pcp = WebUtility.getPageControl(request, "p");
 
-        //BZ-580127 Refactor so that all lists are initialized regardless of ldap server 
+        //BZ-580127 Refactor so that all lists are initialized regardless of ldap server
         // availability or state of filter params
         List<String> pendingGroupIds = new ArrayList<String>();
         Set<Map<String, String>> allGroups = new HashSet<Map<String, String>>();
@@ -247,7 +248,7 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
     /** Method duplicates pageControl/pagination mechanism for LdapGroup data. This data has not been moved into the
      *  database yet so the PageList and PageControl mechanism does not yet work properly.
      *  There are only two columns so the pagination code uses Maps and Sorted Lists for efficient sorting.
-     *  
+     *
      * @param pagedGroupData Pagelist of Maps to be populated.
      * @param fullGroupData Full list of Maps available for paging
      * @param pc the pagination control from the web session reflecting user selections.
@@ -306,15 +307,21 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
 
         //detect sort order
         boolean descending = false;
-        if (sortOrder.DESC == sortOrder) {
+        if (PageOrdering.DESC == sortOrder) {
             descending = true;
         }
         //use sort column to determine which list to use
         if (sortColumn.equalsIgnoreCase("lg.name")) {
             int i = 0;
-            NavigableSet<String> keyList = groupNames.navigableKeySet();
+            List<String> keyList;
+
             if (descending) {
-                keyList = groupNames.descendingKeySet();
+                keyList = new ArrayList<String>(groupNames.keySet());
+                Collections.reverse(keyList);
+            }
+            else {
+                keyList = new ArrayList<String>(groupNames.keySet());
+                Collections.sort(keyList);
             }
             for (String key : keyList) {
                 if ((i >= start) && (i < end)) {
@@ -324,9 +331,14 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
             }
         } else {
             int i = 0;
-            NavigableSet<String> keyList = groupDescriptions.navigableKeySet();
+            List<String> keyList;
             if (descending) {
-                keyList = groupDescriptions.descendingKeySet();
+                keyList = new ArrayList<String>(groupDescriptions.keySet());
+                Collections.reverse(keyList);
+            }
+            else {
+                keyList = new ArrayList<String>( groupDescriptions.keySet());
+                Collections.sort(keyList);
             }
             for (String key : keyList) {
                 if ((i >= start) && (i < end)) {

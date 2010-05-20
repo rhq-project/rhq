@@ -67,7 +67,7 @@ public class BundleView extends VLayout implements BookmarkableView {
         super();
         setWidth100();
         setHeight100();
-//        setPadding(10);
+        setPadding(10);
         setOverflow(Overflow.AUTO);
     }
 

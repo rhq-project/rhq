@@ -31,8 +31,12 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
+import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -64,7 +68,17 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
         DataSourceTextField deployDir = new DataSourceTextField("deployDir", "Deploy Directory");
         addField(deployDir);
 
+        DataSourceTextField latestDeploymentVersion = new DataSourceTextField("latestDeploymentVersion", "Last Deployed Version");
+        addField(latestDeploymentVersion);
+
+        DataSourceTextField latestDeploymentDate = new DataSourceTextField("latestDeploymentDate", "Last Deployment Date");
+        addField(latestDeploymentDate);
+
+        DataSourceTextField latestDeploymentStatus = new DataSourceTextField("latestDeploymentStatus", "Last Deployment Status");
+        addField(latestDeploymentStatus);
+
     }
+
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
@@ -79,22 +93,50 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
         criteria.fetchGroup(true);
         criteria.fetchTags(true);
 
+
         GWTServiceLookup.getBundleService().findBundleDestinationsByCriteria(criteria,
                 new AsyncCallback<PageList<BundleDestination>>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError("Failed to load bundle destinations",caught);
                     }
 
-                    public void onSuccess(PageList<BundleDestination> result) {
-                        response.setData(buildRecords(result));
-                        processResponse(request.getRequestId(), response);
+                    public void onSuccess(final PageList<BundleDestination> result) {
+
+                        BundleVersionCriteria versionCriteria = new BundleVersionCriteria();
+                        if (request.getCriteria().getValues().containsKey("bundleId")) {
+                            versionCriteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttributeAsString("bundleId")));
+                        }
+                        GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(versionCriteria, new AsyncCallback<PageList<BundleVersion>>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to load bundle destination deployed version info",caught);
+                            }
+
+                            public void onSuccess(PageList<BundleVersion> versions) {
+
+                                for (BundleDestination dest : result) {
+
+                                    for (BundleDeployment dep : dest.getDeployments()) {
+
+                                        for (BundleVersion version : versions) {
+                                            if (dep.getBundleVersion().getId() == version.getId()) {
+                                                dep.setBundleVersion(version);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                response.setData(buildRecords(result));
+                                processResponse(request.getRequestId(), response);
+
+                            }
+                        });
                     }
                 });
     }
 
     @Override
     public BundleDestination copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null;
     }
 
     @Override
@@ -112,6 +154,20 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
 
         record.setAttribute("deployDir", from.getDeployDir());
         record.setAttribute("entity", from);
+
+
+        long last = 0;
+        for (BundleDeployment dep : from.getDeployments()) {
+            if (last < dep.getCtime()) {
+                last = dep.getCtime();
+
+                record.setAttribute("latestDeployment", dep);
+                record.setAttribute("latestDeploymentVersion", dep.getBundleVersion().getVersion());
+                record.setAttribute("latestDeploymentDate", new Date(dep.getCtime()));
+                record.setAttribute("latestDeploymentStatus", dep.getStatus().name());
+
+            }
+        }
 
 
         return record;

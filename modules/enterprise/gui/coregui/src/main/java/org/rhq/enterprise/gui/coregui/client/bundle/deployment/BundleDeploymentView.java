@@ -43,6 +43,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -75,18 +76,23 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
 
     private VLayout detail;
 
+    public BundleDeploymentView() {
+        setWidth100();
+        setHeight100();
+        setMargin(10);
+    }
+
     private void viewBundleDeployment(BundleDeployment bundleDeployment, ViewId current) {
 
         this.deployment = bundleDeployment;
         this.version = bundleDeployment.getBundleVersion();
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
 
-        addMember(new BackButton("Back to Destination: " + deployment.getDestination().getName(),"Bundles/" + version.getBundle().getId() + "/destinations/" + deployment.getDestination().getId()));
-
+        addMember(new BackButton("Back to Destination: " + deployment.getDestination().getName(), "Bundles/" + version.getBundle().getId() + "/destinations/" + deployment.getDestination().getId()));
 
 
         addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png")
-            + "\"/> " + deployment.getName()));
+                + "\"/> " + deployment.getName()));
 
         DynamicForm form = new DynamicForm();
         form.setNumCols(4);
@@ -101,16 +107,16 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         TagEditorView tagEditor = new TagEditorView(version.getTags(), false, new TagsChangedCallback() {
             public void tagsChanged(HashSet<Tag> tags) {
                 GWTServiceLookup.getTagService().updateBundleDeploymentTags(deployment.getId(), tags,
-                    new AsyncCallback<Void>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to update bundle deployment's tags", caught);
-                        }
+                        new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to update bundle deployment's tags", caught);
+                            }
 
-                        public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Bundle Deployment Tags updated", Message.Severity.Info));
-                        }
-                    });
+                            public void onSuccess(Void result) {
+                                CoreGUI.getMessageCenter().notify(
+                                        new Message("Bundle Deployment Tags updated", Message.Severity.Info));
+                            }
+                        });
             }
         });
         tagItem.setCanvas(tagEditor);
@@ -147,10 +153,10 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         Table table = new Table("Deployment Machines");
 
 
-        ListGridField resourceIcon = new ListGridField("resourceAvailabity");
-        HashMap<String,String> icons = new HashMap<String, String>();
-        icons.put("UP","types/Platform_up_16.png");
-        icons.put("DOWN","types/Platform_down_16.png");
+        ListGridField resourceIcon = new ListGridField("resourceAvailabity", "");
+        HashMap<String, String> icons = new HashMap<String, String>();
+        icons.put("UP", "types/Platform_up_16.png");
+        icons.put("DOWN", "types/Platform_down_16.png");
         resourceIcon.setValueIcons(icons);
         resourceIcon.setValueIconSize(16);
         resourceIcon.setCellFormatter(new CellFormatter() {
@@ -169,6 +175,16 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         });
         ListGridField resourceVersion = new ListGridField("resourceVersion", "Operating System");
         ListGridField status = new ListGridField("status", "Status");
+        HashMap<String, String> statusIcons = new HashMap<String, String>();
+        statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
+        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
+        status.setValueIcons(statusIcons);
+        status.setValueIconHeight(11);
+        status.setWidth(80);
+
 
         table.getListGrid().setFields(resourceIcon, resource, resourceVersion, status);
 
@@ -194,9 +210,9 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
                 if (selectionEvent.getState()) {
 
                     BundleResourceDeployment bundleResourceDeployment = (BundleResourceDeployment) selectionEvent
-                        .getRecord().getAttributeAsObject("entity");
+                            .getRecord().getAttributeAsObject("entity");
                     BundleResourceDeploymentHistoryListView detailView = new BundleResourceDeploymentHistoryListView(
-                        bundleResourceDeployment);
+                            bundleResourceDeployment);
 
                     detail.removeMembers(detail.getMembers());
                     detail.addMember(detailView);
@@ -267,20 +283,20 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
                         criteria.fetchResource(true);
                         criteria.fetchBundleDeployment(true);
                         bundleService.findBundleResourceDeploymentsByCriteria(criteria,
-                            new AsyncCallback<PageList<BundleResourceDeployment>>() {
+                                new AsyncCallback<PageList<BundleResourceDeployment>>() {
 
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError("Failed to load deployment detail", caught);
-                                }
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError("Failed to load deployment detail", caught);
+                                    }
 
-                                public void onSuccess(PageList<BundleResourceDeployment> result) {
+                                    public void onSuccess(PageList<BundleResourceDeployment> result) {
 
-                                    deployment.setResourceDeployments(result);
+                                        deployment.setResourceDeployments(result);
 
-                                    viewBundleDeployment(deployment, viewPath.getCurrent());
+                                        viewBundleDeployment(deployment, viewPath.getCurrent());
 
-                                }
-                            });
+                                    }
+                                });
 
                     }
                 });

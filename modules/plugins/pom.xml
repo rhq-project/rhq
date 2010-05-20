@@ -153,6 +153,7 @@
         </modules>
     </profile>
 
+<!--
     <profile>
         <id>jdk6-only-plugins</id>
         <activation>
@@ -167,11 +168,6 @@
         <id>jdk6-linux-plugins</id>
         <activation>
             <jdk>[1.6,)</jdk>
-<!--
-            <property>
-               <name>java.home</name>
-            </property>
--->
         </activation>
         <modules>
             <module>virt</module>
@@ -180,6 +176,7 @@
         </modules>
 
     </profile>
+-->
 
     <profile>
         <id>misc-plugins</id>

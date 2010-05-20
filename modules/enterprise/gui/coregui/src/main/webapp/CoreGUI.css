@@ -54,7 +54,8 @@ a:hover {
 
 
 .HeaderLabel {
-    font-size: 14pt;
+    height: 35px;
+    font-size: 11pt;
     font-weight: bold;
     color: #444444;
 }

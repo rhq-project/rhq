@@ -76,10 +76,10 @@ public class ResourceSearchView extends VLayout {
         searchPanel.setWrapItemTitles(false);
         searchPanel.setFields(searchBox);
 
-        addMember(searchPanel);
 
         final ResourceDatasource datasource = new ResourceDatasource();
         table = new Table(title, criteria);
+        table.setTitleComponent(searchPanel);
         table.setDataSource(datasource);
 
         table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
@@ -133,6 +133,18 @@ public class ResourceSearchView extends VLayout {
             }
         });
     }
+
+
+
+    public void setCriteria(Criteria criteria) {
+        this.table.getListGrid().fetchData(criteria);
+    }
+
+
+    public int getMatches() {
+        return this.table.getListGrid().getTotalRows();
+    }
+
 
     public void addResourceSelectedListener(ResourceSelectListener listener) {
         selectListeners.add(listener);

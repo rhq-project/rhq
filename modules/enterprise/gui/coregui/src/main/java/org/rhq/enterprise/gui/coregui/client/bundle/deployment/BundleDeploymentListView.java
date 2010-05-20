@@ -22,13 +22,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 
+import java.util.HashMap;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
@@ -79,6 +83,9 @@ public class BundleDeploymentListView extends VLayout {
                 return "<a href=\"#Bundles/Bundle/" + bundleId + "/deployments/" + record.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
             }
         });
+
+
+
 
         addMember(table);
 

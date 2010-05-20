@@ -39,6 +39,7 @@ import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.bundle.ant.LoggerAntBuildListener;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -106,9 +107,11 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
                 // Get the bundle's configuration values and the global system facts and
                 // add them as Ant properties so the Ant script can get their values.
-                Properties antProps = createAntProperties(bundleDeployment);
+                Properties antProps = createAntProperties(request);
                 // TODO: Eventually the phase to be executed should be passed in by the PC when it calls us.
+                // TODO: Invoke STOP phase.
                 antProps.setProperty(DeployPropertyNames.DEPLOY_PHASE, "INSTALL");
+                // TODO: Invoke START phase.
 
                 List<BuildListener> buildListeners = new ArrayList();
                 LoggerAntBuildListener logger = new LoggerAntBuildListener(null, logFileOutput, Project.MSG_DEBUG);
@@ -117,7 +120,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                     .getBundleManagerProvider(), resourceDeployment);
                 buildListeners.add(auditor);
 
-                // Parse & execute the Ant script.
+                // Parse and execute the Ant script.
                 AntLauncher antLauncher = new AntLauncher();
                 BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, antProps,
                     buildListeners);
@@ -125,8 +128,8 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 // Send the diffs to the Server so it can store them as an entry in the deployment history.
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
                 DeployDifferences diffs = project.getDeployDifferences();
-                bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", bundleDeployment
-                    .getName(), null, null, diffs.toString(), null);
+                bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", null,
+                        BundleResourceDeploymentHistory.Category.DEPLOY_STEP, null, diffs.toString(), null);
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {
@@ -150,9 +153,11 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         return result;
     }
 
-    private Properties createAntProperties(BundleDeployment bundleDeployment) {
+    private Properties createAntProperties(BundleDeployRequest request) {
         Properties antProps = new Properties();
 
+        BundleResourceDeployment resourceDeployment = request.getResourceDeployment();
+        BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
         String deployDir = bundleDeployment.getDestination().getDeployDir();
         if (deployDir == null) {
             throw new IllegalStateException("Bundle deployment does not specify install dir: " + bundleDeployment);
@@ -162,6 +167,8 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         int deploymentId = bundleDeployment.getId();
         antProps.setProperty(DeployPropertyNames.DEPLOY_ID, Integer.toString(deploymentId));
         antProps.setProperty(DeployPropertyNames.DEPLOY_NAME, bundleDeployment.getName());
+        antProps.setProperty(DeployPropertyNames.DEPLOY_REVERT, String.valueOf(request.isRevert()));
+        antProps.setProperty(DeployPropertyNames.DEPLOY_CLEAN, String.valueOf(request.isCleanDeployment()));
 
         Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
         for (Map.Entry<String, String> fact : sysFacts.entrySet()) {

@@ -180,8 +180,11 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         int facetMethodTimeout = 4 * 60 * 60 * 1000; // 4 hours is given to the bundle plugin to do its thing
                         BundleFacet bundlePluginComponent = getBundleFacet(bundleHandlerResourceId, facetMethodTimeout);
                         BundleDeployResult result = bundlePluginComponent.deployBundle(deployRequest);
-                        if (!result.isSuccess()) {
-                            response.setErrorMessage(result.getErrorMessage());
+                        if (result.isSuccess()) {
+                            completeDeployment(resourceDeployment, BundleDeploymentStatus.SUCCESS, deploymentMessage);
+                        } else {
+                            completeDeployment(resourceDeployment, BundleDeploymentStatus.FAILURE, result
+                                .getErrorMessage());
                         }
                         completeDeployment(resourceDeployment, BundleDeploymentStatus.SUCCESS, deploymentMessage);
                     } catch (InterruptedException ie) {

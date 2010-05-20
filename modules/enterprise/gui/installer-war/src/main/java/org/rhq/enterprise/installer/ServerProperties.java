@@ -152,6 +152,7 @@ public class ServerProperties {
         DATABASE_TYPES = new ArrayList<SelectItem>();
         DATABASE_TYPES.add(new SelectItem("PostgreSQL", "PostgreSQL"));
         DATABASE_TYPES.add(new SelectItem("Oracle10g", "Oracle 10g"));
+        DATABASE_TYPES.add(new SelectItem("Oracle11g", "Oracle 11g"));
         DATABASE_TYPES.add(new SelectItem("sqlserver", "MS SQL Server"));
         DATABASE_TYPES.add(new SelectItem("H2", "H2 (embedded)"));
         //DATABASE_TYPES.add(new SelectItem("MySQL", "MySQL"));

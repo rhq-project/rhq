@@ -2014,14 +2014,31 @@ public class AgentMain {
     }
 
     /**
+     * This will purge all plugins in the agent's plugin directory.
+     */
+    private void cleanPluginsDirectory() {
+        try {
+            File plugins_dir = m_configuration.getPluginContainerConfiguration().getPluginDirectory();
+            if (plugins_dir.exists()) {
+                LOG.info(AgentI18NResourceKeys.CLEANING_PLUGINS_DIRECTORY, plugins_dir.getAbsolutePath());
+                cleanFile(plugins_dir);
+            }
+        } catch (Exception e) {
+            LOG.warn(AgentI18NResourceKeys.CLEAN_PLUGINS_FAILURE, e);
+        }
+
+        return;
+    }
+
+    /**
      * This will purge all files in the agent's data directory.
      */
     private void cleanDataDirectory() {
         try {
             File data_dir = m_configuration.getDataDirectory();
             if (data_dir.exists()) {
-                LOG.info(AgentI18NResourceKeys.CLEANING_DATA_DIRECTORY, data_dir);
-                cleanDataFile(data_dir);
+                LOG.info(AgentI18NResourceKeys.CLEANING_DATA_DIRECTORY, data_dir.getAbsolutePath());
+                cleanFile(data_dir);
             }
 
             // it is concievable the comm services data directory was configured in a different
@@ -2029,8 +2046,8 @@ public class AgentMain {
             File comm_data_dir = m_configuration.getServiceContainerPreferences().getDataDirectory();
             if (!comm_data_dir.getAbsolutePath().equals(data_dir.getAbsolutePath())) {
                 if (comm_data_dir.exists()) {
-                    LOG.info(AgentI18NResourceKeys.CLEANING_DATA_DIRECTORY, comm_data_dir);
-                    cleanDataFile(comm_data_dir);
+                    LOG.info(AgentI18NResourceKeys.CLEANING_DATA_DIRECTORY, comm_data_dir.getAbsolutePath());
+                    cleanFile(comm_data_dir);
                 }
             }
         } catch (Exception e) {
@@ -2046,18 +2063,18 @@ public class AgentMain {
      *
      * @param file the file/directory to delete
      */
-    private void cleanDataFile(File file) {
+    private void cleanFile(File file) {
         boolean deleted;
 
         File[] doomed_files = file.listFiles();
         if (doomed_files != null) {
             for (File doomed_file : doomed_files) {
-                cleanDataFile(doomed_file); // call this method recursively
+                cleanFile(doomed_file); // call this method recursively
             }
         }
 
         deleted = file.delete();
-        LOG.debug(AgentI18NResourceKeys.CLEANING_DATA_FILE, file, deleted);
+        LOG.debug(AgentI18NResourceKeys.CLEANING_FILE, file, deleted);
 
         return;
     }
@@ -2717,11 +2734,13 @@ public class AgentMain {
             new LongOpt("setup", LongOpt.NO_ARGUMENT, null, 's'),
             new LongOpt("nostart", LongOpt.NO_ARGUMENT, null, 'n'),
             new LongOpt("nonative", LongOpt.NO_ARGUMENT, null, 't'),
+            new LongOpt("purgeplugins", LongOpt.NO_ARGUMENT, null, 'g'),
             new LongOpt("purgedata", LongOpt.NO_ARGUMENT, null, 'u') };
 
         String config_file_name = null;
         boolean clean_config = false;
         boolean purge_data = false;
+        boolean purge_plugins = false;
         AgentInputReaderFactory.ConsoleType console_type = null;
 
         Getopt getopt = new Getopt("agent", args, sopts, lopts);
@@ -2781,6 +2800,11 @@ public class AgentMain {
 
             case 'u': {
                 purge_data = true;
+                break;
+            }
+
+            case 'g': {
+                purge_plugins = true;
                 break;
             }
 
@@ -2875,6 +2899,9 @@ public class AgentMain {
         // We must do this after we load the config file so we know where the user configured the data dir.
         if (purge_data) {
             cleanDataDirectory();
+        }
+        if (purge_plugins) {
+            cleanPluginsDirectory();
         }
 
         LOG.debug(AgentI18NResourceKeys.ARGS_PROCESSED, Arrays.asList(m_commandLineArgs));

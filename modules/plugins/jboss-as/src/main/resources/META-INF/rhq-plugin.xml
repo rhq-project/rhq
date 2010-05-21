@@ -558,7 +558,37 @@
                <c:simple-property name="descriptionTemplate" default="A JCA Connection Factory"/>
                <c:simple-property name="name" type="string" description="The name of this Connection Factory"/>
             </plugin-configuration>
+            
+            <metric property="AvailableConnectionCount" measurementType="dynamic" displayType="summary"
+            displayName="Available Connection Count" description="Number of available connections."
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
 
+            <metric property="ConnectionCount" measurementType="dynamic" displayType="summary"
+            displayName="Connection Count" defaultOn="true" defaultInterval="60000" dataType="measurement"
+            category="performance"/>
+
+            <metric property="ConnectionCreatedCount" measurementType="dynamic" displayType="detail"
+            displayName="Connection Created Count" defaultOn="true" defaultInterval="60000"
+            dataType="measurement" category="performance"/>
+
+            <metric property="ConnectionDestroyedCount" measurementType="dynamic" displayType="detail"
+            displayName="Connection Destroyed Count" defaultOn="true" defaultInterval="60000"
+            dataType="measurement" category="performance"/>
+
+            <metric property="InUseConnectionCount" measurementType="dynamic" displayType="detail"
+            displayName="In Use Connection Count" description="Mumber of connections currently in use."
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+            <metric property="MaxConnectionsInUseCount" measurementType="dynamic" displayType="detail"
+            displayName="Max Connections In Use Count" description="Maximum number of maximum connections that have been in use."
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+            <metric property="MaxSize" measurementType="dynamic" displayType="detail" displayName="Max Size"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+            <metric property="MinSize" measurementType="dynamic" displayType="detail" displayName="Min Size"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>            
+            
             <resource-configuration>
 
                 <c:group name="connection" displayName="Connection Information">
@@ -883,7 +913,7 @@
 
                 </c:group>
             </resource-configuration>
-
+            
         </service>
 
       <service name="JBossMQ"

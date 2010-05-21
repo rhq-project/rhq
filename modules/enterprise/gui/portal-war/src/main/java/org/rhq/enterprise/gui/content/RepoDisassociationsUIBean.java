@@ -55,10 +55,10 @@ public class RepoDisassociationsUIBean extends PagedDataTableUIBean {
                 manager.addContentSourcesToRepo(subject, repoId, contentSourceIds);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Associated [" + contentSourceIds.length
-                    + "] content sources with repo");
+                    + "] content sources with repository");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to associate one or more content sources with repo", e);
+                    "Failed to associate one or more content sources with repository", e);
             }
         }
 

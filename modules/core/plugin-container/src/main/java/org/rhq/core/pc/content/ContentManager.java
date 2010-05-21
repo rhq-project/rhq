@@ -677,6 +677,8 @@ public class ContentManager extends AgentService implements ContainerService, Co
                                 .calcDigestString(localCopy);
                             //and attach it to the report returned to be picked up on server side in merge
                             detail.setSHA256(sha256);
+                            //attach fileCreatedDate as well
+                            detail.setInstallationTimestamp(Long.valueOf(System.currentTimeMillis()));
                         }
                     }
                 } catch (IOException iex) {

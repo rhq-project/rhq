@@ -183,20 +183,33 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 //discovered with created
                 String md5Value = resourcePackage.getMD5();
                 if ((md5Value == null) || (md5Value.isEmpty())) {
-                    //query for installed packages with SHA256, we'll grab first one. All identical.
+                    //query for installed packages with SHA256
                     Query packageDiscoveredQuery = entityManager
                         .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_SHA);
                     packageDiscoveredQuery.setParameter("sha", shaValue);
                     List<PackageVersion> discoveredPackages = packageDiscoveredQuery.getResultList();
                     if (discoveredPackages.size() > 0) {
-                        packageVersion = discoveredPackages.get(0);
-                        //now assign PackageVersion details correctly
-                        PackageDetailsKey discoveredKey = new PackageDetailsKey(packageVersion.getFileName(),
-                            packageVersion.getVersion(), packageVersion.getGeneralPackage().getPackageType().getName(),
-                            resourcePackage.getArchitectureName());
-                        ResourcePackageDetails retrievedResourcePackage = new ResourcePackageDetails(discoveredKey);
-                        //now reassign the resourcePackage to use this newly retrieved id.
-                        resourcePackage = retrievedResourcePackage;
+                        //iterate over packages to determine first one with same file name
+                        PackageVersion[] discovered = new PackageVersion[discoveredPackages.size()];
+                        discoveredPackages.toArray(discovered);
+                        boolean located = false;
+                        for (int i = 0; (!located && i < discovered.length); i++) {
+                            packageVersion = discovered[i];
+                            //check that the returned file name is same as expected otherwise
+                            //bail(bank1.war != crook1.war for auditing purposes) even though hash is equal.
+                            if (packageVersion.getFileName().trim().equals(resourcePackage.getFileName().trim())) {
+                                located = true;
+                                //now assign PackageVersion details correctly
+                                PackageDetailsKey discoveredKey = new PackageDetailsKey(packageVersion.getFileName(),
+                                    packageVersion.getVersion(), packageVersion.getGeneralPackage().getPackageType()
+                                        .getName(), resourcePackage.getArchitectureName());
+                                ResourcePackageDetails retrievedResourcePackage = new ResourcePackageDetails(
+                                    discoveredKey);
+                                retrievedResourcePackage.setInstallationTimestamp(resourcePackage.getFileCreatedDate());
+                                //now reassign the resourcePackage to use this newly retrieved id.
+                                resourcePackage = retrievedResourcePackage;
+                            }
+                        }
                     }
                 }
             }

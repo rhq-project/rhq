@@ -2920,7 +2920,8 @@
                 </schema-directSQL>
            </schemaSpec>
 
-           <schemaSpec version="2.86">
+            
+           <schemaSpec version="2.87">
                <schema-directSQL>
                    <statement desc="Make RHQ_RES_TYPE_IDX_PLG_NAME index unique">
                        DROP INDEX RHQ_RES_TYPE_IDX_PLG_NAME ;

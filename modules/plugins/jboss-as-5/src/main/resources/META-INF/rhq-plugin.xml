@@ -485,10 +485,10 @@
         </c:description>
     </c:simple-property>
 
-    <c:simple-property name="use-try-lock" type="long" required="false" defaultValue="0">
+    <c:simple-property name="use-try-lock" type="long" required="false">
         <c:description>
-            Any configured timeout, in milliseconds, for internal locks on the resource adapter objects. A value of 0
-            means no timeout. The default is 0.
+            Any configured timeout, in seconds, for internal locks on the resource adapter objects. A value of 0
+            means no timeout. The default is 60.
         </c:description>
     </c:simple-property>
 

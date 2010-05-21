@@ -80,7 +80,8 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
                 // TODO: mark this saved search as "broken" so that future computation is suppressed for it
                 errors++;
                 LOG.error("Could not calculate result count for SavedSearch[name=" + next.getName() + ", pattern='"
-                    + next.getPattern() + "']");
+                    + next.getPattern() + "']: " + t.getMessage());
+                LOG.debug(t);
             }
         }
         if (updated > 0) {

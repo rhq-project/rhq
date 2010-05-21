@@ -1,10 +1,5 @@
 package org.rhq.enterprise.gui.coregui.client;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -67,6 +62,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static CoreGUI coreGUI;
 
     public void onModuleLoad() {
+        if (GWT.getHostPageBaseURL().indexOf("/coregui/") == -1) {
+            System.out.println("Suppressing load of CoreGUI module");
+            return; // suppress loading this module if not using the new GWT app
+        }
+
         coreGUI = this;
 
         if (!GWT.isScript()) {
@@ -88,9 +88,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         messageCenter = new MessageCenter();
 
-
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
-                "/j_security_check.do?j_username=rhqadmin&j_password=rhqadmin");
+            "/j_security_check.do?j_username=rhqadmin&j_password=rhqadmin");
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(Request request, Response response) {
@@ -105,7 +104,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         } catch (RequestException e) {
             e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
-
 
         SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
 
@@ -131,7 +129,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         //        HTMLPane menuPane = new HTMLPane();
         //        menuPane.setWidth100();
         //        menuPane.setHeight(26);
-        //        menuPane.setContentsType(ContentsType.PAGE);
+        //     //To change body of catch statement use File | Settings | File Templates.    menuPane.setContentsType(ContentsType.PAGE);
         //        menuPane.setContentsURL("/rhq/common/menu/menu.xhtml");
         //        menuPane.setZIndex(400000);
         //        layout.addMember(menuPane);
@@ -163,7 +161,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         History.fireCurrentHistoryState();
     }
 
-
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
         System.out.println("Handling history event: " + stringValueChangeEvent.getValue());
         currentViewPath = new ViewPath(stringValueChangeEvent.getValue());
@@ -171,7 +168,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         rootCanvas.renderView(currentViewPath);
 
     }
-
 
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
@@ -202,7 +198,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         return messageCenter;
     }
 
-
     public static ErrorHandler getErrorHandler() {
         return errorHandler;
     }
@@ -214,7 +209,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public static UserPreferences getUserPreferences() {
         return userPreferences;
     }
-
 
     public static void setSessionSubject(Subject subject) {
         GWTServiceLookup.registerSession(String.valueOf(subject.getSessionId()));
@@ -248,7 +242,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         breadCrumbTrailPane.refresh(currentViewPath);
     }
 
-
     private class RootCanvas extends VLayout implements BookmarkableView {
 
         ViewId currentViewId;
@@ -258,7 +251,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             setWidth100();
             setHeight100();
         }
-
 
         public void renderView(ViewPath viewPath) {
             if (viewPath.isEnd()) {

@@ -13,7 +13,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.util.PageControl;
@@ -26,7 +25,6 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
 import org.rhq.enterprise.server.search.execution.SearchAssistManager;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -41,7 +39,6 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
     private ResourceCategory category;
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-    private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
 
     private static final IntExtractor<ResourceComposite> RESOURCE_ID_EXTRATOR = new IntExtractor<ResourceComposite>() {
         public int extract(ResourceComposite object) {
@@ -59,6 +56,7 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
             category = ResourceCategory.SERVICE;
         }
 
+        /*
         String searchId = FacesContextUtility.getOptionalRequestParameter("searchId");
         if (searchId != null) {
             SavedSearch savedSearch = savedSearchManager.getSavedSearchById(getSubject(), Integer.valueOf(searchId));
@@ -66,6 +64,7 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
         } else {
             search = FacesContextUtility.getOptionalRequestParameter("search");
         }
+        */
     }
 
     public String getSearch() {
@@ -155,5 +154,4 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
     public void setSearchInput(HtmlInputText searchInput) {
         this.searchInput = searchInput;
     }
-
 }

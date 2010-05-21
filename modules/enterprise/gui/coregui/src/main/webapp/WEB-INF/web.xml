@@ -48,13 +48,10 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleGWTServiceImpl</servlet-class>
     </servlet>
-
-
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI FileUploadServlet</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.FileUploadServlet</servlet-class>
     </servlet>
-
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleFileUploadServlet</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleFileUploadServlet</servlet-class>
@@ -63,26 +60,29 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI UberBundleFileUploadServlet</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.UberBundleFileUploadServlet</servlet-class>
     </servlet>
-
     <servlet>
-      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AuthorizationGWTService</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AuthorizationGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AuthorizationGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AuthorizationGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AvailabilityGWTService</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AvailabilityGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TagGWTService</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SearchGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.SearchGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RemoteInstallGWTService</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TagGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RemoteInstallGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl</servlet-class>
     </servlet>
 
     <servlet-mapping>
@@ -137,12 +137,10 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI UberBundleFileUploadServlet</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/UberBundleFileUploadServlet</url-pattern>
     </servlet-mapping>
-
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceBossGWTService</url-pattern>
     </servlet-mapping>
-
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AuthorizationGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AuthorizationGWTService</url-pattern>
@@ -150,6 +148,10 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AvailabilityGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AvailabilityGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SearchGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/SearchGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TagGWTService</servlet-name>

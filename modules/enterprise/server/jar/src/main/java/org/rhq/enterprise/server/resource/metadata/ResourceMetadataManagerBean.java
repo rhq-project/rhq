@@ -92,6 +92,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
  * @author Greg Hinkle
  * @author Heiko W. Rupp
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
@@ -312,14 +313,14 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         if (existingPlugin != null) {
             Plugin obsolete = AgentPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
-            if (obsolete == existingPlugin) { // yes use == for reference equality
+            if (obsolete == existingPlugin) { // yes, use == for reference equality
                 newOrUpdated = true;
             }
             plugin.setId(existingPlugin.getId());
             plugin.setEnabled(existingPlugin.isEnabled());
         }
 
-        // If this is a brand new plugin, it gets "updated" too - which ends up being a simple persist.
+        // If this is a brand new plugin, it gets "updated" too.
         if (newOrUpdated) {
             if (plugin.getDisplayName() == null) {
                 plugin.setDisplayName(plugin.getName());
@@ -347,7 +348,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         // TODO GH: JBNADM-1310/JBNADM-1630 - Push updated plugins to running agents and have them reboot their PCs
         // We probably want to be smart about this - perhaps have the agents periodically poll their server to see
-        // if there are new plugins and if so download them - this of course would be configurable/disablable
+        // if there are new plugins and if so download them - this of course would be configurable/disableable
 
         return typesUpdated;
     }
@@ -392,7 +393,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
      * @param id the id of the plugin whose content is being updated
      * @param file the plugin file whose content will be streamed to the database
      *
-     * @throws Exception
+     * @throws Exception on failure to update the plugin's content
      */
     private void streamPluginFileContentToDatabase(int id, File file) throws Exception {
         Connection conn = null;
@@ -424,7 +425,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private void updateTypes(Set<ResourceType> rootResourceTypes) throws Exception {
         // Iterate the resource types breadth-first, so all platform types get added before any server types or platform
         // service types. This way, we'll be able to set all of the platform types as parents of the server types and
-        // platform service types.
+        // platform service types. It's also helpful for other types with multiple "runs-inside" parent types (e.g
+        // Hibernate Entities), since it ensures the parent types will get persisted prior to the child types.
         for (ResourceType rootResourceType : rootResourceTypes) {
             updateType(rootResourceType);
         }
@@ -544,7 +546,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private void mergeExistingType(ResourceType resourceType, ResourceType existingType) {
-        log.info("Merging type [" + resourceType + "] + into existing type [" + existingType + "]...");
+        log.debug("Merging type [" + resourceType + "] + into existing type [" + existingType + "]...");
 
         // Make sure to first add/update any subcategories on the parent before trying to update children.
         // Otherwise, the children may try to save themselves with subcategories which wouldn't exist yet.
@@ -648,7 +650,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     private void updateParentResourceTypes(ResourceType newType, ResourceType existingType) {
         Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
-        log.info("Setting parent types on type: " + ((existingType != null) ? existingType : newType )
+        log.debug("Setting parent types on type: " + ((existingType != null) ? existingType : newType )
                 + " to [" + newParentTypes + "]...");
         newType.setParentResourceTypes(new HashSet<ResourceType>());
         Set<ResourceType> originalExistingParentTypes = new HashSet<ResourceType>();
@@ -663,7 +665,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                         ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", newParentType.getName())
                         .setParameter("plugin", newParentType.getPlugin()).getSingleResult();
                     ResourceType type = (existingType != null) ? existingType : newType;
-                    log.info("Adding type [" + type + "] as child of type [" + realParentType + "]...");
+                    log.info("Adding type [" + toConciseString(type) + "] as child of type ["
+                            + toConciseString(realParentType) + "]...");
                     realParentType.addChildResourceType(type);
                 }
             } catch (NoResultException nre) {
@@ -673,12 +676,17 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         for (ResourceType obsoleteParentType : originalExistingParentTypes) {
-            log.info("Removing type [" + existingType + "] from parent type [" + obsoleteParentType + "]...");
+            log.info("Removing type [" + toConciseString(existingType) + "] from parent type ["
+                    + toConciseString(obsoleteParentType) + "]...");
             obsoleteParentType.removeChildResourceType(existingType);
             moveResourcesToNewParent(existingType, obsoleteParentType, newParentTypes);
         }
 
         entityManager.flush();
+    }
+
+    private static String toConciseString(ResourceType type) {
+        return (type != null) ? (type.getPlugin() + ":" + type.getName() + "(id=" + type.getId() + ")") : "null";
     }
 
     private void moveResourcesToNewParent(ResourceType existingType, ResourceType obsoleteParentType, Set<ResourceType> newParentTypes) {
@@ -703,6 +711,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 for (Resource childResource : resource.getChildResources()) {
                     if (childResource.getResourceType().equals(newParentType)) {
                         // We found a child to be the new parent of our orphaned Resource.
+                        // TODO: Check if there are are multiple children of the new parent type. If so,
+                        //       log an error and don't move the resource.
                         newParent = childResource;
                         break newParentTypes;
                     }
@@ -714,7 +724,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 }
                 newParent.addChildResource(resource);
             } else {
-                log.warn("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
+                log.debug("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
                         + " to a new valid parent with one of the following types: " + newParentTypes);
             }
         }
@@ -735,7 +745,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private List<ResourceSubCategory> getAllSubcategories(ResourceSubCategory cat) {
-
         List<ResourceSubCategory> result = new ArrayList<ResourceSubCategory>();
 
         if (cat.getChildSubCategories() != null) {
@@ -750,7 +759,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     /** Update the &lt;event> tags */
     private void updateEventDefinitions(ResourceType newType, ResourceType existingType) {
-
         Set<EventDefinition> newEventDefs = newType.getEventDefinitions();
         // Loop over the newEventDefs and set the resourceTypeId, so equals() will work
         for (EventDefinition def : newEventDefs) {
@@ -1284,7 +1292,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 existingType.setPackageExtraPropertiesDefinition(null);
             }
         }
-
     }
 
     /**

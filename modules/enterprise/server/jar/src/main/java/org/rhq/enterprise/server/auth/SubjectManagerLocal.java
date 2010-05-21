@@ -65,7 +65,9 @@ public interface SubjectManagerLocal {
     Subject getOverlord();
 
     /**
-     * @see SubjectManagerRemote#findAllSubjects
+     * Returns a paged list of all Subjects.
+     *
+     * @param pageControl the page control that specifies which page of the result set to return and how sort it
      */
     PageList<Subject> findAllSubjects(PageControl pageControl);
 

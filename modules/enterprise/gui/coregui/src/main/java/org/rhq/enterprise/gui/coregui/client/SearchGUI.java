@@ -19,11 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Label;
 
@@ -39,7 +34,7 @@ public class SearchGUI implements EntryPoint {
 
     public static SearchGUI singleton = new SearchGUI();
     public SearchBar searchBar;
-    
+
     private static Subject sessionSubject;
 
     private SearchGUI() {
@@ -63,23 +58,6 @@ public class SearchGUI implements EntryPoint {
     }
 
     private static void portalWarLogin() {
-        RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
-            "/j_security_check.do?j_username=rhqadmin&j_password=rhqadmin");
-        try {
-            b.setCallback(new RequestCallback() {
-                public void onResponseReceived(Request request, Response response) {
-                    System.out.println("Portal-War logged in");
-                }
-
-                public void onError(Request request, Throwable exception) {
-                    System.out.println("Portal-War login failed");
-                }
-            });
-            b.send();
-        } catch (RequestException e) {
-            e.printStackTrace();
-        }
-
         SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
 
         subjectService.login("rhqadmin", "rhqadmin", new AsyncCallback<Subject>() {
@@ -97,7 +75,7 @@ public class SearchGUI implements EntryPoint {
             }
         });
     }
-    
+
     public static Subject getSessionSubject() {
         return sessionSubject;
     }

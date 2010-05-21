@@ -31,7 +31,7 @@
       <a4j:keepAlive beanName="BrowseResourcesUIBean"/>
 
       <a4j:form>
-         <a4j:jsFunction name="extractSearchFilter">
+         <a4j:jsFunction name="applySearchFilter">
             <a4j:actionparam name="param1" assignTo="#{BrowseResourcesUIBean.search}" />
          </a4j:jsFunction>
       </a4j:form>
@@ -39,60 +39,6 @@
             <input type="hidden" name="subtab" value="${param.subtab}" />
             
             <p/>
-            <h:panelGroup>
-               <h:outputLabel for="search" value="Search: " />
-               <h:inputText id="search"
-                            binding="#{BrowseResourcesUIBean.searchInput}"
-                            value="#{BrowseResourcesUIBean.search}"
-                            onkeypress="return ignoreEnterKey(event);"
-                            style="width: 600px;">
-                   <ui:remove>
-                   <a4j:support event="onfocus" reRender="suggest"
-                                disableDefault="true" status="commonStatus" limitToList="true" 
-                                ajaxSingle="true" oncomplete="#{rich:component('suggest')}.show(event, {})"/>
-                   </ui:remove>
-               </h:inputText>
-               <rich:suggestionbox id="suggest" for="search" 
-                                   width="600" height="400"
-                                   border="1" cellpadding="1" cellspacing="1"
-                                   minChars="0"
-                                   first="0" rows="10"
-                                   frequency="0"
-                                   var="suggestItem" 
-                                   fetchValue="#{suggestItem.value}"
-                                   selfRendered="true"
-                                   suggestionAction="#{BrowseResourcesUIBean.autocomplete}" 
-                                   nothingLabel="Start typing for simple text matches" 
-                                   usingSuggestObjects="true"
-                                   eventsQueue="resourceSearchSuggestions"
-                                   ignoreDupResponses="true"
-                                   rendered="true">
-                   <h:column width="10%">
-                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: gray;" 
-                                    rendered="#{suggestItem.kind.name eq 'Simple'}" />
-                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; " 
-                                    rendered="#{suggestItem.kind.name eq 'Advanced'}" />
-                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: yellow" 
-                                    rendered="#{suggestItem.kind.name eq 'AdvancedOperator'}" />
-                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: green;" 
-                                    rendered="#{suggestItem.kind.name eq 'UserSavedSearch'}" />
-                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: orange;" 
-                                    rendered="#{suggestItem.kind.name eq 'GlobalSavedSearch'}" />
-                   </h:column>
-                   <h:column width="90%">
-                      <h:outputText value="#{suggestItem.label}" />
-                   </h:column>
-               </rich:suggestionbox>
-               <rich:spacer/>
-               <a4j:commandButton value="GO" 
-                                  reRender="browseResourcesDataTable, browseResourcesDataTableScroller"
-                                  status="commonStatus"
-                                  actionListener="#{BrowseResourcesUIBean.clearDataModel}"
-                                  styleClass="buttonmed">
-                   <s:defaultAction/>
-               </a4j:commandButton>
-            </h:panelGroup>
-            <ui:remove>
             <h:panelGrid columns="3">
                <h:outputText value="Search: " />
                <ui:include src="/rhq/common/searchInterface.xhtml">
@@ -104,11 +50,10 @@
                                   status="commonStatus"
                                   actionListener="#{BrowseResourcesUIBean.clearDataModel}"
                                   styleClass="buttonmed"
-                                  onclick="extractSearchFilter(getElementCrossBrowser('patternField').value)">
+                                  onclick="applySearchFilter(getElementCrossBrowser('patternField'));">
                    <s:defaultAction/>
                </a4j:commandButton>
             </h:panelGrid>
-            </ui:remove>
             <p/>
 
             <h:panelGrid columns="1" width="100%">

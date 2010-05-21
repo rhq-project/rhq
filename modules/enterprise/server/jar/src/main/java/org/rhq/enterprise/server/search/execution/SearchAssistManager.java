@@ -599,6 +599,6 @@ public class SearchAssistManager {
     }
 
     private void debug(String message) {
-        LOG.info(message);
+        LOG.debug(message);
     }
 }

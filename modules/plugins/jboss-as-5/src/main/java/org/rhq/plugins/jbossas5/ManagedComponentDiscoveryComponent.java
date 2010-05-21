@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
+* Copyright (C) 2005-2010 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,11 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
         } catch (Exception e) {
             throw new IllegalStateException("Failed to get component types for " + resourceType + ".", e);
         }
+        if (resourceType.isSingleton() && components.size() > 1) {
+            throw new IllegalStateException("Discovered multiple [" + componentType
+                    + "] managed components during [" + resourceType
+                    + "] discovery, but expected to find no more than one - components were: " + components);
+        }
 
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>(components.size());
         /* Create a resource for each managed component found. We know all managed components will be of a
@@ -83,7 +88,8 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
                 if (resourceKey == null) {
                     resourceKey = component.getName();
                 }
-                String version = null; // (ips) I don't think there's anything generic we can do here.
+
+                String version = getResourceVersion(component);
 
                 DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey,
                     resourceName, version, resourceType.getDescription(), discoveryContext
@@ -110,6 +116,7 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
      * Resource name.
      *
      * @param component the ManagedComponent being discovered
+     *
      * @return the name to be assigned to the corresponding Resource
      */
     protected String getResourceName(ManagedComponent component) {
@@ -124,10 +131,22 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
      * ({@link ManagedComponentComponent#getComponentName()}). 
      *
      * @param component the component to uniquely identify
+     *
      * @return the unique identifier for the component
      */
     protected String getResourceKey(ManagedComponent component) {
         return component.getName();
+    }
+
+    /**
+     * Subclasses can override this method if they want the discovered ManagedComponent to have a version.
+     *
+     * @param component the ManagedComponent being discovered
+     *
+     * @return the version to be assigned to the corresponding Resource
+     */
+    protected String getResourceVersion(ManagedComponent component) {
+        return null;
     }
 
     /**

@@ -102,8 +102,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             "lib/jboss-metatype.jar",
             "lib/jboss-dependency.jar",
             // The below jars are required for JBoss AS 6.0 M1, M2, and M3.
-            "lib/jboss-classpool.jar",
-            "lib/jboss-classpool-scoped.jar"
+            //"lib/jboss-classpool.jar",
+            //"lib/jboss-classpool-scoped.jar"
     };
 
     private final Log log = LogFactory.getLog(this.getClass());

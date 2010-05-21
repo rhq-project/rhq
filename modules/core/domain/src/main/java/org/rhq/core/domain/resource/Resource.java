@@ -356,7 +356,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_KEY, hints = { @QueryHint(name = "cacheable", value = "true") }, query = "" //
         + "SELECT r " //
         + "  FROM Resource AS r " //
-        + " WHERE (:parent = r.parentResource OR :parent IS NULL) " //
+        + " WHERE (:parent = r.parentResource OR (:parent IS NULL AND r.parentResource IS NULL)) " //
         + "   AND r.resourceKey = :key " //
         + "   AND r.resourceType.plugin = :plugin " //
         + "   AND r.resourceType.name = :typeName"),

@@ -150,6 +150,7 @@ public class SavedSearchManager {
         Subject currentUser = SearchGUI.getSessionSubject();
         SavedSearchCriteria criteria = new SavedSearchCriteria();
         criteria.addFilterSubjectId(currentUser.getId());
+        criteria.addFilterSearchSubsystem(searchBar.getSearchSubsystem());
         searchService.findSavedSearchesByCriteria(criteria, new AsyncCallback<List<SavedSearch>>() {
 
             @Override

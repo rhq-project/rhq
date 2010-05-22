@@ -59,7 +59,8 @@ import org.rhq.enterprise.gui.coregui.client.search.suggest.SuggestTextBox;
  */
 public class SearchBar {
 
-    public static final String DEFAULT_SEARCH_TEXT = "search for resources";
+    public String welcomeMessage;
+
     public static final String DEFAULT_PATTERN_NAME = "name your pattern";
 
     private static final String IMAGE_DIR = "/coregui/images/search/";
@@ -88,7 +89,7 @@ public class SearchBar {
 
     private final SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
 
-    private final SavedSearchManager savedSearchManager = new SavedSearchManager(this);
+    private final SavedSearchManager savedSearchManager;
     private SearchSubsystem searchSubsystem;
 
     public static boolean existsOnPage() {
@@ -110,12 +111,19 @@ public class SearchBar {
             }
         });
 
-        String searchSubsystem = searchBarElement.getAttribute("searchSubsystemName");
-        this.searchSubsystem = (SearchSubsystem.valueOf(searchSubsystem.toUpperCase()));
+        String searchSubsystem = searchBarElement.getAttribute("searchSubsystem");
+        setSearchSubsystem(SearchSubsystem.valueOf(searchSubsystem.toUpperCase()));
     }
 
     public SearchBar() {
         System.out.println("Loading SearchBar...");
+
+        // in the future, will be instantiated directly from a higher-level widget
+        if (existsOnPage()) {
+            loadAdditionalDataFromDivAttributes();
+        }
+
+        savedSearchManager = new SavedSearchManager(this);
 
         RootPanel.get("patternFieldContainer").add(autoCompletePatternField);
         RootPanel.get("patternFieldSuggestionsContainer").add(autoCompletePatternField.getSuggestionComponent());
@@ -134,10 +142,6 @@ public class SearchBar {
         setupArrowImage();
         setupSavedSearches();
 
-        // in the future, will be instantiated directly from a higher-level widget
-        if (existsOnPage()) {
-            loadAdditionalDataFromDivAttributes();
-        }
         // presume the enclosing page logic loads results without a button click
     }
 
@@ -145,8 +149,19 @@ public class SearchBar {
         return savedSearchManager;
     }
 
+    public void setSearchSubsystem(SearchSubsystem searchSubsystem) {
+        this.searchSubsystem = searchSubsystem;
+
+        this.welcomeMessage = "search for " + searchSubsystem.getName().toLowerCase() + "s";
+        this.autoCompletePatternField.setText(welcomeMessage);
+    }
+
     public SearchSubsystem getSearchSubsystem() {
         return searchSubsystem;
+    }
+
+    public String getWelcomeMessage() {
+        return welcomeMessage;
     }
 
     public void executeSearch() {
@@ -155,7 +170,7 @@ public class SearchBar {
     }
 
     public void executeSearch(String searchTerms) {
-        if (searchTerms.equals(DEFAULT_SEARCH_TEXT)) {
+        if (searchTerms.equals(welcomeMessage)) {
             searchTerms = "";
         }
 
@@ -189,7 +204,6 @@ public class SearchBar {
     }
 
     private void setupAutoCompletingPatternField() {
-        autoCompletePatternField.setText(DEFAULT_SEARCH_TEXT);
         autoCompletePatternField.getElement().setId("patternField");
         autoCompletePatternField.addStyleName("patternField");
 
@@ -315,7 +329,7 @@ public class SearchBar {
         @Override
         public void onClick(ClickEvent event) {
             // clear default search text if necessary
-            if (autoCompletePatternField.getText().equals(DEFAULT_SEARCH_TEXT)) {
+            if (autoCompletePatternField.getText().equals(welcomeMessage)) {
                 autoCompletePatternField.setValue("", true);
             }
             savedSearchesPanel.hide();

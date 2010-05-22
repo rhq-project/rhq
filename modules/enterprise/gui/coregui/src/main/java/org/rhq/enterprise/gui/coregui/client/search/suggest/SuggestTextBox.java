@@ -34,7 +34,6 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
-import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
@@ -167,7 +166,7 @@ public class SuggestTextBox extends TextBox {
 
         @Override
         public void onFocus(FocusEvent event) {
-            if (getText().equals(SearchBar.DEFAULT_SEARCH_TEXT)) {
+            if (getText().equals(searchBar.getWelcomeMessage())) {
                 setText("");
             }
             // send a 'fake' key, this will rerender PopupPanel with the new completion list
@@ -249,7 +248,7 @@ public class SuggestTextBox extends TextBox {
         String text = this.getText();
 
         searchService.getSuggestions( //
-            SearchSubsystem.RESOURCE, // replace with appropriate subsystem somehow extracted from the context
+            searchBar.getSearchSubsystem(), //
             text, //
             this.getCursorPos(), //
             new SearchSuggestionCallback(keyCode));

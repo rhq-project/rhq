@@ -483,7 +483,7 @@ public class SearchAssistManager {
 
         SavedSearchCriteria criteria = new SavedSearchCriteria();
         criteria.addFilterSubjectId(subject.getId());
-        criteria.addFilterSearchContext(searchSubsystem);
+        criteria.addFilterSearchSubsystem(searchSubsystem);
         if (expression.equals("") == false) {
             criteria.addFilterName(expression);
         }
@@ -510,7 +510,7 @@ public class SearchAssistManager {
 
         SavedSearchCriteria criteria = new SavedSearchCriteria();
         criteria.addFilterGlobal(true);
-        criteria.addFilterSearchContext(searchSubsystem);
+        criteria.addFilterSearchSubsystem(searchSubsystem);
         if (expression.equals("") == false) {
             criteria.addFilterName(expression);
         }

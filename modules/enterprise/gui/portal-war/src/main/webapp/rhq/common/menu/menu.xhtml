@@ -128,7 +128,7 @@
         <ui:remove>***** Resources > SAVED SEARCHES *****</ui:remove>
         <rich:menuGroup value="Saved Searches" icon="/images/bookmark.png">
             <c:forEach var="savedSearch" items="#{UserPreferencesUIBean.savedSearches}">
-                <c:if test="#{savedSearch.context.name == 'RESOURCE'}">
+                <c:if test="#{savedSearch.searchSubsystem.name == 'RESOURCE'}">
                 <rich:menuItem submitMode="none"
                                icon="/images/icons/Flag_#{savedSearch.global ? 'yellow' : 'blue'}_16.png"
                                onclick="window.location = '/rhq/inventory/browseResources.xhtml?subtab=all&amp;searchId=#{savedSearch.id}'">
@@ -243,6 +243,21 @@
                                icon="/images/icons/#{visit.kind == 'COMPATIBLE_GROUP' ? 'Cluster' : 'Group'}_up_16.png"
                                onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{visit.id}'">
                     <h:outputText value="#{visit.name}"/>
+                </rich:menuItem>
+                </c:if>
+            </c:forEach>
+        </rich:menuGroup>
+        
+        <ui:remove>***** Resources > SAVED SEARCHES *****</ui:remove>
+        <rich:menuGroup value="Saved Searches" icon="/images/bookmark.png">
+            <c:forEach var="savedSearch" items="#{UserPreferencesUIBean.savedSearches}">
+                <c:if test="#{savedSearch.searchSubsystem.name == 'GROUP'}">
+                <rich:menuItem submitMode="none"
+                               icon="/images/icons/Flag_#{savedSearch.global ? 'yellow' : 'blue'}_16.png"
+                               onclick="window.location = '/rhq/inventory/browseGroups.xhtml?subtab=all&amp;searchId=#{savedSearch.id}'">
+                    <h:outputText value="#{savedSearch.name}" />
+                    <h:outputText value=" (#{savedSearch.resultCount})"
+                                  rendered="#{not empty savedSearch.resultCount}" />
                 </rich:menuItem>
                 </c:if>
             </c:forEach>

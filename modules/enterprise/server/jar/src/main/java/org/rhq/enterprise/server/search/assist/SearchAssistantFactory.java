@@ -10,6 +10,8 @@ public class SearchAssistantFactory {
     public static SearchAssistant getAssistant(SearchSubsystem searchContext) {
         if (searchContext == SearchSubsystem.RESOURCE) {
             return new ResourceSearchAssistant();
+        } else if (searchContext == SearchSubsystem.GROUP) {
+            return new GroupSearchAssistant();
         } else {
             throw new IllegalArgumentException("No SearchAssistant found for SearchSubsystem[" + searchContext + "]");
         }

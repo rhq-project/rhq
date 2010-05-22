@@ -1,6 +1,6 @@
 package org.rhq.enterprise.server.search.translation.antlr;
 
-public class RHQLTerm {
+public class RHQLAdvancedTerm implements RHQLTerm {
     private final String lineage;
     private final String path;
     private final String param;
@@ -9,7 +9,7 @@ public class RHQLTerm {
 
     private final String value;
 
-    public RHQLTerm(String lineage, String path, String param, RHQLComparisonOperator operator, String value) {
+    public RHQLAdvancedTerm(String lineage, String path, String param, RHQLComparisonOperator operator, String value) {
         this.lineage = lineage;
         this.path = path;
         this.param = param;

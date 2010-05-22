@@ -1,14 +1,14 @@
 package org.rhq.enterprise.server.search.translation;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
-import org.rhq.enterprise.server.search.translation.antlr.RHQLTerm;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragmentType;
 
 public class ResourceSearchTranslator extends AbstractSearchTranslator {
 
-    public SearchFragment getSearchFragment(String alias, RHQLTerm term) {
+    public SearchFragment getSearchFragment(String alias, RHQLAdvancedTerm term) {
         String path = term.getPath();
         RHQLComparisonOperator op = term.getOperator();
         String param = term.getParam();

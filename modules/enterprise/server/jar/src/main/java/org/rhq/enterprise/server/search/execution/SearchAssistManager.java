@@ -17,8 +17,8 @@ import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.search.SearchSuggestion.Kind;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
-import org.rhq.enterprise.server.search.assist.AbstractSearchAssistant;
-import org.rhq.enterprise.server.search.assist.ResourceSearchAssistant;
+import org.rhq.enterprise.server.search.assist.SearchAssistant;
+import org.rhq.enterprise.server.search.assist.SearchAssistantFactory;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class SearchAssistManager {
@@ -309,15 +309,10 @@ public class SearchAssistManager {
     public SearchAssistManager(Subject subject, SearchSubsystem searchSubsystem) {
         this.subject = subject;
         this.searchSubsystem = searchSubsystem;
-
     }
 
-    protected AbstractSearchAssistant getSearchAssistant() {
-        if (searchSubsystem == SearchSubsystem.RESOURCE) {
-            return new ResourceSearchAssistant();
-        } else {
-            throw new IllegalArgumentException("No SearchAssistant found for SearchSubsystem[" + searchSubsystem + "]");
-        }
+    protected SearchAssistant getSearchAssistant() {
+        return SearchAssistantFactory.getAssistant(searchSubsystem);
     }
 
     private List<String> getAllContexts() {
@@ -349,7 +344,7 @@ public class SearchAssistManager {
     }
 
     public List<SearchSuggestion> getSimpleSuggestions(String expression, int caretPos) {
-        AbstractSearchAssistant completor = getSearchAssistant();
+        SearchAssistant completor = getSearchAssistant();
 
         debug("getSimpleSuggestions: START");
 
@@ -366,25 +361,16 @@ public class SearchAssistManager {
          * would hold it's current value, which in this case we'll extract and use as the simple value match
          */
         String parsedTerm = parsed.context;
-        List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
-        for (String nextContext : completor.getSimpleContexts()) {
+        String primarySimpleContext = completor.getPrimarySimpleContext();
+        debug("getSimpleSuggestions: suggesting value completions for a simple context [" + primarySimpleContext + "]");
 
-            debug("getSimpleSuggestions: suggesting value completions for a simple context [" + nextContext + "]");
-            List<String> valueSuggestions = pad("\"", completor.getValues(nextContext, null, parsedTerm), "\"");
-
-            List<SearchSuggestion> suggestions = convert(valueSuggestions, parsed, parsedTerm, Kind.Simple);
-            results.addAll(suggestions);
-        }
-        Collections.sort(results);
-        if (results.size() > completor.getMaxResultCount()) {
-            return results.subList(0, completor.getMaxResultCount());
-        } else {
-            return results;
-        }
+        List<String> valueSuggestions = pad("\"", completor.getValues(primarySimpleContext, null, parsedTerm), "\"");
+        List<SearchSuggestion> suggestions = convert(valueSuggestions, parsed, parsedTerm, Kind.Simple);
+        return suggestions;
     }
 
     public List<SearchSuggestion> getAdvancedSuggestions(String expression, int caretPos) {
-        AbstractSearchAssistant completor = getSearchAssistant();
+        SearchAssistant completor = getSearchAssistant();
 
         debug("getAdvancedSuggestions: START");
         SearchTermAssistant assistant = new SearchTermAssistant(expression, caretPos);

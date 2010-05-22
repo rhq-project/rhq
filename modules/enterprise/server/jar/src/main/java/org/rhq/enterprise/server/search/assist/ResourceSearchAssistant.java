@@ -24,6 +24,11 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
     }
 
     @Override
+    public String getPrimarySimpleContext() {
+        return "name";
+    }
+
+    @Override
     public List<String> getSimpleContexts() {
         return simpleContexts;
     }

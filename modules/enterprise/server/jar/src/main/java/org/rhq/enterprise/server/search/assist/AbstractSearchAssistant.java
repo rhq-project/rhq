@@ -27,6 +27,10 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
         this.maxResultCount = maxResultCount;
     }
 
+    public String getPrimarySimpleContext() {
+        return null;
+    }
+
     public List<String> getSimpleContexts() {
         return Collections.emptyList();
     }

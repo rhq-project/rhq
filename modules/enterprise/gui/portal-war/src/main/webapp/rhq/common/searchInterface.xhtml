@@ -10,7 +10,10 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" 
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-   <div class="searchBarContainer" id="searchBar">
+   <div class="searchBarContainer #{searchButtonId} #{searchSubsystem}" 
+        searchButtonId="#{searchButtonId}" 
+        searchSubsystem="#{searchSubsystem}" 
+        id="searchBar">
       <div class="searchBarBackgroundContainer">
       <div class="searchBarComponentsContainer">
          <div class="searchBarComponentLHS" id="patternFieldContainer"></div>
@@ -23,7 +26,7 @@
          </div>
          </div>
       </div>
-      <div class="#{searchButtonId} searchBarButtonContainer" id="searchButtonContainer"></div>
+      <div class="searchBarButtonContainer" id="searchButtonContainer"></div>
       <div style="position: absolute;" id="patternFieldSuggestionsContainer"></div>
       <div style="position: absolute; width: 800px;" id="savedSearchesContainer"></div>
       <br style="clear: both;" />

@@ -33,9 +33,8 @@ import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
 public class SearchGUI implements EntryPoint {
 
     public static SearchGUI singleton = new SearchGUI();
-    public SearchBar searchBar;
-
     private static Subject sessionSubject;
+    private SearchBar searchBar;
 
     private SearchGUI() {
     }
@@ -54,7 +53,7 @@ public class SearchGUI implements EntryPoint {
     }
 
     public void buildSearchGUI() {
-        searchBar = SearchBar.get(); // TODO: SearchBar is a singleton right now, that restriction needs to be removed
+        searchBar = new SearchBar();
     }
 
     private static void portalWarLogin() {
@@ -78,5 +77,9 @@ public class SearchGUI implements EntryPoint {
 
     public static Subject getSessionSubject() {
         return sessionSubject;
+    }
+
+    public SearchBar getSearchBar() {
+        return searchBar;
     }
 }

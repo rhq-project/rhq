@@ -43,6 +43,7 @@
                <h:outputText value="Search: " />
                <ui:include src="/rhq/common/searchInterface.xhtml">
                   <ui:param name="searchButtonId" value="browseResourcesForm:searchButtonJSF" />
+                  <ui:param name="searchSubsystem" value="RESOURCE" />
                </ui:include>
 
                <a4j:commandButton id="searchButtonJSF" value="GO" 

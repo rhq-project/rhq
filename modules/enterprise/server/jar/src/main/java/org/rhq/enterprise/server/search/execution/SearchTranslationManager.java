@@ -51,10 +51,10 @@ public class SearchTranslationManager {
         this.translator = SearchTranslatorFactory.getTranslator(this.context);
         this.assistant = SearchAssistantFactory.getAssistant(this.context);
 
-        ANTLRStringStream input = new ANTLRStringStream(expression); // Create an input character stream from standard in
+        ANTLRStringStream input = new ANTLRStringStream(this.expression); // Create an input character stream from standard in
         this.lexer = new RHQLLexer(input); // Create an echoLexer that feeds from that stream
 
-        CommonTokenStream tokens = new CommonTokenStream(lexer); // Create a stream of tokens fed by the lexer
+        CommonTokenStream tokens = new CommonTokenStream(this.lexer); // Create a stream of tokens fed by the lexer
         this.parser = new RHQLParser(tokens); // Create a parser that feeds off the token stream
 
         this.adaptor = new RHQLNodeAdaptor();

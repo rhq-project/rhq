@@ -29,10 +29,10 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.search.SavedSearch;
-import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.SearchGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
 import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 /**
@@ -43,14 +43,11 @@ public class SavedSearchManager {
     private final SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
 
     private LinkedHashMap<String, SavedSearch> savedSearches = new LinkedHashMap<String, SavedSearch>();
-    private static SavedSearchManager singleton = new SavedSearchManager();
+    private SearchBar searchBar;
 
-    public SavedSearchManager() {
+    public SavedSearchManager(SearchBar searchBar) {
+        this.searchBar = searchBar;
         load();
-    }
-
-    public synchronized static SavedSearchManager get() {
-        return singleton;
     }
 
     public synchronized String getPatternByName(String name) {
@@ -64,7 +61,7 @@ public class SavedSearchManager {
     public synchronized void updatePatternByName(final String name, final String pattern) {
         SavedSearch savedSearch = savedSearches.get(name);
         if (savedSearch == null) { // created case
-            final SavedSearch newSavedSearch = new SavedSearch(SearchSubsystem.RESOURCE, name, pattern, SearchGUI
+            final SavedSearch newSavedSearch = new SavedSearch(searchBar.getSearchSubsystem(), name, pattern, SearchGUI
                 .getSessionSubject());
             searchService.createSavedSearch(newSavedSearch, new AsyncCallback<Integer>() {
 

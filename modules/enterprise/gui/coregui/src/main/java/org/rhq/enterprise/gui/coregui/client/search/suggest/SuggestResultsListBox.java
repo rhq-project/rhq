@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.search.suggest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 import com.google.gwt.dom.client.Document;
@@ -30,33 +29,13 @@ import com.google.gwt.user.client.ui.ListBox;
 
 import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.search.SearchSuggestion.Kind;
-import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 public class SuggestResultsListBox extends ListBox {
     public static final String FOOTER_MESSAGE = "Start typing for more simple text matches";
 
-    private List<SearchSuggestion> searchSuggestions;
-    private SuggestionItemComparator suggestionItemComparator;
+    private List<SearchSuggestion> searchSuggestions = new ArrayList<SearchSuggestion>();
 
     private final List<String> OPERATORS = Arrays.asList("!==", "!=", "==", "=");
-
-    public SuggestResultsListBox() {
-        this.searchSuggestions = new ArrayList<SearchSuggestion>();
-
-        this.suggestionItemComparator = new SuggestionItemComparator();
-    }
-
-    class SuggestionItemComparator implements Comparator<SearchSuggestion> {
-        public int compare(SearchSuggestion first, SearchSuggestion second) {
-            try {
-                return first.getValue().toLowerCase().compareTo(second.getValue().toLowerCase());
-            } catch (Throwable t) {
-                SearchLogger.debug("Error sorting suggestions '" + first.getValue() + "' '" + second.getValue() + "': "
-                    + t.getMessage());
-            }
-            return 0;
-        }
-    };
 
     public void setErrorMessage(String error) {
         this.searchSuggestions.clear();
@@ -69,9 +48,6 @@ public class SuggestResultsListBox extends ListBox {
     }
 
     public int render(int maxSuggestions, int maxResultsShown) {
-        // sorting is done on the server-side
-        //Collections.sort(searchSuggestions, suggestionItemComparator);
-
         clear();
         int addedResults = 0;
 
@@ -86,7 +62,6 @@ public class SuggestResultsListBox extends ListBox {
             }
 
             appendSuggestItem(next);
-            //appendSuggestItem(next.getLabel(), prefix, className, next.getStartIndex(), next.getEndIndex());
             addedResults++;
         }
 

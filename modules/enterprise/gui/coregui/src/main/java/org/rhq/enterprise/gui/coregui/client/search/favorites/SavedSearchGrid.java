@@ -33,6 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
 public class SavedSearchGrid extends Grid {
 
     private PatternSelectionHandler patternSelectionHandler;
+    private SearchBar searchBar;
 
     public interface PatternSelectionHandler {
         public void handleSelection(int rowIndex, int columnIndex, String patternName);
@@ -57,15 +58,16 @@ public class SavedSearchGrid extends Grid {
         }
     }
 
-    private static SavedSearchManager manager = SavedSearchManager.get();
+    public SavedSearchGrid(SearchBar searchBar) {
+        super(0, 2); // assume no rows to start, but we'll always have 2 columns
 
-    public SavedSearchGrid() {
-        super(count(), 2);
         setRowFormatter(new SavedSearchRowFormatter());
         sinkEvents(Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONCLICK);
         setCellSpacing(0);
         setCellPadding(5);
         setStyleName("savedSearchesGrid");
+
+        this.searchBar = searchBar;
     }
 
     @Override
@@ -115,14 +117,14 @@ public class SavedSearchGrid extends Grid {
     }
 
     public void updateModel() {
-        List<String> names = manager.getPatternNamesMRU();
+        List<String> names = searchBar.getSavedSearchManager().getPatternNamesMRU();
 
         clear(true);
         resizeRows(names.size());
 
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
-            String pattern = manager.getPatternByName(name);
+            String pattern = searchBar.getSavedSearchManager().getPatternByName(name);
             setHTML(i, 0, stylize(name, pattern));
             setHTML(i, 1, trashify());
         }
@@ -138,8 +140,8 @@ public class SavedSearchGrid extends Grid {
         return "<div name=\"action\">&nbsp;</div>";
     }
 
-    private static int count() {
-        return manager.getSavedSearchCount();
+    private int count() {
+        return searchBar.getSavedSearchManager().getSavedSearchCount();
     }
 
     public String getSelectedItem() {

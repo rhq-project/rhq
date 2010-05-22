@@ -46,6 +46,7 @@ import com.google.gwt.user.client.ui.TextBox;
 
 import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.search.SavedSearch;
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchGrid;
@@ -72,7 +73,7 @@ public class SearchBar {
 
     public static final String TRASH = IMAGE_DIR + "trash.png";
 
-    private final SuggestTextBox autoCompletePatternField;
+    private final SuggestTextBox autoCompletePatternField = new SuggestTextBox(this);
     private final TextBox patternNameField = new TextBox();
     private final Label patternNameLabel = new Label();
 
@@ -80,33 +81,46 @@ public class SearchBar {
     private final Image arrowImage = new Image(ARROW_WHITE_URL);
 
     private final PopupPanel savedSearchesPanel = new PopupPanel(true);
-    private final SavedSearchGrid savedSearches = new SavedSearchGrid();
+    private final SavedSearchGrid savedSearches = new SavedSearchGrid(this);
 
     private String currentSearch = "";
     private long lastNameFieldBlurTime = 0;
 
-    private final SavedSearchManager savedSearchManager = SavedSearchManager.get();
     private final SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
 
-    public static SearchBar singleton;
-
-    public static SearchBar get() {
-        if (singleton == null) {
-            singleton = new SearchBar();
-        }
-        return singleton;
-    }
+    private final SavedSearchManager savedSearchManager = new SavedSearchManager(this);
+    private SearchSubsystem searchSubsystem;
 
     public static boolean existsOnPage() {
-        return DOM.getElementById("searchBar") != null;
+        return getSearchBarElement() != null;
     }
 
-    private SearchBar() {
+    private static Element getSearchBarElement() {
+        return DOM.getElementById("searchBar");
+    }
+
+    public void loadAdditionalDataFromDivAttributes() {
+        Element searchBarElement = getSearchBarElement();
+
+        String searchButtonId = searchBarElement.getAttribute("searchButtonId");
+        DOM.setEventListener(DOM.getElementById(searchButtonId), new EventListener() {
+            @Override
+            public void onBrowserEvent(Event event) {
+                executeSearch();
+            }
+        });
+
+        String searchSubsystem = searchBarElement.getAttribute("searchSubsystemName");
+        this.searchSubsystem = (SearchSubsystem.valueOf(searchSubsystem.toUpperCase()));
+    }
+
+    public SearchBar() {
         System.out.println("Loading SearchBar...");
 
-        autoCompletePatternField = new SuggestTextBox("patternFieldSuggestionsContainer");
-
         RootPanel.get("patternFieldContainer").add(autoCompletePatternField);
+        RootPanel.get("patternFieldSuggestionsContainer").add(autoCompletePatternField.getSuggestionComponent());
+        autoCompletePatternField.hideInitialSuggestions();
+
         RootPanel.get("patternNameFieldContainer").add(patternNameField);
         RootPanel.get("patternNameLabelContainer").add(patternNameLabel);
         RootPanel.get("starImageContainer").add(starImage);
@@ -119,9 +133,20 @@ public class SearchBar {
         setupStarImage();
         setupArrowImage();
         setupSavedSearches();
-        setupSearchButton();
 
+        // in the future, will be instantiated directly from a higher-level widget
+        if (existsOnPage()) {
+            loadAdditionalDataFromDivAttributes();
+        }
         // presume the enclosing page logic loads results without a button click
+    }
+
+    public SavedSearchManager getSavedSearchManager() {
+        return savedSearchManager;
+    }
+
+    public SearchSubsystem getSearchSubsystem() {
+        return searchSubsystem;
     }
 
     public void executeSearch() {
@@ -216,27 +241,6 @@ public class SearchBar {
         SavedSearchesEventHandler handler = new SavedSearchesEventHandler();
         savedSearchesPanel.addCloseHandler(handler);
         savedSearches.setPatternSelectionHandler(handler);
-    }
-
-    private void setupSearchButton() {
-        Element searchButtonContainerElement = DOM.getElementById("searchButtonContainer");
-        String searchButtonElementId = searchButtonContainerElement.getClassName().split(" ")[0]; // yeah, it's hacky
-
-        Element searchButtonElement = DOM.getElementById(searchButtonElementId);
-        if (searchButtonElement == null) {
-            return;
-        }
-
-        DOM.setEventListener(searchButtonElement, new EventListener() {
-            @Override
-            public void onBrowserEvent(Event event) {
-                executeSearch();
-            }
-        });
-
-        //searchButton.addStyleName("searchButton");
-        //SearchButtonEventHandler handler = new SearchButtonEventHandler();
-        //searchButton.addClickHandler(handler);
     }
 
     private void turnNameFieldIntoLabel() {

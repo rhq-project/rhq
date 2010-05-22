@@ -31,7 +31,6 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -40,7 +39,6 @@ import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
-import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchManager;
 
 public class SuggestTextBox extends TextBox {
 
@@ -48,12 +46,15 @@ public class SuggestTextBox extends TextBox {
     protected ScrollPanel choicesScrollPanel = new ScrollPanel();
     protected SuggestResultsListBox choices = new SuggestResultsListBox();
 
+    private SearchBar searchBar;
+
     private SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
 
-    public SuggestTextBox(String rootPanelID) {
+    public SuggestTextBox(SearchBar searchBar) {
         super();
+        this.searchBar = searchBar;
         setupTextBox();
-        setupChoicesPopup(rootPanelID);
+        setupChoicesPopup();
         setupChoicesListBox();
     }
 
@@ -64,14 +65,14 @@ public class SuggestTextBox extends TextBox {
         this.addFocusHandler(handler);
     }
 
-    public void setupChoicesPopup(String rootPanelID) {
+    public void setupChoicesPopup() {
         choicesPopup.removeStyleName("gwt-PopupPanel");
         choicesPopup.addStyleName("suggestPanel");
         choicesPopup.add(choices);
+    }
 
-        RootPanel.get(rootPanelID).add(choicesPopup);
-        show();
-        hide();
+    public PopupPanel getSuggestionComponent() {
+        return choicesPopup;
     }
 
     public void setupChoicesListBox() {
@@ -80,6 +81,11 @@ public class SuggestTextBox extends TextBox {
         SuggestionResultsListBoxEventHandler handler = new SuggestionResultsListBoxEventHandler();
         choices.addChangeHandler(handler);
         choices.addClickHandler(handler);
+    }
+
+    public void hideInitialSuggestions() {
+        show();
+        hide();
     }
 
     public boolean isSuggestionListShowing() {
@@ -122,9 +128,9 @@ public class SuggestTextBox extends TextBox {
 
         // if this is a saved search pattern completion, execute that search immediately
         System.out.println("just completed to '" + this.getValue() + "'");
-        String patternValue = SavedSearchManager.get().getPatternByName(this.getValue());
+        String patternValue = searchBar.getSavedSearchManager().getPatternByName(this.getValue());
         if (patternValue != null) {
-            SearchBar.get().executeSearch(this.getValue());
+            searchBar.executeSearch(this.getValue());
         } else {
             // send a 'fake' key, this will rerender PopupPanel with the new completion list
             handleKeyCode(0);

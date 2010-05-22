@@ -126,7 +126,7 @@
         </rich:menuGroup>
         
         <ui:remove>***** Resources > SAVED SEARCHES *****</ui:remove>
-        <rich:menuGroup value="Saved Searches" icon="/images/bookmark.png">
+        <rich:menuGroup value="Resource Saved Searches" icon="/images/bookmark.png">
             <c:forEach var="savedSearch" items="#{UserPreferencesUIBean.savedSearches}">
                 <c:if test="#{savedSearch.searchSubsystem.name == 'RESOURCE'}">
                 <rich:menuItem submitMode="none"
@@ -248,8 +248,8 @@
             </c:forEach>
         </rich:menuGroup>
         
-        <ui:remove>***** Resources > SAVED SEARCHES *****</ui:remove>
-        <rich:menuGroup value="Saved Searches" icon="/images/bookmark.png">
+        <ui:remove>***** Groups > SAVED SEARCHES *****</ui:remove>
+        <rich:menuGroup value="Group Saved Searches" icon="/images/bookmark.png">
             <c:forEach var="savedSearch" items="#{UserPreferencesUIBean.savedSearches}">
                 <c:if test="#{savedSearch.searchSubsystem.name == 'GROUP'}">
                 <rich:menuItem submitMode="none"

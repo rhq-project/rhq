@@ -53,16 +53,41 @@ import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 
 /**
  * @author Greg Hinkle
  */
-public class LoginView {
+public class LoginView extends Canvas {
 
 
     private Window window;
     private DynamicForm form;
+
+
+    public LoginView() {
+        this(false);
+    }
+
+    public LoginView(boolean logout) {
+
+        if (logout && CoreGUI.getSessionSubject() != null) {
+            GWTServiceLookup.getSubjectService().logout(CoreGUI.getSessionSubject(), new AsyncCallback<Void>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to logout", caught);
+                    CoreGUI.checkLoginStatus();
+                }
+
+                public void onSuccess(Void result) {
+                    CoreGUI.checkLoginStatus();
+                }
+            });
+        } else {
+            CoreGUI.checkLoginStatus();
+        }
+
+    }
 
     public void showLoginDialog() {
 
@@ -72,7 +97,7 @@ public class LoginView {
 
 
         CanvasItem logo = new CanvasItem();
-        logo.setCanvas(new Img("header/rhq_logo_28px.png",80,28));
+        logo.setCanvas(new Img("header/rhq_logo_28px.png", 80, 28));
         logo.setShowTitle(false);
 
         HeaderItem header = new HeaderItem();
@@ -105,7 +130,7 @@ public class LoginView {
         window = new Window();
         window.setTitle("RHQ Login");
         window.setWidth(400);
-        window.setHeight(400);
+        window.setHeight(250);
         window.setIsModal(true);
         window.setShowModalMask(true);
         window.setCanDragResize(true);

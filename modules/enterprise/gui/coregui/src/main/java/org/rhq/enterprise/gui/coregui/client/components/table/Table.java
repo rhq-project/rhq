@@ -161,7 +161,6 @@ public class Table extends VLayout {
         super.onInit();
 
 
-
         // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
         //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
         //       the underlying datasource).
@@ -184,117 +183,7 @@ public class Table extends VLayout {
 
         tableInfo.setWrap(false);
 
-        for (final TableActionInfo tableAction : tableActions) {
-            IButton button = new IButton(tableAction.title);
-            button.setDisabled(true);
-            button.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    if (tableAction.confirmMessage != null) {
 
-                        String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                .getSelection().length));
-
-                        SC.ask(message, new BooleanCallback() {
-                            public void execute(Boolean confirmed) {
-                                if (confirmed) {
-                                    tableAction.action.executeAction(listGrid.getSelection());
-                                }
-                            }
-                        });
-                    } else {
-                        tableAction.action.executeAction(listGrid.getSelection());
-                    }
-                }
-            });
-            tableAction.actionButton = button;
-            footer.addMember(button);
-        }
-
-        for (Canvas extraWidgetCanvas : extraWidgets) {
-            footer.addMember(extraWidgetCanvas);
-        }
-
-
-        footer.addMember(new LayoutSpacer());
-
-        IButton refreshButton = new IButton("Refresh");
-        refreshButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                listGrid.invalidateCache();
-            }
-        });
-        footer.addMember(refreshButton);
-
-        footer.addMember(tableInfo);
-
-        // Manages enable/disable buttons for the grid
-        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                refreshTableInfo();
-            }
-        });
-
-        listGrid.addDataArrivedHandler(new DataArrivedHandler() {
-            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                refreshTableInfo();
-                fieldSizes.clear();
-                totalWidth = 0;
-            }
-        });
-
-        // TODO GH: This doesn't yet work as desired to force the fields to fit to the table when you resize one of them.
-        if (false) { // If Force Fit
-            listGrid.addDataArrivedHandler(new DataArrivedHandler() {
-                public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                    for (ListGridField f : listGrid.getFields()) {
-
-                        int size = listGrid.getFieldWidth(f.getName());
-                        fieldSizes.add(size);
-                        totalWidth += size;
-                    }
-                }
-            });
-
-            listGrid.addFieldStateChangedHandler(new FieldStateChangedHandler() {
-                public void onFieldStateChanged(FieldStateChangedEvent fieldStateChangedEvent) {
-
-                    if (autoSizing) {
-                        return;
-                    }
-                    autoSizing = true;
-
-                    ArrayList<Integer> newSizes = new ArrayList<Integer>();
-                    int total = 0;
-                    int resizeCol = 0;
-                    int i = 0;
-                    for (ListGridField f : listGrid.getFields()) {
-                        int size = listGrid.getFieldWidth(f.getName());
-                        newSizes.add(size);
-                        total += size;
-                        if (fieldSizes.get(i) != size) {
-                            resizeCol = i;
-                        }
-                        i++;
-                        System.out.println("Field " + f.getName() + " width: " + listGrid.getFieldWidth(f.getName()));
-                    }
-
-                    int diff = totalWidth - total;
-                    int fieldsLeft = listGrid.getFields().length - resizeCol - 1;
-
-                    if (fieldsLeft > 0) {
-                        int perFieldSizeDiff = diff / fieldsLeft;
-                        for (int j = resizeCol + 1; j < listGrid.getFields().length; j++) {
-                            listGrid.resizeField(j, fieldSizes.get(j) + perFieldSizeDiff);
-                        }
-                    }
-
-                    fieldSizes = newSizes;
-                    markForRedraw();
-
-                    autoSizing = false;
-                }
-            });
-        }
     }
 
 
@@ -307,6 +196,67 @@ public class Table extends VLayout {
         addMember(titleLayout);
         addMember(listGrid);
         if (showFooter) {
+
+
+            for (final TableActionInfo tableAction : tableActions) {
+                IButton button = new IButton(tableAction.title);
+                button.setDisabled(true);
+                button.addClickHandler(new ClickHandler() {
+                    public void onClick(ClickEvent clickEvent) {
+                        if (tableAction.confirmMessage != null) {
+
+                            String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
+                                    .getSelection().length));
+
+                            SC.ask(message, new BooleanCallback() {
+                                public void execute(Boolean confirmed) {
+                                    if (confirmed) {
+                                        tableAction.action.executeAction(listGrid.getSelection());
+                                    }
+                                }
+                            });
+                        } else {
+                            tableAction.action.executeAction(listGrid.getSelection());
+                        }
+                    }
+                });
+                tableAction.actionButton = button;
+                footer.addMember(button);
+            }
+
+            for (Canvas extraWidgetCanvas : extraWidgets) {
+                footer.addMember(extraWidgetCanvas);
+            }
+
+
+            footer.addMember(new LayoutSpacer());
+
+            IButton refreshButton = new IButton("Refresh");
+            refreshButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    listGrid.invalidateCache();
+                }
+            });
+            footer.addMember(refreshButton);
+
+            footer.addMember(tableInfo);
+
+            // Manages enable/disable buttons for the grid
+            listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+                public void onSelectionChanged(SelectionEvent selectionEvent) {
+                    refreshTableInfo();
+                }
+            });
+
+            listGrid.addDataArrivedHandler(new DataArrivedHandler() {
+                public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                    refreshTableInfo();
+                    fieldSizes.clear();
+                    totalWidth = 0;
+                }
+            });
+
+
             addMember(footer);
         }
     }

@@ -55,6 +55,7 @@ public class Table extends VLayout {
 
     private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
 
+    private HLayout titleLayout;
     private HTMLFlow title;
 
     private Canvas titleComponent;
@@ -63,6 +64,9 @@ public class Table extends VLayout {
     private ToolStrip footer;
     private Label tableInfo;
     private String[] excludedFieldNames;
+
+
+    private boolean showFooter = true;
 
     /**
      * Specifies how many rows must be selected in order for a {@link TableAction} button to be enabled.
@@ -157,6 +161,7 @@ public class Table extends VLayout {
         super.onInit();
 
 
+
         // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
         //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
         //       the underlying datasource).
@@ -166,7 +171,7 @@ public class Table extends VLayout {
             }
         }
 
-        HLayout titleLayout = new HLayout();
+        titleLayout = new HLayout();
         titleLayout.setAutoHeight();
         titleLayout.setAlign(VerticalAlignment.BOTTOM);
         titleLayout.addMember(title);
@@ -176,9 +181,6 @@ public class Table extends VLayout {
             titleLayout.addMember(titleComponent);
         }
 
-        addMember(titleLayout);
-        addMember(listGrid);
-        addMember(footer);
 
         tableInfo.setWrap(false);
 
@@ -295,6 +297,28 @@ public class Table extends VLayout {
         }
     }
 
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
+        removeMembers(getMembers());
+
+        addMember(titleLayout);
+        addMember(listGrid);
+        if (showFooter) {
+            addMember(footer);
+        }
+    }
+
+    public boolean isShowFooter() {
+        return showFooter;
+    }
+
+    public void setShowFooter(boolean showFooter) {
+        this.showFooter = showFooter;
+    }
+
     private int totalWidth;
     private ArrayList<Integer> fieldSizes = new ArrayList<Integer>();
     private boolean autoSizing = false;
@@ -362,28 +386,30 @@ public class Table extends VLayout {
 
 
     private void refreshTableInfo() {
-        int count = this.listGrid.getSelection().length;
-        for (TableActionInfo tableAction : tableActions) {
-            boolean enabled;
-            switch (tableAction.enablement) {
-                case ALWAYS:
-                    enabled = true;
-                    break;
-                case ANY:
-                    enabled = (count >= 1);
-                    break;
-                case SINGLE:
-                    enabled = (count == 1);
-                    break;
-                case MULTIPLE:
-                    enabled = (count > 1);
-                    break;
-                default:
-                    throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
+        if (showFooter) {
+            int count = this.listGrid.getSelection().length;
+            for (TableActionInfo tableAction : tableActions) {
+                boolean enabled;
+                switch (tableAction.enablement) {
+                    case ALWAYS:
+                        enabled = true;
+                        break;
+                    case ANY:
+                        enabled = (count >= 1);
+                        break;
+                    case SINGLE:
+                        enabled = (count == 1);
+                        break;
+                    case MULTIPLE:
+                        enabled = (count > 1);
+                        break;
+                    default:
+                        throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
+                }
+                tableAction.actionButton.setDisabled(!enabled);
             }
-            tableAction.actionButton.setDisabled(!enabled);
+            this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
         }
-        this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
     }
 
     // -------------- Inner utility class -------------

@@ -43,11 +43,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 /**
  * @author Greg Hinkle
  */
-public class BundlesListView extends VLayout {
-
-    private Table table;
+public class BundlesListView extends Table {
 
     public BundlesListView() {
+        super("Bundles");
         setWidth100();
         setHeight100();
     }
@@ -56,35 +55,33 @@ public class BundlesListView extends VLayout {
     protected void onInit() {
         super.onInit();
 
-        table = new Table("Bundles");
+        setDataSource(new BundlesWithLatestVersionDataSource());
 
-        table.setDataSource(new BundlesWithLatestVersionDataSource());
-
-        table.getListGrid().getField("id").setWidth("60");
-        table.getListGrid().getField("name").setWidth("25%");
-        table.getListGrid().getField("name").setCellFormatter(new CellFormatter() {
+        getListGrid().getField("id").setWidth("60");
+        getListGrid().getField("name").setWidth("25%");
+        getListGrid().getField("name").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
             }
         });
 
-        table.getListGrid().getField("description").setWidth("25%");
-        table.getListGrid().getField("latestVersion").setWidth("25%");
-        table.getListGrid().getField("versionsCount").setWidth("*");
+        getListGrid().getField("description").setWidth("25%");
+        getListGrid().getField("latestVersion").setWidth("25%");
+        getListGrid().getField("versionsCount").setWidth("*");
 
-        table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-        table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
+        getListGrid().setSelectionType(SelectionStyle.SIMPLE);
+//        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
-        table.addTableAction("New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+        addTableAction("New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 new BundleCreateWizard().startBundleWizard();
 
             }
         });
 
-        table.addTableAction("Delete", Table.SelectionEnablement.ANY, "Are You Sure?", new TableAction() {
+        addTableAction("Delete", Table.SelectionEnablement.ANY, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selections) {
-                BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) table.getDataSource();
+                BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
                 for (ListGridRecord selection : selections) {
                     BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
                     final BundleWithLatestVersionComposite object = ds.copyValues(selection);
@@ -105,14 +102,14 @@ public class BundlesListView extends VLayout {
 
         // can change this back to SINGLE selection when we feel like it. currently allowing the wizard to
         // select the bundle.
-        table.addTableAction("Deploy", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+        addTableAction("Deploy", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 if (selection.length == 0) {
                     new BundleDeployWizard().startBundleWizard();
                     return;
                 }
 
-                BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) table.getDataSource();
+                BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
                 final BundleWithLatestVersionComposite object = ds.copyValues(selection[0]);
                 BundleCriteria bc = new BundleCriteria();
                 bc.addFilterId(object.getBundleId());
@@ -135,16 +132,13 @@ public class BundlesListView extends VLayout {
                 });
             }
         });
-
-        addMember(table);
-
     }
 
     public void setCriteria(Criteria criteria) {
-        this.table.getListGrid().fetchData(criteria);
+        this.getListGrid().fetchData(criteria);
     }
 
     public int getMatches() {
-        return this.table.getListGrid().getTotalRows();
+        return this.getListGrid().getTotalRows();
     }
 }

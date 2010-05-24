@@ -24,9 +24,12 @@ package org.rhq.enterprise.gui.coregui.client.report.tag;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.tile.TileGrid;
+import com.smartgwt.client.widgets.tile.TileLayout;
 
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.Tag;
@@ -67,15 +70,24 @@ public class TaggedView extends VLayout implements BookmarkableView {
         TagCloudView tagCloudView = new TagCloudView();
         tagCloudView.setAutoHeight();
         addMember(tagCloudView);
+//
+//        sectionStack = new SectionStack();
+//        sectionStack.setHeight("*");
+//
+//        sectionStack.addSection(getResourceStack());
+//
+//        sectionStack.addSection(getBundleStack());
+//
+//        addMember(sectionStack);
 
-        sectionStack = new SectionStack();
-        sectionStack.setHeight("*");
+        TileLayout tileLayout = new TileLayout();
+        tileLayout.setWidth100();
+        tileLayout.setTileHeight(250);
+        tileLayout.setTileWidth(getWidth()/2 - 20);
+        addMember(tileLayout);
 
-        sectionStack.addSection(getResourceStack());
-
-        sectionStack.addSection(getBundleStack());
-
-        addMember(sectionStack);
+        tileLayout.addTile(getResourceCanvas());
+        tileLayout.addTile(getBundleCanvas());
 
     }
 
@@ -90,11 +102,11 @@ public class TaggedView extends VLayout implements BookmarkableView {
         criteria.addCriteria("tagName", tag.getName());
 
 
-        resourceView.setCriteria(criteria);
-        bundlesView.setCriteria(criteria);
+        resourceView.refresh(criteria);
+        bundlesView.refresh(criteria);
 
 
-        TagCriteria criteria = new TagCriteria();
+/*        TagCriteria criteria = new TagCriteria();
         criteria.addFilterNamespace(tag.getNamespace());
         criteria.addFilterSemantic(tag.getSemantic());
         criteria.addFilterName(tag.getName());
@@ -109,26 +121,19 @@ public class TaggedView extends VLayout implements BookmarkableView {
                 sectionStack.setSectionTitle(0, "Resources: " + tagReport.getResourceCount());
                 sectionStack.setSectionTitle(1, "Bundles: " + tagReport.getBundleCount());
             }
-        });
+        });*/
     }
 
-    private SectionStackSection getResourceStack() {
-        resourceSection = new SectionStackSection();
-        resourceSection.setTitle("Resources");
-
-
-        resourceView = new ResourceSearchView();
-        resourceSection.addItem(resourceView);
-        return resourceSection;
+    private Canvas getResourceCanvas() {
+        resourceView = new ResourceSearchView("Tagged Resources", new String[]{"pluginName","category","currentAvailability"});
+        resourceView.setShowFooter(false);
+        return resourceView;
     }
 
-    private SectionStackSection getBundleStack() {
-        bundleSection = new SectionStackSection();
-        bundleSection.setTitle("Bundles");
-
+    private Canvas getBundleCanvas() {
         bundlesView = new BundlesListView();
-        bundleSection.addItem(bundlesView);
-        return bundleSection;
+        bundlesView.setShowFooter(false);
+        return bundlesView;
     }
 
     public void renderView(ViewPath viewPath) {

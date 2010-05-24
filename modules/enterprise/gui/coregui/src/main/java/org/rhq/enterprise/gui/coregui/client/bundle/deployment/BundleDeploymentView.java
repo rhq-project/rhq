@@ -99,8 +99,9 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
 
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle("Bundle");
-        bundleName.setTarget("#Bundles/Bundle/" + bundle.getId());
+        bundleName.setValue("#Bundles/Bundle/" + bundle.getId());
         bundleName.setLinkTitle(bundle.getName());
+        bundleName.setTarget("_self");
 
         CanvasItem tagItem = new CanvasItem("tag");
         tagItem.setShowTitle(false);
@@ -119,6 +120,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
                         });
             }
         });
+        tagEditor.setVertical(true);
         tagItem.setCanvas(tagEditor);
         tagItem.setRowSpan(4);
 
@@ -126,8 +128,11 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         deployed.setValue(new Date(deployment.getCtime()));
 
         LinkItem destinationGroup = new LinkItem("group");
-        destinationGroup.setTarget("#ResourceGroup/" + deployment.getDestination().getGroup().getId());
+        destinationGroup.setTitle("Group");
+        destinationGroup.setValue("#ResourceGroup/" + deployment.getDestination().getGroup().getId());
         destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
+        destinationGroup.setTarget("_self");
+
 
         StaticTextItem path = new StaticTextItem("path", "Path");
         path.setValue(deployment.getDestination().getDeployDir());

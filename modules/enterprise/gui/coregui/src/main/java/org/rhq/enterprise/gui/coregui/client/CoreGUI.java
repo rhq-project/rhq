@@ -123,6 +123,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                         GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError("Failed to load user's subject", caught);
+                                new LoginView().showLoginDialog();
                             }
 
                             public void onSuccess(PageList<Subject> result) {

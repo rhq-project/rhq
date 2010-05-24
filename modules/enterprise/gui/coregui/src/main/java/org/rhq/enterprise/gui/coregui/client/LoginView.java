@@ -83,8 +83,6 @@ public class LoginView extends Canvas {
                     CoreGUI.checkLoginStatus();
                 }
             });
-        } else {
-            CoreGUI.checkLoginStatus();
         }
 
     }

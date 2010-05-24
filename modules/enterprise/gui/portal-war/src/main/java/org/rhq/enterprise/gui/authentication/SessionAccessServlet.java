@@ -35,8 +35,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+import org.rhq.enterprise.server.auth.SessionManager;
+import org.rhq.enterprise.server.auth.SessionNotFoundException;
+import org.rhq.enterprise.server.auth.SessionTimeoutException;
 
 /**
  * @author Greg Hinkle
@@ -59,17 +64,36 @@ public class SessionAccessServlet extends HttpServlet {
          */
         WebUser webUser = SessionUtils.getWebUser(session);
 
-        if (webUser != null) {
 
-            ServletOutputStream out = response.getOutputStream();
+        if (webUser != null && webUser.getSubject() != null) {
 
-            String output =
-                    String.valueOf(webUser.getSubject().getId()) + ":" +
-                            String.valueOf(webUser.getSessionId());
+            // the web user exists, so update our SessionManager's session last-access-time
+            Subject subject = webUser.getSubject();
+
+            try {
+
+                SessionManager.getInstance().getSubject(subject.getSessionId());
 
 
-            out.write(output.getBytes());
+                ServletOutputStream out = response.getOutputStream();
 
+                String output =
+                        String.valueOf(webUser.getSubject().getId()) + ":" +
+                                String.valueOf(webUser.getSessionId());
+
+
+                out.write(output.getBytes());
+
+
+            } catch (SessionNotFoundException snfe) {
+                session.removeAttribute(ParamConstants.USER_PARAM);
+                SessionUtils.setWebUser(session, null);
+                webUser = null;
+            } catch (SessionTimeoutException ste) {
+                session.removeAttribute(ParamConstants.USER_PARAM);
+                SessionUtils.setWebUser(session, null);
+                webUser = null;
+            }
         }
     }
 }

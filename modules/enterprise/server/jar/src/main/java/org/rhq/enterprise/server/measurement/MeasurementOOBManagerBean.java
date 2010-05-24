@@ -54,6 +54,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -318,6 +319,8 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         }
 
+        applyFormatting(results);
+
         return new PageList<MeasurementOOBComposite>(results, (int) totalCount, pc);
     }
 
@@ -370,8 +373,23 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         long totalCount = (Long) countQuery.getSingleResult();
         PageList<MeasurementOOBComposite> result = new PageList<MeasurementOOBComposite>(results, (int) totalCount, pc);
 
+        applyFormatting(result);
+
         return result;
 
+    }
+
+    private void applyFormatting(List<MeasurementOOBComposite> composites) {
+        for (MeasurementOOBComposite oob : composites) {
+            oob.setFormattedOutlier(MeasurementConverter.format(oob.getOutlier(), oob.getUnits(), true));
+            formatBaseband(oob);
+        }
+    }
+
+    private void formatBaseband(MeasurementOOBComposite oob) {
+        String min = MeasurementConverter.format(oob.getBlMin(), oob.getUnits(), true);
+        String max = MeasurementConverter.format(oob.getBlMax(), oob.getUnits(), true);
+        oob.setFormattedBaseband(min + ", " + max);
     }
 
     /**

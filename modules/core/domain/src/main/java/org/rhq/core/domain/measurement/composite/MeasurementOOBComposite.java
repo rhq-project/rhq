@@ -47,6 +47,8 @@ public class MeasurementOOBComposite implements Serializable {
     private MeasurementUnits units;
     private String parentName;
     private Integer parentId;
+    private String formattedOutlier;
+    private String formattedBaseband;
 
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId,
         long timestamp, int definitionId, int factor, double blMin, double blMax, MeasurementUnits units,
@@ -107,6 +109,10 @@ public class MeasurementOOBComposite implements Serializable {
         return timestamp;
     }
 
+    public MeasurementUnits getUnits() {
+        return units;
+    }
+
     public double getBlMin() {
         return blMin;
     }
@@ -160,20 +166,21 @@ public class MeasurementOOBComposite implements Serializable {
         }
     }
 
-    /*
     public String getFormattedBaseband() {
-        String min = MeasurementConverter.format(blMin, units, true);
-        String max = MeasurementConverter.format(blMax, units, true);
+        return formattedBaseband;
+    }
 
-        String result = min + ", " + max;
-
-        return result;
+    public void setFormattedBaseband(String formattedBaseband) {
+        this.formattedBaseband = formattedBaseband;
     }
 
     public String getFormattedOutlier() {
-        return MeasurementConverter.format(outlier, units, true);
+        return formattedOutlier;
     }
-    */
+
+    public void setFormattedOutlier(String formattedOutlier) {
+        this.formattedOutlier = formattedOutlier;
+    }
 
     @Override
     public String toString() {

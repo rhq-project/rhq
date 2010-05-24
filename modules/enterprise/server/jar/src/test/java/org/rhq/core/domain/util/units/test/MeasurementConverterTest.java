@@ -28,13 +28,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.rhq.core.server.MeasurementConverter;
+import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
-import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.server.MeasurementParser;
 
 // TODO two tests in here need to be re-enables once the GWT client issues are resolved
@@ -98,7 +98,7 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
         MeasurementUnits expectedUnits) {
         incrementPrecisionScalingTestCount();
 
-        String[] results = MeasurementConverterClient.formatToSignificantPrecision(values, units, true);
+        String[] results = MeasurementConverter.formatToSignificantPrecision(values, units, true);
         for (int i = 0; i < results.length; i++) {
             String expected = expectedResults[i];
             String actual = results[i];
@@ -109,7 +109,7 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
                 Locale.setDefault(Locale.US);
                 MeasurementNumericValueAndUnits vu = MeasurementParser.parse(expected, expectedUnits);
                 Locale.setDefault(defaultLocale);
-                expected = MeasurementConverterClient.format(vu.getValue(), expectedUnits, false, null, 4);
+                expected = MeasurementConverter.format(vu.getValue(), expectedUnits, false, null, 4);
             }
 
             assert actual.equals(expected) : "Test " + precisionScalingTestCount.get() + ": " + "Index " + i + ", "
@@ -150,7 +150,7 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
                     }
 
                     for (String unitVariation : unitsVariations) {
-                        String original = MeasurementConverterClient.format(POSITIVE, units, false);
+                        String original = MeasurementConverter.format(POSITIVE, units, false);
                         String toBeTested = magnitudeVariation.trim() + unitVariation.trim();
 
                         assert original.equals(toBeTested) : "Error constructing whitespace string: " + "Expected '"
@@ -174,7 +174,7 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
                     }
 
                     for (String unitVariation : unitsVariations) {
-                        String original = MeasurementConverterClient.format(-POSITIVE, units, false);
+                        String original = MeasurementConverter.format(-POSITIVE, units, false);
                         String toBeTested = "-" + magnitudeVariation.trim() + unitVariation.trim();
 
                         assert original.equals(toBeTested) : "Error constructing whitespace string: " + "Expected '"
@@ -259,7 +259,7 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
     private void validateScale(double fromValue, MeasurementUnits fromUnits, double toValue, MeasurementUnits toUnits) {
         MeasurementNumericValueAndUnits valueAndUnits = new MeasurementNumericValueAndUnits(fromValue, fromUnits);
         try {
-            double derived = MeasurementConverterClient.scale(valueAndUnits, toUnits);
+            double derived = MeasurementConverter.scale(valueAndUnits, toUnits);
             assert Math.abs(toValue - derived) < 1e-9 : "Scale conversion error: " +
 
             "From value '" + fromValue + "', " + "with units of '" + fromUnits.name() + "', " + "displayed as '"
@@ -287,7 +287,7 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
 
     private void validateFormatConvert(double passedValue, double expectedValue, MeasurementUnits units) {
         try {
-            String intermediate = MeasurementConverterClient.format(passedValue, units, false);
+            String intermediate = MeasurementConverter.format(passedValue, units, false);
             MeasurementNumericValueAndUnits results = MeasurementParser.parse(intermediate, units);
 
             assert (Math.abs(results.getValue() - expectedValue) < 1e-9 && results.getUnits() == units) : "double input was '"

@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import java.util.HashMap;
 
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -47,6 +48,8 @@ import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
@@ -67,6 +70,7 @@ public class LoginView {
         form.setMargin(10);
         form.setShowInlineErrors(false);
 
+
         CanvasItem logo = new CanvasItem();
         logo.setCanvas(new Img("header/rhq_logo_28px.png",80,28));
         logo.setShowTitle(false);
@@ -77,13 +81,23 @@ public class LoginView {
 
         TextItem user = new TextItem("user", "User");
         user.setRequired(true);
+        user.setAttribute("canAutocomplete", true);
+        user.setAttribute("autoComplete", true);
         PasswordItem password = new PasswordItem("password", "Password");
         password.setRequired(true);
+        password.setAttribute("autocomplete", true);
 
         final SubmitItem login = new SubmitItem("login", "Login");
         login.setAlign(Alignment.CENTER);
         login.setColSpan(2);
 
+        password.addKeyPressHandler(new KeyPressHandler() {
+            public void onKeyPress(KeyPressEvent event) {
+                if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
+                    form.submit();
+                }
+            }
+        });
 
         form.setFields(logo, header, user, password, login);
 

@@ -221,7 +221,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         } else if (breadcrumbName.equals("Bundles")) {
             canvas = new BundleTopView();
         } else if (breadcrumbName.equals("LogOut")) {
-            canvas = new LoginView();
+            canvas = new LoginView(true);
         } else if (breadcrumbName.equals("Tag")) {
             canvas = new TaggedView();
         } else {

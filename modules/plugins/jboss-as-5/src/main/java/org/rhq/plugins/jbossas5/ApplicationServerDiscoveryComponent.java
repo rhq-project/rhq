@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
+* Copyright (C) 2005-2010 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -68,8 +68,12 @@ import org.rhq.plugins.jbossas5.util.JnpConfig;
 import org.jboss.on.common.jbossas.JBossASDiscoveryUtils;
 
 /**
- * A Resource discovery component for JBoss AS, 5.2.0.Beta1 or later, and JBoss EAP and SOA-P, 5.0.0.Beta or later,
- * Servers.
+ * A Resource discovery component for JBoss AS Server Resources, which include the following:
+ *
+ *   JBoss AS, 5.2.0.Beta1 and later
+ *   JBoss EAP, 5.0.0.Beta and later
+ *   JBoss EWP, 5.0.0.CR1 and later
+ *   JBoss SOA-P, 5.0.0.Beta and later
  *
  * @author Ian Springer
  * @author Mark Spritzler
@@ -84,39 +88,31 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private static final String JAVA_HOME_ENV_VAR = "JAVA_HOME";
 
     private static final Map<JBossProductType, ComparableVersion> MINIMUM_PRODUCT_VERSIONS = new HashMap(3);
-
-    private static final List<String> CLIENT_JARS = Arrays.asList(
-            // NOTE: The jbossall-client.jar aggregates a whole bunch of other jars from the client dir via its
-            // MANIFEST.MF Class-Path.
-            "client/jbossall-client.jar",
-            "client/trove.jar",
-            "client/javassist.jar",
-            "common/lib/jboss-security-aspects.jar",
-            "lib/jboss-managed.jar",
-            "lib/jboss-metatype.jar",
-<<<<<<< HEAD
-            "lib/jboss-dependency.jar"
-    );
-
-    private static final List<String> AS6_CLIENT_JARS = new ArrayList<String>(CLIENT_JARS);
-
     static {
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.AS, new ComparableVersion("5.2.0.Beta1"));
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EAP, new ComparableVersion("5.0.0.Beta"));
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EWP, new ComparableVersion("5.0.0.CR1"));
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.SOA, new ComparableVersion("5.0.0.Beta"));
+    }
 
+    private static final List<String> CLIENT_JARS = Arrays.asList(
+        // NOTE: The jbossall-client.jar aggregates a whole bunch of other jars from the client dir via its
+        // MANIFEST.MF Class-Path.
+        "client/jbossall-client.jar",
+        "client/trove.jar",
+        "client/javassist.jar",
+        "common/lib/jboss-security-aspects.jar",
+        "lib/jboss-managed.jar",
+        "lib/jboss-metatype.jar",
+        "lib/jboss-dependency.jar"
+    );
+
+    private static final List<String> AS6_CLIENT_JARS = new ArrayList<String>(CLIENT_JARS);
+    static {
         // The below jars are required for JBoss AS 6.0 M1, M2, and M3.
         AS6_CLIENT_JARS.add("lib/jboss-classpool.jar");
         AS6_CLIENT_JARS.add("lib/jboss-classpool-scoped.jar");
     }
-=======
-            "lib/jboss-dependency.jar",
-            // The below jars are required for JBoss AS 6.0 M1, M2, and M3.
-            //"lib/jboss-classpool.jar",
-            //"lib/jboss-classpool-scoped.jar"
-    };
->>>>>>> 2e1a8be... * add support for moving resourcetypes to new locations in the type hierarchy, as well as moving any existing resources of those types (https://bugzilla.redhat.com/show_bug.cgi?id=577055)
 
     private final Log log = LogFactory.getLog(this.getClass());
 

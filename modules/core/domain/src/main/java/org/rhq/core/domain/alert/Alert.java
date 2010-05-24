@@ -258,7 +258,7 @@ public class Alert implements Serializable {
     private boolean willRecover;
 
     @Column(name = "ACK_TIME")
-    private long acknowledgeTime = -1;
+    private Long acknowledgeTime = -1L;
 
     @Column(name = "ACK_SUBJECT")
     private String acknowledgingSubject;
@@ -333,11 +333,11 @@ public class Alert implements Serializable {
         this.triggeredOperation = triggeredOperation;
     }
 
-    public long getAcknowledgeTime() {
+    public Long getAcknowledgeTime() {
         return acknowledgeTime;
     }
 
-    public void setAcknowledgeTime(long acknowledgeTime) {
+    public void setAcknowledgeTime(Long acknowledgeTime) {
         this.acknowledgeTime = acknowledgeTime;
     }
 

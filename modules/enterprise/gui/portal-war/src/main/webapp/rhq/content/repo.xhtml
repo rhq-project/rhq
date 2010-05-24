@@ -223,11 +223,11 @@
 
         <h:panelGrid columns="1" width="100%">
 
-          <ui:param name="repoContentProviderDataModel"
+          <ui:param name="repoContentProvidersDataModel"
             value="#{RepoContentSourcesUIBean.dataModel}" />
           <rich:dataTable id="repoContentProvidersDataTable"
             rows="#{PageControl.RepoContentSourcesList.pageSize}"
-            value="#{repoContentProviderDataModel}"
+            value="#{repoContentProvidersDataModel}"
             var="contentprovideritem" width="100%"
             columnsWidth="1%, 20%, 15%, 15%, 9%, 9%"
             headerClass="tableRowHeader" footerClass="on-pager-footer"

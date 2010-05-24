@@ -285,7 +285,7 @@ public class Property implements Serializable, DeepCopyable<Property>, Comparabl
        // It's not clear to me why this class implements Externalizable.  It seems to write out every field
        // using standard serialization. Also, it's sub-classes seem to write out every field. To be safe I'm leaving
        // it as is and also applying the new strategy logic, in case there are (future) differences between agent and
-       // remoteAPI serialization. 
+       // remoteAPI serialization.
        public void writeExternal(ObjectOutput out) throws IOException {
            ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
            out.writeChar(strategy.id());
@@ -367,7 +367,6 @@ public class Property implements Serializable, DeepCopyable<Property>, Comparabl
         return;
     }
 
-    @Override
     public int compareTo(Property other) {
         return getName().compareTo(other.getName());
     }

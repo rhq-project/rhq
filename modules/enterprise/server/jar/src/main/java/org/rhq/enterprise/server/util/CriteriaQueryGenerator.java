@@ -230,7 +230,7 @@ public final class CriteriaQueryGenerator {
         }
 
         Map<String, Object> filterFields = getFilterFields(criteria);
-        if (filterFields.size() > 0 || authorizationJoinFragment != null) {
+        if (filterFields.size() > 0 || authorizationJoinFragment != null || searchExpressionWhereClause != null) {
             results.append("WHERE ");
         }
 

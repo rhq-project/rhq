@@ -61,7 +61,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 /**
- * This bean provides functionality to manipulate the ldap auth/authz funcitonality. 
+ * This bean provides functionality to manipulate the ldap auth/authz funcitonality.
  * That is, adding/modifying/deleting ldap group/users and their
  * associated subjects and permissions are performed by this manager.
  * @author paji
@@ -189,7 +189,6 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         }
     }
 
-    @Override
     public PageList<LdapGroup> findLdapGroupsByRole(int roleId, PageControl pageControl) {
         Role role = entityManager.find(Role.class, roleId);
         if (role == null) {
@@ -280,7 +279,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
 
     /**
-     * @throws NamingException 
+     * @throws NamingException
      * @see org.jboss.security.auth.spi.UsernamePasswordLoginModule#validatePassword(java.lang.String,java.lang.String)
      */
     protected Set<Map<String, String>> buildGroup(Properties options, String filter) {
@@ -347,7 +346,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 log.error(message, fException);
                 throw new LdapFilterException(message + " " + fException.getMessage());
             }
-            //TODO: check for ldap connection/unavailable/etc. exceptions. 
+            //TODO: check for ldap connection/unavailable/etc. exceptions.
             else {
                 log.error("LDAP communication error: " + e.getMessage(), e);
                 throw new LdapCommunicationException(e);

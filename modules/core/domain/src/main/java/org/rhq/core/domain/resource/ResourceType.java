@@ -22,10 +22,6 @@
  */
 package org.rhq.core.domain.resource;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -87,8 +83,7 @@ import org.rhq.core.domain.util.Summary;
     query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name)"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt WHERE rt.plugin = :plugin"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN, // TODO: QUERY: names are case-sensitive
-    hints = { @QueryHint(name = "org.hibernate.able", value = "true"),
-        @QueryHint(name = "org.hibernate.Region", value = "metadata") }, query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin"),
+    query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin"),
     @NamedQuery(name = ResourceType.QUERY_FIND_ALL, query = "SELECT rt FROM ResourceType AS rt"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PARENT_AND_NAME, // TODO: QUERY: Not looking up by the full key, get rid of this query
     query = "SELECT rt FROM ResourceType AS rt WHERE :parent MEMBER OF rt.parentResourceTypes AND rt.name = :name"),
@@ -319,14 +314,15 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @Column(name = "MTIME")
     private Long mtime;
 
-    @ManyToMany(mappedBy = "parentResourceTypes", cascade = CascadeType.ALL)
+    @ManyToMany(mappedBy = "parentResourceTypes", cascade = { CascadeType.REFRESH, CascadeType.REMOVE })
     @OrderBy
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private Set<ResourceType> childResourceTypes;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // persist so self-injecting plugins work
-    @JoinTable(name = "RHQ_RESOURCE_TYPE_PARENTS", joinColumns = { @JoinColumn(name = "RESOURCE_TYPE_ID") }, inverseJoinColumns = { @JoinColumn(name = "PARENT_RESOURCE_TYPE_ID") })
+    @JoinTable(name = "RHQ_RESOURCE_TYPE_PARENTS", joinColumns = { @JoinColumn(name = "RESOURCE_TYPE_ID") },
+            inverseJoinColumns = { @JoinColumn(name = "PARENT_RESOURCE_TYPE_ID") })
     @OrderBy
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private Set<ResourceType> parentResourceTypes;

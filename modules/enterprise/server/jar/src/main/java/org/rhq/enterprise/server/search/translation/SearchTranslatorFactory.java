@@ -10,6 +10,8 @@ public class SearchTranslatorFactory {
     public static SearchTranslator getTranslator(SearchSubsystem searchContext) {
         if (searchContext == SearchSubsystem.RESOURCE) {
             return new ResourceSearchTranslator();
+        } else if (searchContext == SearchSubsystem.GROUP) {
+            return new GroupSearchTranslator();
         }
         throw new IllegalArgumentException("No SearchTranslator found for SearchContext[" + searchContext + "]");
     }

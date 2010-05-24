@@ -65,6 +65,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static CoreGUI coreGUI;
 
     public void onModuleLoad() {
+        if (GWT.getHostPageBaseURL().indexOf("/coregui/") == -1) {
+            System.out.println("Suppressing load of CoreGUI module");
+            return; // suppress loading this module if not using the new GWT app
+        }
+
         coreGUI = this;
 
         if (!GWT.isScript()) {
@@ -194,7 +199,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         History.fireCurrentHistoryState();
     }
 
-
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
 
         String event = URL.decodeComponent(stringValueChangeEvent.getValue());
@@ -204,7 +208,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         rootCanvas.renderView(currentViewPath);
     }
-
 
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;

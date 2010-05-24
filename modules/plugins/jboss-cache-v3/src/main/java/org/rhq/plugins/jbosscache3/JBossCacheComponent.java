@@ -25,6 +25,7 @@ package org.rhq.plugins.jbosscache3;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 import org.mc4j.ems.connection.EmsConnection;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -49,9 +50,12 @@ public class JBossCacheComponent implements
 
 	private String beanName;
 
-	public void start(ResourceContext<ProfileServiceComponent> context)
+    private ResourceContext<ProfileServiceComponent> resourceContext;
+
+    public void start(ResourceContext<ProfileServiceComponent> context)
 			throws InvalidPluginConfigurationException, Exception {
 
+        resourceContext = context;
 		parentComp = context.getParentResourceComponent();
 
 		Configuration configuration = context.getPluginConfiguration();
@@ -80,4 +84,9 @@ public class JBossCacheComponent implements
 	public EmsConnection getEmsConnection() {
 		return parentComp.getEmsConnection();
 	}
+
+    @NotNull
+    public ResourceContext<ProfileServiceComponent> getResourceContext() {
+        return resourceContext;
+    }
 }

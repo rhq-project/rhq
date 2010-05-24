@@ -51,7 +51,7 @@ let sections (body:lens) = sec "Directory" body
 
 (* FIXME: *)
 (* - Nesting of sections *)
-let rec lns = ((directive | comment)* | sections lns)*
+let rec lns = (directive | comment | sections lns)*
 
 let filter =
     incl "/etc/httpd/conf/httpd.conf"

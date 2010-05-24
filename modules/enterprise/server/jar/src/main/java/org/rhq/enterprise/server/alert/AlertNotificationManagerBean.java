@@ -26,6 +26,8 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -38,14 +40,11 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
-import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
@@ -70,8 +69,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     @EJB
     private GroupAlertDefinitionManagerLocal groupAlertDefintionManager;
     @EJB
-    private AuthorizationManagerLocal authorizationManager;
-    @EJB
     private SubjectManagerLocal subjectManager;
     @EJB
     private ServerPluginsLocal serverPluginsBean;
@@ -83,48 +80,69 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * Must use detached object in all circumstances where the AlertDefinition will eventually be passed to
      * AlertDefinitionManager.updateAlertDefinition() to perform the actual modifications and persistence.
      * If we use an attached AlertDefinity entity at this layer, modify the set of notifications, then call
-     * into AlertDefinitionManager.updateAlertDefinition() which starts a new transaction, the work will be
-     * performed at the AlertTemplate layer twice.  This would result in duplicate notifications (RHQ-629) as
-     * well as errors during removal (which would be attempted twice for each being removed).
+     * into AlertDefinitionManager.updateAlertDefinition() which executes in a new transaction, the work will
+     * actually be performed twice - once at each layer.  This would result in either duplicate notifications 
+     * (in the case of adding notifications) or Hibernate exceptions (in the case of removing notifications,
+     * which are attempted twice for each being removed).
      *
-     * Must, however, return an AlertDefinition with a copy of the ids because the removeNotifications method
-     * needs to compare ids to figure out what to remove from the set of notifications.
+     * However, instead of loading the alertDefinition from within a transaction, and then detaching it from
+     * the Hibernate session, a better method is to just execute the add/removal logic for the AlertNotification(s)
+     * outside a transaction and then call AlertDefinitionManager.updateAlertNotification() which starts a new
+     * transaction to do all of its logic.
+     * 
+     * Note: for AlertNotification updates to work properly, alertDefinitionManager.getAlertDefinitionById() must
+     *        eagerly load the List<AlertNotification> on the returned AlertDefinition
      */
     private AlertDefinition getDetachedAlertDefinition(int alertDefinitionId) {
         AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),
             alertDefinitionId);
-        checkPermission(subjectManager.getOverlord(), alertDefinition);
-        AlertDefinitionContext context = alertDefinition.getContext();
-        if (context == AlertDefinitionContext.Resource) {
-            return alertDefinition; // return attached to make modifications directly on
-        }
-        // otherwise, return detached to pass to alertTemplateManager.update or groupAlertDefinitionManager.update
-        AlertDefinition detachedDefinition = new AlertDefinition(alertDefinition, true);
-        detachedDefinition.setContext(context);
-        detachedDefinition.setId(alertDefinition.getId());
-        return detachedDefinition;
+        return alertDefinition;
     }
 
-    private void checkPermission(Subject subject, AlertDefinition alertDefinition) {
-        boolean hasPermission = false;
+    /**
+     * @throws AlertDefinitionUpdateException if the {@link AlertNotification} is not associated with a known sender
+     */
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, AlertNotification notification)
+        throws AlertDefinitionUpdateException {
 
-        if (alertDefinition.getResourceType() != null) { // an alert template
-            hasPermission = authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
-        } else if (alertDefinition.getResourceGroup() != null) { // a groupAlertDefinition
-            hasPermission = authorizationManager.hasGroupPermission(subject, Permission.MANAGE_ALERTS, alertDefinition
-                .getResourceGroup().getId());
-        } else { // an alert definition
-            hasPermission = authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS,
-                alertDefinition.getResource().getId());
+        List<String> validSenders = listAllAlertSenders();
+        if (validSenders.contains(notification.getSenderName()) == false) {
+            throw new AlertDefinitionUpdateException(notification.getSenderName()
+                + " is not a valid alert sender, options are: " + validSenders);
         }
 
-        if (!hasPermission) {
-            throw new PermissionException(subject + " is not authorized to edit this alert definition");
-        }
+        AlertDefinition definition = getDetachedAlertDefinition(alertDefinitionId);
+        List<AlertNotification> notifications = definition.getAlertNotifications();
+        notifications.add(notification);
+
+        postProcessAlertDefinition(definition);
+
+        return notification;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void updateAlertNotification(Subject subject, int alertDefinitionId, AlertNotification notification) {
+        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId); // permissions check first
+
+        /* 
+         * NULL notifications used to perform cascade updates from template and group level for alert senders
+         * that leverage custom UIs, which have a completely external methodology for loading/saving the data
+         * into and out of configuration object(s) associated with an AlertNotification.  
+         */
+        if (notification != null) {
+            // remove then add is a cheap way of performing an update
+            List<AlertNotification> notifications = alertDefinition.getAlertNotifications();
+            notifications.remove(notification);
+            notifications.add(notification);
+        }
+
+        postProcessAlertDefinition(alertDefinition);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds) {
-        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
+        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId); // permissions check first
         if ((notificationIds == null) || (notificationIds.length == 0)) {
             return 0;
         }
@@ -141,20 +159,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             }
         }
 
-        // Before we delete the notification, check if has a custom backing bean
-        // and give it the possibility to clean up
-        for (AlertNotification notification : toBeRemoved) {
-            CustomAlertSenderBackingBean bb = getBackingBeanForSender(notification.getSenderName(), notification
-                .getId());
-            try {
-                bb.internalCleanup();
-            } catch (Throwable t) {
-                LOG
-                    .error("removeNotifications, calling backingBean.internalCleanup() resulted in " + t.getMessage(),
-                        t);
-            }
-        }
-
         alertDefinition.getAlertNotifications().removeAll(toBeRemoved);
 
         postProcessAlertDefinition(alertDefinition);
@@ -167,23 +171,21 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return purgeQuery.executeUpdate();
     }
 
-    private void postProcessAlertDefinition(AlertDefinition definition) {
+    private AlertDefinition postProcessAlertDefinition(AlertDefinition definition) {
+        AlertDefinition updated = null;
         AlertDefinitionContext context = definition.getContext();
+        Subject overlord = subjectManager.getOverlord();
         if (context == AlertDefinitionContext.Type) {
-            try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), definition, true);
-            } catch (InvalidAlertDefinitionException iade) {
-                // can this ever really happen?  if it does, the logs will know about it
-                LOG.error("Can not update alert template, invalid definition: " + definition);
-            }
+            updated = alertTemplateManager.updateAlertTemplate(overlord, definition, true);
         } else if (context == AlertDefinitionContext.Group) {
-            try {
-                groupAlertDefintionManager.updateGroupAlertDefinitions(subjectManager.getOverlord(), definition, true);
-            } catch (InvalidAlertDefinitionException iade) {
-                // can this ever really happen?  if it does, the logs will know about it
-                LOG.error("Can not update alert template, invalid definition: " + definition);
-            }
+            updated = groupAlertDefintionManager.updateGroupAlertDefinitions(overlord, definition, true);
+        } else if (context == AlertDefinitionContext.Resource) {
+            updated = alertDefinitionManager.updateAlertDefinition(overlord, definition.getId(), definition, false);
+        } else {
+            throw new IllegalStateException("No support for updating alert notifications for AlertDefinitionContext: "
+                + definition.getContext());
         }
+        return updated;
     }
 
     public Configuration getAlertPropertiesConfiguration(AlertNotification notification) {
@@ -268,28 +270,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName,
-        Configuration configuration) {
-
-        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user, alertDefinitionId);
-        if (definition == null) {
-            LOG.error("Did not find definition for id [" + alertDefinitionId + "]");
-            return null;
-        }
-
-        entityManager.persist(configuration);
-        AlertNotification notif = new AlertNotification(definition);
-        notif.setSenderName(senderName);
-        notif.setConfiguration(configuration);
-        entityManager.persist(notif);
-        definition.getAlertNotifications().add(notif);
-
-        return notif;
-    }
-
-    /**
      * Return notifications for a certain alertDefinitionId
      *
      * NOTE: this only returns notifications that have an AlertSender defined.
@@ -313,16 +293,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         }
 
         return notifications;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void updateAlertNotification(AlertNotification notification) {
-        notification = entityManager.merge(notification);
-
-        entityManager.persist(notification);
-        entityManager.flush();
     }
 
     public AlertNotification getAlertNotification(Subject user, int alertNotificationId) {

@@ -402,15 +402,10 @@ public class AlertDefinition implements Serializable {
      */
     public AlertDefinition(AlertDefinition alertDef) {
         this();
-        this.update(alertDef, false);
+        this.update(alertDef);
     }
 
-    public AlertDefinition(AlertDefinition alertDef, boolean copyIds) {
-        this();
-        this.update(alertDef, copyIds);
-    }
-
-    public void update(AlertDefinition alertDef, boolean copyIds) {
+    public void update(AlertDefinition alertDef) {
         /*
          * Don't copy the id, ctime, or mtime.
          */
@@ -443,18 +438,20 @@ public class AlertDefinition implements Serializable {
         this.recoveryId = alertDef.recoveryId;
 
         // copy conditions
-        Set<AlertCondition> copiedConditions = new HashSet<AlertCondition>();
+        List<AlertCondition> copiedConditions = new ArrayList<AlertCondition>();
         for (AlertCondition oldCondition : alertDef.getConditions()) {
-            AlertCondition newCondition = new AlertCondition(oldCondition, copyIds);
+            AlertCondition newCondition = new AlertCondition(oldCondition);
             newCondition.setAlertDefinition(this);
             copiedConditions.add(newCondition);
         }
         this.removeAllConditions();
         this.getConditions().addAll(copiedConditions);
 
-        Set<AlertNotification> copiedNotifications = new HashSet<AlertNotification>();
-        for (AlertNotification oldNotification : new HashSet<AlertNotification>(alertDef.getAlertNotifications())) {
-            AlertNotification newNotification = new AlertNotification(oldNotification, copyIds);
+        // copy notifications
+        List<AlertNotification> copiedNotifications = new ArrayList<AlertNotification>();
+        for (AlertNotification oldNotification : alertDef.getAlertNotifications()) {
+            AlertNotification newNotification = new AlertNotification(oldNotification);
+            newNotification.setAlertDefinition(this);
             copiedNotifications.add(newNotification);
         }
         this.removeAllAlertNotifications();
@@ -682,8 +679,7 @@ public class AlertDefinition implements Serializable {
     }
 
     public void removeAllAlertNotifications() {
-        List<AlertNotification> toBeRemoved = new ArrayList<AlertNotification>(this.alertNotifications);
-        for (AlertNotification notification : toBeRemoved) {
+        for (AlertNotification notification : this.alertNotifications) {
             notification.prepareForOrphanDelete();
         }
 

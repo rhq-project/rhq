@@ -19,6 +19,8 @@
 package org.rhq.enterprise.gui.navigation.resource;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
@@ -30,15 +32,11 @@ import org.richfaces.component.state.TreeState;
 import org.richfaces.component.state.TreeStateAdvisor;
 import org.richfaces.model.TreeRowKey;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -46,22 +44,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Manages the tree selection and node openess for the left nav resource tree
  *
  * @author Greg Hinkle
+ * @author Lukas Krejci
  */
 public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
-    UITree tree;
-    TreeState treeState = new TreeState();
-    private int selecteAGTypeId;
-
-    private boolean hasMessages = false;
-
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
-    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-    public TreeState getTreeState() {
-        return treeState;
-    }
-
+    Set<ResourceTreeNode> openNodes = new HashSet<ResourceTreeNode>();
+    
     public void changeExpandListener(org.richfaces.event.NodeExpandedEvent e) {
         HtmlTree tree = (HtmlTree) e.getComponent();
         TreeState state = (TreeState) tree.getComponentState();
@@ -87,12 +77,24 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             if (closingParent) {
                 if (redirectTo(node)) {
                     state.setSelected(key);
+                    openNodes.remove(node);
+                    
+                    //this is nasty hack. We need some kind of flag that would persist only for the remainder
+                    //of this request to advertise that no more open/closed states should be made in this request. 
+                    //The tree is request scoped, so setting this flag will not persist to the next request. 
+                    //In the case of the tree, setting this to true in this listener has no side-effects.
+                    tree.setBypassUpdates(true);
                 } else if (!redirectTo(selectedNode)) {
                     FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree", 
                         new FacesMessage(FacesMessage.SEVERITY_WARN, "Failed to re-expand node that shouldn't be collapsed.", null));                    
                 }
-            } 
-
+            } else {
+                if (openNodes.contains(node)) {
+                    openNodes.remove(node);
+                } else {
+                    openNodes.add(node);
+                }
+            }
         }
     }
 
@@ -125,7 +127,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         //make sure that the node refered to in the request parameters is visible
         int selectedId = 0;
         String typeId = FacesContextUtility.getOptionalRequestParameter("type");
-        this.selecteAGTypeId = ((typeId == null || typeId.length() == 0) ? 0 : Integer.parseInt(typeId));
+        int selecteAGTypeId = ((typeId == null || typeId.length() == 0) ? 0 : Integer.parseInt(typeId));
 
         if (typeId != null) {
             String id = FacesContextUtility.getOptionalRequestParameter("parent");
@@ -140,35 +142,52 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             }
         }
 
-        if (preopen((ResourceTreeNode) tree.getRowData(key), selectedId, this.selecteAGTypeId)) {
+        //only update the state of open nodes in the preopen check
+        //if we're not finishing the request in which a parent
+        //of currently selected node was requested to close.
+        //If we did update the open node states in the "remainder"
+        //of such request the redirect that results from it would
+        //get wrong information and the parent wouldn't appear closed
+        //(because it'd had been re-opened in the below preopen call).
+        //@see changeExpandListener for more nasty details.
+        boolean setOpenStates = !tree.isBypassUpdates();
+        
+        if (preopen(node, selectedId, selecteAGTypeId, setOpenStates)) {
             return true;
         }
         
         //ok, in this case return whatever the last open state was
-        TreeState state = (TreeState) tree.getComponentState();
-        return state.isExpanded(key);
+        return openNodes.contains(node);
     }
 
-    private boolean preopen(ResourceTreeNode resourceTreeNode, int selectedResourceId, int selectedAGTypeId) {
-        if (resourceTreeNode.getData() instanceof ResourceFlyweight && selectedAGTypeId == 0) {
-            if (((ResourceFlyweight) resourceTreeNode.getData()).getId() == selectedResourceId) {
-                return true;
-            }
-        } else if (resourceTreeNode.getData() instanceof AutoGroupCompositeFlyweight) {
-            AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) resourceTreeNode.getData();
-            if (ag.getParentResource().getId() == selectedResourceId && ag.getResourceType() != null
-                && ag.getResourceType().getId() == selectedAGTypeId) {
-                return true;
-            }
-        }
-
+    private boolean preopen(ResourceTreeNode resourceTreeNode, int selectedResourceId, int selectedAGTypeId, boolean setOpenStates) {
+        boolean ret = false;
         for (ResourceTreeNode child : resourceTreeNode.getChildren()) {
-            if (preopen(child, selectedResourceId, selectedAGTypeId)) {
-                return true;
+            if (child.getData() instanceof ResourceFlyweight && selectedAGTypeId == 0) {
+                if (((ResourceFlyweight) child.getData()).getId() == selectedResourceId) {
+                    ret = true;
+                    break;
+                }
+            } else if (child.getData() instanceof AutoGroupCompositeFlyweight) {
+                AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) child.getData();
+                if (ag.getParentResource().getId() == selectedResourceId && ag.getResourceType() != null
+                    && ag.getResourceType().getId() == selectedAGTypeId) {
+                    
+                    ret = true;
+                    break;
+                }
+            }
+            
+            if (preopen(child, selectedResourceId, selectedAGTypeId, setOpenStates)) {
+                ret = true;
+                break;
             }
         }
 
-        return false;
+        if (setOpenStates && ret) {
+            openNodes.add(resourceTreeNode);
+        }
+        return ret;
     }
 
     public Boolean adviseNodeSelected(UITree tree) {
@@ -178,31 +197,25 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         String type = FacesContextUtility.getOptionalRequestParameter("type");
         ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
 
-        if (this.selecteAGTypeId > 0) {
-            if (node.getData() instanceof AutoGroupCompositeFlyweight) {
-                AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) node.getData();
-                if (ag.getParentResource() != null && ag.getResourceType() != null
-                    && String.valueOf(ag.getParentResource().getId()).equals(parent)
-                    && String.valueOf(ag.getResourceType().getId()).equals(type)) {
-                    return true;
-                }
+        if (node.getData() instanceof AutoGroupCompositeFlyweight) {
+            AutoGroupCompositeFlyweight ag = (AutoGroupCompositeFlyweight) node.getData();
+            if (ag.getParentResource() != null && ag.getResourceType() != null
+                && String.valueOf(ag.getParentResource().getId()).equals(parent)
+                && String.valueOf(ag.getResourceType().getId()).equals(type)) {
+                return true;
             }
-        }
-        if (node.getData() instanceof ResourceFlyweight) {
+        } else if (node.getData() instanceof ResourceFlyweight) {
             if (String.valueOf(((ResourceFlyweight) node.getData()).getId()).equals(id)) {
                 return Boolean.TRUE;
             }
         }
 
-        if (tree.getRowKey().equals(state.getSelectedNode())) {
-            return Boolean.TRUE;
-        }
-        return null;
+        
+        return tree.getRowKey().equals(state.getSelectedNode());
     }
 
     public boolean getHasMessages() {
-        hasMessages = FacesContext.getCurrentInstance().getMessages("leftNavTreeForm:leftNavTree").hasNext();
-        return hasMessages;
+        return FacesContext.getCurrentInstance().getMessages("leftNavTreeForm:leftNavTree").hasNext();
     }
 
     /**
@@ -211,7 +224,6 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     private boolean redirectTo(ResourceTreeNode node) {
         HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext().getExternalContext()
             .getResponse();
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
 
         String path = "";
         if (node.getData() instanceof ResourceFlyweight) {

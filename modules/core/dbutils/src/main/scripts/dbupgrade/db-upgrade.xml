@@ -2091,7 +2091,6 @@
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="email_address" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="role_id" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="subject_id" />
-                <schema-deleteColumn table="RHQ_ALERT_DEFINITION" column="operation_def_id" />
             </schemaSpec>
             <schemaSpec version="2.70.4">
                 <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="roles" />
@@ -2700,24 +2699,26 @@
                 <schema-addColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" columnType="BOOLEAN" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" nullable="FALSE" />
 
+                <schema-createSequence name="RHQ_SAVED_SEARCH_ID_SEQ" initial="10001" />
+
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Inserting global default saved search 'Downed Platforms'">
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
-                        VALUES (1, 'Resource', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, true)
+                        VALUES (1, 'RESOURCE', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, true)
                     </statement>
                     <statement targetDBVendor="oracle" desc="Inserting global default saved search 'Downed Platforms'">
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
-                        VALUES (1, 'Resource', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, 1)
+                        VALUES (1, 'RESOURCE', 'Downed Platforms', 'All downed machines across the entire enterprise', 'down platform', 0, 1, 1)
                     </statement>
                 </schema-directSQL>
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Inserting global default saved search 'Downed Servers'">
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
-                        VALUES (2, 'Resource', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, true)
+                        VALUES (2, 'RESOURCE', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, true)
                     </statement>
                     <statement targetDBVendor="oracle" desc="Inserting global default saved search 'Downed Servers'">
                         INSERT INTO rhq_saved_search (id, context, name, description, pattern, last_compute_time, subject_id, global)
-                        VALUES (2, 'Resource', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, 1)
+                        VALUES (2, 'RESOURCE', 'Downed Servers', 'All downed servers across the entire enterprise', 'down server', 0, 1, 1)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -2747,6 +2748,31 @@
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="SUBJECT_ID" nullable="FALSE" />
                 <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="ROLE_ID"  nullable="FALSE" />
+            
+                <!-- Fixing ldap group authz by adding remaining mapping elements left out(RHQ_ROLE_LDAP_GROUP)  -->
+                <!-- RHQ_ROLE_LDAP_GROUP -->
+                <schema-createSequence name="RHQ_ROLE_LDAP_GROUP_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                   <statement desc="Creating table RHQ_ROLE_LDAP_GROUP">
+                    CREATE TABLE RHQ_ROLE_LDAP_GROUP ( ID INTEGER PRIMARY KEY, ROLE_ID INTEGER )
+                   </statement>
+                </schema-directSQL> 
+                <schema-alterColumn table="RHQ_ROLE_LDAP_GROUP" column="ID" nullable="FALSE" />
+                <schema-alterColumn table="RHQ_ROLE_LDAP_GROUP" column="ROLE_ID" nullable="FALSE" />
+                <schema-addColumn table="RHQ_ROLE_LDAP_GROUP" column="LDAP_GROUP_NAME" columnType="VARCHAR2" precision="128" />
+                
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ROLE_LDAP_GROUP
+                        ADD CONSTRAINT RHQ_RLM_ROLE_ID_FK
+                        FOREIGN KEY ( ROLE_ID )
+                        REFERENCES RHQ_ROLE (ID)
+                    </statement>
+                    <statement>
+                        CREATE UNIQUE INDEX RHQ_ROLE_LDAP_GROUP_IDX
+                        ON RHQ_ROLE_LDAP_GROUP ( LDAP_GROUP_NAME, ROLE_ID )
+                    </statement>
+                </schema-directSQL> 
             </schemaSpec>
 
             <!-- Remove the old tagging system -->
@@ -2938,16 +2964,16 @@
                 </schema-directSQL>                
             </schemaSpec>
 
-            <schemaSpec version="2.86">
-                <schema-directSQL>
-                    <statement desc="Adding MANAGE_BUNDLE permission to overlord">
-                        INSERT INTO RHQ_PERMISSION VALUES(1, 12)
-                    </statement>
-                    <statement desc="Adding MANAGE_BUNDLE permission to superuser">
-                        INSERT INTO RHQ_PERMISSION VALUES(2, 12)
-                    </statement>
-                </schema-directSQL>
-            </schemaSpec>
+            
+           <schemaSpec version="2.87">
+               <schema-directSQL>
+                   <statement desc="Make RHQ_RES_TYPE_IDX_PLG_NAME index unique">
+                       DROP INDEX RHQ_RES_TYPE_IDX_PLG_NAME ;
+                       CREATE UNIQUE INDEX RHQ_RES_TYPE_IDX_PLG_NAME ON RHQ_RESOURCE_TYPE (name, plugin)
+                   </statement>
+               </schema-directSQL>
+           </schemaSpec>
+            
         </dbupgrade>
     </target>
 </project>

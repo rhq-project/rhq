@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import javax.persistence.EntityNotFoundException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -35,6 +37,7 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
+import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -81,9 +84,11 @@ public final class AlertConditionCacheCoordinator {
     private ReentrantReadWriteLock agentReadWriteLock;
 
     private AgentManagerLocal agentManager;
+    private StatusManagerLocal statusManager;
 
     private AlertConditionCacheCoordinator() {
         agentManager = LookupUtil.getAgentManager();
+        statusManager = LookupUtil.getStatusManager();
 
         globalCache = new GlobalConditionCache();
 
@@ -99,19 +104,65 @@ public final class AlertConditionCacheCoordinator {
     public void reloadGlobalCache() {
         try {
             // simply "forget" about the old cache, let the JVM release the memory in time
+            log.debug("Start reloading global cache");
             globalCache = new GlobalConditionCache();
-            log.debug("Reloaded global cache");
+            log.debug("Finished reloading global cache");
         } catch (Throwable t) {
-            log.error("Error reloading global cache", t); // don't let any exceptions bubble up to the calling SLSB layer
+            try {
+                Throwable throwable = t;
+                boolean found = false;
+                while (throwable != null) {
+                    if (throwable instanceof EntityNotFoundException) {
+                        // we're trying to load a list of conditions at the very moment one is deleted out from under us
+                        statusManager.markGlobalCache();
+                        log.debug("EntityNotFoundException thrown during reload, resetting status bit for retry");
+                        found = true;
+                        break;
+                    }
+                    throwable = throwable.getCause();
+                }
+                if (!found) {
+                    log.error("Error reloading global cache", t);
+                }
+            } catch (Throwable inner) {
+                // again, don't let any exceptions bubble up to the calling SLSB layer
+                log.error("Error while resetting agent status bit during failed global cache reload attempt", inner);
+            }
         }
     }
 
     public void reloadCachesForAgent(int agentId) {
         AgentConditionCache agentCache = null;
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("Start reloading cache for agent[id=" + agentId + "]");
+            }
             agentCache = new AgentConditionCache(agentId);
+            if (log.isDebugEnabled()) {
+                log.debug("Finished reloading cache for agent[id=" + agentId + "]");
+            }
         } catch (Throwable t) {
-            log.error("Error reloading cache for agent[id=" + agentId + "]", t); // don't let any exceptions bubble up to the calling SLSB layer
+            try {
+                Throwable throwable = t;
+                boolean found = false;
+                while (throwable != null) {
+                    if (throwable instanceof EntityNotFoundException) {
+                        // we're trying to load a list of conditions at the very moment one is deleted out from under us
+                        statusManager.updateByAgent(agentId);
+                        log.debug("EntityNotFoundException thrown during reload, resetting status bit for retry");
+                        found = true;
+                        break;
+                    }
+                    throwable = throwable.getCause();
+                }
+                if (!found) {
+                    log.error("Error reloading cache for agent[id=" + agentId + "]", t);
+                }
+            } catch (Throwable inner) {
+                // again, don't let any exceptions bubble up to the calling SLSB layer
+                log.error("Error while resetting agent status bit during failed cache reload attempt for agent[id="
+                    + agentId + "]", inner);
+            }
         }
 
         if (agentCache != null) {

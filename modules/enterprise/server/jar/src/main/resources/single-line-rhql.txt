@@ -46,12 +46,6 @@ context[param] != null
 (context[param] != null)
 
 
-# single-pair parenthetical combinations
-# simple expression, 'or' boolean operator
-context = value1 or context = value2
-(context = value1) or context = value2
-context = value1 or (context = value2)
-(context = value1) or (context = value2)
 
 # single-pair parenthetical combinations
 # simple expression, '|' boolean operator (meaning 'or')
@@ -69,14 +63,6 @@ context = value (context = value)
 (context = value) (context = value)
 
 
-# double-pair parenthetical combinations
-# simple expression, 'or' boolean operator
-((context = value1 or context = value2))
-((context = value1) or context = value2)
-((context = value1)) or context = value2
-(context = value1) or (context = value2)
-(context = value1 or (context = value2))
-context = value1 or ((context = value2))
 
 # double-pair parenthetical combinations
 # simple expression, '|' boolean operator (meaning 'or')

@@ -23,7 +23,7 @@
 
       <plugin-configuration>
          <c:simple-property name="objectName" readOnly="true" default="Hibernate:application=%application%,type=statistics"/>
-         <c:simple-property name="nameTemplate" default="{application} Hibernate statistics"/>
+         <c:simple-property name="nameTemplate" default="{application}"/>
          <c:simple-property name="descriptionTemplate" default="Hibernate statistics for the {application} application."/>
          <c:simple-property name="application" type="string" description="the Hibernate application name"/>
       </plugin-configuration>

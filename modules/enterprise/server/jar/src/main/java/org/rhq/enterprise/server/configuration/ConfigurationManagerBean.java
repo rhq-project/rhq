@@ -50,6 +50,7 @@ import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -1083,6 +1084,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public void executeResourceConfigurationUpdate(int updateId) {
         ResourceConfigurationUpdate update = getResourceConfigurationUpdate(subjectManager.getOverlord(), updateId);
+        Configuration originalConfig = update.getConfiguration();
+        update.setConfiguration(originalConfig.deepCopy(false));
         executeResourceConfigurationUpdate(update, true);
     }
 
@@ -1902,16 +1905,24 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             return;
         }
 
-        Query propertiesQuery = entityManager
-            .createNamedQuery(Configuration.QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS);
-        Query configurationsQuery = entityManager
-            .createNamedQuery(Configuration.QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS);
+        boolean supportsCascade = DatabaseTypeFactory.getDefaultDatabaseType().supportsSelfReferringCascade();
+        if (supportsCascade == false) {
+            Query breakPropertyRecursionQuery = entityManager
+                .createNamedQuery(Configuration.QUERY_BREAK_PROPERTY_RECURSION_BY_CONFIGURATION_IDS);
+            breakPropertyRecursionQuery.setParameter("configurationIds", configurationIds);
+            breakPropertyRecursionQuery.executeUpdate();
+        }
 
-        propertiesQuery.setParameter("configurationIds", configurationIds);
+        Query rawConfigurationsQuery = entityManager
+            .createNamedQuery(Configuration.QUERY_DELETE_RAW_CONFIGURATIONS_CONFIGURATION_IDS);
+        Query configurationsQuery = entityManager
+            .createNamedQuery(Configuration.QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs);
+
+        rawConfigurationsQuery.setParameter("configurationIds", configurationIds);
         configurationsQuery.setParameter("configurationIds", configurationIds);
 
-        propertiesQuery.executeUpdate();
-        configurationsQuery.executeUpdate();
+        rawConfigurationsQuery.executeUpdate();
+        configurationsQuery.executeUpdate(); // uses DB-level cascades to delete properties
     }
 
     public void deleteProperties(int[] propertyIds) {

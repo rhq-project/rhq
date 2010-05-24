@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
@@ -59,10 +60,12 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 	public ProfileServiceComponent parentComponent;
 	private String beanName;
 	private final Log log = LogFactory.getLog(this.getClass());
+    private ResourceContext<ProfileServiceComponent> resourceContext;
 
-	public void start(ResourceContext<ProfileServiceComponent> context)
+    public void start(ResourceContext<ProfileServiceComponent> context)
 			throws InvalidPluginConfigurationException, Exception {
 
+        resourceContext = context;
 		parentComponent = context.getParentResourceComponent();
 		EmsConnection connection = getEmsConnection();
 
@@ -100,7 +103,12 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 		return parentComponent.getConnection();
 	}
 
-	public void getValues(MeasurementReport report,
+    @NotNull
+    public ResourceContext<ProfileServiceComponent> getResourceContext() {
+        return resourceContext;
+    }
+
+    public void getValues(MeasurementReport report,
 			Set<MeasurementScheduleRequest> metrics) throws Exception {
 		EmsConnection connection = getEmsConnection();
 
@@ -125,7 +133,7 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 								.toString()));
 					}
 			} catch (Exception e) {
-				log.error(" Failure to collect measurement data for metric "
+				log.error("Failure to collect measurement data for metric "
 						+ metricName + " from bean "
 						+ detailComponent.getBeanName(), e);
 			}
@@ -151,7 +159,7 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 						new PropertySimple(OperationResult.SIMPLE_OPERATION_RESULT_NAME, String.valueOf(obj)));
 			}
 		} catch (Exception e) {
-			log.error(" Failure to invoke operation " + name + " on bean "
+			log.error("Failure to invoke operation " + name + " on bean "
 					+ beanName, e);
 		}
 		return result;

@@ -70,6 +70,8 @@ public interface AlertDefinitionManagerLocal {
 
     int purgeUnusedAlertDefinition();
 
+    void purgeInternals(int alertDefinitionId);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

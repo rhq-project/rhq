@@ -34,17 +34,12 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 public interface AlertTemplateManagerLocal {
     PageList<AlertDefinition> getAlertTemplates(Subject user, int resourceTypeId, PageControl pageControl);
 
-    // Create operation always cascades
     int createAlertTemplate(Subject user, AlertDefinition alertDefinition, Integer resourceTypeId)
-        throws InvalidAlertDefinitionException, ResourceTypeNotFoundException;
+        throws InvalidAlertDefinitionException, ResourceTypeNotFoundException, AlertDefinitionCreationException;
 
     // this is a system side-effect of template processing, and thus should only ever by called by the overlord user
     void updateAlertDefinitionsForResource(Subject user, Integer resourceId) throws AlertDefinitionCreationException,
         InvalidAlertDefinitionException;
-
-    // this is a system side-effect of template processing, and thus should only ever by called by the overlord user
-    void updateAlertDefinitionsForResource(Subject user, AlertDefinition alertTemplate, Integer resourceId)
-        throws AlertDefinitionCreationException, InvalidAlertDefinitionException;
 
     void removeAlertTemplates(Subject user, Integer[] alertTemplateIds);
 
@@ -53,5 +48,5 @@ public interface AlertTemplateManagerLocal {
     void disableAlertTemplates(Subject user, Integer[] alertTemplateIds);
 
     AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertDefinition, boolean purgeInternals)
-        throws InvalidAlertDefinitionException;
+        throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 }

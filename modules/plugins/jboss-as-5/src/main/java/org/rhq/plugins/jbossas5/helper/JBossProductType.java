@@ -25,16 +25,16 @@ package org.rhq.plugins.jbossas5.helper;
 import java.util.jar.Attributes;
 
 /**
- * The product type of a JBoss 5.x/6.x application server installation - AS, EAP, EWP, or SOA-P.
+ * The product type of a JBoss 5.x/6.x application server installation - AS, EAP, EWP, or SOA.
  *
  * @author Jessica Sant
  * @author Ian Springer
  */
 public enum JBossProductType {
-    AS("JBoss AS", "JBoss Application Server (AS)", "default"), // community
-    EAP("JBoss EAP", "JBoss Enterprise Application Platform (EAP)", "default"), // enterprise
-    EWP("JBoss EWP", "JBoss Enterprise Web Platform (EWP)", "default"), // enterprise
-    SOA("JBoss SOA-P", "JBoss Enterprise SOA Platform (SOA-P)", "production"); // enterprise
+    AS("JBoss AS", "JBoss Application Server", "default"), // the public offering
+    EAP("JBoss EAP", "JBoss Enterprise Application Platform", "default"), // the customer offering
+    EWP("JBoss EWP", "JBoss Enterprise Web Platform", "default"), // the customer offering    
+    SOA("JBoss SOA-P", "JBoss Enterprise SOA Platform", "default"); // the customer SOA platform
 
     public final String NAME;
     public final String DESCRIPTION;

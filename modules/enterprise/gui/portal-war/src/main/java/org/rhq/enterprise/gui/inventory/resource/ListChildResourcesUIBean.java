@@ -120,7 +120,7 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
             FacesContextUtility.removeSessionScopedBean(CreateNewPackageChildResourceUIBean.class);
             FacesContextUtility.removeSessionScopedBean(UploadNewChildPackageUIBean.class);
         } catch (Throwable t) {
-            // if any error happens whatsoever, continue processing as if this code didn't exist 
+            // if any error happens whatsoever, continue processing as if this code didn't exist
         }
         return null;
     }
@@ -297,9 +297,18 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
         Pluralizer customPluralizer = new CustomEnglishPluralizer();
         Set<String> dupResourceTypeNames = getDuplicateResourceTypeNames(resourceTypes);
         for (ResourceType resourceType : resourceTypes) {
+            String resourceTypeName = resourceType.getName();
+            String pluralizedName = resourceTypeName;
+            try {
+                if (pluralize)
+                    pluralizedName = customPluralizer.pluralize(resourceTypeName);
+            }
+            catch (StringIndexOutOfBoundsException oobe) { // Work around a bug in the pluralizer, BZ 594417
+                // Just ignore it and take the plain resource type name
+            }
             String label = NBSP + " - "
-                + ((pluralize) ? customPluralizer.pluralize(resourceType.getName()) : resourceType.getName());
-            if (dupResourceTypeNames.contains(resourceType.getName())) {
+                + ((pluralize) ? pluralizedName : resourceTypeName);
+            if (dupResourceTypeNames.contains(resourceTypeName)) {
                 label += " (" + resourceType.getPlugin() + " plugin)";
             }
             SelectItem selectItem = new SelectItem(resourceType.getId(), label);
@@ -312,7 +321,7 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
     private static Set<String> getDuplicateResourceTypeNames(List<ResourceType> resourceTypes) {
         Set<String> resourceTypeNames = new HashSet();
         Set<String> dupResourceTypeNames = new HashSet();
-        for (ResourceType resourceType : resourceTypes) {            
+        for (ResourceType resourceType : resourceTypes) {
             String resourceTypeName = resourceType.getName();
             if (resourceTypeNames.contains(resourceTypeName)) {
                 dupResourceTypeNames.add(resourceTypeName);

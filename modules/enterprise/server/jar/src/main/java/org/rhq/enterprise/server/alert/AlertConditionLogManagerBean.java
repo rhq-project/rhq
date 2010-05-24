@@ -32,6 +32,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.exception.ConstraintViolationException;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
@@ -83,37 +84,58 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
          * outer-scoping transaction, which will operate on the results.
          */
         try {
-            AlertConditionLog alertConditionLog = this.getUnmatchedLogByAlertConditionId(alertConditionId);
+            try {
+                AlertConditionLog alertConditionLog = this.getUnmatchedLogByAlertConditionId(alertConditionId);
 
-            /*
-             * No exceptions.
-             *
-             * This means that there was exactly one existing, unmatched, active alert condition.  This is another
-             * positive event associated against the same alertCondition, so we're going to use its data to update the
-             * "ctime" and "value" properties.
-             */
-            alertConditionLog.setCtime(ctime);
-            alertConditionLog.setValue(value);
-            log.debug("Updating unmatched alert condition log: " + alertConditionLog);
+                /*
+                 * No exceptions.
+                 *
+                 * This means that there was exactly one existing, unmatched, active alert condition.  This is another
+                 * positive event associated against the same alertCondition, so we're going to use its data to update the
+                 * "ctime" and "value" properties.
+                 */
+                alertConditionLog.setCtime(ctime);
+                alertConditionLog.setValue(value);
+                log.debug("Updating unmatched alert condition log: " + alertConditionLog);
 
-            entityManager.merge(alertConditionLog); // update values, for
-        } catch (NoResultException nre) // this is the expected case 90% of the time
-        {
-            // lookup the condition entity
-            AlertCondition condition = entityManager.find(AlertCondition.class, alertConditionId);
+                entityManager.merge(alertConditionLog); // update values, for
+                entityManager.flush();
+            } catch (NoResultException nre) { // this is the expected case 90% of the time
+                // lookup the condition entity
+                AlertCondition condition = entityManager.find(AlertCondition.class, alertConditionId);
+                if (condition == null) {
+                    // the associated AlertDefinition must have been updated, which removes all previous AlertConditions
+                }
 
-            // persist the log entry
-            AlertConditionLog conditionLog = new AlertConditionLog(condition, ctime);
-            conditionLog.setValue(value);
+                // persist the log entry
+                AlertConditionLog conditionLog = new AlertConditionLog(condition, ctime);
+                conditionLog.setValue(value);
 
-            log.debug("Inserting unmatched alert condition log: " + conditionLog);
+                log.debug("Inserting unmatched alert condition log: " + conditionLog);
 
-            entityManager.persist(conditionLog);
-            entityManager.flush();
-        } catch (NonUniqueResultException nure) {
-            // serious bug in the processing logic
-            log.debug("Found multiple unmatched results for alertConditionId of " + alertConditionId
-                + " while performing activation.  There should only be one.");
+                entityManager.persist(conditionLog);
+                entityManager.flush();
+            } catch (NonUniqueResultException nure) {
+                // serious bug in the processing logic
+                log.debug("Found multiple unmatched results for alertConditionId of " + alertConditionId
+                    + " while performing activation.  There should only be one.");
+            }
+        } catch (Throwable t) {
+            Throwable throwable = t;
+            boolean found = false;
+            while (throwable != null) {
+                if (throwable instanceof ConstraintViolationException) {
+                    // we're trying to persist a log entry for an AlertCondition that was just deleted
+                    log.debug("ConstraintViolationException thrown during AlertConditionLog persistence");
+                    found = true;
+                    break;
+                }
+                throwable = throwable.getCause();
+            }
+            if (!found) {
+                throw new RuntimeException(
+                    "Could not insert log entry for AlertCondition[id=" + alertConditionId + "]", t);
+            }
         }
     }
 

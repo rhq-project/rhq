@@ -310,7 +310,18 @@ public interface ContentSourceManagerLocal {
      * @param contentSource
      */
     void downloadDistributionBits(Subject subject, ContentSource contentSource);
-
+    
+    /**
+     * This will download the actual package bits for that package version from that content source's remote repository.
+     * 
+     * @param resourceId
+     * @param packageDetailsKey
+     * @param packageVersionId
+     * @return
+     */
+    boolean downloadPackageBits(int resourceId, PackageDetailsKey packageDetailsKey);
+        
+    
     /**
      * Given a {@link PackageVersionContentSource} which contains the ID of a content source, an ID of a package
      * version, and the location of that package version on the remote content source repo, this will download the
@@ -622,4 +633,4 @@ public interface ContentSourceManagerLocal {
      *                                the given object are not valid
      */
     ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
-}
+} 

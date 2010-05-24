@@ -19,10 +19,17 @@
 package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Status;
 
+import org.jetbrains.annotations.NotNull;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.DisplayType;
@@ -126,25 +133,36 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("testMoveResourceType --- start");
         try {
             registerPlugin("update2-v1_0.xml");
+
             ResourceType platform1 = getResourceType("myPlatform");
+            Resource platformResource = createResource("foo-myPlatform", "foo-myPlatform", platform1);
+            ResourceType service1 = getResourceType("service1");
+            Resource service1Resource = createResource("foo-service1", "foo-service1", service1);
+            platformResource.addChildResource(service1Resource);
+            ResourceType nestedOne = getResourceType("nestedOne");
+            Resource nestedOneResource = createResource("foo-nestedOne", "foo-nestedOne", nestedOne);
+            service1Resource.addChildResource(nestedOneResource);
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            resourceManager.createResource(overlord, platformResource, -1);
+
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+            EntityManager em = getEntityManager();            
             platform1 = em.find(ResourceType.class, platform1.getId());
 
             assert platform1 != null : "I did not find myPlatform";
             Set<MeasurementDefinition> defs = platform1.getMetricDefinitions();
-            assert defs.size() == 1 : "I was expecting 1 definition at platform level in v1";
+            assert defs.size() == 1 : "I was expecting 1 metric definition at platform level in v1";
             assert DisplayType.DETAIL == defs.iterator().next().getDisplayType() : "Display type should be DETAIL in v1";
 
             // one child service in v1
             Set<ResourceType> platformChildren = platform1.getChildResourceTypes();
             assert platformChildren.size() == 1 : "Expected 1 direct child service of platform in v1";
-            ResourceType service1 = platformChildren.iterator().next();
+            service1 = platformChildren.iterator().next();
             assert service1.getName().equals("service1") : "Expected 'service1' as name of direct platform child in v1";
             assert service1.getMetricDefinitions().size() == 1 : "Expected 1 metric for 'service1' in v1";
-            Set<ResourceType> nestedService = service1.getChildResourceTypes();
-            assert nestedService.size() == 1 : "Expected 1 nested service of 'service1' in v1";
-            Set<MeasurementDefinition> nestedDefs = nestedService.iterator().next().getMetricDefinitions();
+            Set<ResourceType> nestedServices = service1.getChildResourceTypes();
+            assert nestedServices.size() == 1 : "Expected 1 nested service of 'service1' in v1";
+            Set<MeasurementDefinition> nestedDefs = nestedServices.iterator().next().getMetricDefinitions();
             assert nestedDefs.size() == 1 : "Expected 1 definition within 'nestedService' in v1";
             MeasurementDefinition defThree = nestedDefs.iterator().next();
             int definitionId = defThree.getId(); // get the id of the definition "Three" and save it for later use
@@ -166,9 +184,28 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             assert defs2.size() == 1 : "I was expecting 1 definition at platform level in v2";
             assert DisplayType.SUMMARY == defs2.iterator().next().getDisplayType() : "Display type should be SUMMARY in v2";
 
+            ResourceCriteria resourceCriteria = new ResourceCriteria();
+            resourceCriteria.setStrict(true);
+            resourceCriteria.addFilterResourceKey("foo-myPlatform");
+            resourceCriteria.fetchChildResources(true);
+            Resource platform2Resource = getResource(resourceCriteria);
+            assert platform2Resource != null : "Expected to find platform Resource in db.";
+
             // two children in v2
             Set<ResourceType> platformChildren2 = platform2.getChildResourceTypes();
-            assert platformChildren2.size() == 2 : "Expected 2 direct child services of platform in v2";
+            assert platformChildren2.size() == 2 : "Expected 2 direct child service types of platform in v2";
+
+            Set<Resource> platform2ChildResources = platform2Resource.getChildResources();
+            assert platform2ChildResources.size() == 2 : "Expected 2 direct child services of platform in v2";
+            boolean foundMovedResource = false;
+            for (Resource childResource : platform2ChildResources) {
+                assert childResource.getChildResources().isEmpty() : "Expected child Resource " + childResource + " to have no children";
+                if (childResource.getResourceKey().equals("foo-nestedOne")) {
+                    foundMovedResource = true;
+                }
+            }
+            assert foundMovedResource : "Expected 'foo-nestedOne' Resource to have been moved directly under platform Resource";
+
             for (ResourceType type : platformChildren2) {
                 String typeName = type.getName();
                 assert type.getMetricDefinitions().size() == 1 : "Expected one definition for " + typeName + " in v2";
@@ -186,7 +223,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
                      * latter is a different story. We probably should cascade that anyway.
                      */
                     assert three.getId() == definitionId : "Expected the id of 'Three' to be " + definitionId
-                            + " but it was " + three.getId() + " in v2";
+                            + ", but it was " + three.getId() + " in v2";
                 } else if (typeName.equals("service1")) {
                     // check that the nested service is gone
                     Set<ResourceType> childrenOfService = type.getChildResourceTypes();

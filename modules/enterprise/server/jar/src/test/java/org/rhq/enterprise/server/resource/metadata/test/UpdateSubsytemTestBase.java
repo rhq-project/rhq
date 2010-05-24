@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
@@ -82,12 +83,14 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     protected static ResourceMetadataManagerLocal metadataManager;
     protected static ResourceTypeManagerLocal resourceTypeManager;
+    protected static ResourceManagerLocal resourceManager;
 
     @BeforeSuite
     protected void init() {
         try {
             metadataManager = LookupUtil.getResourceMetadataManager();
             resourceTypeManager = LookupUtil.getResourceTypeManager();
+            resourceManager = LookupUtil.getResourceManager();
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
@@ -143,6 +146,28 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         } else {
             throw new IllegalStateException("Found more than one resourceType with name " + typeName + " from plugin "
                 + pluginName + ".");
+        }
+    }
+
+    protected Resource createResource(String resourceKey, String name, ResourceType type) {
+        Resource resource = new Resource(resourceKey, name, type);
+        resource.setUuid(UUID.randomUUID().toString());
+        resource.setInventoryStatus(InventoryStatus.COMMITTED);
+        return resource;
+    }
+
+    protected Resource getResource(ResourceCriteria resourceCriteria) {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        PageList<Resource> results = resourceManager
+            .findResourcesByCriteria(overlord, resourceCriteria);
+        if (results.size() == 0) {
+            return null;
+        } else if (results.size() == 1) {
+            return results.get(0);
+        } else {
+            throw new IllegalStateException("Found more than one Resource with criteria " + resourceCriteria
+                + ".");
         }
     }
 

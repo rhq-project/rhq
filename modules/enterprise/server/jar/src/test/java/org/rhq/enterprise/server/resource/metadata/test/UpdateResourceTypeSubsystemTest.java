@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.resource.metadata.test;
 
-import java.util.Iterator;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -31,7 +30,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
- * Note, plugins are registered in new transactions. for tests, this means
+ * Note, plugins are registered in new transactions. For tests, this means
  * you can't do everything in a trans and roll back at the end. You must clean up manually.
  */
 public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
@@ -44,7 +43,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
     /**
      * See if deletion of a resource type just works
      *
-     * @throws Exception
+     * @throws Exception on error
      */
     @Test
     public void testResourceTypeDeletion() throws Exception {
@@ -113,16 +112,18 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             try {
                 cleanupTest();
             } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
                     + ".testResourceTypeDeletion");
             }
         }
     }
 
-    // TODO: Fix ResourceType move in the code and then re-enable this test.
-    //@Test
-    public void testMoveResoureType() throws Exception {
-        System.out.println("testUpdatePlugin2 --- start");
+    @Test
+    /**
+     * Tests moving a resource type to a new parent resource type.
+     */
+    public void testMoveResourceType() throws Exception {
+        System.out.println("testMoveResourceType --- start");
         try {
             registerPlugin("update2-v1_0.xml");
             ResourceType platform1 = getResourceType("myPlatform");
@@ -149,7 +150,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             int definitionId = defThree.getId(); // get the id of the definition "Three" and save it for later use
             getTransactionManager().rollback();
 
-            System.out.println("testUpdatePlugin2 -- done with the first plugin version");
+            System.out.println("testMoveResourceType -- done with the first plugin version");
 
             /*
              * The nested service got pulled out and put under platform
@@ -168,9 +169,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             // two children in v2
             Set<ResourceType> platformChildren2 = platform2.getChildResourceTypes();
             assert platformChildren2.size() == 2 : "Expected 2 direct child services of platform in v2";
-            Iterator<ResourceType> iter = platformChildren2.iterator();
-            while (iter.hasNext()) {
-                ResourceType type = iter.next();
+            for (ResourceType type : platformChildren2) {
                 String typeName = type.getName();
                 assert type.getMetricDefinitions().size() == 1 : "Expected one definition for " + typeName + " in v2";
                 if (typeName.equals("nestedOne")) // The moved one
@@ -178,23 +177,21 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
                     Set<MeasurementDefinition> defs3 = type.getMetricDefinitions();
                     MeasurementDefinition three = defs3.iterator().next();
                     assert three.getDisplayName().equals("Three") : "Expected the nestedOne to have a metric withDisplayName Three in v2, but it was "
-                        + three.getDisplayName();
+                            + three.getDisplayName();
                     assert three.getDisplayType() == DisplayType.SUMMARY : "Expected three to be SUMMARY in v2";
 
                     /*
                      * TODO check here if the Definition is the one from above which got moved. this should be the case.
-                     * Else we would loose all measurment schedules (and disociate them from measurement data. But the
-                     * later is a different story. We probably should cascade that anyway.
+                     * Else we would loose all measurement schedules (and disassociate them from measurement data. But the
+                     * latter is a different story. We probably should cascade that anyway.
                      */
-                    System.out.println("Expected the id of 'Three' to be " + definitionId + " but it was "
-                        + three.getId() + " in v2");
                     assert three.getId() == definitionId : "Expected the id of 'Three' to be " + definitionId
-                        + " but it was " + three.getId() + " in v2";
+                            + " but it was " + three.getId() + " in v2";
                 } else if (typeName.equals("service1")) {
                     // check that the nested service is gone
                     Set<ResourceType> childrenOfService = type.getChildResourceTypes();
                     assert childrenOfService.size() == 0 : "No children of 'service1' expected in v2, but found: "
-                        + childrenOfService.size();
+                            + childrenOfService.size();
                 } else {
                     assert true == false : "We found an unknown type with name " + typeName;
                 }
@@ -209,23 +206,23 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
                 cleanupTest();
             } catch (Exception e) {
                 System.out
-                    .println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testMoveResoureType");
+                    .println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testMoveResourceType");
             }
         }
 
-        System.out.println("testUpdatePlugin2 --- end");
+        System.out.println("testMoveResourceType --- end");
     }
 
     @Test
     public void testDuplicateResourceType() throws Exception {
         System.out.println("= testDuplicateResourceType");
         try {
-            System.out.println(" A stack trace coming out of this is expected");
+            System.out.println("NOTE: A stack trace coming out of this is expected.");
             registerPlugin("duplicateResourceType.xml");
             getResourceType("ops");
             assert false : "We should not have hit this line";
         } catch (Exception e) {
-            ; // We expect an exception to come out of the ResourceMetadataManager
+            // ignore - We expect an exception to come out of the ResourceMetadataManager
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -233,7 +230,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             try {
                 cleanupTest();
             } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
                     + ".testDuplicateResourceType");
             }
         }

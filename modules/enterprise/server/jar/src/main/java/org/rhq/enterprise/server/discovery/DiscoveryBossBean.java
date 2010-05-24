@@ -143,7 +143,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 mergeResource(root, Resource.ROOT, knownAgent);
             }
 
-            // do NOT delete this flush/clear - it greatly improves performance
+            // Do NOT delete this flush+clear - it greatly improves performance.
             entityManager.flush();
             entityManager.clear();
 
@@ -558,14 +558,19 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
              * or if the agent didn't know about it to begin with (id was 0).
              */
             ResourceType resourceType = resource.getResourceType();
-            existingResource = resourceManager.getResourceByParentAndKey(subjectManager.getOverlord(), resource
-                .getParentResource(), resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
+            Resource parent = resource;
+            while (parent != null && existingResource == null) {
+                parent = parent.getParentResource();
+                existingResource = resourceManager.getResourceByParentAndKey(subjectManager.getOverlord(), parent, 
+                        resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
+            }
+
             if (existingResource != null) {
-                // we found it, reset the id to what it should be
+                // We found it - reset the id to what it should be.
                 resource.setId(existingResource.getId());
                 log.debug(idLogMsg + ": Found resource already in inventory with specified business key");
             } else {
-                log.debug(idLogMsg + ": Unable to find the agent-reported resource by id and business key.");
+                log.debug(idLogMsg + ": Unable to find the agent-reported resource by id or business key.");
 
                 if (resource.getId() != 0) {
                     // existingResource is still null at this point, the resource does not exist in inventory.
@@ -588,6 +593,34 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private void updatePreviouslyInventoriedResource(Resource resource, Resource existingResource,
         Resource parentResource) throws InvalidInventoryReportException {
         assert (parentResource == null) || (parentResource.getId() != 0);
+        
+        ResourceType existingResourceParentType = (existingResource.getParentResource() != null)
+                ? existingResource.getParentResource().getResourceType() : null;
+        ResourceType resourceParentType = (resource.getParentResource() != null)
+                    ? resource.getParentResource().getResourceType() : null;
+        Set<ResourceType> validParentTypes = existingResource.getResourceType().getParentResourceTypes();
+        if (validParentTypes != null && !validParentTypes.isEmpty() &&
+                !validParentTypes.contains(existingResourceParentType)) {
+            // The existing Resource has an invalid parent ResourceType. This may be because its ResourceType was moved
+            // to a new parent ResourceType, but its new parent was not yet discovered at the time of the type move. See
+            // if the Resource reported by the Agent has a valid parent type, and, if so, update the existing Resource's
+            // parent to that type.
+
+            if (validParentTypes.contains(resourceParentType)) {
+                if (existingResource.getParentResource() != null) {
+                    existingResource.getParentResource().removeChildResource(existingResource);
+                }
+                if (resource.getParentResource() != null) {
+                    parentResource = getExistingResource(resource.getParentResource());
+                    parentResource.addChildResource(existingResource);
+                }
+                existingResource.setParentResource(resource.getParentResource());
+            } else {
+                log.debug("Existing Resource " + existingResource + " has invalid parent type ("
+                        + existingResourceParentType + ") and so does plugin-reported Resource " + resource + " ("
+                        + resourceParentType + ") - valid parent types are [" + validParentTypes + "].");
+            }
+        }        
 
         // The below block is for Resources that were created via the RHQ GUI, whose descriptions will be null.
         if (existingResource.getDescription() == null && resource.getDescription() != null) {
@@ -620,8 +653,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     private boolean initResourceTypes(Resource resource) {
         ResourceType resourceType;
-        resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(subjectManager.getOverlord(), resource
-            .getResourceType().getName(), resource.getResourceType().getPlugin());
+        try {
+            resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(subjectManager.getOverlord(), resource
+                .getResourceType().getName(), resource.getResourceType().getPlugin());
+        } catch (RuntimeException e) {
+            log.error("Failed to lookup Resource type [" + resource.getResourceType() + "] for reported Resource ["
+                    + resource + "] - this should not have happened.");
+            return false;
+        }
         if (resourceType == null) {
             log.error("Reported resource [" + resource + "] has an unknown type [" + resource.getResourceType()
                 + "]. The Agent most likely has a plugin named '" + resource.getResourceType().getPlugin()

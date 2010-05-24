@@ -94,6 +94,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             "common/lib/jboss-security-aspects.jar",
             "lib/jboss-managed.jar",
             "lib/jboss-metatype.jar",
+<<<<<<< HEAD
             "lib/jboss-dependency.jar"
     );
 
@@ -109,6 +110,13 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         AS6_CLIENT_JARS.add("lib/jboss-classpool.jar");
         AS6_CLIENT_JARS.add("lib/jboss-classpool-scoped.jar");
     }
+=======
+            "lib/jboss-dependency.jar",
+            // The below jars are required for JBoss AS 6.0 M1, M2, and M3.
+            //"lib/jboss-classpool.jar",
+            //"lib/jboss-classpool-scoped.jar"
+    };
+>>>>>>> 2e1a8be... * add support for moving resourcetypes to new locations in the type hierarchy, as well as moving any existing resources of those types (https://bugzilla.redhat.com/show_bug.cgi?id=577055)
 
     private final Log log = LogFactory.getLog(this.getClass());
 

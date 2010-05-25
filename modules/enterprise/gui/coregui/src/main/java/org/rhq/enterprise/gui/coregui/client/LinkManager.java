@@ -27,9 +27,27 @@ package org.rhq.enterprise.gui.coregui.client;
  */
 public class LinkManager {
 
+    private static boolean GWT = true;
+
 
     public static String getResourceLink(int resourceId) {
 
-        return "Resource/" + resourceId;
+        if (GWT) {
+            return "Resource/" + resourceId;
+        } else {
+            return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
+        }
     }
+
+
+    public static String getResourceGroupLink(int resouceGroupId) {
+
+        if (GWT) {
+            return "ResourceGroup/" + resouceGroupId;
+        } else {
+            return "/rhq/group/inventory/view.xhtml?groupId=" + resouceGroupId;
+        }
+    }
+
+
 }

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Canvas;
@@ -58,6 +59,8 @@ public class WizardView extends VLayout {
 
     ArrayList<IButton> customButtons = new ArrayList<IButton>();
     Canvas currentCanvas;
+
+    HashSet<Canvas> createdCanvases = new HashSet<Canvas>();
 
     public WizardView(Wizard wizard) {
         super(10);
@@ -195,6 +198,8 @@ public class WizardView extends VLayout {
             contentLayout.removeMember(currentCanvas);
         }
         currentCanvas = wizardSteps.get(currentStep).getCanvas();
+        createdCanvases.add(currentCanvas);
+
         contentLayout.addMember(currentCanvas);
 
         markForRedraw();
@@ -222,6 +227,12 @@ public class WizardView extends VLayout {
     }
 
     public void closeDialog() {
+
+        // Attempt to clean up canvases created in the steps
+        for (Canvas canvas : createdCanvases) {
+            canvas.markForDestroy();
+        }
+
         wizardWindow.destroy();
     }
 

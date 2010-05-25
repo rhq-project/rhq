@@ -149,8 +149,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // For performance tracking
         long start = System.currentTimeMillis();
 
-        log.debug("Merging [" + report.getDeployedPackages().size() + "] packages for Resource with id ["
-                + resourceId + "]...");
+        log.debug("Merging [" + report.getDeployedPackages().size() + "] packages for Resource with id [" + resourceId
+            + "]...");
 
         // Load the resource and its installed packages
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -185,8 +185,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 if ((md5Value == null) || (md5Value.isEmpty())) {
                     //query for installed packages with SHA256
                     Query packageDiscoveredQuery = entityManager
-                        .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_SHA);
+                        .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_SHA_RES_TYPE);
                     packageDiscoveredQuery.setParameter("sha", shaValue);
+                    packageDiscoveredQuery.setParameter("displayName", resourcePackage.getFileName());
+                    packageDiscoveredQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
                     List<PackageVersion> discoveredPackages = packageDiscoveredQuery.getResultList();
                     if (discoveredPackages.size() > 0) {
                         //iterate over packages to determine first one with same file name
@@ -210,6 +212,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                                 resourcePackage = retrievedResourcePackage;
                             }
                         }
+                        packageVersion = discoveredPackages.get(0);
+                        //check that the returned file name is same as expected otherwise
+                        //bail(bank1.war != crook1.war for auditing purposes) even though hash is equal.
+                        //now assign PackageVersion details correctly
+                        PackageDetailsKey discoveredKey = new PackageDetailsKey(packageVersion.getDisplayName(),
+                            packageVersion.getVersion(), packageVersion.getGeneralPackage().getPackageType().getName(),
+                            resourcePackage.getArchitectureName());
+                        ResourcePackageDetails retrievedResourcePackage = new ResourcePackageDetails(discoveredKey);
+                        retrievedResourcePackage.setInstallationTimestamp(resourcePackage.getFileCreatedDate());
+                        //now reassign the resourcePackage to use this newly retrieved id.
+                        resourcePackage = retrievedResourcePackage;
                     }
                 }
             }

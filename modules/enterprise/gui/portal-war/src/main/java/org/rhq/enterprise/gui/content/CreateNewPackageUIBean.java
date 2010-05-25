@@ -21,7 +21,9 @@ package org.rhq.enterprise.gui.content;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
@@ -44,9 +46,11 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentException;
+import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -216,6 +220,30 @@ public class CreateNewPackageUIBean {
                 ContentManagerLocal contentManager = LookupUtil.getContentManager();
                 packageVersion = contentManager.createPackageVersion(packageName, packageTypeId, version,
                     architectureId, packageStream);
+
+                //store information about uploaded file for packageDetails as most of it is already available
+                Map<String, String> packageUploadDetails = new HashMap<String, String>();
+                packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
+                packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_INSTALL_DATE, String.valueOf(System
+                    .currentTimeMillis()));
+                packageUploadDetails.put(ContentManagerBean.UPLOAD_OWNER, subject.getName());
+                packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_NAME, fileItem.getFileName());
+
+                try {//Easier to implement here than in server side bean. Shouldn't affect performance too much.
+                    packageUploadDetails.put(ContentManagerBean.UPLOAD_MD5, new MessageDigestGenerator(
+                        MessageDigestGenerator.MD5).calcDigestString(fileItem.getFile()));
+                    packageUploadDetails.put(ContentManagerBean.UPLOAD_SHA256, new MessageDigestGenerator(
+                        MessageDigestGenerator.SHA_256).calcDigestString(fileItem.getFile()));
+                } catch (IOException e1) {
+                    log.warn("Error calculating file digest(s) : " + e1.getMessage());
+                    e1.printStackTrace();
+                }
+
+                //TODO: need to get parent id instead right? ref to app server inst itself?
+                int newResourceTypeId = resource.getResourceType().getId();
+                packageVersion = contentManager.getUploadedPackageVersion(packageName, packageTypeId, version,
+                    architectureId, packageStream, packageUploadDetails, newResourceTypeId);
+
             } catch (Exception e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName

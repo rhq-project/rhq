@@ -43,10 +43,11 @@ import java.util.jar.JarFile;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
+import com.jboss.jbossnetwork.product.jbpm.handlers.InPluginControlActionFacade;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.on.common.jbossas.JBPMWorkflowManager;
-import org.jboss.on.common.jbossas.JBossASPaths;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -62,13 +63,16 @@ import org.mc4j.ems.connection.support.ConnectionProvider;
 import org.mc4j.ems.connection.support.metadata.ConnectionTypeDescriptor;
 import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
 
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
+import org.jboss.on.common.jbossas.JBPMWorkflowManager;
+import org.jboss.on.common.jbossas.JBossASPaths;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -94,6 +98,7 @@ import org.rhq.core.pluginapi.support.SnapshotReportRequest;
 import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
 import org.rhq.plugins.jbossas.util.ConnectionFactoryConfigurationEditor;
@@ -108,9 +113,6 @@ import org.rhq.plugins.jbossas.util.XMLConfigurationEditor;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
-
-import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
-import com.jboss.jbossnetwork.product.jbpm.handlers.InPluginControlActionFacade;
 
 /**
 * Supports JBoss 3.2.3 through 4.2.x
@@ -261,7 +263,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
         this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
         this.logFileEventDelegate.startLogFileEventPollers();
-        
+
         // prepare to perform async avail checking
         String availCheckPeriodProp = pluginConfig.getSimpleValue(AVAIL_CHECK_PERIOD_CONFIG_PROP, null);
         if (availCheckPeriodProp != null) {
@@ -279,7 +281,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
             }
         }
 
-        return;        
+        return;
     }
 
     public void stop() {
@@ -319,12 +321,12 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
                 // A different server must have been started on our JNP URL - this is definitely something about which
                 // the user should be informed.
                 if (!this.loggedHijackedJnpUrlError) {
-                    String namingURL = this.resourceContext.getPluginConfiguration().
-                            getSimpleValue(NAMING_URL_CONFIG_PROP, null);
+                    String namingURL = this.resourceContext.getPluginConfiguration().getSimpleValue(
+                        NAMING_URL_CONFIG_PROP, null);
                     String message = "Availability check for JBoss AS Resource with configPath [" + this.configPath
-                            + "] has connected to a different running JBoss AS instance which is installed at ["
-                            + serverHomeViaJnp + "] using namingURL [" + namingURL
-                            + "] - returning AvailabilityType.DOWN...";
+                        + "] has connected to a different running JBoss AS instance which is installed at ["
+                        + serverHomeViaJnp + "] using namingURL [" + namingURL
+                        + "] - returning AvailabilityType.DOWN...";
                     log.error(message);
                     this.loggedHijackedJnpUrlError = true;
                     // Throw an exception, so the PC can send the message to the Server for display in the GUI.
@@ -343,7 +345,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         File serverHomeViaJnp;
         EmsAttribute serverHomeDirAttrib = bean.getAttribute("ServerHomeDir");
         if (serverHomeDirAttrib != null) {
-            serverHomeViaJnp = (File)serverHomeDirAttrib.refresh();
+            serverHomeViaJnp = (File) serverHomeDirAttrib.refresh();
         } else {
             // We have a non-null MBean but a null ServerHomeDir attribute. This most likely means we're
             // connected to a JBoss 5.x or 6.x instance, because in those versions the ServerConfig MBean no
@@ -356,12 +358,12 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         return serverHomeViaJnp;
     }
 
-    private static  File toFile(URL url) {
+    private static File toFile(URL url) {
         File file;
         try {
-          file = new File(url.toURI());
-        } catch(URISyntaxException e) {
-          file = new File(url.getPath());
+            file = new File(url.toURI());
+        } catch (URISyntaxException e) {
+            file = new File(url.getPath());
         }
         return file;
     }
@@ -456,8 +458,8 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     public SnapshotReportResults getSnapshotReport(SnapshotReportRequest request) throws Exception {
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
         String tmpDir = resourceContext.getTemporaryDirectory().getAbsolutePath();
-        JBossASSnapshotReport report = new JBossASSnapshotReport(request.getName(), request.getDescription(), pluginConfig, this.configPath
-            .getCanonicalPath(), tmpDir);
+        JBossASSnapshotReport report = new JBossASSnapshotReport(request.getName(), request.getDescription(),
+            pluginConfig, this.configPath.getCanonicalPath(), tmpDir);
         File reportFile = report.generate();
         InputStream inputStream = new BufferedInputStream(new FileInputStream(reportFile));
         SnapshotReportResults results = new SnapshotReportResults(inputStream);
@@ -895,7 +897,8 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         }
 
         InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
-        deployer.createContent(details, isForTempDir, !zip, createBackup);
+        String shaString = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).getDigestString(tempFile);
+        deployer.createContent(details, isForTempDir, !zip, createBackup, shaString);
 
         String vhost = null;
         if (resourceTypeName.equals(RESOURCE_TYPE_WAR)) {

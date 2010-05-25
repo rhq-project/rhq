@@ -207,13 +207,13 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
                 //if successful then verified that user and pw are valid ldap credentials
                 ctx.reconnect(null);
 
-                //if group auth enabled and user acct already exists then insert authorization check 
+                //if group auth enabled and user acct already exists then insert authorization check
                 String groupFilter = (String) options.get("GroupFilter");
                 String groupMember = (String) options.get("GroupMemberFilter");
                 SubjectManagerLocal sManager = LookupUtil.getSubjectManager();
                 Subject ldapSubject = sManager.getSubjectByName(getUsername());
-                if (ldapSubject != null && ((groupFilter != null) && !groupFilter.trim().isEmpty())
-                    && ((groupMember != null) && !groupMember.trim().isEmpty())) {
+                if (ldapSubject != null && ((groupFilter != null) && !groupFilter.trim().equals(""))
+                    && ((groupMember != null) && !groupMember.trim().equals(""))) {
                     //check authorized groups to see if this user is authorized via ldap
                     //BUT still must always return true as authz is handled by RHQ if roles/groups correct
 

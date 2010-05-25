@@ -115,7 +115,7 @@ public class StatusManagerBean implements StatusManagerLocal {
          * this method is called, we only have the updated alert definition, thus it's not possible to intelligently
          * know which of the two caches to reload; so, we need to reload them both to be sure the system is consistent
          */
-        markGlobalCache();
+        markGlobalCache(); // use local references to execute in the same transaction
 
         Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_RESOURCE);
         updateAgentQuery.setParameter("resourceId", resourceId);
@@ -148,7 +148,7 @@ public class StatusManagerBean implements StatusManagerLocal {
          * this method is called, we only have the updated alert definition, thus it's not possible to intelligently
          * know which of the two caches to reload; so, we need to reload them both to be sure the system is consistent
          */
-        markGlobalCache();
+        markGlobalCache(); // use local references to execute in the same transaction
 
         Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_ALERT_DEFINITION);
         updateAgentQuery.setParameter("alertDefinitionId", alertDefinitionId);
@@ -167,7 +167,8 @@ public class StatusManagerBean implements StatusManagerLocal {
         }
     }
 
-    private void markGlobalCache() {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void markGlobalCache() {
         Query updateServerQuery = entityManager.createNamedQuery(Server.QUERY_UPDATE_STATUS_BY_NAME);
         updateServerQuery.setParameter("identity", serverManager.getIdentity());
         int serversUpdated = updateServerQuery.executeUpdate();

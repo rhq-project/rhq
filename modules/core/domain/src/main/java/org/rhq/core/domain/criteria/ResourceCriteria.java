@@ -30,6 +30,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageOrdering;
 
 import java.util.Arrays;
@@ -56,6 +57,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private String filterPluginName; // needs overrides
     private Integer filterParentResourceId; // needs overrides
     private String filterParentResourceName; // needs overrides
+    private Integer filterParentResourceTypeId; // needs overrides
     private String filterAgentName; // needs overrides
     private AvailabilityType filterCurrentAvailability; // needs overrides
     private Long filterStartItime;
@@ -103,6 +105,7 @@ public class ResourceCriteria extends TaggedCriteria {
         filterOverrides.put("pluginName", "resourceType.plugin like ?");
         filterOverrides.put("parentResourceId", "parentResource.id = ?");
         filterOverrides.put("parentResourceName", "parentResource.name like ?");
+        filterOverrides.put("parentResourceTypeId", "parentResource.resourceType.id = ?");
         filterOverrides.put("agentName", "agent.name like ?");
         filterOverrides.put("currentAvailability", "currentAvailability.availabilityType = ?");
         filterOverrides.put("startItime", "itime >= ?");
@@ -170,6 +173,10 @@ public class ResourceCriteria extends TaggedCriteria {
         this.filterParentResourceName = filterParentResourceName;
     }
 
+    public void addFilterParentResourceTypeId(int filterParentResourceTypeId) {
+        this.filterParentResourceTypeId = filterParentResourceTypeId;
+    }
+    
     public void addFilterAgentName(String filterAgentName) {
         this.filterAgentName = filterAgentName;
     }

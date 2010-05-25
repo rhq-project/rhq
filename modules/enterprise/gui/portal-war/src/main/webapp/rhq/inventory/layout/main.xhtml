@@ -18,16 +18,23 @@
 
 <ui:param name="defaultPageTitle" value="Inventory Browser"/>
 
+   <ui:define name="metaHeaders">
+      <script type="text/javascript" language="javascript"
+              src="/coregui/org.rhq.enterprise.gui.coregui.CoreGUI/org.rhq.enterprise.gui.coregui.CoreGUI.nocache.js"></script>
+      <script type="text/javascript" src="/coregui/js/search.js"></script>
+      <link href="/coregui/css/search.css" rel="stylesheet" type="text/css"/>
+   </ui:define>
+
    <ui:define name="summary"></ui:define>
    
    <ui:define name="tabBar">
+
       <a4j:region>
          <h:form>
             <a4j:poll interval="60000" timeout="5000" 
                       reRender="browserTabBarPanel" status="commonStatus" />
          </h:form>
       </a4j:region>
-      
       
       <onc:tabBar id="browserTabBarPanel" selectedTabName="#{selectedTabName}" >
          <onc:tab name="Resources" 

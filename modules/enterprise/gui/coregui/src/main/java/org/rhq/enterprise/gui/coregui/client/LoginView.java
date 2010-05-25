@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import java.util.HashMap;
 
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -47,19 +48,44 @@ import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 
 /**
  * @author Greg Hinkle
  */
-public class LoginView {
+public class LoginView extends Canvas {
 
 
     private Window window;
     private DynamicForm form;
+
+
+    public LoginView() {
+        this(false);
+    }
+
+    public LoginView(boolean logout) {
+
+        if (logout && CoreGUI.getSessionSubject() != null) {
+            GWTServiceLookup.getSubjectService().logout(CoreGUI.getSessionSubject(), new AsyncCallback<Void>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to logout", caught);
+                    CoreGUI.checkLoginStatus();
+                }
+
+                public void onSuccess(Void result) {
+                    CoreGUI.checkLoginStatus();
+                }
+            });
+        }
+
+    }
 
     public void showLoginDialog() {
 
@@ -67,8 +93,9 @@ public class LoginView {
         form.setMargin(10);
         form.setShowInlineErrors(false);
 
+
         CanvasItem logo = new CanvasItem();
-        logo.setCanvas(new Img("header/rhq_logo_28px.png",80,28));
+        logo.setCanvas(new Img("header/rhq_logo_28px.png", 80, 28));
         logo.setShowTitle(false);
 
         HeaderItem header = new HeaderItem();
@@ -77,13 +104,23 @@ public class LoginView {
 
         TextItem user = new TextItem("user", "User");
         user.setRequired(true);
+        user.setAttribute("canAutocomplete", true);
+        user.setAttribute("autoComplete", true);
         PasswordItem password = new PasswordItem("password", "Password");
         password.setRequired(true);
+        password.setAttribute("autocomplete", true);
 
         final SubmitItem login = new SubmitItem("login", "Login");
         login.setAlign(Alignment.CENTER);
         login.setColSpan(2);
 
+        password.addKeyPressHandler(new KeyPressHandler() {
+            public void onKeyPress(KeyPressEvent event) {
+                if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
+                    form.submit();
+                }
+            }
+        });
 
         form.setFields(logo, header, user, password, login);
 
@@ -91,7 +128,7 @@ public class LoginView {
         window = new Window();
         window.setTitle("RHQ Login");
         window.setWidth(400);
-        window.setHeight(400);
+        window.setHeight(250);
         window.setIsModal(true);
         window.setShowModalMask(true);
         window.setCanDragResize(true);

@@ -26,21 +26,21 @@ package org.rhq.plugins.jbossas5;
  * @author Ian Springer
  */
 public class ApplicationServerPluginConfigurationProperties {
-    static final String SERVER_NAME = "serverName";
-    static final String NAMING_URL = "namingURL";
-    static final String PRINCIPAL = "principal";
-    static final String CREDENTIALS = "credentials";
-    static final String HOME_DIR = "homeDir";
-    static final String SERVER_HOME_DIR = "serverHomeDir";
-    static final String JAVA_HOME = "javaHome";
-    static final String BIND_ADDRESS = "bindAddress";
-    static final String START_SCRIPT_CONFIG_PROP = "startScript";
-    static final String SHUTDOWN_SCRIPT_CONFIG_PROP = "shutdownScript";
-    static final String SHUTDOWN_MBEAN_CONFIG_PROP = "shutdownMBeanName";
-    static final String SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP = "shutdownMBeanOperation";
-    static final String SHUTDOWN_METHOD_CONFIG_PROP = "shutdownMethod";
-    static final String SCRIPT_PREFIX_CONFIG_PROP = "scriptPrefix";
-    static final String AVAIL_CHECK_PERIOD_CONFIG_PROP = "availabilityCheckPeriod";
+    public static final String SERVER_NAME = "serverName";
+    public static final String NAMING_URL = "namingURL";
+    public static final String PRINCIPAL = "principal";
+    public static final String CREDENTIALS = "credentials";
+    public static final String HOME_DIR = "homeDir";
+    public static final String SERVER_HOME_DIR = "serverHomeDir";
+    public static final String JAVA_HOME = "javaHome";
+    public static final String BIND_ADDRESS = "bindAddress";
+    public static final String START_SCRIPT_CONFIG_PROP = "startScript";
+    public static final String SHUTDOWN_SCRIPT_CONFIG_PROP = "shutdownScript";
+    public static final String SHUTDOWN_MBEAN_CONFIG_PROP = "shutdownMBeanName";
+    public static final String SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP = "shutdownMBeanOperation";
+    public static final String SHUTDOWN_METHOD_CONFIG_PROP = "shutdownMethod";
+    public static final String SCRIPT_PREFIX_CONFIG_PROP = "scriptPrefix";
+    public static final String AVAIL_CHECK_PERIOD_CONFIG_PROP = "availabilityCheckPeriod";
 
     private ApplicationServerPluginConfigurationProperties() {
     }

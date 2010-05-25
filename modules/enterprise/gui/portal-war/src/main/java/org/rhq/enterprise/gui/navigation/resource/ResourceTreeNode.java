@@ -113,10 +113,7 @@ public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
 
         ResourceTreeNode that = (ResourceTreeNode) o;
 
-        if (!level.equals(that.level))
-            return false;
-
-        return true;
+        return level.equals(that.level);
     }
 
     @Override

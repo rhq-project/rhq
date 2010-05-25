@@ -45,7 +45,7 @@
       <dependency>
          <groupId>net.augeas</groupId>
          <artifactId>augeas</artifactId>
-         <version>0.0.1</version>
+         <version>0.0.2</version>
       </dependency>
 
       <dependency>
@@ -92,6 +92,21 @@
 
       </plugins>
    </build>
+
+    <repositories>
+
+        <!-- for the augeas jar -->
+        <repository>
+           <id>jboss-thirdparty-uploads</id>
+           <name>JBoss Third-Party Uploads</name>
+           <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-uploads/</url>
+           <snapshots>
+             <enabled>false</enabled>
+           </snapshots>
+        </repository>
+
+    </repositories>
+
 
    <profiles>
 

@@ -640,7 +640,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     public void removeContentSourcesFromRepo(Subject subject, int repoId, int[] contentSourceIds) throws RepoException {
         Repo repo = getRepo(subject, repoId);
 
-        log.debug("User [" + subject + "] is removing content sources from repo [" + repo + "]");
+        log.debug("User [" + subject + "] is removing content sources from repository [" + repo + "]");
 
         Set<RepoContentSource> currentSet = repo.getRepoContentSources();
 
@@ -715,7 +715,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         // make sure the user has permissions to unsubscribe this resource
         if (!authzManager.hasResourcePermission(subject, Permission.MANAGE_CONTENT, resourceId)) {
             throw new PermissionException("[" + subject
-                + "] does not have permission to unsubscribe this resource from repos");
+                + "] does not have permission to unsubscribe this resource from repositories");
         }
 
         // find the resource - abort if it does not exist

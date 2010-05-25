@@ -38,12 +38,12 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 
 @Entity
 @NamedQueries( {
@@ -59,11 +59,6 @@ public class AlertNotification implements Serializable {
     public static final String DELETE_BY_ID = "AlertNotification.deleteById";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotification.deleteByResources";
     public static final String QUERY_DELETE_ORPHANED = "AlertNotification.deleteOrphaned";
-
-    @Transient
-    transient int alertDefinitionId;
-    @Transient
-    transient int alertNotificationId;
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
@@ -84,41 +79,20 @@ public class AlertNotification implements Serializable {
     protected AlertNotification() {
     } // JPA spec
 
-    public AlertNotification(AlertDefinition alertDefinition) {
-        if (alertDefinition == null) {
-            throw new IllegalArgumentException("alertDefinition must be non-null.");
-        }
-
-        this.alertDefinition = alertDefinition;
-    }
-
-    public AlertNotification(AlertDefinition alertDefinition, Configuration config) {
-        if (alertDefinition == null) {
-            throw new IllegalArgumentException("alertDefinition must be non-null.");
-        }
-
-        this.alertDefinition = alertDefinition;
-        this.configuration = config.deepCopy();
-    }
-
-    public AlertNotification(AlertNotification source, boolean copyIds) {
-        if (copyIds) {
-            this.id = source.id;
-            this.configuration = source.configuration;
-        } else {
-            this.configuration = source.configuration.deepCopy(false);
-        }
-        this.senderName = source.senderName;
-    }
-
     /**
-     * Constructor only for transient usage
-     * @param alertDefinitionId
-     * @param alertNotificationId
+     * @param sender        the type of alert sender for this {@link AlertNotification}
+     * @param configuration the custom data required for runtime configuration; it must be a new configuration object
+     *                      and not already persisted; in other words, the {@link Configuration} object as well as its
+     *                      {@link Property} children must have ids of 0.
      */
-    public AlertNotification(int alertDefinitionId, int alertNotificationId) {
-        this.alertDefinitionId = alertDefinitionId;
-        this.alertNotificationId = alertNotificationId;
+    public AlertNotification(String sender, Configuration configuration) {
+        setSenderName(sender);
+        setConfiguration(configuration);
+    }
+
+    public AlertNotification(AlertNotification source) {
+        this.configuration = source.configuration.deepCopy(false);
+        this.senderName = source.senderName;
     }
 
     public AlertNotification(String sender) {
@@ -135,6 +109,9 @@ public class AlertNotification implements Serializable {
     }
 
     public void setAlertDefinition(AlertDefinition alertDefinition) {
+        if (alertDefinition == null) {
+            throw new IllegalArgumentException("alertDefinition must be non-null.");
+        }
         this.alertDefinition = alertDefinition;
     }
 
@@ -155,26 +132,50 @@ public class AlertNotification implements Serializable {
     }
 
     public void setConfiguration(Configuration configuration) {
+        if (configuration == null) {
+            throw new IllegalArgumentException("configuration must be non-null");
+        }
         this.configuration = configuration;
-    }
-
-    public int getAlertDefinitionId() {
-        return alertDefinitionId;
-    }
-
-    public int getAlertNotificationId() {
-        return alertNotificationId;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("AlertNotification");
-        sb.append("{alertDefinitionId=").append(alertDefinitionId);
-        sb.append(", alertNotificationId=").append(alertNotificationId);
-        sb.append(", id=").append(id);
+        sb.append("{id=").append(id);
         sb.append(", senderName='").append(senderName).append('\'');
         sb.append('}');
         return sb.toString();
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null) {
+            return false;
+        }
+
+        if (!(obj instanceof AlertNotification)) {
+            return false;
+        }
+
+        AlertNotification other = (AlertNotification) obj;
+        if (id != other.id) {
+            return false;
+        }
+
+        return true;
+    }
+
 }

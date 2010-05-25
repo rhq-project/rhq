@@ -141,7 +141,7 @@ public class JBossInstallationInfo {
 
     private static String getDefaultServerName(String serverVersion) {
         ComparableVersion comparableVersion = new ComparableVersion(serverVersion);
-        return (comparableVersion.compareTo(VERSION_4_2) >= 0) ? ANY_ADDRESS : LOCALHOST_ADDRESS; // TODO check
+        return (comparableVersion.compareTo(VERSION_4_2) >= 0) ? LOCALHOST_ADDRESS : ANY_ADDRESS;
     }
 
     @Override

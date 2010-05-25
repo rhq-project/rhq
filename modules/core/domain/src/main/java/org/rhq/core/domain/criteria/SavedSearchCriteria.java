@@ -38,7 +38,7 @@ public class SavedSearchCriteria extends Criteria {
     public static final long serialVersionUID = 1L;
 
     private Integer filterId;
-    private SearchSubsystem filterContext;
+    private SearchSubsystem filterSearchSubsystem;
     private String filterName;
     private String filterDescription;
     private String filterPattern;
@@ -73,8 +73,8 @@ public class SavedSearchCriteria extends Criteria {
         this.filterId = filterId;
     }
 
-    public void addFilterSearchContext(SearchSubsystem filterContext) {
-        this.filterContext = filterContext;
+    public void addFilterSearchSubsystem(SearchSubsystem filterSearchSubsystem) {
+        this.filterSearchSubsystem = filterSearchSubsystem;
     }
 
     public void addFilterName(String filterName) {

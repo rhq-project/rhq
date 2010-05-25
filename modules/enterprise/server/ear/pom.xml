@@ -320,11 +320,13 @@
                            <version>${project.version}</version>
                         </artifactItem>
 
+<!--  TODO:jdk6 - temporarily disabled because of jdk6 requirement
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                             <artifactId>alert-scriptlang</artifactId>
                             <version>${project.version}</version>
                         </artifactItem>
+-->
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
@@ -383,7 +385,7 @@
                                  <version>${project.version}</version>
                                </artifactItem>
                              </artifactItems>
-                             
+
                              <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
                            </configuration>
                          </execution>
@@ -408,7 +410,7 @@
                                  <version>${project.version}</version>
                                </artifactItem>
                              </artifactItems>
-                             
+
                              <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
                            </configuration>
                          </execution>
@@ -547,11 +549,13 @@
                                   <version>${project.version}</version>
                                 </artifactItem>
 
+<!-- TODO:jdk6 temporarily disabled because of jdk6 requirement
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
                                   <artifactId>rhq-script2-plugin</artifactId>
                                   <version>${project.version}</version>
                                 </artifactItem>
+-->
 
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
@@ -606,6 +610,7 @@
                                   <artifactId>rhq-sshd-plugin</artifactId>
                                   <version>${project.version}</version>
                                 </artifactItem>
+<!-- TODO:jdk6 - temporarily disabled because of jdk6 requirement
 
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
@@ -619,6 +624,7 @@
                                   <version>${project.version}</version>
                                 </artifactItem>
 
+-->
                              </artifactItems>
                              <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
                           </configuration>

@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -72,7 +72,7 @@
 
 
         <!-- =============== 3rd Party Deps =============== -->
-        
+
         <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-servlet</artifactId>
@@ -185,6 +185,13 @@
             <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
             <scope>provided</scope>
             <!-- by JBossAS -->
+        </dependency>
+
+        <dependency>
+           <groupId>jboss.jbossws</groupId>
+           <artifactId>jboss-jaxws</artifactId>
+           <version>3.0.1-native-2.0.4.GA</version>
+           <scope>provided</scope> <!-- by JBossAS -->
         </dependency>
 
     </dependencies>

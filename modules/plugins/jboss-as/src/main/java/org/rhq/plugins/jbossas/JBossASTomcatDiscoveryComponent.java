@@ -79,17 +79,14 @@ public class JBossASTomcatDiscoveryComponent implements ResourceDiscoveryCompone
             String key = jbossWebDir.getName();
 
             // TODO GH: Get bound addresses and ports or something
-            String hostname = context.getSystemInformation().getHostname();
             boolean pre42 = jbossWebDir.getName().startsWith(EMBEDDED_TOMCAT_PRE42_DIR);
             String serverName = (pre42) ? "Tomcat" : "JBossWeb";
-            String bindAddress = context.getParentResourceComponent().getBindingAddress();
             String version = getVersion(jbossWebDir);
-            String name = getResourceName(hostname, serverName, version, bindAddress);
             String description = "JBossAS-Embedded " + serverName + " Web Server (" + jbossWebDir.getName()
                 + File.separator + ")";
             Configuration pluginConfig = null;
             ProcessInfo processInfo = null;
-            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,
+            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, getResourceName(pre42),
                 version, description, pluginConfig, processInfo);
             set.add(resource);
         }
@@ -97,8 +94,8 @@ public class JBossASTomcatDiscoveryComponent implements ResourceDiscoveryCompone
         return set;
     }
 
-    private String getResourceName(String hostName, String serverName, String version, String bindAddress) {
-        return bindAddress;
+    private String getResourceName(boolean pre42) {
+        return pre42 ? "Embedded Tomcat Server" : "Embedded JBossWeb Server";
     }
     
     private String getVersion(File jbossWebDir) throws IOException {

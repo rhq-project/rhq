@@ -52,7 +52,6 @@ public class ApacheIfModuleComponent implements ResourceComponent<ApacheVirtualH
 
     private AugeasTree tree;
     private ResourceContext<ApacheVirtualHostServiceComponent> context;
-    private List<String> position;
     private ApacheVirtualHostServiceComponent parentComponent; 
     private final Log log = LogFactory.getLog(this.getClass());
     private static final String IFMODULE_DIRECTIVE_NAME="<IfModule"; 
@@ -62,12 +61,6 @@ public class ApacheIfModuleComponent implements ResourceComponent<ApacheVirtualH
         
       this.context = context;    
       parentComponent = context.getParentResourceComponent();
-      String resourceKey = context.getResourceKey();
-      position = new ArrayList<String>();
-      
-      for (String pm : resourceKey.split(";")){
-          position.add(pm);
-      }
     }
 
     public void stop(){
@@ -115,14 +108,8 @@ public class ApacheIfModuleComponent implements ResourceComponent<ApacheVirtualH
     }
     
     private AugeasNode getNode(AugeasNode virtualHost) {
-        List<AugeasNode> directories = AugeasNodeSearch.getNodeByParentParams(virtualHost, IFMODULE_DIRECTIVE_NAME, position);
-        if (directories.isEmpty())
-        {
-            log.warn("Parent directive of ifmodule was probably deleted in configuration file.");
-            throw new RuntimeException("Parent directive of ifmodule was probably deleted in configuration file.");
-        }
-        
-        return directories.get(0);
+        AugeasNode directory = AugeasNodeSearch.findNodeById(virtualHost, context.getResourceKey());
+        return directory;
       }
     
     private void prepareNode(AugeasNode node,AugeasNode parentNode,AugeasTree tree,Configuration configuration){

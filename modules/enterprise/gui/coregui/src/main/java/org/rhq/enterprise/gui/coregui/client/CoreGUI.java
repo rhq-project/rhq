@@ -65,6 +65,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static CoreGUI coreGUI;
 
     public void onModuleLoad() {
+        if (GWT.getHostPageBaseURL().indexOf("/coregui/") == -1) {
+            System.out.println("Suppressing load of CoreGUI module");
+            return; // suppress loading this module if not using the new GWT app
+        }
+
         coreGUI = this;
 
         if (!GWT.isScript()) {
@@ -123,6 +128,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                         GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError("Failed to load user's subject", caught);
+                                new LoginView().showLoginDialog();
                             }
 
                             public void onSuccess(PageList<Subject> result) {
@@ -152,44 +158,46 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
 
     private void buildCoreUI() {
-        this.rootCanvas = new RootCanvas();
-        rootCanvas.setOverflow(Overflow.HIDDEN);
+        // If the core gui is already built (eg. from previous login, just refire event)
+        if (this.rootCanvas == null) {
+            this.rootCanvas = new RootCanvas();
+            rootCanvas.setOverflow(Overflow.HIDDEN);
 
-        //        HTMLPane menuPane = new HTMLPane();
-        //        menuPane.setWidth100();
-        //        menuPane.setHeight(26);
-        //        menuPane.setContentsType(ContentsType.PAGE);
-        //        menuPane.setContentsURL("/rhq/common/menu/menu.xhtml");
-        //        menuPane.setZIndex(400000);
-        //        layout.addMember(menuPane);
+            //        HTMLPane menuPane = new HTMLPane();
+            //        menuPane.setWidth100();
+            //        menuPane.setHeight(26);
+            //        menuPane.setContentsType(ContentsType.PAGE);
+            //        menuPane.setContentsURL("/rhq/common/menu/menu.xhtml");
+            //        menuPane.setZIndex(400000);
+            //        layout.addMember(menuPane);
 
-        MenuBarView menuBarView = new MenuBarView();
-        menuBarView.setWidth("100%");
-        //        WidgetCanvas menuCanvas = new WidgetCanvas(menuBarView);
-        //        menuCanvas.setTop(0);
-        //        menuCanvas.setWidth100();
-        //        menuCanvas.draw();
-        rootCanvas.addMember(menuBarView);
+            MenuBarView menuBarView = new MenuBarView();
+            menuBarView.setWidth("100%");
+            //        WidgetCanvas menuCanvas = new WidgetCanvas(menuBarView);
+            //        menuCanvas.setTop(0);
+            //        menuCanvas.setWidth100();
+            //        menuCanvas.draw();
+            rootCanvas.addMember(menuBarView);
 
-        breadCrumbTrailPane = new BreadcrumbTrailPane();
-        rootCanvas.addMember(breadCrumbTrailPane);
+            breadCrumbTrailPane = new BreadcrumbTrailPane();
+            rootCanvas.addMember(breadCrumbTrailPane);
 
-        DOM.setInnerHTML(RootPanel.get("Loading-Panel").getElement(), "");
+            DOM.setInnerHTML(RootPanel.get("Loading-Panel").getElement(), "");
 
-        Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
-        canvas.setWidth100();
-        canvas.setHeight100();
-        rootCanvas.addMember(canvas);
+            Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
+            canvas.setWidth100();
+            canvas.setHeight100();
+            rootCanvas.addMember(canvas);
 
-        rootCanvas.addMember(new Footer());
+            rootCanvas.addMember(new Footer());
 
-        rootCanvas.draw();
+            rootCanvas.draw();
 
-        History.addValueChangeHandler(this);
+            History.addValueChangeHandler(this);
+        }
 
         History.fireCurrentHistoryState();
     }
-
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
 
@@ -200,7 +208,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         rootCanvas.renderView(currentViewPath);
     }
-
 
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
@@ -217,8 +224,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new DashboardsView();
         } else if (breadcrumbName.equals("Bundles")) {
             canvas = new BundleTopView();
-        /*} else if (breadcrumbName.equals("LogOut")) {
-            //            canvas = new LoginView();*/
+        } else if (breadcrumbName.equals("LogOut")) {
+            canvas = new LoginView(true);
         } else if (breadcrumbName.equals("Tag")) {
             canvas = new TaggedView();
         } else {

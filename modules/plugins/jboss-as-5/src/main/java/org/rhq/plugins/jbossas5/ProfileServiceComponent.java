@@ -22,9 +22,11 @@
  */
 package org.rhq.plugins.jbossas5;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jmx.JMXComponent;
 
@@ -34,4 +36,7 @@ import org.rhq.plugins.jmx.JMXComponent;
 public interface ProfileServiceComponent<T extends ResourceComponent> extends ResourceComponent<T>, JMXComponent<T> {
     @Nullable
     ProfileServiceConnection getConnection();
+
+    @NotNull
+    ResourceContext<T> getResourceContext();
 }

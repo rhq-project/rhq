@@ -142,8 +142,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // For performance tracking
         long start = System.currentTimeMillis();
 
-        log.info("Merging packages for resource ID [" + resourceId + "]. Package count ["
-            + report.getDeployedPackages().size() + "]");
+        log.debug("Merging [" + report.getDeployedPackages().size() + "] packages for Resource with id ["
+                + resourceId + "]...");
 
         // Load the resource and its installed packages
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -322,7 +322,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             }
         }
 
-        log.info("Finished merging " + report.getDeployedPackages().size() + " packages in "
+        log.debug("Finished merging [" + report.getDeployedPackages().size() + "] packages in "
             + (System.currentTimeMillis() - start) + "ms");
     }
 

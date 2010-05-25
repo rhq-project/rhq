@@ -24,6 +24,8 @@ package org.rhq.plugins.jbossas;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -294,11 +296,9 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
         }
 
         String configName = absoluteConfigPath.getName();
-        String baseName = discoveryContext.getSystemInformation().getHostname();
         String description = installInfo.getProductType().DESCRIPTION;
-        boolean isInServer = isEmbeddedInServer(absoluteConfigPath);
+        boolean isInServer = isRhqServer(absoluteConfigPath);
         if (isInServer) {
-            baseName += " RHQ Server, ";
             description += " hosting the RHQ Server";
 
             // RHQ-633 : We know this is an RHQ Server. Let's auto-configure for tracking its log file, which is not in
@@ -325,7 +325,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                 }
             }
         }
-        String name = formatServerName(baseName, bindingAddress, namingPort, configName, installInfo);
+        String name = formatServerName(bindingAddress, namingPort, discoveryContext.getSystemInformation().getHostname(), isInServer);
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, installInfo.getVersion(),
             description, pluginConfiguration, processInfo);
@@ -335,7 +335,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
      * @param absoluteConfigPath
      * @return true if this plugin is in an Agent that is embedded in the Server
      */
-    private boolean isEmbeddedInServer(File absoluteConfigPath) {
+    private boolean isRhqServer(File absoluteConfigPath) {
         File deployDir = new File(absoluteConfigPath, "deploy");
         File rhqInstallerWar = new File(deployDir, "rhq-installer.war");
         File rhqInstallerWarUndeployed = new File(deployDir, "rhq-installer.war.rej");
@@ -403,8 +403,8 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                 // Now set default values on any props that are still not set.
                 setPluginConfigurationDefaults(pluginConfiguration);
 
-                String resourceName = formatServerName(context.getSystemInformation().getHostname(), bindAddress,
-                    jnpPort, configName, installInfo);
+                String resourceName = formatServerName(bindAddress, jnpPort, 
+                    context.getSystemInformation().getHostname(), isRhqServer(configDir));
                 DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), configDir
                     .getAbsolutePath(), resourceName, version,
                     "JBoss AS server that the RHQ Plugin Container is running within", pluginConfiguration, null);
@@ -420,16 +420,32 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
         return null;
     }
 
-    public String formatServerName(String baseName, String bindingAddress, String jnpPort, String configName,
-        JBossInstallationInfo installInfo) {
-       
-        String details = null;
-        if ((bindingAddress != null) && (jnpPort != null && !jnpPort.equals(CHANGE_ME))) {
-            details = bindingAddress + ":" + jnpPort;
-        } else 
-              details = bindingAddress;
+    public String formatServerName(String bindingAddress, String jnpPort, String hostname, boolean isRhq) {
 
-        return details;
+        if (isRhq) {
+            return hostname + " RHQ Server";
+        } else {
+            String hostnameToUse = hostname;
+            
+            if (bindingAddress != null) {
+                    try {
+                        InetAddress bindAddr = InetAddress.getByName(bindingAddress);
+                        if (!bindAddr.isAnyLocalAddress()) {
+                            //if the binding address != 0.0.0.0
+                            hostnameToUse = bindAddr.getHostName();
+                        }
+                    } catch (UnknownHostException e) {
+                        //this should not happen?
+                        log.warn("Unknown hostname passed in as the binding address for JBoss AS server discovery: " + bindingAddress);
+                    }
+            }
+            
+            if (jnpPort != null && !jnpPort.equals(CHANGE_ME)) {
+                hostnameToUse += ":" + jnpPort;
+            }
+            
+            return hostnameToUse;
+        }
     }
 
     private static String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {

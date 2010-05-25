@@ -125,6 +125,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
                 });
             }
         });
+        tagEditor.setVertical(true);
         tagItem.setCanvas(tagEditor);
         tagItem.setRowSpan(4);
 

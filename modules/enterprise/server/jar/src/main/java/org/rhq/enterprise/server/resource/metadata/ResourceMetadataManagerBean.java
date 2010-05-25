@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -83,6 +83,7 @@ import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -91,6 +92,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
  * @author Greg Hinkle
  * @author Heiko W. Rupp
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
@@ -119,6 +121,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private ResourceManagerLocal resourceManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager;
 
     @EJB
     private EventManagerLocal eventManager;
@@ -308,14 +313,14 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         if (existingPlugin != null) {
             Plugin obsolete = AgentPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
-            if (obsolete == existingPlugin) { // yes use == for reference equality
+            if (obsolete == existingPlugin) { // yes, use == for reference equality
                 newOrUpdated = true;
             }
             plugin.setId(existingPlugin.getId());
             plugin.setEnabled(existingPlugin.isEnabled());
         }
 
-        // If this is a brand new plugin, it gets "updated" too - which ends up being a simple persist.
+        // If this is a brand new plugin, it gets "updated" too.
         if (newOrUpdated) {
             if (plugin.getDisplayName() == null) {
                 plugin.setDisplayName(plugin.getName());
@@ -336,14 +341,14 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             }
             if (newOrUpdated || forceUpdate) {
                 // Only merge the plugin's ResourceTypes into the DB if the plugin is new or updated or we were forced to
-                updateTypes(plugin.getName(), rootResourceTypes);
+                updateTypes(rootResourceTypes);
                 typesUpdated = true;
             }
         }
 
         // TODO GH: JBNADM-1310/JBNADM-1630 - Push updated plugins to running agents and have them reboot their PCs
         // We probably want to be smart about this - perhaps have the agents periodically poll their server to see
-        // if there are new plugins and if so download them - this of course would be configurable/disablable
+        // if there are new plugins and if so download them - this of course would be configurable/disableable
 
         return typesUpdated;
     }
@@ -385,10 +390,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
      * This will assume the MD5 in the database is already correct, so this
      * method will not take the time to calculate the MD5 again.
      *
-     * @param name the name of the plugin whose content is being updated
+     * @param id the id of the plugin whose content is being updated
      * @param file the plugin file whose content will be streamed to the database
      *
-     * @throws Exception
+     * @throws Exception on failure to update the plugin's content
      */
     private void streamPluginFileContentToDatabase(int id, File file) throws Exception {
         Connection conn = null;
@@ -398,7 +403,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         FileInputStream fis = new FileInputStream(file);
 
         try {
-
             conn = this.dataSource.getConnection();
             ps = conn.prepareStatement("UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ? WHERE ID = ?");
             ps.setBinaryStream(1, new BufferedInputStream(fis), (int) file.length());
@@ -418,9 +422,16 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return;
     }
 
-    private void updateTypes(String pluginName, Set<ResourceType> rootResourceTypes) throws Exception {
+    private void updateTypes(Set<ResourceType> rootResourceTypes) throws Exception {
+        // Iterate the resource types breadth-first, so all platform types get added before any server types or platform
+        // service types. This way, we'll be able to set all of the platform types as parents of the server types and
+        // platform service types. It's also helpful for other types with multiple "runs-inside" parent types (e.g
+        // Hibernate Entities), since it ensures the parent types will get persisted prior to the child types.
         for (ResourceType rootResourceType : rootResourceTypes) {
             updateType(rootResourceType);
+        }
+        for (ResourceType rootResourceType : rootResourceTypes) {
+            updateTypes(rootResourceType.getChildResourceTypes());
         }
     }
 
@@ -493,6 +504,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
+
     private void removeFromParents(ResourceType typeToBeRemoved) {
         // Wrap in new HashSet to avoid ConcurrentModificationExceptions.
         Set<ResourceType> parents = new HashSet<ResourceType>(typeToBeRemoved.getParentResourceTypes());
@@ -503,187 +515,217 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @SuppressWarnings("unchecked")
     private void updateType(ResourceType resourceType) {
+        entityManager.flush();
+
+        // see if there is already an existing type that we need to update
+        if (log.isDebugEnabled()) {
+            log.debug("Updating resource type [" + resourceType.getName() + "] from plugin ["
+                + resourceType.getPlugin() + "]...");
+        }
+
+        ResourceType existingType;
         try {
-            entityManager.flush();
-
-            // see if there is already an existing type that we need to update
-            if (log.isDebugEnabled()) {
-                log.debug("Updating resource type [" + resourceType.getName() + "] from plugin ["
-                    + resourceType.getPlugin() + "]...");
-            }
-
-            Query q = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
-            q.setParameter("name", resourceType.getName()).setParameter("plugin", resourceType.getPlugin());
-            List<ResourceType> findTypeByNameAndPlugin = q.getResultList();
-
-            ResourceType existingType = null;
-            if (findTypeByNameAndPlugin.size() == 1) {
-                existingType = findTypeByNameAndPlugin.get(0);
-            }
-
-            // Connect the parent types if they exist which they should
-            // We'll do this no matter if the resourceType exists or not - but we use existing vs. resourceType appropriately
-            // This is to support the case when an existing type gets a new parent resource type in <runs-inside>
-            updateParentResourceTypes(resourceType, existingType);
-
-            if (findTypeByNameAndPlugin.size() == 0) {
-                throw new NoResultException(); // falls into the catch block down below. TODO refactor this stuff
-            }
-
-            // XXX: I do not think the code in this if-block is valid - see RHQ-1086 - I think it should be removed
-            // see what we have. Default is 0 or 1. When hot deploying and moving a RT 2 can happen
-            if (findTypeByNameAndPlugin.size() > 1) {
-                // No Unique result. List what we have and bail out if more than 2 results
-                if (log.isDebugEnabled()) {
-                    for (ResourceType rType : findTypeByNameAndPlugin) {
-                        log.debug("updateType: found: " + rType);
-                    }
-                }
-
-                if (findTypeByNameAndPlugin.size() != 2) {
-                    throw new IllegalArgumentException("We only expected two results here, but got "
-                        + findTypeByNameAndPlugin.size());
-                }
-
-                // two results - see if one is us, then the other must be the existing type that we are looking for
-                Iterator<ResourceType> iter = findTypeByNameAndPlugin.iterator();
-                ResourceType rt1 = iter.next();
-                ResourceType rt2 = iter.next();
-                if (rt1.equals(resourceType)) {
-                    existingType = rt2;
-                } else if (rt2.equals(resourceType)) {
-                    existingType = rt1;
-                } else {
-                    throw new IllegalArgumentException("Existing ResourceType not found for " + resourceType);
-                }
-            }
-
-            // Type exists now, (if it didn't exist we'd fall through to the NSRE catch block and cascade persist everything
-
-            // first add/update any subcategories on the parent before trying to update children
-            // if we didn't do this the children may try to save themselves with subcategories which
-            // wouldn't exist yet
-            updateChildSubCategories(resourceType, existingType);
-
-            // update children next
-            for (ResourceType childType : resourceType.getChildResourceTypes()) {
-                updateType(childType);
-            }
-            entityManager.flush();
-
-            // even though we've updated our child types to use new subcategory references, its still
-            // not safe to delete the old sub categories yet, because we haven't yet deleted all of the old
-            // child types which may still be referencing these sub categories
-
-            // Update the rest of these related resources
-            updatePluginConfiguration(resourceType, existingType);
-            entityManager.flush();
-
-            updateResourceConfiguration(resourceType, existingType);
-
-            updateMeasurementDefinitions(resourceType, existingType);
-
-            updateContentDefinitions(resourceType, existingType);
-
-            updateOperationDefinitions(resourceType, existingType);
-
-            updateProcessScans(resourceType, existingType);
-
-            updateEventDefinitions(resourceType, existingType);
-
-            // Update the type itself
-            existingType.setDescription(resourceType.getDescription());
-            existingType.setCreateDeletePolicy(resourceType.getCreateDeletePolicy());
-            existingType.setCreationDataType(resourceType.getCreationDataType());
-            existingType.setSingleton(resourceType.isSingleton());
-            existingType.setSupportsManualAdd(resourceType.isSupportsManualAdd());
-
-            /*
-             * We need to be careful updating the subcategory. If it is not null and the same ("equals")
-             * to the new one, we need to copy over the attributes, as the existing will be kept and
-             * the new one not persisted. Otherwise, we can just use the new one.
-             */
-            ResourceSubCategory oldSubCat = existingType.getSubCategory();
-            ResourceSubCategory newSubCat = resourceType.getSubCategory();
-            if (oldSubCat != null && oldSubCat.equals(newSubCat)) {
-                // Subcategory hasn't changed - nothing to do (call to addAndUpdateChildSubCategories()
-                // above already took care of any modifications to the ResourceSubCategorys themselves).
-            } else if (newSubCat == null) {
-                if (oldSubCat != null) {
-                    log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName()
-                        + "] changed from " + oldSubCat + " to " + newSubCat);
-                    existingType.setSubCategory(null);
-                }
-            } else {
-                // New subcategory is non-null and not equal to the old subcategory.
-                ResourceSubCategory existingSubCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                    existingType, newSubCat.getName());
-                if (existingSubCat == null)
-                    throw new IllegalStateException("Resource type [" + resourceType.getName() + "] in plugin ["
-                        + resourceType.getPlugin() + "] has a subcategory (" + newSubCat.getName()
-                        + ") which was not defined as a child subcategory of one of its ancestor resource types.");
-                log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
-                    + oldSubCat + " to " + existingSubCat);
-                existingType.setSubCategory(existingSubCat);
-            }
-
-            existingType = entityManager.merge(existingType);
-            entityManager.flush();
-        } catch (NoResultException nre) {
-            /*
-             * If the type didn't exist then we'll persist here which will cascade through
-             * all child types as well as plugin and resource configs and their delegate types and
-             * metric and operation definitions and their dependent types
-             *
-             * But first do some validity checking
-             */
-
-            // Check if the subcategories as children of resourceType are valid
-            // Those are the subtacegories we offer for children of us
-            checkForValidSubcategories(resourceType.getChildSubCategories());
-
-            // Check if we have a subcategory attached that needs to be linked to one of the parents
-            // This is a subcategory of our parent where we are supposed to be grouped in.
-            linkSubCategoryToParents(resourceType);
-
-            if (log.isDebugEnabled())
-                log.debug("Persisting new ResourceType: " + resourceType);
-            entityManager.persist(resourceType);
+            existingType = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceType.getName(),
+                        resourceType.getPlugin());
         } catch (NonUniqueResultException nure) {
             log.debug("Found more than one existing ResourceType for " + resourceType);
+            // TODO: Delete the redundant ResourceTypes to get the DB into a valid state.
             throw new IllegalStateException(nure);
+        }
+
+        // Connect the parent types if they exist, which they should.
+        // We'll do this no matter if the resourceType exists or not - but we use existing vs. resourceType appropriately
+        // This is to support the case when an existing type gets a new parent resource type in <runs-inside>
+        updateParentResourceTypes(resourceType, existingType);
+
+        if (existingType == null) {
+            persistNewType(resourceType);
+        } else {
+            mergeExistingType(resourceType, existingType);
         }
     }
 
-    private void linkSubCategoryToParents(ResourceType resourceType) {
+    private void mergeExistingType(ResourceType resourceType, ResourceType existingType) {
+        log.debug("Merging type [" + resourceType + "] + into existing type [" + existingType + "]...");
 
-        if (resourceType.getSubCategory() == null)
+        // Make sure to first add/update any subcategories on the parent before trying to update children.
+        // Otherwise, the children may try to save themselves with subcategories which wouldn't exist yet.
+        updateChildSubCategories(resourceType, existingType);
+
+        entityManager.flush();
+
+        // even though we've updated our child types to use new subcategory references, its still
+        // not safe to delete the old sub categories yet, because we haven't yet deleted all of the old
+        // child types which may still be referencing these sub categories
+
+        // Update the rest of these related resources
+        updatePluginConfiguration(resourceType, existingType);
+        entityManager.flush();
+
+        updateResourceConfiguration(resourceType, existingType);
+
+        updateMeasurementDefinitions(resourceType, existingType);
+
+        updateContentDefinitions(resourceType, existingType);
+
+        updateOperationDefinitions(resourceType, existingType);
+
+        updateProcessScans(resourceType, existingType);
+
+        updateEventDefinitions(resourceType, existingType);
+
+        // Update the type itself
+        existingType.setDescription(resourceType.getDescription());
+        existingType.setCreateDeletePolicy(resourceType.getCreateDeletePolicy());
+        existingType.setCreationDataType(resourceType.getCreationDataType());
+        existingType.setSingleton(resourceType.isSingleton());
+        existingType.setSupportsManualAdd(resourceType.isSupportsManualAdd());
+
+        // We need to be careful updating the subcategory. If it is not null and the same ("equals")
+        // to the new one, we need to copy over the attributes, as the existing will be kept and
+        // the new one not persisted. Otherwise, we can just use the new one.
+        ResourceSubCategory oldSubCat = existingType.getSubCategory();
+        ResourceSubCategory newSubCat = resourceType.getSubCategory();
+        if (oldSubCat != null && oldSubCat.equals(newSubCat)) {
+            // Subcategory hasn't changed - nothing to do (call to addAndUpdateChildSubCategories()
+            // above already took care of any modifications to the ResourceSubCategories themselves).
+        } else if (newSubCat == null) {
+            if (oldSubCat != null) {
+                log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName()
+                    + "] changed from " + oldSubCat + " to " + newSubCat);
+                existingType.setSubCategory(null);
+            }
+        } else {
+            // New subcategory is non-null and not equal to the old subcategory.
+            ResourceSubCategory existingSubCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
+                existingType, newSubCat.getName());
+            if (existingSubCat == null)
+                throw new IllegalStateException("Resource type [" + resourceType.getName() + "] in plugin ["
+                    + resourceType.getPlugin() + "] has a subcategory (" + newSubCat.getName()
+                    + ") which was not defined as a child subcategory of one of its ancestor resource types.");
+            log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
+                + oldSubCat + " to " + existingSubCat);
+            existingType.setSubCategory(existingSubCat);
+        }
+
+        existingType = entityManager.merge(existingType);
+        entityManager.flush();
+    }
+
+    private void persistNewType(ResourceType resourceType) {
+        log.info("Persisting new type [" + resourceType + "]...");
+        // If the type didn't exist then we'll persist here which will cascade through
+        // all child types as well as plugin and resource configs and their delegate types and
+        // metric and operation definitions and their dependent types,
+        // but first do some validity checking.
+
+        // Check if the subcategories as children of resourceType are valid
+        // Those are the subcategories we offer for children of us
+        checkForValidSubcategories(resourceType.getChildSubCategories());
+
+        // Check if we have a subcategory attached that needs to be linked to one of the parents
+        // This is a subcategory of our parent where we are supposed to be grouped in.
+        linkSubCategoryToParents(resourceType);
+
+        entityManager.persist(resourceType);
+        entityManager.flush();
+    }
+
+    private void linkSubCategoryToParents(ResourceType resourceType) {
+        if (resourceType.getSubCategory() == null) {
             return; // Nothing to do
+        }
 
         ResourceSubCategory mySubCategory = resourceType.getSubCategory();
         ResourceSubCategory existingCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
             resourceType, mySubCategory.getName());
-        if (existingCat != null)
+        if (existingCat != null) {
             resourceType.setSubCategory(existingCat);
-        else
+        } else {
             throw new IllegalStateException("Subcategory " + mySubCategory.getName() + " defined on resource type "
                 + resourceType.getName() + " in plugin " + resourceType.getPlugin()
                 + " is not defined in a parent type");
-
+        }
     }
 
-    private void updateParentResourceTypes(ResourceType resourceType, ResourceType existingType) {
-        Set<ResourceType> types = new HashSet<ResourceType>(resourceType.getParentResourceTypes());
-        resourceType.setParentResourceTypes(new HashSet<ResourceType>());
-        for (ResourceType resourceTypeParent : types) {
+    private void updateParentResourceTypes(ResourceType newType, ResourceType existingType) {
+        Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
+        log.debug("Setting parent types on type: " + ((existingType != null) ? existingType : newType )
+                + " to [" + newParentTypes + "]...");
+        newType.setParentResourceTypes(new HashSet<ResourceType>());
+        Set<ResourceType> originalExistingParentTypes = new HashSet<ResourceType>();
+        if (existingType != null) {
+            originalExistingParentTypes.addAll(existingType.getParentResourceTypes());
+        }
+        for (ResourceType newParentType : newParentTypes) {
             try {
-                ResourceType realParentType = (ResourceType) entityManager.createNamedQuery(
-                    ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", resourceTypeParent.getName())
-                    .setParameter("plugin", resourceTypeParent.getPlugin()).getSingleResult();
-                realParentType.addChildResourceType(existingType != null ? existingType : resourceType);
+                boolean parentNew = existingType == null || !originalExistingParentTypes.remove(newParentType) ;
+                if (parentNew) {
+                    ResourceType realParentType = (ResourceType) entityManager.createNamedQuery(
+                        ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", newParentType.getName())
+                        .setParameter("plugin", newParentType.getPlugin()).getSingleResult();
+                    ResourceType type = (existingType != null) ? existingType : newType;
+                    log.info("Adding type [" + toConciseString(type) + "] as child of type ["
+                            + toConciseString(realParentType) + "]...");
+                    realParentType.addChildResourceType(type);
+                }
             } catch (NoResultException nre) {
-                throw new RuntimeException("Couldn't persist type [" + resourceType
-                    + "] because parent wasn't already persisted [" + resourceTypeParent + "]");
+                throw new RuntimeException("Couldn't persist type [" + newType
+                    + "] because parent [" + newParentType + "] wasn't already persisted.");
+            }
+        }
+
+        for (ResourceType obsoleteParentType : originalExistingParentTypes) {
+            log.info("Removing type [" + toConciseString(existingType) + "] from parent type ["
+                    + toConciseString(obsoleteParentType) + "]...");
+            obsoleteParentType.removeChildResourceType(existingType);
+            moveResourcesToNewParent(existingType, obsoleteParentType, newParentTypes);
+        }
+
+        entityManager.flush();
+    }
+
+    private static String toConciseString(ResourceType type) {
+        return (type != null) ? (type.getPlugin() + ":" + type.getName() + "(id=" + type.getId() + ")") : "null";
+    }
+
+    private void moveResourcesToNewParent(ResourceType existingType, ResourceType obsoleteParentType, Set<ResourceType> newParentTypes) {
+        Subject overlord = subjectManager.getOverlord();
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterResourceTypeId(existingType.getId());
+        criteria.addFilterParentResourceTypeId(obsoleteParentType.getId());
+        List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, criteria);
+        for (Resource resource : resources) {
+            Resource newParent = null;
+            newParentTypes:
+            for (ResourceType newParentType : newParentTypes) {
+                Resource ancestorResource = resource.getParentResource();
+                while (ancestorResource != null) {
+                    if (ancestorResource.getResourceType().equals(newParentType)) {
+                        // We found an ancestor to be the new parent of our orphaned Resource.
+                        newParent = ancestorResource;
+                        break newParentTypes;
+                    }
+                    ancestorResource = ancestorResource.getParentResource();
+                }
+                for (Resource childResource : resource.getChildResources()) {
+                    if (childResource.getResourceType().equals(newParentType)) {
+                        // We found a child to be the new parent of our orphaned Resource.
+                        // TODO: Check if there are are multiple children of the new parent type. If so,
+                        //       log an error and don't move the resource.
+                        newParent = childResource;
+                        break newParentTypes;
+                    }
+                }
+            }
+            if (newParent != null) {
+                if (resource.getParentResource() != null) {
+                    resource.getParentResource().removeChildResource(resource);
+                }
+                newParent.addChildResource(resource);
+            } else {
+                log.debug("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
+                        + " to a new valid parent with one of the following types: " + newParentTypes);
             }
         }
     }
@@ -703,7 +745,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private List<ResourceSubCategory> getAllSubcategories(ResourceSubCategory cat) {
-
         List<ResourceSubCategory> result = new ArrayList<ResourceSubCategory>();
 
         if (cat.getChildSubCategories() != null) {
@@ -718,7 +759,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     /** Update the &lt;event> tags */
     private void updateEventDefinitions(ResourceType newType, ResourceType existingType) {
-
         Set<EventDefinition> newEventDefs = newType.getEventDefinitions();
         // Loop over the newEventDefs and set the resourceTypeId, so equals() will work
         for (EventDefinition def : newEventDefs) {
@@ -1252,7 +1292,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 existingType.setPackageExtraPropertiesDefinition(null);
             }
         }
-
     }
 
     /**

@@ -36,7 +36,7 @@ import java.security.NoSuchAlgorithmException;
  * An object that generates a message digest or hash for algorithms such as MD5 or SHA. This class is basically a
  * wrapper around {@link java.security.MessageDigest} and provides convenience methods making it easier to generate
  * hashes.
- * 
+ *
  * There are static methods in here that use MD5 as the default algorithm. If you want to use another
  * algorithm, instantiate an instance of this object and use its instance methods.
  */

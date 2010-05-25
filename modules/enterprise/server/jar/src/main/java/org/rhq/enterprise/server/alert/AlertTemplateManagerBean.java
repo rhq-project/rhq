@@ -18,10 +18,13 @@
  */
 package org.rhq.enterprise.server.alert;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -48,7 +51,6 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 /**
  * @author Joseph Marques
  */
-
 @Stateless
 public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
 
@@ -61,8 +63,6 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
-    @EJB
-    private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
     @EJB
@@ -109,36 +109,49 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public int createAlertTemplate(Subject user, AlertDefinition alertTemplate, Integer resourceTypeId)
-        throws InvalidAlertDefinitionException, ResourceTypeNotFoundException {
+        throws InvalidAlertDefinitionException, ResourceTypeNotFoundException, AlertDefinitionCreationException {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("createAlertTemplate: " + alertTemplate);
+        }
+
         ResourceType type = resourceTypeManager.getResourceTypeById(user, resourceTypeId);
 
         alertTemplate.setResourceType(type); // mark this as an alert "template" definition
-        int alertTemplateId = alertDefinitionManager.createAlertDefinition(user, alertTemplate, null);
+        int alertTemplateId = 0;
+        try {
+            alertTemplateId = alertDefinitionManager.createAlertDefinition(user, alertTemplate, null);
+        } catch (Throwable t) {
+            throw new AlertDefinitionCreationException("Could not create alertTemplate for " + type + " with data "
+                + alertTemplate.toSimpleString(), t);
+        }
 
-        int definitionCount = 0;
         Subject overlord = subjectManager.getOverlord();
+        Throwable firstThrowable = null;
+
         List<Integer> resourceIdsForType = getCommittedResourceIdsNeedingTemplateApplication(user, alertTemplateId,
             resourceTypeId);
-
+        List<Integer> resourceIdsInError = new ArrayList<Integer>();
         for (Integer resourceId : resourceIdsForType) {
             try {
-                // make sure we perform the system side-effects as the overlord
-                updateAlertDefinitionsForResource(overlord, alertTemplate, resourceId);
+                // construct the child
+                AlertDefinition childAlertDefinition = new AlertDefinition(alertTemplate);
+                childAlertDefinition.setParentId(alertTemplate.getId());
 
-                // rev2804 - flush/clear after 250 definitions for good performance
-                if (++definitionCount % 250 == 0) {
-                    entityManager.flush();
-                    entityManager.clear();
+                // persist the child using overlord
+                alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
+            } catch (Throwable t) {
+                // continue on error, create as many as possible
+                if (firstThrowable == null) {
+                    firstThrowable = t;
                 }
-            } catch (AlertDefinitionCreationException adce) {
-                /* should never happen because AlertDefinitionCreationException is only ever
-                 * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-                 *
-                 * but we'll log it anyway, just in case, so it isn't just swallowed
-                 */
-                LOG.error(adce);
+                resourceIdsInError.add(resourceId);
             }
+        }
+        if (firstThrowable != null) {
+            throw new AlertDefinitionCreationException("Could not create child alert definition for Resources "
+                + resourceIdsInError + " with template" + alertTemplate.toSimpleString(), firstThrowable);
         }
 
         return alertTemplateId;
@@ -147,13 +160,10 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     @SuppressWarnings("unchecked")
     public void updateAlertDefinitionsForResource(Subject user, Integer resourceId)
         throws AlertDefinitionCreationException, InvalidAlertDefinitionException {
-        if (0 == resourceId) {
-            throw new AlertDefinitionCreationException("Unexpected resourceId = 0");
-        }
-
         if (authorizationManager.isOverlord(user) == false) {
             throw new AlertDefinitionCreationException(
-                "Updating the alert definitions for a resource is an implicit system operation and must only be performed by the overlord");
+                "Updating the alert definitions for a resource is an implicit system operation; "
+                    + "It can only be performed by the overlord");
         }
 
         // get list of AlertTemplates that should be, but haven't already been, applied to this resource
@@ -171,23 +181,18 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         List<AlertDefinition> unappliedTemplates = query.getResultList();
 
         for (AlertDefinition template : unappliedTemplates) {
-            alertTemplateManager.updateAlertDefinitionsForResource(user, template, resourceId);
+            // construct the child
+            AlertDefinition childAlertDefinition = new AlertDefinition(template);
+            childAlertDefinition.setParentId(template.getId());
+
+            // persist the child, user is known to be overlord at this point for this system side-effect
+            try {
+                alertDefinitionManager.createAlertDefinition(user, childAlertDefinition, resourceId);
+            } catch (Throwable t) {
+                throw new AlertDefinitionCreationException("Failed to create child AlertDefinition for Resource[id="
+                    + resourceId + "] with template " + template.toSimpleString());
+            }
         }
-    }
-
-    public void updateAlertDefinitionsForResource(Subject user, AlertDefinition alertTemplate, Integer resourceId)
-        throws AlertDefinitionCreationException, InvalidAlertDefinitionException {
-        if (authorizationManager.isOverlord(user) == false) {
-            throw new AlertDefinitionCreationException("Updating the alert definitions for a resource "
-                + "is an implicit system operation " + "and must only be performed by the overlord");
-        }
-
-        // construct the child
-        AlertDefinition childAlertDefinition = new AlertDefinition(alertTemplate);
-        childAlertDefinition.setParentId(alertTemplate.getId());
-
-        // persist the child
-        alertDefinitionManager.createAlertDefinition(user, childAlertDefinition, resourceId);
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -227,84 +232,84 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertTemplate, boolean purgeInternals)
-        throws InvalidAlertDefinitionException {
-        AlertDefinition updatedTemplate = null;
-
-        try {
-            updatedTemplate = alertDefinitionManager.updateAlertDefinition(user, alertTemplate.getId(), alertTemplate,
-                purgeInternals); // do not allow direct undeletes of an alert definition
-        } catch (AlertDefinitionUpdateException adue) {
-            /* jmarques (Oct 10, 2007)
-             *
-             * this should never happen, there is currently no way to update a deleted alert template via the JON UI
-             */
-            LOG.error("Attempt to update a deleted template " + alertTemplate.toSimpleString());
+        throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("updateAlertTemplate: " + alertTemplate);
         }
 
-        Subject overlord = subjectManager.getOverlord();
-        int definitionCount = 0;
+        // first update the actual alert template
+        AlertDefinition updated = null;
+        try {
+            updated = alertDefinitionManager.updateAlertDefinition(user, alertTemplate.getId(), alertTemplate,
+                purgeInternals); // do not allow direct undeletes of an alert definition
+        } catch (Throwable t) {
+            throw new AlertDefinitionUpdateException("Failed to update an AlertTemplate "
+                + alertTemplate.toSimpleString(), t);
+        }
 
-        /*
-         * update all of the definitions that were spawned from alert templates
-         */
+        // overlord will be used for all system-side effects as a result of updating this alert template
+        Subject overlord = subjectManager.getOverlord();
+        Throwable firstThrowable = null;
+
+        // update all of the definitions that were spawned from alert templates
         List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(overlord, alertTemplate.getId());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Need to update the following children alert definition ids: " + alertDefinitions);
+        }
+        List<Integer> alertDefinitionIdsInError = new ArrayList<Integer>();
         for (Integer alertDefinitionId : alertDefinitions) {
             try {
-
                 alertDefinitionManager
-                    .updateAlertDefinition(overlord, alertDefinitionId, alertTemplate, purgeInternals); // if the child is deleted, we will undelete is as part of the update
-            } catch (AlertDefinitionUpdateException adue) {
-                /* jmarques (Oct 10, 2007), as of this writing...
-                 *
-                 * this should not happen, because the call to getAlertDefinitionIdsByTemplateId only returns
-                 * non-deleted definitions.
-                 *
-                 * if a definition was deleted, then it will signify to the system that a new definition has to be
-                 * created in its place, which is what the call out to
-                 * getResourceIdsWithNoDefinitionFromThisTemplate is all about.
-                 *
-                 * but, it's conceivable that in the future an AlertDefinitionUpdateException can be thrown for other
-                 * reasons, so we want to catch that here and, at the very least, log it.
-                 */
-                LOG.error("Attempt to update a deleted template " + alertTemplate.toSimpleString());
-            }
-
-            // rev2804 - flush/clear after 250 definitions for good performance
-            if (++definitionCount % 250 == 0) {
-                entityManager.flush();
-                entityManager.clear();
-            }
-        }
-
-        /*
-         * if the user deleted the alert definition spawned from a template, a cascade update will recreate it
-         */
-        List<Integer> resourceIds = getCommittedResourceIdsNeedingTemplateApplication(overlord, alertTemplate.getId(),
-            getResourceTypeIdAlertTemplateId(alertTemplate.getId()));
-        try {
-            for (Integer resourceId : resourceIds) {
-                updateAlertDefinitionsForResource(overlord, alertTemplate, resourceId);
-
-                // rev2804 - flush/clear after 250 definitions for good performance
-                if (++definitionCount % 250 == 0) {
-                    entityManager.flush();
-                    entityManager.clear();
+                    .updateAlertDefinition(overlord, alertDefinitionId, alertTemplate, purgeInternals);
+            } catch (Throwable t) {
+                // continue on error, update as many as possible
+                if (firstThrowable == null) {
+                    firstThrowable = t;
                 }
+                alertDefinitionIdsInError.add(alertDefinitionId);
             }
-        } catch (AlertDefinitionCreationException adce) {
-            /* should never happen because AlertDefinitionCreationException is only ever
-             * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-             *
-             * but we'll log it anyway, just in case, so it isn't just swallowed
-             */
-            LOG.error(adce);
         }
 
-        return updatedTemplate;
+        // if the user deleted the alert definition spawned from a template, a cascade update will recreate it
+        List<Integer> resourceIds = getCommittedResourceIdsNeedingTemplateApplication(overlord, alertTemplate.getId(),
+            getResourceTypeIdForAlertTemplateId(alertTemplate.getId()));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Need to re-create alert definitions for the following resource ids: " + resourceIds);
+        }
+        List<Integer> resourceIdsInError = new ArrayList<Integer>();
+        for (Integer resourceId : resourceIds) {
+            try {
+                // construct the child
+                AlertDefinition childAlertDefinition = new AlertDefinition(alertTemplate);
+                childAlertDefinition.setParentId(alertTemplate.getId());
+
+                // persist the child
+                alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
+            } catch (Throwable t) {
+                // continue on error, update as many as possible
+                if (firstThrowable == null) {
+                    firstThrowable = t;
+                }
+                resourceIdsInError.add(resourceId);
+            }
+        }
+        if (firstThrowable != null) {
+            StringBuilder error = new StringBuilder();
+            if (alertDefinitionIdsInError.size() != 0) {
+                error.append("Failed to update child AlertDefinitions " + alertDefinitionIdsInError + "; ");
+            }
+            if (resourceIdsInError.size() != 0) {
+                error.append("Failed to re-create child AlertDefinition for Resources " + resourceIdsInError + "; ");
+            }
+            throw new AlertDefinitionUpdateException(error.toString(), firstThrowable);
+        }
+
+        return updated;
     }
 
-    private int getResourceTypeIdAlertTemplateId(int alertTemplateId) {
+    private int getResourceTypeIdForAlertTemplateId(int alertTemplateId) {
         Query query = entityManager.createQuery("" //
             + "SELECT template.resourceType.id " //
             + "  FROM AlertDefinition template " //

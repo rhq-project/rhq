@@ -32,13 +32,8 @@ import org.rhq.core.domain.util.PageList;
 public interface GroupAlertDefinitionManagerLocal {
     PageList<AlertDefinition> findGroupAlertDefinitions(Subject subject, int resourceGroupId, PageControl pageControl);
 
-    // Create operation always cascades
     int createGroupAlertDefinitions(Subject subject, AlertDefinition alertDefinition, Integer resourceGroupId)
-        throws InvalidAlertDefinitionException;
-
-    // this is a system side-effect of group processing, and thus should only ever by called by the overlord user
-    void updateAlertDefinitionsForResource(Subject subject, AlertDefinition alertTemplate, Integer resourceGroupId)
-        throws AlertDefinitionCreationException, InvalidAlertDefinitionException;
+        throws InvalidAlertDefinitionException, AlertDefinitionCreationException;
 
     int removeGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds);
 
@@ -47,10 +42,11 @@ public interface GroupAlertDefinitionManagerLocal {
     int disableGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds);
 
     AlertDefinition updateGroupAlertDefinitions(Subject subject, AlertDefinition groupAlertDefinition,
-        boolean purgeInternals) throws InvalidAlertDefinitionException;
+        boolean purgeInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 
-    // methods requires to implement system side-effects as a result of modifying group membership or deleting groups
-    void addGroupAlertDefinitions(Subject subject, int groupId, int[] resourcesIdsToAdd);
+    // required to implement system side-effects as a result of modifying group membership or deleting groups
+    void addGroupAlertDefinitions(Subject subject, int groupId, int[] resourcesIdsToAdd)
+        throws AlertDefinitionCreationException;
 
     void removeGroupAlertDefinitions(Subject subject, int groupId, int[] resourceIdsToRemove);
 

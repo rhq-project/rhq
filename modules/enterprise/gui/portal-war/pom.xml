@@ -19,6 +19,7 @@
       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/portal-war/</developerConnection>
    </scm>
 
+
    <properties>
       <scm.module.path>modules/enterprise/gui/portal-war/</scm.module.path>
 
@@ -27,7 +28,7 @@
       <jsf-facelets.version>1.1.15.B1</jsf-facelets.version>
       <seam.version>2.1.0.SP1</seam.version>
 
-      <!-- plugin versions --> 
+      <!-- plugin versions -->
       <jetty-jspc-maven-plugin.version>7.0.1.v20091125</jetty-jspc-maven-plugin.version>
 
       <product.shortName>RHQ</product.shortName>
@@ -39,6 +40,7 @@
       <product.version>${project.version}</product.version>
       <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
    </properties>
+
 
    <dependencies>
 
@@ -364,6 +366,13 @@
       </dependency>
 
       <dependency>
+          <groupId>jboss.jbossws</groupId>
+          <artifactId>jboss-jaxws</artifactId>
+          <version>3.0.1-native-2.0.4.GA</version>
+          <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
          <groupId>xalan</groupId>
          <artifactId>xalan</artifactId>
          <version>2.5.1</version>
@@ -391,6 +400,7 @@
       </dependency>
 
    </dependencies>
+
 
    <build>
       <finalName>rhq-portal</finalName>
@@ -471,6 +481,7 @@
       </plugins>
 
    </build>
+
 
    <profiles>
 
@@ -581,6 +592,7 @@
 
    </profiles>
 
+
    <repositories>
 
       <repository>
@@ -589,22 +601,6 @@
          <url>http://download.java.net/maven/1/</url>
          <layout>legacy</layout>
       </repository>
-
-        <!-- This is needed for the org.jvnet:inflector dep. 
-             TODO: Publish the inflector artifact to the JBoss 3rd party repo. -->
-        <repository>
-          <id>jboss-deprecated-repository</id>
-          <name>JBoss Deprecated Maven Repository</name>
-          <url>https://repository.jboss.org/nexus/content/repositories/deprecated/</url>
-          <layout>default</layout>
-          <releases>
-             <enabled>true</enabled>
-             <updatePolicy>never</updatePolicy>
-          </releases>
-          <snapshots>
-             <enabled>false</enabled>
-          </snapshots>
-        </repository>
 
    </repositories>
 

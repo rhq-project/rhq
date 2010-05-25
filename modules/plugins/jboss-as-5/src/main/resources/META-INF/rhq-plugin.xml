@@ -1028,6 +1028,10 @@
                              <c:integer-constraint minimum="60"/>
                          </c:constraint>
                      </c:simple-property>
+
+                     <c:simple-property name="childJmxServerName" displayName="JBoss AS JVM Name" default="JVM" 
+                                        readOnly="true" required="false" 
+                                        description="The name of the JBoss AS JVM resource."/>
             </c:group>
 
              <c:group name="events">
@@ -1596,653 +1600,670 @@
 
         </service>
 
-        <service name="Queue"
-                 class="JmsDestinationComponent"
-                 createDeletePolicy="both"
-                 subCategory="JMS Destinations"
-                 discovery="JmsDestinationDiscoveryComponent">
 
-            <plugin-configuration>
-                <c:simple-property name="componentType" default="JMSDestination" readOnly="true"/>
-                <c:simple-property name="componentSubtype" default="Queue" readOnly="true"/>
+        <service name="JBoss Messaging"
+                 class="JBossMessagingComponent"
+                 subCategory="Resources"
+                 discovery="JBossMessagingDiscoveryComponent"
+                 description="the JBoss Messaging JMS provider"
+                 singleton="true">
+
+             <plugin-configuration>
+                <c:simple-property name="componentType" default="JMS" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="ServerPeer" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
-                <c:simple-property name="templateName" default="QueueTemplate" readOnly="true"/>
-                <c:simple-property name="componentNameProperty" default="JNDIName" readOnly="true">
-                    <c:description>
-                        The name of the Resource configuration property whose value should be used as the
-                        underlying ManagedComponent name when creating a new Resource of this type.
-                    </c:description>
-                </c:simple-property>
-                <c:group name="managedPropertyGroup" displayName="managedPropertyGroup" hiddenByDefault="true">
-                    <c:simple-property name="jms-type" default="queue"/>
-                    <c:map-property name="customProperties"
-                                    description="Maps a list of custom property names to the the fully qualified class names of the org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter implementations that should be used for those properties.">
-                        <c:simple-property name="securityConfig"
-                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
-                    </c:map-property>
-                </c:group>
-            </plugin-configuration>
-
-            &destinationOperations;
-
-		    <operation name="listAllMessages" displayName="List All Messages" description="List all messages for the specified selector">
-		        <parameters>
-		            <c:simple-property required="false" name="arg#0" displayName="selector"/>
-		        </parameters>
-		        <results>
-	                <c:notes>List all messages with selector</c:notes>
-	                <c:list-property name="result">
-	                    <c:map-property required="false" name="element">
-	                        <c:simple-property required="false" name="JMSCorrelationID"/>
-	                        <c:simple-property required="false" name="JMSMessageID"/>
-	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
-	                    </c:map-property>
-	                </c:list-property>
-		        </results>
-		    </operation>
-
-		    <operation name="listDurableMessages" displayName="List Durable Messages" description="List all durable messages for the specified selector">
-		        <parameters>
-		            <c:simple-property required="false" name="arg#0" displayName="selector"/>
-		        </parameters>
-		        <results>
-	                <c:notes>List all durable messages using a selector</c:notes>
-	                <c:list-property name="result">
-	                    <c:map-property required="false" name="element">
-	                        <c:simple-property required="false" name="JMSCorrelationID"/>
-	                        <c:simple-property required="false" name="JMSMessageID"/>
-	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
-	                    </c:map-property>
-	                </c:list-property>
-		        </results>
-		    </operation>
-
-		    <operation name="listNonDurableMessages" displayName="List Non Durable Messages" description="List all non durable messages for the specified selector">
-		        <parameters>
-		            <c:simple-property required="false" name="arg#0" displayName="selector"/>
-		       </parameters>
-		        <results>
-	                <c:notes>List all non durable messages using a selector</c:notes>
-	                <c:list-property name="result">
-	                    <c:map-property required="false" name="element">
-	                        <c:simple-property required="false" name="JMSCorrelationID"/>
-	                        <c:simple-property required="false" name="JMSMessageID"/>
-	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
-	                    </c:map-property>
-	                </c:list-property>
-		        </results>
-		    </operation>
-
-            <operation name="listMessageCounterAsHTML" displayName="List Message Counter As HTML" description="Get the message counter as HTML">
-                <results>
-                    <c:notes>Get the message counter as HTML</c:notes>
-                    <c:simple-property name="result" type="longString"/>
-                </results>
-            </operation>
-
-            <operation name="listMessageCounterHistoryAsHTML" displayName="List Message Counter History As HTML" description="Get the message counter history as HTML">
-                <results>
-                 	<c:notes>Get the message counter history as HTML</c:notes>
-                    <c:simple-property name="result" type="longString"/>
-                </results>
-            </operation>
-
-            <operation name="resetMessageCounter" displayName="Reset Message Counter" description="Reset the message counter"/>
-
-            <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History" description="Reset the message counter history"/>
-
-            &managedObjectMetrics;
-
-            <!-- Traits -->
-
-            <metric property="createdProgrammatically" displayType="summary"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
-                    description="Was this queue created programmatically? If Yes, the queue will not survive a restart of the application server. If No, the queue was created via a deployment XML file."/>
-
-            <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
-                       (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
-            <metric property="messageCounterHistoryDayLimit"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
-                    description="This queue's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"/>
-
-            <!-- Numerics -->
-
-            <metric property="consumerCount" measurementType="dynamic" displayType="summary" displayName="Consumer Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
-                    description="The number of consumers on the queue"/>
-
-            <metric property="deliveringCount" measurementType="dynamic" displayType="detail" displayName="Delivering Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
-                    description="The number of messages currently being delivered"/>
-
-            <metric property="messageCount" measurementType="dynamic" displayType="summary" displayName="Message Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
-                    description="The number of messages in the queue"/>
-
-            <metric property="scheduledMessageCount" measurementType="dynamic" displayType="detail" displayName="Scheduled Message Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
-                    description="The number of scheduled messages in the queue"/>
-
-            <metric property="messageStatistics.count" measurementType="dynamic" displayType="detail" displayName="Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
-                    description="The total message count since startup or last counter reset"/>
-
-            <metric property="messageStatistics.countDelta" measurementType="dynamic" displayType="detail" displayName="Count Delta"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
-                    description="The message count delta since last method call"/>
-
-            <metric property="messageStatistics.depth" measurementType="dynamic" displayType="detail" displayName="Depth"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
-                    description="The current message count of pending messages within the queue waiting for dispatch"/>
-
-            <metric property="messageStatistics.depthDelta" measurementType="dynamic" displayType="detail" displayName="Depth Delta"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
-                    description="The message count delta of pending messages since last method call"/>
-
-            <metric property="messageStatistics.timeLastUpdate" measurementType="dynamic" displayType="detail" displayName="Time Last Update"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
-                    description="The timestamp of the last message add"/>
-
-            <resource-configuration>
-
-                <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
-
-                <c:simple-property required="true" name="name" readOnly="true"
-                                   description="The name of this queue (e.g. 'MyQueue')."/>
-
-                <c:simple-property required="true" name="JNDIName" readOnly="true"
-                                   description="This queue's JNDI name (e.g. '/queue/MyQueue')."/>
-
-                <c:simple-property type="boolean" required="false" name="clustered" readOnly="true" defaultValue="false">
-                    <c:description>
-                        Is this queue clustered? For an existing queue, this property is read-only. If not specified
-                        when creating a new queue, the default value is false.
-                    </c:description>
-                </c:simple-property>
-
-                <c:simple-property type="integer" required="false" name="downCacheSize" defaultValue="2000">
-                    <c:description>
-                        When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
-                        being written to storage. This enables the write to occur as a single operation, thus aiding
-                        performance. This setting determines the maximum number of messages that the Down Cache will hold
-                        before they are flushed to storage.
-                        Updates to this property will not go into effect until the queue has been restarted.
-                        The default value is 2000.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property type="integer" required="false" name="fullSize" defaultValue="200000">
-                    <c:description>
-                        The maximum number of messages for the queue held in memory at any one time.
-                        The actual queue can hold many more messages than this, but these are paged to and from
-                        storage as necessary, as messages are added or consumed.
-                        Updates to this property will not go into effect until the queue has been restarted.
-                        The default value is 200000.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts" defaultValue="-1">
-                    <c:description>
-                        The number of delivery attempts before a message to a subscriber of this queue is moved to the
-                        DLQ. The default value is 10. A value of -1 indicates the default value should be used.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="-1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property type="integer" required="false" name="maxSize" defaultValue="-1">
-                    <c:description>
-                        The maximum number of messages this queue can hold before they are dropped.
-                        A value of -1 means there is no maximum. The default value is -1.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="-1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property type="integer" required="false" name="pageSize" defaultValue="2000">
-                    <c:description>
-                        When loading messages from a subscription, this is the maximum number of messages to
-                        pre-load in one operation. Must be less than Full Size and greater than or equal to Down Cache Size.
-                        Updates to this property will not go into effect until the queue has been restarted.
-                        The default value is 2000.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds" defaultValue="-1">
-                    <c:description>
-                        The delay in milliseconds before a rolled back or recovered message is redelivered.
-                        Set to 0 to disable redelivery. The default value is 0. A value of -1 indicates the default value should be used.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="-1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property required="false" name="DLQ">
-                    <c:description>
-                        The JMX ObjectName of the dead letter queue (DLQ) for this queue (e.g.
-                        "jboss.messaging.destination:service=Queue,name=PrivateDLQ") - overrides the default DLQ on the
-                        server peer.
-                    </c:description>
-                    <c:constraint>
-                        <c:regex-constraint expression="[^:]+:.+"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property required="false" name="expiryQueue">
-                    <c:description>
-                        The JMX ObjectName of the expiry queue for this queue (e.g.
-                        "jboss.messaging.destination:service=Queue,name=PrivateExpiryQueue") - overrides the default
-                        expiry queue on the server peer.
-                    </c:description>
-                    <c:constraint>
-                        <c:regex-constraint expression="[^:]+:.+"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property required="false" name="serverPeer">
-                    <c:description>
-                        The JMX ObjectName of the server peer this queue was deployed on (e.g.
-                        "jboss.messaging:service=ServerPeer"). Updates to this property will not go into effect until
-                        the queue has been restarted.
-                    </c:description>
-                    <c:constraint>
-                        <c:regex-constraint expression="[^:]+:.+"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:list-property name="securityConfig" max="4" min="2"
-                                 displayName="Security Configurations"
-                                 description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
-                    <c:map-property name="role"
-                                    displayName="Security Configuration Attributes"
-                                    description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
-                        <c:simple-property name="name"
-                                           displayName="Name"
-                                           description="Name of the Security Role. e.g. Guest"
-                                           summary="true"
-                                           required="true"/>
-                        <c:simple-property name="read"
-                                           displayName="Read"
-                                           description="Is this role allowed to read messages?"
-                                           summary="true"
-                                           required="false"
-                                           type="boolean"/>
-                        <c:simple-property name="write"
-                                           displayName="Write"
-                                           description="Is this role allowed to write messages?"
-                                           summary="true"
-                                           required="false"
-                                           type="boolean"/>
-                        <c:simple-property name="create"
-                                           displayName="Create"
-                                           description="Is this role allowed to create messages?"
-                                           summary="true"
-                                           required="false"
-                                           type="boolean"/>
-                    </c:map-property>
-
-                </c:list-property>
-
-            </resource-configuration>
-
-            <help>
-               <![CDATA[
-                  <p>The message counter metrics will not be collected by default. In order
-                     for these metrics to be collected for all Topics and Queues for a given application server instance,
-                     go to the instance's JMX Console, and invoke the
-                     <tt>enableMessageCounters</tt> operation on the <tt>jboss.messaging:service=ServerPeer</tt> MBean.
-                     To ensure the message counters are still enabled when the application server is restarted,
-                     edit that instance's <tt>deploy/messaging/messaging-service.xml</tt> file and set the
-                     <tt>EnableMessageCounters</tt> attribute to "true".</p>
-               ]]>
-            </help>
-
-        </service>
-
-        <service name="Topic"
-                 class="JmsDestinationComponent"
-                 createDeletePolicy="both"
-                 subCategory="JMS Destinations"
-                 discovery="JmsDestinationDiscoveryComponent">
-
-            <plugin-configuration>
-                <c:simple-property name="componentType" default="JMSDestination" readOnly="true"/>
-                <c:simple-property name="componentSubtype" default="Topic" readOnly="true"/>
-                <c:simple-property name="componentName" readOnly="true"/>
-                <c:simple-property name="templateName" default="TopicTemplate" readOnly="true"/>
-                <c:simple-property name="componentNameProperty" default="JNDIName" readOnly="true">
-                    <c:description>
-                        The name of the Resource configuration property whose value should be used as the
-                        underlying ManagedComponent name when creating a new Resource of this type.
-                    </c:description>
-                </c:simple-property>
-                <c:group name="managedPropertyGroup" displayName="managedPropertyGroup" hiddenByDefault="true">
-                    <c:simple-property name="jms-type" default="topic"/>
-                    <c:map-property name="customProperties"
-                                    description="Maps a list of custom property names to the the fully qualified class names of the org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter implementations that should be used for those properties.">
-                        <c:simple-property name="securityConfig"
-                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
-                    </c:map-property>
-                </c:group>
-            </plugin-configuration>
-
-            &destinationOperations;
-
-		    <operation name="listAllMessages" displayName="List All Messages" description="List all messages for the specified subscription with the specified selector">
-		        <parameters>
-		            <c:simple-property required="false" name="arg#0" displayName="subscriptionID"/>
-		            <c:simple-property required="false" name="arg#1" displayName="selector"/>
-		        </parameters>
-		        <results>
-	                <c:notes>List all messages for the specified subscription with the specified selector</c:notes>
-	                <c:list-property name="result">
-	                    <c:map-property required="false" name="element">
-	                        <c:simple-property required="false" name="JMSCorrelationID"/>
-	                        <c:simple-property required="false" name="JMSMessageID"/>
-	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
-	                    </c:map-property>
-	                </c:list-property>
-		        </results>
-		    </operation>
-
-		    <operation name="listDurableMessages" displayName="List Durable Messages" description="List all durable messages for the specified subscription with the specified selector">
-		        <parameters>
-		            <c:simple-property required="false" name="arg#0" displayName="subscriptionID"/>
-		            <c:simple-property required="false" name="arg#1" displayName="selector"/>
-		        </parameters>
-		        <results>
-	                <c:notes>List all durable messages for the specified subscription with the specified selector</c:notes>
-	                <c:list-property name="result">
-	                    <c:map-property required="false" name="element">
-	                        <c:simple-property required="false" name="JMSCorrelationID"/>
-	                        <c:simple-property required="false" name="JMSMessageID"/>
-	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
-	                    </c:map-property>
-	                </c:list-property>
-		        </results>
-		    </operation>
-
-		    <operation name="listNonDurableMessages" displayName="List Non Durable Messages" description="List all non durable messages for the specified subscription with the specified selector">
-		        <parameters>
-		            <c:simple-property required="false" name="arg#0" displayName="subscriptionID"/>
-		            <c:simple-property required="false" name="arg#1" displayName="selector"/>
-		       </parameters>
-		        <results>
-	                <c:notes>List all non durable messages for the specified subscription with the specified selector</c:notes>
-	                <c:list-property name="result">
-	                    <c:map-property required="false" name="element">
-	                        <c:simple-property required="false" name="JMSCorrelationID"/>
-	                        <c:simple-property required="false" name="JMSMessageID"/>
-	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
-	                    </c:map-property>
-	                </c:list-property>
-		        </results>
-		    </operation>
-
-            <operation name="listAllSubscriptions" displayName="List All Subscriptions"
-                       description="Return all subscriptions for the topic">
-                <results>
-					<c:notes>Return all subscriptions for the topic</c:notes>
-                    &subscriptionsResultProperty;
-                </results>
-            </operation>
-
-            <operation name="listAllSubscriptionsAsHTML" displayName="List All Subscriptions As HTML"
-                       description="Return all subscriptions for the topic as HTML">
-                <results>
-                    <c:notes>Return all subscriptions for the topic as HTML</c:notes>
-                    <c:simple-property name="result" type="longString"/>
-                </results>
-            </operation>
-
-            <operation name="listDurableSubscriptions" displayName="List Durable Subscriptions"
-                       description="Return all durable subscriptions for the topic">
-                <results>
-                	<c:notes>Return all durable subscriptions for the topic</c:notes>
-                    &subscriptionsResultProperty;
-                </results>
-            </operation>
-
-            <operation name="listDurableSubscriptionsAsHTML" displayName="List Durable Subscriptions As HTML"
-                       description="Return all durable subscriptions for the topic as HTML">
-                <results>
-                	<c:notes>Return all durable subscriptions for the topic as HTML</c:notes>
-                    <c:simple-property name="result" type="longString"/>
-                </results>
-            </operation>
-
-            <operation name="listNonDurableSubscriptions" displayName="List Non-Durable Subscriptions"
-                       description="Return all non-durable subscriptions for the topic">
-                <results>
-                  	<c:notes>Return all non-durable subscriptions for the topic</c:notes>
-                    &subscriptionsResultProperty;
-                </results>
-            </operation>
-
-            <operation name="listNonDurableSubscriptionsAsHTML" displayName="List Non-Durable Subscriptions As HTML"
-                       description="Return all non-durable subscriptions for the topic as HTML">
-                <results>
-                    <c:notes>Return all non-durable subscriptions for the topic as HTML</c:notes>
-                    <c:simple-property name="result" type="longString"/>
-                </results>
-            </operation>
-
-            &managedObjectMetrics;
-
-            <!-- Traits -->
-
-            <metric property="createdProgrammatically" displayType="summary"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
-                    description="Was this topic created programmatically? If Yes, the topic will not survive a restart of the application server. If No, the topic was created via a deployment XML file."/>
-
-            <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
-                       (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
-            <metric property="messageCounterHistoryDayLimit"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
-                    description="This topic's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"/>
-
-            <!-- Numerics -->
-
-            <metric property="allMessageCount" measurementType="dynamic" displayType="summary" displayName="All Message Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
-                    description="The count of all messages in all subscriptions to this topic"/>
-
-            <metric property="allSubscriptionsCount" measurementType="dynamic" displayType="summary" displayName="All Subscriptions Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
-                    description="The count of all subscriptions to this topic"/>
-
-            <metric property="durableMessageCount" measurementType="dynamic" displayType="detail" displayName="Durable Message Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
-                    description="The count of all messages for all durable subscriptions to this topic"/>
-
-            <metric property="durableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Durable Subscriptions Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
-                    description="The count of all durable subscriptions to this topic"/>
-
-            <metric property="nonDurableMessageCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Message Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
-                    description="The count of all messages in all non durable subscriptions to this topic"/>
-
-            <metric property="nonDurableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Subscriptions Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
-                    description="The count of all non durable subscriptions to this topic"/>
-
-            <resource-configuration>
-
-                <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/TopicServiceMO.java -->
-
-                <c:simple-property required="true" name="name" readOnly="true"
-                                   description="The name of this topic (e.g. 'MyTopic')."/>
-
-                <c:simple-property required="true" name="JNDIName" readOnly="true"
-                                   description="This topic's JNDI name (e.g. '/topic/MyTopic')"/>
-
-                <c:simple-property type="boolean" required="false" name="clustered" readOnly="true" defaultValue="false">
-                    <c:description>
-                        Is this topic clustered? For an existing topic, this property is read-only. If not specified
-                        when creating a new topic, the default value is false.
-                    </c:description>
-                </c:simple-property>
-
-                <c:simple-property type="integer" required="false" name="downCacheSize" defaultValue="2000">
-                    <c:description>
-                        When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
-                        being written to storage. This enables the write to occur as a single operation, thus aiding
-                        performance. This setting determines the maximum number of messages that the Down Cache will hold
-                        before they are flushed to storage.
-                        Updates to this property will not go into effect until the topic has been restarted.
-                        The default value is 2000.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property type="integer" required="false" name="fullSize" defaultValue="200000">
-                    <c:description>
-                        The maximum number of messages held by the topic subscriptions in memory at any one time.
-                        The actual subscription can hold many more messages than this, but these are paged to and from
-                        storage as necessary, as messages are added or consumed.
-                        Updates to this property will not go into effect until the topic has been restarted.
-                        The default value is 200000.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts" defaultValue="-1">
-                    <c:description>
-                        The number of delivery attempts before a message to a subscriber of this topic is moved to the
-                        DLQ. The default value is 10. A value of -1 indicates the default value should be used.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="-1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property type="integer" required="false" name="maxSize" defaultValue="-1">
-                    <c:description>
-                        The maximum number of messages this topic can hold before they are dropped.
-                        A value of -1 means there is no maximum. The default value is -1.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="-1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property type="integer" required="false" name="pageSize" defaultValue="2000">
-                    <c:description>
-                        When loading messages from a subscription, this is the maximum number of messages to
-                        pre-load in one operation. Must be less than Full Size and greater than or equal to Down Cache Size.
-                        Updates to this property will not go into effect until the topic has been restarted.
-                        The default value is 2000.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds" defaultValue="-1">
-                    <c:description>
-                        The delay in milliseconds before a rolled back or recovered message is redelivered.
-                        Set to 0 to disable redelivery. The default value is 0. A value of -1 indicates the default value should be used.
-                    </c:description>
-                    <c:constraint>
-                        <c:integer-constraint minimum="-1"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property required="false" name="DLQ">
-                    <c:description>
-                        The JMX ObjectName of the dead letter queue (DLQ) for this topic (e.g.
-                        "jboss.messaging.destination:service=Queue,name=PrivateDLQ") - overrides the default DLQ on the
-                        server peer.
-                    </c:description>
-                    <c:constraint>
-                        <c:regex-constraint expression="[^:]+:.+"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property required="false" name="expiryQueue">
-                    <c:description>
-                        The JMX ObjectName of the expiry queue for this topic (e.g.
-                        "jboss.messaging.destination:service=Queue,name=PrivateExpiryQueue") - overrides the default
-                        expiry queue on the server peer.
-                    </c:description>
-                    <c:constraint>
-                        <c:regex-constraint expression="[^:]+:.+"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:simple-property required="false" name="serverPeer">
-                    <c:description>
-                        The JMX ObjectName of the server peer this topic was deployed on (e.g.
-                        "jboss.messaging:service=ServerPeer"). Updates to this property will not go into effect until
-                        the topic has been restarted.
-                    </c:description>
-                    <c:constraint>
-                        <c:regex-constraint expression="[^:]+:.+"/>
-                    </c:constraint>
-                </c:simple-property>
-
-                <c:list-property name="securityConfig" max="4" min="2"
-                                 displayName="Security Configurations"
-                                 description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
-                    <c:map-property name="role"
-                                    displayName="Security Configuration Attributes"
-                                    description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
-                        <c:simple-property name="name"
-                                           displayName="Name"
-                                           description="Name of the Security Role. e.g. Guest"
-                                           summary="true"
-                                           required="true"/>
-                        <c:simple-property name="read"
-                                           displayName="Read"
-                                           description="Is this role allowed to read messages?"
-                                           summary="true"
-                                           required="false"
-                                           type="boolean"/>
-                        <c:simple-property name="write"
-                                           displayName="Write"
-                                           description="Is this role allowed to write messages?"
-                                           summary="true"
-                                           required="false"
-                                           type="boolean"/>
-                        <c:simple-property name="create"
-                                           displayName="Create"
-                                           description="Is this role allowed to create messages?"
-                                           summary="true"
-                                           required="false"
-                                           type="boolean"/>
-                    </c:map-property>
-                </c:list-property>
-
-            </resource-configuration>
-
-            <help>
-               <![CDATA[
-                  <p>The message counter metrics will not be collected by default. In order
-                     for these metrics to be collected for all Topics and Queues for a given application server instance,
-                     go to the instance's JMX Console, and invoke the
-                     <tt>enableMessageCounters</tt> operation on the <tt>jboss.messaging:service=ServerPeer</tt> MBean.
-                     To ensure the message counters are still enabled when the application server is restarted,
-                     edit that instance's <tt>deploy/messaging/messaging-service.xml</tt> file and set the
-                     <tt>EnableMessageCounters</tt> attribute to "true".</p>
-               ]]>
-            </help>
+             </plugin-configuration>
+
+            <service name="Queue"
+                     class="JmsDestinationComponent"
+                     createDeletePolicy="both"
+                     discovery="JmsDestinationDiscoveryComponent"
+                     description="a JMS queue">
+
+                <plugin-configuration>
+                    <c:simple-property name="componentType" default="JMSDestination" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="Queue" readOnly="true"/>
+                    <c:simple-property name="componentName" readOnly="true"/>
+                    <c:simple-property name="templateName" default="QueueTemplate" readOnly="true"/>
+                    <c:simple-property name="componentNameProperty" default="JNDIName" readOnly="true">
+                        <c:description>
+                            The name of the Resource configuration property whose value should be used as the
+                            underlying ManagedComponent name when creating a new Resource of this type.
+                        </c:description>
+                    </c:simple-property>
+                    <c:group name="managedPropertyGroup" displayName="managedPropertyGroup" hiddenByDefault="true">
+                        <c:simple-property name="jms-type" default="queue"/>
+                        <c:map-property name="customProperties"
+                                        description="Maps a list of custom property names to the the fully qualified class names of the org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter implementations that should be used for those properties.">
+                            <c:simple-property name="securityConfig"
+                                               default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
+                        </c:map-property>
+                    </c:group>
+                </plugin-configuration>
+
+                &destinationOperations;
+
+                <operation name="listAllMessages" displayName="List All Messages" description="List all messages for the specified selector">
+                    <parameters>
+                        <c:simple-property required="false" name="arg#0" displayName="selector"/>
+                    </parameters>
+                    <results>
+                        <c:notes>List all messages with selector</c:notes>
+                        <c:list-property name="result">
+                            <c:map-property required="false" name="element">
+                                <c:simple-property required="false" name="JMSCorrelationID"/>
+                                <c:simple-property required="false" name="JMSMessageID"/>
+                                <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+                            </c:map-property>
+                        </c:list-property>
+                    </results>
+                </operation>
+
+                <operation name="listDurableMessages" displayName="List Durable Messages" description="List all durable messages for the specified selector">
+                    <parameters>
+                        <c:simple-property required="false" name="arg#0" displayName="selector"/>
+                    </parameters>
+                    <results>
+                        <c:notes>List all durable messages using a selector</c:notes>
+                        <c:list-property name="result">
+                            <c:map-property required="false" name="element">
+                                <c:simple-property required="false" name="JMSCorrelationID"/>
+                                <c:simple-property required="false" name="JMSMessageID"/>
+                                <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+                            </c:map-property>
+                        </c:list-property>
+                    </results>
+                </operation>
+
+                <operation name="listNonDurableMessages" displayName="List Non Durable Messages" description="List all non durable messages for the specified selector">
+                    <parameters>
+                        <c:simple-property required="false" name="arg#0" displayName="selector"/>
+                   </parameters>
+                    <results>
+                        <c:notes>List all non durable messages using a selector</c:notes>
+                        <c:list-property name="result">
+                            <c:map-property required="false" name="element">
+                                <c:simple-property required="false" name="JMSCorrelationID"/>
+                                <c:simple-property required="false" name="JMSMessageID"/>
+                                <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+                            </c:map-property>
+                        </c:list-property>
+                    </results>
+                </operation>
+
+                <operation name="listMessageCounterAsHTML" displayName="List Message Counter As HTML" description="Get the message counter as HTML">
+                    <results>
+                        <c:notes>Get the message counter as HTML</c:notes>
+                        <c:simple-property name="result" type="longString"/>
+                    </results>
+                </operation>
+
+                <operation name="listMessageCounterHistoryAsHTML" displayName="List Message Counter History As HTML" description="Get the message counter history as HTML">
+                    <results>
+                        <c:notes>Get the message counter history as HTML</c:notes>
+                        <c:simple-property name="result" type="longString"/>
+                    </results>
+                </operation>
+
+                <operation name="resetMessageCounter" displayName="Reset Message Counter" description="Reset the message counter"/>
+
+                <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History" description="Reset the message counter history"/>
+
+                &managedObjectMetrics;
+
+                <!-- Traits -->
+
+                <metric property="createdProgrammatically" displayType="summary"
+                        defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                        description="Was this queue created programmatically? If Yes, the queue will not survive a restart of the application server. If No, the queue was created via a deployment XML file."/>
+
+                <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
+                           (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
+                <metric property="messageCounterHistoryDayLimit"
+                        defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                        description="This queue's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"/>
+
+                <!-- Numerics -->
+
+                <metric property="consumerCount" measurementType="dynamic" displayType="summary" displayName="Consumer Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                        description="The number of consumers on the queue"/>
+
+                <metric property="deliveringCount" measurementType="dynamic" displayType="detail" displayName="Delivering Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                        description="The number of messages currently being delivered"/>
+
+                <metric property="messageCount" measurementType="dynamic" displayType="summary" displayName="Message Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                        description="The number of messages in the queue"/>
+
+                <metric property="scheduledMessageCount" measurementType="dynamic" displayType="detail" displayName="Scheduled Message Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                        description="The number of scheduled messages in the queue"/>
+
+                <metric property="messageStatistics.count" measurementType="dynamic" displayType="detail" displayName="Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
+                        description="The total message count since startup or last counter reset"/>
+
+                <metric property="messageStatistics.countDelta" measurementType="dynamic" displayType="detail" displayName="Count Delta"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
+                        description="The message count delta since last method call"/>
+
+                <metric property="messageStatistics.depth" measurementType="dynamic" displayType="detail" displayName="Depth"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
+                        description="The current message count of pending messages within the queue waiting for dispatch"/>
+
+                <metric property="messageStatistics.depthDelta" measurementType="dynamic" displayType="detail" displayName="Depth Delta"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
+                        description="The message count delta of pending messages since last method call"/>
+
+                <metric property="messageStatistics.timeLastUpdate" measurementType="dynamic" displayType="detail" displayName="Time Last Update"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
+                        description="The timestamp of the last message add"/>
+
+                <resource-configuration>
+
+                    <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
+
+                    <c:simple-property required="true" name="name" readOnly="true"
+                                       description="The name of this queue (e.g. 'MyQueue')."/>
+
+                    <c:simple-property required="true" name="JNDIName" readOnly="true"
+                                       description="This queue's JNDI name (e.g. '/queue/MyQueue')."/>
+
+                    <c:simple-property type="boolean" required="false" name="clustered" readOnly="true" defaultValue="false">
+                        <c:description>
+                            Is this queue clustered? For an existing queue, this property is read-only. If not specified
+                            when creating a new queue, the default value is false.
+                        </c:description>
+                    </c:simple-property>
+
+                    <c:simple-property type="integer" required="false" name="downCacheSize" defaultValue="2000">
+                        <c:description>
+                            When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
+                            being written to storage. This enables the write to occur as a single operation, thus aiding
+                            performance. This setting determines the maximum number of messages that the Down Cache will hold
+                            before they are flushed to storage.
+                            Updates to this property will not go into effect until the queue has been restarted.
+                            The default value is 2000.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property type="integer" required="false" name="fullSize" defaultValue="200000">
+                        <c:description>
+                            The maximum number of messages for the queue held in memory at any one time.
+                            The actual queue can hold many more messages than this, but these are paged to and from
+                            storage as necessary, as messages are added or consumed.
+                            Updates to this property will not go into effect until the queue has been restarted.
+                            The default value is 200000.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property type="integer" required="false" name="maxDeliveryAttempts" defaultValue="-1">
+                        <c:description>
+                            The number of delivery attempts before a message to a subscriber of this queue is moved to the
+                            DLQ. The default value is 10. A value of -1 indicates the default value should be used.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="-1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property type="integer" required="false" name="maxSize" defaultValue="-1">
+                        <c:description>
+                            The maximum number of messages this queue can hold before they are dropped.
+                            A value of -1 means there is no maximum. The default value is -1.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="-1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property type="integer" required="false" name="pageSize" defaultValue="2000">
+                        <c:description>
+                            When loading messages from a subscription, this is the maximum number of messages to
+                            pre-load in one operation. Must be less than Full Size and greater than or equal to Down Cache Size.
+                            Updates to this property will not go into effect until the queue has been restarted.
+                            The default value is 2000.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds" defaultValue="-1">
+                        <c:description>
+                            The delay in milliseconds before a rolled back or recovered message is redelivered.
+                            Set to 0 to disable redelivery. The default value is 0. A value of -1 indicates the default value should be used.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="-1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property required="false" name="DLQ">
+                        <c:description>
+                            The JMX ObjectName of the dead letter queue (DLQ) for this queue (e.g.
+                            "jboss.messaging.destination:service=Queue,name=PrivateDLQ") - overrides the default DLQ on the
+                            server peer.
+                        </c:description>
+                        <c:constraint>
+                            <c:regex-constraint expression="[^:]+:.+"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property required="false" name="expiryQueue">
+                        <c:description>
+                            The JMX ObjectName of the expiry queue for this queue (e.g.
+                            "jboss.messaging.destination:service=Queue,name=PrivateExpiryQueue") - overrides the default
+                            expiry queue on the server peer.
+                        </c:description>
+                        <c:constraint>
+                            <c:regex-constraint expression="[^:]+:.+"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property required="false" name="serverPeer">
+                        <c:description>
+                            The JMX ObjectName of the server peer this queue was deployed on (e.g.
+                            "jboss.messaging:service=ServerPeer"). Updates to this property will not go into effect until
+                            the queue has been restarted.
+                        </c:description>
+                        <c:constraint>
+                            <c:regex-constraint expression="[^:]+:.+"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:list-property name="securityConfig" max="4" min="2"
+                                     displayName="Security Configurations"
+                                     description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
+                        <c:map-property name="role"
+                                        displayName="Security Configuration Attributes"
+                                        description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
+                            <c:simple-property name="name"
+                                               displayName="Name"
+                                               description="Name of the Security Role. e.g. Guest"
+                                               summary="true"
+                                               required="true"/>
+                            <c:simple-property name="read"
+                                               displayName="Read"
+                                               description="Is this role allowed to read messages?"
+                                               summary="true"
+                                               required="false"
+                                               type="boolean"/>
+                            <c:simple-property name="write"
+                                               displayName="Write"
+                                               description="Is this role allowed to write messages?"
+                                               summary="true"
+                                               required="false"
+                                               type="boolean"/>
+                            <c:simple-property name="create"
+                                               displayName="Create"
+                                               description="Is this role allowed to create messages?"
+                                               summary="true"
+                                               required="false"
+                                               type="boolean"/>
+                        </c:map-property>
+
+                    </c:list-property>
+
+                </resource-configuration>
+
+                <help>
+                   <![CDATA[
+                      <p>The message counter metrics will not be collected by default. In order
+                         for these metrics to be collected for all Topics and Queues for a given application server instance,
+                         go to the instance's JMX Console, and invoke the
+                         <tt>enableMessageCounters</tt> operation on the <tt>jboss.messaging:service=ServerPeer</tt> MBean.
+                         To ensure the message counters are still enabled when the application server is restarted,
+                         edit that instance's <tt>deploy/messaging/messaging-service.xml</tt> file and set the
+                         <tt>EnableMessageCounters</tt> attribute to "true".</p>
+                   ]]>
+                </help>
+
+            </service>
+
+            
+            <service name="Topic"
+                     class="JmsDestinationComponent"
+                     createDeletePolicy="both"
+                     discovery="JmsDestinationDiscoveryComponent"
+                     description="a JMS topic">
+
+                <plugin-configuration>
+                    <c:simple-property name="componentType" default="JMSDestination" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="Topic" readOnly="true"/>
+                    <c:simple-property name="componentName" readOnly="true"/>
+                    <c:simple-property name="templateName" default="TopicTemplate" readOnly="true"/>
+                    <c:simple-property name="componentNameProperty" default="JNDIName" readOnly="true">
+                        <c:description>
+                            The name of the Resource configuration property whose value should be used as the
+                            underlying ManagedComponent name when creating a new Resource of this type.
+                        </c:description>
+                    </c:simple-property>
+                    <c:group name="managedPropertyGroup" displayName="managedPropertyGroup" hiddenByDefault="true">
+                        <c:simple-property name="jms-type" default="topic"/>
+                        <c:map-property name="customProperties"
+                                        description="Maps a list of custom property names to the the fully qualified class names of the org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter implementations that should be used for those properties.">
+                            <c:simple-property name="securityConfig"
+                                               default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
+                        </c:map-property>
+                    </c:group>
+                </plugin-configuration>
+
+                &destinationOperations;
+
+                <operation name="listAllMessages" displayName="List All Messages" description="List all messages for the specified subscription with the specified selector">
+                    <parameters>
+                        <c:simple-property required="false" name="arg#0" displayName="subscriptionID"/>
+                        <c:simple-property required="false" name="arg#1" displayName="selector"/>
+                    </parameters>
+                    <results>
+                        <c:notes>List all messages for the specified subscription with the specified selector</c:notes>
+                        <c:list-property name="result">
+                            <c:map-property required="false" name="element">
+                                <c:simple-property required="false" name="JMSCorrelationID"/>
+                                <c:simple-property required="false" name="JMSMessageID"/>
+                                <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+                            </c:map-property>
+                        </c:list-property>
+                    </results>
+                </operation>
+
+                <operation name="listDurableMessages" displayName="List Durable Messages" description="List all durable messages for the specified subscription with the specified selector">
+                    <parameters>
+                        <c:simple-property required="false" name="arg#0" displayName="subscriptionID"/>
+                        <c:simple-property required="false" name="arg#1" displayName="selector"/>
+                    </parameters>
+                    <results>
+                        <c:notes>List all durable messages for the specified subscription with the specified selector</c:notes>
+                        <c:list-property name="result">
+                            <c:map-property required="false" name="element">
+                                <c:simple-property required="false" name="JMSCorrelationID"/>
+                                <c:simple-property required="false" name="JMSMessageID"/>
+                                <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+                            </c:map-property>
+                        </c:list-property>
+                    </results>
+                </operation>
+
+                <operation name="listNonDurableMessages" displayName="List Non Durable Messages" description="List all non durable messages for the specified subscription with the specified selector">
+                    <parameters>
+                        <c:simple-property required="false" name="arg#0" displayName="subscriptionID"/>
+                        <c:simple-property required="false" name="arg#1" displayName="selector"/>
+                   </parameters>
+                    <results>
+                        <c:notes>List all non durable messages for the specified subscription with the specified selector</c:notes>
+                        <c:list-property name="result">
+                            <c:map-property required="false" name="element">
+                                <c:simple-property required="false" name="JMSCorrelationID"/>
+                                <c:simple-property required="false" name="JMSMessageID"/>
+                                <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+                            </c:map-property>
+                        </c:list-property>
+                    </results>
+                </operation>
+
+                <operation name="listAllSubscriptions" displayName="List All Subscriptions"
+                           description="Return all subscriptions for the topic">
+                    <results>
+                        <c:notes>Return all subscriptions for the topic</c:notes>
+                        &subscriptionsResultProperty;
+                    </results>
+                </operation>
+
+                <operation name="listAllSubscriptionsAsHTML" displayName="List All Subscriptions As HTML"
+                           description="Return all subscriptions for the topic as HTML">
+                    <results>
+                        <c:notes>Return all subscriptions for the topic as HTML</c:notes>
+                        <c:simple-property name="result" type="longString"/>
+                    </results>
+                </operation>
+
+                <operation name="listDurableSubscriptions" displayName="List Durable Subscriptions"
+                           description="Return all durable subscriptions for the topic">
+                    <results>
+                        <c:notes>Return all durable subscriptions for the topic</c:notes>
+                        &subscriptionsResultProperty;
+                    </results>
+                </operation>
+
+                <operation name="listDurableSubscriptionsAsHTML" displayName="List Durable Subscriptions As HTML"
+                           description="Return all durable subscriptions for the topic as HTML">
+                    <results>
+                        <c:notes>Return all durable subscriptions for the topic as HTML</c:notes>
+                        <c:simple-property name="result" type="longString"/>
+                    </results>
+                </operation>
+
+                <operation name="listNonDurableSubscriptions" displayName="List Non-Durable Subscriptions"
+                           description="Return all non-durable subscriptions for the topic">
+                    <results>
+                        <c:notes>Return all non-durable subscriptions for the topic</c:notes>
+                        &subscriptionsResultProperty;
+                    </results>
+                </operation>
+
+                <operation name="listNonDurableSubscriptionsAsHTML" displayName="List Non-Durable Subscriptions As HTML"
+                           description="Return all non-durable subscriptions for the topic as HTML">
+                    <results>
+                        <c:notes>Return all non-durable subscriptions for the topic as HTML</c:notes>
+                        <c:simple-property name="result" type="longString"/>
+                    </results>
+                </operation>
+
+                &managedObjectMetrics;
+
+                <!-- Traits -->
+
+                <metric property="createdProgrammatically" displayType="summary"
+                        defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                        description="Was this topic created programmatically? If Yes, the topic will not survive a restart of the application server. If No, the topic was created via a deployment XML file."/>
+
+                <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
+                           (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
+                <metric property="messageCounterHistoryDayLimit"
+                        defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                        description="This topic's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"/>
+
+                <!-- Numerics -->
+
+                <metric property="allMessageCount" measurementType="dynamic" displayType="summary" displayName="All Message Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                        description="The count of all messages in all subscriptions to this topic"/>
+
+                <metric property="allSubscriptionsCount" measurementType="dynamic" displayType="summary" displayName="All Subscriptions Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                        description="The count of all subscriptions to this topic"/>
+
+                <metric property="durableMessageCount" measurementType="dynamic" displayType="detail" displayName="Durable Message Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                        description="The count of all messages for all durable subscriptions to this topic"/>
+
+                <metric property="durableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Durable Subscriptions Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                        description="The count of all durable subscriptions to this topic"/>
+
+                <metric property="nonDurableMessageCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Message Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                        description="The count of all messages in all non durable subscriptions to this topic"/>
+
+                <metric property="nonDurableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Subscriptions Count"
+                        defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                        description="The count of all non durable subscriptions to this topic"/>
+
+                <resource-configuration>
+
+                    <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/TopicServiceMO.java -->
+
+                    <c:simple-property required="true" name="name" readOnly="true"
+                                       description="The name of this topic (e.g. 'MyTopic')."/>
+
+                    <c:simple-property required="true" name="JNDIName" readOnly="true"
+                                       description="This topic's JNDI name (e.g. '/topic/MyTopic')"/>
+
+                    <c:simple-property type="boolean" required="false" name="clustered" readOnly="true" defaultValue="false">
+                        <c:description>
+                            Is this topic clustered? For an existing topic, this property is read-only. If not specified
+                            when creating a new topic, the default value is false.
+                        </c:description>
+                    </c:simple-property>
+
+                    <c:simple-property type="integer" required="false" name="downCacheSize" defaultValue="2000">
+                        <c:description>
+                            When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
+                            being written to storage. This enables the write to occur as a single operation, thus aiding
+                            performance. This setting determines the maximum number of messages that the Down Cache will hold
+                            before they are flushed to storage.
+                            Updates to this property will not go into effect until the topic has been restarted.
+                            The default value is 2000.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property type="integer" required="false" name="fullSize" defaultValue="200000">
+                        <c:description>
+                            The maximum number of messages held by the topic subscriptions in memory at any one time.
+                            The actual subscription can hold many more messages than this, but these are paged to and from
+                            storage as necessary, as messages are added or consumed.
+                            Updates to this property will not go into effect until the topic has been restarted.
+                            The default value is 200000.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property type="integer" required="false" name="maxDeliveryAttempts" defaultValue="-1">
+                        <c:description>
+                            The number of delivery attempts before a message to a subscriber of this topic is moved to the
+                            DLQ. The default value is 10. A value of -1 indicates the default value should be used.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="-1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property type="integer" required="false" name="maxSize" defaultValue="-1">
+                        <c:description>
+                            The maximum number of messages this topic can hold before they are dropped.
+                            A value of -1 means there is no maximum. The default value is -1.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="-1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property type="integer" required="false" name="pageSize" defaultValue="2000">
+                        <c:description>
+                            When loading messages from a subscription, this is the maximum number of messages to
+                            pre-load in one operation. Must be less than Full Size and greater than or equal to Down Cache Size.
+                            Updates to this property will not go into effect until the topic has been restarted.
+                            The default value is 2000.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds" defaultValue="-1">
+                        <c:description>
+                            The delay in milliseconds before a rolled back or recovered message is redelivered.
+                            Set to 0 to disable redelivery. The default value is 0. A value of -1 indicates the default value should be used.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="-1"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property required="false" name="DLQ">
+                        <c:description>
+                            The JMX ObjectName of the dead letter queue (DLQ) for this topic (e.g.
+                            "jboss.messaging.destination:service=Queue,name=PrivateDLQ") - overrides the default DLQ on the
+                            server peer.
+                        </c:description>
+                        <c:constraint>
+                            <c:regex-constraint expression="[^:]+:.+"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property required="false" name="expiryQueue">
+                        <c:description>
+                            The JMX ObjectName of the expiry queue for this topic (e.g.
+                            "jboss.messaging.destination:service=Queue,name=PrivateExpiryQueue") - overrides the default
+                            expiry queue on the server peer.
+                        </c:description>
+                        <c:constraint>
+                            <c:regex-constraint expression="[^:]+:.+"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property required="false" name="serverPeer">
+                        <c:description>
+                            The JMX ObjectName of the server peer this topic was deployed on (e.g.
+                            "jboss.messaging:service=ServerPeer"). Updates to this property will not go into effect until
+                            the topic has been restarted.
+                        </c:description>
+                        <c:constraint>
+                            <c:regex-constraint expression="[^:]+:.+"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:list-property name="securityConfig" max="4" min="2"
+                                     displayName="Security Configurations"
+                                     description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
+                        <c:map-property name="role"
+                                        displayName="Security Configuration Attributes"
+                                        description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
+                            <c:simple-property name="name"
+                                               displayName="Name"
+                                               description="Name of the Security Role. e.g. Guest"
+                                               summary="true"
+                                               required="true"/>
+                            <c:simple-property name="read"
+                                               displayName="Read"
+                                               description="Is this role allowed to read messages?"
+                                               summary="true"
+                                               required="false"
+                                               type="boolean"/>
+                            <c:simple-property name="write"
+                                               displayName="Write"
+                                               description="Is this role allowed to write messages?"
+                                               summary="true"
+                                               required="false"
+                                               type="boolean"/>
+                            <c:simple-property name="create"
+                                               displayName="Create"
+                                               description="Is this role allowed to create messages?"
+                                               summary="true"
+                                               required="false"
+                                               type="boolean"/>
+                        </c:map-property>
+                    </c:list-property>
+
+                </resource-configuration>
+
+                <help>
+                   <![CDATA[
+                      <p>The message counter metrics will not be collected by default. In order
+                         for these metrics to be collected for all Topics and Queues for a given application server instance,
+                         go to the instance's JMX Console, and invoke the
+                         <tt>enableMessageCounters</tt> operation on the <tt>jboss.messaging:service=ServerPeer</tt> MBean.
+                         To ensure the message counters are still enabled when the application server is restarted,
+                         edit that instance's <tt>deploy/messaging/messaging-service.xml</tt> file and set the
+                         <tt>EnableMessageCounters</tt> attribute to "true".</p>
+                   ]]>
+                </help>
+
+            </service>
 
         </service>
 

@@ -333,6 +333,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         if (group.getModifiedBy() != null) {
             group.getModifiedBy().getId();
         }
+
+        group.getAlertDefinitions().size();
     }
 
     public int getResourceGroupCountByCategory(Subject subject, GroupCategory category) {

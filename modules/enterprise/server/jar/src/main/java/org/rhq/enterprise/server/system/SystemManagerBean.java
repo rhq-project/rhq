@@ -473,7 +473,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                     // we need to undeploy it first - on windows the files are locked and can't be renamed until undeployed
                     ObjectName name = ObjectNameFactory.create("jboss.system:service=MainDeployer");
                     MBeanServerConnection mbs = MBeanServerLocator.locateJBoss();
-                    MainDeployerMBean mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name,
+                    MainDeployerMBean mbean = (MainDeployerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
                         MainDeployerMBean.class, false);
                     URL url = deployedInstallWar.toURI().toURL();
                     String urlString = url.toString().replace("%20", " "); // bug in undeployer doesn't like %20 - it wants a real space
@@ -550,7 +550,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      * @return The License object
      */
     public License getLicense() {
-        // it's legal to return a null license, which then by-passes the check to 
+        // it's legal to return a null license, which then by-passes the check to
         // whether the expirationDate in the backing store has been fiddled with
         License license = LicenseManager.instance().getLicense();
         if (license == null) {

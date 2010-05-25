@@ -22,6 +22,7 @@
  */
 package org.rhq.plugins.jbossas5;
 
+import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
@@ -49,6 +50,11 @@ public class JBossWebComponent implements ProfileServiceComponent<ProfileService
     public AvailabilityType getAvailability()
     {
         return AvailabilityType.UP;
+    }
+
+    @NotNull
+    public ResourceContext<ProfileServiceComponent> getResourceContext() {
+        return this.resourceContext;
     }
 
     public ProfileServiceConnection getConnection()

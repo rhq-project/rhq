@@ -41,7 +41,9 @@
          <input type="hidden" name="mode" value="#{param.mode}"/>
 
          <!-- TODO: Only update if a sync is in progress. -->
-         <a4j:poll id="poller" interval="7000" enabled="true" reRender="poller,contentSourceSyncResultsListForm"/>
+         <!-- BZ-589199 modified a4j:poll to rerender all other regions of contentSourceSyncResultsListForm but the modalPanel -->
+         <a4j:poll id="poller" interval="7000" enabled="true" 
+           reRender="poller,table-check-boxes,table-start,table-end,table-id,table-status"/>
       </h:form>
    </a4j:region>
 
@@ -339,7 +341,7 @@
                   <onc:paginationControl id="ContentSourceSyncResultsList" />
                </f:facet>
       
-               <rich:column>
+               <rich:column id="table-check-boxes">
                   <f:facet name="header">
                      <onc:allSelect target="selectedContentSourceSyncResults" />
                   </f:facet>
@@ -347,7 +349,7 @@
                   <onc:select name="selectedContentSourceSyncResults" value="#{syncitem.id}" />
                </rich:column>
       
-               <rich:column>
+               <rich:column id="table-id">
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="ID" />
                   </f:facet>
@@ -355,7 +357,7 @@
                   <h:outputText value="#{syncitem.id}"/>
                </rich:column>
 
-               <rich:column>
+               <rich:column id="table-start">
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="cssr.startTime">
                         <h:outputText styleClass="headerText" value="Start Time" />
@@ -367,7 +369,7 @@
                   </h:outputText>
                </rich:column>
                
-               <rich:column>
+               <rich:column id="table-end">
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="cssr.endTime">
                         <h:outputText styleClass="headerText" value="End Time" />
@@ -379,7 +381,7 @@
                   </h:outputText>
                </rich:column>
                
-               <rich:column>
+               <rich:column id="table-status">
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="cssr.status">
                         <h:outputText styleClass="headerText" value="Status" />

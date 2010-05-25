@@ -87,7 +87,7 @@ public class ResourceHubPortalAction extends BaseAction {
         ResourceHubForm hubForm = (ResourceHubForm) form;
 
         String searchExpression = hubForm.getKeywords();
-        if (searchExpression.equals("Resource Name")) {
+        if (searchExpression != null && searchExpression.equals("Resource Name")) {
             searchExpression = null; // user didn't type a filter, just selected a category and clicked 'GO'
         }
         String category = hubForm.getResourceCategory();

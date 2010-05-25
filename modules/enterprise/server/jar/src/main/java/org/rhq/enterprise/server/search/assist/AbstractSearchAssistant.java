@@ -8,9 +8,14 @@ import java.util.Map;
 
 import javax.persistence.Query;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class AbstractSearchAssistant implements SearchAssistant {
+
+    private final Log log = LogFactory.getLog(SearchAssistant.class);
 
     private int maxResultCount = 20;
 
@@ -22,17 +27,18 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
         this.maxResultCount = maxResultCount;
     }
 
-    @Override
+    public String getPrimarySimpleContext() {
+        return null;
+    }
+
     public List<String> getSimpleContexts() {
         return Collections.emptyList();
     }
 
-    @Override
     public List<String> getParameterizedContexts() {
         return Collections.emptyList();
     }
 
-    @Override
     public List<String> getParameters(String context, String filter) {
         if (getParameterizedContexts().contains(context) == false) {
             throw new IllegalArgumentException("context[" + context
@@ -41,7 +47,6 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
         return Collections.emptyList();
     }
 
-    @Override
     public List<String> getValues(String context, String param, String filter) {
         if (getSimpleContexts().contains(context) && param != null) {
             throw new IllegalArgumentException("context[" + context + "] is simple, param[" + param
@@ -55,6 +60,7 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     @SuppressWarnings("unchecked")
     protected final List<String> execute(String jpql) {
+        log.debug("Executing JPQL: " + jpql);
         Query query = LookupUtil.getEntityManager().createQuery(jpql);
         query.setMaxResults(maxResultCount);
         List<String> results = query.getResultList();
@@ -63,6 +69,7 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     @SuppressWarnings("unchecked")
     protected final Map<String, List<String>> executeMap(String jpql) {
+        log.debug("Executing Map JPQL: " + jpql);
         Query query = LookupUtil.getEntityManager().createQuery(jpql);
         List<Object[]> rawResults = query.getResultList();
         Map<String, List<String>> results = new HashMap<String, List<String>>();

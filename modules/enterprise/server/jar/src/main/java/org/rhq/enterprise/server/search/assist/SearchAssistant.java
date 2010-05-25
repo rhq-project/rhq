@@ -8,6 +8,8 @@ public interface SearchAssistant {
 
     SearchSubsystem getSearchSubsystem();
 
+    String getPrimarySimpleContext();
+
     List<String> getSimpleContexts();
 
     List<String> getParameterizedContexts();

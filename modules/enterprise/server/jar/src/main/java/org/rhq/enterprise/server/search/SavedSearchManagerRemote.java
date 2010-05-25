@@ -33,7 +33,7 @@ import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * The remote interface to the SavedSearchManager.
- * 
+ *
  * @author Joseph Marques
  */
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
@@ -45,23 +45,23 @@ public interface SavedSearchManagerRemote {
      * Persisted a new {@link SavedSearch} with the given primary key
      *
      * @param subject       the logged in user requesting the {@link SavedSearch} deletion
-     * @param savedSearchId the primary key of the {@link SavedSearch} to be deleted
+     * @param savedSearch   the primary key of the {@link SavedSearch} to be deleted
      *
      * @throws PermissionException if the user is not authorized to create the {@link SavedSearch}.  Only inventory
      *         managers can create global saved searches.  Regular users can only create {@link SavedSearch}es against
-     *         their own accounts. 
+     *         their own accounts.
      */
     @WebMethod
-    public void createSavedSearch( //
+    public int createSavedSearch( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "savedSearch") SavedSearch savedSearch);
 
     /**
-     * Saves all changes to the passed {@link SavedSearch} database, correlating it to the record already 
+     * Saves all changes to the passed {@link SavedSearch} database, correlating it to the record already
      * persisted with the same primary key
      *
      * @param subject       the logged in user requesting the {@link SavedSearch} persisted modification
-     * @param savedSearchId the {@link SavedSearch} which will have its modifications persisted
+     * @param savedSearch   the {@link SavedSearch} which will have its modifications persisted
      *.
      * @throws PermissionException if the user is not authorized to modify the {@link SavedSearch}.  Only inventory
      *         managers can update global saved searches.  Regular users can only update {@link SavedSearch}es from
@@ -94,7 +94,7 @@ public interface SavedSearchManagerRemote {
      * @param savedSearchId the primary key of the {@link SavedSearch} to be loaded
      *
      * @return the {@link SavedSearch} or <code>null</code> if it wasn't found
-     * @throws PermissionException if the user is not authorized to view the {@link SavedSearch}.  Regular users can 
+     * @throws PermissionException if the user is not authorized to view the {@link SavedSearch}.  Regular users can
      *         only view {@link SavedSearch}es from their own accounts.
      */
     @WebMethod

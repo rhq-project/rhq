@@ -2732,6 +2732,31 @@
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="SUBJECT_ID" nullable="FALSE" />
                 <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="ROLE_ID"  nullable="FALSE" />
+            
+                <!-- Fixing ldap group authz by adding remaining mapping elements left out(RHQ_ROLE_LDAP_GROUP)  -->
+                <!-- RHQ_ROLE_LDAP_GROUP -->
+                <schema-createSequence name="RHQ_ROLE_LDAP_GROUP_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                   <statement desc="Creating table RHQ_ROLE_LDAP_GROUP">
+                    CREATE TABLE RHQ_ROLE_LDAP_GROUP ( ID INTEGER PRIMARY KEY, ROLE_ID INTEGER )
+                   </statement>
+                </schema-directSQL> 
+                <schema-alterColumn table="RHQ_ROLE_LDAP_GROUP" column="ID" nullable="FALSE" />
+                <schema-alterColumn table="RHQ_ROLE_LDAP_GROUP" column="ROLE_ID" nullable="FALSE" />
+                <schema-addColumn table="RHQ_ROLE_LDAP_GROUP" column="LDAP_GROUP_NAME" columnType="VARCHAR2" precision="128" />
+                
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ROLE_LDAP_GROUP
+                        ADD CONSTRAINT RHQ_RLM_ROLE_ID_FK
+                        FOREIGN KEY ( ROLE_ID )
+                        REFERENCES RHQ_ROLE (ID)
+                    </statement>
+                    <statement>
+                        CREATE UNIQUE INDEX RHQ_ROLE_LDAP_GROUP_IDX
+                        ON RHQ_ROLE_LDAP_GROUP ( LDAP_GROUP_NAME, ROLE_ID )
+                    </statement>
+                </schema-directSQL> 
             </schemaSpec>
 
             <!-- Remove the old tagging system -->
@@ -2895,6 +2920,16 @@
                 </schema-directSQL>
            </schemaSpec>
 
+            
+           <schemaSpec version="2.87">
+               <schema-directSQL>
+                   <statement desc="Make RHQ_RES_TYPE_IDX_PLG_NAME index unique">
+                       DROP INDEX RHQ_RES_TYPE_IDX_PLG_NAME ;
+                       CREATE UNIQUE INDEX RHQ_RES_TYPE_IDX_PLG_NAME ON RHQ_RESOURCE_TYPE (name, plugin)
+                   </statement>
+               </schema-directSQL>
+           </schemaSpec>
+            
         </dbupgrade>
     </target>
 </project>

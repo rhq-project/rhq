@@ -257,11 +257,17 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Agent has been asked to start up clean - cleaning out the data directory: {0}")
     String CLEANING_DATA_DIRECTORY = "AgentMain.clean-data-dir";
 
-    @I18NMessage("Deleting data file [{0}]. deleted successfully=[{1}]")
-    String CLEANING_DATA_FILE = "AgentMain.clean-data-file";
+    @I18NMessage("Agent has been asked to purge all plugins - cleaning out the plugins directory: {0}")
+    String CLEANING_PLUGINS_DIRECTORY = "AgentMain.clean-plugins-dir";
+
+    @I18NMessage("Purging file [{0}]. deleted successfully=[{1}]")
+    String CLEANING_FILE = "AgentMain.clean-file";
 
     @I18NMessage("A failure occurred while trying to clean the data directory. Cause: {0}")
     String CLEAN_DATA_DIR_FAILURE = "AgentMain.clean-data-dir-failure";
+
+    @I18NMessage("A failure occurred while trying to purge the plugins. Cause: {0}")
+    String CLEAN_PLUGINS_FAILURE = "AgentMain.clean-plugins-failure";
 
     @I18NMessage("Failed to delete a data file [{0}]")
     String CLEAN_DATA_FILE_FAILURE = "AgentMain.clean-data-file-failure";
@@ -519,13 +525,13 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Neither server auto-detection nor polling is enabled - the client will be allowed to start sending commands immediately, but when the server is offline, be prepared for alot of errors to be logged")
     String NO_AUTO_DETECT = "AgentMain.no-auto-detect";
 
-    @I18NMessage("Native system info is enabled, but the system info API is not accessible on this platform " +
-                 "(sigar.jar not found in classpath or SIGAR shared library not found in shared library path). " +
-                 "Enable DEBUG logging for more details.")
+    @I18NMessage("Native system info is enabled, but the system info API is not accessible on this platform "
+        + "(sigar.jar not found in classpath or SIGAR shared library not found in shared library path). "
+        + "Enable DEBUG logging for more details.")
     String NATIVE_SYSINFO_UNAVAILABLE = "AgentMain.native-sysinfo-unavailable";
 
-    @I18NMessage("Native system info is enabled, but the system info API is not accessible on this platform " +
-                 "(sigar.jar not found in classpath or SIGAR shared library not found in shared library path).")                 
+    @I18NMessage("Native system info is enabled, but the system info API is not accessible on this platform "
+        + "(sigar.jar not found in classpath or SIGAR shared library not found in shared library path).")
     String NATIVE_SYSINFO_UNAVAILABLE_DEBUG = "AgentMain.native-sysinfo-unavailable-debug";
 
     @I18NMessage("The agent encountered an error during startup and must abort")
@@ -586,6 +592,7 @@ public interface AgentI18NResourceKeys {
         + "\\   -d, --daemon                  Agent runs in daemon mode - will not read from stdin for commands\\n\\\n"
         + "\\   -D<name>[=<value>]            Overrides an agent configuration preference and sets a system property\\n\\\n"
         + "\\   -e, --console=<type>          Specifies the implementation to use when reading console input: jline, sigar, java\\n\\\n"
+        + "\\   -g, --purgeplugins            Deletes all plugins, forcing the agent to re-download all of them\\n\\\n"
         + "\\   -h, --help                    Shows this help message (default)\\n\\\n"
         + "\\   -i, --input=<filename>        Specifies a script file to be used for input\\n\\\n"
         + "\\   -l, --cleanconfig             Clears out any existing configuration and data files so the agent starts with a totally clean slate\\n\\\n"

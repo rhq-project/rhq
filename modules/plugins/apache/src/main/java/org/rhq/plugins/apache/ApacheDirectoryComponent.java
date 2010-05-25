@@ -54,23 +54,13 @@ import org.rhq.plugins.apache.util.AugeasNodeSearch;
 public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtualHostServiceComponent>, ConfigurationFacet, DeleteResourceFacet {
 	 
 	private final Log log = LogFactory.getLog(this.getClass());
-    public static final String DIRECTIVE_INDEX_PROP = "directiveIndex";
     public static final String REGEXP_PROP = "regexp";
-    public static final String PARAMS_PROPERTY_NAME = "ifmoduleParams";
     public static final String DIRECTORY_DIRECTIVE = "<Directory";
-    private List<String> position;
     
     private ResourceContext<ApacheVirtualHostServiceComponent> resourceContext;
     
     public void start(ResourceContext<ApacheVirtualHostServiceComponent> context) throws InvalidPluginConfigurationException, Exception {
-        resourceContext = context;
-        String key = context.getResourceKey();
-        position = new ArrayList<String>();
-        String param = key.substring(0,key.indexOf("|"));          
-           for (String pm :param.split(";")){
-               position.add(pm);
-           }
-           
+        resourceContext = context;           
         }
     
 
@@ -146,16 +136,9 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
      * @return
      */
     public AugeasNode getNode(AugeasNode virtualHost) {
-        List<AugeasNode> directories = AugeasNodeSearch.getNodeByParentParams(virtualHost, DIRECTORY_DIRECTIVE, position);
-        int index = resourceContext.getPluginConfiguration().getSimple(DIRECTIVE_INDEX_PROP).getIntegerValue();
+        AugeasNode directory = AugeasNodeSearch.findNodeById(virtualHost, resourceContext.getResourceKey());
         
-        for(AugeasNode dir : directories) {
-            if (dir.getSeq() == index) {
-                return dir;
-            }
-        }
-        
-        return null;
+        return directory;
     }
     
     public AugeasNode getNode(){

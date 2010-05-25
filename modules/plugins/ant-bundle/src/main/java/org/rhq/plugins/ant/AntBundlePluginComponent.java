@@ -128,8 +128,8 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 // Send the diffs to the Server so it can store them as an entry in the deployment history.
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
                 DeployDifferences diffs = project.getDeployDifferences();
-                bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", null,
-                        BundleResourceDeploymentHistory.Category.DEPLOY_STEP, null, diffs.toString(), null);
+                bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", project.getName(),
+                    BundleResourceDeploymentHistory.Category.DEPLOY_STEP, null, diffs.toString(), null);
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {

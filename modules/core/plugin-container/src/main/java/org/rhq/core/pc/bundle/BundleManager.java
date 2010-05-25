@@ -211,7 +211,12 @@ public class BundleManager extends AgentService implements BundleAgentService, B
      * convenience method:<br/>
      * category defaults to null<br/>
      * status defaults to SUCCESS<br/>
-     * attachement defaults null <br/>
+     * attachment defaults null <br/>
+     *
+     * @param bundleResourceDeployment not null
+     * @param action not null
+     * @param info not null
+     * @param message
      */
     public void auditDeployment(BundleResourceDeployment bundleResourceDeployment, String action, String info,
         String message) {
@@ -222,6 +227,10 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     public void auditDeployment(BundleResourceDeployment bundleResourceDeployment, String action, String info,
         BundleResourceDeploymentHistory.Category category, BundleResourceDeploymentHistory.Status status,
         String message, String attachment) {
+        if (null == action || null == info) {
+            throw new IllegalArgumentException("action or info is null");
+        }
+
         if (null == status) {
             status = BundleResourceDeploymentHistory.Status.SUCCESS;
         }

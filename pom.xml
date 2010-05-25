@@ -22,9 +22,9 @@
   </organization>
 
   <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git</developerConnection>
-    <url>http://git.fedorahosted.org/git/?p=rhq/rhq.git;a=tree</url>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
+    <url>http://git.fedorahosted.org/git/?p=rhq/rhq.git</url>
   </scm>
 
   <issueManagement>

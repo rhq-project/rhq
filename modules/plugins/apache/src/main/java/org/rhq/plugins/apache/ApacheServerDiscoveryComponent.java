@@ -21,8 +21,10 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -36,12 +38,16 @@ import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
+import org.rhq.core.pluginapi.migration.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.migration.ResourceUpgradeFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.apache.parser.ApacheConfigReader;
@@ -63,7 +69,8 @@ import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent>, ManualAddFacet<PlatformComponent> {
+public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent>, ManualAddFacet<PlatformComponent>,
+    ResourceUpgradeFacet<PlatformComponent> {
     private static final String PRODUCT_DESCRIPTION = "Apache Web Server";
 
     private static final Log log = LogFactory.getLog(ApacheServerDiscoveryComponent.class);
@@ -163,7 +170,46 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return discoveredResources;
     }
 
-
+    public Map<ResourceUpgradeContext, ResourceUpgradeReport> upgrade(Set<ResourceUpgradeContext> inventoriedSimblings,
+        ResourceUpgradeContext<PlatformComponent> parentContext, Set<ResourceUpgradeContext> discoveryResults) {
+        
+        Map<ResourceUpgradeContext, ResourceUpgradeReport> ret = new HashMap<ResourceUpgradeContext, ResourceUpgradeReport>();
+        
+        for (ResourceUpgradeContext context : inventoriedSimblings) {
+            String inventoriedResourceKey = context.getResourceKey();
+            File inventoriedResourceKeyAsPath = new File(inventoriedResourceKey);
+            
+            //the resource key we use now is a full path to the httpdconf.
+            //in the old version, it was the server root.
+            //so if the inventoried resource key is a path to a file,
+            //we know it's a new style resource key.
+            if (inventoriedResourceKeyAsPath.isFile()) {
+                continue;
+            }
+            
+            Configuration pluginConfiguration = context.getPluginConfiguration();
+            
+            String serverRoot = pluginConfiguration.getSimpleValue("serverRoot", null);
+            String httpdConf = pluginConfiguration.getSimpleValue("configFile", null);
+            
+            String resourceKey = null;
+            
+            if (httpdConf != null) {
+                File httpdConfFile = new File(httpdConf);
+                if (!httpdConfFile.isAbsolute()) {
+                    httpdConfFile = new File(serverRoot, httpdConf);
+                }
+                
+                resourceKey = httpdConfFile.getPath();
+                
+                ResourceUpgradeReport rep = new ResourceUpgradeReport();
+                rep.setNewResourceKey(resourceKey);
+                
+                ret.put(context, rep);
+            }
+        }
+        return ret;
+    }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
                                                       ResourceDiscoveryContext<PlatformComponent> discoveryContext)

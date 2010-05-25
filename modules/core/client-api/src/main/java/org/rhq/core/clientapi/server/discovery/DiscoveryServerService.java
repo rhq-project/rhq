@@ -37,6 +37,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 
 /**
  * The interface to a JON server's resource discovery subsystem.
@@ -136,6 +137,15 @@ public interface DiscoveryServerService {
      */
     boolean updateResourceVersion(int resourceId, String version);
 
+    /**
+     * Upgrades the data of the resource according to the provided report.
+     * 
+     * @param resourceId the id of the resource to be upgraded
+     * @param upgradeReport contains the information about the upgrade
+     * @return true if the upgrade succeeded, false otherwise.
+     */
+    boolean upgradeResource(int resourceId, ResourceUpgradeReport upgradeReport);
+    
     /**
      * Gives the server a chance to apply any necessary post-processing that's needed for newly committed resources
      * that have been successfully synchronized on the agent.

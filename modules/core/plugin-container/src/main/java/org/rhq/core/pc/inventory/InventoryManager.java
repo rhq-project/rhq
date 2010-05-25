@@ -70,6 +70,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
@@ -104,6 +105,8 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.migration.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.migration.ResourceUpgradeFacet;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationServices;
 import org.rhq.core.system.SystemInfo;
@@ -1110,6 +1113,38 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return resourceContainer.updateAvailability(availabilityType);
     }
 
+    private boolean mergeResourceFromUpgrade(Resource existingResource, ResourceUpgradeReport upgradeReport) {
+        String resourceKey = upgradeReport.getNewResourceKey();
+        String name = upgradeReport.getNewName();
+        String version = upgradeReport.getNewVersion();
+        String description = upgradeReport.getNewDescription();
+        Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
+        Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
+
+        boolean serverUpdated = false;
+        try {
+            ServerServices serverServices = this.configuration.getServerServices();
+            if (serverServices != null) {
+                DiscoveryServerService discoveryServerService = serverServices.getDiscoveryServerService();
+                
+                serverUpdated = discoveryServerService.upgradeResource(existingResource.getId(), upgradeReport);
+            }
+        } catch (Exception e) {
+            log.error("Failed to upgrade the resource [" + existingResource + "] on the server.", e);
+        }
+        
+        if (serverUpdated) {
+            existingResource.setResourceKey(resourceKey);
+            existingResource.setName(name);
+            existingResource.setVersion(version);
+            existingResource.setDescription(description);
+            existingResource.setPluginConfiguration(pluginConfiguration);
+            existingResource.setResourceConfiguration(resourceConfiguration);
+        }
+        
+        return serverUpdated;
+    }
+    
     public Resource mergeResourceFromDiscovery(Resource resource, Resource parent) throws PluginContainerException {
         // If the Resource is already in inventory, make sure its version is up-to-date, then simply return the
         // existing Resource.
@@ -1336,20 +1371,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 parentComponent = getResourceComponent(resource.getParentResource());
             }
 
-            File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
-
-            ResourceContext context = new ResourceContext(resource, // the resource itself
-                parentComponent, // its parent component
-                discoveryComponent, // the discovery component (this is actually the proxy to it)
-                SystemInfoFactory.createSystemInfo(), // for native access
-                this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
-                pluginDataDir, // location for plugin to write data files
-                this.configuration.getContainerName(), // the name of the agent/PC
-                getEventContext(resource), // for event access
-                getOperationContext(resource), // for operation manager access
-                getContentContext(resource), // for content manager access
-                this.availabilityCollectors, // for components that want to perform async avail checking
-                this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
+            ResourceContext context = createResourceContext(resource, parentComponent, discoveryComponent);
+            
             container.setResourceContext(context);
 
             // Wrap the component in a proxy that will provide locking and a timeout for the call to start().
@@ -1396,6 +1419,23 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    private <T extends ResourceComponent> ResourceContext<T> createResourceContext(Resource resource, T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
+        File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
+
+        return new ResourceContext<T>(resource, // the resource itself
+            parentComponent, // its parent component
+            discoveryComponent, // the discovery component (this is actually the proxy to it)
+            SystemInfoFactory.createSystemInfo(), // for native access
+            this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
+            pluginDataDir, // location for plugin to write data files
+            this.configuration.getContainerName(), // the name of the agent/PC
+            getEventContext(resource), // for event access
+            getOperationContext(resource), // for operation manager access
+            getContentContext(resource), // for content manager access
+            this.availabilityCollectors, // for components that want to perform async avail checking
+            this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
+    }
+    
     /**
      * This will send a resource error to the server (if applicable) to indicate that the given resource could not be
      * connected to due to an invalid plugin configuration.
@@ -1960,8 +2000,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @NotNull
     Set<Resource> executeComponentDiscovery(ResourceType resourceType, ResourceDiscoveryComponent discoveryComponent,
-        ResourceComponent parentComponent, ResourceContext parentResourceContext,
-        List<ProcessScanResult> processScanResults) {
+        ResourceContainer parentContainer, List<ProcessScanResult> processScanResults) {
+        
+        ResourceContext parentResourceContext = parentContainer.getResourceContext();
+        ResourceComponent parentComponent = parentContainer.getResourceComponent();
+        Resource parentResource = parentContainer.getResource();
+        
         long startTime = System.currentTimeMillis();
         log.debug("Executing discovery for [" + resourceType.getName() + "] Resources...");
         Set<Resource> newResources;
@@ -2000,6 +2044,59 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     newResources.add(newResource);
                 }
             }
+
+            //check for upgrade support
+            if (discoveryComponent instanceof ResourceUpgradeFacet) {
+                ResourceUpgradeFacet resourceUpgrade = (ResourceUpgradeFacet) discoveryComponent;
+                
+                Set<Resource> siblings = getResourcesWithType(resourceType, parentResource.getChildResources());
+                
+                Resource grandParent = parentResource.getParentResource();
+                ResourceContainer grandParentContainer = grandParent == null ? null : getResourceContainer(grandParent);
+                ResourceDiscoveryComponent parentDiscoveryComponent = PluginContainer.getInstance().getPluginComponentFactory()
+                    .getDiscoveryComponent(parentResource.getResourceType(), grandParentContainer);
+                
+                ResourceUpgradeContext<?> parentUpgradeContext = new ResourceUpgradeContext(parentResource, parentDiscoveryComponent, parentResourceContext, availabilityCollectors);
+                
+                Set<ResourceUpgradeContext> siblingContexts = new HashSet<ResourceUpgradeContext>(siblings.size());
+                
+                Map<ResourceUpgradeContext, Resource> siblingContextToResource = new HashMap<ResourceUpgradeContext, Resource>();
+                
+                for (Resource sibling : siblings) {
+                    ResourceUpgradeContext siblingContext = new ResourceUpgradeContext(sibling, discoveryComponent, getResourceContainer(sibling).getResourceContext(), availabilityCollectors);
+                    siblingContexts.add(siblingContext);
+                    siblingContextToResource.put(siblingContext, sibling);
+                }
+                
+                Set<ResourceUpgradeContext> newResourceContexts = new HashSet<ResourceUpgradeContext>();
+                Map<String, Resource> newResourceKeyToResource = new HashMap<String, Resource>();
+                
+                for (Resource newResource : newResources) {
+                    ResourceUpgradeContext newUpgradeContext = new ResourceUpgradeContext(newResource, discoveryComponent, createResourceContext(newResource, parentComponent, discoveryComponent), availabilityCollectors);                    
+                    newResourceContexts.add(newUpgradeContext);
+                    newResourceKeyToResource.put(newResource.getResourceKey(), newResource);
+                }
+                
+                Map<ResourceUpgradeContext, ResourceUpgradeReport> results = resourceUpgrade.upgrade(siblingContexts, parentUpgradeContext, newResourceContexts);
+                
+                for(Map.Entry<ResourceUpgradeContext, ResourceUpgradeReport> upgradeEntry : results.entrySet()) {
+                    Resource siblingToUpgrade = siblingContextToResource.get(upgradeEntry.getKey());
+                    ResourceUpgradeReport newData = upgradeEntry.getValue();
+                    
+                    mergeResourceFromUpgrade(siblingToUpgrade, newData);
+                    
+                    //if there was a resource key upgrade, remove a resource with the same resource key
+                    //from the discovery results. Otherwise we'd end up with 2 sibling resources with
+                    //the same resource key, which is illegal.
+                    if (newData.getNewResourceKey() != null) {
+                        Resource newResourceToRemove = newResourceKeyToResource.get(newData.getNewResourceKey());
+                        if (newResourceToRemove != null) {
+                            newResources.remove(newResourceToRemove);
+                        }
+                    }
+                }
+            }
+            
         } catch (Throwable e) {
             // TODO GH: Add server/parent - up/down semantics so this won't happen just because a server is not up
             long elapsedTime = System.currentTimeMillis() - startTime;

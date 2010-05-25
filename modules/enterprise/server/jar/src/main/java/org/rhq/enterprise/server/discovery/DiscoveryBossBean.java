@@ -56,6 +56,7 @@ import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -400,6 +401,19 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
     }
 
+    public boolean upgradeResource(int resourceId, ResourceUpgradeReport upgradeReport) {
+        Resource existingResource = this.entityManager.find(Resource.class, resourceId);
+        if (existingResource != null) {
+            boolean changed = upgradeResource(existingResource, upgradeReport);
+            if (changed) {
+                this.entityManager.merge(existingResource);
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     /**
      * Convienence method that looks at <code>resource</code> and if its version is not
      * the same as <code>newVersion</code>, its version string will be set to it. If
@@ -445,6 +459,81 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return versionChanged;
     }
 
+    /**
+     * @param existingResource
+     * @param upgradeReport
+     * @return
+     */
+    private boolean upgradeResource(Resource resource, ResourceUpgradeReport upgradeReport) {
+        boolean changed = false;
+        if (resource != null) {
+            String resourceKey = upgradeReport.getNewResourceKey();
+            String name = upgradeReport.getNewName();
+            String version = upgradeReport.getNewVersion();
+            String description = upgradeReport.getNewDescription();
+            Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
+            Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
+            
+            if (resourceKey != null) {
+                if (!equalOrNull(resourceKey, resource.getResourceKey())) {
+                    log.info("Resource [" + resource + "] upgraded its resource key from [" +
+                        resource.getResourceKey() + "] to [" + resourceKey + "]");
+                    changed = true;
+                    resource.setResourceKey(resourceKey);
+                }
+            }
+            
+            if (name != null) {
+                if (!equalOrNull(name, resource.getName())) {
+                    log.info("Resource [" + resource + "] upgraded its name from [" +
+                        resource.getName() + "] to [" + name + "]");
+                    changed = true;
+                    resource.setName(name);
+                }
+            }
+            
+            if (version != null) {
+                changed = updateResourceVersion(resource, version) || changed;
+            }
+            
+            if (description != null) {
+                if (!equalOrNull(description, resource.getDescription())) {
+                    log.info("Resource [" + resource + "] upgraded its description from [" +
+                        resource.getDescription() + "] to [" + description + "]");
+                    changed = true;
+                    resource.setDescription(description);
+                }
+            }
+            
+            if (pluginConfiguration != null) {
+                if (!equalOrNull(pluginConfiguration, resource.getPluginConfiguration())) {
+                    log.info("Resource [" + resource + "] upgraded its plugin configuration from [" +
+                        resource.getPluginConfiguration() + "] to [" + pluginConfiguration + "]");
+                    changed = true;
+                    resource.setPluginConfiguration(pluginConfiguration);
+                }
+            }
+            
+            if (resourceConfiguration != null) {
+                if (!equalOrNull(resourceConfiguration, resource.getResourceConfiguration())) {
+                    //XXX Will this create a new history entry?
+
+                    log.info("Resource [" + resource + "] upgraded its resource configuration from [" +
+                        resource.getResourceConfiguration() + "] to [" + resourceConfiguration + "]");
+                    
+                    changed = true;
+                    resource.setResourceConfiguration(resourceConfiguration);
+                }
+            }
+            
+            // If the resource was marked as deleted, reactivate it again.
+            if (resource.getInventoryStatus() == InventoryStatus.DELETED) {
+                resource.setInventoryStatus(InventoryStatus.COMMITTED);
+            }            
+        }
+        return changed;
+    }
+    
     private void validateInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
         for (Resource root : report.getAddedRoots()) {
             validateResource(root);
@@ -792,5 +881,17 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
 
         updateInventoryStatus(subject, platforms, servers, target);
+    }
+    
+    private static <T> boolean equalOrNull(T a, T b) {
+        if (a == null) {
+            return b == null;
+        } else {
+            if (b == null) {
+                return false;
+            } else {
+                return a.equals(b);
+            }
+        }
     }
 }

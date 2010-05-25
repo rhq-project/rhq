@@ -37,6 +37,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
@@ -176,6 +177,11 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return discoveryBoss.updateResourceVersion(resourceId, version);
     }
 
+    public boolean upgradeResource(int resourceId, ResourceUpgradeReport upgradeReport) {
+        DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+        return discoveryBoss.upgradeResource(resourceId, upgradeReport);
+    }
+    
     private static Resource convertToPojoResource(Resource resource, boolean includeDescendants) {
         Resource pojoResource = new Resource(resource.getId());
         pojoResource.setUuid(resource.getUuid());

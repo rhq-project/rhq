@@ -38,6 +38,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -176,4 +177,13 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *         <code>false</code> if the Resource was not in inventory
      */
     boolean updateResourceVersion(int resourceId, String version);
+
+    /**
+     * Upgrades the data of the resource according to the provided report.
+     * 
+     * @param resourceId the id of the resource to be upgraded
+     * @param upgradeReport contains the information about the upgrade
+     * @return true if the upgrade succeeded, false otherwise.
+     */
+    boolean upgradeResource(int resourceId, ResourceUpgradeReport upgradeReport);
 }

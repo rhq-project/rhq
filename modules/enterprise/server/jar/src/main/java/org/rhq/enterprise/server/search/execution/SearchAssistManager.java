@@ -377,7 +377,7 @@ public class SearchAssistManager {
         String[] tokens = assistant.getTerms().toArray(new String[0]);
         debug("" + tokens.length + " tokens are " + Arrays.asList(tokens));
 
-        if (tokens.length == 0) {
+        if (tokens.length == 0 || caretPos == 0) {
             debug("getAdvancedSuggestions: no terms");
             return convert(getAllContexts()); // no terms yet defined
         }

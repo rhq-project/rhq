@@ -122,7 +122,7 @@ public class BundleDeployment implements Serializable {
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleResourceDeployment> resourceDeployments;
 
-    @ManyToMany(mappedBy = "bundleDeployments", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "bundleDeployments", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
 
     public BundleDeployment() {

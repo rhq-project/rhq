@@ -448,7 +448,7 @@ public class ResourceGroup extends Group {
     @OneToMany(mappedBy = "resourceGroup", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     private Set<AlertDefinition> alertDefinitions = new LinkedHashSet<AlertDefinition>();
 
-    @ManyToMany(mappedBy = "resourceGroups", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "resourceGroups", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
 
     /* no-arg constructor required by EJB spec */

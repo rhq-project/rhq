@@ -1134,12 +1134,29 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
         
         if (serverUpdated) {
-            existingResource.setResourceKey(resourceKey);
-            existingResource.setName(name);
-            existingResource.setVersion(version);
-            existingResource.setDescription(description);
-            existingResource.setPluginConfiguration(pluginConfiguration);
-            existingResource.setResourceConfiguration(resourceConfiguration);
+            if (resourceKey != null) {
+                existingResource.setResourceKey(resourceKey);
+            }
+            
+            if (name != null) {
+                existingResource.setName(name);
+            }
+            
+            if (version != null) {
+                existingResource.setVersion(version);
+            }
+            
+            if (description != null) {
+                existingResource.setDescription(description);
+            }
+            
+            if (pluginConfiguration != null) {
+                existingResource.setPluginConfiguration(pluginConfiguration);
+            }
+            
+            if (resourceConfiguration != null) {
+                existingResource.setResourceConfiguration(resourceConfiguration);
+            }
         }
         
         return serverUpdated;

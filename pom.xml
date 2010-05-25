@@ -514,13 +514,15 @@
          </plugin>
          <plugin>
            <artifactId>maven-release-plugin</artifactId>
-           <!-- NOTE: If http://jira.codehaus.org/browse/MRELEASE-300 resurfaces,
-                      it may be necessary to rollback to 2.0-beta-6. -->
            <version>2.0-beta-9</version>
          </plugin>
          <plugin>
            <artifactId>maven-resources-plugin</artifactId>
            <version>2.4.2</version>
+         </plugin>
+         <plugin>
+           <artifactId>maven-scm-plugin</artifactId>
+           <version>1.3</version>
          </plugin>
          <plugin>
            <artifactId>maven-site-plugin</artifactId>
@@ -561,11 +563,11 @@
            <artifactId>properties-maven-plugin</artifactId>
            <version>1.0-alpha-2</version>
          </plugin>
-           <plugin>
-               <groupId>org.codehaus.mojo</groupId>
-               <artifactId>findbugs-maven-plugin</artifactId>
-               <version>${findbugs.version}</version>
-           </plugin>
+         <plugin>
+           <groupId>org.codehaus.mojo</groupId>
+           <artifactId>findbugs-maven-plugin</artifactId>
+           <version>${findbugs.version}</version>
+         </plugin>
        </plugins>
      </pluginManagement>
 

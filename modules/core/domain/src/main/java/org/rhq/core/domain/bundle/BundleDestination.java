@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -98,7 +99,7 @@ public class BundleDestination implements Serializable {
     @OneToMany(mappedBy = "destination", fetch = FetchType.LAZY)
     private List<BundleDeployment> deployments;
 
-    @ManyToMany(mappedBy = "bundleDestinations", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "bundleDestinations", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
 
     public BundleDestination() {

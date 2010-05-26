@@ -28,6 +28,8 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 
 public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackFormImplHost {
 
+    private static int frameIndex = 0;
+
     private String frameName;
     private Element synthesizedFrame;
     private DynamicCallbackFormHandlerCollection formHandlers;
@@ -35,8 +37,8 @@ public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackF
 
     public DynamicCallbackForm(String frameName) {
         super();
-        this.frameName = frameName;
-        setTarget(frameName);
+        this.frameName = frameName + (frameIndex++);
+        setTarget(this.frameName);
         init();
     }
 

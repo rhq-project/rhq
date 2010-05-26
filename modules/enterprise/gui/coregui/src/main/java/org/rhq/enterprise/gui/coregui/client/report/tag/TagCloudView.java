@@ -46,6 +46,7 @@ public class TagCloudView extends VLayout {
     protected void onDraw() {
         super.onDraw();
 
+        removeMembers(getMembers());
 
         GWTServiceLookup.getTagService().findTagReportCompositesByCriteria(new TagCriteria(),
                 new AsyncCallback<PageList<TagReportComposite>>() {

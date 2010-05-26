@@ -111,6 +111,22 @@ public class Deployer {
     }
 
     /**
+     * @return information about the particular deployment that this deployer will install.
+     */
+    public DeploymentData getDeploymentData() {
+        return deploymentData;
+    }
+
+    /** 
+     * @return <code>true</code> if the deployer is to install the deployment data in a directory
+     *         that already has a managed deployment in it. <code>false</code> if there is currently
+     *         no managed deployments in the destination directory.
+     */
+    public boolean isDestinationDirectoryManaged() {
+        return deploymentsMetadata.isManaged();
+    }
+
+    /**
      * Convienence method that is equivalent to {@link #deploy(DeployDifferences, boolean) deploy(diff, false)}.
      * @see #deploy(DeployDifferences, boolean) 
      */

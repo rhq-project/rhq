@@ -64,4 +64,14 @@ public class Metric
 	{
 		this.value = value;
 	}
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Metric");
+        sb.append("{id='").append(id).append('\'');
+        sb.append(", value='").append(value).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

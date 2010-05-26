@@ -45,7 +45,7 @@ public interface ResourceUpgradeFacet<T extends ResourceComponent> {
      * The exact same discovery results are passed to this method along with the set of resources
      * that already exist in the inventory.
      * 
-     * @param inventoriedSimblings the existing resources
+     * @param inventoriedSiblings the existing resources
      * @param parentContext the parent of both the newly discovered and existing resources
      * @param discoveryResults the discovered resources. The resources from this set that have
      * the same resource key as one of the inventoried siblings (after upgrade using the results of this method) won't
@@ -54,5 +54,5 @@ public interface ResourceUpgradeFacet<T extends ResourceComponent> {
      * inventoriedSiblings set, the values are the upgrade reports detailing what the data of the
      * corresponding siblings should be upgraded to.
      */
-    Map<ResourceUpgradeContext, ResourceUpgradeReport> upgrade(Set<ResourceUpgradeContext> inventoriedSimblings, ResourceUpgradeContext<T> parentContext, Set<ResourceUpgradeContext> discoveryResults);
+    Map<ResourceUpgradeContext, ResourceUpgradeReport> upgrade(Set<ResourceUpgradeContext> inventoriedSiblings, ResourceUpgradeContext<T> parentContext, Set<ResourceUpgradeContext> discoveryResults);
 }

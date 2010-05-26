@@ -2062,21 +2062,33 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
 
-            //check for upgrade support
+            //check if the discovery component supports resource upgrade
+            //if it does, perform the resource upgrade straight away here during the discovery process.
             if (discoveryComponent instanceof ResourceUpgradeFacet) {
                 ResourceUpgradeFacet resourceUpgrade = (ResourceUpgradeFacet) discoveryComponent;
                 
+                //the siblings are the resources of the type that is currently being discovered that are already
+                //present in the inventory. These are the candidate resources for the upgrade.
                 Set<Resource> siblings = getResourcesWithType(resourceType, parentResource.getChildResources());
                 
-                Resource grandParent = parentResource.getParentResource();
-                ResourceContainer grandParentContainer = grandParent == null ? null : getResourceContainer(grandParent);
-                ResourceDiscoveryComponent parentDiscoveryComponent = PluginContainer.getInstance().getPluginComponentFactory()
-                    .getDiscoveryComponent(parentResource.getResourceType(), grandParentContainer);
+                ResourceUpgradeContext<?> parentUpgradeContext = null;
+
+                //get the upgrade context of the parent resource so that it can be passed to the upgrade method
+                //of the discovery component.
+                if (parentResource != null) {
+                    Resource grandParent = parentResource.getParentResource();
+                    ResourceContainer grandParentContainer = grandParent == null ? null : getResourceContainer(grandParent);
+                    ResourceDiscoveryComponent parentDiscoveryComponent = PluginContainer.getInstance().getPluginComponentFactory()
+                        .getDiscoveryComponent(parentResource.getResourceType(), grandParentContainer);
+                    
+                    parentUpgradeContext = new ResourceUpgradeContext(parentResource, parentDiscoveryComponent, parentResourceContext, availabilityCollectors);
+                }
                 
-                ResourceUpgradeContext<?> parentUpgradeContext = new ResourceUpgradeContext(parentResource, parentDiscoveryComponent, parentResourceContext, availabilityCollectors);
-                
+                //convert the sibling resources into upgrade context objects so that the plugin methods don't access the
+                //domain objects directly.
                 Set<ResourceUpgradeContext> siblingContexts = new HashSet<ResourceUpgradeContext>(siblings.size());
                 
+                //but we are going to need to update the resources in the end, so map the contexts with the resources.
                 Map<ResourceUpgradeContext, Resource> siblingContextToResource = new HashMap<ResourceUpgradeContext, Resource>();
                 
                 for (Resource sibling : siblings) {
@@ -2085,6 +2097,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     siblingContextToResource.put(siblingContext, sibling);
                 }
                 
+                //covert the new resources into contexts.
+                //map the resources by resource key so that we can later check for uniqueness of the reported results.
                 Set<ResourceUpgradeContext> newResourceContexts = new HashSet<ResourceUpgradeContext>();
                 Map<String, Resource> newResourceKeyToResource = new HashMap<String, Resource>();
                 
@@ -2094,12 +2108,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     newResourceKeyToResource.put(newResource.getResourceKey(), newResource);
                 }
                 
+                //ask the discovery component to upgrade the siblings.
                 Map<ResourceUpgradeContext, ResourceUpgradeReport> results = resourceUpgrade.upgrade(siblingContexts, parentUpgradeContext, newResourceContexts);
                 
+                //now go through the results and upgrade the resources as needed.
                 for(Map.Entry<ResourceUpgradeContext, ResourceUpgradeReport> upgradeEntry : results.entrySet()) {
                     Resource siblingToUpgrade = siblingContextToResource.get(upgradeEntry.getKey());
                     ResourceUpgradeReport newData = upgradeEntry.getValue();
                     
+                    //upgrade the data on the server first
                     mergeResourceFromUpgrade(siblingToUpgrade, newData);
                     
                     //if there was a resource key upgrade, remove a resource with the same resource key

@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pluginapi.migration;
+package org.rhq.core.pluginapi.upgrade;
 
 import java.util.Map;
 import java.util.Set;

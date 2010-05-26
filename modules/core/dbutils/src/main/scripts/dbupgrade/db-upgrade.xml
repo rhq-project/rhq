@@ -2964,16 +2964,27 @@
                 </schema-directSQL>                
             </schemaSpec>
             
-           <schemaSpec version="2.87">
-               <schema-directSQL>
-                   <statement desc="Drop non-unique RHQ_RES_TYPE_IDX_PLG_NAME index">
-                       DROP INDEX RHQ_RES_TYPE_IDX_PLG_NAME
-                   </statement>                       
-                   <statement desc="Recreate RHQ_RES_TYPE_IDX_PLG_NAME index as unique">                   
-                       CREATE UNIQUE INDEX RHQ_RES_TYPE_IDX_PLG_NAME ON RHQ_RESOURCE_TYPE (name, plugin)
-                   </statement>
-               </schema-directSQL>
-           </schemaSpec>
+            <schemaSpec version="2.86">
+                <schema-directSQL>
+                    <statement desc="Adding MANAGE_BUNDLE permission to overlord">
+                        INSERT INTO RHQ_PERMISSION VALUES(1, 12)
+                    </statement>
+                    <statement desc="Adding MANAGE_BUNDLE permission to superuser">
+                        INSERT INTO RHQ_PERMISSION VALUES(2, 12)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+            
+            <schemaSpec version="2.87">
+                <schema-directSQL>
+                    <statement desc="Drop non-unique RHQ_RES_TYPE_IDX_PLG_NAME index">
+                        DROP INDEX RHQ_RES_TYPE_IDX_PLG_NAME
+                    </statement>                       
+                    <statement desc="Recreate RHQ_RES_TYPE_IDX_PLG_NAME index as unique">                   
+                        CREATE UNIQUE INDEX RHQ_RES_TYPE_IDX_PLG_NAME ON RHQ_RESOURCE_TYPE (name, plugin)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
             
         </dbupgrade>
     </target>

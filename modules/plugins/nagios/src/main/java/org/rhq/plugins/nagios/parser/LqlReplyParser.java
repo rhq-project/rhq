@@ -96,42 +96,44 @@ public class LqlReplyParser
 	 */
 	public void parseLqlServiceReply(LqlReply serviceReply, NagiosData data) throws InvalidReplyTypeException
 	{
-		String[] resourceNames = null;
+		String[] resourceNames = new String[1];
 		String[] metricNames = null;
 		String[] metricValues = null;
 
         ArrayList<String> lqlReply = serviceReply.getLqlReply();
-        if(serviceReply.getContext().getNagiosRequestType() == NagiosRequestTypes.SERVICE_REQUEST)
-		{
-			metricValues = lqlReply.get(0).split(Pattern.quote(";"));
-		}
-		else
+        if(serviceReply.getContext().getNagiosRequestType() != NagiosRequestTypes.SERVICE_REQUEST)
 		{
 			throw new InvalidReplyTypeException(NagiosRequestTypes.SERVICE_REQUEST.toString(), serviceReply.getContext().getNagiosRequestType().toString());
 		}
 
 		//First element is always the number of services running
-		int numberOfResources = Integer.parseInt(lqlReply.get(0));
+//		int numberOfResources = Integer.parseInt(lqlReply.get(0));
 		//Delete first element after information is stored
-		lqlReply.remove(0);
+//		lqlReply.remove(0);
+
+        int numberOfResources = lqlReply.size();
 
 		for(int resourceCounter = 0; resourceCounter < numberOfResources; resourceCounter++)
 		{
 			//For each resource get the name --> the first elements contain the names
-			resourceNames = lqlReply.get(resourceCounter).split(Pattern.quote(";"));
+//			resourceNames = lqlReply.get(resourceCounter).split(Pattern.quote(";"));
     		//After the names of the resources there are always the names of the metrics
-			metricNames = lqlReply.get(numberOfResources).split(Pattern.quote(";"));
+          //  String row = lqlReply.get(numberOfResources);
+          //  metricNames = row.split(Pattern.quote(";"));
+            metricNames = new String[]{ "display_name","plugin_output"};
     		//After the names of the metrics there are the values to each resource
-            int i = 0;
-            for (String name : metricNames) {
-                if (name.equals("display_name"))
-                    break;
-                i++;
-            }
+// We filter for columns, so display_name is now always the first
+//            int i = 0;
+//            for (String name : metricNames) {
+//                if (name.equals("display_name"))
+//                    break;
+//                i++;
+//            }
 
 
-			metricValues = lqlReply.get(resourceCounter + (numberOfResources + 1)).split(Pattern.quote(";"), metricNames.length);
-            String resourceName = metricValues[i];
+//			metricValues = lqlReply.get(resourceCounter + (numberOfResources + 1)).split(Pattern.quote(";"), metricNames.length);
+			metricValues = lqlReply.get(resourceCounter).split(Pattern.quote(";"));
+            String resourceName = metricValues[0];
             resourceNames[0] = resourceName;
 
 			//for a service all information are necessary because there is more than one service per host

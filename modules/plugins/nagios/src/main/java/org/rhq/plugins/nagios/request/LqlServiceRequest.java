@@ -32,7 +32,7 @@ public class LqlServiceRequest implements LqlRequest
 	 */
 	private final String GET_NUMBER_OF_SERVICES = "GET services\nStats: state = 0\nFilter: host_name = ";
 	private final String GET_SERVICE_NAMES = "GET services\nColumns: display_name\nFilter: host_name = ";
-	private final String GET_SERVICE_METRICS = "GET services\nFilter: host_name = ";
+	private final String GET_SERVICE_METRICS = "GET services\nColumns: display_name plugin_output\nFilter: host_name = ";
 	private final String STATUS_AVAILABLE_FILTER = "Filter: state = 0\n";
 	private final String CONJUNCTION_OF_2 = "And: 2\n";
 
@@ -60,8 +60,8 @@ public class LqlServiceRequest implements LqlRequest
 	public void setRequestQueryList()
 	{
 		requestQueryList = new ArrayList<String>();
-		requestQueryList.add(getNumberOfServices);
-		requestQueryList.add(getServiceNames);
+//		requestQueryList.add(getNumberOfServices);
+//		requestQueryList.add(getServiceNames);
 		requestQueryList.add(getServiceMetrics);
 	}
 

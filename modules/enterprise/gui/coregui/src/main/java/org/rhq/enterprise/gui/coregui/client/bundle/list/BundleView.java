@@ -43,6 +43,9 @@ import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
+import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
+import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -75,9 +78,11 @@ public class BundleView extends VLayout implements BookmarkableView {
     }
 
     public void viewBundle(Bundle bundle, ViewId nextViewId) {
+        removeMembers(getMembers());
+
         this.bundle = bundle;
 
-        headerLabel = new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/Bundle_24.png") + "\"/> " + bundle.getName());
+        headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
 
 
         TabSet tabs = new TabSet();
@@ -87,7 +92,7 @@ public class BundleView extends VLayout implements BookmarkableView {
         Tab versionsTab = createVersionsTab();
         tabs.addTab(versionsTab);
 
-        Tab deploymentsTab = createDeploymentsTab();
+        Tab deploymentsTab = createDestinationsTab();
         tabs.addTab(deploymentsTab);
 
         addMember(headerLabel);
@@ -96,7 +101,7 @@ public class BundleView extends VLayout implements BookmarkableView {
         if (nextViewId != null) {
             if (nextViewId.getPath().equals("versions")) {
                 tabs.selectTab(versionsTab);
-            } else if (nextViewId.getPath().equals("deployments")) {
+            } else if (nextViewId.getPath().equals("desinations")) {
                 tabs.selectTab(deploymentsTab);
             }
         }
@@ -104,9 +109,13 @@ public class BundleView extends VLayout implements BookmarkableView {
         markForRedraw();
     }
 
-    private Tab createDeploymentsTab() {
-        Tab deploymentsTab = new Tab("Deployments");
-        return deploymentsTab;
+    private Tab createDestinationsTab() {
+        Tab destinationsTab = new Tab("Destinations");
+
+
+        destinationsTab.setPane(new BundleDestinationListView(bundle.getId()));
+
+        return destinationsTab;
     }
 
     private Tab createVersionsTab() {
@@ -191,6 +200,8 @@ public class BundleView extends VLayout implements BookmarkableView {
                 });
             }
         });
+//        tagEditor.setAlwaysEdit(true);
+        tagEditor.setVertical(true);
         layout.addMember(tagEditor);
 
 
@@ -226,6 +237,7 @@ public class BundleView extends VLayout implements BookmarkableView {
 
                             public void onSuccess(PageList<Bundle> result) {
                                 Bundle bundle = result.get(0);
+                                viewId.getBreadcrumbs().set(0,new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                                 viewBundle(bundle, viewPath.getCurrent());
                                 viewId.getBreadcrumbs().add(new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                                 CoreGUI.refreshBreadCrumbTrail();
@@ -241,6 +253,28 @@ public class BundleView extends VLayout implements BookmarkableView {
                     // one version
                     removeMembers(getMembers());
                     BundleVersionView view = new BundleVersionView();
+                    addMember(view);
+                    view.renderView(viewPath.next());
+                }
+            } else if (viewPath.getCurrent().getPath().equals("deployments")) {
+                if (viewPath.isEnd()) {
+
+                    // versions list screen
+                } else {
+                    // one version
+                    removeMembers(getMembers());
+                    BundleDeploymentView view = new BundleDeploymentView();
+                    addMember(view);
+                    view.renderView(viewPath.next());
+                }
+            } else if (viewPath.getCurrent().getPath().equals("destinations")) {
+                if (viewPath.isEnd()) {
+
+                    // versions list screen
+                } else {
+                    // one version
+                    removeMembers(getMembers());
+                    BundleDestinationView view = new BundleDestinationView();
                     addMember(view);
                     view.renderView(viewPath.next());
                 }

@@ -36,9 +36,14 @@ public interface BundleServerPluginFacet {
      * 
      * @param recipe the content of the recipe to be parsed
      * @return the information gleened from the recipe after being parsed
-     * @throws Exception if the recipe could not be successfully parsed
+     * @throws UnknownRecipeException if the recipe is not understood by the plugin (i.e.
+     *                                it is a recipe that some other bundle plugin probably
+     *                                can process)
+     * @throws Exception if the recipe could not be successfully parsed - this exception
+     *                   usually means the recipe type is known to the plugin but it just
+     *                   had some error that caused it to fail to parse successfully
      */
-    RecipeParseResults parseRecipe(String recipe) throws Exception;
+    RecipeParseResults parseRecipe(String recipe) throws UnknownRecipeException, Exception;
 
     /**
      * The server side plugin is being given an bundle distribution file that must be procssed.
@@ -48,7 +53,13 @@ public interface BundleServerPluginFacet {
      * 
      * @param distributionFile
      * @return the information gleened by cracking open the bundle distribution file and examining its contents
-     * @throws Exception if the bundle distribution file could not be processed successfully
+     * @throws UnknownRecipeException if the recipe in the distribution file is not understood by the
+     *                                plugin (i.e. the distribution file can probably be processed by some other
+     *                                bundle plugin).
+     * @throws Exception if the bundle distribution file could not be successfully processed - this exception
+     *                   usually means the distribution file is of a known type to the plugin but it just
+     *                   had some error that caused it to fail to be processed successfully.
      */
-    BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws Exception;
+    BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws UnknownRecipeException,
+        Exception;
 }

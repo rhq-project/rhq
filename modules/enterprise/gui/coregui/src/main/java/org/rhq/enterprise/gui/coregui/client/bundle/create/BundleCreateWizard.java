@@ -29,8 +29,7 @@ public class BundleCreateWizard extends AbstractBundleCreateWizard {
         setTitle("Create Bundle");
 
         ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
-        steps.add(new BundleInfoStep(this));
-        steps.add(new BundleUploadRecipeStep(this));
+        steps.add(new BundleUploadDistroFileStep(this));
         steps.add(new BundleUploadDataStep(this));
         steps.add(new BundleSummaryStep(this));
         setSteps(steps);

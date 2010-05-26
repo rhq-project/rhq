@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -38,7 +40,19 @@ import org.testng.annotations.Test;
 
 import org.rhq.bundle.filetemplate.recipe.RecipeContext;
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
+import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
@@ -168,7 +182,23 @@ public class ProcessingRecipeContextTest {
         Map<PackageVersion, File> packageVersionFiles = null; // TODO not used yet
         SystemInfo sysinfo = SystemInfoFactory.createSystemInfo();
         String cwd = testDir.getAbsolutePath();
-        ProcessingRecipeContext context = new ProcessingRecipeContext(getRecipe(), packageVersionFiles, sysinfo, cwd);
+
+        // need a dummy deployment
+
+        ResourceType resourceType = new ResourceType("name", "plugin", ResourceCategory.PLATFORM, null);
+        Resource resource = new Resource("key", "name", resourceType);
+        BundleType bundleType = new BundleType("name", resourceType);
+        Bundle bundle = new Bundle("name", bundleType, null, null);
+        BundleVersion bundleVersion = new BundleVersion("bname", "bversion", bundle, "");
+        String name = "name";
+        String installDir = "installDir";
+        BundleDestination bundleDestination = new BundleDestination(bundle, "destName", new ResourceGroup("groupName"),
+            installDir);
+        BundleDeployment bundleDeployment = new BundleDeployment(bundleVersion, bundleDestination, name);
+        BundleResourceDeployment deployment = new BundleResourceDeployment(bundleDeployment, resource);
+
+        ProcessingRecipeContext context = new ProcessingRecipeContext(getRecipe(), packageVersionFiles, sysinfo, cwd,
+            deployment, new DummyBundleManagerProvider());
         return context;
     }
 
@@ -244,5 +274,22 @@ public class ProcessingRecipeContextTest {
                 stream.close();
             }
         }
+    }
+
+    private class DummyBundleManagerProvider implements BundleManagerProvider {
+        public void auditDeployment(BundleResourceDeployment deployment, String action, String info,
+            BundleResourceDeploymentHistory.Category category, BundleResourceDeploymentHistory.Status status,
+            String message, String attachment) throws Exception {
+            System.out.println("audit: action=[" + action + "], status=[" + status + "], message: " + message);
+        }
+
+        public List<PackageVersion> getAllBundleVersionPackageVersions(BundleVersion bundleVersion) throws Exception {
+            return null;
+        }
+
+        public long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception {
+            return 0;
+        }
+
     }
 }

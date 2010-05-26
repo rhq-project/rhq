@@ -20,7 +20,7 @@
       <c:if test="<%= new ServerInformation().isFullyDeployed() && request.getRequestURI().indexOf("installer/start") == -1 %>">
       <script type="text/javascript" language="JavaScript">
 
-         var startPage = '/Start.do';
+         var startPage = '/Dashboard.do';
          var xmlRequest = false;
 
          function doLoad()

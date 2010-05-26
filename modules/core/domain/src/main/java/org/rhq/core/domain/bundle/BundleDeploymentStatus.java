@@ -31,7 +31,9 @@ package org.rhq.core.domain.bundle;
  * @author Jay Shaughnessy
  */
 public enum BundleDeploymentStatus {
-    INPROGRESS("In Progress"), //
+    PENDING("Pending"), //
+    IN_PROGRESS("In Progress"), //    
+    MIXED("Mixed"), //
     SUCCESS("Success"), //
     FAILURE("Failure"), //
     WARN("Warning");

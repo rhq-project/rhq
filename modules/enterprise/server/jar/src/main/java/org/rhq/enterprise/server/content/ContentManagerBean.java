@@ -1281,7 +1281,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageBits bits = loadPackageBits(packageBitStream);
 
         newPackageVersion.setPackageBits(bits);
-
+        newPackageVersion.setFileSize((long) bits.getBits().length);
         newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
 
         existingPackage.addVersion(newPackageVersion);

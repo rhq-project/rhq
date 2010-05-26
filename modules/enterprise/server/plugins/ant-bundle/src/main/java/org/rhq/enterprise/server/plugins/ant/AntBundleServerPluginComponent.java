@@ -45,6 +45,7 @@ import org.rhq.enterprise.server.bundle.RecipeParseResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
+import org.rhq.enterprise.server.plugin.pc.bundle.UnknownRecipeException;
 
 /**
  * A bundle server-side plugin component that the server uses to process Ant-based bundles.
@@ -81,7 +82,13 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         log.debug("The Ant bundle plugin has been shut down: " + this);
     }
 
-    public RecipeParseResults parseRecipe(String recipe) throws Exception {
+    public RecipeParseResults parseRecipe(String recipe) throws UnknownRecipeException, Exception {
+
+        // all Ant recipes must use the RHQ custom ant library; if the recipe doesn't have the
+        // string of that antlib URI, that means this probably isn't an Ant recipe in the first place
+        if (!recipe.contains("antlib:org.rhq.bundle")) {
+            throw new UnknownRecipeException("Not a valid Ant recipe");
+        }
 
         DeploymentProperties deploymentProps;
         Set<String> bundleFiles;
@@ -123,7 +130,8 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         return results;
     }
 
-    public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws Exception {
+    public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws UnknownRecipeException,
+        Exception {
         if (null == distributionFile) {
             throw new IllegalArgumentException("distributionFile == null");
         }
@@ -139,7 +147,7 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         recipeParseResults = recipeVisitor.getResults();
 
         if (null == recipeParseResults) {
-            throw new IllegalArgumentException("Not an Ant Bundle");
+            throw new UnknownRecipeException("Not an Ant Bundle");
         }
 
         // if we parsed the recipe then this is a distribution we can deal with, get the bundle file Map                 
@@ -170,12 +178,8 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
                 StreamUtil.copy(stream, out, false);
                 this.recipe = new String(out.toByteArray());
                 out = null; // no need for this anymore, help out GC
-                try {
-                    this.results = this.facet.parseRecipe(this.recipe);
-                } catch (Throwable t) {
-                    this.results = null;
-                }
-                return false; // whether we parsed it or not, we found the file we are looking for so stop walking
+                this.results = this.facet.parseRecipe(this.recipe);
+                return false; // we found the file we are looking for so stop walking
             }
             return true;
         }

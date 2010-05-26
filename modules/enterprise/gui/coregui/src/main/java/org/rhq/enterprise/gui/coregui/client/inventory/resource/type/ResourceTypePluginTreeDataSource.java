@@ -18,8 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.type;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ListIterator;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -118,18 +122,18 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
 
         HashMap<String, PluginTreeNode> pluginNodes = new HashMap<String, PluginTreeNode>();
 
-        HashSet<TreeNode> nodes = new HashSet<TreeNode>();
+        ArrayList<TreeNode> nodes = new ArrayList<TreeNode>();
         for (ResourceType type : result) {
-
-            PluginTreeNode pluginNode = pluginNodes.get(type.getPlugin());
-            if (pluginNode == null) {
-                pluginNode = new PluginTreeNode(type.getPlugin());
-                pluginNodes.put(type.getPlugin(), pluginNode);
-                nodes.add(pluginNode);
-            }
-
-
             if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
+
+                PluginTreeNode pluginNode = pluginNodes.get(type.getPlugin());
+                 if (pluginNode == null) {
+                     pluginNode = new PluginTreeNode(type.getPlugin());
+                     pluginNodes.put(type.getPlugin(), pluginNode);
+                     nodes.add(pluginNode);
+                 }
+
+
                 nodes.add(new ResourceTypeTreeNode(type, type.getPlugin()));
             } else {
                 for (ResourceType parent : type.getParentResourceTypes()) {
@@ -137,6 +141,12 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
                 }
             }
         }
+
+        Collections.sort(nodes, new Comparator<TreeNode>() {
+            public int compare(TreeNode o1, TreeNode o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
 
         TreeNode[] treeNodes = nodes.toArray(new TreeNode[nodes.size()]);
         return treeNodes;
@@ -184,8 +194,10 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             this.id = pluginName;
             setParentID(null);
 
-            setAttribute("name", pluginName);
+            setAttribute("name", pluginName + " Plugin");
 //            setAttribute("plugin",pluginName);
+            setIcon("types/plugin_16.png"); // todo doesn't work
+            setEnabled(true);
         }
 
         @Override
@@ -227,6 +239,8 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             setAttribute("name", resourceType.getName());
             setAttribute("plugin", resourceType.getPlugin());
             setAttribute("category", resourceType.getCategory().getDisplayName());
+
+            setIcon("types/" + resourceType.getCategory().getDisplayName() + "_up_16.png");
 
             setIsFolder(true);
         }

@@ -99,11 +99,13 @@ public class Bundle implements Serializable {
     private PackageType packageType;
 
     @OneToMany(mappedBy = "bundle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleDestination> destinations = new ArrayList<BundleDestination>();
+
+    @OneToMany(mappedBy = "bundle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleVersion> bundleVersions = new ArrayList<BundleVersion>();
 
-    @ManyToMany(mappedBy = "bundles", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "bundles", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
-
 
     public Bundle() {
         // for JPA use
@@ -175,6 +177,19 @@ public class Bundle implements Serializable {
 
     public void setBundleVersions(List<BundleVersion> bundleVersions) {
         this.bundleVersions = bundleVersions;
+    }
+
+    public List<BundleDestination> getDestinations() {
+        return destinations;
+    }
+
+    public void addDestination(BundleDestination destination) {
+        this.destinations.add(destination);
+        destination.setBundle(this);
+    }
+
+    public void setDestinations(List<BundleDestination> destinations) {
+        this.destinations = destinations;
     }
 
     public Set<Tag> getTags() {

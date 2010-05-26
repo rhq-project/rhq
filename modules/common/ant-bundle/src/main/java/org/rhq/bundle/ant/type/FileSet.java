@@ -37,7 +37,7 @@ import java.util.Stack;
 /**
  * A fileset that supports includes, but not excludes or selectors.
  */
-public class FileSet extends DataType {
+public class FileSet extends AbstractBundleType {
     private PatternSet defaultPatterns = new PatternSet();
 
     private File dir;

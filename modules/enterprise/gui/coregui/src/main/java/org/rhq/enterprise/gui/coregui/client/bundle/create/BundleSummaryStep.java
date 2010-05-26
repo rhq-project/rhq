@@ -47,26 +47,26 @@ public class BundleSummaryStep implements WizardStep {
         bundleTypeLabel.setTitleAlign(Alignment.LEFT);
         bundleTypeLabel.setAlign(Alignment.LEFT);
         bundleTypeLabel.setWrap(false);
-        bundleTypeLabel.setValue(wizard.getBundleType().getName());
+        bundleTypeLabel.setValue(wizard.getBundleVersion().getBundle().getBundleType().getName());
 
         StaticTextItem nameLabel = new StaticTextItem("name", "Name");
         nameLabel.setTitleAlign(Alignment.LEFT);
         nameLabel.setAlign(Alignment.LEFT);
         nameLabel.setWrap(false);
-        nameLabel.setValue(wizard.getBundleName());
+        nameLabel.setValue(wizard.getBundleVersion().getBundle().getName());
 
         StaticTextItem versionLabel = new StaticTextItem("Version");
         versionLabel.setTitleAlign(Alignment.LEFT);
         versionLabel.setTitleAlign(Alignment.LEFT);
         versionLabel.setAlign(Alignment.LEFT);
         versionLabel.setWrap(false);
-        versionLabel.setValue(wizard.getBundleVersionString());
+        versionLabel.setValue(wizard.getBundleVersion().getVersion());
 
         StaticTextItem descriptionLabel = new StaticTextItem("Description");
         descriptionLabel.setTitleAlign(Alignment.LEFT);
         descriptionLabel.setAlign(Alignment.LEFT);
         descriptionLabel.setWrap(false);
-        descriptionLabel.setValue(wizard.getBundleDescription());
+        descriptionLabel.setValue(wizard.getBundleVersion().getBundle().getDescription());
 
         StaticTextItem filesLabel = new StaticTextItem("Files");
         filesLabel.setTitleVAlign(VerticalAlignment.TOP);

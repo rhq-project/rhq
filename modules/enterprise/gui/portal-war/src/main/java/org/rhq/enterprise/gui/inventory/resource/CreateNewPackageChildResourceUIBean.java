@@ -23,10 +23,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
+import javax.persistence.NoResultException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,11 +49,14 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -77,6 +83,10 @@ public class CreateNewPackageChildResourceUIBean {
 
     private ResourceType resourceType;
     private PackageType packageType;
+
+    private String packageName;
+    private String version = "1.0";//default it to 1.0
+    private int selectedPackageTypeId;
 
     private int selectedArchitectureId;
 
@@ -105,9 +115,35 @@ public class CreateNewPackageChildResourceUIBean {
         uploadUIBean = FacesContextUtility.getManagedBean(UploadNewChildPackageUIBean.class);
         UploadItem fileItem = uploadUIBean.getFileItem();
 
+        //store information about uploaded file for packageDetails as most of it is already available
+        Map<String, String> packageUploadDetails = new HashMap<String, String>();
+        packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
+        packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_INSTALL_DATE, String
+            .valueOf(System.currentTimeMillis()));
+        packageUploadDetails.put(ContentManagerBean.UPLOAD_OWNER, user.getName());
+        packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_NAME, fileItem.getFileName());
+
+        try {//Easier to implement here than in server side bean. Shouldn't affect performance too much.
+            packageUploadDetails.put(ContentManagerBean.UPLOAD_MD5, new MessageDigestGenerator(
+                MessageDigestGenerator.MD5).calcDigestString(fileItem.getFile()));
+            packageUploadDetails.put(ContentManagerBean.UPLOAD_SHA256, new MessageDigestGenerator(
+                MessageDigestGenerator.SHA_256).calcDigestString(fileItem.getFile()));
+        } catch (IOException e1) {
+            log.warn("Error calculating file digest(s) : " + e1.getMessage());
+            e1.printStackTrace();
+        }
+
         // Validate
         if ((fileItem == null) || fileItem.getFile() == null) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be uploaded");
+            return null;
+        }
+        if ((getVersion() == null) || (getVersion().trim().length() == 0)) {//version
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package version must be specified.");
+            return null;
+        }
+        if ((getSelectedPackageTypeId() < 0) || (getVersion().trim().length() == 0)) {//type
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package type must be specified.");
             return null;
         }
 
@@ -131,6 +167,9 @@ public class CreateNewPackageChildResourceUIBean {
                     "Failed to retrieve the input stream. Cause: " + errorMessages);
                 return OUTCOME_SUCCESS_OR_FAILURE;
             }
+
+            //pull in archictecture selection
+            selectedArchitectureId = getSelectedArchitectureId();
 
             // If the type does not support architectures, load the no architecture entity and use that
             if (!packageType.isSupportsArchitecture()) {
@@ -160,9 +199,22 @@ public class CreateNewPackageChildResourceUIBean {
 
                 // RHQ-666 - Changed to not request the resource name from the user; simply pass null
                 // JON 2.0 RC3 - use timestamp versioning; pass null for version
-                resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
-                    pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
-                    packageContentStream);
+                //                resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
+                //                    pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
+                //                    packageContentStream);
+                if (packageUploadDetails != null) {
+                    resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
+                        pluginConfiguration, packageName, getVersion(), selectedArchitectureId,
+                        deployTimeConfiguration, packageContentStream, packageUploadDetails);
+                } else {
+                    resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
+                        pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
+                        packageContentStream);
+
+                }
+
+            } catch (NoResultException nre) {
+                //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
             } catch (Exception e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
@@ -355,4 +407,45 @@ public class CreateNewPackageChildResourceUIBean {
                 ParamConstants.RESOURCE_TYPE_ID_PARAM);
         }
     }
+
+    public String getPackageName() {
+        return packageName;
+    }
+
+    public void setPackageName(String packageName) {
+        this.packageName = packageName;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public int getSelectedPackageTypeId() {
+        return selectedPackageTypeId;
+    }
+
+    public void setSelectedPackageTypeId(int selectedPackageTypeId) {
+        this.selectedPackageTypeId = selectedPackageTypeId;
+    }
+
+    public SelectItem[] getPackageTypes() {
+        Resource resource = EnterpriseFacesContextUtility.getResource();
+
+        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+        List<PackageType> packageTypes = contentUIManager.getPackageTypes(resource.getResourceType().getId());
+
+        SelectItem[] items = new SelectItem[packageTypes.size()];
+        int itemCounter = 0;
+        for (PackageType packageType : packageTypes) {
+            SelectItem item = new SelectItem(packageType.getId(), packageType.getDisplayName());
+            items[itemCounter++] = item;
+        }
+
+        return items;
+    }
+
 }

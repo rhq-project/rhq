@@ -30,6 +30,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,11 +39,13 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.tagging.Tag;
+import org.rhq.core.domain.tagging.compsite.TagReportComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -55,7 +58,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  * @author Greg Hinkle
  */
 @Stateless
-public class TagManagerBean implements TagManagerLocal {
+public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
 
     private final Log log = LogFactory.getLog(TagManagerBean.class);
 
@@ -113,6 +116,15 @@ public class TagManagerBean implements TagManagerLocal {
 
         Set<Tag> definedTags = addTags(subject, tags);
         Resource resource = entityManager.find(Resource.class, resourceId);
+
+        Set<Tag> previousTags = new HashSet<Tag>(resource.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeResource(resource);
+        }
+
+
+
         for (Tag tag : definedTags) {
             tag.addResource(resource);
         }
@@ -125,7 +137,14 @@ public class TagManagerBean implements TagManagerLocal {
 
         Set<Tag> definedTags = addTags(subject, tags);
         ResourceGroup group = entityManager.find(ResourceGroup.class, resourceGroupId);
-        group.setTags(definedTags);
+
+        Set<Tag> previousTags = new HashSet<Tag>(group.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeResourceGroup(group);
+        }
+
+
         for (Tag tag : definedTags) {
             tag.addResourceGroup(group);
         }
@@ -137,6 +156,14 @@ public class TagManagerBean implements TagManagerLocal {
 
         Set<Tag> definedTags = addTags(subject, tags);
         Bundle bundle = entityManager.find(Bundle.class, bundleId);
+
+        Set<Tag> previousTags = new HashSet<Tag>(bundle.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeBundle(bundle);
+        }
+
+
         for (Tag tag : definedTags) {
             tag.addBundle(bundle);
         }
@@ -148,7 +175,14 @@ public class TagManagerBean implements TagManagerLocal {
 
         Set<Tag> definedTags = addTags(subject, tags);
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
-        bundleVersion.setTags(definedTags);
+
+        Set<Tag> previousTags = new HashSet<Tag>(bundleVersion.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeBundleVersion(bundleVersion);
+        }
+
+
         for (Tag tag : definedTags) {
             tag.addBundleVersion(bundleVersion);
         }
@@ -160,9 +194,49 @@ public class TagManagerBean implements TagManagerLocal {
 
         Set<Tag> definedTags = addTags(subject, tags);
         BundleDeployment bundleDeployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
-        bundleDeployment.setTags(definedTags);
+
+        Set<Tag> previousTags = new HashSet<Tag>(bundleDeployment.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeBundleDeployment(bundleDeployment);
+        }
+
         for (Tag tag : definedTags) {
             tag.addBundleDeployment(bundleDeployment);
         }
     }
+
+
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    // todo verify
+    public void updateBundleDestinationTags(Subject subject, int bundleDestinationId, Set<Tag> tags) {
+
+        Set<Tag> definedTags = addTags(subject, tags);
+        BundleDestination bundleDestination = entityManager.find(BundleDestination.class, bundleDestinationId);
+
+        Set<Tag> previousTags = new HashSet<Tag>(bundleDestination.getTags());
+        previousTags.removeAll(definedTags);
+        for (Tag tag : previousTags) {
+            tag.removeBundleDestination(bundleDestination);
+        }
+
+        for (Tag tag : definedTags) {
+            tag.addBundleDestination(bundleDestination);
+        }
+    }
+
+
+    public PageList<TagReportComposite> findTagReportCompositesByCriteria(Subject subject, TagCriteria tagCriteria) {
+        // TODO criteria stuff
+
+        Query query = entityManager.createNamedQuery(Tag.QUERY_TAG_COMPOSITE_REPORT);
+
+        PageList<TagReportComposite> result = new PageList<TagReportComposite>();
+
+        result.addAll(query.getResultList());
+
+        return result;
+    }
+
 }

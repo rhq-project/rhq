@@ -32,7 +32,7 @@ import org.apache.tools.ant.types.DataType;
  *
  * @author Ian Springer
  */
-public abstract class AbstractFileType extends DataType {
+public abstract class AbstractFileType extends AbstractBundleType {
     private File source;
 
     public File getSource() {
@@ -42,7 +42,7 @@ public abstract class AbstractFileType extends DataType {
     public void setName(String name) {
         File file = new File(name);
         if (file.isAbsolute()) {
-            throw new BuildException("Path specified by 'file' attribute (" + name
+            throw new BuildException("Path specified by 'name' attribute (" + name
                 + ") is not relative - it must be a relative path, relative to the Ant basedir.");
         }
         this.source = getProject().resolveFile(name);

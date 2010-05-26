@@ -63,5 +63,8 @@
     <servlet path="/SearchGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.SearchGWTServiceImpl"/>
     <servlet path="/SubjectGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.SubjectGWTServiceImpl"/>
     <servlet path="/TagGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl"/>
+    <servlet path="/RemoteInstallGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl"/>
+    <servlet path="/RepoGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RepoGWTServiceImpl"/>
+    <servlet path="/ContentGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ContentGWTServiceImpl"/>
 
 </module>

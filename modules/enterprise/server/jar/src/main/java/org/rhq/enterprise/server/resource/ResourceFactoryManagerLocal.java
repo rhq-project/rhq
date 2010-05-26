@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.resource;
 
 import java.io.InputStream;
+import java.util.Map;
 
 import javax.ejb.Local;
 
@@ -82,6 +83,11 @@ public interface ResourceFactoryManagerLocal {
     void createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
         Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,
         Configuration deploymentTimeConfiguration, InputStream packageBitStream);
+
+    void createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,
+        Configuration deploymentTimeConfiguration, InputStream packageBitStream,
+        Map<String, String> packageUploadDetails);
 
     // Internal Utilities  --------------------------------------------
 

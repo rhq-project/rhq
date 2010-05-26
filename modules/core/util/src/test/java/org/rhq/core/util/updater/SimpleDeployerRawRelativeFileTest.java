@@ -90,7 +90,9 @@ public class SimpleDeployerRawRelativeFileTest {
         this.sourceRawFiles = new HashMap<File, File>(1);
         this.sourceRawFiles.put(sourceRawFile, new File(originalFileName)); // RELATIVE! note we name it different than the source file
         this.originalDeployProps = new DeploymentProperties(1, "simple", "1.0", "original test deployment");
-        Deployer deployer = new Deployer(originalDeployProps, null, sourceRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(originalDeployProps, null, sourceRawFiles, deployDir, null, null, null,
+            null);
+        Deployer deployer = new Deployer(dd);
         this.originalFileHashcodeMap = deployer.deploy(null);
         this.currentFile = sourceRawFiles.get(sourceRawFile);
         this.currentRelativePath = this.currentFile.getPath();
@@ -134,6 +136,10 @@ public class SimpleDeployerRawRelativeFileTest {
         baseX_Y_Z(false);
     }
 
+    public void testX_Y_Z_Restore() throws Exception {
+        baseX_Y_Z_Restore(false);
+    }
+
     public void testNoOriginalNoCurrentWithNew() throws Exception {
         baseNoOriginalNoCurrentWithNew(false);
     }
@@ -174,6 +180,10 @@ public class SimpleDeployerRawRelativeFileTest {
         baseX_Y_Z(true);
     }
 
+    public void testX_Y_Z_Restore_DryRun() throws Exception {
+        baseX_Y_Z_Restore(true);
+    }
+
     public void testNoOriginalNoCurrentWithNew_DryRun() throws Exception {
         baseNoOriginalNoCurrentWithNew(true);
     }
@@ -195,7 +205,8 @@ public class SimpleDeployerRawRelativeFileTest {
     }
 
     private void baseX_X_X(boolean dryRun) throws Exception {
-        Deployer deployer = new Deployer(newDeployProps, null, sourceRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, sourceRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -216,6 +227,8 @@ public class SimpleDeployerRawRelativeFileTest {
         assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.getRestoredFiles().isEmpty() : this.diff;
+        assert !this.diff.wasCleaned() : this.diff;
         assert this.diff.getErrors().isEmpty() : this.diff;
 
         if (dryRun) {
@@ -234,7 +247,8 @@ public class SimpleDeployerRawRelativeFileTest {
         Map<File, File> newRawFiles = new HashMap<File, File>(1);
         newRawFiles.put(newRawFile, this.currentFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -279,7 +293,8 @@ public class SimpleDeployerRawRelativeFileTest {
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         writeFile(newContent, this.currentFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, sourceRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, sourceRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -326,7 +341,8 @@ public class SimpleDeployerRawRelativeFileTest {
         Map<File, File> newRawFiles = new HashMap<File, File>(1);
         newRawFiles.put(newRawFile, this.currentFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -373,7 +389,8 @@ public class SimpleDeployerRawRelativeFileTest {
         Map<File, File> newRawFiles = new HashMap<File, File>(1);
         newRawFiles.put(newRawFile, this.currentFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -382,8 +399,8 @@ public class SimpleDeployerRawRelativeFileTest {
         }
 
         // The new file changed the original, and our current file has been manually updated
-        // but that current file's change does not match to new file. Therefore, the current file
-        // it out of date. The safest thing to do is backup the current and copy the new file
+        // but that current file's change does not match the new file. Therefore, the current file
+        // is out of date. The safest thing to do is backup the current and copy the new file
         // to become the current file.
 
         assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
@@ -435,7 +452,8 @@ public class SimpleDeployerRawRelativeFileTest {
         File newDestRawFile = new File(newFileName); // RELATIVE!
         newRawFiles.put(newRawFile, newDestRawFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -496,7 +514,8 @@ public class SimpleDeployerRawRelativeFileTest {
         String inTheWayHashcode = MessageDigestGenerator.getDigestString(inTheWayContent);
         writeFile(inTheWayContent, inTheWayFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -554,7 +573,8 @@ public class SimpleDeployerRawRelativeFileTest {
     private void baseNoCurrent(boolean dryRun) throws Exception {
         assert this.currentFileWithAbsolutePath.delete() : "Failed to delete the current file, cannot prepare the test";
 
-        Deployer deployer = new Deployer(newDeployProps, null, sourceRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, sourceRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -604,7 +624,8 @@ public class SimpleDeployerRawRelativeFileTest {
         File newDestRawFile = new File(newFileName); // RELATIVE!
         newRawFiles.put(newRawFile, newDestRawFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -667,7 +688,8 @@ public class SimpleDeployerRawRelativeFileTest {
         File newDestRawFile = new File(newFileName); // RELATIVE!
         newRawFiles.put(newRawFile, newDestRawFile);
 
-        Deployer deployer = new Deployer(newDeployProps, null, newRawFiles, deployDir, null, null, null);
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
             newFileHashcodeMap = deployer.dryRun(this.diff);
@@ -725,6 +747,88 @@ public class SimpleDeployerRawRelativeFileTest {
             assert !backupFile.exists() : "dry run should not create backup";
         } else {
             assert readFile(backupFile).equals(currentContent) : "did not backup the correct file?";
+        }
+    }
+
+    private void baseX_Y_Z_Restore(boolean dryRun) throws Exception {
+        String newContentY = "testX_Y_Z_YYY";
+        writeFile(newContentY, this.currentFile);
+        String newHashcodeY = MessageDigestGenerator.getDigestString(newContentY);
+
+        String newContentZ = "testX_Y_Z_ZZZ";
+        String newHashcodeZ = MessageDigestGenerator.getDigestString(newContentZ);
+        File newRawFile = writeFile(newContentZ, tmpDir, "new-content.txt");
+        Map<File, File> newRawFiles = new HashMap<File, File>(1);
+        newRawFiles.put(newRawFile, this.currentFile);
+
+        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null);
+        Deployer deployer = new Deployer(dd);
+        FileHashcodeMap newFileHashcodeMap;
+        newFileHashcodeMap = deployer.deploy(this.diff); // no dry run - we need to do this to force backup file creation
+
+        // The new file changed the original, and our current file has been manually updated
+        // but that current file's change does not match the new file. Therefore, the current file
+        // is out of date. The safest thing to do is backup the current and copy the new file
+        // to become the current file.
+
+        assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
+        assert newFileHashcodeMap.size() == 1;
+        assert newFileHashcodeMap.get(currentRelativePath).equals(newHashcodeZ);
+        String[] contentHash = getOriginalFilenameContentHashcode();
+        assert contentHash[0].equals(newContentZ);
+        assert contentHash[1].equals(newHashcodeZ);
+
+        assert this.diff.getAddedFiles().isEmpty() : this.diff;
+        assert this.diff.getDeletedFiles().isEmpty() : this.diff;
+        assert this.diff.getChangedFiles().size() == 1 : this.diff;
+        assert this.diff.getChangedFiles().contains(currentRelativePath) : this.diff;
+        assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
+        assert this.diff.getBackedUpFiles().containsKey(currentRelativePath) : this.diff;
+        assert this.diff.getRestoredFiles().isEmpty() : this.diff;
+        assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
+        assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.getErrors().isEmpty() : this.diff;
+
+        assert this.metadata.getCurrentDeploymentProperties().equals(newDeployProps);
+        assert this.metadata.getCurrentDeploymentFileHashcodes().equals(newFileHashcodeMap);
+
+        // verify the backup copy
+        File backupFile = new File(this.diff.getBackedUpFiles().get(currentRelativePath));
+        assert readFile(backupFile).equals(newContentY) : "did not backup the correct file?";
+
+        // all we did so far was upgrade to v2 and created a backup file, now we need to redeploy v1 and see the backup restored
+        DeploymentProperties v1Duplicate = new DeploymentProperties();
+        v1Duplicate.putAll(this.originalDeployProps);
+        v1Duplicate.setDeploymentId(3); // this is the same as v1, but it needs a unique deployment ID
+        dd = new DeploymentData(v1Duplicate, null, sourceRawFiles, deployDir, null, null, null, null);
+        deployer = new Deployer(dd);
+        this.diff = new DeployDifferences();
+        FileHashcodeMap restoreFileHashcodeMap;
+        restoreFileHashcodeMap = deployer.redeployAndRestoreBackupFiles(this.diff, false, dryRun);
+
+        assert this.diff.getAddedFiles().isEmpty() : this.diff;
+        assert this.diff.getDeletedFiles().isEmpty() : this.diff;
+        assert this.diff.getChangedFiles().size() == 1 : this.diff;
+        assert this.diff.getChangedFiles().contains(currentRelativePath) : this.diff;
+        assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
+        assert this.diff.getRestoredFiles().size() == 1 : this.diff;
+        assert this.diff.getRestoredFiles().containsKey(currentRelativePath) : this.diff;
+        assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
+        assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.getErrors().isEmpty() : this.diff;
+
+        assert restoreFileHashcodeMap.get(currentRelativePath).equals(newHashcodeY) : "hashcode doesn't reflect restored backup";
+
+        if (dryRun) {
+            // still our v2
+            assert this.metadata.getCurrentDeploymentProperties().equals(newDeployProps);
+            assert this.metadata.getCurrentDeploymentFileHashcodes().equals(newFileHashcodeMap);
+        } else {
+            // we reverted back to v1 with the manual changes
+            assert this.metadata.getCurrentDeploymentProperties().equals(v1Duplicate);
+            assert this.metadata.getCurrentDeploymentFileHashcodes().equals(restoreFileHashcodeMap);
+            assert MessageDigestGenerator.getDigestString(new File(deployDir, currentRelativePath))
+                .equals(newHashcodeY) : "file wasn't restored";
         }
     }
 

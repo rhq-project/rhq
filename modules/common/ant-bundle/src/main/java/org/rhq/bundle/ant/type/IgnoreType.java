@@ -36,7 +36,7 @@ import java.util.List;
  *
  * @author Ian Springer
  */
-public class IgnoreType extends DataType {
+public class IgnoreType extends AbstractBundleType {
     private List<FileSet> fileSets = new ArrayList<FileSet>();
 
     public void addConfigured(FileSet fileSet) {

@@ -42,7 +42,7 @@ import java.util.List;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class ResourceCriteria extends Criteria {
+public class ResourceCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
@@ -87,7 +87,6 @@ public class ResourceCriteria extends Criteria {
     private boolean fetchResourceErrors;
     private boolean fetchEventSources;
     private boolean fetchProductVersion;
-    private boolean fetchTags;
 
     private PageOrdering sortName;
     private PageOrdering sortInventoryStatus;
@@ -297,10 +296,6 @@ public class ResourceCriteria extends Criteria {
 
     public void fetchProductVersion(boolean fetchProductVersion) {
         this.fetchProductVersion = fetchProductVersion;
-    }
-
-    public void fetchTags(boolean fetchTags) {
-        this.fetchTags = fetchTags;
     }
 
     public void addSortName(PageOrdering sortName) {

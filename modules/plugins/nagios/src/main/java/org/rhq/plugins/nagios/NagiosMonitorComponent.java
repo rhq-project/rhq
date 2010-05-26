@@ -137,32 +137,37 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         {
         	try
     		{ // Don't let one bad egg spoil the cake
-        		
-        		String[] splitter = req.getName().split("|");
+
+        		String[] splitter = req.getName().split("\\|");
         		String property = splitter[1];
         		String pattern = splitter[2];
-        		
+
         		log.info("Name of Metric: " + property);
         		log.info("RegEx: " + pattern);
 
                 if (req.getDataType() == DataType.MEASUREMENT) {
                     String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost").getValue(); // TODO use 'real' host
-                    
+
                     Pattern p = Pattern.compile(pattern);
                     Matcher m = p.matcher(value);
-                    String val = m.group(1);
-                    
-                    MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(val));
-                    report.addData(res);
+                    if (m.matches()) {
+                        String val = m.group(1);
+
+                        MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(val));
+                        report.addData(res);
+                    }
+                    else {
+                        log.warn("Pattern >>" + pattern + "<< did not match for input >>" + value + "<< and request: >>" + req.getName());
+                    }
                 }
                 else if(req.getDataType() == DataType.TRAIT)
                 {
                     String value = nagiosSystemData.getSingleHostServiceMetric(req.getName(), serviceName, "localhost").getValue(); // TODO use 'real' host
-                    
+
                     Pattern p = Pattern.compile(pattern);
                     Matcher m = p.matcher(value);
                     String val = m.group(1);
-                    
+
                     MeasurementDataTrait res = new MeasurementDataTrait(req, val);
                     report.addData(res);
                 }

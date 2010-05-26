@@ -27,16 +27,16 @@
             </plugin-configuration>
 
         <service name="Root Partition" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="root partition service">
-            <metric property="free_space|plugin_output|.*/ ([\\d]+).*" displayName="free_space" measurementType="dynamic" units="megabytes" displayType="summary"/>
+            <metric property="free_space|plugin_output|.*/ ([\d]+).*" displayName="free_space" measurementType="dynamic" units="megabytes" displayType="summary"/>
 		</service>
         <service name="Current Load" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="current load service">
-            <metric property="load_average|plugin_output|.*: ([\\d]+\\.[\\d]+), ([\\d]+\\.[\\d]+), ([\\d]+\\.[\\d]+).*" displayName="loadAverage" measurementType="dynamic" units="none" displayType="summary"/>
+            <metric property="load_average|plugin_output|.*: ([\d]+\\.[\d]+), ([\d]+\.[\d]+), ([\d]+\.[\d]+).*" displayName="loadAverage" measurementType="dynamic" units="none" displayType="summary"/>
 		</service>
         <service name="Current Users" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="current users service">
-            <metric property="current_users|plugin_output|.*- ([\\d]+).*" displayName="current_users" measurementType="dynamic" units="none" displayType="summary"/>
+            <metric property="current_users|plugin_output|.*- ([\d]+).*" displayName="User count" measurementType="dynamic" units="none" displayType="summary"/>
 		</service>
         <service name="Total Processes" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="total processes service">
-            <metric property="total_processes|plugin_output|.*: ([\\d]+).*" displayName="total_pocesses" measurementType="dynamic" units="none" displayType="summary"/>
+            <metric property="total_processes|plugin_output|.*: ([\d]+).*" displayName="Process count" measurementType="dynamic" units="none" displayType="summary"/>
 		</service>
 	</server>
 </plugin>

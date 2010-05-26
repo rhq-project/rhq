@@ -18,6 +18,7 @@ package org.rhq.plugins.nagios.parser;
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import org.rhq.plugins.nagios.data.NagiosData;
@@ -63,16 +64,17 @@ public class LqlReplyParser
 
 	/**
 	 * Method to parse a LQLStatusReply
-	 * @param nagiosData is concrete instance of a class that has to implement the interface NagiosData
+	 * @param data is concrete instance of a class that has to implement the interface NagiosData
 	 */
 	public void parseLqlStatusReply(LqlReply statusReply, NagiosData data) throws InvalidReplyTypeException
 	{
 		String[] metricNames = null;
 		String[] metricValues = null;;
 
-		if(statusReply.getContext().getNagiosRequestType() == NagiosRequestTypes.STATUS_REQUEST)
+        ArrayList<String> lqlReply = statusReply.getLqlReply();
+        if(statusReply.getContext().getNagiosRequestType() == NagiosRequestTypes.STATUS_REQUEST)
 		{
-			metricValues = statusReply.getLqlReply().get(0).split(Pattern.quote(";"));
+			metricValues = lqlReply.get(0).split(Pattern.quote(";"));
 		}
 		else
 		{
@@ -81,8 +83,8 @@ public class LqlReplyParser
 
 		//Status reply contains always two strings, first string is the name of the metrics
 		//and the second string are the values that belong to the metrics
-		metricNames = statusReply.getLqlReply().get(0).split(Pattern.quote(";"));
-		metricValues = statusReply.getLqlReply().get(1).split(Pattern.quote(";"));
+		metricNames = lqlReply.get(0).split(Pattern.quote(";"));
+		metricValues = lqlReply.get(1).split(Pattern.quote(";"));
 
 		//First param is not used in status objects and can be null
 		data.fillWithData(null, metricNames, metricValues);
@@ -90,17 +92,18 @@ public class LqlReplyParser
 
 	/**
 	 * Method to parse a LQLStatusReply
-	 * @param nagiosData is concrete instance of a class that has to implement the interface NagiosData
+	 * @param data is concrete instance of a class that has to implement the interface NagiosData
 	 */
 	public void parseLqlServiceReply(LqlReply serviceReply, NagiosData data) throws InvalidReplyTypeException
 	{
-		String[] ressourceNames = null;
+		String[] resourceNames = null;
 		String[] metricNames = null;
 		String[] metricValues = null;
 
-		if(serviceReply.getContext().getNagiosRequestType() == NagiosRequestTypes.SERVICE_REQUEST)
+        ArrayList<String> lqlReply = serviceReply.getLqlReply();
+        if(serviceReply.getContext().getNagiosRequestType() == NagiosRequestTypes.SERVICE_REQUEST)
 		{
-			metricValues = serviceReply.getLqlReply().get(0).split(Pattern.quote(";"));
+			metricValues = lqlReply.get(0).split(Pattern.quote(";"));
 		}
 		else
 		{
@@ -108,21 +111,31 @@ public class LqlReplyParser
 		}
 
 		//First element is always the number of services running
-		int numberOfRessources = Integer.parseInt(serviceReply.getLqlReply().get(0));
+		int numberOfResources = Integer.parseInt(lqlReply.get(0));
 		//Delete first element after information is stored
-		serviceReply.getLqlReply().remove(0);
+		lqlReply.remove(0);
 
-		for(int ressourceCounter = 0; ressourceCounter < numberOfRessources; ressourceCounter++)
+		for(int resourceCounter = 0; resourceCounter < numberOfResources; resourceCounter++)
 		{
 			//For each resource get the name --> the first elements contain the names
-			ressourceNames = serviceReply.getLqlReply().get(ressourceCounter).split(Pattern.quote(";"));
+			resourceNames = lqlReply.get(resourceCounter).split(Pattern.quote(";"));
     		//After the names of the resources there are always the names of the metrics
-			metricNames = serviceReply.getLqlReply().get(numberOfRessources).split(Pattern.quote(";"));
+			metricNames = lqlReply.get(numberOfResources).split(Pattern.quote(";"));
     		//After the names of the metrics there are the values to each resource
-			metricValues = serviceReply.getLqlReply().get(ressourceCounter + (numberOfRessources + 1)).split(Pattern.quote(";"), metricNames.length);
+            int i = 0;
+            for (String name : metricNames) {
+                if (name.equals("display_name"))
+                    break;
+                i++;
+            }
+
+
+			metricValues = lqlReply.get(resourceCounter + (numberOfResources + 1)).split(Pattern.quote(";"), metricNames.length);
+            String resourceName = metricValues[i];
+            resourceNames[0] = resourceName;
 
 			//for a service all information are necessary because there is more than one service per host
-			data.fillWithData(ressourceNames, metricNames, metricValues);
+			data.fillWithData(resourceNames, metricNames, metricValues);
 		}
 	}
 }

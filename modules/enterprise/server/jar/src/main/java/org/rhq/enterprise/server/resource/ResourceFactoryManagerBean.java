@@ -320,7 +320,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         CreateResourceHistory history = new CreateResourceHistory(parentResource, resourceType, user.getName(),
             (InstalledPackage) null);
         history.setCreatedResourceName(createResourceName);
-        //        history.setConfiguration(deploymentTimeConfiguration);
+        history.setConfiguration(deploymentTimeConfiguration);
         history.setStatus(CreateResourceStatus.IN_PROGRESS);
 
         entityManager.persist(history);

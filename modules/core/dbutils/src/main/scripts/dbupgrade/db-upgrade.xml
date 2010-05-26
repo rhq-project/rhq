@@ -2963,12 +2963,13 @@
                     </statement>
                 </schema-directSQL>                
             </schemaSpec>
-
             
            <schemaSpec version="2.87">
                <schema-directSQL>
-                   <statement desc="Make RHQ_RES_TYPE_IDX_PLG_NAME index unique">
-                       DROP INDEX RHQ_RES_TYPE_IDX_PLG_NAME ;
+                   <statement desc="Drop non-unique RHQ_RES_TYPE_IDX_PLG_NAME index">
+                       DROP INDEX RHQ_RES_TYPE_IDX_PLG_NAME
+                   </statement>                       
+                   <statement desc="Recreate RHQ_RES_TYPE_IDX_PLG_NAME index as unique">                   
                        CREATE UNIQUE INDEX RHQ_RES_TYPE_IDX_PLG_NAME ON RHQ_RESOURCE_TYPE (name, plugin)
                    </statement>
                </schema-directSQL>

@@ -30,6 +30,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -319,7 +320,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         CreateResourceHistory history = new CreateResourceHistory(parentResource, resourceType, user.getName(),
             (InstalledPackage) null);
         history.setCreatedResourceName(createResourceName);
-        history.setConfiguration(deploymentTimeConfiguration);
+        //        history.setConfiguration(deploymentTimeConfiguration);
         history.setStatus(CreateResourceStatus.IN_PROGRESS);
 
         entityManager.persist(history);
@@ -529,6 +530,19 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
                 packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, newResourceTypeId);
         }
 
+        //check that Configuration is persisted correctly.
+        if (deploymentTimeConfiguration.getId() > 0) {
+            entityManager.merge(deploymentTimeConfiguration);
+        } else {
+            entityManager.persist(deploymentTimeConfiguration);
+        }
+        //check that Configuration is persisted correctly.
+        if (pluginConfiguration.getId() > 0) {
+            entityManager.merge(pluginConfiguration);
+        } else {
+            entityManager.persist(pluginConfiguration);
+        }
+
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,
             newResourceTypeId, newResourceName, packageVersion, deploymentTimeConfiguration);
@@ -544,6 +558,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             AgentClient agentClient = agentManager.getAgentClient(agent);
             ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
             resourceFactoryAgentService.createResource(request);
+        } catch (NoResultException nre) {
+            //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
         } catch (Exception e) {
             log.error("Error while sending create resource request to agent service", e);
 

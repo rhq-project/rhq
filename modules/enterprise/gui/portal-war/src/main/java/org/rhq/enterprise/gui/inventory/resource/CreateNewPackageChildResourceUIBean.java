@@ -29,6 +29,7 @@ import java.util.Map;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
+import javax.persistence.NoResultException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -212,6 +213,8 @@ public class CreateNewPackageChildResourceUIBean {
 
                 }
 
+            } catch (NoResultException nre) {
+                //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
             } catch (Exception e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,

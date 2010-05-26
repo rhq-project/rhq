@@ -333,7 +333,6 @@
                 <rich:column colspan="#{param.debug ? 8 : 7}"
                   width="100%">
 
-                  <ui:remove>
                   <!-- The ability to associate/disassociate repos with content sources is not needed for JON. -->
                   <h:commandButton
                     action="#{RepoContentSourcesUIBean.associateWithContentProviders}"
@@ -344,7 +343,6 @@
                     value="DISASSOCIATE SELECTED"
                     target="selectedRepoContentProviders"
                     styleClass="on-pager-button buttonsmall" />
-                  </ui:remove>
 
                   <ui:param name="paginationDataTableName"
                     value="repoContentProvidersDataTable" />

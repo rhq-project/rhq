@@ -27,6 +27,7 @@ import java.util.Map;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
+import javax.persistence.NoResultException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -79,6 +80,12 @@ public class CreateNewPackageUIBean {
      * repo.
      */
     private static final String REPO_OPTION_NEW = "new";
+
+    /**
+     * Option value for no repo.  This is a standalone war that may not be related to any repo.
+     * 
+     */
+    private static final String REPO_OPTION_NONE = "none";
 
     private String packageName;
     private String version;
@@ -153,6 +160,7 @@ public class CreateNewPackageUIBean {
 
         String repoOption = request.getParameter("repoOption");
         UploadItem fileItem = uploadUIBean.getFileItem();
+        boolean usingARepo = true;
 
         // Validate
         if (packageName == null || packageName.trim().equals("")) {
@@ -182,15 +190,21 @@ public class CreateNewPackageUIBean {
             return null;
         }
 
+        if (repoOption.equalsIgnoreCase(REPO_OPTION_NONE)) {
+            usingARepo = false;
+        }
+
         // Determine which repo the package will go into
         String repoId = null;
-        try {
-            repoId = determineRepo(repoOption, subject, resource.getId());
-        } catch (ContentException ce) {
-            String errorMessages = ThrowableUtil.getAllMessages(ce);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repository. Cause: "
-                + errorMessages);
-            return "failure";
+        if (usingARepo) {
+            try {
+                repoId = determineRepo(repoOption, subject, resource.getId());
+            } catch (ContentException ce) {
+                String errorMessages = ThrowableUtil.getAllMessages(ce);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repository. Cause: "
+                    + errorMessages);
+                return "failure";
+            }
         }
 
         try {
@@ -215,11 +229,9 @@ public class CreateNewPackageUIBean {
                workflow and we'll deal with the refactoring later.
                jdobies, Feb 27, 2008
              */
-            PackageVersion packageVersion;
+            PackageVersion packageVersion = null;
             try {
                 ContentManagerLocal contentManager = LookupUtil.getContentManager();
-                packageVersion = contentManager.createPackageVersion(packageName, packageTypeId, version,
-                    architectureId, packageStream);
 
                 //store information about uploaded file for packageDetails as most of it is already available
                 Map<String, String> packageUploadDetails = new HashMap<String, String>();
@@ -244,26 +256,30 @@ public class CreateNewPackageUIBean {
                 packageVersion = contentManager.getUploadedPackageVersion(packageName, packageTypeId, version,
                     architectureId, packageStream, packageUploadDetails, newResourceTypeId);
 
+            } catch (NoResultException nre) {
+                //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
             } catch (Exception e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName
-                    + "] in repo. Cause: " + errorMessages);
+                    + "] in repository. Cause: " + errorMessages);
                 return "failure";
             }
 
             int[] packageVersionList = new int[] { packageVersion.getId() };
 
             // Add the package to the repo
-            try {
-                int iRepoId = Integer.parseInt(repoId);
+            if (usingARepo) {
+                try {
+                    int iRepoId = Integer.parseInt(repoId);
 
-                RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-                repoManager.addPackageVersionsToRepo(subject, iRepoId, packageVersionList);
-            } catch (Exception e) {
-                String errorMessages = ThrowableUtil.getAllMessages(e);
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package ["
-                    + packageName + "] with repository ID [" + repoId + "]. Cause: " + errorMessages);
-                return "failure";
+                    RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+                    repoManager.addPackageVersionsToRepo(subject, iRepoId, packageVersionList);
+                } catch (Exception e) {
+                    String errorMessages = ThrowableUtil.getAllMessages(e);
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package ["
+                        + packageName + "] with repository ID [" + repoId + "]. Cause: " + errorMessages);
+                    return "failure";
+                }
             }
 
             // Put the package ID in the session so it can fit into the deploy existing package workflow

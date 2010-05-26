@@ -47,19 +47,18 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**
-    * Support manually adding this resource type via Platform's inventory tab
-    * @param configuration
-    * @param resourceDiscoveryContext
-    * @return
+    * Support manually adding the NagiosMonitor server resource type via Platform's inventory tab
+    * @param configuration Configuration data the user passed in from the UI
+    * @param resourceDiscoveryContext Discovery context from the plugin container
+    * @return Our server type
     * @throws org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException
      */
    public DiscoveredResourceDetails discoverResource(Configuration configuration, ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException {
 
-	   String nagiosHost = configuration.getSimpleValue("nagiosHost",NagiosMonitorComponent.DEFAULT_NAGIOSIP);
-	   String nagiosPort = configuration.getSimpleValue("nagiosPort",NagiosMonitorComponent.DEFAULT_NAGIOSPORT);
+        String nagiosHost = configuration.getSimpleValue("nagiosHost",NagiosMonitorComponent.DEFAULT_NAGIOSIP);
+        String nagiosPort = configuration.getSimpleValue("nagiosPort",NagiosMonitorComponent.DEFAULT_NAGIOSPORT);
 
-        DiscoveredResourceDetails detail = new DiscoveredResourceDetails
-        (
+        DiscoveredResourceDetails detail = new DiscoveredResourceDetails (
         		resourceDiscoveryContext.getResourceType(),
         		"nagios@"+nagiosHost+":"+nagiosPort,
         		"Nagios@"+nagiosHost+":"+nagiosPort,
@@ -68,35 +67,35 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
         		configuration,
         		null
         );
+        log.info("Adding NagiosMonitor " + detail);
 
-      return detail;
-   }
+        return detail;
+    }
 
     /**
-     * Don't run the auto-discovery of this "nagios" server type,
-     * as we probably won't have one on each platform. Rather have the admin
-     * explicitly add it to one platform.
+     * Don run the auto-discovery for the services below the NagiosMonitor server type.
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
-    	Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
+        Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
         // If we have no parent, it means the NagioMonitoring server type is not yet up.
         ResourceComponent tmpComponent = discoveryContext.getParentResourceComponent();
         if (tmpComponent ==null || !(tmpComponent instanceof NagiosMonitorComponent))
-                return discoveredResources;
+            return discoveredResources;
 
         NagiosMonitorComponent parentComponent = (NagiosMonitorComponent) tmpComponent;
-       String nagiosHost = parentComponent.getNagiosHost();
-	   int nagiosPort = parentComponent.getNagiosPort();
+        String nagiosHost = parentComponent.getNagiosHost();
+        int nagiosPort = parentComponent.getNagiosPort();
 
-       	//Method requests available nagios services an returns the names of them
-       	LqlReply resourceTypeReply = getResourceTypeInformation(nagiosHost, nagiosPort);
+        //Method requests available nagios services an returns the names of them
+        LqlReply resourceTypeReply = getResourceTypeInformation(nagiosHost, nagiosPort);
 
+        // the resource type we are interested in this invocation
+        ResourceType wanted = discoveryContext.getResourceType();
        	//for each available service
 		for(int i = 0; i < resourceTypeReply.getLqlReply().size(); i++)
 		{
 
-            ResourceType wanted = discoveryContext.getResourceType();
             String nagiosType = resourceTypeReply.getLqlReply().get(i);
             if (!nagiosType.equals(wanted.getName()))
                     continue;
@@ -116,6 +115,7 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
 
 			//add DiscoveredResourceDetails instance to Set
 			discoveredResources.add(detail);
+            log.info("Discovered a nagios service: " + detail);
 		}
 
        return discoveredResources;

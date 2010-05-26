@@ -28,6 +28,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.plugins.nagios.reply.LqlReply;
 import org.rhq.plugins.nagios.request.LqlRequest;
 
@@ -39,6 +42,8 @@ import org.rhq.plugins.nagios.request.LqlRequest;
  */
 public class NetworkConnection
 {
+    private static final Log log = LogFactory.getLog(NetworkConnection.class);
+
     /**
      * Destination ip adress and port
      */
@@ -57,7 +62,6 @@ public class NetworkConnection
 	 *
 	 * @param destinationAdress - Adress of Host where MK_livestatus runs
 	 * @param destinationPort - Port to communicate with Mk_livetstatus
-	 * @param lqlRequest -  LivestatusQueryLanguage request which is sent to MK_livetstatus
 	 */
 	public NetworkConnection(String destinationAdress, int destinationPort)
 	{
@@ -76,7 +80,6 @@ public class NetworkConnection
 
 	/**
 	 * Method opens connection to Nagios
-	 * @throws UnknownHostException
 	 * @throws IOException
 	 */
 	public void openConnection() throws UnknownHostException, IOException
@@ -102,6 +105,7 @@ public class NetworkConnection
     /**
      * Method sends all commands which are contained in the query,
 	 * receives the answers an writes them to the reply object
+ 	 * @param lqlRequest -  LivestatusQueryLanguage request which is sent to MK_livetstatus
      */
 	public LqlReply sendAndReceive(LqlRequest lqlRequest)
     {
@@ -131,13 +135,9 @@ public class NetworkConnection
 
 				closeConnection();
 			}
-    		catch (UnknownHostException e)
-    		{
-				//log.error(e);
-			}
     		catch (IOException e)
     		{
-  			   //log.error(e);
+  			   log.error("Error in sendAndReceive: " + e.getMessage());
 			}
 		}
 		//Write whole result list to LqlReply object

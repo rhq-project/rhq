@@ -69,6 +69,11 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "   AND pv.generalPackage.packageType.name = :packageTypeName "
         + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId "
         + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_SHA, query = "SELECT pv FROM PackageVersion AS pv "
+        + " WHERE pv.generalPackage.name = :packageName "
+        + "   AND pv.generalPackage.packageType.name = :packageTypeName " + "   AND pv.sha256 = :sha "
+        + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId "
+        + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID, query = "SELECT pv.id "
         + "  FROM PackageVersion AS pv " + "       JOIN pv.generalPackage.packageType.resourceType.resources r "
         + " WHERE pv.generalPackage.name = :packageName "
@@ -249,6 +254,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_PACKAGE_SHA = "PackageVersion.findByPackageSha";
     public static final String QUERY_FIND_BY_PACKAGE_SHA_RES_TYPE = "PackageVersion.findByPackageShaResType";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY = "PackageVersion.findByPackageDetailsKey";
+    public static final String QUERY_FIND_BY_PACKAGE_DETAILS_SHA = "PackageVersion.findByPackageDetailsSha";
     public static final String QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID = "PackageVersion.findIdByPackageDetailsKeyAndResId";
     public static final String QUERY_FIND_BY_REPO_ID = "PackageVersion.findByRepoId";
     public static final String QUERY_FIND_BY_REPO_ID_FILTERED = "PackageVersion.findByRepoIdFiltered";

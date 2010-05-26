@@ -142,8 +142,10 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         		String property = splitter[1];
         		String pattern = splitter[2];
 
-        		log.info("Name of Metric: " + property);
-        		log.info("RegEx: " + pattern);
+                if (log.isDebugEnabled()) {
+                    log.debug("Name of Metric: " + property);
+                    log.debug("RegEx: " + pattern);
+                }
 
                 if (req.getDataType() == DataType.MEASUREMENT) {
                     String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost").getValue(); // TODO use 'real' host

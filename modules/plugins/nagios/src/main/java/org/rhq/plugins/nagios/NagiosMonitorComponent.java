@@ -19,6 +19,8 @@ package org.rhq.plugins.nagios;
  */
 
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -123,11 +125,6 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         {
             //Getting all Nagios system information
         	nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
-
-//            log.info(nagiosSystemData.getSingleHostServiceMetric("execution_time", "Current Load", "localhost").getValue());
-//            log.info(nagiosSystemData.getSingleHostServiceMetric("host_execution_time", "Current Load", "localhost").getValue());
-//            log.info(nagiosSystemData.getSingleHostServiceMetric("host_check_period", "Current Load", "localhost").getValue());
-
         }
         catch (Exception e)
         {
@@ -140,16 +137,33 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         {
         	try
     		{ // Don't let one bad egg spoil the cake
+        		
+        		String[] splitter = req.getName().split("|");
+        		String property = splitter[1];
+        		String pattern = splitter[2];
+        		
+        		log.info("Name of Metric: " + property);
+        		log.info("RegEx: " + pattern);
 
                 if (req.getDataType() == DataType.MEASUREMENT) {
-                    String value = nagiosSystemData.getSingleHostServiceMetric(req.getName(), serviceName, "localhost").getValue(); // TODO use 'real' host
-                    MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(value));
+                    String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost").getValue(); // TODO use 'real' host
+                    
+                    Pattern p = Pattern.compile(pattern);
+                    Matcher m = p.matcher(value);
+                    String val = m.group(1);
+                    
+                    MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(val));
                     report.addData(res);
                 }
                 else if(req.getDataType() == DataType.TRAIT)
                 {
                     String value = nagiosSystemData.getSingleHostServiceMetric(req.getName(), serviceName, "localhost").getValue(); // TODO use 'real' host
-                    MeasurementDataTrait res = new MeasurementDataTrait(req, value);
+                    
+                    Pattern p = Pattern.compile(pattern);
+                    Matcher m = p.matcher(value);
+                    String val = m.group(1);
+                    
+                    MeasurementDataTrait res = new MeasurementDataTrait(req, val);
                     report.addData(res);
                 }
                 else

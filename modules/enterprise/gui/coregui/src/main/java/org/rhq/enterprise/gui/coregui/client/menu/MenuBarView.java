@@ -71,6 +71,9 @@ public class MenuBarView extends VLayout {
     protected void onDraw() {
         super.onDraw();
 
+        this.aboutModalWindow = new AboutModalWindow();
+
+
         // TODO GH: This is a nasty hack... it injects the css to override the smartgwt skin
         String css = ".menuButton, .menuButtonOver, .menuButtonDown, .menuButtonDisabled, .menuButtonSelected, .menuButtonSelectedDown, .menuButtonSelectedOver, .menuButtonSelectedDisabled {\n" +
                 "    border: none;\n" +
@@ -131,7 +134,6 @@ public class MenuBarView extends VLayout {
         overviewMenu.addItem(subsystemsSubMenuItem);
         overviewMenu.addItem(new EMenuItem("AutoDiscovery Queue",LinkManager.getAutodiscoveryQueueLink()));//,new LinkCommand("#cofng"));
         overviewMenu.addItem(new EMenuItem("Dashboard",LinkManager.getDashboardLink()));//,new LinkCommand("#cofng"));
-        overviewMenu.addItem(new EMenuItem("Bundles", "#Bundles"));
 
 
         Menu resourcesMenu = new Menu();
@@ -179,6 +181,7 @@ public class MenuBarView extends VLayout {
 
         Menu contentMenu = new Menu();
         contentMenu.setTitle("Content");
+        contentMenu.addItem(new EMenuItem("Bundles","#Bundles"));
         contentMenu.addItem(new EMenuItem("Content Providers",LinkManager.getAdminContentProvidersLink()));
         contentMenu.addItem(new EMenuItem("Content Repositories",LinkManager.getAdminContentReposLink()));
         MenuItem contentSubMenuItem = new MenuItem("Content");

@@ -89,6 +89,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
                 + "\"/> " + destination.getName()));
 
         DynamicForm form = new DynamicForm();
+        form.setWidth100();
         form.setNumCols(4);
 
         LinkItem bundleName = new LinkItem("bundle");
@@ -118,6 +119,11 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         tagItem.setCanvas(tagEditor);
         tagItem.setRowSpan(4);
 
+        CanvasItem actionItem = new CanvasItem("actions");
+        actionItem.setShowTitle(false);
+        actionItem.setCanvas(getActionLayout());
+        actionItem.setRowSpan(4);
+
         StaticTextItem created = new StaticTextItem("created", "Created");
         created.setValue(new Date(destination.getCtime()));
 
@@ -130,7 +136,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         StaticTextItem path = new StaticTextItem("path", "Path");
         path.setValue(destination.getDeployDir());
 
-        form.setFields(bundleName, tagItem, created, destinationGroup, path);
+        form.setFields(bundleName, tagItem, actionItem, created, destinationGroup, path);
 
         addMember(form);
 
@@ -139,26 +145,33 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         deployments.setShowResizeBar(true);
         addMember(createDeploymentsTable());
 
-        IButton deployButton = new IButton("Deploy");
-        deployButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                new BundleDeployWizard(destination).startBundleWizard();
-            }
-        });
-        addMember(deployButton);
-
-        IButton revertButton = new IButton("Revert");
-        revertButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                new BundleRevertWizard(destination).startBundleWizard();
-            }
-        });
-        addMember(revertButton);
 
         detail = new Canvas();
         detail.setHeight("50%");
         detail.hide();
         addMember(detail);
+    }
+
+    private Canvas getActionLayout() {
+        VLayout actionLayout = new VLayout();
+        IButton deployButton = new IButton("Deploy");
+        deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
+        deployButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                new BundleDeployWizard(destination).startBundleWizard();
+            }
+        });
+        actionLayout.addMember(deployButton);
+
+        IButton revertButton = new IButton("Revert");
+        revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
+        revertButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                new BundleRevertWizard(destination).startBundleWizard();
+            }
+        });
+        actionLayout.addMember(revertButton);
+        return actionLayout;
     }
 
     private Table createDeploymentsTable() {

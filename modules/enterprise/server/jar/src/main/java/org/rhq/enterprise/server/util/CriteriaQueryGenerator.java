@@ -41,9 +41,11 @@ import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.criteria.TaggedCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
@@ -53,7 +55,7 @@ import org.rhq.enterprise.server.search.execution.SearchTranslationManager;
 
 /**
  * A query generator used to generate queries with specific filtering, prefetching, or sorting requirements.
- * 
+ *
  * @author Joseph Marques
  */
 public final class CriteriaQueryGenerator {
@@ -68,6 +70,7 @@ public final class CriteriaQueryGenerator {
     private Criteria criteria;
     private String searchExpressionWhereClause;
 
+
     private String authorizationJoinFragment;
     private String authorizationPermsFragment;
     private String authorizationCustomConditionFragment;
@@ -78,7 +81,15 @@ public final class CriteriaQueryGenerator {
     private String projection;
     private static String NL = System.getProperty("line.separator");
 
+    private static List<String> EXPRESSION_START_KEYWORDS;
+
     private List<Field> persistentBagFields = new ArrayList<Field>();
+
+    static {
+        EXPRESSION_START_KEYWORDS = new ArrayList<String>(2);
+        EXPRESSION_START_KEYWORDS.add("NOT");
+        EXPRESSION_START_KEYWORDS.add("EXISTS");
+    }
 
     public CriteriaQueryGenerator(Criteria criteria) {
         this.criteria = criteria;
@@ -103,7 +114,7 @@ public final class CriteriaQueryGenerator {
     }
 
     private String fixFilterOverride(String expression, String fieldName) {
-        boolean fuzzyMatch = expression.toLowerCase().indexOf(" like ") != -1;
+        boolean fuzzyMatch = expression.toLowerCase().contains(" like ") && !expression.toLowerCase().contains("select"); // Don't fuzzy match subselects
         boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive() && fuzzyMatch;
 
         while (expression.indexOf('?') != -1) {
@@ -111,12 +122,17 @@ public final class CriteriaQueryGenerator {
             expression = expression.replaceFirst("\\?", replacement);
         }
 
-        if (wantCaseInsensitiveMatch) {
-            int indexOfFirstSpace = expression.indexOf(" ");
-            String filterToken = expression.substring(0, indexOfFirstSpace);
-            expression = "LOWER( " + alias + "." + filterToken + " ) " + expression.substring(indexOfFirstSpace);
-        } else {
-            expression = alias + "." + expression;
+        // if the override expression does not follow the usual format of ( field operator expression )
+        // then don't prepend the alias or deal with other special handling. The override must be left
+        // explicit.
+        if (!expressionStartsWithKeyword(expression)) {
+            if (wantCaseInsensitiveMatch) {
+                int indexOfFirstSpace = expression.indexOf(" ");
+                String filterToken = expression.substring(0, indexOfFirstSpace);
+                expression = "LOWER( " + alias + "." + filterToken + " ) " + expression.substring(indexOfFirstSpace);
+            } else {
+                expression = alias + "." + expression;
+            }
         }
 
         if (fuzzyMatch) {
@@ -126,35 +142,42 @@ public final class CriteriaQueryGenerator {
         return expression;
     }
 
+    private boolean expressionStartsWithKeyword(String expression) {
+        expression = expression.trim();
+        int i = expression.trim().indexOf(" ");
+        String startToken = expression.substring(0, i);
+        return EXPRESSION_START_KEYWORDS.contains(startToken.toUpperCase());
+    }
+
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {
         this.authorizationSubjectId = subjectId;
         if (type == AuthorizationTokenType.RESOURCE) {
             if (fragment == null) {
-                this.authorizationJoinFragment = "" // 
-                    + "JOIN " + alias + ".implicitGroups authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
+                this.authorizationJoinFragment = "" //
+                        + "JOIN " + alias + ".implicitGroups authGroup " + NL //
+                        + "JOIN authGroup.roles authRole " + NL //
+                        + "JOIN authRole.subjects authSubject " + NL;
             } else {
                 this.authorizationJoinFragment = "" //
-                    + "JOIN " + alias + "." + fragment + " authRes " + NL // 
-                    + "JOIN authRes.implicitGroups authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
+                        + "JOIN " + alias + "." + fragment + " authRes " + NL //
+                        + "JOIN authRes.implicitGroups authGroup " + NL //
+                        + "JOIN authGroup.roles authRole " + NL //
+                        + "JOIN authRole.subjects authSubject " + NL;
             }
         } else if (type == AuthorizationTokenType.GROUP) {
             if (fragment == null) {
                 this.authorizationJoinFragment = "" // 
-                    + "JOIN " + alias + ".roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
+                        + "JOIN " + alias + ".roles authRole " + NL //
+                        + "JOIN authRole.subjects authSubject " + NL;
             } else {
                 this.authorizationJoinFragment = "" //
-                    + "JOIN " + alias + "." + fragment + " authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
+                        + "JOIN " + alias + "." + fragment + " authGroup " + NL //
+                        + "JOIN authGroup.roles authRole " + NL //
+                        + "JOIN authRole.subjects authSubject " + NL;
             }
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
-                + " does not yet support generating queries for '" + type + "' token types");
+                    + " does not yet support generating queries for '" + type + "' token types");
         }
 
         // If the query results are narrowed by requiredParams generate the fragment now. It's done
@@ -165,16 +188,17 @@ public final class CriteriaQueryGenerator {
         List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
         if (!(null == requiredPerms || requiredPerms.isEmpty())) {
             this.authorizationPermsFragment = "" //
-                + "AND ( SELECT COUNT(DISTINCT p)" + NL //
-                + "      FROM Subject innerSubject" + NL //
-                + "      JOIN innerSubject.roles r" + NL //
-                + "      JOIN r.permissions p" + NL //
-                + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
-                + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
+                    + "AND ( SELECT COUNT(DISTINCT p)" + NL //
+                    + "      FROM Subject innerSubject" + NL //
+                    + "      JOIN innerSubject.roles r" + NL //
+                    + "      JOIN r.permissions p" + NL //
+                    + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
+                    + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
         }
     }
 
     // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
+
     public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
@@ -206,7 +230,7 @@ public final class CriteriaQueryGenerator {
         }
 
         Map<String, Object> filterFields = getFilterFields(criteria);
-        if (filterFields.size() > 0 || authorizationJoinFragment != null) {
+        if (filterFields.size() > 0 || authorizationJoinFragment != null || searchExpressionWhereClause != null) {
             results.append("WHERE ");
         }
 
@@ -416,7 +440,7 @@ public final class CriteriaQueryGenerator {
             }
         } catch (Exception e) {
             LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
-                + ThrowableUtil.getAllMessages(e, true));
+                    + ThrowableUtil.getAllMessages(e, true));
         }
     }
 
@@ -460,7 +484,7 @@ public final class CriteriaQueryGenerator {
      * that method where the persistentBagFields property is initialized.
      *
      * @return Returns a list of fields from the persistent class to which the criteria class corresponds. The fields in
-     * the list are themselves instances of List and have "bag" semantics.
+     *         the list are themselves instances of List and have "bag" semantics.
      */
     public List<Field> getPersistentBagFields() {
         return persistentBagFields;
@@ -470,10 +494,10 @@ public final class CriteriaQueryGenerator {
      * If you want to return something other than the list of entities represented by the passed Criteria object,
      * you can alter the projection here to return a customized subset or superset of data.  The projection will
      * only affect the ResultSet for the data query, not the count query.
-     * 
-     * If you are projecting a composite object that does not directly extend the entity your Criteria object 
+     * <p/>
+     * If you are projecting a composite object that does not directly extend the entity your Criteria object
      * represents, then you will need to manually initialize the persistent bags using the methods exposed on
-     * {@link CriteriaQueryRunner} 
+     * {@link CriteriaQueryRunner}
      */
     public void alterProjection(String projection) {
         this.projection = projection;
@@ -495,34 +519,43 @@ public final class CriteriaQueryGenerator {
     }
 
     private void setBindValues(Query query, boolean countQuery) {
-        boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive();
-        boolean wantsFuzzyMatching = !criteria.isStrict();
 
         for (Map.Entry<String, Object> critField : getFilterFields(criteria).entrySet()) {
             Object value = critField.getValue();
-            if (value instanceof String) {
-                String formattedValue = (String) value;
 
-                if (wantsFuzzyMatching) {
-                    formattedValue = "%" + QueryUtility.escapeSearchParameter(formattedValue) + "%";
+            if (value instanceof Tag) {
+                Tag tag = (Tag) value;
+                query.setParameter("tagNamespace", tag.getNamespace());
+                query.setParameter("tagSemantic", tag.getSemantic());
+                query.setParameter("tagName", tag.getName());
+
+            } else {
+                if (value instanceof String) {
+                    value = prepareStringBindValue((String) value);
                 }
-
-                if (wantCaseInsensitiveMatch) {
-                    formattedValue = formattedValue.toLowerCase();
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
                 }
-
-                value = formattedValue;
+                query.setParameter(critField.getKey(), value);
             }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
-            }
-            query.setParameter(critField.getKey(), value);
         }
         if (null != this.authorizationPermsFragment) {
             List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
             query.setParameter("requiredPerms", requiredPerms);
             query.setParameter("requiredPermsSize", (long) requiredPerms.size());
         }
+    }
+
+    private String prepareStringBindValue(String value) {
+        if (!criteria.isStrict()) {
+            value = "%" + QueryUtility.escapeSearchParameter(value) + "%";
+        }
+
+        if (!criteria.isCaseSensitive()) {
+            value = value.toLowerCase();
+        }
+
+        return value;
     }
 
     public static void main(String[] args) {

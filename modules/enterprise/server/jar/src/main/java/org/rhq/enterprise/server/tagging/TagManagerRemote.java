@@ -30,6 +30,7 @@ import javax.ejb.Remote;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.Tag;
+import org.rhq.core.domain.tagging.compsite.TagReportComposite;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -56,6 +57,8 @@ public interface TagManagerRemote {
 
     void updateBundleDeploymentTags(Subject subject, int bundleDeploymentId, Set<Tag> tags);
 
+    void updateBundleDestinationTags(Subject subject, int bundleDestinationId, Set<Tag> tags);
 
+    PageList<TagReportComposite> findTagReportCompositesByCriteria(Subject subject, TagCriteria tagCriteria);
 
 }

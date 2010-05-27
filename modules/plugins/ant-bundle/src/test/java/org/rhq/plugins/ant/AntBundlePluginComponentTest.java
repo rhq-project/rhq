@@ -35,8 +35,9 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
@@ -47,6 +48,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
@@ -122,6 +124,7 @@ public class AntBundlePluginComponentTest {
     /**
      * Test a Ant script that includes all of the RHQ tasks.
      */
+    @Test(enabled = false)
     public void testAntBundle() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
@@ -130,6 +133,8 @@ public class AntBundlePluginComponentTest {
         Bundle bundle = new Bundle("testSimpleBundle", bundleType, repo, packageType);
         BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
             getRecipeFromFile("test-build.xml"));
+        BundleDestination destination = new BundleDestination(bundle, "testSimpleBundle", new ResourceGroup(
+            "testSimpleBundle"), "/jboss");
 
         Configuration config = new Configuration();
         config.put(new PropertySimple("custom.prop1", "custom property 1"));
@@ -138,7 +143,7 @@ public class AntBundlePluginComponentTest {
         BundleDeployment deployment = new BundleDeployment();
         deployment.setBundleVersion(bundleVersion);
         deployment.setConfiguration(config);
-        deployment.setInstallDir(USER_HOME + "/jboss");
+        deployment.setDestination(destination);
 
         File file1 = new File(tmpDir, "test-v2.properties");
         File file2 = new File(tmpDir, "package.zip");
@@ -163,13 +168,15 @@ public class AntBundlePluginComponentTest {
 
     private String getRecipeFromFile(String filename) {
         InputStream stream = getClass().getClassLoader().getResourceAsStream(filename);
+
         byte[] contents = StreamUtil.slurp(stream);
         return new String(contents);
     }
 
     private class MockBundleManagerProvider implements BundleManagerProvider {
-        public void auditDeployment(BundleResourceDeployment deployment, String action, BundleDeploymentStatus status,
-            String message) throws Exception {
+        public void auditDeployment(BundleResourceDeployment deployment, String action, String info,
+            BundleResourceDeploymentHistory.Category category, BundleResourceDeploymentHistory.Status status,
+            String message, String attachment) throws Exception {
             System.out.println("Auditing deployment step [" + message + "]...");
         }
 

@@ -28,18 +28,28 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypePluginTreeDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceSelector extends AbstractSelector {
+public class ResourceSelector extends AbstractSelector<Resource> {
+
+    private Integer requireTypeId;
 
     public ResourceSelector() {
         super();
+    }
+
+    public Integer getRequireTypeId() {
+        return requireTypeId;
+    }
+
+    public void setRequireTypeId(Integer requireTypeId) {
+        this.requireTypeId = requireTypeId;
+        markForRedraw();
     }
 
     protected DynamicForm getAvailableFilterForm() {
@@ -48,27 +58,43 @@ public class ResourceSelector extends AbstractSelector {
         final TextItem search = new TextItem("search", "Search");
 
         IPickTreeItem typeSelectItem = new IPickTreeItem("type", "Type");
-        typeSelectItem.setDataSource(new ResourceTypeTreeDataSource());
+        typeSelectItem.setDataSource(new ResourceTypePluginTreeDataSource());
         typeSelectItem.setValueField("id");
         typeSelectItem.setCanSelectParentItems(true);
         typeSelectItem.setLoadDataOnDemand(false);
+        typeSelectItem.setEmptyMenuMessage("Loading...");
+        typeSelectItem.setShowIcons(true);
 
-        SelectItem categorySelect = new SelectItem("category", "Category");
-        categorySelect.setValueMap("Platform", "Server", "Service");
-        categorySelect.setAllowEmptyValue(true);
-        availableFilterForm.setItems(search, typeSelectItem, categorySelect);
+        if (requireTypeId != null) {
+            typeSelectItem.setValue(requireTypeId);
+            typeSelectItem.setDisabled(true);
+            availableFilterForm.setItems(search, typeSelectItem);
+        } else {
+            SelectItem categorySelect = new SelectItem("category", "Category");
+            categorySelect.setValueMap("Platform", "Server", "Service");
+            categorySelect.setAllowEmptyValue(true);
+
+            availableFilterForm.setItems(search, typeSelectItem, categorySelect);
+        }
 
         return availableFilterForm;
     }
 
-    protected RPCDataSource<?> getDataSource() {
+    protected RPCDataSource<Resource> getDataSource() {
         return new SelectedResourceDataSource();
     }
 
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
         Criteria latestCriteria = new Criteria();
         latestCriteria.setAttribute("name", availableFilterForm.getValue("search"));
-        latestCriteria.setAttribute("type", availableFilterForm.getValue("type"));
+
+        // If its a number its a typeId, otherwise a plugin name
+        try {
+            Integer.parseInt((String) availableFilterForm.getValue("type"));
+            latestCriteria.setAttribute("type", availableFilterForm.getValue("type"));
+        } catch (NumberFormatException nfe) {
+            latestCriteria.setAttribute("plugin", availableFilterForm.getValue("type"));
+        }
         latestCriteria.setAttribute("category", availableFilterForm.getValue("category"));
 
         return latestCriteria;

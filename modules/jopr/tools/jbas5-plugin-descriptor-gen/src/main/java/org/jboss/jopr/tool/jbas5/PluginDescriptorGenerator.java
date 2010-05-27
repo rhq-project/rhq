@@ -105,8 +105,8 @@ public class PluginDescriptorGenerator
     public static void main(String[] args) throws Exception
     {
         String namingURL = "jnp://127.0.0.1:1099/";
-        String principal = null;
-        String credentials = null;
+        String principal = "admin";
+        String credentials = "admin";
         ProfileServiceConnectionProvider connectionProvider =
                 new RemoteProfileServiceConnectionProvider(namingURL, principal, credentials);
         ProfileServiceConnection connection = connectionProvider.connect();

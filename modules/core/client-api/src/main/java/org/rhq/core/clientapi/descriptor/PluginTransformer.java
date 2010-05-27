@@ -100,7 +100,7 @@ public class PluginTransformer {
         if (version == null) {
             version = getVersionFromPluginJarManifest(pluginURL);
         }
-
+        
         if (version == null) {
             throw new PluginTransformException("No version is defined for plugin jar [" + pluginURL
                 + "]. A version must be defined either via the MANIFEST.MF '" + Attributes.Name.IMPLEMENTATION_VERSION

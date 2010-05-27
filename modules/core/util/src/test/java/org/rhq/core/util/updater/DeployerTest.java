@@ -207,7 +207,7 @@ public class DeployerTest {
     private void baseUpdateTest(boolean realize, boolean ignore) throws Exception {
         DeployDifferences diff;
 
-        final Pattern filesToRealizeRegex = realize ? Pattern.compile("fileA") : null;
+        final Pattern realizeRegex = realize ? Pattern.compile("fileA") : null;
         final Pattern ignoreRegex = ignore ? Pattern.compile("ignoreme.*") : null;
         File fileToIgnore = null;
 
@@ -253,9 +253,18 @@ public class DeployerTest {
             Map<File, File> rawFiles = new HashMap<File, File>(1);
             rawFiles.put(testRawFileA, updaterAabsolute); // raw file to absolute path
             File destDir = tmpDir;
-            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
-                templateEngine, ignoreRegex);
+            Map<File, Pattern> filesToRealizeRegex1 = new HashMap<File, Pattern>(1);
+            filesToRealizeRegex1.put(testZipFile1, realizeRegex);
+            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex1,
+                null, templateEngine, ignoreRegex);
+            Deployer deployer = new Deployer(dd);
             diff = new DeployDifferences();
+
+            DeploymentDiskUsage diskUsage = deployer.estimateDiskUsage();
+            assert diskUsage.getMaxDiskUsable() > 0L;
+            assert diskUsage.getDiskUsage() > 0L;
+            assert diskUsage.getFileCount() == 6 : "should have been 5 files in zip and 1 raw file";
+
             deployer.deploy(diff);
 
             if (ignore) {
@@ -280,8 +289,11 @@ public class DeployerTest {
             zipFiles.add(testZipFile2);
             rawFiles = new HashMap<File, File>(1);
             rawFiles.put(testRawFileB, updaterBabsolute); // raw file to absolute path
-            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
-                ignoreRegex);
+            Map<File, Pattern> filesToRealizeRegex2 = new HashMap<File, Pattern>(1);
+            filesToRealizeRegex2.put(testZipFile2, realizeRegex);
+            dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex2, null,
+                templateEngine, ignoreRegex);
+            deployer = new Deployer(dd);
             diff = new DeployDifferences();
             deployer.deploy(diff);
 
@@ -299,12 +311,14 @@ public class DeployerTest {
             boolean isWindows = File.separatorChar == '\\';
             String updaterBabsoluteBackupTo1;
             String updaterBabsoluteBackupTo2;
+            String updaterBabsoluteBackupTo3;
             if (!isWindows) {
                 updaterBabsoluteBackupTo1 = new File(metadir, "1/ext-backup/" + updaterBabsolute.getAbsolutePath())
                     .getAbsolutePath();
                 updaterBabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + updaterBabsolute.getAbsolutePath())
                     .getAbsolutePath();
-                assert new File(updaterBabsoluteBackupTo1).exists() : "missing updateB.txt backup";
+                updaterBabsoluteBackupTo3 = new File(metadir, "3/ext-backup/" + updaterBabsolute.getAbsolutePath())
+                    .getAbsolutePath();
             } else {
                 StringBuilder str = new StringBuilder(updaterBabsolute.getAbsolutePath());
                 String driveLetter = FileUtil.stripDriveLetter(str);
@@ -317,7 +331,12 @@ public class DeployerTest {
                     .getAbsolutePath();
                 updaterBabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + driveLetter + str.toString())
                     .getAbsolutePath();
+                updaterBabsoluteBackupTo3 = new File(metadir, "3/ext-backup/" + driveLetter + str.toString())
+                    .getAbsolutePath();
             }
+            assert !(new File(updaterBabsoluteBackupTo1).exists()) : "updateB.txt backup should not be in deploy #1";
+            assert new File(updaterBabsoluteBackupTo2).exists() : "missing updateB.txt backup from deploy #2";
+
             String updaterAabsoluteBackupTo1;
             String updaterAabsoluteBackupTo2;
             if (!isWindows) {
@@ -325,7 +344,6 @@ public class DeployerTest {
                     .getAbsolutePath();
                 updaterAabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + updaterAabsolute.getAbsolutePath())
                     .getAbsolutePath();
-                assert new File(updaterAabsoluteBackupTo1).exists() : "missing updateA.txt backup";
             } else {
                 StringBuilder str = new StringBuilder(updaterAabsolute.getAbsolutePath());
                 String driveLetter = FileUtil.stripDriveLetter(str);
@@ -339,6 +357,8 @@ public class DeployerTest {
                 updaterAabsoluteBackupTo2 = new File(metadir, "2/ext-backup/" + driveLetter + str.toString())
                     .getAbsolutePath();
             }
+            assert !(new File(updaterAabsoluteBackupTo1).exists()) : "should not have updateA.txt backup in #1";
+            assert new File(updaterAabsoluteBackupTo2).exists() : "missing updateA.txt backup";
 
             assert !(new File(tmpDir, file0).exists()) : "file0 should be deleted";
             assert new File(tmpDir, fileA).exists() : "fileA should exist";
@@ -352,16 +372,16 @@ public class DeployerTest {
             }
             assert new File(tmpDir, fileB).exists() : "fileB should exist";
             assert !"X".equals(new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, fileB)))));
-            File fileBbackupTo1 = new File(metadir, "1/backup/" + fileB);
-            assert fileBbackupTo1.exists() : "should have fileB backed up in deploy 1 backup dir";
-            assert "X".equals(new String(StreamUtil.slurp(new FileInputStream(fileBbackupTo1))));
+            File fileBbackupTo2 = new File(metadir, "2/backup/" + fileB);
+            assert fileBbackupTo2.exists() : "should have fileB backed up in deploy 2 backup dir";
+            assert "X".equals(new String(StreamUtil.slurp(new FileInputStream(fileBbackupTo2))));
             assert new File(tmpDir, fileC).exists() : "fileC should exist";
             assert new File(tmpDir, file4).exists() : "file4 should exist";
             assert "X".equals(new String(StreamUtil.slurp(new FileInputStream(new File(tmpDir, file1)))));
             assert new File(tmpDir, file2).exists() : "file2 should exist again";
             assert !(new File(tmpDir, file999).exists()) : "file999 should be deleted";
-            File file999backupTo1 = new File(metadir, "1/backup/" + file999);
-            assert file999backupTo1.exists() : "file999 should not be backed up";
+            File file999backupTo2 = new File(metadir, "2/backup/" + file999);
+            assert file999backupTo2.exists() : "file999 should not be backed up";
             assert new File(tmpDir, file3).exists() : "file3 should exist";
             assert diff.getAddedFiles().size() == 3 : diff;
             assert diff.getAddedFiles().contains(file2) : diff;
@@ -377,14 +397,14 @@ public class DeployerTest {
             assert diff.getBackedUpFiles().size() == 4 : diff;
             assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterAabsolute.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().get(diff.convertPath(updaterAabsolute.getAbsolutePath())).equals(
-                diff.convertPath(updaterAabsoluteBackupTo1)) : diff;
+                diff.convertPath(updaterAabsoluteBackupTo2)) : diff;
             assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().get(diff.convertPath(updaterBabsolute.getAbsolutePath())).equals(
-                diff.convertPath(updaterBabsoluteBackupTo1)) : diff;
+                diff.convertPath(updaterBabsoluteBackupTo2)) : diff;
             assert diff.getBackedUpFiles().containsKey(fileB) : diff;
-            assert diff.getBackedUpFiles().get(fileB).equals(diff.convertPath(fileBbackupTo1.getAbsolutePath())) : diff;
+            assert diff.getBackedUpFiles().get(fileB).equals(diff.convertPath(fileBbackupTo2.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().containsKey(file999) : diff;
-            assert diff.getBackedUpFiles().get(file999).equals(diff.convertPath(file999backupTo1.getAbsolutePath())) : diff;
+            assert diff.getBackedUpFiles().get(file999).equals(diff.convertPath(file999backupTo2.getAbsolutePath())) : diff;
             if (realize) {
                 assert diff.getRealizedFiles().size() == 1 : diff;
                 assert diff.getRealizedFiles().containsKey(fileA) : diff;
@@ -399,8 +419,9 @@ public class DeployerTest {
             rawFiles = new HashMap<File, File>(2);
             rawFiles.put(testRawFileA, updaterAabsolute); // source raw file to absolute path
             rawFiles.put(testRawFileBChange1, updaterBabsolute); // source raw file to absolute path
-            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
-                ignoreRegex);
+            dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex2, null,
+                templateEngine, ignoreRegex);
+            deployer = new Deployer(dd);
             diff = new DeployDifferences();
             deployer.deploy(diff);
 
@@ -410,9 +431,9 @@ public class DeployerTest {
                 assert diff.getIgnoredFiles().contains(fileToIgnore.getParentFile().getName());
             }
 
-            assert new File(updaterBabsoluteBackupTo2).exists() : "updaterB should be backed up";
+            assert new File(updaterBabsoluteBackupTo3).exists() : "updaterB should be backed up";
             assert "B1prime".equals(new String(StreamUtil.slurp(new FileInputStream(updaterBabsolute))));
-            assert "Y".equals(new String(StreamUtil.slurp(new FileInputStream(new File(updaterBabsoluteBackupTo2)))));
+            assert "Y".equals(new String(StreamUtil.slurp(new FileInputStream(new File(updaterBabsoluteBackupTo3)))));
 
             assert diff.getAddedFiles().size() == 1 : diff;
             assert diff.getAddedFiles().contains(diff.convertPath(updaterAabsolute.getAbsolutePath())) : diff;
@@ -422,7 +443,7 @@ public class DeployerTest {
             assert diff.getBackedUpFiles().size() == 1 : diff;
             assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().get(diff.convertPath(updaterBabsolute.getAbsolutePath())).equals(
-                diff.convertPath(updaterBabsoluteBackupTo2)) : diff;
+                diff.convertPath(updaterBabsoluteBackupTo3)) : diff;
             if (realize) {
                 assert diff.getRealizedFiles().size() == 1 : diff;
                 assert diff.getRealizedFiles().containsKey(fileA) : diff;
@@ -438,8 +459,9 @@ public class DeployerTest {
             rawFiles = new HashMap<File, File>(2);
             rawFiles.put(testRawFileAChange, updaterAabsolute); // source raw file to absolute path
             rawFiles.put(testRawFileBChange2, updaterBabsolute); // source raw file to absolute path
-            deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex, templateEngine,
-                ignoreRegex);
+            dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex2, null,
+                templateEngine, ignoreRegex);
+            deployer = new Deployer(dd);
             diff = new DeployDifferences();
             deployer.deploy(diff);
 
@@ -463,6 +485,18 @@ public class DeployerTest {
             } else {
                 assert diff.getRealizedFiles().size() == 0 : diff;
             }
+
+            File previousDeployment1 = new File(metadir, "1/previous-deployment.properties");
+            File previousDeployment2 = new File(metadir, "2/previous-deployment.properties");
+            File previousDeployment3 = new File(metadir, "3/previous-deployment.properties");
+            File previousDeployment4 = new File(metadir, "4/previous-deployment.properties");
+            assert !previousDeployment1.exists() : "there was no previous deployment for #1";
+            assert previousDeployment2.exists() : "there was a previous deployment";
+            assert previousDeployment3.exists() : "there was a previous deployment";
+            assert previousDeployment4.exists() : "there was a previous deployment";
+            assert DeploymentProperties.loadFromFile(previousDeployment2).getDeploymentId() == 1;
+            assert DeploymentProperties.loadFromFile(previousDeployment3).getDeploymentId() == 2;
+            assert DeploymentProperties.loadFromFile(previousDeployment4).getDeploymentId() == 3;
         } finally {
             FileUtil.purge(tmpDir, true);
             FileUtil.purge(tmpDir2, true);
@@ -489,9 +523,11 @@ public class DeployerTest {
             rawFiles.put(testRawFileB, rawFileDestination); // we will realize this one
             File destDir = tmpDir;
             Pattern ignoreRegex = null;
-
-            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
-                templateEngine, ignoreRegex);
+            Set<File> realizeRawFiles1 = new HashSet<File>(1);
+            realizeRawFiles1.add(testRawFileB);
+            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, destDir, null,
+                realizeRawFiles1, templateEngine, ignoreRegex);
+            Deployer deployer = new Deployer(dd);
             DeployDifferences diff = new DeployDifferences();
             FileHashcodeMap map = deployer.deploy(diff);
 
@@ -539,8 +575,13 @@ public class DeployerTest {
             File destDir = tmpDir;
             Pattern ignoreRegex = null;
 
-            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
-                templateEngine, ignoreRegex);
+            Set<File> realizeRawFiles1 = new HashSet<File>(3);
+            realizeRawFiles1.add(testZipFile1);
+            realizeRawFiles1.add(testZipFile2);
+            realizeRawFiles1.add(testRawFileB);
+            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, destDir, null,
+                realizeRawFiles1, templateEngine, ignoreRegex);
+            Deployer deployer = new Deployer(dd);
             DeployDifferences listener = new DeployDifferences();
             deployer.deploy(listener);
 
@@ -633,8 +674,12 @@ public class DeployerTest {
             File destDir = tmpDir;
             Pattern ignoreRegex = null;
 
-            Deployer deployer = new Deployer(deploymentProps, zipFiles, rawFiles, destDir, filesToRealizeRegex,
+            Map<File, Pattern> realizeRegex1 = new HashMap<File, Pattern>(1);
+            realizeRegex1.put(testZipFile1, filesToRealizeRegex);
+
+            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, destDir, realizeRegex1, null,
                 templateEngine, ignoreRegex);
+            Deployer deployer = new Deployer(dd);
             DeployDifferences listener = new DeployDifferences();
             deployer.deploy(listener);
 

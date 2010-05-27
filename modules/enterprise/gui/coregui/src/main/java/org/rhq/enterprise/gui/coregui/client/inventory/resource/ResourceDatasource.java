@@ -37,6 +37,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -116,6 +117,29 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         if (request.getCriteria().getValues().get("type") != null) {
             criteria.addFilterResourceTypeId(Integer.parseInt(((String)request.getCriteria().getValues().get("type"))));
         }
+
+        if (request.getCriteria().getValues().get("plugin") != null) {
+            criteria.addFilterPluginName((String)request.getCriteria().getValues().get("plugin"));
+        }
+
+
+        if (request.getCriteria().getValues().get("tag") != null) {
+            criteria.addFilterTag((Tag) request.getCriteria().getValues().get("tag"));
+        }
+
+        if (request.getCriteria().getValues().get("tagNamespace") != null) {
+            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
+        }
+
+        if (request.getCriteria().getValues().get("tagSemantic") != null) {
+            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
+        }
+
+        if (request.getCriteria().getValues().get("tagName") != null) {
+            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
+        }
+
+
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {

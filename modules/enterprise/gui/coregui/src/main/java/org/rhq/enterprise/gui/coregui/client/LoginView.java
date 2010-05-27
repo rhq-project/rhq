@@ -22,79 +22,146 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import java.util.HashMap;
+
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.docs.Image;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
+import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 
 /**
  * @author Greg Hinkle
  */
-public class LoginView extends VLayout {
+public class LoginView extends Canvas {
+
+
+    private Window window;
+    private DynamicForm form;
 
 
     public LoginView() {
-        setWidth100();
-        setHeight100();
+        this(false);
     }
 
-    @Override
-    protected void onDraw() {
-        super.onDraw();
+    public LoginView(boolean logout) {
+
+        if (logout && CoreGUI.getSessionSubject() != null) {
+            GWTServiceLookup.getSubjectService().logout(CoreGUI.getSessionSubject(), new AsyncCallback<Void>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to logout", caught);
+                    CoreGUI.checkLoginStatus();
+                }
+
+                public void onSuccess(Void result) {
+                    CoreGUI.checkLoginStatus();
+                }
+            });
+        }
+
+    }
+
+    public void showLoginDialog() {
+
+        form = new DynamicForm();
+        form.setMargin(10);
+        form.setShowInlineErrors(false);
 
 
-        final DynamicForm form = new DynamicForm();
+        CanvasItem logo = new CanvasItem();
+        logo.setCanvas(new Img("header/rhq_logo_28px.png", 80, 28));
+        logo.setShowTitle(false);
 
-        TextItem user = new TextItem("user","User");
-        PasswordItem password = new PasswordItem("password","Password");
+        HeaderItem header = new HeaderItem();
+        header.setValue("RHQ Login");
 
-        final SubmitItem login = new SubmitItem("login","Login");
+
+        TextItem user = new TextItem("user", "User");
+        user.setRequired(true);
+        user.setAttribute("canAutocomplete", true);
+        user.setAttribute("autoComplete", true);
+        PasswordItem password = new PasswordItem("password", "Password");
+        password.setRequired(true);
+        password.setAttribute("autocomplete", true);
+
+        final SubmitItem login = new SubmitItem("login", "Login");
         login.setAlign(Alignment.CENTER);
         login.setColSpan(2);
 
-        form.setFields(user,password,login);
+        password.addKeyPressHandler(new KeyPressHandler() {
+            public void onKeyPress(KeyPressEvent event) {
+                if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
+                    form.submit();
+                }
+            }
+        });
 
-        Window graphPopup = new Window();
-        graphPopup.setTitle("RHQ Login");
-        graphPopup.setWidth(400);
-        graphPopup.setHeight(400);
-        graphPopup.setIsModal(true);
-        graphPopup.setShowModalMask(true);
-        graphPopup.setCanDragResize(true);
-        graphPopup.centerInPage();
-        graphPopup.addItem(form);
-        graphPopup.show();
+        form.setFields(logo, header, user, password, login);
 
-        login.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                login(form.getValueAsString("user"), form.getValueAsString("password"));
+
+        window = new Window();
+        window.setTitle("RHQ Login");
+        window.setWidth(400);
+        window.setHeight(250);
+        window.setIsModal(true);
+        window.setShowModalMask(true);
+        window.setCanDragResize(true);
+        window.centerInPage();
+        window.addItem(form);
+        window.show();
+
+        form.focusInItem(user);
+
+        form.addSubmitValuesHandler(new SubmitValuesHandler() {
+            public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
+                if (form.validate()) {
+                    login(form.getValueAsString("user"), form.getValueAsString("password"));
+                }
             }
         });
 
     }
 
     private void login(String user, String password) {
+
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
-        "/j_security_check.do?j_username=" + user + "&j_password=" + password );
+                "/j_security_check.do?j_username=" + user + "&j_password=" + password);
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(Request request, Response response) {
-                    System.out.println("Portal-War logged in");
+                    if (response.getStatusCode() == 200) {
+                        System.out.println("Portal-War logged in");
+                        window.destroy();
+                        CoreGUI.checkLoginStatus();
+                    } else {
+                        form.setFieldErrors("user", "The username or password provided does not match our records.", true);
+                    }
                 }
 
                 public void onError(Request request, Throwable exception) {
@@ -107,6 +174,7 @@ public class LoginView extends VLayout {
         }
 
 
+        /*
         SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
 
         subjectService.login(user, password, new AsyncCallback<Subject>() {
@@ -120,7 +188,7 @@ public class LoginView extends VLayout {
                 System.out.println("Logged in: " + result.getSessionId());
                 CoreGUI.setSessionSubject(result);
 
-                /* We can cache all metadata right here
+                *//* We can cache all metadata right here
                 ResourceTypeRepository.Cache.getInstance().getResourceTypes(
                         (Integer[]) null, EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
                     public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
@@ -128,8 +196,9 @@ public class LoginView extends VLayout {
                         buildCoreUI();
                     }
                 });
-                */
+                *//*
             }
-        });
+        });  */
+
     }
 }

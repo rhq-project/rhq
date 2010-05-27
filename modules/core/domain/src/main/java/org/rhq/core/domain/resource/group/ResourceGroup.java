@@ -56,7 +56,7 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.Resource;
@@ -408,8 +408,8 @@ public class ResourceGroup extends Group {
 
     @OneToMany(mappedBy = "group", cascade = { CascadeType.REMOVE })
     @OrderBy
-    // by primary key which will also put the bundle deployments in chronological order
-    private List<BundleGroupDeployment> groupDeployments = new ArrayList<BundleGroupDeployment>();
+    // by primary key which will also put the bundle destinations in chronological order (not all that useful :)
+    private List<BundleDestination> bundleDestinations = new ArrayList<BundleDestination>();
 
     @JoinColumn(name = "GROUP_DEFINITION_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
@@ -448,9 +448,8 @@ public class ResourceGroup extends Group {
     @OneToMany(mappedBy = "resourceGroup", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     private Set<AlertDefinition> alertDefinitions = new LinkedHashSet<AlertDefinition>();
 
-    @ManyToMany(mappedBy = "resourceGroups", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "resourceGroups", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
-
 
     /* no-arg constructor required by EJB spec */
     protected ResourceGroup() {
@@ -560,12 +559,12 @@ public class ResourceGroup extends Group {
         this.configurationUpdates = configurationUpdates;
     }
 
-    public List<BundleGroupDeployment> getGroupDeployments() {
-        return groupDeployments;
+    public List<BundleDestination> getBundleDestinations() {
+        return bundleDestinations;
     }
 
-    public void setGroupDeployments(List<BundleGroupDeployment> groupDeployments) {
-        this.groupDeployments = groupDeployments;
+    public void setBundleDestinations(List<BundleDestination> bundleDestinations) {
+        this.bundleDestinations = bundleDestinations;
     }
 
     public GroupDefinition getGroupDefinition() {

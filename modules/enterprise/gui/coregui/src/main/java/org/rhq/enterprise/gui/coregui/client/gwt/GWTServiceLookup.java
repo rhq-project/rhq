@@ -96,6 +96,18 @@ public class GWTServiceLookup {
         return secure(RemoteInstallGWTServiceAsync.Util.getInstance());
     }
 
+    public static RepoGWTServiceAsync getRepoService() {
+        return secure(RepoGWTServiceAsync.Util.getInstance());
+    }
+
+    public static ContentGWTServiceAsync getContentService() {
+        return secure(ContentGWTServiceAsync.Util.getInstance());
+    }
+
+    public static SearchGWTServiceAsync getSearchService() {
+        return secure(SearchGWTServiceAsync.Util.getInstance());
+    }
+
 
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget))

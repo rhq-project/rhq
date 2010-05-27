@@ -24,6 +24,11 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
     }
 
     @Override
+    public String getPrimarySimpleContext() {
+        return "name";
+    }
+
+    @Override
     public List<String> getSimpleContexts() {
         return simpleContexts;
     }
@@ -41,7 +46,7 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
                 + "  FROM ResourceType type " //
                 + "  JOIN type.pluginConfigurationDefinition.propertyDefinitions definition " //
                 + add(" WHERE LOWER(definition.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
-                + "ORDER BY definition.name ");
+                + " ORDER BY definition.name ");
 
         } else if (context.equals("configuration")) {
             return execute("" //
@@ -49,7 +54,7 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
                 + "  FROM ResourceType type " //
                 + "  JOIN type.resourceConfigurationDefinition.propertyDefinitions definition " //
                 + add(" WHERE LOWER(definition.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
-                + "ORDER BY definition.name ");
+                + " ORDER BY definition.name ");
 
         } else if (context.equals("trait")) {
             return execute("" //
@@ -57,7 +62,7 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
                 + "  FROM MeasurementDefinition definition " //
                 + " WHERE definition.dataType = 1 " //
                 + add("   AND LOWER(definition.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
-                + "ORDER BY definition.name ");
+                + " ORDER BY definition.name ");
 
         } else {
             return Collections.emptyList();
@@ -77,21 +82,21 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
                 + "SELECT DISTINCT type.name " //
                 + "  FROM ResourceType type " //
                 + add(" WHERE LOWER(type.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
-                + "ORDER BY type.name ");
+                + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
             return execute("" //
                 + "SELECT DISTINCT type.plugin " //
                 + "  FROM ResourceType type " //
                 + add(" WHERE LOWER(type.plugin) LIKE '%" + filter.toLowerCase() + "%'", filter) //
-                + "ORDER BY type.plugin ");
+                + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
             return execute("" //
                 + "SELECT DISTINCT res.name " //
                 + "  FROM Resource res " //
                 + add(" WHERE LOWER(res.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
-                + "ORDER BY res.name ");
+                + " ORDER BY res.name ");
 
         } else if (context.equals("connection")) {
             return execute("" //
@@ -99,9 +104,9 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
                 + "  FROM Resource res, PropertySimple simple " //
                 + "  JOIN res.pluginConfiguration.properties property " //
                 + " WHERE simple.id = property.id " //
-                + "   AND property.name = '" + param + "'" //
+                + "   AND LOWER(property.name) LIKE '%" + param + "%'" //
                 + add("   AND LOWER(property.stringValue) LIKE '%" + filter.toLowerCase() + "%'", filter) //
-                + "ORDER BY simple.stringValue ");
+                + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("configuration")) {
             return execute("" //
@@ -109,18 +114,18 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
                 + "  FROM Resource res, PropertySimple simple " //
                 + "  JOIN res.resourceConfiguration.properties property " //
                 + " WHERE simple.id = property.id " //
-                + "   AND property.name = '" + param + "'" //
+                + "   AND LOWER(property.name) LIKE '%" + param + "%'" //
                 + add("   AND LOWER(property.stringValue) LIKE '%" + filter.toLowerCase() + "%'", filter) //
-                + "ORDER BY simple.stringValue ");
+                + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("trait")) {
             return execute("" //
                 + "SELECT trait.value " //
                 + "  FROM MeasurementDataTrait trait " //
                 + " WHERE trait.schedule.definition.dataType = 1 " //
-                + "   AND trait.schedule.definition.name = '" + param + "'" //
+                + "   AND LOWER(trait.schedule.definition.name) LIKE '%" + param + "%'" //
                 + add("   AND LOWER(trait.value) LIKE '%" + filter.toLowerCase() + "%'", filter) //
-                + "ORDER BY trait.value ");
+                + " ORDER BY trait.value ");
 
         } else {
             return Collections.emptyList();

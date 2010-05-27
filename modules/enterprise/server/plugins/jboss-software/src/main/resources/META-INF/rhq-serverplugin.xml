@@ -18,7 +18,8 @@
                       apiClass="org.rhq.enterprise.server.plugins.jboss.software.JBossSoftwareContentSourceAdapter">
 
       <configuration>
-         <c:group name="csp" displayName="CSP Feed Settings">
+
+          <c:group name="csp" displayName="CSP Feed Settings">
             <c:simple-property name="url" displayName="Feed URL" type="string" required="true"
                                description="URL of the RSS feed."/>
             <c:simple-property name="username" displayName="Username" type="string" required="false"
@@ -28,18 +29,21 @@
             <c:simple-property name="active" displayName="Active" type="boolean" required="true" default="true"
                                description="Indicates if this instance should go out and check the feed for packages."/>
          </c:group>
+
          <c:group name="proxy" displayName="Proxy Settings" hiddenByDefault="true">
-            <c:simple-property name="proxyUrl" displayName="Proxy URL" type="string" required="false"
-                               description="Optional. URL of the proxy server to use for this connection."/>
+            <c:simple-property name="proxyUrl" displayName="Proxy Host" type="string" required="false"
+                               description="Optional. Hostname or IP address of the HTTP proxy server to use for this connection."/>
             <c:simple-property name="proxyPort" displayName="Proxy Port" type="string" required="false"
-                               description="Optional. Port of the proxy server to use for this connection."/>
+                               description="Optional. TCP port of the HTTP proxy server to use for this connection."/>
             <c:simple-property name="proxyUsername" displayName="Proxy Username" type="string" required="false"
-                               description="Optional. If the proxy requires authentication, this is the user to log in as."/>
+                               description="Optional. If the proxy server requires authentication, this is the user to log in as."/>
             <c:simple-property name="proxyPassword" displayName="Proxy Password" type="password" required="false"
-                               description="Optional. If the proxy requires authentication, this is the password for the user."/>
+                               description="Optional. If the proxy server requires authentication, this is the password for the user."/>
          </c:group>
+
       </configuration>
 
    </contentSourceType>
 
 </content-plugin>
+        

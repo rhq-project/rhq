@@ -16,6 +16,7 @@ import org.jboss.managed.api.ManagedProperty;
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
+import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -44,7 +45,6 @@ import org.mc4j.ems.connection.EmsConnection;
 public class PlatformComponent implements
 		ProfileServiceComponent<ProfileServiceComponent>, MeasurementFacet,
 		OperationFacet, ConfigurationFacet {
-
 	private final Log log = LogFactory.getLog(this.getClass());
 	private ResourceContext<ProfileServiceComponent> context;
 	private String deployName;
@@ -59,11 +59,15 @@ public class PlatformComponent implements
 	}
 
 	public void stop() {
-		// TODO Auto-generated method stub
-
+		return;
 	}
 
-	public ProfileServiceConnection getConnection() {
+    @NotNull
+    public ResourceContext<ProfileServiceComponent> getResourceContext() {
+        return this.context;
+    }
+
+    public ProfileServiceConnection getConnection() {
 		ApplicationServerComponent component = (ApplicationServerComponent) context
 				.getParentResourceComponent();
 		return component.getConnection();
@@ -272,5 +276,4 @@ public class PlatformComponent implements
 		}
 		return null;
 	}
-
 }

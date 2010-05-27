@@ -27,6 +27,9 @@ import javax.faces.model.DataModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.util.units.UnitNumber;
+import org.rhq.core.clientapi.util.units.UnitsConstants;
+import org.rhq.core.clientapi.util.units.UnitsFormat;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.InstalledPackage;
@@ -36,9 +39,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.core.clientapi.util.units.UnitsFormat;
-import org.rhq.core.clientapi.util.units.UnitNumber;
-import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -103,6 +103,7 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
     private List<PackageTableDataValue> toCombinedValues(InstalledPackage current, InstalledPackage old) {
         List<PackageTableDataValue> results = new ArrayList<PackageTableDataValue>();
 
+        //        current.getPackageVersion();
         results.add(new PackageTableDataValue("Name", current.getPackageVersion().getGeneralPackage().getName(), null));
         results.add(new PackageTableDataValue("Version", current.getPackageVersion().getDisplayVersion(),
             ((old != null) ? old.getPackageVersion().getDisplayVersion() : null)));
@@ -113,18 +114,21 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
             (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old.getPackageVersion().getFileName()
                 : null) : null));
 
-        long fileSizeBytes = (current.getPackageVersion().getFileSize() != null) ? current.getPackageVersion().getFileSize() : 0;
-        long oldFileSizeBytes = (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old.getPackageVersion().getFileSize() : 0) : 0;
-        results.add(new PackageTableDataValue("File Size",
-                UnitsFormat.format(new UnitNumber(fileSizeBytes, UnitsConstants.UNIT_BYTES)).toString(),
-                UnitsFormat.format(new UnitNumber(oldFileSizeBytes, UnitsConstants.UNIT_BYTES)).toString()));
+        long fileSizeBytes = (current.getPackageVersion().getFileSize() != null) ? current.getPackageVersion()
+            .getFileSize() : 0;
+        long oldFileSizeBytes = (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old
+            .getPackageVersion().getFileSize() : 0) : 0;
+        results.add(new PackageTableDataValue("File Size", UnitsFormat.format(
+            new UnitNumber(fileSizeBytes, UnitsConstants.UNIT_BYTES)).toString(), UnitsFormat.format(
+            new UnitNumber(oldFileSizeBytes, UnitsConstants.UNIT_BYTES)).toString()));
 
         results.add(new PackageTableDataValue("SHA256", current.getPackageVersion().getSHA256(), ((old != null) ? old
             .getPackageVersion().getSHA256() : null)));
-        results.add(new PackageTableDataValue("Installation Date", dateToString(current.getInstallationDate()),
-            dateToString((old != null) ? old.getInstallationDate() : null)));
-        results.add(new PackageTableDataValue("Owner", (current.getUser() != null) ? current.getUser().toString()
-            : null, (old != null) ? ((old.getUser() != null) ? old.getUser().toString() : null) : null));
+        results.add(new PackageTableDataValue("Installation Date", dateToString(current.getPackageVersion()
+            .getFileCreatedDate()), dateToString((old != null) ? old.getPackageVersion().getFileCreatedDate() : null)));
+        //Comment for now. This field is not even in the list of InstalledPackage fields
+        //results.add(new PackageTableDataValue("Owner", (current.getUser() != null) ? current.getUser().toString()
+        //    : null, (old != null) ? ((old.getUser() != null) ? old.getUser().toString() : null) : null));
 
         // TODO: figure out how to know if the content is available
         /*

@@ -8,9 +8,14 @@ import java.util.Map;
 
 import javax.persistence.Query;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class AbstractSearchAssistant implements SearchAssistant {
+
+    private final Log log = LogFactory.getLog(SearchAssistant.class);
 
     private int maxResultCount = 20;
 
@@ -20,6 +25,10 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     public void setMaxResultCount(int maxResultCount) {
         this.maxResultCount = maxResultCount;
+    }
+
+    public String getPrimarySimpleContext() {
+        return null;
     }
 
     public List<String> getSimpleContexts() {
@@ -51,6 +60,7 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     @SuppressWarnings("unchecked")
     protected final List<String> execute(String jpql) {
+        log.debug("Executing JPQL: " + jpql);
         Query query = LookupUtil.getEntityManager().createQuery(jpql);
         query.setMaxResults(maxResultCount);
         List<String> results = query.getResultList();
@@ -59,6 +69,7 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     @SuppressWarnings("unchecked")
     protected final Map<String, List<String>> executeMap(String jpql) {
+        log.debug("Executing Map JPQL: " + jpql);
         Query query = LookupUtil.getEntityManager().createQuery(jpql);
         List<Object[]> rawResults = query.getResultList();
         Map<String, List<String>> results = new HashMap<String, List<String>>();

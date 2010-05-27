@@ -47,7 +47,7 @@ public abstract class AbstractManagedComponent implements ProfileServiceComponen
         return;
     }    
 
-    protected ResourceContext<ProfileServiceComponent> getResourceContext()
+    public ResourceContext<ProfileServiceComponent> getResourceContext()
     {
         return this.resourceContext;
     }

@@ -22,6 +22,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.ui.Hyperlink;
+import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
@@ -67,7 +68,17 @@ public class MenuBarView extends VLayout {
         });
     }
 
-    @Override
+    protected void onDraw2() {
+        super.onDraw();
+
+        HTMLFlow menu = new HTMLFlow();
+        menu.setContentsType(ContentsType.PAGE);
+        menu.setContentsURL("/rhq/common/menu/menu.xhtml");
+        addMember(menu);
+    }
+
+
+    //    @Override
     protected void onDraw() {
         super.onDraw();
 

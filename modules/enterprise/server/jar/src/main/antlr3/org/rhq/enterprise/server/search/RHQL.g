@@ -75,11 +75,11 @@ tokens {
  */
  
 searchExpression
-    :   conditionalExpression { /* System.out.println($conditionalExpression.tree.toStringTree()); */ }
+    :   conditionalExpression
     ;
 
 conditionalExpression
-    :   conds+=conditionalFactor ( WS+ ( 'or' | '|' ) WS+ conds+=conditionalFactor )* -> { $conds.size() == 1 }? ^($conds)
+    :   conds+=conditionalFactor ( WS+ ( '|' ) WS+ conds+=conditionalFactor )*        -> { $conds.size() == 1 }? ^($conds)
                                                                                       -> ^(OR conditionalFactor+)
     ; // use rewrite predicates to eliminate superfluous 'or' node if only one child
 
@@ -136,7 +136,7 @@ boundedValue
     ; // consume until we find a whitespace char or ']' to terminate the current phrase
     
 openEndedvalue
-    :   ~( '(' | ')' | WS )*
+    :   ~( '|' ) ~( '(' | ')' | WS )*
     ; // consume until we find a whitespace char to ')' terminate the current phrase, or '(' begin the next phrase
 
 comparisonOperator  
@@ -149,7 +149,7 @@ comparisonOperator
 /* 
  * lexical elements 
  */ 
- 
+
 ID
     :   'a'..'z' | 'A'..'Z'
     ;

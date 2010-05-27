@@ -18,11 +18,10 @@
  */
 package org.rhq.core.domain.measurement.composite;
 
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
+import java.io.Serializable;
+
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-
-import java.io.Serializable;
 
 /**
  * Composite that holds information about an oob
@@ -48,6 +47,8 @@ public class MeasurementOOBComposite implements Serializable {
     private MeasurementUnits units;
     private String parentName;
     private Integer parentId;
+    private String formattedOutlier;
+    private String formattedBaseband;
 
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId,
         long timestamp, int definitionId, int factor, double blMin, double blMax, MeasurementUnits units,
@@ -108,6 +109,10 @@ public class MeasurementOOBComposite implements Serializable {
         return timestamp;
     }
 
+    public MeasurementUnits getUnits() {
+        return units;
+    }
+
     public double getBlMin() {
         return blMin;
     }
@@ -162,17 +167,19 @@ public class MeasurementOOBComposite implements Serializable {
     }
 
     public String getFormattedBaseband() {
+        return formattedBaseband;
+    }
 
-        String min = MeasurementConverterClient.format(blMin, units, true);
-        String max = MeasurementConverterClient.format(blMax, units, true);
-
-        String result =  min + ", " + max ;
-
-        return result;
+    public void setFormattedBaseband(String formattedBaseband) {
+        this.formattedBaseband = formattedBaseband;
     }
 
     public String getFormattedOutlier() {
-        return MeasurementConverterClient.format(outlier, units, true);
+        return formattedOutlier;
+    }
+
+    public void setFormattedOutlier(String formattedOutlier) {
+        this.formattedOutlier = formattedOutlier;
     }
 
     @Override

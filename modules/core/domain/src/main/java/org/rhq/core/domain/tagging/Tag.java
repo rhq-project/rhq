@@ -34,6 +34,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -41,6 +43,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -49,12 +52,24 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  * @author Greg Hinkle
  */
 @Entity
+@NamedQueries( {
+        @NamedQuery(name = Tag.QUERY_TAG_COMPOSITE_REPORT,
+                query = "SELECT new org.rhq.core.domain.tagging.compsite.TagReportComposite( \n" +
+                        "   t.id, t.namespace, t.semantic, t.name,\n" +
+                        "  (count(r) + count(g) + count(b) + count(bv) + count(bd) + count(bds)) AS Total,\n" +
+                        "  count(r) AS Resources, count(g) AS ResourceGroups, count(b) AS Bundles, count(bv) AS BundleVersions, count(bd) AS BundleDeployments, count(bds) AS BundleDestinations )\n" +
+                        "FROM Tag t LEFT JOIN t.resources r  LEFT JOIN t.resourceGroups g LEFT JOIN t.bundles b LEFT JOIN t.bundleVersions bv LEFT JOIN t.bundleDeployments bd LEFT JOIN t.bundleDestinations bds \n" +
+                        "GROUP BY t.id, t.namespace, t.semantic, t.name\n" +
+                        "ORDER BY (count(r) + count(g) + count(b) + count(bv) + count(bd)) desc")
+})
 @SequenceGenerator(name = "RHQ_TAGGING_SEQ", sequenceName = "RHQ_TAGGING_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_TAGGING")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Tag implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_TAG_COMPOSITE_REPORT = "Tag.compositeReport";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_TAGGING_SEQ")
@@ -86,11 +101,15 @@ public class Tag implements Serializable {
     @ManyToMany
     private Set<BundleVersion> bundleVersions;
 
-    @JoinTable(name = "RHQ_TAGGING_BUNDLE_DEPLOY_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_DEPLOY_ID") })
+    @JoinTable(name = "RHQ_TAGGING_BUNDLE_DEPLOY_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_DEPLOYMENT_ID") })
     @ManyToMany
     private Set<BundleDeployment> bundleDeployments;
 
-    protected Tag() {
+    @JoinTable(name = "RHQ_TAGGING_BUNDLE_DEST_MAP", joinColumns = { @JoinColumn(name = "TAG_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_DESTINATION_ID") })
+    @ManyToMany
+    private Set<BundleDestination> bundleDestinations;
+
+    public Tag() {
     }
 
     public Tag(String namespace, String semantic, String name) {
@@ -115,6 +134,10 @@ public class Tag implements Serializable {
     public int getId() {
         return id;
     }
+
+    public void setId(int id) {
+        this.id = id;
+    }    
 
     public String getNamespace() {
         return namespace;
@@ -260,6 +283,31 @@ public class Tag implements Serializable {
         if (bundleDeployments != null) {
             bundleDeployment.removeTag(this);
             return bundleDeployments.remove(bundleDeployment);
+        } else {
+            return false;
+        }
+    }
+
+    public Set<BundleDestination> getBundleDestinations() {
+        return bundleDestinations;
+    }
+
+    public void setBundleDestinations(Set<BundleDestination> bundleDestinations) {
+        this.bundleDestinations = bundleDestinations;
+    }
+
+    public void addBundleDestination(BundleDestination bundleDestination) {
+        if (bundleDestinations == null) {
+            bundleDestinations = new HashSet<BundleDestination>();
+        }
+        bundleDestination.addTag(this);
+        bundleDestinations.add(bundleDestination);
+    }
+
+    public boolean removeBundleDestination(BundleDestination bundleDestination) {
+        if (bundleDestinations != null) {
+            bundleDestination.removeTag(this);
+            return bundleDestinations.remove(bundleDestination);
         } else {
             return false;
         }

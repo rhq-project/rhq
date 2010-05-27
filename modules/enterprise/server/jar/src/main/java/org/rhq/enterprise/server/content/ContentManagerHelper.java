@@ -95,6 +95,10 @@ public class ContentManagerHelper {
         details.setMetadata(packageVersion.getMetadata());
         details.setSHA256(packageVersion.getSHA256());
         details.setShortDescription(packageVersion.getShortDescription());
+        Long created = packageVersion.getFileCreatedDate();
+        if (created != null) {
+            details.setInstallationTimestamp(created.longValue());
+        }
 
         return details;
     }

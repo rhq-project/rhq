@@ -45,8 +45,17 @@ a:hover {
     text-decoration: underline;
 }
 
+
+.backLink {
+    color: #4A5D75;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+
 .HeaderLabel {
-    font-size: 14pt;
+    height: 35px;
+    font-size: 11pt;
     font-weight: bold;
     color: #444444;
 }

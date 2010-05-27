@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 /**
  * @author Greg Hinkle
  */
-public class BundleDeploymentListView extends VLayout {
+public class BundleDeploymentListView extends Table {
 
     private int bundleId;
     private Bundle bundle;
@@ -47,8 +47,12 @@ public class BundleDeploymentListView extends VLayout {
 
 
     public BundleDeploymentListView(Bundle bundle) {
+        super("Bundle Versions");
+
         this.bundle = bundle;
         this.bundleId = bundle.getId();
+
+
     }
 
     public BundleDeploymentListView(BundleVersion bundleVersion) {
@@ -62,32 +66,27 @@ public class BundleDeploymentListView extends VLayout {
 
 
         String title = "Bundle Versions";
-
         Criteria criteria = new Criteria();
         if (bundle != null) {
             title = bundle.getName() + " deployments";
-            criteria.setAttribute("bundleId",bundle.getId());
+            criteria.setAttribute("bundleId", bundle.getId());
         }
         if (bundleVersion != null) {
             title = bundleVersion.getVersion() + " deployments";
             criteria.setAttribute("bundleVersionId", bundleVersion.getId());
         }
+        setTableTitle(title);
 
-        Table table = new Table(title, criteria);
+        refresh(criteria);
 
-        table.setDataSource(new BundleDeploymentDataSource());
+        setDataSource(new BundleDeploymentDataSource());
 
 
-        table.getListGrid().getField("name").setCellFormatter(new CellFormatter() {
+        getListGrid().getField("name").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord record, int i, int i1) {
                 return "<a href=\"#Bundles/Bundle/" + bundleId + "/deployments/" + record.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
             }
         });
-
-
-
-
-        addMember(table);
 
     }
 }

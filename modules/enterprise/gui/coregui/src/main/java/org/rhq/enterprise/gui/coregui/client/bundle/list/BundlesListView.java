@@ -51,6 +51,10 @@ public class BundlesListView extends Table {
         setHeight100();
     }
 
+    public BundlesListView(Criteria criteria) {
+        super("Bundles", criteria);
+    }
+
     @Override
     protected void onInit() {
         super.onInit();
@@ -134,9 +138,6 @@ public class BundlesListView extends Table {
         });
     }
 
-    public void setCriteria(Criteria criteria) {
-        this.getListGrid().fetchData(criteria);
-    }
 
     public int getMatches() {
         return this.getListGrid().getTotalRows();

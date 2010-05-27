@@ -22,24 +22,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.tag;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.layout.SectionStack;
-import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tile.TileGrid;
 import com.smartgwt.client.widgets.tile.TileLayout;
 
-import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.Tag;
-import org.rhq.core.domain.tagging.compsite.TagReportComposite;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 
 /**
@@ -47,16 +39,15 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
  */
 public class TaggedView extends VLayout implements BookmarkableView {
 
-
-    private SectionStack sectionStack;
+    private TagCloudView tagCloudView;
 
     private Criteria criteria;
 
-    private SectionStackSection resourceSection;
     private ResourceSearchView resourceView;
 
-    private SectionStackSection bundleSection;
     private BundlesListView bundlesView;
+
+    private TileLayout tileLayout;
 
     public TaggedView() {
         setWidth100();
@@ -67,32 +58,19 @@ public class TaggedView extends VLayout implements BookmarkableView {
     protected void onInit() {
         super.onInit();
 
-        TagCloudView tagCloudView = new TagCloudView();
+        tagCloudView = new TagCloudView();
         tagCloudView.setAutoHeight();
         addMember(tagCloudView);
-//
-//        sectionStack = new SectionStack();
-//        sectionStack.setHeight("*");
-//
-//        sectionStack.addSection(getResourceStack());
-//
-//        sectionStack.addSection(getBundleStack());
-//
-//        addMember(sectionStack);
+    }
 
-        TileLayout tileLayout = new TileLayout();
-        tileLayout.setWidth100();
-        tileLayout.setTileHeight(250);
-        tileLayout.setTileWidth(getWidth()/2 - 20);
-        addMember(tileLayout);
-
-        tileLayout.addTile(getResourceCanvas());
-        tileLayout.addTile(getBundleCanvas());
-
+    @Override
+    protected void onDraw() {
+        super.onDraw();
     }
 
     private void viewTag(String tagString) {
 
+        tagCloudView.setSelectedTag(tagString);
 
         Tag tag = new Tag(tagString);
 
@@ -102,39 +80,37 @@ public class TaggedView extends VLayout implements BookmarkableView {
         criteria.addCriteria("tagName", tag.getName());
 
 
+        if (tileLayout == null) {
+
+            tileLayout = new TileLayout();
+            tileLayout.setWidth100();
+            tileLayout.setTileHeight(250);
+            tileLayout.setTileWidth(getWidth() / 2 - 20);
+            addMember(tileLayout);
+
+            tileLayout.addTile(getResourceCanvas(criteria));
+            tileLayout.addTile(getBundleCanvas(criteria));
+
+        }
+
         resourceView.refresh(criteria);
         bundlesView.refresh(criteria);
-
-
-/*        TagCriteria criteria = new TagCriteria();
-        criteria.addFilterNamespace(tag.getNamespace());
-        criteria.addFilterSemantic(tag.getSemantic());
-        criteria.addFilterName(tag.getName());
-
-        GWTServiceLookup.getTagService().findTagReportCompositesByCriteria(criteria, new AsyncCallback<PageList<TagReportComposite>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load tag report",caught);
-            }
-
-            public void onSuccess(PageList<TagReportComposite> result) {
-                TagReportComposite tagReport = result.get(0);
-                sectionStack.setSectionTitle(0, "Resources: " + tagReport.getResourceCount());
-                sectionStack.setSectionTitle(1, "Bundles: " + tagReport.getBundleCount());
-            }
-        });*/
     }
 
-    private Canvas getResourceCanvas() {
-        resourceView = new ResourceSearchView("Tagged Resources", new String[]{"pluginName","category","currentAvailability"});
+
+    private Canvas getResourceCanvas(Criteria criteria) {
+        resourceView = new ResourceSearchView(criteria, "Tagged Resources", new SortSpecifier[] {},new String[]{"pluginName", "category", "currentAvailability"});
         resourceView.setShowFooter(false);
         return resourceView;
     }
 
-    private Canvas getBundleCanvas() {
-        bundlesView = new BundlesListView();
+
+    private Canvas getBundleCanvas(Criteria criteria) {
+        bundlesView = new BundlesListView(criteria);
         bundlesView.setShowFooter(false);
         return bundlesView;
     }
+
 
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isEnd()) {

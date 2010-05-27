@@ -274,6 +274,7 @@ public class Table extends VLayout {
     private boolean autoSizing = false;
 
     public void refresh(Criteria criteria) {
+        this.listGrid.invalidateCache();
         this.listGrid.setCriteria(criteria);
         this.listGrid.markForRedraw();
     }

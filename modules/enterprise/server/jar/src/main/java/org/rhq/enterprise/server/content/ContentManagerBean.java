@@ -1278,7 +1278,23 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
 
-        PackageBits bits = loadPackageBits(packageBitStream);
+        //        PackageBits bits = loadPackageBits(packageBitStream);
+        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
+        // Write the content into the newly created package version. This may eventually move, but for now we'll just
+        // use the byte array in the package version to store the bits.
+        byte[] packageBits;
+        try {
+            packageBits = StreamUtil.slurp(packageBitStream);
+        } catch (RuntimeException re) {
+            throw new RuntimeException("Error reading in the package file", re);
+        }
+
+        PackageBits bits = new PackageBits();
+        try {
+            bits.setBits(packageBits);
+        } catch (Exception e) {
+            log.error("Error savinf the package.", e);
+        }
 
         newPackageVersion.setPackageBits(bits);
         newPackageVersion.setFileSize((long) bits.getBits().length);
@@ -1596,7 +1612,24 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         //get the data and persist/merge packageVersion
-        PackageBits bits = loadPackageBits(packageBitStream);
+        //        PackageBits bits = loadPackageBits(packageBitStream);
+        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
+        // Write the content into the newly created package version. This may eventually move, but for now we'll just
+        // use the byte array in the package version to store the bits.
+        byte[] packageBits;
+        try {
+            packageBits = StreamUtil.slurp(packageBitStream);
+        } catch (RuntimeException re) {
+            throw new RuntimeException("Error reading in the package file", re);
+        }
+
+        PackageBits bits = new PackageBits();
+        try {
+            bits.setBits(packageBits);
+        } catch (Exception e) {
+            log.error("Error savinf the package.", e);
+        }
+
         packageVersion.setPackageBits(bits);
 
         //populate extra details, persist

@@ -37,7 +37,6 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
  * 
  * @author Lukas Krejci
  */
-@SuppressWarnings("unchecked")
 public interface ResourceUpgradeFacet<T extends ResourceComponent> {
 
     /**
@@ -54,5 +53,5 @@ public interface ResourceUpgradeFacet<T extends ResourceComponent> {
      * inventoriedSiblings set, the values are the upgrade reports detailing what the data of the
      * corresponding siblings should be upgraded to.
      */
-    Map<ResourceUpgradeContext, ResourceUpgradeReport> upgrade(Set<ResourceUpgradeContext> inventoriedSiblings, ResourceUpgradeContext<T> parentContext, Set<ResourceUpgradeContext> discoveryResults);
+    Map<ResourceUpgradeContext<T>, ResourceUpgradeReport> upgrade(Set<ResourceUpgradeContext<T>> inventoriedSiblings, ResourceUpgradeContext<? extends ResourceComponent> parentContext, Set<ResourceUpgradeContext<T>> discoveryResults);
 }

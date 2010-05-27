@@ -66,6 +66,10 @@ public class TagCloudView extends VLayout {
 
     private void drawTags(PageList<TagReportComposite> tags) {
 
+        if (tags == null) {
+            return; // Tags still loading
+        }
+
         this.tags = tags;
 
         addMember(new HeaderLabel("Tag Cloud"));
@@ -95,6 +99,10 @@ public class TagCloudView extends VLayout {
             int font = (int) ((((double) tag.getTotal()) / (double) max) * (maxFont - minFont)) + minFont;
 
             buf.append("<a href=\"#Tag/" + tag.getTag().toString() + "\" style=\"font-size: " + font + "pt; margin: 8px;\"");
+
+
+            buf.append(" title=\"Tag used " + tag.getTotal() + " times\"");
+
 
             if (tag.getTag().toString().equals(selectedTag)) {
                 buf.append(" class=\"selectedTag\"");

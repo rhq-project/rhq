@@ -264,7 +264,7 @@ public class PluginContainer implements ContainerService {
 
         //fire off the resource upgrade as soon as possible. It will run only once per plugin container
         //lifetime.
-        inventoryManager.executeResourceUpgradeImmediately();
+        inventoryManager.fireResourceUpgrade();
         
         return;
     }

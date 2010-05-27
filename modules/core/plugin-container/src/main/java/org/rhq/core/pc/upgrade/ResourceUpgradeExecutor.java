@@ -27,9 +27,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,21 +56,22 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
  * 
  * @author Lukas Krejci
  */
-public class ResourceUpgradeExecutor {
+public class ResourceUpgradeExecutor implements Runnable {
     private static final Log log = LogFactory.getLog(ResourceUpgradeExecutor.class);
 
     /**
      * The upgrade runs only once in its lifetime.
      */
-    private boolean enabled = true;
-
+    private AtomicBoolean enabled = new AtomicBoolean(true);
+    private AtomicBoolean started = new AtomicBoolean(false);
+    
     private InventoryManager inventoryManager;
 
-    private Set<ResourceUpgradeReport> reports;
+    private ConcurrentLinkedQueue<ResourceUpgradeReport> reports;
 
     public ResourceUpgradeExecutor(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
-        reports = new HashSet<ResourceUpgradeReport>();
+        reports = new ConcurrentLinkedQueue<ResourceUpgradeReport>();
     }
 
     /**
@@ -90,14 +92,14 @@ public class ResourceUpgradeExecutor {
     public <T extends ResourceComponent> Map<ResourceUpgradeContext<T>, ResourceUpgradeReport> processAndQueue(
         ResourceUpgradeRequest<T> request, Set<Resource> discoveredResources) {
 
-        return enabled ? executeResourceUpgradeAndStoreReport(request, discoveredResources) : null;
+        return enabled.get() ? executeResourceUpgradeAndStoreReport(request, discoveredResources) : null;
     }
 
     /**
      * @return true if the executor is ready to perform the upgrade, false otherwise.
      */
     public boolean isEnabled() {
-        return enabled;
+        return enabled.get();
     }
 
     /**
@@ -105,9 +107,10 @@ public class ResourceUpgradeExecutor {
      * all the upgrade requests.
      */
     public void sendRequests() {
-        if (enabled && reports.size() > 0) {
-            inventoryManager.mergeResourceFromUpgrade(reports);
-            reports.clear();
+        if (enabled.get() && reports.size() > 0) {
+            HashSet<ResourceUpgradeReport> currentCopy = new HashSet<ResourceUpgradeReport>(reports);
+            inventoryManager.mergeResourceFromUpgrade(currentCopy);
+            reports.removeAll(currentCopy);
         }
     }
 
@@ -117,8 +120,8 @@ public class ResourceUpgradeExecutor {
      * After that a full discovery is performed and both the upgrade report and discovery report
      * are sent to the server.
      */
-    public void execute() {
-        if (enabled) {
+    public void run() {
+        if (!started.getAndSet(true)) {
             if (log.isDebugEnabled()) {
                 log.debug("Starting resource upgrade.");
             }
@@ -140,7 +143,7 @@ public class ResourceUpgradeExecutor {
                 log.warn("Resource upgrade failed.", t);
             } finally {
                 //make sure to switch off the upgrade...
-                this.enabled = false;
+                this.enabled.set(false);
 
                 //clear up so that we don't hold unnecessary instances.
                 reports.clear();

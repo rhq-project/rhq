@@ -507,8 +507,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    public void executeResourceUpgradeImmediately() {
-        resourceUpgradeExecutor.execute();
+    /**
+     * Executes the resource upgrade asynchronously.
+     */
+    public void fireResourceUpgrade() {
+        Thread resourceUpgradeThread = new Thread(resourceUpgradeExecutor, "Resource Upgrade Thread");
+        resourceUpgradeThread.setDaemon(true);
+        resourceUpgradeThread.start();
     }
     
     public InventoryReport executeServerScanImmediately() {

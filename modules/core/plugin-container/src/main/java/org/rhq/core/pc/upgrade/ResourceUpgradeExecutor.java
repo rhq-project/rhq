@@ -130,7 +130,7 @@ public class ResourceUpgradeExecutor implements Runnable {
                 //pull the inventory down from the server.
                 //this will ensure that we have an up-to-date info on the
                 //server inventory before we try to upgrade.
-                boolean syncResult = inventoryManager.handleReport(new InventoryReport(inventoryManager.getAgent()));
+                boolean syncResult = inventoryManager.handleReport(new InventoryReport(inventoryManager.getAgent()), true);
                 if (!syncResult) {
                     log.warn("Resource upgrade failed to sync up the inventory with the server.");
                     return;

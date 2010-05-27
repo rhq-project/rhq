@@ -883,13 +883,22 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
+     * @see #handleReport(InventoryReport, boolean)
+     * @param report
+     * @return
+     */
+    public boolean handleReport(InventoryReport report) {
+        return handleReport(report, false);
+    }
+    
+    /**
      * Send an inventory report to the Server.
      *
      * @param  report the inventory report to be sent
-     *
+     * @param  forceServerRoundtrip whether to report to the server even if there are no resources to report.
      * @return true if sending the report to the Server succeeded, or false otherwise
      */
-    public boolean handleReport(InventoryReport report) {
+    public boolean handleReport(InventoryReport report, boolean forceServerRoundtrip) {
         if (!configuration.isInsideAgent()) {
             //TODO how does resource upgrade behave in the embedded scenario?
             return true;
@@ -905,7 +914,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             resourceUpgradeExecutor.sendRequests();
         }
         
-        if (report.getAddedRoots().isEmpty()) {
+        if (report.getAddedRoots().isEmpty() && !forceServerRoundtrip) {
             return true; // nothing to do
         }
 

@@ -83,7 +83,7 @@ public class AntBundlePluginComponentTest {
         this.plugin.start(context);
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void cleanTmpDir() {
         FileUtil.purge(this.tmpDir, true);
     }
@@ -107,6 +107,7 @@ public class AntBundlePluginComponentTest {
         config.put(new PropertySimple("custom.prop1", "ABC123"));
 
         BundleDeployment deployment = new BundleDeployment();
+        deployment.setName("test bundle deployment name");
         deployment.setBundleVersion(bundleVersion);
         deployment.setConfiguration(config);
         deployment.setDestination(destination);

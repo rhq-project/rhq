@@ -302,3 +302,53 @@ a:hover {
     padding: 2px;
     font-weight: bold;
 }
+
+
+.topMenuBar {
+    background: url('/coregui/org.rhq.enterprise.gui.coregui.CoreGUI/sc/skins/Enterprise/images/cssButton/button_stretch.png') repeat-x scroll 0 0 #DDDDDD;
+}
+
+.menuButton, .menuButtonOver, .menuButtonDown, .menuButtonDisabled, .menuButtonSelected, .menuButtonSelectedDown, .menuButtonSelectedOver, .menuButtonSelectedDisabled {
+    border: none;
+    font-weight: bold;
+}
+
+
+
+/** Not used right now **/
+.gwtMenuBar {
+    background-image: url('images/header/header_bg.png');
+    /*background-image: url("http://localhost:7080/coregui/org.rhq.enterprise.gui.coregui.CoreGUI/sc/skins/Enterprise/images/SectionHeader/header_opened_stretch.png");*/
+    background-repeat: repeat-x;
+    padding: 0px;
+    -moz-box-sizing: border-box;
+    overflow: hidden;
+    cursor: auto;
+    z-index: 9999999;
+}
+
+.gwtMenu, .gwt-MenuBarPopup, .gwt-MenuPopup {
+    z-index: 9999999;
+    background-color: white;
+}
+
+.gwt-MenuItem {
+    padding: 0 10px;
+    font-weight: bold;
+    color: #666666;
+    font-size: 9pt;
+}
+
+.gwt-MenuItemSeparator {
+    background-color: #666666;
+}
+
+.gwt-MenuItem-Selected {
+    background-color: #999999;
+}
+
+.selectedTag {
+    background-color: lightblue;
+    padding: 5px;
+    border: 1px solid darkblue;
+}

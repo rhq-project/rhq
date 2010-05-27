@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.list;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
@@ -46,8 +47,10 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationView;
+import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
@@ -82,6 +85,9 @@ public class BundleView extends VLayout implements BookmarkableView {
 
         this.bundle = bundle;
 
+        addMember(new BackButton("Back to All Bundles", "Bundles"));
+
+
         headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
 
 
@@ -112,8 +118,10 @@ public class BundleView extends VLayout implements BookmarkableView {
     private Tab createDestinationsTab() {
         Tab destinationsTab = new Tab("Destinations");
 
+        Criteria criteria = new Criteria();
+        criteria.addCriteria("bundleId", bundle.getId());
 
-        destinationsTab.setPane(new BundleDestinationListView(bundle.getId()));
+        destinationsTab.setPane(new BundleDestinationListView(criteria));
 
         return destinationsTab;
     }
@@ -121,35 +129,12 @@ public class BundleView extends VLayout implements BookmarkableView {
     private Tab createVersionsTab() {
         Tab versionsTab = new Tab("Versions");
 
-        bundleVersionsTable = new Table();
-        bundleVersionsTable.setHeight100();
+        Criteria criteria = new Criteria();
+        criteria.addCriteria("bundleId", bundleBeingViewed);
 
-        BundleVersionDataSource bundleVersionsDataSource = new BundleVersionDataSource();
-        bundleVersionsTable.setDataSource(bundleVersionsDataSource);
-
-        bundleVersionsTable.getListGrid().getField("id").setWidth("60");
-        bundleVersionsTable.getListGrid().getField("name").setWidth("25%");
-        bundleVersionsTable.getListGrid().getField("name").setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + bundle.getId() + "/versions/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
-            }
-        });
-
-        bundleVersionsTable.getListGrid().getField("version").setWidth("10%");
-        bundleVersionsTable.getListGrid().getField("fileCount").setWidth("10%");
-        bundleVersionsTable.getListGrid().getField("description").setWidth("*");
-
-        bundleVersionsTable.getListGrid().setSelectionType(SelectionStyle.NONE);
-        bundleVersionsTable.getListGrid().setSelectionAppearance(SelectionAppearance.ROW_STYLE);
+        bundleVersionsTable = new BundleVersionListView(criteria);
 
         versionsTab.setPane(bundleVersionsTable);
-
-        // versions tab
-        BundleVersionDataSource bvDataSource;
-        bvDataSource = (BundleVersionDataSource) bundleVersionsTable.getDataSource();
-        bvDataSource.setBundleId(bundleBeingViewed);
-        bvDataSource.fetchData();
-        bundleVersionsTable.getListGrid().invalidateCache(); // TODO: is there a better way to refresh?
 
         return versionsTab;
     }
@@ -239,7 +224,7 @@ public class BundleView extends VLayout implements BookmarkableView {
                                 Bundle bundle = result.get(0);
                                 viewId.getBreadcrumbs().set(0,new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                                 viewBundle(bundle, viewPath.getCurrent());
-                                viewId.getBreadcrumbs().add(new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
+//                                viewId.getBreadcrumbs().add(new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                                 CoreGUI.refreshBreadCrumbTrail();
                             }
                         });

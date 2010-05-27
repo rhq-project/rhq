@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 /**
  * @author Greg Hinkle
  */
-public class BundleDeploymentListView extends VLayout {
+public class BundleDeploymentListView extends Table {
 
     private int bundleId;
     private Bundle bundle;
@@ -47,8 +47,14 @@ public class BundleDeploymentListView extends VLayout {
 
 
     public BundleDeploymentListView(Bundle bundle) {
+        super("Bundle Deployments");
+
         this.bundle = bundle;
         this.bundleId = bundle.getId();
+    }
+
+    public BundleDeploymentListView(Criteria criteria) {
+        super("Bundle Deployments", criteria);
     }
 
     public BundleDeploymentListView(BundleVersion bundleVersion) {
@@ -59,35 +65,34 @@ public class BundleDeploymentListView extends VLayout {
     @Override
     protected void onInit() {
         super.onInit();
+        setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
 
 
-        String title = "Bundle Versions";
 
+
+        String title = "Bundle Deployments";
         Criteria criteria = new Criteria();
         if (bundle != null) {
             title = bundle.getName() + " deployments";
-            criteria.setAttribute("bundleId",bundle.getId());
+            criteria.setAttribute("bundleId", bundle.getId());
         }
         if (bundleVersion != null) {
             title = bundleVersion.getVersion() + " deployments";
             criteria.setAttribute("bundleVersionId", bundleVersion.getId());
         }
+        setTableTitle(title);
 
-        Table table = new Table(title, criteria);
+        refresh(criteria);
 
-        table.setDataSource(new BundleDeploymentDataSource());
+        setDataSource(new BundleDeploymentDataSource());
 
-
-        table.getListGrid().getField("name").setCellFormatter(new CellFormatter() {
+        getListGrid().getField("id").setWidth("60");
+        getListGrid().getField("name").setWidth("25%");
+        getListGrid().getField("name").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord record, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + bundleId + "/deployments/" + record.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
+                return "<a href=\"#Bundles/Bundle/" + record.getAttribute("bundleId") + "/deployments/" + record.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
             }
         });
-
-
-
-
-        addMember(table);
 
     }
 }

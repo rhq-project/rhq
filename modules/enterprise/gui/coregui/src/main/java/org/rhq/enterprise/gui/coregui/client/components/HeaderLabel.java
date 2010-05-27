@@ -33,7 +33,7 @@ public class HeaderLabel extends HTMLFlow {
 
     public HeaderLabel(String contents) {
         super(contents);
-        setHeight(60);
+        setHeight(50);
         setStylePrimaryName("HeaderLabel");
         setStyleName("HeaderLabel");
     }

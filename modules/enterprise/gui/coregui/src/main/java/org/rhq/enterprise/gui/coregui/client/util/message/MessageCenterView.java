@@ -55,6 +55,7 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
 
     public MessageCenterView() {
         super(5);
+        setHeight100();
         setAlign(Alignment.LEFT);
         setAlign(VerticalAlignment.CENTER);
         setOverflow(Overflow.CLIP_H);

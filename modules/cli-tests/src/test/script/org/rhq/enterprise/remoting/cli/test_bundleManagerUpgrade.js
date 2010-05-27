@@ -100,12 +100,27 @@ function testGroupDeployment() {
 }
 
 function getGroupId() {
-   // Find a target platform group
-   var rgc = new ResourceGroupCriteria();
-   rgc.addFilterName("platforms");
-   var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
-   Assert.assertTrue( groups.size() > 0, "need a group called platforms for this test" );
-   return groups.get(0).getId();
+    // Find a target platform group
+    var rgc = new ResourceGroupCriteria();
+    rgc.addFilterName("platforms");
+    var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
+    var groupId;
+    // create if needed (and possible)
+    if ( groups.isEmpty() ) {
+      var c = new ResourceCriteria();
+      c.addFilterResourceCategory(ResourceCategory.PLATFORM);
+      var platforms = ResourceManager.findResourcesByCriteria(c);
+      Assert.assertTrue( platforms.size() > 0 );
+      var rg = new ResourceGroup("platforms");
+      var platformSet = new java.util.HashSet();
+      platformSet.addAll( platforms );
+      rg.setExplicitResources(platformSet);
+      rg = ResourceGroupManager.createResourceGroup(rg);
+      groupId = rg.getId();
+   } else { 
+      groupId = groups.get(0).getId();
+   }
+   return groupId;
 }
 
 function getBundleType() {

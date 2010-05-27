@@ -22,8 +22,6 @@
  */
 package org.rhq.bundle.ant.type;
 
-import org.apache.tools.ant.types.DataType;
-
 import java.util.ArrayList;
 import java.util.List;
 

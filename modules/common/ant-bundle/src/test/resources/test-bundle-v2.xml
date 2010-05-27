@@ -12,28 +12,34 @@
                 defaultValue="8080"
                 type="integer"/>
 
-        <rhq:deployment name="appserver" preinstallTarget="preinstall">
+        <rhq:deployment-unit name="appserver" preinstallTarget="preinstall" postinstallTarget="postinstall">
             <rhq:system-service name="foo" scriptFile="foo-script"
                          configFile="foo-config" overwriteScript="true"
                          startLevels="3,4,5" startPriority="80" stopPriority="20" root="root"/>
-            <rhq:file name="test-v2.properties" destinationFile="subdir/test.properties"/>
-            <rhq:archive name="file.zip"/>
-            <rhq:replace>
-                <rhq:fileset includes="**/*.properties"/>
-            </rhq:replace>
+            <rhq:file name="test-v2.properties" destinationFile="subdir/test.properties" replace="true"/>
+            <rhq:archive name="file.zip">
+                <rhq:replace>
+                    <rhq:fileset includes="**/*.properties"/>
+                </rhq:replace>
+            </rhq:archive>
             <!-- the files that should be ignored during upgrades -->
             <rhq:ignore>
                 <rhq:fileset includes="*.log"/>
             </rhq:ignore>
-        </rhq:deployment>
+        </rhq:deployment-unit>
 
     </rhq:bundle>
 
     <target name="main"/>
 
     <target name="preinstall">
-        <echo>Deploying Test Bundle v2.0 to ${rhq.deploy.dir}...</echo>
+        <echo>Deploying Test Bundle v1.0 to ${rhq.deploy.dir}...</echo>
         <property name="preinstallTargetExecuted" value="true"/>
+    </target>
+
+    <target name="postinstall">
+        <echo>Done deploying Test Bundle v1.0 to ${rhq.deploy.dir}.</echo>
+        <property name="postinstallTargetExecuted" value="true"/>
     </target>
 
 </project>

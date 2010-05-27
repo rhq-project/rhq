@@ -4,4 +4,5 @@ Important things that will have to be done in the future:
 -At the moment it is limited to only a few metrics because there is a bug in the parser that has to be fixed first
 -Refactoring of the data model to find out if there are possibilities to improve the whole thing
 -Update wiki documentation to include the latest changes
--More logging output for debug purpose in all the classes 
+-More logging output for debug purpose in all the classes
+-Add hosts to the type hierachy (at the moment hard coded "localhost")

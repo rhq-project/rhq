@@ -105,7 +105,7 @@ public class ResourceUpgradeExecutor {
      */
     public void sendRequests() {
         if (enabled) {
-            //TODO implement
+            inventoryManager.mergeResourceFromUpgrade(reports);
         }
     }
 

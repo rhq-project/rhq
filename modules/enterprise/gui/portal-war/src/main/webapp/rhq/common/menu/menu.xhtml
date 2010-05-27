@@ -344,6 +344,9 @@
 
         <ui:remove>***** Administration > CONTENT *****</ui:remove>
         <rich:menuGroup value="Content" rendered="#{GlobalPermissionsUIBean.inventory}">
+            <rich:menuItem submitMode="none" onclick="window.location = '/coregui/CoreGUI.html#Bundles'">
+                <h:outputText value="Bundles"/>
+            </rich:menuItem>
             <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listContentProviders.xhtml'">
                 <h:outputText value="Content Sources"/>
             </rich:menuItem>

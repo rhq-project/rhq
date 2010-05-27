@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.tag;
 
+import java.util.ArrayList;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.widgets.Canvas;
@@ -31,7 +33,11 @@ import com.smartgwt.client.widgets.tile.TileLayout;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentListView;
+import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
+import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionListView;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 
 /**
@@ -43,9 +49,8 @@ public class TaggedView extends VLayout implements BookmarkableView {
 
     private Criteria criteria;
 
-    private ResourceSearchView resourceView;
 
-    private BundlesListView bundlesView;
+    private ArrayList<Table> tiles = new ArrayList<Table>();
 
     private TileLayout tileLayout;
 
@@ -88,27 +93,31 @@ public class TaggedView extends VLayout implements BookmarkableView {
             tileLayout.setTileWidth(getWidth() / 2 - 20);
             addMember(tileLayout);
 
-            tileLayout.addTile(getResourceCanvas(criteria));
-            tileLayout.addTile(getBundleCanvas(criteria));
 
+            ResourceSearchView resourceView = new ResourceSearchView(criteria, "Tagged Resources", new SortSpecifier[]{}, new String[]{"pluginName", "category", "currentAvailability"});
+            tiles.add(resourceView);
+
+            BundlesListView bundlesView = new BundlesListView(criteria);
+            tiles.add(bundlesView);
+
+            BundleVersionListView bundleVersionListView = new BundleVersionListView(criteria);
+            tiles.add(bundleVersionListView);
+
+            BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(criteria);
+            tiles.add(bundleDeploymentListView);
+
+            BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(criteria);
+            tiles.add(bundleDestinationListView);
+
+            for (Table t : tiles) {
+                t.setShowFooter(false);
+                tileLayout.addTile(t);
+            }
         }
 
-        resourceView.refresh(criteria);
-        bundlesView.refresh(criteria);
-    }
-
-
-    private Canvas getResourceCanvas(Criteria criteria) {
-        resourceView = new ResourceSearchView(criteria, "Tagged Resources", new SortSpecifier[] {},new String[]{"pluginName", "category", "currentAvailability"});
-        resourceView.setShowFooter(false);
-        return resourceView;
-    }
-
-
-    private Canvas getBundleCanvas(Criteria criteria) {
-        bundlesView = new BundlesListView(criteria);
-        bundlesView.setShowFooter(false);
-        return bundlesView;
+        for (Table t : tiles) {
+            t.refresh(criteria);
+        }
     }
 
 

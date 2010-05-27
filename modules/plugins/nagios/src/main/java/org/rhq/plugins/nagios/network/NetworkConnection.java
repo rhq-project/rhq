@@ -118,10 +118,10 @@ public class NetworkConnection
     	{
     		try
     		{
-    			//TODO change the socket handling in livestatus
-				openConnection(); // TODO move outside the loop to inprove performance -- needs keepalives enabled?
+                String s = it.next();
+                //TODO change the socket handling in livestatus
+                openConnection(); // TODO move outside the loop to inprove performance -- needs keepalives enabled?
 
-				String s = it.next();
 
 				//Write query out to Nagios
 				printWriter.println(s);
@@ -138,6 +138,8 @@ public class NetworkConnection
     		catch (IOException e)
     		{
   			   log.error("Error in sendAndReceive: " + e.getMessage());
+               // return an empty reply and not partial data
+               return new LqlReply(lqlRequest.getRequestType());
 			}
 		}
 		//Write whole result list to LqlReply object

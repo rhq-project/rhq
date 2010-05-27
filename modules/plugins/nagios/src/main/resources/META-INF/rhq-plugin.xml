@@ -45,5 +45,8 @@
             <metric property="free_swap|plugin_output|.* \(([\d]+) .*" displayName="Free swap" measurementType="dynamic" units="megabytes" displayType="summary"/>
             <metric property="free_swap_perc|plugin_output|.* - ([\d]+)%.*" displayName="Free swap percent" measurementType="dynamic" units="none" displayType="summary"/>
         </service>
+        <service name="SSH" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="SSHD">
+            <metric property="ssh_version|plugin_output|.* - (.*)" displayName="SSH Version" dataType="trait" displayType="summary"/>
+        </service>
 	</server>
 </plugin>

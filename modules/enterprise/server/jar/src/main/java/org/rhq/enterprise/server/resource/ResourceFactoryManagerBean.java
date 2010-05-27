@@ -320,7 +320,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         CreateResourceHistory history = new CreateResourceHistory(parentResource, resourceType, user.getName(),
             (InstalledPackage) null);
         history.setCreatedResourceName(createResourceName);
-        //        history.setConfiguration(deploymentTimeConfiguration);
+        history.setConfiguration(deploymentTimeConfiguration);
         history.setStatus(CreateResourceStatus.IN_PROGRESS);
 
         entityManager.persist(history);
@@ -529,19 +529,6 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             packageVersion = contentManager.getUploadedPackageVersion(packageName, newPackageType.getId(),
                 packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, newResourceTypeId);
         }
-
-        //        //check that Configuration is persisted correctly.
-        //        if (deploymentTimeConfiguration.getId() > 0) {
-        //            entityManager.merge(deploymentTimeConfiguration);
-        //        } else {
-        //            entityManager.persist(deploymentTimeConfiguration);
-        //        }
-        //        //check that Configuration is persisted correctly.
-        //        if (pluginConfiguration.getId() > 0) {
-        //            entityManager.merge(pluginConfiguration);
-        //        } else {
-        //            entityManager.persist(pluginConfiguration);
-        //        }
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,

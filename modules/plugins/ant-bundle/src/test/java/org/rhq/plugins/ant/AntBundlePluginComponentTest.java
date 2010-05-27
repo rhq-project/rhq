@@ -124,6 +124,7 @@ public class AntBundlePluginComponentTest {
     /**
      * Test a Ant script that includes all of the RHQ tasks.
      */
+    @Test(enabled = false)
     public void testAntBundle() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
@@ -167,6 +168,7 @@ public class AntBundlePluginComponentTest {
 
     private String getRecipeFromFile(String filename) {
         InputStream stream = getClass().getClassLoader().getResourceAsStream(filename);
+
         byte[] contents = StreamUtil.slurp(stream);
         return new String(contents);
     }

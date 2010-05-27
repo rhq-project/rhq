@@ -85,14 +85,17 @@ function testGroupDeployment() {
    var property23 = new PropertySimple("upgrade.test.new", "A NEW REPLACEMENT");
    config2.put( property23 );
    
+   // create a destination to deploy to
+   var testDest = BundleManager.createBundleDestination(testBundleVersion1.getBundle().getId(), "upgrade destination", "upgrade destination", "/tmp/upgrade-bundle-test", groupId);
+
    // create a deployment of 1.0 using the 1.0 config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion1.getId(), "Upgrade Deployment Test 1", "Creating initial deployment to be upgraded", "/tmp/upgrade-bundle-test", config1);
-   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion1.getId(), testDest.getId(), "Upgrade Deployment Test 1", "Creating initial deployment to be upgraded", config1);
+   var bgd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), true);
    Assert.assertNotNull( bgd, "Failed to create 1.0 deployment" );
    
    // upgrade the deployment to 2.0 using the 2.0 config
-   testDeployment = BundleManager.createBundleDeployment(testBundleVersion2.getId(), "Upgrade Deployment Test 2", "Testing upgrade deployment", "/tmp/upgrade-bundle-test", config2);
-   bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
+   testDeployment = BundleManager.createBundleDeployment(testBundleVersion2.getId(), testDest.getId(), "Upgrade Deployment Test 2", "Testing upgrade deployment", config2);
+   bgd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), false);
    Assert.assertNotNull( bgd, "Failed to upgrade to 2.0 deployment" );
 }
 

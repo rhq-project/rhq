@@ -250,16 +250,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
             }
 
-            //try to perform the full resource upgrade now.
-            //The initialization time is ideal for this because inventory manager
-            //is the first plugin container service to start and hence we can
-            //be sure that no under concurrent updates to the resources are happening.
-            //Because PC doesn't support online updates of plugins and needs to be restarted
-            //in order to pick up the changed plugins, we can be sure that running the 
-            //upgrade only once at the PC start up is enough for the lifetime of 
-            //plugin container (and hence this instance of InventoryManager).
             resourceUpgradeExecutor = new ResourceUpgradeExecutor(this);
-            resourceUpgradeExecutor.execute();
         } finally {
             inventoryLock.writeLock().unlock();
         }
@@ -516,6 +507,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    public void executeResourceUpgradeImmediately() {
+        resourceUpgradeExecutor.execute();
+    }
+    
     public InventoryReport executeServerScanImmediately() {
         try {
             return inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serverScanExecutor).get();
@@ -1180,10 +1175,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (ResourceUpgradeReport upgradeReport : upgradeReports) {
                 String resourceKey = upgradeReport.getNewResourceKey();
                 String name = upgradeReport.getNewName();
-                String version = upgradeReport.getNewVersion();
+                //String version = upgradeReport.getNewVersion();
                 String description = upgradeReport.getNewDescription();
-                Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
-                Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
+                //Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
+                //Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
 
                 ResourceContainer existingResourceContainer = getResourceContainer(upgradeReport.getResourceId());
                 if (existingResourceContainer != null) {
@@ -1196,21 +1191,21 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         existingResource.setName(name);
                     }
                     
-                    if (version != null) {
-                        existingResource.setVersion(version);
-                    }
+//                    if (version != null) {
+//                        existingResource.setVersion(version);
+//                    }
                     
                     if (description != null) {
                         existingResource.setDescription(description);
                     }
                     
-                    if (pluginConfiguration != null) {
-                        existingResource.setPluginConfiguration(pluginConfiguration);
-                    }
-                    
-                    if (resourceConfiguration != null) {
-                        existingResource.setResourceConfiguration(resourceConfiguration);
-                    }
+//                    if (pluginConfiguration != null) {
+//                        existingResource.setPluginConfiguration(pluginConfiguration);
+//                    }
+//                    
+//                    if (resourceConfiguration != null) {
+//                        existingResource.setResourceConfiguration(resourceConfiguration);
+//                    }
                 } else {
                     log.error("Upgraded a resource that is not present on the agent. This should not happen. The id of the missing resource is " + upgradeReport.getResourceId());
                 }

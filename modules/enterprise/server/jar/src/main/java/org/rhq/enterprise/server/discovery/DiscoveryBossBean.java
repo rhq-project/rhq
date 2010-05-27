@@ -472,67 +472,56 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         if (resource != null) {
             String resourceKey = upgradeReport.getNewResourceKey();
             String name = upgradeReport.getNewName();
-            String version = upgradeReport.getNewVersion();
+            //String version = upgradeReport.getNewVersion();
             String description = upgradeReport.getNewDescription();
-            Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
-            Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
+//            Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
+//            Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
             
-            if (resourceKey != null) {
-                if (!equalOrNull(resourceKey, resource.getResourceKey())) {
-                    log.info("Resource [" + resource + "] upgraded its resource key from [" +
-                        resource.getResourceKey() + "] to [" + resourceKey + "]");
-                    changed = true;
-                    resource.setResourceKey(resourceKey);
-                }
+            if (needsUpgrade(resource.getResourceKey(), resourceKey)) {
+                log.info("Resource [" + resource + "] upgraded its resource key from [" +
+                    resource.getResourceKey() + "] to [" + resourceKey + "]");
+                changed = true;
+                resource.setResourceKey(resourceKey);
             }
             
-            if (name != null) {
-                if (!equalOrNull(name, resource.getName())) {
-                    log.info("Resource [" + resource + "] upgraded its name from [" +
-                        resource.getName() + "] to [" + name + "]");
-                    changed = true;
-                    resource.setName(name);
-                }
+            if (needsUpgrade(resource.getName(), name)) {
+                log.info("Resource [" + resource + "] upgraded its name from [" +
+                    resource.getName() + "] to [" + name + "]");
+                changed = true;
+                resource.setName(name);
             }
             
-            if (version != null) {
-                changed = updateResourceVersion(resource, version) || changed;
+//            if (version != null) {
+//                changed = updateResourceVersion(resource, version) || changed;
+//            }
+            
+            if (needsUpgrade(resource.getDescription(), description)) {
+                log.info("Resource [" + resource + "] upgraded its description from [" +
+                    resource.getDescription() + "] to [" + description + "]");
+                changed = true;
+                resource.setDescription(description);
             }
             
-            if (description != null) {
-                if (!equalOrNull(description, resource.getDescription())) {
-                    log.info("Resource [" + resource + "] upgraded its description from [" +
-                        resource.getDescription() + "] to [" + description + "]");
-                    changed = true;
-                    resource.setDescription(description);
-                }
-            }
-            
-            if (pluginConfiguration != null) {
-                if (!equalOrNull(pluginConfiguration, resource.getPluginConfiguration())) {
-                    log.info("Resource [" + resource + "] upgraded its plugin configuration from [" +
-                        resource.getPluginConfiguration() + "] to [" + pluginConfiguration + "]");
-                    changed = true;
-                    resource.setPluginConfiguration(pluginConfiguration);
-                }
-            }
-            
-            if (resourceConfiguration != null) {
-                if (!equalOrNull(resourceConfiguration, resource.getResourceConfiguration())) {
-                    //XXX Will this create a new history entry?
-
-                    log.info("Resource [" + resource + "] upgraded its resource configuration from [" +
-                        resource.getResourceConfiguration() + "] to [" + resourceConfiguration + "]");
-                    
-                    changed = true;
-                    resource.setResourceConfiguration(resourceConfiguration);
-                }
-            }
-            
-            // If the resource was marked as deleted, reactivate it again.
-            if (resource.getInventoryStatus() == InventoryStatus.DELETED) {
-                resource.setInventoryStatus(InventoryStatus.COMMITTED);
-            }            
+//            if (pluginConfiguration != null) {
+//                if (!equalOrNull(pluginConfiguration, resource.getPluginConfiguration())) {
+//                    log.info("Resource [" + resource + "] upgraded its plugin configuration from [" +
+//                        resource.getPluginConfiguration() + "] to [" + pluginConfiguration + "]");
+//                    changed = true;
+//                    resource.setPluginConfiguration(pluginConfiguration);
+//                }
+//            }
+//            
+//            if (resourceConfiguration != null) {
+//                if (!equalOrNull(resourceConfiguration, resource.getResourceConfiguration())) {
+//                    //XXX Will this create a new history entry?
+//
+//                    log.info("Resource [" + resource + "] upgraded its resource configuration from [" +
+//                        resource.getResourceConfiguration() + "] to [" + resourceConfiguration + "]");
+//                    
+//                    changed = true;
+//                    resource.setResourceConfiguration(resourceConfiguration);
+//                }
+//            }
         }
         return changed;
     }
@@ -896,5 +885,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 return a.equals(b);
             }
         }
+    }
+    
+    private static <T> boolean needsUpgrade(T oldValue, T newValue) {
+        return newValue != null && (oldValue == null || !newValue.equals(oldValue));
     }
 }

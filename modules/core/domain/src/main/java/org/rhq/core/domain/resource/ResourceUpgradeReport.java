@@ -44,9 +44,18 @@ public class ResourceUpgradeReport implements Serializable {
     private int resourceId;
     private String newResourceKey;
     private String newName;
-    private String newVersion;
-    private Configuration newPluginConfiguration;
-    private Configuration newResourceConfiguration;
+    
+// version changes are handled differently.    
+//    private String newVersion;
+    
+// upgrading configurations would have large consequences.
+// it would be difficult to synchronize the upgrade process
+// with the agent or server initiated configuration updates.
+// It could also be difficult for the UI to reflect more complicated
+// structural changes as currently, it is assumed that 
+// the configurations are kept backwards compatible.
+//    private Configuration newPluginConfiguration;
+//    private Configuration newResourceConfiguration;
     private String newDescription;
 
     public ResourceUpgradeReport() {
@@ -85,29 +94,29 @@ public class ResourceUpgradeReport implements Serializable {
         this.newName = newName;
     }
 
-    public String getNewVersion() {
-        return newVersion;
-    }
-
-    public void setNewVersion(String newVersion) {
-        this.newVersion = newVersion;
-    }
-
-    public Configuration getNewPluginConfiguration() {
-        return newPluginConfiguration;
-    }
-
-    public void setNewPluginConfiguration(Configuration newPluginConfiguration) {
-        this.newPluginConfiguration = newPluginConfiguration;
-    }
-
-    public Configuration getNewResourceConfiguration() {
-        return newResourceConfiguration;
-    }
-
-    public void setNewResourceConfiguration(Configuration newResourceConfiguration) {
-        this.newResourceConfiguration = newResourceConfiguration;
-    }
+//    public String getNewVersion() {
+//        return newVersion;
+//    }
+//
+//    public void setNewVersion(String newVersion) {
+//        this.newVersion = newVersion;
+//    }
+//
+//    public Configuration getNewPluginConfiguration() {
+//        return newPluginConfiguration;
+//    }
+//
+//    public void setNewPluginConfiguration(Configuration newPluginConfiguration) {
+//        this.newPluginConfiguration = newPluginConfiguration;
+//    }
+//
+//    public Configuration getNewResourceConfiguration() {
+//        return newResourceConfiguration;
+//    }
+//
+//    public void setNewResourceConfiguration(Configuration newResourceConfiguration) {
+//        this.newResourceConfiguration = newResourceConfiguration;
+//    }
 
     public String getNewDescription() {
         return newDescription;

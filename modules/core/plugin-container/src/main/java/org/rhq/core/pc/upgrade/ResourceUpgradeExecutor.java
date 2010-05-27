@@ -69,6 +69,7 @@ public class ResourceUpgradeExecutor {
 
     public ResourceUpgradeExecutor(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
+        reports = new HashSet<ResourceUpgradeReport>();
     }
 
     /**
@@ -104,8 +105,9 @@ public class ResourceUpgradeExecutor {
      * all the upgrade requests.
      */
     public void sendRequests() {
-        if (enabled) {
+        if (enabled && reports.size() > 0) {
             inventoryManager.mergeResourceFromUpgrade(reports);
+            reports.clear();
         }
     }
 

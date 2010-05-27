@@ -8,8 +8,8 @@
 
 body, p, td, th, option, input, textarea, select {
     color: #000000;
-    font-family: tahoma, verdana, sans-serif;
-    font-size: 11px;
+    font-family: tahoma, verdana, sans-serif !important;
+    font-size: 11px !important;
 }
 
 img {
@@ -27,22 +27,15 @@ hr {
     width: 100%;
 }
 
-a:link {
-    color: #4A5D75;
-    font-weight: bold;
-    text-decoration: none;
-}
+a, a:link, a:visited, a:hover {
+    color: #4A5D75 !important;
+    font-weight: bold !important;
+    text-decoration: none !important;
 
-a:visited {
-    color: #4A5D75;
-    font-weight: bold;
-    text-decoration: none;
 }
 
 a:hover {
-    color: #4A5D75;
-    font-weight: bold;
-    text-decoration: underline;
+    text-decoration: underline !important;
 }
 
 
@@ -214,7 +207,7 @@ a:hover {
 .SubTabButtonSelectedFocusedOver,
 .SubTabButtonDisabled,
 .SubTabButtonSelectedDisabled {
-    font-family: Arial, Verdana, Bitstream Vera Sans, sans-serif;
+    font-family: tahoma, verdona, sans-serif;
     font-size: 11px;
     padding: 2px;
     }
@@ -297,7 +290,7 @@ a:hover {
 .SimpleButtonSelectedOver,
 .SimpleButtonSelectedFocusedOver,
 .SimpleButtonSelectedDisabled{
-    font-family: Arial, Verdana, Bitstream Vera Sans, sans-serif;
+    font-family: tahoma, verdana, sans-serif;
     font-size: 11px;
     padding: 2px;
     font-weight: bold;

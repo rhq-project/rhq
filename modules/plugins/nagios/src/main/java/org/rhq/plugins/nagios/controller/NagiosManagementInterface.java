@@ -61,6 +61,19 @@ public class NagiosManagementInterface
 		controller = new Controller();
 	}
 
+    /**
+     * Ping the nagios server by sending a host request.
+     * @return true if >=1 hosts were listed in the answer or false otherwise
+     */
+    public boolean pingNagios() {
+        LqlHostRequest hostRequest = new LqlHostRequest();
+        LqlReply hostReply = livestatusConnectionInterface.sendAndReceive(hostRequest);
+        if (hostReply.getLqlReply().size()>0)
+            return true;
+
+        return false;
+    }
+
 	/**
 	 * Method does all the necessary steps to get the data about the current nagios hosts
 	 *

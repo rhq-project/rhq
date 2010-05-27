@@ -70,8 +70,17 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
      */
     public AvailabilityType getAvailability()
     {
-        // TODO supply real implementation
-        return AvailabilityType.UP;
+        if (context.getParentResourceComponent() instanceof NagiosMonitorComponent) {
+            return AvailabilityType.UP; // TODO get from parent?
+        } else {
+            boolean available = false;
+            if (nagiosManagementInterface!=null)
+                available = nagiosManagementInterface.pingNagios();
+
+            if (available)
+                return AvailabilityType.UP;
+        }
+        return AvailabilityType.DOWN;
     }
 
     /**

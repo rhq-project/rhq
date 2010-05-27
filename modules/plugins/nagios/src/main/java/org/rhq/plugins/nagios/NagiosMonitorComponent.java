@@ -173,7 +173,7 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
                 }
                 else if(req.getDataType() == DataType.TRAIT)
                 {
-                    String value = nagiosSystemData.getSingleHostServiceMetric(req.getName(), serviceName, "localhost").getValue(); // TODO use 'real' host
+                    String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost").getValue(); // TODO use 'real' host
 
                     Pattern p = Pattern.compile(pattern);
                     Matcher m = p.matcher(value);

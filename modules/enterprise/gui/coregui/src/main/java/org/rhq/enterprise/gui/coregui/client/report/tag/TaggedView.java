@@ -89,7 +89,7 @@ public class TaggedView extends VLayout implements BookmarkableView {
 
             tileLayout = new TileLayout();
             tileLayout.setWidth100();
-            tileLayout.setTileHeight(250);
+            tileLayout.setTileHeight(220);
             tileLayout.setTileWidth(getWidth() / 2 - 20);
             addMember(tileLayout);
 

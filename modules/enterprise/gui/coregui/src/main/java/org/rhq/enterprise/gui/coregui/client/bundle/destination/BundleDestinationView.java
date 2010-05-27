@@ -154,6 +154,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
 
     private Canvas getActionLayout() {
         VLayout actionLayout = new VLayout();
+        actionLayout.setMembersMargin(10);
         IButton deployButton = new IButton("Deploy");
         deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
         deployButton.addClickHandler(new ClickHandler() {

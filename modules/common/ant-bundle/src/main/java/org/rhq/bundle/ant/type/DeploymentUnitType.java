@@ -43,13 +43,14 @@ import java.util.regex.Pattern;
  *
  * @author Ian Springer
  */
-public class DeploymentType extends AbstractBundleType {
+public class DeploymentUnitType extends AbstractBundleType {
     private String name;
     private Map<File, File> files = new LinkedHashMap<File, File>();
+    private Set<File> rawFilesToReplace = new LinkedHashSet<File>();
     private Set<File> archives = new LinkedHashSet<File>();
+    private Map<File, Pattern> archiveReplacePatterns = new HashMap<File, Pattern>();
     private SystemServiceType systemService;
     private Pattern ignorePattern;
-    private Pattern replacePattern;
     private boolean preview;
     private String preinstallTarget;
     private String postinstallTarget;
@@ -78,15 +79,9 @@ public class DeploymentType extends AbstractBundleType {
             log("Deploying archives " + this.archives + "...", Project.MSG_VERBOSE);
         }
 
-        // for now, apply the pattern to all files in the deployment
-        Map<File, Pattern> archiveReplacePatterns = new HashMap<File, Pattern>();
-        for (File file : this.archives) {
-            archiveReplacePatterns.put(file, this.replacePattern);
-        }
-        Set<File> rawFilesToReplace = this.files.keySet(); // TODO: CHANGE ME! only replace those raw files marked as "replace=true"
-        DeploymentData dd = new DeploymentData(deploymentProps, this.archives, this.files, deployDir,
-            archiveReplacePatterns, rawFilesToReplace, templateEngine, this.ignorePattern);
-        Deployer deployer = new Deployer(dd);
+        DeploymentData deploymentData = new DeploymentData(deploymentProps, this.archives, this.files, deployDir,
+            this.archiveReplacePatterns, this.rawFilesToReplace, templateEngine, this.ignorePattern);
+        Deployer deployer = new Deployer(deploymentData);
         try {
             DeployDifferences diffs = getProject().getDeployDifferences();
             boolean dryRun = getProject().isDryRun();
@@ -125,8 +120,8 @@ public class DeploymentType extends AbstractBundleType {
 
     }
 
-    public void upgrade() throws BuildException {
-
+    public void upgrade(boolean revert, boolean clean) throws BuildException {
+        install(revert, clean);
     }
 
     public void uninstall() throws BuildException {
@@ -187,20 +182,22 @@ public class DeploymentType extends AbstractBundleType {
             destFile = new File(destDir, file.getSource().getName());
         }
         this.files.put(file.getSource(), destFile);
+        if (file.isReplace()) {
+            this.rawFilesToReplace.add(file.getSource());
+        }
     }
 
     public void addConfigured(ArchiveType archive) {
         this.archives.add(archive.getSource());
+        Pattern replacePattern = archive.getReplacePattern();
+        if (replacePattern != null) {
+            this.archiveReplacePatterns.put(archive.getSource(), replacePattern);
+        }
     }
 
     public void addConfigured(IgnoreType ignore) {
         List<FileSet> fileSets = ignore.getFileSets();
         this.ignorePattern = getPattern(fileSets);
-    }
-
-    public void addConfigured(ReplaceType replace) {
-        List<FileSet> fileSets = replace.getFileSets();
-        this.replacePattern = getPattern(fileSets);
     }
 
     private TemplateEngine createTemplateEngine() {
@@ -211,58 +208,5 @@ public class DeploymentType extends AbstractBundleType {
             templateEngine.getTokens().put(prop.getName(), prop.getStringValue());
         }
         return templateEngine;
-    }
-
-    private static Pattern getPattern(List<FileSet> fileSets) {
-        boolean first = true;
-        StringBuilder regex = new StringBuilder();
-        for (FileSet fileSet : fileSets) {
-            if (!first) {
-                regex.append("|");
-            } else {
-                first = false;
-            }
-            regex.append("(");
-            File dir = fileSet.getDir();
-            if (dir != null) {
-                regex.append(dir);
-                regex.append('/');
-            }
-            if (fileSet.getIncludePatterns().length == 0) {
-                regex.append(".*");
-            } else {
-                boolean firstIncludePattern = true;
-                for (String includePattern : fileSet.getIncludePatterns()) {
-                    if (!firstIncludePattern) {
-                        regex.append("|");
-                    } else {
-                        firstIncludePattern = false;
-                    }
-                    regex.append("(");
-                    for (int i = 0; i < includePattern.length(); i++) {
-                        char c = includePattern.charAt(i);
-                        if (c == '?') {
-                            regex.append('.');
-                        } else if (c == '*') {
-                            if (i + 1 < includePattern.length()) {
-                                char c2 = includePattern.charAt(++i);
-                                if (c2 == '*') {
-                                    regex.append(".*");
-                                    i++;
-                                    continue;
-                                }
-                            }
-                            regex.append("[^/]*");
-                        } else {
-                            regex.append(c);
-                        }
-                        // TODO: Escape backslashes.
-                    }
-                    regex.append(")");
-                }
-            }
-            regex.append(")");
-        }
-        return Pattern.compile(regex.toString());
     }
 }

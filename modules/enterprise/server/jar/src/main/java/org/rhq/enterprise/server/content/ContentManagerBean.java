@@ -1668,7 +1668,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         bits = new PackageBits();
         try {
             bits.setBits(packageBits);
-            entityManager.persist(bits);
         } catch (Exception e) {
             log.error("Error saving the package.", e);
         }

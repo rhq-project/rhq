@@ -75,6 +75,8 @@ public class ResourceSearchView extends Table {
     public ResourceSearchView(Criteria criteria, String title, SortSpecifier[] sortSpecifier, String[] excludeFields) {
         super(title, criteria, sortSpecifier, excludeFields);
 
+        setHeaderIcon("types/Platform_up_24.png");
+
         setWidth100();
         setHeight100();
 

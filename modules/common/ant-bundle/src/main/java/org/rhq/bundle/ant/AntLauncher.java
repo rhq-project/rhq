@@ -46,7 +46,7 @@ import org.apache.tools.ant.helper.AntXMLContext;
 import org.apache.tools.ant.helper.ProjectHelper2;
 
 import org.rhq.bundle.ant.task.BundleTask;
-import org.rhq.bundle.ant.type.DeploymentType;
+import org.rhq.bundle.ant.type.DeploymentUnitType;
 
 /**
  * This object enables you to invoke an Ant script within the running VM. You can fully run the script
@@ -69,14 +69,11 @@ public class AntLauncher {
 
     // TODO (ips, 04/28/10): Figure out a way to avoid assuming the prefix is "rhq".
     private static final String BUNDLE_TASK_NAME = "rhq:bundle";
-    private static final String INPUT_PROPERTY_TASK_NAME = "rhq:input-property";
-    private static final String DEPLOY_TASK_NAME = "rhq:deploy";
 
     /**
      * Executes the specified bundle deploy Ant build file (i.e. rhq-deploy.xml).
      *
      * @param buildFile       the path to the build file (i.e. rhq-deploy.xml)
-     * @param targetName      the target to run, <code>null</code> will run the default target
      * @param buildProperties the properties to pass into Ant
      * @param buildListeners  a list of build listeners (provide callback methods for targetExecuted, taskExecuted, etc.)
      *
@@ -84,8 +81,9 @@ public class AntLauncher {
      *
      * @throws InvalidBuildFileException if the build file is invalid
      */
-    public BundleAntProject executeBundleDeployFile(File buildFile, String targetName, Properties buildProperties,
-        List<BuildListener> buildListeners) throws InvalidBuildFileException {
+    public BundleAntProject executeBundleDeployFile(File buildFile, Properties buildProperties,
+                                                    List<BuildListener> buildListeners)
+            throws InvalidBuildFileException {
         parseBundleDeployFile(buildFile);
 
         BundleAntProject project = new BundleAntProject();
@@ -121,8 +119,8 @@ public class AntLauncher {
             // targets.
             project.executeTarget("");
 
-            // Now execute the target the user actually specified.
-            project.executeTarget((targetName == null) ? project.getDefaultTarget() : targetName);
+            // Now execute the default target?
+            //project.executeTarget(project.getDefaultTarget());
 
             return project;
         } catch (Exception e) {
@@ -228,11 +226,11 @@ public class AntLauncher {
         }
 
         BundleTask bundleTask = (BundleTask) preconfigureTask(unconfiguredBundleTask);
-        Collection<DeploymentType> deployments = bundleTask.getDeployments().values();
+        Collection<DeploymentUnitType> deployments = bundleTask.getDeploymentUnits().values();
         if (deployments.isEmpty()) {
-            throw new InvalidBuildFileException("The bundle task must contain at least one deployment child element.");
+            throw new InvalidBuildFileException("The bundle task must contain exactly one rhq:deploymentUnit child element.");
         }
-        DeploymentType deployment = deployments.iterator().next();
+        DeploymentUnitType deployment = deployments.iterator().next();
         Map<File, File> files = deployment.getFiles();
         for (File file : files.values()) {
             project.getBundleFileNames().add(file.getName());

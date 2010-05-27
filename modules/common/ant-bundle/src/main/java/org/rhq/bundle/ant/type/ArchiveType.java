@@ -22,11 +22,25 @@
  */
 package org.rhq.bundle.ant.type;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 /**
- * An archive file to be exploded during the bundle deployment.
+ * An archive file to be exploded during the bundle deployment. Can optionally contain a rhq:replace child element
+ * that specifies the set of files that contain template variables (e.g. @@http.port@@) which need to be replaced with
+ * the value of the corresponding property.
  *
  * @author Ian Springer
  */
 public class ArchiveType extends AbstractFileType {
+    private Pattern replacePattern;
 
+    public void addConfigured(ReplaceType replace) {
+        List<FileSet> fileSets = replace.getFileSets();
+        this.replacePattern = getPattern(fileSets);
+    }
+
+    public Pattern getReplacePattern() {
+        return replacePattern;
+    }
 }

@@ -41,6 +41,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  */
 public class TagCloudView extends VLayout {
 
+    private PageList<TagReportComposite> tags;
+
+    private String selectedTag;
 
     @Override
     protected void onDraw() {
@@ -58,12 +61,16 @@ public class TagCloudView extends VLayout {
                         drawTags(result);
                     }
                 });
-
-
     }
 
 
     private void drawTags(PageList<TagReportComposite> tags) {
+
+        if (tags == null) {
+            return; // Tags still loading
+        }
+
+        this.tags = tags;
 
         addMember(new HeaderLabel("Tag Cloud"));
 
@@ -82,7 +89,6 @@ public class TagCloudView extends VLayout {
             }
         });
 
-
         StringBuilder buf = new StringBuilder();
 
         int minFont = 8;
@@ -92,16 +98,29 @@ public class TagCloudView extends VLayout {
 
             int font = (int) ((((double) tag.getTotal()) / (double) max) * (maxFont - minFont)) + minFont;
 
+            buf.append("<a href=\"#Tag/" + tag.getTag().toString() + "\" style=\"font-size: " + font + "pt; margin: 8px;\"");
 
-            buf.append("<a href=\"#Tag/" + tag.getTag().toString() + "\" style=\"font-size: " + font + "pt; margin: 8px;\">" + tag.getTag().toString() + "</a> ");
+
+            buf.append(" title=\"Tag used " + tag.getTotal() + " times\"");
 
 
+            if (tag.getTag().toString().equals(selectedTag)) {
+                buf.append(" class=\"selectedTag\"");
+            }
+
+            buf.append(">" + tag.getTag().toString() + "</a> ");
         }
 
         HTMLFlow flow = new HTMLFlow(buf.toString());
 
         addMember(flow);
+    }
 
+
+    public void setSelectedTag(String selectedTag) {
+        this.selectedTag = selectedTag;
+        removeMembers(getMembers());
+        drawTags(tags);
     }
 
 }

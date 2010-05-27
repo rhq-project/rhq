@@ -246,6 +246,9 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
     }
 
     public void setChildSubCategories(List<ResourceSubCategory> childSubCategories) {
+        if (childSubCategories == null) {
+            throw new IllegalArgumentException("childSubCategories is null.");
+        }
         this.childSubCategories = childSubCategories;
     }
 

@@ -253,7 +253,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static void setSessionSubject(Subject subject) {
-
         // TODO this breaks because of reattach rules, bizarely even in queries. gonna switch out to non-subject include apis
         // Create a minimized session object for validation on requests
         //        Subject s = new Subject(subject.getName(),subject.getFactive(), subject.getFsystem());

@@ -156,34 +156,29 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
                     log.debug("RegEx: " + pattern);
                 }
 
-                if (req.getDataType() == DataType.MEASUREMENT) {
-                    String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost").getValue(); // TODO use 'real' host
+                // Get "raw" data from nagios data structures - we need to pick our value below
+                String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost").getValue(); // TODO use 'real' host
 
-                    Pattern p = Pattern.compile(pattern);
-                    Matcher m = p.matcher(value);
-                    if (m.matches()) {
-                        String val = m.group(1);
+                Pattern p = Pattern.compile(pattern);
+                Matcher m = p.matcher(value);
+                if (m.matches()) {
+                    String val = m.group(1); // Our metric is always in the first match group.
 
+                    // We have a match, now dispatch by dataType of the request
+                    if (req.getDataType() == DataType.MEASUREMENT) {
                         MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(val));
                         report.addData(res);
                     }
-                    else {
-                        log.warn("Pattern >>" + pattern + "<< did not match for input >>" + value + "<< and request: >>" + req.getName());
+                    else if(req.getDataType() == DataType.TRAIT) {
+                        MeasurementDataTrait res = new MeasurementDataTrait(req, val);
+                        report.addData(res);
                     }
+                    else
+                        log.error("Unknown DataType for request " + req);
                 }
-                else if(req.getDataType() == DataType.TRAIT)
-                {
-                    String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost").getValue(); // TODO use 'real' host
-
-                    Pattern p = Pattern.compile(pattern);
-                    Matcher m = p.matcher(value);
-                    String val = m.group(1);
-
-                    MeasurementDataTrait res = new MeasurementDataTrait(req, val);
-                    report.addData(res);
+                else {
+                    log.warn("Pattern >>" + pattern + "<< did not match for input >>" + value + "<< and request: >>" + req.getName());
                 }
-                else
-                    log.error("Unknown DataType for request " + req);
         	}
             catch (NagiosException e)
             {

@@ -54,7 +54,6 @@ public class GetDeploymentInfoStep implements WizardStep {
 
             final StaticTextItem nameTextItem = new StaticTextItem("name", "Deployment Name");
             nameTextItem.setWidth(300);
-            nameTextItem.setRequired(true);
             wizard.setNewDeploymentName(getDeploymentName());
             wizard.setSubtitle(wizard.getNewDeploymentName());
             nameTextItem.setValue(wizard.getNewDeploymentName());
@@ -100,8 +99,8 @@ public class GetDeploymentInfoStep implements WizardStep {
             String liveVersion = wizard.getLiveDeployment().getBundleVersion().getVersion();
             if (liveVersion.equals(version)) {
                 // redeploy
-                int iStart = liveName.indexOf("["), iEnd = liveName.indexOf("]");
-                deploy = Integer.valueOf(liveName.substring(iStart, iEnd) + 1);
+                int iStart = liveName.indexOf("[") + 1, iEnd = liveName.indexOf("]");
+                deploy = Integer.valueOf(liveName.substring(iStart, iEnd)) + 1;
                 deploymentName = "Deployment [" + deploy + "] of Version [" + version + "] to [" + dest + "]";
             } else {
                 // upgrade
@@ -114,6 +113,6 @@ public class GetDeploymentInfoStep implements WizardStep {
     }
 
     public boolean nextPage() {
-        return form.validate();
+        return true;
     }
 }

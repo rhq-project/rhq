@@ -41,6 +41,7 @@ public class ResourceUpgradeReport implements Serializable {
 
     private static final long serialVersionUID = 1L;
     
+    private int resourceId;
     private String newResourceKey;
     private String newName;
     private String newVersion;
@@ -52,6 +53,22 @@ public class ResourceUpgradeReport implements Serializable {
         
     }
 
+    /**
+     * The server-side id of the resource being upgraded.
+     * The discovery components don't need to assign this value.
+     */
+    public int getResourceId() {
+        return resourceId;
+    }
+    
+    /**
+     * The server-side id of the resource being upgraded.
+     * The discovery components don't need to assign this value.
+     */
+    public void setResourceId(int resourceId) {
+        this.resourceId = resourceId;
+    }
+    
     public String getNewResourceKey() {
         return newResourceKey;
     }

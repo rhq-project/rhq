@@ -177,9 +177,9 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return discoveryBoss.updateResourceVersion(resourceId, version);
     }
 
-    public boolean upgradeResource(int resourceId, ResourceUpgradeReport upgradeReport) {
+    public boolean upgradeResources(Set<ResourceUpgradeReport> upgradeReports) {
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        return discoveryBoss.upgradeResource(resourceId, upgradeReport);
+        return discoveryBoss.upgradeResources(upgradeReports);
     }
     
     private static Resource convertToPojoResource(Resource resource, boolean includeDescendants) {

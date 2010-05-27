@@ -401,17 +401,20 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
     }
 
-    public boolean upgradeResource(int resourceId, ResourceUpgradeReport upgradeReport) {
-        Resource existingResource = this.entityManager.find(Resource.class, resourceId);
-        if (existingResource != null) {
-            boolean changed = upgradeResource(existingResource, upgradeReport);
-            if (changed) {
-                this.entityManager.merge(existingResource);
+    public boolean upgradeResources(Set<ResourceUpgradeReport> upgradeReports) {
+        for (ResourceUpgradeReport report : upgradeReports) {
+            Resource existingResource = this.entityManager.find(Resource.class, report.getResourceId());
+            if (existingResource != null) {
+                boolean changed = upgradeResource(existingResource, report);
+                if (changed) {
+                    this.entityManager.merge(existingResource);
+                }
+            } else {
+                this.entityManager.getTransaction().setRollbackOnly();
+                return false;
             }
-            return true;
-        } else {
-            return false;
         }
+        return true;
     }
     
     /**

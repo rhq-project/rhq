@@ -138,13 +138,12 @@ public interface DiscoveryServerService {
     boolean updateResourceVersion(int resourceId, String version);
 
     /**
-     * Upgrades the data of the resource according to the provided report.
+     * Upgrades the data of the resources according to the provided reports.
      * 
-     * @param resourceId the id of the resource to be upgraded
-     * @param upgradeReport contains the information about the upgrade
+     * @param upgradeReports contains the information about the upgrade of individual resources.
      * @return true if the upgrade succeeded, false otherwise.
      */
-    boolean upgradeResource(int resourceId, ResourceUpgradeReport upgradeReport);
+    boolean upgradeResources(Set<ResourceUpgradeReport> upgradeReports);
     
     /**
      * Gives the server a chance to apply any necessary post-processing that's needed for newly committed resources

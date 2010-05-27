@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.discovery;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -179,11 +180,10 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
     boolean updateResourceVersion(int resourceId, String version);
 
     /**
-     * Upgrades the data of the resource according to the provided report.
+     * Upgrades the data of the resources according to the provided reports.
      * 
-     * @param resourceId the id of the resource to be upgraded
-     * @param upgradeReport contains the information about the upgrade
+     * @param upgradeReports contains the information about the upgrade of individual resources.
      * @return true if the upgrade succeeded, false otherwise.
      */
-    boolean upgradeResource(int resourceId, ResourceUpgradeReport upgradeReport);
+    boolean upgradeResources(Set<ResourceUpgradeReport> upgradeReports);
 }

@@ -170,10 +170,10 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return discoveredResources;
     }
 
-    public Map<ResourceUpgradeContext, ResourceUpgradeReport> upgrade(Set<ResourceUpgradeContext> inventoriedSiblings,
-        ResourceUpgradeContext<PlatformComponent> parentContext, Set<ResourceUpgradeContext> discoveryResults) {
+    public Map<ResourceUpgradeContext<PlatformComponent>, ResourceUpgradeReport> upgrade(Set<ResourceUpgradeContext<PlatformComponent>> inventoriedSiblings,
+        ResourceUpgradeContext<?> parentContext, Set<ResourceUpgradeContext<PlatformComponent>> discoveryResults) {
         
-        Map<ResourceUpgradeContext, ResourceUpgradeReport> ret = new HashMap<ResourceUpgradeContext, ResourceUpgradeReport>();
+        Map<ResourceUpgradeContext<PlatformComponent>, ResourceUpgradeReport> ret = new HashMap<ResourceUpgradeContext<PlatformComponent>, ResourceUpgradeReport>();
         
         for (ResourceUpgradeContext context : inventoriedSiblings) {
             String inventoriedResourceKey = context.getResourceKey();

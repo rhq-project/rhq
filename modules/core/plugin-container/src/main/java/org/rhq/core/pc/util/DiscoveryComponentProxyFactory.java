@@ -189,7 +189,7 @@ public class DiscoveryComponentProxyFactory {
                     + "] has been blacklisted and can no longer be invoked.");
             }
 
-            if (method.getDeclaringClass().equals(ResourceDiscoveryComponent.class)) {
+            if (method.getDeclaringClass().getPackage().getName().startsWith("org.rhq")) {
                 return invokeInNewThread(method, args);
             } else {
                 // toString(), etc.

@@ -166,9 +166,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
         int deploymentId = bundleDeployment.getId();
         antProps.setProperty(DeployPropertyNames.DEPLOY_ID, Integer.toString(deploymentId));
-        if (bundleDeployment.getName() != null) {
-            antProps.setProperty(DeployPropertyNames.DEPLOY_NAME, bundleDeployment.getName());
-        }
+        antProps.setProperty(DeployPropertyNames.DEPLOY_NAME, bundleDeployment.getName());
         antProps.setProperty(DeployPropertyNames.DEPLOY_REVERT, String.valueOf(request.isRevert()));
         antProps.setProperty(DeployPropertyNames.DEPLOY_CLEAN, String.valueOf(request.isCleanDeployment()));
 

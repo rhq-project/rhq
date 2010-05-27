@@ -57,7 +57,7 @@ import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
-@Test
+@Test(enabled = false)
 public class AntBundlePluginComponentTest {
     private static final String USER_HOME = System.getProperty("user.home");
 
@@ -84,12 +84,11 @@ public class AntBundlePluginComponentTest {
         this.plugin.start(context);
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void cleanTmpDir() {
         FileUtil.purge(this.tmpDir, true);
     }
 
-    @Test(enabled = false)
     /**
      * Test a simple Ant script that contains no RHQ tasks other than rhq:bundle.
      */
@@ -103,6 +102,7 @@ public class AntBundlePluginComponentTest {
             getRecipeFromFile("test-bundle-v1.xml"));
 
         BundleDeployment deployment = new BundleDeployment();
+        deployment.setName("test bundle deployment name");
         deployment.setBundleVersion(bundleVersion);
         deployment.setConfiguration(null);
 
@@ -124,7 +124,6 @@ public class AntBundlePluginComponentTest {
     /**
      * Test a Ant script that includes all of the RHQ tasks.
      */
-    @Test(enabled = false)
     public void testAntBundle() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
@@ -141,6 +140,7 @@ public class AntBundlePluginComponentTest {
         config.put(new PropertySimple("custom.prop2", "custom property 2"));
 
         BundleDeployment deployment = new BundleDeployment();
+        deployment.setName("test bundle deployment name");
         deployment.setBundleVersion(bundleVersion);
         deployment.setConfiguration(config);
         deployment.setDestination(destination);

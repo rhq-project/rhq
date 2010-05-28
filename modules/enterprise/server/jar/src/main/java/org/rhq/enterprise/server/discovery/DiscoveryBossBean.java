@@ -465,65 +465,70 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     /**
      * @param existingResource
      * @param upgradeReport
-     * @return
+     * @return true if the resource was changed, false otherwise
      */
     private boolean upgradeResource(Resource resource, ResourceUpgradeReport upgradeReport) {
-        boolean changed = false;
         if (resource != null) {
             String resourceKey = upgradeReport.getNewResourceKey();
             String name = upgradeReport.getNewName();
-            //String version = upgradeReport.getNewVersion();
+//            String version = upgradeReport.getNewVersion();
             String description = upgradeReport.getNewDescription();
 //            Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
 //            Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
             
-            if (needsUpgrade(resource.getResourceKey(), resourceKey)) {
-                log.info("Resource [" + resource + "] upgraded its resource key from [" +
-                    resource.getResourceKey() + "] to [" + resourceKey + "]");
-                changed = true;
-                resource.setResourceKey(resourceKey);
-            }
-            
-            if (needsUpgrade(resource.getName(), name)) {
-                log.info("Resource [" + resource + "] upgraded its name from [" +
-                    resource.getName() + "] to [" + name + "]");
-                changed = true;
-                resource.setName(name);
-            }
-            
-//            if (version != null) {
-//                changed = updateResourceVersion(resource, version) || changed;
-//            }
-            
-            if (needsUpgrade(resource.getDescription(), description)) {
-                log.info("Resource [" + resource + "] upgraded its description from [" +
-                    resource.getDescription() + "] to [" + description + "]");
-                changed = true;
-                resource.setDescription(description);
-            }
-            
-//            if (pluginConfiguration != null) {
-//                if (!equalOrNull(pluginConfiguration, resource.getPluginConfiguration())) {
-//                    log.info("Resource [" + resource + "] upgraded its plugin configuration from [" +
-//                        resource.getPluginConfiguration() + "] to [" + pluginConfiguration + "]");
-//                    changed = true;
-//                    resource.setPluginConfiguration(pluginConfiguration);
+            if (resourceKey != null || name != null || description != null) {
+                StringBuilder logMessage = new StringBuilder("Resource [")
+                    .append(resource.toString()).append("] upgraded its ");
+                
+                if (needsUpgrade(resource.getResourceKey(), resourceKey)) {
+                    resource.setResourceKey(resourceKey);
+                    logMessage.append("resourceKey, ");
+                }
+                
+                if (needsUpgrade(resource.getName(), name)) {
+                    resource.setName(name);
+                    logMessage.append("name, ");
+                }
+                
+//                if (version != null) {
+//                    changed = updateResourceVersion(resource, version) || changed;
 //                }
-//            }
-//            
-//            if (resourceConfiguration != null) {
-//                if (!equalOrNull(resourceConfiguration, resource.getResourceConfiguration())) {
-//                    //XXX Will this create a new history entry?
-//
-//                    log.info("Resource [" + resource + "] upgraded its resource configuration from [" +
-//                        resource.getResourceConfiguration() + "] to [" + resourceConfiguration + "]");
-//                    
-//                    changed = true;
-//                    resource.setResourceConfiguration(resourceConfiguration);
+                
+                if (needsUpgrade(resource.getDescription(), description)) {
+                    resource.setDescription(description);
+                    logMessage.append("description, ");
+                }
+                
+//                if (pluginConfiguration != null) {
+//                    if (!equalOrNull(pluginConfiguration, resource.getPluginConfiguration())) {
+//                        log.info("Resource [" + resource + "] upgraded its plugin configuration from [" +
+//                            resource.getPluginConfiguration() + "] to [" + pluginConfiguration + "]");
+//                        changed = true;
+//                        resource.setPluginConfiguration(pluginConfiguration);
+//                    }
 //                }
-//            }
+//                
+//                if (resourceConfiguration != null) {
+//                    if (!equalOrNull(resourceConfiguration, resource.getResourceConfiguration())) {
+//                        //XXX Will this create a new history entry?
+//    
+//                        log.info("Resource [" + resource + "] upgraded its resource configuration from [" +
+//                            resource.getResourceConfiguration() + "] to [" + resourceConfiguration + "]");
+//                        
+//                        changed = true;
+//                        resource.setResourceConfiguration(resourceConfiguration);
+//                    }
+//                }
+                
+                logMessage.replace(logMessage.length() - 1, logMessage.length(), 
+                    "to become [").append(resource.toString()).append("]");
+            
+                log.info(logMessage.toString());
+                
+                return true;
+            }            
         }
-        return changed;
+        return false;
     }
     
     private void validateInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
@@ -873,18 +878,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
 
         updateInventoryStatus(subject, platforms, servers, target);
-    }
-    
-    private static <T> boolean equalOrNull(T a, T b) {
-        if (a == null) {
-            return b == null;
-        } else {
-            if (b == null) {
-                return false;
-            } else {
-                return a.equals(b);
-            }
-        }
     }
     
     private static <T> boolean needsUpgrade(T oldValue, T newValue) {

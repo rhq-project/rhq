@@ -1194,36 +1194,50 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 //Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
                 //Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
 
-                ResourceContainer existingResourceContainer = getResourceContainer(upgradeReport.getResourceId());
-                if (existingResourceContainer != null) {
-                    Resource existingResource = existingResourceContainer.getResource();
-                    if (resourceKey != null) {
-                        existingResource.setResourceKey(resourceKey);
+                //only bother if there's something to upgrade at all on this resource.
+                if (resourceKey != null || name != null || description != null) {
+                    ResourceContainer existingResourceContainer = getResourceContainer(upgradeReport.getResourceId());
+                    if (existingResourceContainer != null) {
+                        Resource existingResource = existingResourceContainer.getResource();
+                        
+                        StringBuilder logMessage = new StringBuilder("Resource [")
+                            .append(existingResource.toString()).append("] upgraded its ");
+                        
+                        if (resourceKey != null) {
+                            existingResource.setResourceKey(resourceKey);
+                            logMessage.append("resourceKey, ");
+                        }
+                        
+                        if (name != null) {
+                            existingResource.setName(name);
+                            logMessage.append("name, ");
+                        }
+                        
+//                        if (version != null) {
+//                            existingResource.setVersion(version);
+//                        }
+                        
+                        if (description != null) {
+                            existingResource.setDescription(description);
+                            logMessage.append("description, ");
+                        }
+                        
+//                        if (pluginConfiguration != null) {
+//                            existingResource.setPluginConfiguration(pluginConfiguration);
+//                        }
+//                        
+//                        if (resourceConfiguration != null) {
+//                            existingResource.setResourceConfiguration(resourceConfiguration);
+//                        }
+
+                        logMessage.replace(logMessage.length() - 1, logMessage.length(), 
+                            "to become [").append(existingResource.toString()).append("]");
+                        
+                        log.info(logMessage.toString());
+                    } else {
+                        log.error("Upgraded a resource that is not present on the agent. This should not happen. The id of the missing resource is " + upgradeReport.getResourceId());
                     }
-                    
-                    if (name != null) {
-                        existingResource.setName(name);
-                    }
-                    
-//                    if (version != null) {
-//                        existingResource.setVersion(version);
-//                    }
-                    
-                    if (description != null) {
-                        existingResource.setDescription(description);
-                    }
-                    
-//                    if (pluginConfiguration != null) {
-//                        existingResource.setPluginConfiguration(pluginConfiguration);
-//                    }
-//                    
-//                    if (resourceConfiguration != null) {
-//                        existingResource.setResourceConfiguration(resourceConfiguration);
-//                    }
-                } else {
-                    log.error("Upgraded a resource that is not present on the agent. This should not happen. The id of the missing resource is " + upgradeReport.getResourceId());
                 }
-                
             }
         }
         

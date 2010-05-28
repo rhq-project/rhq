@@ -46,13 +46,19 @@ public class ApacheIfModuleDiscoveryComponent  implements ResourceDiscoveryCompo
         ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context)
         throws InvalidPluginConfigurationException, Exception {
    
+    Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();    
     ApacheVirtualHostServiceComponent virtualHost = context.getParentResourceComponent();
+    
+    if (!virtualHost.isAugeasEnabled()){
+        return discoveredResources;
+    }
+    
     tree = virtualHost.getServerConfigurationTree();
     parentNode = virtualHost.getNode(tree);
     
     List<AugeasNode> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
     
-    Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
+    
     ResourceType resourceType = context.getResourceType();
 
     for (AugeasNode node : ifModuleNodes) {

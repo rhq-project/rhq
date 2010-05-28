@@ -94,5 +94,28 @@ public class BundleDeploymentListView extends Table {
             }
         });
 
+
+        getListGrid().getField("bundleVersionVersion").setWidth("80");
+        getListGrid().getField("bundleVersionVersion").setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return "<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("bundleId") + "/versions/"
+                        + listGridRecord.getAttribute("bundleVersionId") + "\">" + o + "</a>";
+            }
+        });
+
+        getListGrid().getField("description").setWidth("25%");
+        getListGrid().getField("deploymentTime").setWidth("20%");
+        getListGrid().getField("status").setWidth("25%");
+        ListGridField status = getListGrid().getField("status");
+        HashMap<String, String> statusIcons = new HashMap<String, String>();
+        statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
+        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
+        status.setValueIcons(statusIcons);
+        status.setValueIconHeight(11);
+        status.setWidth(80);
+
     }
 }

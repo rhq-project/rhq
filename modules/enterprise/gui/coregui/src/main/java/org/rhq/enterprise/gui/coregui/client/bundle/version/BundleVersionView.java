@@ -83,7 +83,8 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
 
         addMember(new BackButton("Back to Bundle: " + version.getBundle().getName(),"Bundles/Bundle/" + version.getBundle().getId()));
 
-        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png") + "\"/> " + version.getName() + ": " + version.getVersion()));
+        addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png"), version.getName() + ": " + version.getVersion()));
+
         addMember(tabs);
 
         if (nextViewId != null) {

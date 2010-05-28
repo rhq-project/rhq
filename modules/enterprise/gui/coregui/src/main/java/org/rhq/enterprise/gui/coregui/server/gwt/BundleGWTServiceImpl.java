@@ -66,13 +66,13 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         }
     }
 
-    public BundleDeployment createBundleDeployment(int bundleVersionId, int bundleDestinationId, String name,
-        String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
-        boolean pinToBundle) throws Exception {
+    public BundleDeployment createBundleDeployment(int bundleVersionId, int bundleDestinationId, String description,
+        Configuration configuration, boolean enforcePolicy, int enforcementInterval, boolean pinToBundle)
+        throws Exception {
 
         try {
             BundleDeployment result = bundleManager.createBundleDeployment(getSessionSubject(), bundleVersionId,
-                bundleDestinationId, name, description, configuration);
+                bundleDestinationId, description, configuration);
             return SerialUtility.prepare(result, "createBundleDeployment");
         } catch (Exception e) {
             throw new Exception(ThrowableUtil.getAllMessages(e));
@@ -147,10 +147,21 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         HashMap<String, Boolean> results = new HashMap<String, Boolean>();
         try {
             results.putAll(bundleManager.getAllBundleVersionFilenames(getSessionSubject(), bundleVersionId));
+            return SerialUtility.prepare(results, "getAllBundleVersionFilenames");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
-        return SerialUtility.prepare(results, "getAllBundleVersionFilenames");
+    }
+
+    public String getBundleDeploymentName(int bundleDestinationId, int bundleVersionId, int prevDeploymentId) {
+        String result;
+        try {
+            result = bundleManager.getBundleDeploymentName(getSessionSubject(), bundleDestinationId, bundleVersionId,
+                prevDeploymentId);
+            return SerialUtility.prepare(result, "getBundleDeploymentName");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public BundleDeployment scheduleBundleDeployment(int bundleDeploymentId, boolean isCleanDeployment)
@@ -164,11 +175,11 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         }
     }
 
-    public BundleDeployment scheduleRevertBundleDeployment(int bundleDeploymentId, String deploymentName,
-        String deploymentDescription, boolean isCleanDeployment) throws Exception {
+    public BundleDeployment scheduleRevertBundleDeployment(int bundleDeploymentId, String deploymentDescription,
+        boolean isCleanDeployment) throws Exception {
         try {
             BundleDeployment result = bundleManager.scheduleRevertBundleDeployment(getSessionSubject(),
-                bundleDeploymentId, deploymentName, deploymentDescription, isCleanDeployment);
+                bundleDeploymentId, deploymentDescription, isCleanDeployment);
             return SerialUtility.prepare(result, "scheduleRevertBundleDeployment");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));

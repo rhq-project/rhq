@@ -204,17 +204,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
         int bundleDestinationId, String name, String description, Configuration configuration) throws Exception {
 
-        return bundleManager.createBundleDeployment(subject, bundleVersionId, bundleDestinationId, name, description,
-            configuration);
-    }
-
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
-    public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, int bundleDestinationId,
-        String name, String description, Configuration configuration) throws Exception {
-
-        if (null == name || "".equals(name.trim())) {
-            throw new IllegalArgumentException("Invalid bundleDeploymentName: " + name);
-        }
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
         if (null == bundleVersion) {
             throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
@@ -223,6 +212,32 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (null == bundleDestination) {
             throw new IllegalArgumentException("Invalid bundleDestinationId: " + bundleVersionId);
         }
+
+        return createBundleDeploymentImpl(subject, bundleVersion, bundleDestination, name, description, configuration);
+    }
+
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
+    public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, int bundleDestinationId,
+        String description, Configuration configuration) throws Exception {
+
+        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
+        if (null == bundleVersion) {
+            throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
+        }
+        BundleDestination bundleDestination = entityManager.find(BundleDestination.class, bundleDestinationId);
+        if (null == bundleDestination) {
+            throw new IllegalArgumentException("Invalid bundleDestinationId: " + bundleVersionId);
+        }
+
+        String name = getBundleDeploymentNameImpl(subject, bundleDestination, bundleVersion, null);
+        return this.createBundleDeploymentImpl(subject, bundleVersion, bundleDestination, name, description,
+            configuration);
+    }
+
+    private BundleDeployment createBundleDeploymentImpl(Subject subject, BundleVersion bundleVersion,
+        BundleDestination bundleDestination, String name, String description, Configuration configuration)
+        throws Exception {
+
         ConfigurationDefinition configDef = bundleVersion.getConfigurationDefinition();
         if (null != configDef) {
             if (null == configuration) {
@@ -269,6 +284,84 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         entityManager.persist(dest);
 
         return dest;
+    }
+
+    public String getBundleDeploymentName(Subject subject, int bundleDestinationId, int bundleVersionId,
+        int prevDeploymentId) {
+        BundleDestination bundleDestination = entityManager.find(BundleDestination.class, bundleDestinationId);
+        if (null == bundleDestination) {
+            throw new IllegalArgumentException("Invalid bundleDestinationId: " + bundleVersionId);
+        }
+
+        BundleVersion bundleVersion = null;
+        BundleDeployment prevDeployment = null;
+
+        if (bundleVersionId > 0) {
+            bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
+            if (null == bundleVersion) {
+                throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
+            }
+        } else if (prevDeploymentId > 0) {
+            prevDeployment = entityManager.find(BundleDeployment.class, prevDeploymentId);
+            if (null == prevDeployment) {
+                throw new IllegalArgumentException("Invalid prevDeploymentId: " + prevDeploymentId);
+            }
+        } else {
+            throw new IllegalArgumentException("Must specify either a valid bundleVersionId [" + bundleVersionId
+                + "] or prevDeploymentId [" + prevDeploymentId + "]");
+        }
+
+        return getBundleDeploymentNameImpl(subject, bundleDestination, bundleVersion, prevDeployment);
+    }
+
+    private String getBundleDeploymentNameImpl(Subject subject, BundleDestination bundleDestination,
+        BundleVersion bundleVersion, BundleDeployment prevDeployment) {
+
+        BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
+        criteria.addFilterDestinationId(bundleDestination.getId());
+        criteria.addFilterIsLive(true);
+        criteria.fetchBundleVersion(true);
+        List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, criteria);
+        BundleDeployment liveDeployment = (liveDeployments.isEmpty()) ? null : liveDeployments.get(0);
+
+        String deploymentName = null;
+
+        if (null != bundleVersion) {
+            boolean isInitialDeployment = (null == liveDeployment);
+            int deploy = 1;
+            String version = bundleVersion.getVersion();
+            String dest = bundleDestination.getName();
+
+            if (isInitialDeployment) {
+                deploymentName = "Deployment [" + deploy + "] of Version [" + version + "] to [" + dest + "]";
+            } else {
+                String liveName = liveDeployment.getName();
+                String liveVersion = liveDeployment.getBundleVersion().getVersion();
+                if (liveVersion.equals(version)) {
+                    // redeploy
+                    int iStart = liveName.indexOf("[") + 1, iEnd = liveName.indexOf("]");
+                    deploy = Integer.valueOf(liveName.substring(iStart, iEnd)) + 1;
+                    deploymentName = "Deployment [" + deploy + "] of Version [" + version + "] to [" + dest + "]";
+                } else {
+                    // upgrade
+                    deploymentName = "Deployment [" + deploy + "] of Version [" + version + "] to [" + dest
+                        + "]. Upgrade from Version [" + liveVersion + "]";
+                }
+            }
+        } else {
+            // revert
+            if (null == liveDeployment) {
+                throw new IllegalArgumentException("Invalid Revert, no live deployment for destination"
+                    + bundleDestination);
+            }
+
+            String liveName = liveDeployment.getName();
+            int iStart = liveName.indexOf("[") + 1, iEnd = liveName.indexOf("]");
+            int deploy = Integer.valueOf(liveName.substring(iStart, iEnd)) + 1;
+            deploymentName = "Deployment [" + deploy + "] Revert To: " + prevDeployment.getName();
+        }
+
+        return deploymentName;
     }
 
     @RequiredPermission(Permission.MANAGE_BUNDLE)
@@ -670,12 +763,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment scheduleRevertBundleDeployment(Subject subject, int bundleDestinationId,
-        String deploymentName, String deploymentDescription, boolean isCleanDeployment) throws Exception {
+        String deploymentDescription, boolean isCleanDeployment) throws Exception {
 
         BundleDeploymentCriteria c = new BundleDeploymentCriteria();
         c.addFilterDestinationId(bundleDestinationId);
         c.addFilterIsLive(true);
         c.fetchReplacedBundleDeployment(true);
+        c.fetchDestination(true);
         List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, c);
         if (1 != liveDeployments.size()) {
             throw new IllegalArgumentException("No live deployment found for destinationId [" + bundleDestinationId
@@ -702,7 +796,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // fresh and can be tracked. The key difference in the schedule request is that we set isRevert=true,
         // tell the bundle handler that we are in fact reverting from the current live deployment. The
         // deployment creation is done in a new transaction so it can then be scheduled.
-        String name = (null != deploymentName) ? deploymentName : prevDeployment.getName();
+        String name = getBundleDeploymentNameImpl(subject, liveDeployment.getDestination(), null, prevDeployment);
         String desc = (null != deploymentDescription) ? deploymentDescription : prevDeployment.getDescription();
         Configuration config = (null == prevDeployment.getConfiguration()) ? null : prevDeployment.getConfiguration()
             .deepCopy(false);

@@ -156,4 +156,31 @@ public class GWTMenuBarView extends VLayout {
         addMember(menu);
     }
 
+    private String setupLinks() {
+        StringBuilder headerString = new StringBuilder(
+                "<table style=\"height: 34px;\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
+
+        boolean first = true;
+        for (String section : SECTIONS) {
+            if (first) {
+                headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
+            }
+            first = false;
+
+            String styleClass = "TopSectionLink";
+            if (section.equals(selected)) {
+                styleClass += "Selected";
+            }
+
+            headerString.append("<td class=\"" + styleClass + "\" onclick=\"document.location='#" + section + "'\" >");
+            headerString.append(section);
+            headerString.append("</td>\n");
+
+            headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
+        }
+
+        headerString.append("</tr></table>");
+
+        return headerString.toString();
+    }
 }

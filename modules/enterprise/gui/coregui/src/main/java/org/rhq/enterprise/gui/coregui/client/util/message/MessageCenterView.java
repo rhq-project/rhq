@@ -26,9 +26,7 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.AnimationCallback;
-import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -39,14 +37,13 @@ import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
+import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
 
 /**
  * @author Greg Hinkle
@@ -58,7 +55,7 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
         setHeight100();
         setAlign(Alignment.LEFT);
         setAlign(VerticalAlignment.CENTER);
-        setOverflow(Overflow.CLIP_H);
+        setOverflow(Overflow.HIDDEN);
     }
 
     @Override
@@ -68,7 +65,7 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
 
         final Menu recentEventsMenu = new Menu();
 
-        IMenuButton recentEventsButton = new IMenuButton("Messages",recentEventsMenu);
+        IMenuButton recentEventsButton = new IMenuButton("Messages", recentEventsMenu);
         recentEventsButton.setTop(5);
         recentEventsButton.setShowMenuBelow(false);
         recentEventsButton.setAutoFit(true);
@@ -98,9 +95,13 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
             }
         });
 
+        VLayout vl = new VLayout();
+        vl.setAutoWidth();
+        vl.setAlign(Alignment.LEFT);
+        vl.setAlign(VerticalAlignment.CENTER);
+        vl.addMember(recentEventsButton);
 
-        addMember(recentEventsButton);
-
+        addMember(vl);
         addMember(new LayoutSpacer());
     }
 
@@ -108,28 +109,28 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
         DynamicForm form = new DynamicForm();
         form.setWrapItemTitles(false);
 
-        StaticTextItem title = new StaticTextItem("title","Title");
+        StaticTextItem title = new StaticTextItem("title", "Title");
         title.setValue(message.title);
 
-        StaticTextItem severity = new StaticTextItem("severity","Severity");
+        StaticTextItem severity = new StaticTextItem("severity", "Severity");
         FormItemIcon severityIcon = new FormItemIcon();
         severityIcon.setSrc(getSeverityIcon(message.severity));
         severity.setIcons(severityIcon);
         severity.setValue(message.severity.name());
 
-        StaticTextItem date = new StaticTextItem("time","Time");
+        StaticTextItem date = new StaticTextItem("time", "Time");
         date.setValue(message.fired);
 
-        StaticTextItem detail = new StaticTextItem("detail","Detail");
+        StaticTextItem detail = new StaticTextItem("detail", "Detail");
         detail.setTitleOrientation(TitleOrientation.TOP);
         detail.setValue(message.detail);
         detail.setColSpan(2);
 
-        ButtonItem okButton = new ButtonItem("Ok","Ok");
+        ButtonItem okButton = new ButtonItem("Ok", "Ok");
         okButton.setColSpan(2);
         okButton.setAlign(Alignment.CENTER);
 
-        form.setItems(title,severity,date,detail, okButton );
+        form.setItems(title, severity, date, detail, okButton);
 
         final Window window = new Window();
         window.setTitle(message.title);
@@ -142,9 +143,9 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
         window.addItem(form);
         window.show();
         okButton.focusInItem();
-        okButton .addClickHandler( new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+        okButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
-                window.destroy();     
+                window.destroy();
             }
         });
     }
@@ -168,7 +169,7 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
             }
         });
 
-        addMember(label,1);
+        addMember(label, 1);
         redraw();
 
         Timer hideTimer = new Timer() {
@@ -187,15 +188,15 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
     private String getSeverityIcon(Message.Severity severity) {
         String iconSrc = null;
         switch (severity) {
-            case Info:
-                iconSrc = "info/icn_info_blue.png";
-                break;
-            case Warning:
-                iconSrc = "info/icn_info_orange.png";
-                break;
-            case Error:
-                iconSrc = "info/icn_info_red.png";
-                break;
+        case Info:
+            iconSrc = "info/icn_info_blue.png";
+            break;
+        case Warning:
+            iconSrc = "info/icn_info_orange.png";
+            break;
+        case Error:
+            iconSrc = "info/icn_info_red.png";
+            break;
         }
         return iconSrc;
     }

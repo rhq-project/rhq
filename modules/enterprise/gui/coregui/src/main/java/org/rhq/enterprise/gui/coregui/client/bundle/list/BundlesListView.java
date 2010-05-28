@@ -53,12 +53,14 @@ public class BundlesListView extends Table {
 
     public BundlesListView(Criteria criteria) {
         super("Bundles", criteria);
-        setHeaderIcon("subsystems/bundle/Bundle_24.png");
     }
 
     @Override
     protected void onInit() {
         super.onInit();
+
+        setHeaderIcon("subsystems/bundle/Bundle_24.png");
+
 
         setDataSource(new BundlesWithLatestVersionDataSource());
 

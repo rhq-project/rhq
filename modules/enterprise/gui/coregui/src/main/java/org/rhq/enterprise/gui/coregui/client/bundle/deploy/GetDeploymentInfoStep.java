@@ -21,8 +21,8 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
@@ -52,19 +52,11 @@ public class GetDeploymentInfoStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            final TextItem nameTextItem = new TextItem("name", "Deployment Name");
+            final StaticTextItem nameTextItem = new StaticTextItem("name", "Deployment Name");
             nameTextItem.setWidth(300);
-            nameTextItem.setRequired(true);
-            nameTextItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
-                    }
-                    wizard.setSubtitle(value.toString());
-                    wizard.setNewDeploymentName(value.toString());
-                }
-            });
+            wizard.setNewDeploymentName(getDeploymentName());
+            wizard.setSubtitle(wizard.getNewDeploymentName());
+            nameTextItem.setValue(wizard.getNewDeploymentName());
 
             final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", "Deployment Description");
             descriptionTextAreaItem.setWidth(300);
@@ -93,7 +85,34 @@ public class GetDeploymentInfoStep implements WizardStep {
         return form;
     }
 
+    private String getDeploymentName() {
+        String deploymentName = "none";
+
+        int deploy = 1;
+        String version = wizard.getBundleVersion().getVersion();
+        String dest = wizard.getDestination().getName();
+
+        if (wizard.isInitialDeployment()) {
+            deploymentName = "Deployment [" + deploy + "] of Version [" + version + "] to [" + dest + "]";
+        } else {
+            String liveName = wizard.getLiveDeployment().getName();
+            String liveVersion = wizard.getLiveDeployment().getBundleVersion().getVersion();
+            if (liveVersion.equals(version)) {
+                // redeploy
+                int iStart = liveName.indexOf("[") + 1, iEnd = liveName.indexOf("]");
+                deploy = Integer.valueOf(liveName.substring(iStart, iEnd)) + 1;
+                deploymentName = "Deployment [" + deploy + "] of Version [" + version + "] to [" + dest + "]";
+            } else {
+                // upgrade
+                deploymentName = "Deployment [" + deploy + "] of Version [" + version + "] to [" + dest
+                    + "]. Upgrade from Version [" + liveVersion + "]";
+            }
+        }
+
+        return deploymentName;
+    }
+
     public boolean nextPage() {
-        return form.validate();
+        return true;
     }
 }

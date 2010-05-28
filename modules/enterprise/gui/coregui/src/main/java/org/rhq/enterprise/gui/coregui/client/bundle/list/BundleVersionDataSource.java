@@ -46,14 +46,16 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
         idField.setPrimaryKey(true);
         addField(idField);
 
+        DataSourceTextField latestVersionField = new DataSourceTextField("version", "Version");
+        addField(latestVersionField);
+
         DataSourceTextField nameField = new DataSourceTextField("name", "Name");
         addField(nameField);
 
         DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
         addField(descriptionField);
 
-        DataSourceTextField latestVersionField = new DataSourceTextField("version", "Version");
-        addField(latestVersionField);
+
 
         DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("fileCount", "File Count");
         addField(deploymentCountField);

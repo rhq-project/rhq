@@ -21,8 +21,8 @@ package org.rhq.enterprise.gui.coregui.client.bundle.revert;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
@@ -52,30 +52,21 @@ public class GetRevertInfoStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            final TextItem nameTextItem = new TextItem("name", "Revert Deployment Name");
+            final StaticTextItem nameTextItem = new StaticTextItem("name", "Revert Deployment Name");
             nameTextItem.setRequired(true);
             nameTextItem.setWidth(300);
-            wizard.setDeploymentName("[Reverted]  " + this.wizard.getPreviousDeployment().getName());
+            wizard.setDeploymentName("[REVERT To]  " + this.wizard.getPreviousDeployment().getName());
+            wizard.setSubtitle(wizard.getDeploymentName());
             nameTextItem.setValue(wizard.getDeploymentName());
-            nameTextItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
-                    }
-                    wizard.setSubtitle(value.toString());
-                    wizard.setDeploymentName(value.toString());
-                }
-            });
 
             final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description",
-                "revert Deployment Description");
+                "Revert Deployment Description");
             descriptionTextAreaItem.setWidth(300);
             String liveDesc = this.wizard.getLiveDeployment().getDescription();
             liveDesc = (null == liveDesc) ? this.wizard.getLiveDeployment().getName() : liveDesc;
             String prevDesc = this.wizard.getPreviousDeployment().getDescription();
             prevDesc = (null == prevDesc) ? this.wizard.getPreviousDeployment().getName() : prevDesc;
-            wizard.setDeploymentDescription("[Reverted From]\n" + liveDesc + "\n\n[Reverted To]\n" + prevDesc);
+            wizard.setDeploymentDescription("[REVERT From]\n" + liveDesc + "\n\n[REVERT To]\n" + prevDesc);
             descriptionTextAreaItem.setValue(wizard.getDeploymentDescription());
             descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {

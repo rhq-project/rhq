@@ -336,9 +336,16 @@ public class SearchAssistManager {
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
         results.addAll(simple);
         results.addAll(advanced);
-        results.addAll(userSavedSearches);
+        //results.addAll(userSavedSearches);
         //results.addAll(globalSavedSearches);
-        Collections.sort(results);
+
+        if (results.isEmpty()) {
+            SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
+                "Start typing for more simple text matches");
+            results.add(footerMessage);
+        } else {
+            Collections.sort(results);
+        }
 
         return results;
     }

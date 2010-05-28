@@ -71,9 +71,8 @@ public class DeployStep implements WizardStep {
             canvas.addMember(deployingImage);
             canvas.addMember(deployingMessage);
 
-            bundleServer.createBundleDeployment(wizard.getBundleVersion().getId(), wizard.getDestination()
-                .getId(), wizard.getNewDeploymentName(), wizard.getNewDeploymentDescription(), wizard
-                .getNewDeploymentConfig(), false, -1, false, //
+            bundleServer.createBundleDeployment(wizard.getBundleVersion().getId(), wizard.getDestination().getId(),
+                wizard.getNewDeploymentDescription(), wizard.getNewDeploymentConfig(), false, -1, false, //
                 new AsyncCallback<BundleDeployment>() {
                     public void onSuccess(BundleDeployment result) {
                         deployingImage.setSrc("/images/status_complete.gif");
@@ -90,7 +89,7 @@ public class DeployStep implements WizardStep {
                                     deployingImage.setSrc("/images/status_complete.gif");
                                     deployingMessage.setText("Bundle Deployment Scheduled!");
                                     CoreGUI.getMessageCenter().notify(
-                                        new Message("Scheduled bundle deployment [" + wizard.getNewDeploymentName()
+                                        new Message("Scheduled bundle deployment [" + result.getName()
                                             + "] resource group [" + result.getDestination().getGroup() + "]",
                                             Severity.Info));
                                     wizard.setNewDeployment(result);

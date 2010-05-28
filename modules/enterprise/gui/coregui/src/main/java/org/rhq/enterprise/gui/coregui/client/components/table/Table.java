@@ -192,7 +192,9 @@ public class Table extends VLayout {
         titleLayout.setAlign(VerticalAlignment.BOTTOM);
 
         if (headerIcon != null) {
-            titleLayout.addMember(new Img(headerIcon,24, 24));
+            Img img = new Img(headerIcon,24, 24);
+            img.setPadding(4);
+            titleLayout.addMember(img);
         }
 
         titleLayout.addMember(title);

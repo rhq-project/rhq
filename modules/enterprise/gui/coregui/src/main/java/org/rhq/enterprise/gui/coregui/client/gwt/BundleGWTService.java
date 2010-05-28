@@ -48,9 +48,9 @@ public interface BundleGWTService extends RemoteService {
 
     BundleVersion createBundleVersionViaRecipe(String recipe) throws Exception;
 
-    BundleDeployment createBundleDeployment(int bundleVersionId, int bundleDestinationId, String name,
-        String description, Configuration configuration, boolean enforcePolicy, int enforcementInterval,
-        boolean pinToBundle) throws Exception;
+    BundleDeployment createBundleDeployment(int bundleVersionId, int bundleDestinationId, String description,
+        Configuration configuration, boolean enforcePolicy, int enforcementInterval, boolean pinToBundle)
+        throws Exception;
 
     BundleDestination createBundleDestination(int bundleId, String name, String description, String deployDir,
         int groupId) throws Exception;
@@ -82,9 +82,11 @@ public interface BundleGWTService extends RemoteService {
 
     ArrayList<BundleType> getAllBundleTypes() throws Exception;
 
+    String getBundleDeploymentName(int bundleDestinationId, int bundleVersionId, int prevDeploymentId);
+
     BundleDeployment scheduleBundleDeployment(int bundleDeploymentId, boolean isCleanDeployment) throws Exception;
 
-    BundleDeployment scheduleRevertBundleDeployment(int bundleDestinationId, String deploymentName,
-        String deploymentDescription, boolean isCleanDeployment) throws Exception;
+    BundleDeployment scheduleRevertBundleDeployment(int bundleDestinationId, String deploymentDescription,
+        boolean isCleanDeployment) throws Exception;
 
 }

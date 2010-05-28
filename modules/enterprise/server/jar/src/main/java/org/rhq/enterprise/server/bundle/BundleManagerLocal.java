@@ -123,15 +123,27 @@ public interface BundleManagerLocal extends BundleManagerRemote {
         throws Exception;
 
     /**
-     * Equivalent to a all to {@link BundleManagerRemote#createBundleDeployment(Subject, int, int, String, String, Configuration)}
-     * with different transaction semantics. Useful when an slsb method needs to both create a deployment and schedules
-     * it prior to returning to an external caller.
+     * Similar to {@link BundleManagerRemote#createBundleDeployment(Subject, int, int, String, Configuration)} but
+     * supplies the internally generated deploymentName and has different transaction semantics. Useful when an
+     * slsb method needs to both create a deployment and schedules it prior to returning to an external caller.
      */
     public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
         int bundleDestinationId, String name, String description, Configuration configuration) throws Exception;
 
     // added here because the same method in @Remote was commented out to bypass a WSProvide issue
     HashMap<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception;
+
+    /**
+     * Needed by the Bundle Deploy and Revert wizards GUI to generate a deployment name for display.
+     *
+     * @param subject
+     * @param bundleDestinationId required
+     * @param bundleVersionId required for progressive deployment, -1 for revert
+     * @param prevDeploymentId required for revert deployment, -1 for progressive
+     * @return
+     */
+    public String getBundleDeploymentName(Subject subject, int bundleDestinationId, int bundleVersionId,
+        int prevDeploymentId);
 
     /** 
      * Not for general consumption.  A special case method to build the pojo that can be sent to the agent to

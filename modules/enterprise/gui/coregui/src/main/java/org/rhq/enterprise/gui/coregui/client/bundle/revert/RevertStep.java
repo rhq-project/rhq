@@ -72,13 +72,13 @@ public class RevertStep implements WizardStep {
             canvas.addMember(deployingMessage);
 
             bundleServer.scheduleRevertBundleDeployment(this.wizard.getDestination().getId(), this.wizard
-                .getDeploymentName(), this.wizard.getDeploymentDescription(), this.wizard.isCleanDeployment(), //
+                .getDeploymentDescription(), this.wizard.isCleanDeployment(), //
                 new AsyncCallback<BundleDeployment>() {
                     public void onSuccess(BundleDeployment result) {
                         deployingImage.setSrc("/images/status_complete.gif");
                         deployingMessage.setText("Revert Deployment Scheduled!");
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Scheduled revert bundle deployment [" + wizard.getDeploymentName()
+                            new Message("Scheduled revert bundle deployment [" + result.getName()
                                 + "] resource group [" + result.getDestination().getGroup() + "]", Severity.Info));
                         wizard.setDeployment(result);
                     }

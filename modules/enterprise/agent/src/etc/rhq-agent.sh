@@ -185,6 +185,14 @@ fi
 debug_msg "RHQ_AGENT_CMDLINE_OPTS: $RHQ_AGENT_CMDLINE_OPTS"
 
 # ----------------------------------------------------------------------
+# Prepare LD_LIBRARY_PATH for apache 
+# ----------------------------------------------------------------------
+
+if [ "x$_LINUX" != "x" ]; then
+export LD_LIBRARY_PATH=${RHQ_AGENT_HOME}/lib
+fi
+
+# ----------------------------------------------------------------------
 # Execute the VM which starts the agent
 # ----------------------------------------------------------------------
 

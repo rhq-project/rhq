@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.plugins.apache.ApachePluginLifecycleListener;
 import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
@@ -66,8 +67,8 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
         return serverRootPath;
     }
 
-    public AugeasConfigurationApache(Configuration configuration) throws AugeasRhqException {
-        super(configuration);
+    public AugeasConfigurationApache(String path,Configuration configuration) throws AugeasRhqException {
+        super(path,configuration);
 
         serverRootPath = configuration.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, null);
 

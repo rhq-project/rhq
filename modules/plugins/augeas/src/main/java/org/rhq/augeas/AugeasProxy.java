@@ -23,6 +23,7 @@
 package org.rhq.augeas;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +38,7 @@ import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeBuilder;
 import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.augeas.tree.impl.DefaultAugeasTreeBuilder;
-import org.rhq.augeas.util.LensHelper;
+import org.rhq.plugins.augeas.AugeasPluginLifecycleListener;
 
 /**
  * This is the main entry point for interfacing with Augeas.

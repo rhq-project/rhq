@@ -158,4 +158,9 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
         resourceContext.getParentResourceComponent().finishConfigurationUpdate(report);
     }
+    
+    public boolean isAugeasEnabled(){
+        ApacheVirtualHostServiceComponent parent = resourceContext.getParentResourceComponent();
+        return parent.isAugeasEnabled();          
+    }
 }

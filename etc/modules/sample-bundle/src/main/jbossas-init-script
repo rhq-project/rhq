@@ -2,7 +2,8 @@
 #
 # jbossas - This shell script takes care of starting and stopping
 #           a JBoss Application Server (AS) instance on a Red Hat 
-#           Linux system.
+#           Linux system. It can be run as a system service (init
+#           script) and/or run manually.
 #
 # chkconfig: 345 84 16
 # description: JBoss AS server

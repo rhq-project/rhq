@@ -90,12 +90,12 @@ function testGroupDeployment() {
    var testDest = BundleManager.createBundleDestination(testBundleVersion1.getBundle().getId(), "upgrade destination", "upgrade destination", "/tmp/upgrade-bundle-ant-test", groupId);
 
    // create a deployment of 1.0 using the 1.0 config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion1.getId(), testDest.getId(), "Upgrade Deployment with  Ant Test 1", "Creating initial ant bundle deployment to be upgraded", config1);
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion1.getId(), testDest.getId(), "Creating initial ant bundle deployment to be upgraded", config1);
    var bgd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), true);
    Assert.assertNotNull( bgd, "Failed to create 1.0 deployment" );
    
    // upgrade the deployment to 2.0 using the 2.0 config
-   testDeployment = BundleManager.createBundleDeployment(testBundleVersion2.getId(), testDest.getId(), "Upgrade Deployment with Ant Test 2", "Testing ant bundle upgrade deployment", config2);
+   testDeployment = BundleManager.createBundleDeployment(testBundleVersion2.getId(), testDest.getId(), "Testing ant bundle upgrade deployment", config2);
    bgd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), false);
    Assert.assertNotNull( bgd, "Failed to upgrade to 2.0 deployment" );
 }

@@ -78,15 +78,15 @@ function testDeployment() {
    var testDest = BundleManager.createBundleDestination( testBundleVersion.getBundle().getId(), "Deployment Test Dest", "test Dest", "/tmp/bundle-test", groupId);
 
    // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Deployment Test", "Deployment Test of testBundle WAR", new Configuration());
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Deployment Test of testBundle WAR", new Configuration());
 
    // deploy to the destination
    var bd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), false);
    Assert.assertNotNull( bd );      
    
    // delete the test bundle if it exists (after allowing agent audit messages to complete)
-   sleep( 5000 );
-   cleanupTestBundle();
+   //sleep( 5000 );
+   //cleanupTestBundle();
 }
 
 function getBundleType() {

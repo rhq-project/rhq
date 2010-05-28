@@ -966,8 +966,8 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     private BundleDeployment createDeployment(String name, BundleVersion bv, BundleDestination dest,
         Configuration config) throws Exception {
         final String fullName = TEST_PREFIX + "-bundledeployment-" + name;
-        BundleDeployment bd = bundleManager.createBundleDeployment(overlord, bv.getId(), dest.getId(), fullName,
-            fullName, config);
+        BundleDeployment bd = bundleManager
+            .createBundleDeployment(overlord, bv.getId(), dest.getId(), fullName, config);
 
         assert bd.getId() > 0;
         assert bd.getName().endsWith(fullName);

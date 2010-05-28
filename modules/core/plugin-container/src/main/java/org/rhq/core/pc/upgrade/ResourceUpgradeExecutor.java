@@ -26,6 +26,7 @@ package org.rhq.core.pc.upgrade;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +38,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
@@ -203,6 +205,15 @@ public class ResourceUpgradeExecutor implements Runnable {
                 Set<Resource> siblings = parentResource == null ? Collections.singleton(inventoryManager.getPlatform())
                     : inventoryManager.getResourcesWithType(resourceType, parentResource.getChildResources());
 
+                //filter out not committed resources
+                //XXX what about uninventoried or ignored ones? is it correct to not upgrade those?
+                Iterator<Resource> siblingsIterator = siblings.iterator();
+                while (siblingsIterator.hasNext()) {
+                    if (siblingsIterator.next().getInventoryStatus() != InventoryStatus.COMMITTED) {
+                        siblingsIterator.remove();
+                    }
+                }
+                
                 //get the upgrade context of the parent resource so that it can be passed to the upgrade method
                 //of the discovery component.
                 ResourceUpgradeContext<?> parentUpgradeContext = null;

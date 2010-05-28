@@ -65,7 +65,7 @@ public class DeploymentData {
      *                                 that the regex must be applied to - in other words, the regex value is only applied
      *                                 to relative file names as found in their associated zip file.
      * @param rawFilesToRealize identifies the raw files that need to be realized; note that each item in this set
-     *                          must match a <code>rawFiles</code> entry
+     *                          must match a key to a <code>rawFiles</code> entry
      * @param templateEngine if one or more filesToRealize are specified, this template engine is used to determine
      *                       the values that should replace all replacement variables found in those files
      * @param ignoreRegex the files/directories to ignore when updating an existing deployment

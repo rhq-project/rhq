@@ -56,15 +56,17 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         DataSourceTextField name = new DataSourceTextField("name", "Deployment Name");
         addField(name);
 
+        DataSourceTextField bundleVersion = new DataSourceTextField("bundleVersionVersion", "Bundle Version");
+        addField(bundleVersion);
+
         DataSourceTextField description = new DataSourceTextField("description", "Description");
         addField(description);
 
-        DataSourceDateTimeField created = new DataSourceDateTimeField("createdTime", "Deployment Time");
+        DataSourceTextField status = new DataSourceTextField("status", "Status");
+        addField(status);
+
+        DataSourceDateTimeField created = new DataSourceDateTimeField("deploymentTime", "Deployment Time");
         addField(created);
-
-        DataSourceTextField bundleVersion = new DataSourceTextField("bundleVersion", "Bundle Version");
-        addField(bundleVersion);
-
     }
 
     @Override
@@ -119,8 +121,10 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         record.setAttribute("name", from.getName());
         record.setAttribute("deployDir", from.getDestination().getDeployDir());
         record.setAttribute("description", from.getDescription());
-        record.setAttribute("createdTime", new Date(from.getCtime()));
+        record.setAttribute("deploymentTime", new Date(from.getCtime()));
         record.setAttribute("configuration", from.getConfiguration());
+        record.setAttribute("status", from.getStatus().name());
+        record.setAttribute("deployer", from.getSubjectName());
 
 
         if (from.getBundleVersion() != null) {

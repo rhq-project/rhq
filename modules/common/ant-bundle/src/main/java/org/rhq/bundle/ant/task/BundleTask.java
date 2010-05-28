@@ -52,6 +52,7 @@ public class BundleTask extends AbstractBundleTask {
         super.maybeConfigure();
 
         validateAttributes();
+        // TODO: Figure out why the Ant parse() method is not initializing the child Type objects.
         //validateTypes();
         
         getProject().setBundleName(this.name);
@@ -60,8 +61,7 @@ public class BundleTask extends AbstractBundleTask {
     }
 
     /**
-     * The RHQ Ant launcher will ensure that the following Ant project properties are defined prior to this method being
-     * invoked:
+     * The following Ant project properties must be defined with valid values prior to this method being invoked:
      *
      *   rhq.deploy.id  -   the {@link org.rhq.core.domain.bundle.BundleDeployment deployment}'s unique id
      *                      (e.g. "10001")
@@ -72,7 +72,7 @@ public class BundleTask extends AbstractBundleTask {
      * If the bundle recipe is being executed from the command line, the user must supply these properties, along
      * with any input properties required by the bundle recipe.
      *
-     * @throws BuildException
+     * @throws BuildException if an error occurs
      */
     @Override
     public void execute() throws BuildException {        

@@ -154,6 +154,13 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 + subjectToModify.getName() + "]");
         }
 
+
+        // Reset the roles and ldap roles according to the current settings as this method will not update them
+        // To update assinged roles see RoleManager
+        Subject currentSubject = entityManager.find(Subject.class, subjectToModify.getId());
+        subjectToModify.setRoles(currentSubject.getRoles());
+        subjectToModify.setLdapRoles(currentSubject.getLdapRoles());
+
         return entityManager.merge(subjectToModify);
     }
 

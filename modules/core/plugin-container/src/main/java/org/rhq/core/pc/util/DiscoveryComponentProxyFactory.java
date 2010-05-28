@@ -81,7 +81,7 @@ public class DiscoveryComponentProxyFactory {
 
             // This is the handler that will actually invoke the method calls.
             ResourceDiscoveryComponentInvocationHandler handler = new ResourceDiscoveryComponentInvocationHandler(type,
-                component, timeout, pluginClassLoader);
+                component, timeout, pluginClassLoader, componentInterface);
 
             // This is the proxy that will look like the discovery component object that the caller will use.
             T proxy = (T) Proxy.newProxyInstance(pluginClassLoader, new Class<?>[] { componentInterface }, handler);
@@ -167,9 +167,10 @@ public class DiscoveryComponentProxyFactory {
         private final long timeout;
         private final ResourceType resourceType;
         private final ClassLoader pluginClassLoader;
-
+        private Class<?> componentInterface;
+        
         public ResourceDiscoveryComponentInvocationHandler(ResourceType type, ResourceDiscoveryComponent component,
-            long timeout, ClassLoader pluginClassLoader) {
+            long timeout, ClassLoader pluginClassLoader, Class<?> componentInterface) {
             if (timeout <= 0) {
                 throw new IllegalArgumentException("timeout value is not positive.");
             }
@@ -181,6 +182,7 @@ public class DiscoveryComponentProxyFactory {
             this.component = component;
             this.timeout = timeout;
             this.pluginClassLoader = pluginClassLoader;
+            this.componentInterface = componentInterface;
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -189,7 +191,7 @@ public class DiscoveryComponentProxyFactory {
                     + "] has been blacklisted and can no longer be invoked.");
             }
 
-            if (method.getDeclaringClass().getPackage().getName().startsWith("org.rhq")) {
+            if (componentInterface.isAssignableFrom(method.getDeclaringClass())) {
                 return invokeInNewThread(method, args);
             } else {
                 // toString(), etc.

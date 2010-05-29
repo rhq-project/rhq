@@ -82,6 +82,10 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
             criteria.addFilterBundleVersionId(Integer.parseInt(request.getCriteria().getAttribute("bundleVersionId")));
         }
 
+        if (request.getCriteria().getValues().containsKey("bundleDestinationId")) {
+            criteria.addFilterDestinationId(Integer.parseInt(request.getCriteria().getAttribute("bundleDestinationId")));
+        }
+
         if (request.getCriteria().getValues().get("tagNamespace") != null) {
             criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
         }

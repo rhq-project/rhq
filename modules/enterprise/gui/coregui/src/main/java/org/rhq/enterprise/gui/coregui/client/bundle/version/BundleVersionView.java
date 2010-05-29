@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.version;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -162,7 +163,10 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
     private Tab createLiveDeploymentsTab() {
         Tab tab = new Tab("Deployments");
 
-        BundleDeploymentListView table = new BundleDeploymentListView(version);
+        Criteria criteria = new Criteria();
+        criteria.setAttribute("bundleVersionId", version.getId());
+
+        BundleDeploymentListView table = new BundleDeploymentListView(criteria);
 
         tab.setPane(table);
 

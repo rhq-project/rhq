@@ -41,48 +41,15 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  */
 public class BundleDeploymentListView extends Table {
 
-    private int bundleId;
-    private Bundle bundle;
-    private BundleVersion bundleVersion;
-
-
-    public BundleDeploymentListView(Bundle bundle) {
-        super("Bundle Deployments");
-
-        this.bundle = bundle;
-        this.bundleId = bundle.getId();
-    }
-
     public BundleDeploymentListView(Criteria criteria) {
         super("Bundle Deployments", criteria);
     }
 
-    public BundleDeploymentListView(BundleVersion bundleVersion) {
-        this.bundleVersion = bundleVersion;
-        this.bundleId = bundleVersion.getBundle().getId();
-    }
 
     @Override
     protected void onInit() {
         super.onInit();
         setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
-
-
-
-
-        String title = "Bundle Deployments";
-        Criteria criteria = new Criteria();
-        if (bundle != null) {
-            title = bundle.getName() + " deployments";
-            criteria.setAttribute("bundleId", bundle.getId());
-        }
-        if (bundleVersion != null) {
-            title = bundleVersion.getVersion() + " deployments";
-            criteria.setAttribute("bundleVersionId", bundleVersion.getId());
-        }
-        setTableTitle(title);
-
-        refresh(criteria);
 
         setDataSource(new BundleDeploymentDataSource());
 

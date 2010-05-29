@@ -1218,6 +1218,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         List<BundleVersion> bvs = q.getResultList();
         for (BundleVersion bv : bvs) {
             bundleManager.deleteBundleVersion(subject, bv.getId(), false);
+            entityManager.flush();
         }
 
         // we need to whack the Repo once the Bundle no longer refers to it
@@ -1243,11 +1244,20 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_BUNDLE)
-    public void deleteBundleDestination(Subject subject, int bundleDestinationId) throws Exception {
-        BundleDestination doomed = this.entityManager.find(BundleDestination.class, bundleDestinationId);
+    public void deleteBundleDestination(Subject subject, int destinationId) throws Exception {
+        BundleDestination doomed = this.entityManager.find(BundleDestination.class, destinationId);
         if (null == doomed) {
             return;
         }
+
+        // deployments replace other deployments and have a self-referring FK.  The deployments
+        // need to be removed in a way that will ensure that a replaced deployment is not removed
+        // prior to the replacer.  To do this we'll just blanket update all the doomed deployments
+        // to break the FK dependency with nulls.
+        Query q = entityManager.createNamedQuery(BundleDeployment.QUERY_UPDATE_FOR_DESTINATION_REMOVE);
+        q.setParameter("destinationId", destinationId);
+        q.executeUpdate();
+        entityManager.flush();
 
         entityManager.remove(doomed);
     }
@@ -1264,12 +1274,21 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             bundleId = bundleVersion.getBundle().getId(); // note that we lazy load this if we never plan to delete the bundle
         }
 
+        // deployments replace other deployments and have a self-referring FK.  The deployments
+        // need to be removed in a way that will ensure that a replaced deployment is not removed
+        // prior to the replacer.  To do this we'll just blanket update all the doomed deployments
+        // to break the FK dependency with nulls.
+        Query q = entityManager.createNamedQuery(BundleDeployment.QUERY_UPDATE_FOR_VERSION_REMOVE);
+        q.setParameter("bundleVersionId", bundleVersionId);
+        int rowsUpdated = q.executeUpdate();
+        entityManager.flush();
+
         // remove the bundle version - cascade remove the deployments which will cascade remove the resource deployments.
         this.entityManager.remove(bundleVersion);
 
         if (deleteBundleIfEmpty) {
             this.entityManager.flush();
-            Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
+            q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
             q.setParameter("bundleId", bundleId);
             if (q.getResultList().size() == 0) {
                 // there are no more bundle versions left, blow away the bundle and all repo/bundle files associated with it

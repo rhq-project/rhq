@@ -2567,12 +2567,12 @@
                         FOREIGN KEY (CONFIG_ID)
                         REFERENCES RHQ_CONFIG (ID)
                     </statement>
-                        <statement desc="Creating RHQ_BUNDLE_DEPLOYMENT foreign key relation to RHQ_BUNDLE_DEPLOYMENT">
-                            ALTER TABLE RHQ_BUNDLE_DEPLOYMENT
-                            ADD CONSTRAINT RHQ_BD_B_DEPLOYMENT_ID_FK
-                            FOREIGN KEY (REPLACED_BUNDLE_DEPLOYMENT_ID)
-                            REFERENCES RHQ_BUNDLE_DEPLOYMENT (ID)
-                        </statement>                                        
+                    <statement desc="Creating RHQ_BUNDLE_DEPLOYMENT foreign key relation to RHQ_BUNDLE_DEPLOYMENT">
+                        ALTER TABLE RHQ_BUNDLE_DEPLOYMENT
+                        ADD CONSTRAINT RHQ_BD_B_DEPLOYMENT_ID_FK
+                        FOREIGN KEY (REPLACED_BUNDLE_DEPLOYMENT_ID)
+                        REFERENCES RHQ_BUNDLE_DEPLOYMENT (ID)
+                    </statement>                                        
                 </schema-directSQL>                
                 
                 <!-- RHQ_BUNDLE_RES_DEPLOY -->

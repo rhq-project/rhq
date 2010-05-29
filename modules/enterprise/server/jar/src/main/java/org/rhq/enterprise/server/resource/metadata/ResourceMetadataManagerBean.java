@@ -670,12 +670,18 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private void updateParentResourceTypes(ResourceType newType, ResourceType existingType) {
-        Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
         if (log.isDebugEnabled()) {
-            log.debug("Setting parent types on type: " + ((existingType != null) ? existingType : newType )
-                    + " to [" + newParentTypes + "], current parent types are [" + existingType.getParentResourceTypes()
-                    + "]...");
+            if (existingType != null) {
+                log.debug("Setting parent types on existing type: " + existingType + " to ["
+                        + newType.getParentResourceTypes() + "] - current parent types are ["
+                        + existingType.getParentResourceTypes() + "]...");
+            } else {
+                log.debug("Setting parent types on new type: " + newType
+                        + " to [" + newType.getParentResourceTypes() + "]...");
+            }
         }
+        
+        Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
         newType.setParentResourceTypes(new HashSet<ResourceType>());
         Set<ResourceType> originalExistingParentTypes = new HashSet<ResourceType>();
         if (existingType != null) {

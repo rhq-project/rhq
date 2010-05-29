@@ -32,6 +32,10 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.DrawEvent;
+import com.smartgwt.client.widgets.events.DrawHandler;
+import com.smartgwt.client.widgets.events.ShowContextMenuEvent;
+import com.smartgwt.client.widgets.events.ShowContextMenuHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -115,6 +119,8 @@ public class MenuBarView extends VLayout {
         final MenuBar menu = new MenuBar();
         menu.setHeight(28);
 
+
+
         Menu subsystemsMenu = new Menu();
 
         subsystemsMenu.setTitle("Subsystems");
@@ -146,7 +152,15 @@ public class MenuBarView extends VLayout {
         resourcesMenu.addItem(new EMenuItem("Servers", LinkManager.getHubServerssLink(), "types/Server_up_16.png"));//, new LinkCommand("#fsdf"));
         resourcesMenu.addItem(new EMenuItem("Services", LinkManager.getHubServicesLink(), "types/Service_up_16.png"));//, new LinkCommand("#fsdf"));
         resourcesMenu.addItem(new MenuItemSeparator());
-//        resourcesMenu.addItem(new MenuItem("Favorite Resources"));//,)
+
+        final FavoritesMenu favoritesMenu = new FavoritesMenu();
+        resourcesMenu.addItem(favoritesMenu);
+        menu.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                System.out.println("over here");
+                favoritesMenu.refresh();
+            }
+        });
 
         Menu groupsMenu = new Menu();
         groupsMenu.setStyleName("menuBarMenuButton");

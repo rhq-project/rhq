@@ -203,7 +203,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                                 suggestionMenu.moveSelectionDown();
                             }
                         }
-                        //suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() + 1);
+                        event.preventDefault();
                         break;
                     case KeyCodes.KEY_UP:
                         suggestionMenu.moveSelectionUp();
@@ -214,7 +214,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                                 suggestionMenu.moveSelectionUp();
                             }
                         }
-                        //suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() - 1);
+                        event.preventDefault();
                         break;
                     case KeyCodes.KEY_ENTER:
                         if (suggestionMenu.getSelectedItemIndex() < 0) {

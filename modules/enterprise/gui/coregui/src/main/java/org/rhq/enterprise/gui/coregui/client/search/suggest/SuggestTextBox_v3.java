@@ -166,20 +166,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
     }
 
-    /*
-    private void setNewSelection(SuggestionMenuItem menuItem) {
-        Suggestion curSuggestion = menuItem.getSuggestion();
-        currentText = curSuggestion.getReplacementString();
-        setText(currentText);
-        suggestionPopup.hide();
-        fireSuggestionEvent(curSuggestion);
-    }
-
-    private void fireSuggestionEvent(Suggestion selectedSuggestion) {
-        SelectionEvent.fire(this, selectedSuggestion);
-    }
-    */
-
     private void addEventsToTextBox() {
         class TextBoxEvents extends HandlesAllKeyEvents implements ValueChangeHandler<String> {
 
@@ -343,25 +329,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     }
 
     /**
-     * Gets the specified suggestion from the suggestions currently showing.
-     * 
-     * @param index the index at which the suggestion lives
-     * 
-     * @throws IndexOutOfBoundsException if the index is greater then the number
-     *           of suggestions currently showing
-     * 
-     * @return the given suggestion
-     */
-    /*
-    Suggestion getSuggestion(int index) {
-        if (!isSuggestionListShowing()) {
-            throw new IndexOutOfBoundsException("No suggestions showing, so cannot show " + index);
-        }
-        return ((SuggestionMenuItem) suggestionMenu.getItems().get(index)).suggestion;
-    }
-    */
-
-    /**
      * Get the number of suggestions that are currently showing.
      * 
      * @return the number of suggestions currently showing, 0 if there are none
@@ -433,22 +400,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             SearchSuggestion searchSuggestion = extraSearchSuggestion(suggestion);
             return searchSuggestion;
         }
-
-        /**
-         * Selects the item at the specified index in the menu. Selecting the item
-         * does not perform the item's associated action; it only changes the style
-         * of the item and updates the value of SuggestionMenu.selectedItem.
-         * 
-         * @param index index
-         */
-        /*
-        public void selectItem(int index) {
-            List<MenuItem> items = getItems();
-            if (index > -1 && index < items.size()) {
-                itemOver(items.get(index), false);
-            }
-        }
-        */
     }
 
     private static SearchSuggestion extraSearchSuggestion(Suggestion suggestion) {

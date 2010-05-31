@@ -29,6 +29,7 @@ div {
   margin: 0;
   border-color: white;
   border-style: none;
+  outline: none;
 }
 
 .patternNameLabel {
@@ -49,6 +50,7 @@ div {
   border-color: gray;
   border-style: dotted;
   border-width: thin;
+  outline: none;
 }
 
 

@@ -85,8 +85,11 @@ public class BundleTask extends AbstractBundleTask {
         }
         File deployDirFile = new File(deployDir);
         if (!deployDirFile.isAbsolute()) {
-            throw new BuildException("Value of property [" + DeployPropertyNames.DEPLOY_DIR + "] (" + deployDirFile
-                + ") is not an absolute path.");
+            // throw exception unless we are on windows and the path is a root dir without a drive letter - ignore missing drive letter
+            if (!deployDirFile.getPath().startsWith(File.separator)) {
+                throw new BuildException("Value of property [" + DeployPropertyNames.DEPLOY_DIR + "] (" + deployDirFile
+                    + ") is not an absolute path.");
+            }
         }
         getProject().setDeployDir(deployDirFile);
         log(DeployPropertyNames.DEPLOY_DIR + "=\"" + deployDir + "\"", Project.MSG_DEBUG);

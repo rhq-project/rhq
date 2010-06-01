@@ -612,14 +612,23 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         int previousWhitespaceIndex = cursorPosition;
         if (cursorPosition != 0) {
             while (--previousWhitespaceIndex > 0) {
-                if (getText().charAt(previousWhitespaceIndex) == ' ') {
+                if (currentText.charAt(previousWhitespaceIndex) == ' ') {
                     previousWhitespaceIndex++; // put index right after found whitespace
                     break;
                 }
             }
         }
+
+        int futureWhitespaceIndex = cursorPosition;
+        while (futureWhitespaceIndex < currentText.length()) {
+            if (currentText.charAt(futureWhitespaceIndex) == ' ') {
+                break;
+            }
+            futureWhitespaceIndex++;
+        }
+
         String before = getText().substring(0, previousWhitespaceIndex);
-        String after = getText().substring(cursorPosition);
+        String after = getText().substring(futureWhitespaceIndex);
         setValue(before + completion + after);
 
         // TODO: this algo screws up when it does the indexOf search on just a single char from currentText

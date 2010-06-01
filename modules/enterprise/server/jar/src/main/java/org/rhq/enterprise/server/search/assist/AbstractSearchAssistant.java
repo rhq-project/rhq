@@ -145,4 +145,26 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
 
         return null; // change all ? to _ and all * to %
     }
+
+    protected final String stripQuotes(String data) {
+        if (data.length() == 0) {
+            return "";
+        }
+
+        char first = data.charAt(0);
+        char last = data.charAt(data.length() - 1);
+        if (first == '\'' || first == '"') {
+            if (data.length() == 1) {
+                return "";
+            }
+            data = data.substring(1);
+        }
+        if (last == '\'' || last == '"') {
+            if (data.length() == 1) {
+                return "";
+            }
+            data = data.substring(0, data.length() - 1);
+        }
+        return data;
+    }
 }

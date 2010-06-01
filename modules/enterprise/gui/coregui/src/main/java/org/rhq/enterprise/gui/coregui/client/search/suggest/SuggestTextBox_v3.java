@@ -544,6 +544,9 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
 
         private static String decorate(String data, String style, int startIndex, int endIndex) {
+            if (startIndex == -1) {
+                return data; // no match
+            }
             String before = data.substring(0, startIndex);
             String highlight = data.substring(startIndex, endIndex);
             String after = data.substring(endIndex);

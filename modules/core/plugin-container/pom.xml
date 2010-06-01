@@ -98,7 +98,7 @@
       <dependency>
          <groupId>net.augeas</groupId>
          <artifactId>augeas-native</artifactId>
-         <version>0.7.1</version>
+         <version>0.7.1.1</version>
          <type>zip</type>
       </dependency>
 

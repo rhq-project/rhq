@@ -438,6 +438,9 @@ public class SearchAssistManager {
         switch (parsed.state) {
         case CONTEXT:
             if (parsed.context.equals("")) {
+                debug("getAdvancedSuggestions: empty term, suggesting all contexts");
+                return convert(getAllContexts());
+                /*
                 if (tokens.length == 1) {
                     debug("getAdvancedSuggestions: no terms yet, suggesting contexts");
                     return convert(getAllContexts());
@@ -448,6 +451,7 @@ public class SearchAssistManager {
                     debug("getAdvancedSuggestions: previous term was not boolean, suggesting boolean");
                     return convert(booleanOperators);
                 }
+                */
             } else if (isBooleanTerm(parsed.context)) {
                 debug("getAdvancedSuggestions: beforeCaret is whole boolean operator");
                 return convert(getAllContexts()); // TODO: should we tell user to type a space first?

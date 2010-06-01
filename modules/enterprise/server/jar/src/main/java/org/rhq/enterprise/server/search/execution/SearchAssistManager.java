@@ -27,7 +27,7 @@ public class SearchAssistManager {
     private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
 
     private static List<String> comparisonOperators = Arrays.asList("!==", "!=", "==", "=");
-    private static List<String> booleanOperators = Arrays.asList("and", "or", "|");
+    private static List<String> booleanOperators = Arrays.asList("|");
 
     private Subject subject;
     private SearchSubsystem searchSubsystem;

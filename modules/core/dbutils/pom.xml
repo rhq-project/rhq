@@ -192,19 +192,19 @@
                          <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
 
                          <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                            <equals arg1="${db}" arg2="dev"/>
+                            <equals arg1="${db}" arg2="dev" />
                          </condition>
 
                          <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                            <equals arg1="${db}" arg2="dev"/>
+                            <equals arg1="${db}" arg2="dev" />
                          </condition>
 
                          <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                            <equals arg1="${db}" arg2="dev"/>
+                            <equals arg1="${db}" arg2="dev" />
                          </condition>
 
                          <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                            <equals arg1="${db}" arg2="dev"/>
+                            <equals arg1="${db}" arg2="dev" />
                          </condition>
 
                          <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
@@ -240,19 +240,19 @@
                         <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
 
 			<condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                            <equals arg1="${db}" arg2="dev"/>
+                            <equals arg1="${db}" arg2="dev" />
                          </condition>
 
                          <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                            <equals arg1="${db}" arg2="dev"/>
+                            <equals arg1="${db}" arg2="dev" />
                          </condition>
 
                          <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                            <equals arg1="${db}" arg2="dev"/>
+                            <equals arg1="${db}" arg2="dev" />
                          </condition>
 
                          <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                            <equals arg1="${db}" arg2="dev"/>
+                            <equals arg1="${db}" arg2="dev" />
 		         </condition>
 
                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
@@ -289,23 +289,23 @@
 	         <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
 
 		 <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                    <equals arg1="${db}" arg2="dev"/>
+                    <equals arg1="${db}" arg2="dev" />
                  </condition>
 
                  <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                    <equals arg1="${db}" arg2="dev"/>
+                    <equals arg1="${db}" arg2="dev" />
                  </condition>
 
                  <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                    <equals arg1="${db}" arg2="dev"/>
+                    <equals arg1="${db}" arg2="dev" />
                  </condition>
 
                  <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                    <equals arg1="${db}" arg2="dev"/>
+                    <equals arg1="${db}" arg2="dev" />
 		 </condition>
 
                 <condition property="rhq.ds.driver-class" value="${rhq.dev.ds.driver-class}" else="${rhq.test.ds.driver-class}">
-                   <equals arg1="${db}" arg2="dev"/>
+                   <equals arg1="${db}" arg2="dev" />
                 </condition>
 
                 <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
@@ -356,19 +356,19 @@
 		             <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
 
 			     <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                               <equals arg1="${db}" arg2="dev"/>
+                               <equals arg1="${db}" arg2="dev" />
                              </condition>
 
                              <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                               <equals arg1="${db}" arg2="dev"/>
+                               <equals arg1="${db}" arg2="dev" />
                              </condition>
 
                              <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                               <equals arg1="${db}" arg2="dev"/>
+                               <equals arg1="${db}" arg2="dev" />
                              </condition>
 
                             <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                               <equals arg1="${db}" arg2="dev"/>
+                               <equals arg1="${db}" arg2="dev" />
                             </condition>
 
                              <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="create-release-schema">
@@ -384,7 +384,7 @@
                                 <property name="rhq.ds.password" value="${rhq.ds.password}" />
                                 <property name="project.version" value="${project.version}" />
                                 <property name="db.schema.version" value="${db.schema.version}" />
-				<property name="jon.release" value="${jon.release}"/>
+				<property name="jon.release" value="${jon.release}" />
                              </ant>
                           </tasks>
             	       </configuration>

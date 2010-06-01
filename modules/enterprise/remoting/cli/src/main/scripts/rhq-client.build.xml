@@ -43,8 +43,8 @@
       <echo>*** Creating lib dir...</echo>
       <mkdir dir="${lib.home}" />
       <mkdir dir="${lib.home}/endorsed" />
+
       <echo>*** Populating lib dir...</echo>
-      <copy file="${settings.localRepository}/org/rhq/rhq-remoting-webservices/${rhq-remoting-ws.version}/rhq-remoting-webservices-${rhq-remoting-ws.version}.jar" tofile="${lib.home}/rhq-remoting-webservices-${rhq-remoting-ws.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/commons-logging/commons-logging/${commons-logging.version}/commons-logging-${commons-logging.version}.jar" tofile="${lib.home}/commons-logging-${commons-logging.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/gnu-getopt/getopt/${getopt.version}/getopt-${getopt.version}.jar" tofile="${lib.home}/getopt-${getopt.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/i18nlog/i18nlog/${i18nlog.version}/i18nlog-${i18nlog.version}.jar" tofile="${lib.home}/i18nlog-${i18nlog.version}.jar" verbose="true" />

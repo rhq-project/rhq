@@ -178,14 +178,6 @@ public class SearchBar {
         }
     }
 
-    public void selectSavedSearch(String savedSearchName) {
-        String savedSearchPattern = getSavedSearchManager().getPatternByName(savedSearchName);
-        autoCompletePatternField.setValue(savedSearchPattern, true);
-        patternNameField.setValue(savedSearchName, true);
-        currentSearch = "";
-        turnNameFieldIntoLabel();
-    }
-
     private void setupAutoCompletingPatternField() {
         autoCompletePatternField.getElement().setId("patternField");
         autoCompletePatternField.addStyleName("patternField");
@@ -201,7 +193,7 @@ public class SearchBar {
         patternNameField.setVisible(false);
 
         PatternNameFieldEventHandler handler = new PatternNameFieldEventHandler();
-        patternNameField.addKeyPressHandler(handler);
+        //patternNameField.addKeyPressHandler(handler);
         patternNameField.addClickHandler(handler);
         patternNameField.addBlurHandler(handler);
     }
@@ -288,6 +280,10 @@ public class SearchBar {
         @Override
         public void onKeyPress(KeyPressEvent event) {
             // hide pattern field/label, turn off star
+            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+                return;
+            }
+
             patternNameLabel.setText("");
             patternNameLabel.setVisible(false);
             patternNameField.setValue("", true);
@@ -295,16 +291,7 @@ public class SearchBar {
             currentSearch = "";
             starImage.setUrl(STAR_OFF_URL);
 
-            // enter submits a search result under certain conditions, escape hides the suggestions drop-down
-            // presume this event is handled by the gwt component
-            /*if (event.getCharCode() == KeyCodes.KEY_ENTER) {
-                boolean suggestionsHidden = !autoCompletePatternField.isSuggestionListShowing();
-                boolean suggestionSelected = !suggestionsHidden && autoCompletePatternField.isItemSelected();
-                if (suggestionsHidden || !suggestionSelected) {
-                    executeSearch();
-                    autoCompletePatternField.hidePopup();
-                }
-            } else */if (event.getCharCode() == KeyCodes.KEY_ESCAPE) {
+            if (event.getCharCode() == KeyCodes.KEY_ESCAPE) {
                 autoCompletePatternField.hideSuggestionList();
                 event.preventDefault();
                 event.stopPropagation();
@@ -327,11 +314,12 @@ public class SearchBar {
                 autoCompletePatternField.setValue(welcomeMessage, true);
             }
             savedSearchesPanel.hide();
-            turnNameFieldIntoLabel();
+            //turnNameFieldIntoLabel();
         }
     }
 
-    class PatternNameFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
+    class PatternNameFieldEventHandler implements /*KeyPressHandler,*/ClickHandler, BlurHandler {
+        /*
         @Override
         public void onKeyPress(KeyPressEvent event) {
             if (event.getCharCode() == 13) {
@@ -339,6 +327,7 @@ public class SearchBar {
                 turnNameFieldIntoLabel();
             }
         }
+        */
 
         @Override
         public void onClick(ClickEvent event) {
@@ -449,16 +438,19 @@ public class SearchBar {
 
                 savedSearches.removeRow(rowIndex);
             } else {
-                currentSearch = "";
-                String patternValue = savedSearchManager.getPatternByName(patternName);
-                autoCompletePatternField.setValue(patternValue, true);
-                patternNameField.setValue(patternName, true);
-                SearchLogger.debug("search results change: [" + patternName + "," + patternValue + "]");
-                turnNameFieldIntoLabel();
-                savedSearchesPanel.hide();
-                prepareSearchExecution();
+                activateSavedSearch(patternName);
             }
         }
+    }
+
+    public void activateSavedSearch(String savedSearchName) {
+        currentSearch = "";
+        String patternValue = savedSearchManager.getPatternByName(savedSearchName);
+        autoCompletePatternField.setValue(patternValue, true);
+        patternNameField.setValue(savedSearchName, true);
+        SearchLogger.debug("search results change: [" + savedSearchName + "," + patternValue + "]");
+        turnNameFieldIntoLabel();
+        savedSearchesPanel.hide();
     }
 
     class SearchButtonEventHandler implements ClickHandler {

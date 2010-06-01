@@ -641,7 +641,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         if (searchSuggestion.getKind() == SearchSuggestion.Kind.GlobalSavedSearch
             || searchSuggestion.getKind() == SearchSuggestion.Kind.UserSavedSearch) {
             // execute saved searches immediately, since they presumably constitute complete expressions
-            searchBar.selectSavedSearch(searchSuggestion.getLabel());
+            searchBar.activateSavedSearch(searchSuggestion.getLabel());
             //searchBar.executeSearch(completion);
         }
     }

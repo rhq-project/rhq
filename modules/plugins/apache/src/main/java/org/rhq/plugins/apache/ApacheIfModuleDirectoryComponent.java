@@ -99,5 +99,9 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
         AugeasNode directory = AugeasNodeSearch.findNodeById(virtualHost, context.getResourceKey());
         return directory;
       }
+    
+    public boolean isAugeasEnabled(){
+        return parentComponent.isAugeasEnabled();          
+    }
 }
 

@@ -49,7 +49,7 @@ public class BundleTreeView extends TreeGrid {
 
         setWidth100();
         setHeight100();
-        setShowRoot(true);
+//        setShowRoot(true);
         setAutoFetchData(true);
         setAnimateFolders(false);
         setSelectionType(SelectionStyle.SINGLE);

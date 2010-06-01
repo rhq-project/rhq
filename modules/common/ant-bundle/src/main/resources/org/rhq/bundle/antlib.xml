@@ -8,7 +8,7 @@
 
     <!-- bundle task's child types -->
     <typedef name="input-property" classname="org.rhq.bundle.ant.type.InputPropertyType"/>
-    <typedef name="deployment" classname="org.rhq.bundle.ant.type.DeploymentType"/>
+    <typedef name="deployment-unit" classname="org.rhq.bundle.ant.type.DeploymentUnitType"/>
 
     <!-- deployment type's child types -->
     <typedef name="file" classname="org.rhq.bundle.ant.type.FileType"/>

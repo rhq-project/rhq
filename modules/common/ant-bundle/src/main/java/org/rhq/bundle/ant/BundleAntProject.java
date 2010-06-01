@@ -121,14 +121,6 @@ public class BundleAntProject extends Project {
         this.deploymentId = deploymentId;
     }
 
-    public String getDeploymentName() {
-        return deploymentName;
-    }
-
-    public void setDeploymentName(String deploymentName) {
-        this.deploymentName = deploymentName;
-    }
-
     public DeploymentPhase getDeploymentPhase() {
         return deploymentPhase;
     }

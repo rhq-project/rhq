@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -53,8 +54,10 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.revert.BundleRevertWizard;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
@@ -85,11 +88,14 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         this.destination = bundleDestination;
         this.bundle = bundleDestination.getBundle();
 
-        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png")
-                + "\"/> " + destination.getName()));
+        addMember(new BackButton("Back to Bundle: " + bundle.getName(),"Bundles/Bundle/" + bundle.getId()));
+
+        addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png"), destination.getName()));
 
         DynamicForm form = new DynamicForm();
+        form.setWidth100();
         form.setNumCols(4);
+        form.setColWidths("20%","30%","25%","25%");
 
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle("Bundle");
@@ -118,6 +124,11 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         tagItem.setCanvas(tagEditor);
         tagItem.setRowSpan(4);
 
+        CanvasItem actionItem = new CanvasItem("actions");
+        actionItem.setShowTitle(false);
+        actionItem.setCanvas(getActionLayout());
+        actionItem.setRowSpan(4);
+
         StaticTextItem created = new StaticTextItem("created", "Created");
         created.setValue(new Date(destination.getCtime()));
 
@@ -130,7 +141,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         StaticTextItem path = new StaticTextItem("path", "Path");
         path.setValue(destination.getDeployDir());
 
-        form.setFields(bundleName, tagItem, created, destinationGroup, path);
+        form.setFields(bundleName, tagItem, actionItem, created, destinationGroup, path);
 
         addMember(form);
 
@@ -139,21 +150,6 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         deployments.setShowResizeBar(true);
         addMember(createDeploymentsTable());
 
-        IButton deployButton = new IButton("Deploy");
-        deployButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                new BundleDeployWizard(destination).startBundleWizard();
-            }
-        });
-        addMember(deployButton);
-
-        IButton revertButton = new IButton("Revert");
-        revertButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                new BundleRevertWizard(destination).startBundleWizard();
-            }
-        });
-        addMember(revertButton);
 
         detail = new Canvas();
         detail.setHeight("50%");
@@ -161,8 +157,38 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         addMember(detail);
     }
 
+    private Canvas getActionLayout() {
+        VLayout actionLayout = new VLayout();
+        actionLayout.setMembersMargin(10);
+        IButton deployButton = new IButton("Deploy");
+        deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
+        deployButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                new BundleDeployWizard(destination).startBundleWizard();
+            }
+        });
+        actionLayout.addMember(deployButton);
+
+        IButton revertButton = new IButton("Revert");
+        revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
+        revertButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                new BundleRevertWizard(destination).startBundleWizard();
+            }
+        });
+        actionLayout.addMember(revertButton);
+        return actionLayout;
+    }
+
     private Table createDeploymentsTable() {
-        Table table = new Table("Deployment History");
+
+        Criteria criteria = new Criteria();
+        criteria.addCriteria("bundleDestinationId", destination.getId());
+
+        return new BundleDeploymentListView(criteria);
+
+
+       /* Table table = new Table("Deployment History");
 
         ListGridField name = new ListGridField("name", "Name");
         name.setCellFormatter(new CellFormatter() {
@@ -206,7 +232,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
 
         table.getListGrid().setData(records.toArray(new ListGridRecord[records.size()]));
 
-        return table;
+        return table;*/
     }
 
     public void renderView(final ViewPath viewPath) {

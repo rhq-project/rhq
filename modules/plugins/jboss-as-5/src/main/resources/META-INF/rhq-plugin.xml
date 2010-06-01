@@ -947,15 +947,12 @@
             <subcategory name="Resources"
                          description="Different types of Resources">
                 <subcategory name="Datasources"
-                    description="Different types of Datasources"/>
+                             description="Different types of Datasources"/>
                 <subcategory name="Connection Factories"
-                    description="Different types of Connection Factories"/>
-                <subcategory name="JMS Destinations"
-                             description="Different types of JMS Destinations"/>
+                             description="Different types of Connection Factories"/>
             </subcategory>
             <subcategory name="Applications"
-                description="Different types of Applications (WARs, EARs, etc.)">
-            </subcategory>
+                         description="Different types of Applications (WARs, EARs, etc.)"/>
         </subcategories>
 
         <plugin-configuration>

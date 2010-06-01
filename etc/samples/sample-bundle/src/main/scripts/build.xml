@@ -9,8 +9,9 @@
       <!-- download JBossAS 6.0 dist from sourceforge and unzip it -->      
       <property name="tmp.dir" location="${java.io.tmpdir}/${user.name}"/>       
       <echo>tmp.dir="${tmp.dir}"</echo>
-      <mkdir dir="${tmp.dir}"/>      
-      <get src="http://downloads.sourceforge.net/project/jboss/JBoss/JBoss-6.0.0.M2/jboss-6.0.0.M2.zip" 
+      <mkdir dir="${tmp.dir}"/>
+
+      <get src="http://downloads.sourceforge.net/project/jboss/JBoss/JBoss-6.0.0.M3/jboss-as-distribution-6.0.0.20100429-M3.zip" 
            dest="${tmp.dir}/jbossas.zip" 
            usetimestamp="true"/>
       <property name="jboss.home" location="target/jbossas-petstore"/>
@@ -18,7 +19,7 @@
       <mkdir dir="${jboss.home}"/>
       <unzip src="${tmp.dir}/jbossas.zip" dest="${jboss.home}">
         <mapper>
-          <globmapper from="jboss-6.0.0.20100216-M2/*" to="*"/>
+          <globmapper from="jboss-6.0.0.20100429-M3/*" to="*"/>
         </mapper>
       </unzip>
 

@@ -29,6 +29,7 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -64,6 +65,8 @@ public class Table extends VLayout {
     private ToolStrip footer;
     private Label tableInfo;
     private String[] excludedFieldNames;
+
+    private String headerIcon;
 
 
     private boolean showFooter = true;
@@ -170,16 +173,6 @@ public class Table extends VLayout {
             }
         }
 
-        titleLayout = new HLayout();
-        titleLayout.setAutoHeight();
-        titleLayout.setAlign(VerticalAlignment.BOTTOM);
-        titleLayout.addMember(title);
-
-        if (titleComponent != null) {
-            titleLayout.addMember(new LayoutSpacer());
-            titleLayout.addMember(titleComponent);
-        }
-
 
         tableInfo.setWrap(false);
 
@@ -192,6 +185,24 @@ public class Table extends VLayout {
         super.onDraw();
 
         removeMembers(getMembers());
+
+
+        titleLayout = new HLayout();
+        titleLayout.setAutoHeight();
+        titleLayout.setAlign(VerticalAlignment.BOTTOM);
+
+        if (headerIcon != null) {
+            Img img = new Img(headerIcon,24, 24);
+            img.setPadding(4);
+            titleLayout.addMember(img);
+        }
+
+        titleLayout.addMember(title);
+
+        if (titleComponent != null) {
+            titleLayout.addMember(new LayoutSpacer());
+            titleLayout.addMember(titleComponent);
+        }
 
         addMember(titleLayout);
         addMember(listGrid);
@@ -274,6 +285,7 @@ public class Table extends VLayout {
     private boolean autoSizing = false;
 
     public void refresh(Criteria criteria) {
+        this.listGrid.invalidateCache();
         this.listGrid.setCriteria(criteria);
         this.listGrid.markForRedraw();
     }
@@ -334,6 +346,13 @@ public class Table extends VLayout {
         this.extraWidgets.add(canvas);
     }
 
+    public String getHeaderIcon() {
+        return headerIcon;
+    }
+
+    public void setHeaderIcon(String headerIcon) {
+        this.headerIcon = headerIcon;
+    }
 
     private void refreshTableInfo() {
         if (showFooter) {

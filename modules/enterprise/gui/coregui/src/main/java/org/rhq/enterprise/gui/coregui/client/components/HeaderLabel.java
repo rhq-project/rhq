@@ -28,12 +28,12 @@ import com.smartgwt.client.widgets.Label;
 public class HeaderLabel extends HTMLFlow {
 
     public HeaderLabel(String icon, String contents) {
-        this("<img src=\"" + getImgURL(icon) + "\"/> " + contents);
+        this("<img src=\"" + getImgURL(icon) + "\" style=\"vertical-align: middle;\"/> " + contents);
     }
 
     public HeaderLabel(String contents) {
         super(contents);
-        setHeight(60);
+        setHeight(50);
         setStylePrimaryName("HeaderLabel");
         setStyleName("HeaderLabel");
     }

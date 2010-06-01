@@ -47,12 +47,16 @@ public class ApacheIfModuleDirectoryDiscoveryComponent implements ResourceDiscov
         throws InvalidPluginConfigurationException, Exception {
    
     ApacheDirectoryComponent directory = context.getParentResourceComponent();
+    Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
+   
+    if (!directory.isAugeasEnabled())
+        return discoveredResources;
     
     parentNode = directory.getNode();
     
     List<AugeasNode> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
     
-    Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
+
     ResourceType resourceType = context.getResourceType();
 
     for (AugeasNode node : ifModuleNodes) {

@@ -22,7 +22,7 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.bundle.ant.DeploymentPhase;
-import org.rhq.bundle.ant.type.DeploymentType;
+import org.rhq.bundle.ant.type.DeploymentUnitType;
 import org.rhq.bundle.ant.type.InputPropertyType;
 
 import java.io.File;
@@ -43,7 +43,7 @@ public class BundleTask extends AbstractBundleTask {
     private String name;
     private String version;
     private String description;
-    private Map<String, DeploymentType> deployments = new HashMap<String, DeploymentType>();
+    private Map<String, DeploymentUnitType> deploymentUnits = new HashMap<String, DeploymentUnitType>();
     private Set<InputPropertyType> inputProperties = new HashSet<InputPropertyType>();
     
     @Override
@@ -52,6 +52,7 @@ public class BundleTask extends AbstractBundleTask {
         super.maybeConfigure();
 
         validateAttributes();
+        // TODO: Figure out why the Ant parse() method is not initializing the child Type objects.
         //validateTypes();
         
         getProject().setBundleName(this.name);
@@ -60,11 +61,10 @@ public class BundleTask extends AbstractBundleTask {
     }
 
     /**
-     * The RHQ Ant launcher will ensure that the following Ant project properties are defined prior to this method being
-     * invoked:
+     * The following Ant project properties must be defined with valid values prior to this method being invoked:
      *
-     *   rhq.deploy.name  - the {@link org.rhq.core.domain.bundle.BundleDeployment deployment} name
-     *                      (e.g. "appserver")
+     *   rhq.deploy.id  -   the {@link org.rhq.core.domain.bundle.BundleDeployment deployment}'s unique id
+     *                      (e.g. "10001")
      *   rhq.deploy.dir   - the {@link org.rhq.core.domain.bundle.BundleDeployment deployment} install dir
      *                      (e.g. "/opt/jbossas-petstore")
      *   rhq.deploy.phase - the {@link org.rhq.bundle.ant.DeploymentPhase deployment phase}
@@ -72,7 +72,7 @@ public class BundleTask extends AbstractBundleTask {
      * If the bundle recipe is being executed from the command line, the user must supply these properties, along
      * with any input properties required by the bundle recipe.
      *
-     * @throws BuildException
+     * @throws BuildException if an error occurs
      */
     @Override
     public void execute() throws BuildException {        
@@ -85,8 +85,11 @@ public class BundleTask extends AbstractBundleTask {
         }
         File deployDirFile = new File(deployDir);
         if (!deployDirFile.isAbsolute()) {
-            throw new BuildException("Value of property [" + DeployPropertyNames.DEPLOY_DIR + "] (" + deployDirFile
-                + ") is not an absolute path.");
+            // throw exception unless we are on windows and the path is a root dir without a drive letter - ignore missing drive letter
+            if (!deployDirFile.getPath().startsWith(File.separator)) {
+                throw new BuildException("Value of property [" + DeployPropertyNames.DEPLOY_DIR + "] (" + deployDirFile
+                    + ") is not an absolute path.");
+            }
         }
         getProject().setDeployDir(deployDirFile);
         log(DeployPropertyNames.DEPLOY_DIR + "=\"" + deployDir + "\"", Project.MSG_DEBUG);
@@ -105,15 +108,10 @@ public class BundleTask extends AbstractBundleTask {
         getProject().setDeploymentId(deploymentId);
         log(DeployPropertyNames.DEPLOY_ID + "=\"" + deploymentId + "\"", Project.MSG_DEBUG);
 
-        String deploymentName = (String) projectProps.get(DeployPropertyNames.DEPLOY_NAME);
-        if (deploymentName == null) {
-            throw new BuildException("Required property [" + DeployPropertyNames.DEPLOY_NAME + "] was not specified.");
+        if (this.deploymentUnits.size() != 1) {
+            throw new BuildException("The rhq:bundle task must contain exactly one rhq:deploymentUnit element.");
         }
-        getProject().setDeploymentName(deploymentName);
-        DeploymentType deployment = this.deployments.get(deploymentName);
-        if (deployment == null) {
-            throw new BuildException("There is no deployment element defined with name '" + deploymentName + "'.");
-        }
+        DeploymentUnitType deploymentUnit = this.deploymentUnits.values().iterator().next();
 
         String deploymentPhaseName = (String) projectProps.get(DeployPropertyNames.DEPLOY_PHASE);
         if (deploymentPhaseName == null) {
@@ -142,28 +140,31 @@ public class BundleTask extends AbstractBundleTask {
         String dryRunString = (String) projectProps.get(DeployPropertyNames.DEPLOY_DRY_RUN);
         boolean dryRun = Boolean.valueOf(dryRunString);
         getProject().setDryRun(dryRun);
+        String revertString = (String) projectProps.get(DeployPropertyNames.DEPLOY_REVERT);
+        boolean revert = Boolean.valueOf(revertString);
+        String cleanString = (String) projectProps.get(DeployPropertyNames.DEPLOY_CLEAN);
+        boolean clean = Boolean.valueOf(cleanString);
 
-        log("Executing '" + deploymentPhase + "' phase for deployment '" + deploymentName + "' from bundle '"
-                + this.name + "' version " + this.version + " using config " + getProject().getConfiguration() + "...");
+        log("Executing '" + deploymentPhase + "' phase for deployment with id [" + deploymentId + "] from bundle '"
+                + this.name + "' version " + this.version + " using config "
+                + getProject().getConfiguration().toString(true) + " [dryRun=" + dryRun + ", revert=" + revert
+                + ", clean=" + clean + "]...");
         switch (deploymentPhase) {
             case INSTALL:
-                String revertString = (String) projectProps.get(DeployPropertyNames.DEPLOY_REVERT);
-                boolean revert = Boolean.valueOf(revertString);
-                String cleanString = (String) projectProps.get(DeployPropertyNames.DEPLOY_CLEAN);
-                boolean clean = Boolean.valueOf(cleanString);
-                deployment.install(revert, clean);
+                // TODO: Revert doesn't really make sense for an initial install.
+                deploymentUnit.install(revert, clean);
                 break;
             case START:
-                deployment.start();
+                deploymentUnit.start();
                 break;
             case STOP:
-                deployment.stop();
+                deploymentUnit.stop();
                 break;
             case UPGRADE:
-                deployment.upgrade();
+                deploymentUnit.upgrade(revert, clean);
                 break;
             case UNINSTALL:
-                deployment.uninstall();
+                deploymentUnit.uninstall();
                 break;
         }
     }
@@ -197,12 +198,12 @@ public class BundleTask extends AbstractBundleTask {
         inputProperty.init();
     }
 
-    public void addConfigured(DeploymentType deployment) {
-        this.deployments.put(deployment.getName(), deployment);
+    public void addConfigured(DeploymentUnitType deployment) {
+        this.deploymentUnits.put(deployment.getName(), deployment);
     }
 
-    public Map<String, DeploymentType> getDeployments() {
-        return deployments;
+    public Map<String, DeploymentUnitType> getDeploymentUnits() {
+        return deploymentUnits;
     }
 
     /**
@@ -233,8 +234,8 @@ public class BundleTask extends AbstractBundleTask {
      * @throws BuildException if an error occurs
      */
     protected void validateTypes() throws BuildException {
-        if (this.deployments.isEmpty()) {
-            throw new BuildException("At least one 'deployment' child element must be specified.");
+        if (this.deploymentUnits.isEmpty()) {
+            throw new BuildException("At least one 'rhq:deploymentUnit' child element must be specified.");
         }
     }
 }

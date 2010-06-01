@@ -43,6 +43,7 @@
 
          <modules>
             <module>webservices</module>
+            <module>cli</module>
          </modules>
       </profile>
 

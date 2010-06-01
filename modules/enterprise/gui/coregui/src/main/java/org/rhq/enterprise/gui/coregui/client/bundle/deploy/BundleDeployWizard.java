@@ -42,9 +42,9 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         List<WizardStep> steps = init();
         steps.add(new SelectBundleStep(this));
         steps.add(new GetDestinationStep(this));
-        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new SelectBundleVersionStep(this));
         steps.add(new GetDeploymentConfigStep(this));
+        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new DeployStep(this));
     }
 
@@ -55,9 +55,9 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
         List<WizardStep> steps = init();
         steps.add(new GetDestinationStep(this));
-        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new SelectBundleVersionStep(this));
         steps.add(new GetDeploymentConfigStep(this));
+        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new DeployStep(this));
     }
 
@@ -72,9 +72,9 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         this.setDestination(destination);
 
         List<WizardStep> steps = init();
-        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new SelectBundleVersionStep(this));
         steps.add(new GetDeploymentConfigStep(this));
+        steps.add(new GetDeploymentInfoStep(this));
         steps.add(new DeployStep(this));
     }
 

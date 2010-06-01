@@ -29,9 +29,9 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 
 /**
  * Utility class to extract various HTTP addresses from Augeas loaded Apache configuration.
@@ -41,35 +41,41 @@ import org.rhq.augeas.tree.AugeasTree;
 public enum HttpdAddressUtility {
 
     APACHE_1_3 {
-        public Address getMainServerSampleAddress(AugeasTree ag) {
+        public Address getMainServerSampleAddress(ApacheDirectiveTree ag) {
             try {
                 Address addr = null;
 
                 //check if there is a ServerName directive
-                List<AugeasNode> serverNameNodes = ag.matchRelative(ag.getRootNode(), "ServerName");
+                List<ApacheDirective> serverNameNodes = ag.search("/ServerName");
 
                 if (serverNameNodes.size() > 0) {
-                    String serverName = serverNameNodes.get(0).getChildByLabel("param").get(0).getValue();
+                    String serverName = serverNameNodes.get(0).getValuesAsString();
                     addr = Address.parse(serverName);
                 } else {
-                    List<AugeasNode> ports = ag.matchRelative(ag.getRootNode(), "Port/param");
-                    List<AugeasNode> bindAddresses = ag.matchRelative(ag.getRootNode(), "BindAddress/param");
-                    List<AugeasNode> listens = ag.matchRelative(ag.getRootNode(), "Listen/param");
+                    List<ApacheDirective> ports = ag.search("/Port");
+                    List<ApacheDirective> bindAddresses = ag.search("/BindAddress");
+                    List<ApacheDirective> listens = ag.search("/Listen");
 
                     String port = null;
                     String bindAddress = null;
                     String listen = null;
                     
                     if (ports.size() > 0) {
-                        port = ports.get(0).getValue();
+                        List<String>values = ports.get(0).getValues();
+                        if (values.size()>0)                           
+                           port =  values.get(0);
                     }
                     
                     if (bindAddresses.size() > 0) {
-                        bindAddress = bindAddresses.get(0).getValue();
+                        List<String>values = bindAddresses.get(0).getValues();
+                        if (values.size()>0)                        
+                        bindAddress =  values.get(0);
                     }
                     
                     if (listens.size() > 0) {
-                        listen = listens.get(0).getValue();
+                        List<String>values = listens.get(0).getValues();
+                        if (values.size()>0)
+                           listen = values.get(0);
                     }
                     
                     String host = null;
@@ -108,22 +114,21 @@ public enum HttpdAddressUtility {
         }
     },
     APACHE_2_x {
-        public Address getMainServerSampleAddress(AugeasTree ag) {
+        public Address getMainServerSampleAddress(ApacheDirectiveTree ag) {
             try {
                 Address addr = null;
 
                 //check if there is a ServerName directive
-                List<AugeasNode> serverNameNodes = ag.matchRelative(ag.getRootNode(), "ServerName");
+                List<ApacheDirective> serverNameNodes = ag.search("/ServerName");
 
                 if (serverNameNodes.size() > 0) {
-                    String serverName = serverNameNodes.get(0).getChildByLabel("param").get(0).getValue();
+                    String serverName = serverNameNodes.get(0).getValuesAsString();
                     addr = Address.parse(serverName);
                 } else {
                     //there has to be at least one Listen directive
-                    AugeasNode listen = ag.matchRelative(ag.getRootNode(), "Listen").get(0);
-
-                    List<AugeasNode> params = listen.getChildByLabel("param");
-                    String address = params.get(0).getValue();
+                    ApacheDirective listen = ag.search("/Listen").get(0);
+                    
+                    String address = listen.getValues().get(0);
 
                     addr = Address.parse(address);
 
@@ -213,7 +218,7 @@ public enum HttpdAddressUtility {
      * @param ag the tree of the httpd configuration
      * @return the address or null on failure
      */
-    public abstract Address getMainServerSampleAddress(AugeasTree ag);
+    public abstract Address getMainServerSampleAddress(ApacheDirectiveTree ag);
 
     /**
      * This constructs an address on which given virtual host can be accessed.
@@ -224,7 +229,7 @@ public enum HttpdAddressUtility {
      * 
      * @return the address on which the virtual host can be accessed or null on error
      */
-    public Address getVirtualHostSampleAddress(AugeasTree ag, String virtualHost, String serverName) {
+    public Address getVirtualHostSampleAddress(ApacheDirectiveTree ag, String virtualHost, String serverName) {
         Address addr = Address.parse(virtualHost);
         if (addr.port == -1) {
             //just port specified

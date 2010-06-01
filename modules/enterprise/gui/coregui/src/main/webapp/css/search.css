@@ -24,11 +24,12 @@ div {
 .patternField {
   font-size: 13px;
   font-family: arial, sans-serif;
-  /*width: 785px;*/
   width: 675px;
   padding: 0;
   margin: 0;
+  border-color: white;
   border-style: none;
+  outline: none;
 }
 
 .patternNameLabel {
@@ -49,6 +50,7 @@ div {
   border-color: gray;
   border-style: dotted;
   border-width: thin;
+  outline: none;
 }
 
 
@@ -72,11 +74,11 @@ div {
   left: 5px;
   background-color: white;
   border-style: inset;
-  border-top-color: rgb(250, 250, 250);
-  border-left-color: rgb(250, 250, 250);
+  border-top-color: rgb(222, 222, 222);
+  border-left-color: rgb(222, 222, 222);
   border-bottom-color: white;
   border-right-color: white;
-  border-width: 2px;
+  border-width: 1px 1px 1px 1px;
   padding: 0;
   width: 785px;
   height: 20px;
@@ -137,6 +139,14 @@ div {
   border-style: solid;
   border-width: thin;
   border-color: buttonshadow;
+
+  border-style: outset;
+  border-top-color: silver;
+  border-left-color: silver;
+  border-bottom-color: gray;
+  border-right-color: gray;
+  border-width: 1px 1px 1px 1px;
+  
   padding: 0;
   margin: 0;
 }
@@ -171,10 +181,25 @@ div {
  
 .suggestPanel {
   width: 785px;
+  background: white;
+  border-style: outset;
+  border-top-color: silver;
+  border-left-color: silver;
+  border-bottom-color: gray;
+  border-right-color: gray;
+  border-width: 1px 1px 1px 1px;
 }
 
 .suggestData {
-  background-color: white;
+  width: 785px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.suggestData-selected {
+  width: 785px;
+  background: rgb(222,222,222);
 }
 
 .suggestDataSimple {
@@ -201,16 +226,16 @@ div.rounded {
 }
 div.rounded2 {
   width: 125px;
-  background: rgb(192, 236, 207) url(images/corner-upper-right-8.png) no-repeat top right;
+  background: rgb(192, 236, 207) url(/coregui/images/search/corner-upper-right-8.png) no-repeat top right;
 }
 div.rounded2 div {
-  background: url(images/corner-upper-left-8.png) no-repeat top left;
+  background: url(/coregui/images/search/corner-upper-left-8.png) no-repeat top left;
 }
 div.rounded2 div div {
-  background: url(images/corner-lower-right-8.png) no-repeat bottom right;
+  background: url(/coregui/images/search/corner-lower-right-8.png) no-repeat bottom right;
 }
 div.rounded2 div div div {
-  background: url(images/corner-lower-left-8.png) no-repeat bottom left;
+  background: url(/coregui/images/search/corner-lower-left-8.png) no-repeat bottom left;
 }
 
 div.rounded2 div div div div {

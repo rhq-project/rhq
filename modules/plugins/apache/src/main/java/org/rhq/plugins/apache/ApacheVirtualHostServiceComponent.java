@@ -25,7 +25,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,6 @@ import net.augeas.AugeasException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -60,6 +58,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
+import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
@@ -138,7 +137,9 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        resourceContext.getParentResourceComponent().checkConfigurationSupported();
+        ApacheServerComponent parent = resourceContext.getParentResourceComponent();
+        if (!parent.isAugeasEnabled())
+           throw new Exception(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         
         AugeasTree tree = getServerConfigurationTree();
         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
@@ -240,6 +241,11 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public CreateResourceReport createResource(CreateResourceReport report) {
+        if (!isAugeasEnabled()){
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage("Resources can be created only when augeas is enabled.");
+            return report;
+        }
         ResourceType resourceType = report.getResourceType();
         
         if (resourceType.equals(getDirectoryResourceType())) {
@@ -501,40 +507,21 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             }
             vhostAddressStrings = key.substring(pipeIdx + 1).split(" ");
 
-            AugeasTree configTree = null;
-            try {
-                configTree = resourceContext.getParentResourceComponent().getAugeasTree();
-            } catch (AugeasException e) {
-                //ok, we'll need to live without augeas...
-            }
+            ApacheDirectiveTree tree = loadParser(); 
             
             //convert the vhost addresses into fully qualified ip/port addresses
             List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
                 vhostAddressStrings.length);
 
-            
-            if (configTree != null) {
                 ApacheServerComponent parent = resourceContext.getParentResourceComponent();
                 if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-                    vhostAddresses.add(parent.getAddressUtility().getMainServerSampleAddress(configTree));
+                    vhostAddresses.add(parent.getAddressUtility().getMainServerSampleAddress(tree));
                 } else {
                     for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                        vhostAddresses.add(parent.getAddressUtility().getVirtualHostSampleAddress(configTree, vhostAddressStrings[i],
+                        vhostAddresses.add(parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
                             vhostServerName));
                     }
                 }
-            } else {
-                Configuration pluginConfig = resourceContext.getPluginConfiguration();
-                URI uri = new URI(pluginConfig.getSimpleValue(URL_CONFIG_PROP, null));
-                String host = uri.getHost();
-                int port = uri.getPort();
-                if (port == -1) port = 80;
-                HttpdAddressUtility.Address addr = new HttpdAddressUtility.Address(host, port);
-                
-                if (addr != null) {
-                    vhostAddresses.add(addr);
-                }
-            }
             
             while (namesIterator.hasNext()) {
                 SNMPValue nameValue = namesIterator.next();
@@ -590,5 +577,14 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     
     private ResourceType getDirectoryResourceType() {
         return resourceContext.getResourceType().getChildResourceTypes().iterator().next();
+    }
+    
+    public ApacheDirectiveTree loadParser() throws Exception{
+        return resourceContext.getParentResourceComponent().loadParser();
+    }
+    
+    public boolean isAugeasEnabled(){
+        ApacheServerComponent parent = resourceContext.getParentResourceComponent();
+        return parent.isAugeasEnabled();          
     }
 }

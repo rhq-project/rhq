@@ -36,9 +36,10 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.augeas.config.AugeasConfiguration;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.util.Glob;
-import org.rhq.augeas.util.LensHelper;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.rhqtransform.AugeasRhqException;
 
 
@@ -73,28 +74,22 @@ public class PluginDescriptorBasedAugeasConfiguration implements AugeasConfigura
      * @param pluginConfiguration
      * @throws AugeasRhqException
      */
-    public PluginDescriptorBasedAugeasConfiguration(Configuration pluginConfiguration) throws AugeasRhqException {
+    public PluginDescriptorBasedAugeasConfiguration(String path,Configuration pluginConfiguration) throws AugeasRhqException {
         List<String> includes = determineGlobs(pluginConfiguration, INCLUDE_GLOBS_PROP);
         List<String> excludes = determineGlobs(pluginConfiguration, EXCLUDE_GLOBS_PROP);
         modules = new ArrayList<AugeasModuleConfig>();
         if (includes.isEmpty())
             throw new AugeasRhqException("At least one Include glob must be defined.");
-        String augeasModuleName = getAugeasModuleName(pluginConfiguration);
-        File tempDir = null;
+              
         try {
           loadPath = pluginConfiguration.getSimpleValue(AUGEAS_LOAD_PATH, "");
            if (loadPath.equals("")){
-        	   tempDir = LensHelper.createTempDir(augeasModuleName);
-        	   loadPath = tempDir.getAbsolutePath(); 
-             }else{
-            	 tempDir = new File(loadPath);
+        	   loadPath = path; 
              }
        
         AugeasModuleConfig config = new AugeasModuleConfig();
           config.setIncludedGlobs(includes);
-          config.setExcludedGlobs(excludes);
-          String modName = Character.toLowerCase(augeasModuleName.charAt(0))+augeasModuleName.substring(1);
-          LensHelper.cpFileFromPluginToTemp(this.getClass().getClassLoader(),tempDir, modName+".aug");
+          config.setExcludedGlobs(excludes);          
           config.setLensPath(getAugeasModuleName(pluginConfiguration) + ".lns");
           config.setModuletName(getAugeasModuleName(pluginConfiguration));
         modules.add(config);

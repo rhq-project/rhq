@@ -27,8 +27,58 @@
                 <field ref="RESOURCE_ID"/>
             </primaryKey>
         </constraint>
-    </table>    
+    </table>
 
+    <table name="RHQ_CHANNEL" obsolete="true">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+        <column name="CREATION_TIME" type="LONG" required="true"/>
+        <column name="LAST_MODIFIED_TIME" type="LONG" required="true"/>
+
+        <index name="RHQ_CHANNEL_IDX" unique="true">
+            <field ref="NAME"/>
+        </index>
+    </table>
+
+    <table name="RHQ_CHANNEL_RESOURCE_MAP" obsolete="true">
+        <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="CTIME" type="LONG" required="true"/>
+
+        <constraint name="RHQ_CHANNEL_RESOURCE_MAP_KEY">
+            <primaryKey>
+                <field ref="CHANNEL_ID"/>
+                <field ref="RESOURCE_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <table name="RHQ_CHANNEL_CONTENT_SRC_MAP" obsolete="true">
+        <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+        <column name="CONTENT_SRC_ID" type="INTEGER" required="true" references="RHQ_CONTENT_SOURCE"/>
+        <column name="CTIME" type="LONG" required="true"/>
+
+        <constraint name="RHQ_CHAN_CONTENT_SRC_MAP_KEY">
+            <primaryKey>
+                <field ref="CHANNEL_ID"/>
+                <field ref="CONTENT_SRC_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <table name="RHQ_CHANNEL_PKG_VERSION_MAP" obsolete="true">
+        <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+        <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
+        <column name="CTIME" type="LONG" required="true"/>
+
+        <constraint name="RHQ_CHANNEL_PKG_VER_MAP_KEY">
+            <primaryKey>
+                <field ref="CHANNEL_ID"/>
+                <field ref="PACKAGE_VERSION_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
 
    <!-- !!! REMOVED FROM MEASUREMENT-SCHEMA !!!! -->
 

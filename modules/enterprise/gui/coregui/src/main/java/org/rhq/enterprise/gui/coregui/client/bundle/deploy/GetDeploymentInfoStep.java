@@ -18,15 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * @author Jay Shaughnessy
@@ -36,6 +40,7 @@ public class GetDeploymentInfoStep implements WizardStep {
 
     private DynamicForm form;
     private final BundleDeployWizard wizard;
+    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
     public GetDeploymentInfoStep(BundleDeployWizard wizard) {
         this.wizard = wizard;
@@ -52,42 +57,46 @@ public class GetDeploymentInfoStep implements WizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            final TextItem nameTextItem = new TextItem("name", "Deployment Name");
-            nameTextItem.setWidth(300);
-            nameTextItem.setRequired(true);
-            nameTextItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
+            bundleServer.getBundleDeploymentName(wizard.getDestination().getId(), wizard.getBundleVersion().getId(),
+                -1, //
+                new AsyncCallback<String>() {
+
+                    public void onSuccess(String result) {
+                        final StaticTextItem nameTextItem = new StaticTextItem("name", "Deployment Name");
+                        nameTextItem.setWidth(300);
+                        wizard.setSubtitle(result);
+                        nameTextItem.setValue(result);
+
+                        final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description",
+                            "Deployment Description");
+                        descriptionTextAreaItem.setWidth(300);
+                        descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
+                            public void onChanged(ChangedEvent event) {
+                                Object value = event.getValue();
+                                if (value == null) {
+                                    value = "";
+                                }
+                                wizard.setNewDeploymentDescription(value.toString());
+                            }
+                        });
+
+                        final CheckboxItem cleanDeploymentCBItem = new CheckboxItem("cleanDeployment",
+                            "Clean Deployment? (wipe deploy directory on destination platform)");
+                        cleanDeploymentCBItem.setValue(wizard.isCleanDeployment());
+                        cleanDeploymentCBItem.addChangedHandler(new ChangedHandler() {
+                            public void onChanged(ChangedEvent event) {
+                                wizard.setCleanDeployment((Boolean) event.getValue());
+                            }
+                        });
+
+                        form.setItems(nameTextItem, descriptionTextAreaItem, cleanDeploymentCBItem);
+
                     }
-                    wizard.setSubtitle(value.toString());
-                    wizard.setNewDeploymentName(value.toString());
-                }
-            });
 
-            final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", "Deployment Description");
-            descriptionTextAreaItem.setWidth(300);
-            descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to get deployment name.", caught);
                     }
-                    wizard.setNewDeploymentDescription(value.toString());
-                }
-            });
-
-            final CheckboxItem cleanDeploymentCBItem = new CheckboxItem("cleanDeployment",
-                "Clean Deployment? (wipe deploy directory on destination platform)");
-            cleanDeploymentCBItem.setValue(wizard.isCleanDeployment());
-            cleanDeploymentCBItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    wizard.setCleanDeployment((Boolean) event.getValue());
-                }
-            });
-
-            form.setItems(nameTextItem, descriptionTextAreaItem, cleanDeploymentCBItem);
+                });
         }
 
         return form;

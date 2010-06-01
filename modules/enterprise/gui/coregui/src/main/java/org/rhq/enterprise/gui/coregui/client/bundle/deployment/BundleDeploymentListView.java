@@ -39,55 +39,50 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 /**
  * @author Greg Hinkle
  */
-public class BundleDeploymentListView extends VLayout {
+public class BundleDeploymentListView extends Table {
 
-    private int bundleId;
-    private Bundle bundle;
-    private BundleVersion bundleVersion;
-
-
-    public BundleDeploymentListView(Bundle bundle) {
-        this.bundle = bundle;
-        this.bundleId = bundle.getId();
+    public BundleDeploymentListView(Criteria criteria) {
+        super("Bundle Deployments", criteria);
     }
 
-    public BundleDeploymentListView(BundleVersion bundleVersion) {
-        this.bundleVersion = bundleVersion;
-        this.bundleId = bundleVersion.getBundle().getId();
-    }
 
     @Override
     protected void onInit() {
         super.onInit();
+        setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
 
+        setDataSource(new BundleDeploymentDataSource());
 
-        String title = "Bundle Versions";
-
-        Criteria criteria = new Criteria();
-        if (bundle != null) {
-            title = bundle.getName() + " deployments";
-            criteria.setAttribute("bundleId",bundle.getId());
-        }
-        if (bundleVersion != null) {
-            title = bundleVersion.getVersion() + " deployments";
-            criteria.setAttribute("bundleVersionId", bundleVersion.getId());
-        }
-
-        Table table = new Table(title, criteria);
-
-        table.setDataSource(new BundleDeploymentDataSource());
-
-
-        table.getListGrid().getField("name").setCellFormatter(new CellFormatter() {
+        getListGrid().getField("id").setWidth("60");
+        getListGrid().getField("name").setWidth("25%");
+        getListGrid().getField("name").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord record, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + bundleId + "/deployments/" + record.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
+                return "<a href=\"#Bundles/Bundle/" + record.getAttribute("bundleId") + "/deployments/" + record.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
             }
         });
 
 
+        getListGrid().getField("bundleVersionVersion").setWidth("80");
+        getListGrid().getField("bundleVersionVersion").setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return "<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("bundleId") + "/versions/"
+                        + listGridRecord.getAttribute("bundleVersionId") + "\">" + o + "</a>";
+            }
+        });
 
-
-        addMember(table);
+        getListGrid().getField("description").setWidth("25%");
+        getListGrid().getField("deploymentTime").setWidth("20%");
+        getListGrid().getField("status").setWidth("25%");
+        ListGridField status = getListGrid().getField("status");
+        HashMap<String, String> statusIcons = new HashMap<String, String>();
+        statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
+        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
+        status.setValueIcons(statusIcons);
+        status.setValueIconHeight(11);
+        status.setWidth(80);
 
     }
 }

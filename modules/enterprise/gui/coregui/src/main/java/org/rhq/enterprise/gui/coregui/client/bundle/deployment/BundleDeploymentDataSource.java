@@ -56,20 +56,23 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         DataSourceTextField name = new DataSourceTextField("name", "Deployment Name");
         addField(name);
 
+        DataSourceTextField bundleVersion = new DataSourceTextField("bundleVersionVersion", "Bundle Version");
+        addField(bundleVersion);
+
         DataSourceTextField description = new DataSourceTextField("description", "Description");
         addField(description);
 
-        DataSourceDateTimeField created = new DataSourceDateTimeField("createdTime", "Deployment Time");
+        DataSourceTextField status = new DataSourceTextField("status", "Status");
+        addField(status);
+
+        DataSourceDateTimeField created = new DataSourceDateTimeField("deploymentTime", "Deployment Time");
         addField(created);
-
-        DataSourceTextField bundleVersion = new DataSourceTextField("bundleVersion", "Bundle Version");
-        addField(bundleVersion);
-
     }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
+        criteria.fetchBundleVersion(true);
 
         if (request.getCriteria().getValues().containsKey("bundleId")) {
             criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttribute("bundleId")));
@@ -77,6 +80,22 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
 
         if (request.getCriteria().getValues().containsKey("bundleVersionId")) {
             criteria.addFilterBundleVersionId(Integer.parseInt(request.getCriteria().getAttribute("bundleVersionId")));
+        }
+
+        if (request.getCriteria().getValues().containsKey("bundleDestinationId")) {
+            criteria.addFilterDestinationId(Integer.parseInt(request.getCriteria().getAttribute("bundleDestinationId")));
+        }
+
+        if (request.getCriteria().getValues().get("tagNamespace") != null) {
+            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
+        }
+
+        if (request.getCriteria().getValues().get("tagSemantic") != null) {
+            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
+        }
+
+        if (request.getCriteria().getValues().get("tagName") != null) {
+            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
 
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
@@ -106,12 +125,19 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         record.setAttribute("name", from.getName());
         record.setAttribute("deployDir", from.getDestination().getDeployDir());
         record.setAttribute("description", from.getDescription());
-        record.setAttribute("createdTime", new Date(from.getCtime()));
+        record.setAttribute("deploymentTime", new Date(from.getCtime()));
         record.setAttribute("configuration", from.getConfiguration());
+        record.setAttribute("status", from.getStatus().name());
+        record.setAttribute("deployer", from.getSubjectName());
+
 
         if (from.getBundleVersion() != null) {
             record.setAttribute("bundleVersionVersion", from.getBundleVersion().getVersion());
             record.setAttribute("bundleVersionId", from.getBundleVersion().getId());
+
+            if (from.getBundleVersion().getBundle() != null) {
+                record.setAttribute("bundleId", from.getBundleVersion().getBundle().getId());
+            }
         }
 
         return record;

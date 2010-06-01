@@ -185,6 +185,20 @@ fi
 debug_msg "RHQ_AGENT_CMDLINE_OPTS: $RHQ_AGENT_CMDLINE_OPTS"
 
 # ----------------------------------------------------------------------
+# Prepare LD_LIBRARY_PATH to include libraries shipped with the agent
+# ----------------------------------------------------------------------
+
+if [ "x$_LINUX" != "x" ]; then
+   if [ "x$LD_LIBRARY_PATH" = "x" ]; then
+      LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib"
+   else
+      LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib:${LD_LIBRARY_PATH}"
+   fi
+   export LD_LIBRARY_PATH
+   debug_msg "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+fi
+
+# ----------------------------------------------------------------------
 # Execute the VM which starts the agent
 # ----------------------------------------------------------------------
 

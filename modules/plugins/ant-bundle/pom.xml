@@ -68,13 +68,25 @@
                                     <version>1.8.0</version>
                                 </artifactItem>
 
-                                <!-- include some optional ant tasks for users to be able to use -->
+                                <!-- include some optional Ant tasks for users to be able to use -->
+                                <artifactItem>
+                                    <groupId>org.apache.ant</groupId>
+                                    <artifactId>ant-nodeps</artifactId>
+                                    <version>1.8.0</version>
+                                </artifactItem>
+
                                 <artifactItem>
                                     <groupId>ant-contrib</groupId>
                                     <artifactId>ant-contrib</artifactId>
                                     <version>1.0b3</version>
                                 </artifactItem>
 
+                                <artifactItem>
+                                    <groupId>org.liquibase</groupId>
+                                    <artifactId>liquibase-core</artifactId>
+                                    <version>1.9.5</version>
+                                </artifactItem>
+                                
                             </artifactItems>
                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                         </configuration>

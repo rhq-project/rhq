@@ -72,13 +72,13 @@
             <version>1.8.0</version>
         </dependency>
 
+        <!-- include some optional Ant tasks for users to be able to use -->
         <dependency>
             <groupId>org.apache.ant</groupId>
             <artifactId>ant-nodeps</artifactId>
             <version>1.8.0</version>
         </dependency>
 
-        <!-- include some optional ant tasks for users to be able to use -->
         <dependency>
             <groupId>ant-contrib</groupId>
             <artifactId>ant-contrib</artifactId>

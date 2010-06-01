@@ -25,41 +25,38 @@
       <tr>
         <td width="3%" class="ListHeaderInactive">&nbsp;</td>
         <td width="37%" class="ListHeaderInactive" align="left"><fmt:message key="dash.home.TableHeader.ResourceName"/></td>
-        <td width="30%" class="ListHeaderInactive" align="left"><fmt:message key="dash.home.TableHeader.Type"/></td>
         <td width="30%" class="ListHeaderInactive" align="left"><fmt:message key="dash.home.TableHeader.DateTime"/></td>
       </tr>
       <c:forEach items="${recentlyApproved}" var="platform">
       <tr class="ListRow">
         <td class="ListCell">
            <c:choose>
-             <c:when test="${platform.showChildren}">
+             <c:when test="${platform.original.showChildren}">
                <a href="." onclick="RAListForm.platformId.value=<c:out
-                  value="${platform.id}"/>; 
+                  value="${platform.original.id}"/>; 
                   RAListForm.submit(); return false;">
                   <html:img page="/images/minus.gif" border="0"/>
                </a>
              </c:when>
              <c:otherwise>
                <a href="." onclick="RAListForm.platformId.value=<c:out
-                  value="${platform.id}"/>; 
+                  value="${platform.original.id}"/>; 
                   RAListForm.submit(); return false;">
                   <html:img page="/images/plus.gif" border="0"/>
                </a>
              </c:otherwise>
            </c:choose>
         </td>
-        <td class="ListCell" align="left"><html:link page="/rhq/resource/summary/overview.xhtml?id=${platform.id}"><c:out value="${platform.name}"/>&nbsp;</html:link></td>
-        <td class="ListCell" align="left"><c:out value="${platform.resourceTypeName}"/></td>
-        <td class="ListCell" align="left"><hq:dateFormatter value="${platform.ctime}"/>&nbsp;</td>
+        <td class="ListCell" align="left"><display:disambiguatedResourceName disambiguationReport="${platform}" resourceName="${platform.original.name}" resourceId="${platform.original.id}"/></td>
+        <td class="ListCell" align="left"><hq:dateFormatter value="${platform.original.ctime}"/>&nbsp;</td>
       </tr>
-      <c:if test="${platform.showChildren}">
+      <c:if test="${platform.original.showChildren}">
       <!-- Show the platform's servers -->
       <c:forEach items="${platform.children}" var="server">
       <tr class="ListRow">
         <td class="ListCell"></td>
-        <td class="ListCell" align="left"><html:link page="/rhq/resource/summary/overview.xhtml?id=${server.id}"><c:out value="${server.name}"/>&nbsp;</html:link></td>
-        <td class="ListCell" align="left"><c:out value="${server.resourceTypeName}"/></td>
-        <td class="ListCell" align="left"><hq:dateFormatter value="${server.ctime}"/>&nbsp;</td>
+        <td class="ListCell" align="left"><display:disambiguatedResourceName disambiguationReport="${server}" resourceName="${server.original.name}" resourceId="${server.original.id}"/></td>
+        <td class="ListCell" align="left"><hq:dateFormatter value="${server.original.ctime}"/>&nbsp;</td>
       </tr>
       </c:forEach> <!-- For each server -->
       </c:if>

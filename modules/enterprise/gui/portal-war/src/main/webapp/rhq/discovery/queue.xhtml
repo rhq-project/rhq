@@ -164,21 +164,21 @@
                      </f:facet>
 
                      <h:commandLink action="#{AutoDiscoverySessionUIBean.collapse}"
-                                    rendered="#{AutoDiscoverySessionUIBean.expandedMap[platformQueueItem.id]}">
-                        <f:param name="platformId" value="#{platformQueueItem.id}"/>
+                                    rendered="#{AutoDiscoverySessionUIBean.expandedMap[platformQueueItem.original.id]}">
+                        <f:param name="platformId" value="#{platformQueueItem.original.id}"/>
                         <h:graphicImage value="/images/minus.gif" />
                      </h:commandLink>
                      <h:commandLink action="#{AutoDiscoverySessionUIBean.expand}"
-                                    rendered="#{!AutoDiscoverySessionUIBean.expandedMap[platformQueueItem.id]}">
-                        <f:param name="platformId" value="#{platformQueueItem.id}"/>
+                                    rendered="#{!AutoDiscoverySessionUIBean.expandedMap[platformQueueItem.original.id]}">
+                        <f:param name="platformId" value="#{platformQueueItem.original.id}"/>
                         <h:graphicImage value="/images/plus.gif" />
                      </h:commandLink>
                      <h:selectBooleanCheckbox id="checkbox_platform"
-                                              value="#{AutoDiscoverySessionUIBean.selectedResources[platformQueueItem.id]}"
-                                              onclick="checkPlatform(this, #{platformQueueItem.id})" />
+                                              value="#{AutoDiscoverySessionUIBean.selectedResources[platformQueueItem.original.id]}"
+                                              onclick="checkPlatform(this, #{platformQueueItem.original.id})" />
                      <input type="hidden"
-                            name="platform_servers_#{platformQueueItem.id}"
-                            id="platform_servers_#{platformQueueItem.id}"
+                            name="platform_servers_#{platformQueueItem.original.id}"
+                            id="platform_servers_#{platformQueueItem.original.id}"
                             value="-1" />
                   </rich:column>
 
@@ -188,30 +188,32 @@
                            <h:outputText styleClass="headerText" value="ID" />
                         </onc:sortableColumnHeader>
                      </f:facet>
-                     <h:outputText value="#{platformQueueItem.id}"/>
+                     <h:outputText value="#{platformQueueItem.original.id}"/>
                   </rich:column>
 
                   <rich:column>
                      <f:facet name="header">
                         <onc:sortableColumnHeader sort="res.name">
-                           <h:outputText styleClass="headerText" value="Resource Name" />
+                           <h:outputText styleClass="headerText" value="Resource" />
                         </onc:sortableColumnHeader>
                      </f:facet>
-                     <h:outputText value="#{platformQueueItem.name}" />
+                     
+                     <onc:disambiguatedResourceName resourceName="#{platformQueueItem.original.name}" 
+                      resourceId="#{platformQueueItem.original.id}" disambiguationReport="#{platformQueueItem}" nameAsLink="false" />
                   </rich:column>
 
                   <rich:column>
                      <f:facet name="header">
                         <h:outputText styleClass="headerText" value="Key" />
                      </f:facet>
-                     <h:outputText value="#{platformQueueItem.resourceKey}" />
+                     <h:outputText value="#{platformQueueItem.original.resourceKey}" />
                   </rich:column>
 
                   <rich:column>
                      <f:facet name="header">
                         <h:outputText styleClass="headerText" value="Description" />
                      </f:facet>
-                     <h:outputText value="#{platformQueueItem.description}"/>
+                     <h:outputText value="#{platformQueueItem.original.description}"/>
                   </rich:column>
 
                   <rich:column>
@@ -220,7 +222,7 @@
                            <h:outputText styleClass="headerText" value="Date Detected" />
                         </onc:sortableColumnHeader>
                      </f:facet>
-                     <h:outputText value="#{platformQueueItem.ctime}">
+                     <h:outputText value="#{platformQueueItem.original.ctime}">
                         <f:converter converterId="UserDateTimeConverter" />
                      </h:outputText>
                   </rich:column>
@@ -231,7 +233,7 @@
                            <h:outputText styleClass="headerText" value="Status" />
                         </onc:sortableColumnHeader>
                      </f:facet>
-                     <h:outputText value="#{platformQueueItem.inventoryStatus}"/>
+                     <h:outputText value="#{platformQueueItem.original.inventoryStatus}"/>
                   </rich:column>
 
                   <rich:subTable value="#{AutoDiscoveryQueueUIBean.platformsAndServers[platformQueueItem]}"
@@ -239,38 +241,39 @@
                                  rowClasses="ListRow"
                                  width="100%"
                                  columnsWidth="1%"
-                                 rendered="#{AutoDiscoverySessionUIBean.expandedMap[platformQueueItem.id]}">
+                                 rendered="#{AutoDiscoverySessionUIBean.expandedMap[platformQueueItem.original.id]}">
                      <rich:column>
                         <h:selectBooleanCheckbox id="checkbox_server"
-                                                 onclick="checkServer(this, #{platformQueueItem.id}, #{serverQueueItem.id})"
-                                                 value="#{AutoDiscoverySessionUIBean.selectedResources[serverQueueItem.id]}"
+                                                 onclick="checkServer(this, #{platformQueueItem.original.id}, #{serverQueueItem.original.id})"
+                                                 value="#{AutoDiscoverySessionUIBean.selectedResources[serverQueueItem.original.id]}"
                                                  style="float:right;" />
                      </rich:column>
 
                      <rich:column rendered="#{param.debug}">
-                        <h:outputText value="#{serverQueueItem.id}"/>
+                        <h:outputText value="#{serverQueueItem.original.id}"/>
                      </rich:column>
 
                      <rich:column>
-                        <h:outputText value="#{serverQueueItem.name}" />
+                     <onc:disambiguatedResourceName resourceName="#{serverQueueItem.original.name}" 
+                      resourceId="#{serverQueueItem.original.id}" disambiguationReport="#{serverQueueItem}" nameAsLink="false" />
                      </rich:column>
 
                      <rich:column>
-                        <h:outputText value="#{serverQueueItem.resourceKey}" />
+                        <h:outputText value="#{serverQueueItem.original.resourceKey}" />
                      </rich:column>
 
                      <rich:column>
-                        <h:outputText value="#{serverQueueItem.description}" />
+                        <h:outputText value="#{serverQueueItem.original.description}" />
                      </rich:column>
 
                      <rich:column>
-                        <h:outputText value="#{serverQueueItem.ctime}">
+                        <h:outputText value="#{serverQueueItem.original.ctime}">
                            <f:converter converterId="UserDateTimeConverter" />
                         </h:outputText>
                      </rich:column>
 
                      <rich:column>
-                        <h:outputText value="#{serverQueueItem.inventoryStatus}" />
+                        <h:outputText value="#{serverQueueItem.original.inventoryStatus}" />
                      </rich:column>
                   </rich:subTable>
 

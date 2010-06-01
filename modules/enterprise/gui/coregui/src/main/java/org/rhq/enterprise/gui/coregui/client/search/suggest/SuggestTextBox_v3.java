@@ -49,6 +49,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
@@ -149,18 +150,40 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                 suggestionMenu.addItem(menuItem);
             }
 
-            suggestionPopup.showRelativeTo(getTextBox());
-            /*
-            suggestionPopup.setPopupPositionAndShow(new PositionCallback() {
-                public void setPosition(int offsetWidth, int offsetHeight) {
-                    position(getTextBox(), offsetWidth, offsetHeight + 5);
-                }
-            });
-            */
-            suggestionPopup.setAnimationEnabled(isAnimationEnabled);
+            class TextBoxSkewWrapper extends TextBox {
+                private TextBoxBase wrapped;
+                private int skewWidth;
+                private int skewHeight;
 
-            suggestionMenu.setWidth("785px");
-            suggestionPopup.setWidth("785px");
+                public TextBoxSkewWrapper(TextBoxBase textBoxBase, int skewWidth, int skewHeight) {
+                    this.wrapped = textBoxBase;
+                    this.skewWidth = skewWidth;
+                    this.skewHeight = skewHeight;
+                }
+
+                @Override
+                public int getOffsetWidth() {
+                    return wrapped.getOffsetWidth();
+                }
+
+                @Override
+                public int getOffsetHeight() {
+                    return wrapped.getOffsetHeight();
+                }
+
+                @Override
+                public int getAbsoluteLeft() {
+                    return wrapped.getAbsoluteLeft() + skewWidth;
+                }
+
+                @Override
+                public int getAbsoluteTop() {
+                    return wrapped.getAbsoluteTop() + skewHeight;
+                }
+            }
+
+            suggestionPopup.showRelativeTo(new TextBoxSkewWrapper(getTextBox(), 0, 5));
+            suggestionPopup.setAnimationEnabled(isAnimationEnabled);
         } else {
             suggestionPopup.hide();
         }

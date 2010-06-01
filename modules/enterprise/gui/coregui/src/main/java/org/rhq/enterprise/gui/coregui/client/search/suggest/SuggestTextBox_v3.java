@@ -496,7 +496,8 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             }
 
             String decoratedPrefix = decorate(prefix, style);
-            String highlightedSuggestion = colorOperator(decorate(item.getLabel(), "background-color: yellow;", item
+            String formattedItemLabel = chopWithEvery(item.getLabel(), "<br/>", 110);
+            String highlightedSuggestion = colorOperator(decorate(formattedItemLabel, "background-color: yellow;", item
                 .getStartIndex(), item.getEndIndex()));
             String decoratedSuffix = decorate(highlightedSuggestion, "float: left; ");
             String floatClear = "<br style=\"clear: both;\" />";
@@ -505,9 +506,24 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             return innerHTML;
         }
 
-        // TODO: fixing coloring strategy
+        private static String chopWithEvery(String chop, String with, int every) {
+            String[] words = chop.split("\\s");
+            StringBuilder results = new StringBuilder();
+            int currentLineLength = 0;
+            for (String next : words) {
+                if (currentLineLength + next.length() > every) {
+                    results.append(with);
+                    currentLineLength = 0;
+                }
+                results.append(next).append(' ');
+                currentLineLength += (next.length() + 1);
+            }
+            return results.toString();
+        }
+
         private static final List<String> OPERATORS = Arrays.asList("!==", "!=", "==", "=");
 
+        // TODO: fixing coloring strategy
         private static String colorOperator(String data) {
             for (String operator : OPERATORS) {
                 int index = -1;
@@ -638,7 +654,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         public SearchSuggestion getSearchSuggestion() {
             return suggestion;
         }
-
     }
 
     @Override

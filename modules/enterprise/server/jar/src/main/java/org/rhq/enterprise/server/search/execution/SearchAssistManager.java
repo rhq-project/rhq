@@ -324,29 +324,36 @@ public class SearchAssistManager {
     }
 
     public List<SearchSuggestion> getSuggestions(String expression, int caretPos) {
-        if (expression == null) {
-            expression = "";
-        }
-
-        List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos);
-        List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos);
-        List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);
-        //List<SearchSuggestion> globalSavedSearches = getGlobalSavedSearchSuggestions(expression);
-
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
-        results.addAll(simple);
-        results.addAll(advanced);
-        //results.addAll(userSavedSearches);
-        //results.addAll(globalSavedSearches);
 
-        if (results.isEmpty()) {
+        try {
+            if (expression == null) {
+                expression = "";
+            }
+
+            List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos);
+            List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos);
+            List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);
+            //List<SearchSuggestion> globalSavedSearches = getGlobalSavedSearchSuggestions(expression);
+
+            results.addAll(simple);
+            results.addAll(advanced);
+            results.addAll(userSavedSearches);
+            //results.addAll(globalSavedSearches);
+
+            if (results.isEmpty()) {
+                SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
+                    "Start typing for more simple text matches");
+                results.add(footerMessage);
+            } else {
+                Collections.sort(results);
+            }
+
+        } catch (Throwable t) {
             SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
-                "Start typing for more simple text matches");
+                "Error retrieving suggestions: " + t.getMessage() + ", see server log for more details");
             results.add(footerMessage);
-        } else {
-            Collections.sort(results);
         }
-
         return results;
     }
 

@@ -54,6 +54,7 @@ import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
@@ -129,7 +130,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
 
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle("Group");
-        destinationGroup.setValue("#ResourceGroup/" + deployment.getDestination().getGroup().getId());
+        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
         destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
         destinationGroup.setTarget("_self");
 
@@ -177,7 +178,8 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         ListGridField resource = new ListGridField("resource", "Platform");
         resource.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId")) + "\">" + o + "</a>";
+
             }
         });
         ListGridField resourceVersion = new ListGridField("resourceVersion", "Operating System");

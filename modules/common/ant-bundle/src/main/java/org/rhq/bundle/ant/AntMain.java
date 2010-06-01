@@ -44,7 +44,7 @@ import org.rhq.core.util.updater.DeploymentsMetadata;
  * Command line entry point into RHQ Ant. This class is entered
  * via the canonical `public static void main` entry point and
  * reads the command line arguments. It then assembles and
- * executes an RHQ Ant project (rhq-bundle.xml).
+ * executes an RHQ Ant bundle recipe (deploy.xml).
  * <p>
  * <b>NOTE:</b> This is a modified copy of the
  * org.apache.tools.ant.Main class from Ant 1.8.0.
@@ -66,7 +66,7 @@ public class AntMain implements org.apache.tools.ant.launch.AntMain {
     }
     
     /** The build file name. {@value} (RHQ: changed from build.xml) */
-    private static final String BUILD_FILE_NAME = "rhq-bundle.xml";
+    private static final String BUILD_FILE_NAME = "deploy.xml";
 
     /** Our current message output status. Follows Project.MSG_XXX. */
     private int msgOutputLevel = Project.MSG_INFO;

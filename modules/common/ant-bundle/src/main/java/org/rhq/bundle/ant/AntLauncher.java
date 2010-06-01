@@ -232,7 +232,7 @@ public class AntLauncher {
         }
         DeploymentUnitType deployment = deployments.iterator().next();
         Map<File, File> files = deployment.getFiles();
-        for (File file : files.values()) {
+        for (File file : files.keySet()) {
             project.getBundleFileNames().add(file.getName());
         }
         Set<File> archives = deployment.getArchives();

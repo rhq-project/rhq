@@ -201,18 +201,47 @@ public class SearchAssistManager {
             CONTEXT, PARAM, OPERATOR, VALUE;
         }
 
+        public enum Type {
+            SIMPLE, ADVANCED;
+        }
+
         public final String context;
         public final String param;
         public final String operator;
         public final String value;
         public final State state;
+        public final Type type;
 
         private ParsedContext(String context, String param, String operator, String value) {
-            this.context = context;
+            this.state = computeState(context, param, operator, value);
+            this.type = computeType(param, operator);
+
+            this.context = (this.type == Type.SIMPLE) ? stripQuotes(context) : context;
             this.param = param;
             this.operator = operator;
             this.value = value;
-            this.state = computeState(context, param, operator, value);
+        }
+
+        private String stripQuotes(String data) {
+            if (data.length() == 0) {
+                return "";
+            }
+
+            char first = data.charAt(0);
+            char last = data.charAt(data.length() - 1);
+            if (first == '\'' || first == '"') {
+                if (data.length() == 1) {
+                    return "";
+                }
+                data = data.substring(1);
+            }
+            if (last == '\'' || last == '"') {
+                if (data.length() == 1) {
+                    return "";
+                }
+                data = data.substring(0, data.length() - 1);
+            }
+            return data;
         }
 
         private State computeState(String context, String param, String operator, String value) {
@@ -276,13 +305,13 @@ public class SearchAssistManager {
             return new ParsedContext(context, param, operator, value);
         }
 
-        public boolean isSimple() {
+        private Type computeType(String param, String operator) {
             if (operator != null) {
-                return false; // non-null operator implies an incomplete, advanced term
+                return Type.ADVANCED; // non-null operator implies an incomplete, advanced term
             }
 
             if (param != null) {
-                return false; // non-null operator implies an incomplete, advanced term
+                return Type.ADVANCED; // non-null operator implies an incomplete, advanced term
             }
 
             /*
@@ -291,7 +320,7 @@ public class SearchAssistManager {
              * note: it should not be necessary to check for non-null 'value' because operation/param would have
              *       had to be non-null first, which we've already verified by getting to here.
              */
-            return true;
+            return Type.SIMPLE;
         }
 
         public String toString() {
@@ -324,29 +353,37 @@ public class SearchAssistManager {
     }
 
     public List<SearchSuggestion> getSuggestions(String expression, int caretPos) {
-        if (expression == null) {
-            expression = "";
-        }
-
-        List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos);
-        List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos);
-        List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);
-        //List<SearchSuggestion> globalSavedSearches = getGlobalSavedSearchSuggestions(expression);
-
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
-        results.addAll(simple);
-        results.addAll(advanced);
-        //results.addAll(userSavedSearches);
-        //results.addAll(globalSavedSearches);
 
-        if (results.isEmpty()) {
+        try {
+            if (expression == null) {
+                expression = "";
+            }
+
+            List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos);
+            List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos);
+            List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);
+            //List<SearchSuggestion> globalSavedSearches = getGlobalSavedSearchSuggestions(expression);
+
+            results.addAll(simple);
+            results.addAll(advanced);
+            results.addAll(userSavedSearches);
+            //results.addAll(globalSavedSearches);
+
+            if (results.isEmpty()) {
+                SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
+                    "Start typing for more simple text matches");
+                results.add(footerMessage);
+            } else {
+                Collections.sort(results);
+            }
+
+        } catch (Throwable t) {
             SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
-                "Start typing for more simple text matches");
+                "Error retrieving suggestions: " + t.getMessage() + ", see server log for more details");
             results.add(footerMessage);
-        } else {
-            Collections.sort(results);
+            LOG.info("Error retrieving suggestions", t);
         }
-
         return results;
     }
 
@@ -359,7 +396,7 @@ public class SearchAssistManager {
         String beforeCaret = assistant.getFragmentBeforeCaret();
         ParsedContext parsed = ParsedContext.get(beforeCaret);
 
-        if (parsed.isSimple() == false) {
+        if (parsed.type != ParsedContext.Type.SIMPLE) {
             return Collections.emptyList();
         }
 
@@ -391,6 +428,10 @@ public class SearchAssistManager {
 
         String beforeCaret = assistant.getFragmentBeforeCaret();
         debug("getAdvancedSuggestions: beforeCaret is '" + beforeCaret + "'");
+
+        if (beforeCaret.startsWith("'") || beforeCaret.startsWith("\"")) {
+            return Collections.emptyList();
+        }
 
         ParsedContext parsed = ParsedContext.get(beforeCaret);
         debug("getAdvancedSuggestions: parsed is " + parsed);

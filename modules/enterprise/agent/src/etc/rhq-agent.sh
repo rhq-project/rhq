@@ -65,6 +65,11 @@ case "`uname`" in
             ;;
 esac
 
+case "`uname -m`" in
+   x86_64) _X86_64=true
+           ;;
+esac
+
 # ----------------------------------------------------------------------
 # Change directory so the current directory is the agent home.
 # Here we assume this script is a child directory of the agent home.
@@ -190,9 +195,17 @@ debug_msg "RHQ_AGENT_CMDLINE_OPTS: $RHQ_AGENT_CMDLINE_OPTS"
 
 if [ "x$_LINUX" != "x" ]; then
    if [ "x$LD_LIBRARY_PATH" = "x" ]; then
-      LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib"
+      if [ "x$_X86_64"  != "x" ]; then
+         LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib/augeas/lib64"
+      else
+         LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib/augeas/lib"
+      fi
    else
-      LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib:${LD_LIBRARY_PATH}"
+      if [ "x$_X86_64"  != "x" ]; then
+         LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib/augeas/lib64:${LD_LIBRARY_PATH}"
+      else
+         LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib/augeas/lib:${LD_LIBRARY_PATH}"
+      fi
    fi
    export LD_LIBRARY_PATH
    debug_msg "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"

@@ -20,14 +20,18 @@ public class ApacheDirectiveTree {
         this.rootNode = rootNode;
     }
     
-    public List<ApacheDirective> search(String name) throws Exception{     
+    public List<ApacheDirective> search(ApacheDirective nd,String name){
+        return parseExpr(nd,name);
+    }
+    
+    public List<ApacheDirective> search(String name){     
         if (name.startsWith("/"))
           return parseExpr(rootNode,name.substring(1));
         else
           return parseExpr(rootNode,name);
     }
     
-    private List<ApacheDirective> parseExpr(ApacheDirective nd, String expr) throws Exception {
+    private List<ApacheDirective> parseExpr(ApacheDirective nd, String expr)  {
         int index = expr.indexOf("/");
         String name;
         
@@ -51,4 +55,10 @@ public class ApacheDirectiveTree {
         return nds;
     }
     
+    public ApacheDirective createNode(ApacheDirective parentNode,String name){
+       ApacheDirective dir = new ApacheDirective(name);
+       dir.setParentNode(parentNode);
+       parentNode.addChildDirective(dir);
+       return dir;
+    }
 }

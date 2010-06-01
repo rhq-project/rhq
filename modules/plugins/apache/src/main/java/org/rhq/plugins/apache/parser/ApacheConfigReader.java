@@ -20,8 +20,11 @@ public class ApacheConfigReader {
         if (!configFile.exists())
             throw new RuntimeException("Configuration file does not exist.");
         
+        BufferedReader br=null;
+        
+        try {    
         FileInputStream fstream = new FileInputStream(configFile);
-        BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+        br = new BufferedReader(new InputStreamReader(fstream));
         String strLine;
         
         while ((strLine = br.readLine()) != null) {    
@@ -44,5 +47,10 @@ public class ApacheConfigReader {
         }
             br.close();
             
+        }catch(Exception e){
+            if (br!=null)
+                br.close();
+            throw new Exception(e);
+        }
     }
 }

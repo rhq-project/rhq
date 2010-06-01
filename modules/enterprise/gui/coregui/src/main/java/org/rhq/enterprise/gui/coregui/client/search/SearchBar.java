@@ -67,7 +67,6 @@ public class SearchBar {
 
     public static final String TRASH = IMAGE_DIR + "trash.png";
 
-    //private final SuggestTextBox autoCompletePatternField = new SuggestTextBox(this);
     private final TextBox patternField = new TextBox();
     private final SuggestTextBox_v3 autoCompletePatternField = new SuggestTextBox_v3(this, patternField);
     private final TextBox patternNameField = new TextBox();
@@ -98,11 +97,12 @@ public class SearchBar {
 
         String searchButtonId = searchBarElement.getAttribute("searchButtonId");
         Element searchButton = DOM.getElementById(searchButtonId);
-        DOM.sinkEvents(searchButton, Event.ONCLICK);
+
+        DOM.sinkEvents(searchButton, Event.ONKEYDOWN);
         DOM.setEventListener(searchButton, new EventListener() {
             @Override
             public void onBrowserEvent(Event event) {
-                if (event.getKeyCode() == Event.ONCLICK) {
+                if (event.getKeyCode() == Event.ONKEYDOWN) {
                     prepareSearchExecution();
                 }
             }
@@ -242,7 +242,7 @@ public class SearchBar {
     }
 
     private void turnNameFieldIntoLabel() {
-        String pattern = autoCompletePatternField.getValue();
+        String pattern = autoCompletePatternField.getText();
         String name = patternNameField.getText();
 
         if (name.equalsIgnoreCase(DEFAULT_PATTERN_NAME)) {

@@ -247,7 +247,7 @@
         </constraint>
     </table>
 
-    <table name="RHQ_REPO_CONTENT_SRC_MAP">
+    <table name="RHQ_REPO_CONTENT_SRC_MAP">                                                               1
         <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
         <column name="CONTENT_SRC_ID" type="INTEGER" required="true" references="RHQ_CONTENT_SOURCE"/>
         <column name="CTIME" type="LONG" required="true"/>

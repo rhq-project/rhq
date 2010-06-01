@@ -49,6 +49,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
@@ -149,36 +150,44 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                 suggestionMenu.addItem(menuItem);
             }
 
-            suggestionPopup.showRelativeTo(getTextBox());
-            /*
-            suggestionPopup.setPopupPositionAndShow(new PositionCallback() {
-                public void setPosition(int offsetWidth, int offsetHeight) {
-                    position(getTextBox(), offsetWidth, offsetHeight + 5);
-                }
-            });
-            */
-            suggestionPopup.setAnimationEnabled(isAnimationEnabled);
+            class TextBoxSkewWrapper extends TextBox {
+                private TextBoxBase wrapped;
+                private int skewWidth;
+                private int skewHeight;
 
-            suggestionMenu.setWidth("785px");
-            suggestionPopup.setWidth("785px");
+                public TextBoxSkewWrapper(TextBoxBase textBoxBase, int skewWidth, int skewHeight) {
+                    this.wrapped = textBoxBase;
+                    this.skewWidth = skewWidth;
+                    this.skewHeight = skewHeight;
+                }
+
+                @Override
+                public int getOffsetWidth() {
+                    return wrapped.getOffsetWidth();
+                }
+
+                @Override
+                public int getOffsetHeight() {
+                    return wrapped.getOffsetHeight();
+                }
+
+                @Override
+                public int getAbsoluteLeft() {
+                    return wrapped.getAbsoluteLeft() + skewWidth;
+                }
+
+                @Override
+                public int getAbsoluteTop() {
+                    return wrapped.getAbsoluteTop() + skewHeight;
+                }
+            }
+
+            suggestionPopup.showRelativeTo(new TextBoxSkewWrapper(getTextBox(), 0, 5));
+            suggestionPopup.setAnimationEnabled(isAnimationEnabled);
         } else {
             suggestionPopup.hide();
         }
     }
-
-    /*
-    private void setNewSelection(SuggestionMenuItem menuItem) {
-        Suggestion curSuggestion = menuItem.getSuggestion();
-        currentText = curSuggestion.getReplacementString();
-        setText(currentText);
-        suggestionPopup.hide();
-        fireSuggestionEvent(curSuggestion);
-    }
-
-    private void fireSuggestionEvent(Suggestion selectedSuggestion) {
-        SelectionEvent.fire(this, selectedSuggestion);
-    }
-    */
 
     private void addEventsToTextBox() {
         class TextBoxEvents extends HandlesAllKeyEvents implements ValueChangeHandler<String> {
@@ -343,25 +352,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     }
 
     /**
-     * Gets the specified suggestion from the suggestions currently showing.
-     * 
-     * @param index the index at which the suggestion lives
-     * 
-     * @throws IndexOutOfBoundsException if the index is greater then the number
-     *           of suggestions currently showing
-     * 
-     * @return the given suggestion
-     */
-    /*
-    Suggestion getSuggestion(int index) {
-        if (!isSuggestionListShowing()) {
-            throw new IndexOutOfBoundsException("No suggestions showing, so cannot show " + index);
-        }
-        return ((SuggestionMenuItem) suggestionMenu.getItems().get(index)).suggestion;
-    }
-    */
-
-    /**
      * Get the number of suggestions that are currently showing.
      * 
      * @return the number of suggestions currently showing, 0 if there are none
@@ -433,22 +423,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             SearchSuggestion searchSuggestion = extraSearchSuggestion(suggestion);
             return searchSuggestion;
         }
-
-        /**
-         * Selects the item at the specified index in the menu. Selecting the item
-         * does not perform the item's associated action; it only changes the style
-         * of the item and updates the value of SuggestionMenu.selectedItem.
-         * 
-         * @param index index
-         */
-        /*
-        public void selectItem(int index) {
-            List<MenuItem> items = getItems();
-            if (index > -1 && index < items.size()) {
-                itemOver(items.get(index), false);
-            }
-        }
-        */
     }
 
     private static SearchSuggestion extraSearchSuggestion(Suggestion suggestion) {
@@ -522,7 +496,8 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             }
 
             String decoratedPrefix = decorate(prefix, style);
-            String highlightedSuggestion = colorOperator(decorate(item.getLabel(), "background-color: yellow;", item
+            String formattedItemLabel = chopWithEvery(item.getLabel(), "<br/>", 110);
+            String highlightedSuggestion = colorOperator(decorate(formattedItemLabel, "background-color: yellow;", item
                 .getStartIndex(), item.getEndIndex()));
             String decoratedSuffix = decorate(highlightedSuggestion, "float: left; ");
             String floatClear = "<br style=\"clear: both;\" />";
@@ -531,9 +506,24 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             return innerHTML;
         }
 
-        // TODO: fixing coloring strategy
+        private static String chopWithEvery(String chop, String with, int every) {
+            String[] words = chop.split("\\s");
+            StringBuilder results = new StringBuilder();
+            int currentLineLength = 0;
+            for (String next : words) {
+                if (currentLineLength + next.length() > every) {
+                    results.append(with);
+                    currentLineLength = 0;
+                }
+                results.append(next).append(' ');
+                currentLineLength += (next.length() + 1);
+            }
+            return results.toString();
+        }
+
         private static final List<String> OPERATORS = Arrays.asList("!==", "!=", "==", "=");
 
+        // TODO: fixing coloring strategy
         private static String colorOperator(String data) {
             for (String operator : OPERATORS) {
                 int index = -1;
@@ -554,6 +544,9 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
 
         private static String decorate(String data, String style, int startIndex, int endIndex) {
+            if (startIndex == -1) {
+                return data; // no match
+            }
             String before = data.substring(0, startIndex);
             String highlight = data.substring(startIndex, endIndex);
             String after = data.substring(endIndex);
@@ -664,7 +657,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         public SearchSuggestion getSearchSuggestion() {
             return suggestion;
         }
-
     }
 
     @Override

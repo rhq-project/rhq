@@ -353,6 +353,7 @@ public class SearchAssistManager {
             SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
                 "Error retrieving suggestions: " + t.getMessage() + ", see server log for more details");
             results.add(footerMessage);
+            LOG.info("Error retrieving suggestions", t);
         }
         return results;
     }

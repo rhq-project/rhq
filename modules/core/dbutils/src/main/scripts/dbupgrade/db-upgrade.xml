@@ -2567,12 +2567,12 @@
                         FOREIGN KEY (CONFIG_ID)
                         REFERENCES RHQ_CONFIG (ID)
                     </statement>
-                        <statement desc="Creating RHQ_BUNDLE_DEPLOYMENT foreign key relation to RHQ_BUNDLE_DEPLOYMENT">
-                            ALTER TABLE RHQ_BUNDLE_DEPLOYMENT
-                            ADD CONSTRAINT RHQ_BD_B_DEPLOYMENT_ID_FK
-                            FOREIGN KEY (REPLACED_BUNDLE_DEPLOYMENT_ID)
-                            REFERENCES RHQ_BUNDLE_DEPLOYMENT (ID)
-                        </statement>                                        
+                    <statement desc="Creating RHQ_BUNDLE_DEPLOYMENT foreign key relation to RHQ_BUNDLE_DEPLOYMENT">
+                        ALTER TABLE RHQ_BUNDLE_DEPLOYMENT
+                        ADD CONSTRAINT RHQ_BD_B_DEPLOYMENT_ID_FK
+                        FOREIGN KEY (REPLACED_BUNDLE_DEPLOYMENT_ID)
+                        REFERENCES RHQ_BUNDLE_DEPLOYMENT (ID)
+                    </statement>                                        
                 </schema-directSQL>                
                 
                 <!-- RHQ_BUNDLE_RES_DEPLOY -->
@@ -2628,8 +2628,7 @@
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="ACTION" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="INFO" columnType="VARCHAR2" precision="512" />
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="INFO" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="CATEGORY" columnType="VARCHAR2" precision="32" />
-                <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="CATEGORY" nullable="FALSE" />                                
+                <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="CATEGORY" columnType="VARCHAR2" precision="32" />                                
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="STATUS" columnType="VARCHAR2" precision="16" />
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="STATUS" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="MESSAGE" columnType="LONGVARCHAR" />

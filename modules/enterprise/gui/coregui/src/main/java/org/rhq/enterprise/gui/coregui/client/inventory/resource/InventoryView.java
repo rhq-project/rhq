@@ -33,14 +33,22 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
+import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 
 /**
  * @author Greg Hinkle
  */
-public class InventoryView extends HLayout {
+public class InventoryView extends HLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = "Inventory";
 
@@ -178,5 +186,79 @@ public class InventoryView extends HLayout {
         newContent.setHeight100();
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();
+    }
+
+
+
+    private void renderContentView(ViewPath viewPath) {
+
+       ViewId currentSectionViewId = viewPath.getCurrent();
+        ViewId currentPageViewId = viewPath.getNext();
+
+        String section = currentSectionViewId.getPath();
+        String page = currentPageViewId.getPath();
+
+
+        Canvas content = null;
+        if ("Reports".equals(section)) {
+
+            if ("Inventory Summary".equals(page)) {
+                content = new FullHTMLPane("/rhq/admin/report/resourceInstallReport-body.xhtml");
+            }
+
+
+        } else if ("Security".equals(section)) {
+
+            if ("Manage Users".equals(page)) {
+                content = new UsersView();
+            } else if ("Manage Roles".equals(page)) {
+                content = new RolesView();
+            } else if ("Auto Discovery Queue".equals(page)) {
+                content = new ResourceAutodiscoveryView();
+            } else if ("Remote Agent Install".equals(page)) {
+                content = new RemoteAgentInstallView();
+            }
+        }
+
+
+       /* for (String name : treeGrids.keySet()) {
+
+            TreeGrid treeGrid = treeGrids.get(name);
+            if (name.equals(section)) {
+                treeGrid.setSelectedPaths(page);
+            } else {
+                treeGrid.deselectAllRecords();
+            }
+        }*/
+
+
+
+        setContent(content);
+
+
+        if (content instanceof BookmarkableView) {
+            ((BookmarkableView) content).renderView(viewPath.next().next());
+        }
+
+
+    }
+
+
+    public void renderView(ViewPath viewPath) {
+
+/*
+        if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
+
+            if (viewPath.isEnd()) {
+                // Display default view
+                setContent(defaultView());
+            } else {
+                renderContentView(viewPath);
+            }
+        }
+*/
+
+
+
     }
 }

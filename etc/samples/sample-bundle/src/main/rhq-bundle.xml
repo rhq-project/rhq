@@ -23,7 +23,8 @@
        required="true"
        type="integer"/>
 
-      <rhq:deployment name="appserver" preinstallTarget="appserver-preinstall">
+      <rhq:deployment-unit name="appserver"
+                           preinstallTarget="appserver-preinstall" postinstallTarget="appserver-postinstall">
         <rhq:system-service name="jbossas-petstore" scriptFile="jbossas-init-script"
                      configFile="jbossas-init-config" overwriteScript="true"
                      startLevels="3,4,5" startPriority="80" stopPriority="20"/>
@@ -39,7 +40,7 @@
                 <include name="server/default/work/**"/>
             </rhq:fileset>
         </rhq:ignore>
-      </rhq:deployment>
+      </rhq:deployment-unit>
 
     </rhq:bundle>
 
@@ -47,6 +48,10 @@
 
     <target name="appserver-preinstall">
         <echo>Installing Java Petstore App Server to ${rhq.deploy.dir}...</echo>
+    </target>
+
+    <target name="appserver-postinstall">
+        <echo>Done installing Java Petstore App Server to ${rhq.deploy.dir}.</echo>
     </target>
 
 </project>

@@ -19,16 +19,18 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 public class GetDeploymentConfigStep implements WizardStep {
 
     private final BundleDeployWizard wizard;
-    private ConfigurationEditor editor;
+    private VLayout editor;
 
     public GetDeploymentConfigStep(BundleDeployWizard wizard) {
         this.wizard = wizard;
@@ -40,16 +42,22 @@ public class GetDeploymentConfigStep implements WizardStep {
 
     public Canvas getCanvas() {
         if (null == editor) {
-            ConfigurationDefinition configDef = this.wizard.getBundleVersion().getConfigurationDefinition();
+            ConfigurationDefinition configDef = wizard.getBundleVersion().getConfigurationDefinition();
 
             // if there are no prop defs for this config def then we can skip this step entirely. just
             // set an empty config.
             if (configDef.getPropertyDefinitions().isEmpty()) {
-                this.wizard.setNewDeploymentConfig(new Configuration());
-                this.wizard.getView().incrementStep();
+                wizard.setNewDeploymentConfig(new Configuration());
+                // This has started behaving badly. Instead of moving ahead let's give them a message
+                // and a chance to go back to the previous screen. 
+                // this.wizard.getView().incrementStep();
+                HeaderLabel label = new HeaderLabel("No configuration needed for this bundle version");
+                label.setWidth100();
+                editor = new VLayout();
+                editor.addMember(label);
             } else {
                 // otherwise, pop up the config editor to get the needed config
-                Configuration startingConfig = (null == this.wizard.getLiveDeployment()) ? new Configuration()
+                Configuration startingConfig = (null == wizard.getLiveDeployment()) ? new Configuration()
                     : getNormalizedLiveConfig(configDef);
                 editor = new ConfigurationEditor(configDef, startingConfig);
             }
@@ -59,7 +67,7 @@ public class GetDeploymentConfigStep implements WizardStep {
     }
 
     private Configuration getNormalizedLiveConfig(ConfigurationDefinition configDef) {
-        Configuration config = this.wizard.getLiveDeployment().getConfiguration();
+        Configuration config = wizard.getLiveDeployment().getConfiguration();
         if (null == config) {
             config = new Configuration();
         } else {
@@ -73,7 +81,9 @@ public class GetDeploymentConfigStep implements WizardStep {
     }
 
     public boolean nextPage() {
-        wizard.setNewDeploymentConfig(editor.getConfiguration());
+        if (null == wizard.getNewDeploymentConfig()) {
+            wizard.setNewDeploymentConfig(((ConfigurationEditor) editor).getConfiguration());
+        }
         return true;
     }
 }

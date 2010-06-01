@@ -76,7 +76,11 @@ public class LinkManager {
     }
 
     public static String getDashboardLink() {
-        return "/Dashboard.do";
+        if (GWT) {
+            return "#Dashboard";
+        } else {
+            return "/Dashboard.do";
+        }
     }
 
 

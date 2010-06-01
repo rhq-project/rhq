@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
 public class TemplateEngineTest extends TestCase {
     private static final String IPADDR = "192.168.22.153";
     private static final String SUCCESSTOKEN1 = "successtoken1";
+    private static final String SUCCESSTOKEN2 = "successtoken2";
     private static final String WINTEMPDIR = "C:\\Users\\JSHAUG~1\\Documents and Settings\\Local\\Temp\\";
     String noTokens = "This string should come through unchanged";
     String justOneToken = "@@rhq.token1@@";
@@ -27,6 +28,8 @@ public class TemplateEngineTest extends TestCase {
             tokens.put("rhq.token1", SUCCESSTOKEN1);
             tokens.put("rhq.platform.ethers.eth1.ipaddress", IPADDR);
             tokens.put("rhq.system.sysprop.java.io.tmpdir", WINTEMPDIR);
+            tokens.put("myapp.max-heap", SUCCESSTOKEN2); // key has dash char in it (bad)
+            tokens.put("myapp.max_heap", SUCCESSTOKEN2); // key has _ char in it (ok)
         }
         return tokens;
     }
@@ -42,6 +45,14 @@ public class TemplateEngineTest extends TestCase {
 
     public void testOneToken() {
         assertEquals(SUCCESSTOKEN1, templateEngine.replaceTokens(justOneToken));
+    }
+
+    public void testOneTokenWithDash() {
+        assertEquals("@@myapp.max-heap@@", templateEngine.replaceTokens("@@myapp.max-heap@@")); // can't have - in names
+    }
+
+    public void testOneTokenWithUnderscore() {
+        assertEquals(SUCCESSTOKEN2, templateEngine.replaceTokens("@@myapp.max_heap@@"));
     }
 
     public void testWinToken() {

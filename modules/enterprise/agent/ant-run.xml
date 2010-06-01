@@ -12,6 +12,7 @@ Ant Script that provides ways to package the Agent.
    <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
    <property name="project.version" value="2.0.0-SNAPSHOT"/>
    <property name="sigar.version" value="1.6.5.132"/>
+   <property name="augeas.version" value="0.7.1"/> 
    <property name="getopt.version" value="1.0.13"/>
    <property name="jaxb-api.version" value="2.1"/>
    <property name="jaxb-impl.version" value="2.1"/>
@@ -73,6 +74,7 @@ Ant Script that provides ways to package the Agent.
 
    <fileset dir="${settings.localRepository}" id="native.fileset">
       <include name="org/hyperic/sigar-dist/${sigar.version}/sigar-dist-${sigar.version}.zip" />
+   	  <include name="net/augeas/augeas-native/${augeas.version}/augeas-native-${augeas.version}.zip" />
    </fileset>
 
    <fileset dir="${settings.localRepository}" id="plugins.fileset">
@@ -116,6 +118,7 @@ Ant Script that provides ways to package the Agent.
             <include name="**/lib/sigar.jar"/>
             <include name="**/lib/bcel*.jar"/>
             <include name="**/lib/*.so"/>
+         	<include name="**/lib/*.so.1"/>
             <include name="**/lib/*.sl"/>
             <include name="**/lib/*.dll"/>
             <include name="**/lib/*.dylib"/>
@@ -131,7 +134,7 @@ Ant Script that provides ways to package the Agent.
       <delete failonerror="false" includeEmptyDirs="true" verbose="true">
           <fileset dir="${agent.distro.dir}/lib" includes="hyperic-sigar-*/"/>
       </delete>       
-      <chmod dir="${agent.distro.dir}/lib" perm="ug+rx" includes="*.so,*.sl,*.dylib"/>
+      <chmod dir="${agent.distro.dir}/lib" perm="ug+rx" includes="*.so,*.so.1,*.sl,*.dylib"/>
 
       <copy todir="${agent.distro.dir}/bin">
          <fileset dir="${basedir}/src/etc"
@@ -175,12 +178,14 @@ Ant Script that provides ways to package the Agent.
             <include name="rhq-agent/**"/>
             <exclude name="rhq-agent/bin/*.sh"/>
             <exclude name="rhq-agent/lib/*.so"/>
+         	<exclude name="rhq-agent/lib/*.so.1"/>
             <exclude name="rhq-agent/lib/*.sl"/>
             <exclude name="rhq-agent/lib/*.dylib"/>
          </zipfileset>
          <zipfileset dir="${basedir}/target" filemode="755">
             <include name="rhq-agent/bin/*.sh"/>
             <include name="rhq-agent/lib/*.so"/>
+         	<include name="rhq-agent/lib/*.so.1"/>
             <include name="rhq-agent/lib/*.sl"/>
             <include name="rhq-agent/lib/*.dylib"/>
          </zipfileset>

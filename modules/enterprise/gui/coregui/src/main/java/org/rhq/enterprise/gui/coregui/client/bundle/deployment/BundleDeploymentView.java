@@ -30,6 +30,7 @@ import java.util.HashSet;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -91,8 +92,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         addMember(new BackButton("Back to Destination: " + deployment.getDestination().getName(), "Bundles/" + version.getBundle().getId() + "/destinations/" + deployment.getDestination().getId()));
 
 
-        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png")
-                + "\"/> " + deployment.getName()));
+        addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png"), deployment.getName()));
 
         DynamicForm form = new DynamicForm();
         form.setNumCols(4);
@@ -157,6 +157,8 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
     private Table createDeploymentsTable() {
         Table table = new Table("Deployment Machines");
 
+
+        table.setTitleComponent(new HTMLFlow("Select a row to show install detials"));
 
         ListGridField resourceIcon = new ListGridField("resourceAvailabity", "");
         HashMap<String, String> icons = new HashMap<String, String>();

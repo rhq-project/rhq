@@ -129,7 +129,7 @@ public class SuggestTextBox extends TextBox {
         System.out.println("just completed to '" + this.getValue() + "'");
         String patternValue = searchBar.getSavedSearchManager().getPatternByName(this.getValue());
         if (patternValue != null) {
-            searchBar.executeSearch(this.getValue());
+            searchBar.prepareSearchExecution(this.getValue());
         } else {
             // send a 'fake' key, this will rerender PopupPanel with the new completion list
             handleKeyCode(0);

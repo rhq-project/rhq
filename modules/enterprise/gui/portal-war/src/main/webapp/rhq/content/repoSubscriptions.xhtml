@@ -116,16 +116,6 @@
                
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="rc.resource.resourceType.name">
-                        <h:outputText styleClass="headerText" value="Resource Type" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{resourceitem.resourceTypeName}"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
                         <h:outputText styleClass="headerText" value="Version" />
                   </f:facet>
 
@@ -263,7 +253,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{availableitem.resourceTypeName}"/>
+                  <h:outputText value="#{availableitem.resourceType.name}"/>
                </rich:column>
 
                <rich:column>

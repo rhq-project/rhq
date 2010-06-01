@@ -238,11 +238,7 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                               resourceId="#{result.original.resource.id}" disambiguationReport="#{result}"
                               nameAsLink="false" />
                         </h:column>
-                        <h:column rendered="#{result.typeResolutionNeeded}">
-                            <f:facet name="header">Type</f:facet>
-                            <h:outputText value="#{result.resourceTypeName}"/>
-                        </h:column>
-                        <h:column rendered="#{result.parentResolutionNeeded}">
+                        <h:column>
                            <f:facet name="header">Parent</f:facet>
                            <onc:disambiguatedResourceLineage parents="#{result.parents}" renderLinks="false" />
                         </h:column>

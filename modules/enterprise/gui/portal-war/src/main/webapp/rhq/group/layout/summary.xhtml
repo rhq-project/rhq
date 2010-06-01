@@ -175,7 +175,7 @@ groupId - the group id of the Group being accessed
                 <rich:column>
                     <f:facet name="header">
                         <onc:sortableColumnHeader sort="res.name">
-                            <h:outputText styleClass="headerText" value="Name"/>
+                            <h:outputText styleClass="headerText" value="Resource"/>
                         </onc:sortableColumnHeader>
                     </f:facet>
 
@@ -185,7 +185,7 @@ groupId - the group id of the Group being accessed
 
                 <rich:column>
                     <f:facet name="header">
-                        <h:outputText styleClass="headerText" value="Parent"/>
+                        <h:outputText styleClass="headerText" value="Location"/>
                     </f:facet>
 
                     <onc:disambiguatedResourceLineage parents="#{resourceWithAvailability.parents}"/>

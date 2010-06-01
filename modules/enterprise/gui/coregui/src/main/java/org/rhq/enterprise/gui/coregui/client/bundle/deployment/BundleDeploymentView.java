@@ -89,7 +89,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         this.version = bundleDeployment.getBundleVersion();
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
 
-        addMember(new BackButton("Back to Destination: " + deployment.getDestination().getName(), "Bundles/" + version.getBundle().getId() + "/destinations/" + deployment.getDestination().getId()));
+        addMember(new BackButton("Back to Destination: " + deployment.getDestination().getName(), "Bundles/Bundle/" + version.getBundle().getId() + "/destinations/" + deployment.getDestination().getId()));
 
 
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png"), deployment.getName()));

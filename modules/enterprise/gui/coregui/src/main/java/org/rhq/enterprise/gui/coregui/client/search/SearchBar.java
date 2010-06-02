@@ -123,22 +123,18 @@ public class SearchBar {
         savedSearchManager = new SavedSearchManager(this);
 
         RootPanel.get("patternFieldContainer").add(autoCompletePatternField);
-        setupAutoCompletingPatternField();
+        RootPanel.get("patternNameFieldContainer").add(patternNameField);
+        RootPanel.get("patternNameLabelContainer").add(patternNameLabel);
+        RootPanel.get("starImageContainer").add(starImage);
+        RootPanel.get("arrowImageContainer").add(arrowImage);
+        RootPanel.get("savedSearchesContainer").add(savedSearchesPanel);
 
-        String userAgent = getUserAgent();
-        System.out.println("User Agent: " + userAgent);
-        if (userAgent.indexOf("msie") == -1) { // don't load saved searches for IE, it still needs some love
-            RootPanel.get("patternNameFieldContainer").add(patternNameField);
-            RootPanel.get("patternNameLabelContainer").add(patternNameLabel);
-            RootPanel.get("starImageContainer").add(starImage);
-            RootPanel.get("arrowImageContainer").add(arrowImage);
-            RootPanel.get("savedSearchesContainer").add(savedSearchesPanel);
-            setupPatternNameField();
-            setupPatternNameLabel();
-            setupStarImage();
-            setupArrowImage();
-            setupSavedSearches();
-        }
+        setupAutoCompletingPatternField();
+        setupPatternNameField();
+        setupPatternNameLabel();
+        setupStarImage();
+        setupArrowImage();
+        setupSavedSearches();
 
         // presume the enclosing page logic loads results without a button click
     }
@@ -247,7 +243,12 @@ public class SearchBar {
             savedSearchManager.removePatternByName(currentSearch);
             starImage.setUrl(STAR_OFF_URL);
         } else {
-            savedSearchManager.renamePattern(currentSearch, name);
+            if (currentSearch.equals("")) {
+                String pattern = autoCompletePatternField.getText();
+                savedSearchManager.updatePatternByName(name, pattern); // create case
+            } else {
+                savedSearchManager.renamePattern(currentSearch, name);
+            }
             //savedSearchManager.updatePatternByName(name, pattern);
             patternNameLabel.setText(elipse(name));
             patternNameLabel.setVisible(true);

@@ -193,7 +193,7 @@ public class SearchBar {
         patternNameField.setVisible(false);
 
         PatternNameFieldEventHandler handler = new PatternNameFieldEventHandler();
-        //patternNameField.addKeyPressHandler(handler);
+        patternNameField.addKeyPressHandler(handler);
         patternNameField.addClickHandler(handler);
         patternNameField.addBlurHandler(handler);
     }
@@ -234,22 +234,21 @@ public class SearchBar {
     }
 
     private void turnNameFieldIntoLabel() {
-        String pattern = autoCompletePatternField.getText();
         String name = patternNameField.getText();
 
         if (name.equalsIgnoreCase(DEFAULT_PATTERN_NAME)) {
             name = "";
         }
 
-        savedSearchManager.removePatternByName(currentSearch);
-
         arrowImage.setVisible(true);
         patternNameField.setVisible(false);
 
         if (name.equals("")) {
+            savedSearchManager.removePatternByName(currentSearch);
             starImage.setUrl(STAR_OFF_URL);
         } else {
-            savedSearchManager.updatePatternByName(name, pattern);
+            savedSearchManager.renamePattern(currentSearch, name);
+            //savedSearchManager.updatePatternByName(name, pattern);
             patternNameLabel.setText(elipse(name));
             patternNameLabel.setVisible(true);
             starImage.setUrl(STAR_ON_URL);
@@ -275,7 +274,6 @@ public class SearchBar {
     /*
      * Event Handlers
      */
-
     class AutoCompletePatternFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
         @Override
         public void onKeyPress(KeyPressEvent event) {
@@ -314,20 +312,17 @@ public class SearchBar {
                 autoCompletePatternField.setValue(welcomeMessage, true);
             }
             savedSearchesPanel.hide();
-            //turnNameFieldIntoLabel();
         }
     }
 
-    class PatternNameFieldEventHandler implements /*KeyPressHandler,*/ClickHandler, BlurHandler {
-        /*
+    class PatternNameFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
         @Override
         public void onKeyPress(KeyPressEvent event) {
-            if (event.getCharCode() == 13) {
+            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
                 SearchLogger.debug("key press pattern name field");
                 turnNameFieldIntoLabel();
             }
         }
-        */
 
         @Override
         public void onClick(ClickEvent event) {

@@ -495,8 +495,9 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
             String decoratedPrefix = decorate(prefix, style);
             String formattedItemLabel = chopWithEvery(item.getLabel(), "<br/>", 110);
-            String highlightedSuggestion = colorOperator(decorate(formattedItemLabel, "background-color: yellow;", item
-                .getStartIndex(), item.getEndIndex()));
+            String decoratedItemLabel = decorate(formattedItemLabel, "background-color: yellow;", item.getStartIndex(),
+                item.getEndIndex());
+            String highlightedSuggestion = colorOperator(decoratedItemLabel);
             String decoratedSuffix = decorate(highlightedSuggestion, "float: left; ");
             String floatClear = "<br style=\"clear: both;\" />";
 
@@ -519,7 +520,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             return results.toString();
         }
 
-        private static final List<String> OPERATORS = Arrays.asList("!==", "!=", "==", "=", "<", ">");
+        private static final List<String> OPERATORS = Arrays.asList("!==", "!=", "==", "=");
 
         // TODO: fixing coloring strategy
         private static String colorOperator(String data) {
@@ -629,9 +630,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         String after = getText().substring(futureWhitespaceIndex);
         setValue(before + completion + after);
 
-        // TODO: this algo screws up when it does the indexOf search on just a single char from currentText
-        //       use case is "availability=dow<enter>" -- is this still true, now that we're completing longer things for advanced search?
-
         if (currentText.equals(getText().toLowerCase())) {
             setValue(currentText + completion, true);
         }
@@ -640,7 +638,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             || searchSuggestion.getKind() == SearchSuggestion.Kind.UserSavedSearch) {
             // execute saved searches immediately, since they presumably constitute complete expressions
             searchBar.activateSavedSearch(searchSuggestion.getLabel());
-            //searchBar.executeSearch(completion);
         }
     }
 

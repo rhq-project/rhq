@@ -56,7 +56,7 @@ groupId - the group id of the Group being accessed
                 <tr>
                     <td>
 
-                        <h:graphicImage value="/images/icons/${ResourceGroupUIBean.compatible ? 'Cluster' : 'Group' }_up_24.png"/>
+                        <h:graphicImage value="/images/icons/${ResourceGroupUIBean.compatible ? (ResourceGroupUIBean.clusterGroup ? ResourceGroupUIBean.resourceType.category : 'Cluster') : 'Group' }_up_24.png"/>
                         <h:outputText style="font-size: 18px;" value="#{ResourceGroupUIBean.name}"/>
 
                     </td>

@@ -33,6 +33,16 @@ import org.rhq.core.domain.resource.ResourceCategory;
 public enum MembersCategoryHint {
     PLATFORM, SERVER, SERVICE, MIXED, NONE;
 
+    private String name;
+    
+    private MembersCategoryHint() {
+        StringBuilder bld = new StringBuilder();
+        String name = name().toLowerCase();
+        bld.append(Character.toUpperCase(name.charAt(0)));
+        bld.append(name, 1, name.length());
+        this.name = bld.toString();
+    }
+    
     public static MembersCategoryHint fromResourceCategory(ResourceCategory category) {
         switch (category) {
         case PLATFORM:
@@ -47,6 +57,6 @@ public enum MembersCategoryHint {
     }
     
     public String toString() {
-        return name().toLowerCase();
+        return name;
     }
 }

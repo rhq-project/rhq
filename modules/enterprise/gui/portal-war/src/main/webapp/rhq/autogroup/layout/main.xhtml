@@ -36,7 +36,7 @@ REQUEST PARAMETERS:
 THIS TEXT WILL BE REMOVED AS WELL.
 
 <ui:param name="defaultPageTitle"
-      value="'#{AutoGroupUIBean.parentResourceName}'.'#{AutoGroupUIBean.childResourceTypeName}'" />
+      value="'#{AutoGroupUIBean.parentResource.name}'.'#{AutoGroupUIBean.childResourceType.name}'" />
 
    <ui:define name="summary">
 
@@ -55,22 +55,22 @@ THIS TEXT WILL BE REMOVED AS WELL.
                 <tr>
                     <td width="30">
                         
-                        <h:graphicImage value="/images/icons/Cluster_up_24.png"/>
+                        <h:graphicImage value="/images/icons/Auto_group_#{AutoGroupUIBean.childResourceType.category}_up_24.png"/>
                         </td>
                     <td nowrap="nowrap">
                         
-                        <h:outputText value="#{AutoGroupUIBean.childResourceTypeName} AutoGroup" style="font-size: 18px;" /><br/>
+                        <h:outputText value="#{AutoGroupUIBean.childResourceType.name} AutoGroup" style="font-size: 18px;" /><br/>
 
 
       <onc:resourceLineage
-         resourceId="#{AutoGroupUIBean.parentResourceId}" />
+         resourceId="#{AutoGroupUIBean.parentResource.id}" />
       <h:outputText value=" &gt; " />
       <h:outputLink value="/rhq/autogroup/monitor/graphs.xhtml">
          <f:param name="parent"
-            value="#{AutoGroupUIBean.parentResourceId}" />
+            value="#{AutoGroupUIBean.parentResource.id}" />
          <f:param name="type"
-            value="#{AutoGroupUIBean.childResourceTypeId}" />
-         <h:outputText value="#{AutoGroupUIBean.childResourceTypeName}" />
+            value="#{AutoGroupUIBean.childResourceType.id}" />
+         <h:outputText value="#{AutoGroupUIBean.childResourceType.name}" />
       </h:outputLink>
 
       </td>

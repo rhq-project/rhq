@@ -292,7 +292,12 @@ public class MessageDigestGenerator {
     }
 
     public String calcDigestString(byte[] bytes) throws IOException {
-        return calculateDigestStringFromBytes(bytes);
+        try {
+            ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+            return calcDigestString(bs);
+        } catch (IOException e) {
+            throw new RuntimeException("IOException reading a byte array input stream, this should never happen", e);
+        }
     }
 
     /**

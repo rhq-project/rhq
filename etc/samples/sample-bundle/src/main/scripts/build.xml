@@ -52,13 +52,11 @@
       <!-- zip up our modified jbossas install - this zipfile will be used as a bundle file -->
       <zip destfile="target/bundle/jbossas-petstore.zip" basedir="${jboss.home}"/>
 
-      <!-- copy the recipe into the bundle -->
+      <!-- copy the recipe and other bundle files into the bundle -->
       <copy todir="target/bundle">
-          <fileset dir="src/main" includes="jbossas-init-*"/>
+          <fileset dir="src/main/bundle"/>
       </copy>
        
-      <!-- copy the recipe into the bundle -->
-      <copy file="src/main/rhq-bundle.xml" todir="target/bundle"/>
    </target>
   
 </project>

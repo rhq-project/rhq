@@ -56,6 +56,12 @@ public class DeploymentUnitType extends AbstractBundleType {
     private String preinstallTarget;
     private String postinstallTarget;
 
+    public void init() throws BuildException {
+        if (this.systemService != null) {
+            this.systemService.init();
+        }
+    }
+
     public void install(boolean revert, boolean clean) throws BuildException {
         if (this.preinstallTarget != null) {
             Target target = (Target) getProject().getTargets().get(this.preinstallTarget);
@@ -70,13 +76,7 @@ public class DeploymentUnitType extends AbstractBundleType {
             getProject().getBundleVersion(), getProject().getBundleDescription());
         File deployDir = getProject().getDeployDir();
         TemplateEngine templateEngine = createTemplateEngine();
-        if (this.systemService != null) {
-            this.files.put(this.systemService.getScriptFile(), this.systemService.getScriptDestFile());
-            if (this.systemService.getConfigFile() != null) {
-                this.files.put(this.systemService.getConfigFile(), this.systemService.getConfigDestFile());
-                this.rawFilesToReplace.add(this.systemService.getConfigFile());
-            }            
-        }
+
         if (this.files.isEmpty() && this.archives.isEmpty()) {
             throw new BuildException("You must specify at least one file to deploy via nested rhq:file, rhq:archive, and/or rhq:system-service elements.");
         }
@@ -184,10 +184,17 @@ public class DeploymentUnitType extends AbstractBundleType {
 
     public void addConfigured(SystemServiceType systemService) {
         if (this.systemService != null) {
-            throw new IllegalStateException("A deployment can only have one system-service child element.");
+            throw new IllegalStateException("A rhq:deploymentUnit element can only have one rhq:system-service child element.");
         }
         this.systemService = systemService;
-        this.systemService.init();
+        this.systemService.validate();
+
+        // Add the init script and its config file to the list of bundle files.
+        this.files.put(this.systemService.getScriptFile(), this.systemService.getScriptDestFile());
+        if (this.systemService.getConfigFile() != null) {
+            this.files.put(this.systemService.getConfigFile(), this.systemService.getConfigDestFile());
+            this.rawFilesToReplace.add(this.systemService.getConfigFile());
+        }
     }
 
     public void addConfigured(FileType file) {

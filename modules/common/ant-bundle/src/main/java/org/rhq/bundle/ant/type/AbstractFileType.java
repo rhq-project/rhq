@@ -35,6 +35,18 @@ import org.apache.tools.ant.types.DataType;
 public abstract class AbstractFileType extends AbstractBundleType {
     private File source;
 
+    // TODO: We currently do not call this method. Do we want to or should we just let the Deployer utility handle
+    //       validation of specified files?
+    public void init() throws BuildException {
+        if (!this.source.exists()) {
+            throw new BuildException("File path specified by 'name' attribute (" + this.source + ") does not exist.");
+        }
+        if (this.source.isDirectory()) {
+            throw new BuildException("File path specified by 'name' attribute (" + this.source
+                    + ") is a directory - it must be a regular file.");
+        }
+    }
+
     public File getSource() {
         return this.source;
     }
@@ -46,15 +58,6 @@ public abstract class AbstractFileType extends AbstractBundleType {
                 + ") is not relative - it must be a relative path, relative to the Ant basedir.");
         }
         this.source = getProject().resolveFile(name);
-
-        /* TODO: we can't validate this here - we might not be parsing on the same machine where it will be executing
-        if (!this.source.exists()) {
-            throw new BuildException("Path specified by 'file' attribute (" + name + ") does not exist.");
-        }
-        if (this.source.isDirectory()) {
-            throw new BuildException("Path specified by 'file' attribute (" + name + ") is a directory - it must be a regular file.");
-        }
-        */
     }
 
 }

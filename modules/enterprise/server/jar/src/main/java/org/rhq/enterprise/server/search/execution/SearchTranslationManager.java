@@ -190,6 +190,10 @@ public class SearchTranslationManager {
             return nullValue ? RHQLComparisonOperator.NOT_NULL : RHQLComparisonOperator.NOT_EQUALS;
         case RHQLLexer.OP_NOT_EQUALS_STRICT:
             return nullValue ? RHQLComparisonOperator.NOT_NULL : RHQLComparisonOperator.NOT_EQUALS_STRICT;
+        case RHQLLexer.OP_LESS_THAN:
+            return RHQLComparisonOperator.LESS_THAN;
+        case RHQLLexer.OP_GREATER_THAN:
+            return RHQLComparisonOperator.GREATER_THAN;
         default:
             throw new IllegalArgumentException("There is no known RHQLComparisonOperator for token type " + tokenType);
         }

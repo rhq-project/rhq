@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.menu;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.ui.TextBox;
 import com.smartgwt.client.types.Alignment;
@@ -127,7 +128,13 @@ public class SearchBarPane extends HLayout {
                 try {
                     Integer resourceId = (Integer) changedEvent.getValue();
                     comboBox.setValue("");
-                    History.newItem(LinkManager.getResourceLink(resourceId));
+
+                    String link = LinkManager.getResourceLink(resourceId);
+                    if (!link.contains("#")) {
+                        com.google.gwt.user.client.Window.Location.assign(link);
+                    } else {
+                        History.newItem(link);
+                    }
                 } catch (Exception e) {
                 }
             }

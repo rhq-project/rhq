@@ -12,7 +12,8 @@ Ant Script that provides ways to package the Agent.
    <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
    <property name="project.version" value="2.0.0-SNAPSHOT"/>
    <property name="sigar.version" value="1.6.5.132"/>
-   <property name="augeas.version" value="0.7.1"/> 
+   <property name="augeas.version" value="0.7.1.1"/> 
+   <property name="augeas.zip.version" value="0.7.1"/> 
    <property name="getopt.version" value="1.0.13"/>
    <property name="jaxb-api.version" value="2.1"/>
    <property name="jaxb-impl.version" value="2.1"/>
@@ -74,7 +75,10 @@ Ant Script that provides ways to package the Agent.
 
    <fileset dir="${settings.localRepository}" id="native.fileset">
       <include name="org/hyperic/sigar-dist/${sigar.version}/sigar-dist-${sigar.version}.zip" />
-   	  <include name="net/augeas/augeas-native/${augeas.version}/augeas-native-${augeas.version}.zip" />
+   </fileset>
+
+   <fileset dir="${settings.localRepository}" id="augeas.native.fileset">
+	  <include name="net/augeas/augeas-native/${augeas.version}/augeas-native-${augeas.version}.zip" />
    </fileset>
 
    <fileset dir="${settings.localRepository}" id="plugins.fileset">
@@ -118,83 +122,115 @@ Ant Script that provides ways to package the Agent.
             <include name="**/lib/sigar.jar"/>
             <include name="**/lib/bcel*.jar"/>
             <include name="**/lib/*.so"/>
-         	<include name="**/lib/*.so.1"/>
             <include name="**/lib/*.sl"/>
             <include name="**/lib/*.dll"/>
             <include name="**/lib/*.dylib"/>
          </patternset>
       </unzip>
-      <move todir="${agent.distro.dir}/lib" flatten="true" overwrite="false">
-         <fileset dir="${agent.distro.dir}/lib">
-            <include name="**/lib/*" />
-         </fileset>
-      </move>
-      <move file="${agent.distro.dir}/lib/sigar.jar" tofile="${agent.distro.dir}/lib/sigar-${sigar.version}.jar"
-            overwrite="false"/> 
-      <delete failonerror="false" includeEmptyDirs="true" verbose="true">
-          <fileset dir="${agent.distro.dir}/lib" includes="hyperic-sigar-*/"/>
-      </delete>       
-      <chmod dir="${agent.distro.dir}/lib" perm="ug+rx" includes="*.so,*.so.1,*.sl,*.dylib"/>
 
-      <copy todir="${agent.distro.dir}/bin">
-         <fileset dir="${basedir}/src/etc"
-                  includes="*.bat,*.sh"/>
-      </copy>
-      <chmod dir="${agent.distro.dir}/bin" perm="ug+rx" includes="*.sh"/>
+    <unzip dest="${agent.distro.dir}/lib" overwrite="false">
+       <fileset refid="augeas.native.fileset" />
+       <patternset>
+          <include name="**/lib*/*.so"/>
+          <include name="**/lib*/*.so.1"/>
+       </patternset>
+    </unzip>
 
-      <copy todir="${agent.distro.dir}/bin/wrapper">
-         <fileset dir="${basedir}/src/etc/java-service-wrapper"
-                  includes="rhq-agent-wrapper.conf"/>
-      </copy>
+     <move todir="${agent.distro.dir}/lib/augeas/lib" flatten="true" overwrite="false">
+       <fileset dir="${agent.distro.dir}/lib/augeas-native-${augeas.zip.version}/lib">
+          <include name="*.so" />
+       	  <include name="*.so.1" />
+       </fileset>
+     </move>
+   	
+    <move todir="${agent.distro.dir}/lib/augeas/lib64" flatten="true" overwrite="false">
+      <fileset dir="${agent.distro.dir}/lib/augeas-native-${augeas.zip.version}/lib64">
+         <include name="*.so" />
+         <include name="*.so.1" />
+      </fileset>
+    </move>
+   	
+    <delete failonerror="false" includeEmptyDirs="true" verbose="true">
+        <fileset dir="${agent.distro.dir}/lib" includes="augeas-native-*/"/>
+    </delete>       
+    
+    <move todir="${agent.distro.dir}/lib" flatten="true" overwrite="false">
+       <fileset dir="${agent.distro.dir}/lib">
+          <include name="**/lib/*" />
+          <exclude name="**/augeas/*/*"/>
+       </fileset>
+    </move>
+    <move file="${agent.distro.dir}/lib/sigar.jar" tofile="${agent.distro.dir}/lib/sigar-${sigar.version}.jar"
+          overwrite="false"/> 
+    <delete failonerror="false" includeEmptyDirs="true" verbose="true">
+        <fileset dir="${agent.distro.dir}/lib" includes="hyperic-sigar-*/"/>
+    </delete>       
+    <chmod dir="${agent.distro.dir}/lib" perm="ug+rx" includes="*.so,*.sl,*.dylib"/>
+    <chmod dir="${agent.distro.dir}/lib/augeas/lib" perm="ug+rx" includes="*.so,*.so.1"/>
+    <chmod dir="${agent.distro.dir}/lib/augeas/lib64" perm="ug+rx" includes="*.so,*.so.1"/>
+    
+    <copy todir="${agent.distro.dir}/bin">
+       <fileset dir="${basedir}/src/etc"
+                includes="*.bat,*.sh"/>
+    </copy>
+    <chmod dir="${agent.distro.dir}/bin" perm="ug+rx" includes="*.sh"/>
 
-      <copy todir="${agent.distro.dir}/bin/wrapper/windows-x86_32">
-         <fileset dir="${basedir}/src/etc/java-service-wrapper/windows-x86_32" />
-      </copy>
+    <copy todir="${agent.distro.dir}/bin/wrapper">
+       <fileset dir="${basedir}/src/etc/java-service-wrapper"
+                includes="rhq-agent-wrapper.conf"/>
+    </copy>
 
-      <copy todir="${agent.distro.dir}/plugins" flatten="true" overwrite="true">
-         <fileset refid="plugins.fileset"/>
-      </copy>
+    <copy todir="${agent.distro.dir}/bin/wrapper/windows-x86_32">
+       <fileset dir="${basedir}/src/etc/java-service-wrapper/windows-x86_32" />
+    </copy>
 
-      <!--
-      Put the configuration files here to override those in the jar.
-      The agent jar has these configs in it, too, just in case the
-      agent is run in an environment that does not have a conf
-      directory or these files in its conf dir (as is the case for
-      some tests).  The agent will have this conf directory as the
-      first thing in its classpath so the conf files can override
-      those in the agent jar.
-      -->
-      <copy todir="${agent.distro.dir}/conf">
-         <fileset dir="${basedir}/src/main/resources">
-            <include name="agent-configuration.xml"/>
-            <include name="log4j.xml"/>
-         </fileset>
-      </copy>
+    <copy todir="${agent.distro.dir}/plugins" flatten="true" overwrite="true">
+       <fileset refid="plugins.fileset"/>
+    </copy>
+    <!--
+    Put the configuration files here to override those in the jar.
+    The agent jar has these configs in it, too, just in case the
+    agent is run in an environment that does not have a conf
+    directory or these files in its conf dir (as is the case for
+    some tests).  The agent will have this conf directory as the
+    first thing in its classpath so the conf files can override
+    those in the agent jar.
+    -->
+    <copy todir="${agent.distro.dir}/conf">
+       <fileset dir="${basedir}/src/main/resources">
+          <include name="agent-configuration.xml"/>
+          <include name="log4j.xml"/>
+       </fileset>
+    </copy>
 
-      <delete file="${basedir}/target/rhq-enterprise-agent-${project.version}.zip" />
-      <zip destfile="${basedir}/target/rhq-enterprise-agent-${project.version}.zip" >
-         <!-- The zip task does not mantain file permissions, we have to make sure they are set here -->
-         <zipfileset dir="${basedir}/target">
-            <include name="rhq-agent/**"/>
-            <exclude name="rhq-agent/bin/*.sh"/>
-            <exclude name="rhq-agent/lib/*.so"/>
-         	<exclude name="rhq-agent/lib/*.so.1"/>
-            <exclude name="rhq-agent/lib/*.sl"/>
-            <exclude name="rhq-agent/lib/*.dylib"/>
-         </zipfileset>
-         <zipfileset dir="${basedir}/target" filemode="755">
-            <include name="rhq-agent/bin/*.sh"/>
-            <include name="rhq-agent/lib/*.so"/>
-         	<include name="rhq-agent/lib/*.so.1"/>
-            <include name="rhq-agent/lib/*.sl"/>
-            <include name="rhq-agent/lib/*.dylib"/>
-         </zipfileset>
-      </zip>
+    <delete file="${basedir}/target/rhq-enterprise-agent-${project.version}.zip" />
+    <zip destfile="${basedir}/target/rhq-enterprise-agent-${project.version}.zip" >
+      <!-- The zip task does not mantain file permissions, we have to make sure they are set here -->
+       <zipfileset dir="${basedir}/target">
+          <include name="rhq-agent/**"/>
+          <exclude name="rhq-agent/bin/*.sh"/>
+          <exclude name="rhq-agent/lib/*.so"/>
+          <exclude name="rhq-agent/lib/*.so.1"/>
+          <exclude name="rhq-agent/lib/*.sl"/>
+          <exclude name="rhq-agent/lib/*.dylib"/>
+       	  <exclude name="rhq-agent/lib/augeas/**" />
+       </zipfileset>
+       <zipfileset dir="${basedir}/target" filemode="755">
+          <include name="rhq-agent/bin/*.sh"/>
+          <include name="rhq-agent/lib/*.so"/>
+          <include name="rhq-agent/lib/*.sl"/>
+          <include name="rhq-agent/lib/*.dylib"/>
+          <include name="rhq-agent/lib/augeas/lib/*.so"/>
+          <include name="rhq-agent/lib/augeas/lib/*.so.1"/>
+          <include name="rhq-agent/lib/augeas/lib64/*.so"/>
+          <include name="rhq-agent/lib/augeas/lib64/*.so.1"/>
+       </zipfileset>
+    </zip>
 
-      <mkdir dir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"/>
-      <copy file="${basedir}/target/rhq-enterprise-agent-${project.version}.zip"
-            tofile="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip"
-            verbose="true"/>
+    <mkdir dir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"/>
+    <copy file="${basedir}/target/rhq-enterprise-agent-${project.version}.zip"
+          tofile="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip"
+          verbose="true"/>
 
    </target>
 

@@ -79,8 +79,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
     };
 
-    //private final String STYLE_NAME_TEXT_BOX = "gwt-SuggestBox";
-    //private final String STYLE_NAME_POPUP_PANEL = "gwt-SuggestBoxPopup";
     private final String STYLE_NAME_TEXT_BOX = "patternField";
     private final String STYLE_NAME_POPUP_PANEL = "suggestPanel";
 
@@ -497,8 +495,9 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
             String decoratedPrefix = decorate(prefix, style);
             String formattedItemLabel = chopWithEvery(item.getLabel(), "<br/>", 110);
-            String highlightedSuggestion = colorOperator(decorate(formattedItemLabel, "background-color: yellow;", item
-                .getStartIndex(), item.getEndIndex()));
+            String decoratedItemLabel = decorate(formattedItemLabel, "background-color: yellow;", item.getStartIndex(),
+                item.getEndIndex());
+            String highlightedSuggestion = colorOperator(decoratedItemLabel);
             String decoratedSuffix = decorate(highlightedSuggestion, "float: left; ");
             String floatClear = "<br style=\"clear: both;\" />";
 
@@ -544,6 +543,9 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
 
         private static String decorate(String data, String style, int startIndex, int endIndex) {
+            if (startIndex == -1) {
+                return data; // no match
+            }
             String before = data.substring(0, startIndex);
             String highlight = data.substring(startIndex, endIndex);
             String after = data.substring(endIndex);
@@ -609,18 +611,24 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         int previousWhitespaceIndex = cursorPosition;
         if (cursorPosition != 0) {
             while (--previousWhitespaceIndex > 0) {
-                if (getText().charAt(previousWhitespaceIndex) == ' ') {
+                if (currentText.charAt(previousWhitespaceIndex) == ' ') {
                     previousWhitespaceIndex++; // put index right after found whitespace
                     break;
                 }
             }
         }
-        String before = getText().substring(0, previousWhitespaceIndex);
-        String after = getText().substring(cursorPosition);
-        setValue(before + completion + after);
 
-        // TODO: this algo screws up when it does the indexOf search on just a single char from currentText
-        //       use case is "availability=dow<enter>" -- is this still true, now that we're completing longer things for advanced search?
+        int futureWhitespaceIndex = cursorPosition;
+        while (futureWhitespaceIndex < currentText.length()) {
+            if (currentText.charAt(futureWhitespaceIndex) == ' ') {
+                break;
+            }
+            futureWhitespaceIndex++;
+        }
+
+        String before = getText().substring(0, previousWhitespaceIndex);
+        String after = getText().substring(futureWhitespaceIndex);
+        setValue(before + completion + after);
 
         if (currentText.equals(getText().toLowerCase())) {
             setValue(currentText + completion, true);
@@ -629,8 +637,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         if (searchSuggestion.getKind() == SearchSuggestion.Kind.GlobalSavedSearch
             || searchSuggestion.getKind() == SearchSuggestion.Kind.UserSavedSearch) {
             // execute saved searches immediately, since they presumably constitute complete expressions
-            searchBar.selectSavedSearch(searchSuggestion.getLabel());
-            //searchBar.executeSearch(completion);
+            searchBar.activateSavedSearch(searchSuggestion.getLabel());
         }
     }
 

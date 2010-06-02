@@ -45,6 +45,7 @@ public class GroupSearchAssistant extends AbstractSearchAssistant {
 
     @Override
     public List<String> getValues(String context, String param, String filter) {
+        filter = stripQuotes(filter);
         if (context.equals("availability")) {
             return filter(AvailabilityType.class, filter);
 

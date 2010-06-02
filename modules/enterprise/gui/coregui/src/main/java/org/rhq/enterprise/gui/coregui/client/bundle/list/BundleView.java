@@ -303,6 +303,7 @@ public class BundleView extends VLayout implements BookmarkableView {
                         });
             }
         } else {
+            bundleBeingViewed = 0;
             if (viewPath.getCurrent().getPath().equals("versions")) {
                 if (viewPath.isEnd()) {
 

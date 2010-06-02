@@ -149,6 +149,7 @@ public class BundleTask extends AbstractBundleTask {
                 + this.name + "' version " + this.version + " using config "
                 + getProject().getConfiguration().toString(true) + " [dryRun=" + dryRun + ", revert=" + revert
                 + ", clean=" + clean + "]...");
+        deploymentUnit.init();
         switch (deploymentPhase) {
             case INSTALL:
                 // TODO: Revert doesn't really make sense for an initial install.

@@ -21,7 +21,6 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -29,8 +28,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import net.augeas.AugeasException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -174,6 +171,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void deleteResource() throws Exception {
+        ApacheServerComponent parent = resourceContext.getParentResourceComponent();
+        if (!parent.isAugeasEnabled())
+           throw new Exception(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        
         if (MAIN_SERVER_RESOURCE_KEY.equals(resourceContext.getResourceKey())) {
             throw new IllegalArgumentException("Cannot delete the virtual host representing the main server configuration.");
         }

@@ -17,18 +17,6 @@
         <column name="BUNDLE_ID" type="INTEGER" required="false" references="RHQ_BUNDLE"/>
     </table>
 
-    <table name="RHQ_BUNDLE_DEPLOYMENT" obsolete="true">
-        <column name="BUNDLE_CONFIG_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_CONFIG"/>
-        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE" />
-
-        <constraint name="RHQ_BUNDLE_DEPLOYMENT_KEY">
-            <primaryKey>
-                <field ref="BUNDLE_CONFIG_ID"/>
-                <field ref="RESOURCE_ID"/>
-            </primaryKey>
-        </constraint>
-    </table>
-
     <table name="RHQ_CHANNEL" obsolete="true">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>

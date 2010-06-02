@@ -291,6 +291,10 @@ public class MessageDigestGenerator {
         return calculateDigestStringFromBytes(calcDigest(file));
     }
 
+    public String calcDigestString(byte[] bytes) throws IOException {
+        return calculateDigestStringFromBytes(bytes);
+    }
+
     /**
      * Calculates the digest for a given file. The file's contents will be used as the source data for the digest calculation.
      *

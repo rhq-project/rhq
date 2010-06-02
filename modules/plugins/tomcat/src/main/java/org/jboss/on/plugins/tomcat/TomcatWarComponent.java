@@ -45,14 +45,14 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -71,6 +71,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.JarContentFileInfo;
@@ -644,11 +645,38 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             if (!file.isDirectory())
                 details.setFileSize(file.length());
             details.setFileCreatedDate(null); // TODO: get created date via SIGAR
+            details.setSHA256(getSHA256(details));
 
             packages.add(details);
         }
 
         return packages;
+    }
+
+    // TODO: if needed we can speed this up by looking in the ResourceContainer's installedPackage
+    // list for previously discovered packages. If there use the sha256 from that record. We'd have to
+    // get access to that info by adding access in org.rhq.core.pluginapi.content.ContentServices
+    private String getSHA256(ResourcePackageDetails detail) {
+
+        String sha256 = null;
+
+        try {
+            //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
+            File app = new File(detail.getLocation());
+            if (app.isDirectory()) {
+                File associatedWarFile = new File(app.getAbsolutePath() + ".war");
+                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(associatedWarFile);
+            } else {
+                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(app);
+            }
+        } catch (IOException iex) {
+            //log exception but move on, discovery happens often. No reason to hold up anything.
+            if (log.isDebugEnabled()) {
+                log.debug("Problem calculating digest of package [" + detail.getName() + "]." + iex.getMessage());
+            }
+        }
+
+        return sha256;
     }
 
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {

@@ -84,6 +84,8 @@ public class SearchBar {
     private final SavedSearchManager savedSearchManager;
     private SearchSubsystem searchSubsystem;
 
+    private Element searchButton;
+
     public static boolean existsOnPage() {
         return getSearchBarElement() != null;
     }
@@ -96,7 +98,7 @@ public class SearchBar {
         Element searchBarElement = getSearchBarElement();
 
         String searchButtonId = searchBarElement.getAttribute("searchButtonId");
-        Element searchButton = DOM.getElementById(searchButtonId);
+        searchButton = DOM.getElementById(searchButtonId);
 
         DOM.sinkEvents(searchButton, Event.ONKEYDOWN);
         DOM.setEventListener(searchButton, new EventListener() {
@@ -435,9 +437,15 @@ public class SearchBar {
                 savedSearches.removeRow(rowIndex);
             } else {
                 activateSavedSearch(patternName);
+                click(searchButton);
             }
         }
     }
+
+    private static native void click(Element button)
+    /*-{
+        button.click();
+    }-*/;
 
     public void activateSavedSearch(String savedSearchName) {
         currentSearch = "";

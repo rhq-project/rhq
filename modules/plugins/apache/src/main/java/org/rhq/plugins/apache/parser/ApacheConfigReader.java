@@ -7,18 +7,24 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public class ApacheConfigReader {
     private static final String EMPTY_LINE="^[\t ]*$";
     private static final Pattern emptyLinePattern = Pattern.compile(EMPTY_LINE);
+    private static final Log log = LogFactory.getLog(ApacheConfigReader.class);
     
-    public static void buildTree(String path,ApacheParser parser) throws Exception{       
+    public static void buildTree(String path,ApacheParser parser){       
         searchFile(path, parser);          
     }
     
-    public static void searchFile(String path,ApacheParser parser) throws Exception{
+    public static void searchFile(String path,ApacheParser parser){
         File configFile = new File(path);
-        if (!configFile.exists())
-            throw new RuntimeException("Configuration file does not exist.");
+        if (!configFile.exists()){
+           log.warn("Apache configuration file "+path+" was not found.");
+           throw new ApacheParserException("Apache configuration file "+path+" was not found.");
+           }
         
         BufferedReader br=null;
         
@@ -48,9 +54,12 @@ public class ApacheConfigReader {
             br.close();
             
         }catch(Exception e){
+            try {
             if (br!=null)
                 br.close();
-            throw new Exception(e);
+            }catch(Exception ee){
+            }
+            throw new ApacheParserException(e);
         }
     }
 }

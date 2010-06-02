@@ -178,14 +178,6 @@ public class SearchBar {
         }
     }
 
-    public void selectSavedSearch(String savedSearchName) {
-        String savedSearchPattern = getSavedSearchManager().getPatternByName(savedSearchName);
-        autoCompletePatternField.setValue(savedSearchPattern, true);
-        patternNameField.setValue(savedSearchName, true);
-        currentSearch = "";
-        turnNameFieldIntoLabel();
-    }
-
     private void setupAutoCompletingPatternField() {
         autoCompletePatternField.getElement().setId("patternField");
         autoCompletePatternField.addStyleName("patternField");
@@ -242,22 +234,21 @@ public class SearchBar {
     }
 
     private void turnNameFieldIntoLabel() {
-        String pattern = autoCompletePatternField.getText();
         String name = patternNameField.getText();
 
         if (name.equalsIgnoreCase(DEFAULT_PATTERN_NAME)) {
             name = "";
         }
 
-        savedSearchManager.removePatternByName(currentSearch);
-
         arrowImage.setVisible(true);
         patternNameField.setVisible(false);
 
         if (name.equals("")) {
+            savedSearchManager.removePatternByName(currentSearch);
             starImage.setUrl(STAR_OFF_URL);
         } else {
-            savedSearchManager.updatePatternByName(name, pattern);
+            savedSearchManager.renamePattern(currentSearch, name);
+            //savedSearchManager.updatePatternByName(name, pattern);
             patternNameLabel.setText(elipse(name));
             patternNameLabel.setVisible(true);
             starImage.setUrl(STAR_ON_URL);
@@ -283,11 +274,14 @@ public class SearchBar {
     /*
      * Event Handlers
      */
-
     class AutoCompletePatternFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
         @Override
         public void onKeyPress(KeyPressEvent event) {
             // hide pattern field/label, turn off star
+            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+                return;
+            }
+
             patternNameLabel.setText("");
             patternNameLabel.setVisible(false);
             patternNameField.setValue("", true);
@@ -295,16 +289,7 @@ public class SearchBar {
             currentSearch = "";
             starImage.setUrl(STAR_OFF_URL);
 
-            // enter submits a search result under certain conditions, escape hides the suggestions drop-down
-            // presume this event is handled by the gwt component
-            /*if (event.getCharCode() == KeyCodes.KEY_ENTER) {
-                boolean suggestionsHidden = !autoCompletePatternField.isSuggestionListShowing();
-                boolean suggestionSelected = !suggestionsHidden && autoCompletePatternField.isItemSelected();
-                if (suggestionsHidden || !suggestionSelected) {
-                    executeSearch();
-                    autoCompletePatternField.hidePopup();
-                }
-            } else */if (event.getCharCode() == KeyCodes.KEY_ESCAPE) {
+            if (event.getCharCode() == KeyCodes.KEY_ESCAPE) {
                 autoCompletePatternField.hideSuggestionList();
                 event.preventDefault();
                 event.stopPropagation();
@@ -327,14 +312,13 @@ public class SearchBar {
                 autoCompletePatternField.setValue(welcomeMessage, true);
             }
             savedSearchesPanel.hide();
-            turnNameFieldIntoLabel();
         }
     }
 
     class PatternNameFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
         @Override
         public void onKeyPress(KeyPressEvent event) {
-            if (event.getCharCode() == 13) {
+            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
                 SearchLogger.debug("key press pattern name field");
                 turnNameFieldIntoLabel();
             }
@@ -449,16 +433,19 @@ public class SearchBar {
 
                 savedSearches.removeRow(rowIndex);
             } else {
-                currentSearch = "";
-                String patternValue = savedSearchManager.getPatternByName(patternName);
-                autoCompletePatternField.setValue(patternValue, true);
-                patternNameField.setValue(patternName, true);
-                SearchLogger.debug("search results change: [" + patternName + "," + patternValue + "]");
-                turnNameFieldIntoLabel();
-                savedSearchesPanel.hide();
-                prepareSearchExecution();
+                activateSavedSearch(patternName);
             }
         }
+    }
+
+    public void activateSavedSearch(String savedSearchName) {
+        currentSearch = "";
+        String patternValue = savedSearchManager.getPatternByName(savedSearchName);
+        autoCompletePatternField.setValue(patternValue, true);
+        patternNameField.setValue(savedSearchName, true);
+        SearchLogger.debug("search results change: [" + savedSearchName + "," + patternValue + "]");
+        turnNameFieldIntoLabel();
+        savedSearchesPanel.hide();
     }
 
     class SearchButtonEventHandler implements ClickHandler {

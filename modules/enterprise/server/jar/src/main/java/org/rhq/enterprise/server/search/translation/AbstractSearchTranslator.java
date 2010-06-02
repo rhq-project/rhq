@@ -68,23 +68,15 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
 
     protected String getJPQLForEnum(String fragment, RHQLComparisonOperator operator, String value,
         Class<? extends Enum<?>> enumClass, boolean useOrdinal) {
-        if (operator == RHQLComparisonOperator.EQUALS) {
-            return fragment + " = " + getEnum(enumClass, value, useOrdinal);
+        if (operator == RHQLComparisonOperator.NULL || //
+            operator == RHQLComparisonOperator.NOT_NULL) {
+            return fragment + operator.getDefaultTranslation();
 
-        } else if (operator == RHQLComparisonOperator.EQUALS_STRICT) {
-            return fragment + " = " + getEnum(enumClass, value, useOrdinal);
-
-        } else if (operator == RHQLComparisonOperator.NOT_EQUALS) {
-            return fragment + " != " + getEnum(enumClass, value, useOrdinal);
-
-        } else if (operator == RHQLComparisonOperator.NOT_EQUALS_STRICT) {
-            return fragment + " != " + getEnum(enumClass, value, useOrdinal);
-
-        } else if (operator == RHQLComparisonOperator.NULL) {
-            return fragment + " IS NULL";
-
-        } else if (operator == RHQLComparisonOperator.NOT_NULL) {
-            return fragment + " IS NOT NULL";
+        } else if (operator == RHQLComparisonOperator.EQUALS || //
+            operator == RHQLComparisonOperator.EQUALS_STRICT || //
+            operator == RHQLComparisonOperator.NOT_EQUALS || //
+            operator == RHQLComparisonOperator.NOT_EQUALS_STRICT) {
+            return fragment + operator.getDefaultTranslation() + getEnum(enumClass, value, useOrdinal);
 
         } else {
             throw new IllegalArgumentException("Unsupported operator " + operator);
@@ -92,12 +84,13 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
     }
 
     protected String getEnum(Class<? extends Enum<?>> enumClass, String value, boolean useOrdinal) {
+        value = value.toLowerCase();
         for (Enum<?> nextEnum : enumClass.getEnumConstants()) {
-            if (nextEnum.name().toLowerCase().equals(value.toLowerCase())) {
+            if (nextEnum.name().toLowerCase().equals(value)) {
                 if (useOrdinal) {
                     return String.valueOf(nextEnum.ordinal());
                 } else {
-                    return nextEnum.name();
+                    return quote(nextEnum.name());
                 }
             }
         }
@@ -111,6 +104,13 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
 
     protected String quote(String data) {
         return "'" + data + "'";
+    }
+
+    protected final String addFragmentIfParameterNotValue(String fragment, String parameter, String value) {
+        if (!parameter.equalsIgnoreCase(value)) {
+            return fragment;
+        }
+        return "";
     }
 
 }

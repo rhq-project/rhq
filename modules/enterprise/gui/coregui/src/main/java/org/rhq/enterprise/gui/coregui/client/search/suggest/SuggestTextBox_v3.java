@@ -79,8 +79,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
     };
 
-    //private final String STYLE_NAME_TEXT_BOX = "gwt-SuggestBox";
-    //private final String STYLE_NAME_POPUP_PANEL = "gwt-SuggestBoxPopup";
     private final String STYLE_NAME_TEXT_BOX = "patternField";
     private final String STYLE_NAME_POPUP_PANEL = "suggestPanel";
 
@@ -521,7 +519,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             return results.toString();
         }
 
-        private static final List<String> OPERATORS = Arrays.asList("!==", "!=", "==", "=");
+        private static final List<String> OPERATORS = Arrays.asList("!==", "!=", "==", "=", "<", ">");
 
         // TODO: fixing coloring strategy
         private static String colorOperator(String data) {

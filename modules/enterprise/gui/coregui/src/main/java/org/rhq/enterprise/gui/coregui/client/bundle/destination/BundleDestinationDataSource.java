@@ -88,6 +88,19 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
             criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttributeAsString("bundleId")));
         }
 
+         if (request.getCriteria().getValues().get("tagNamespace") != null) {
+            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
+        }
+
+        if (request.getCriteria().getValues().get("tagSemantic") != null) {
+            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
+        }
+
+        if (request.getCriteria().getValues().get("tagName") != null) {
+            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
+        }
+
+
         criteria.fetchBundle(true);
         criteria.fetchDeployments(true);
         criteria.fetchGroup(true);

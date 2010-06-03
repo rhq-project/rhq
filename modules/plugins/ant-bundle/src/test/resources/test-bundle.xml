@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+
+<project name="simple-build" default="main"
+         xmlns:rhq="antlib:org.rhq.bundle">
+
+    <echo>basedir=${basedir}</echo>
+
+    <property name="outfile" value="${basedir}/output.2" />
+
+    <rhq:bundle name="example.com (JBoss EAP 4.3)" version="1.0"
+                description="example.com corporate website hosted on JBoss EAP 4.3">
+
+        <rhq:input-property
+           name="custom.prop1"
+           description="my prop 1"
+           required="true"
+           defaultValue="default 1"/>
+
+        <rhq:input-property
+           name="custom.prop2"
+           description="my prop 2"
+           required="true"
+           defaultValue="default 2"/>
+
+        <rhq:deployment-unit name="doodibittydoo">
+            <rhq:file name="test.properties" destinationFile="config/test.properties" replace="true"/>
+        </rhq:deployment-unit>
+
+    </rhq:bundle>
+        
+    <target name="main"/>
+
+</project>

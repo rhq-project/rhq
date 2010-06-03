@@ -18,9 +18,16 @@
  */
 package org.rhq.plugins.augeas;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.plugin.PluginContext;
 import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 
@@ -33,13 +40,10 @@ import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 public class AugeasPluginLifecycleListener implements PluginLifecycleListener {
     private static final Log log = LogFactory.getLog(AugeasPluginLifecycleListener.class);
 
-    public void initialize(PluginContext context) throws Exception {
-        //Aug instance = Aug.INSTANCE;
-        log.info("Augeas native library loaded.");
+    
+    public void initialize(PluginContext context) throws Exception {       
     }
 
     public void shutdown() {
-        //Native.unregister(Aug.class);
-        log.info("Augeas native library unloaded.");
     }
 }

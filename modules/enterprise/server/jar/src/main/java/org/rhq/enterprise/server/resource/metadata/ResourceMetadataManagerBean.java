@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -422,16 +423,36 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return;
     }
 
-    private void updateTypes(Set<ResourceType> rootResourceTypes) throws Exception {
+    private void updateTypes(Set<ResourceType> resourceTypes) throws Exception {        
+        // Only process the type if it is a non-runs-inside type (i.e. not a child of some other type X at this same
+        // level in the type hierarchy). runs-inside types which we skip here will get processed at the next level down
+        // when we recursively process type X's children.
+        Set<ResourceType> allChildren = new HashSet<ResourceType>();
+        for (ResourceType resourceType : resourceTypes) {
+            allChildren.addAll(resourceType.getChildResourceTypes());
+        }
+        Set<ResourceType> nonRunsInsideResourceTypes = new LinkedHashSet<ResourceType>();
+        for (ResourceType resourceType : resourceTypes) {
+            if (!allChildren.contains(resourceType)) {
+                nonRunsInsideResourceTypes.add(resourceType);
+            }
+        }
+
         // Iterate the resource types breadth-first, so all platform types get added before any server types or platform
         // service types. This way, we'll be able to set all of the platform types as parents of the server types and
         // platform service types. It's also helpful for other types with multiple "runs-inside" parent types (e.g
         // Hibernate Entities), since it ensures the parent types will get persisted prior to the child types.
-        for (ResourceType rootResourceType : rootResourceTypes) {
-            updateType(rootResourceType);
+        if (log.isDebugEnabled()) {
+            log.debug("Processing types: " + nonRunsInsideResourceTypes + "...");
         }
-        for (ResourceType rootResourceType : rootResourceTypes) {
-            updateTypes(rootResourceType.getChildResourceTypes());
+        Set<ResourceType> legitimateChildren = new HashSet<ResourceType>();
+        for (ResourceType resourceType : nonRunsInsideResourceTypes) {
+            updateType(resourceType);
+            legitimateChildren.addAll(resourceType.getChildResourceTypes());
+        }
+        // Only recurse if there are actually children - this prevents infinite recursion.
+        if (!legitimateChildren.isEmpty()) {
+            updateTypes(legitimateChildren);
         }
     }
 
@@ -649,9 +670,18 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private void updateParentResourceTypes(ResourceType newType, ResourceType existingType) {
+        if (log.isDebugEnabled()) {
+            if (existingType != null) {
+                log.debug("Setting parent types on existing type: " + existingType + " to ["
+                        + newType.getParentResourceTypes() + "] - current parent types are ["
+                        + existingType.getParentResourceTypes() + "]...");
+            } else {
+                log.debug("Setting parent types on new type: " + newType
+                        + " to [" + newType.getParentResourceTypes() + "]...");
+            }
+        }
+        
         Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
-        log.debug("Setting parent types on type: " + ((existingType != null) ? existingType : newType )
-                + " to [" + newParentTypes + "]...");
         newType.setParentResourceTypes(new HashSet<ResourceType>());
         Set<ResourceType> originalExistingParentTypes = new HashSet<ResourceType>();
         if (existingType != null) {
@@ -659,14 +689,16 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
         for (ResourceType newParentType : newParentTypes) {
             try {
-                boolean parentNew = existingType == null || !originalExistingParentTypes.remove(newParentType) ;
-                if (parentNew) {
+                boolean isExistingParent = originalExistingParentTypes.remove(newParentType);                
+                if (existingType == null || !isExistingParent) {
                     ResourceType realParentType = (ResourceType) entityManager.createNamedQuery(
                         ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", newParentType.getName())
                         .setParameter("plugin", newParentType.getPlugin()).getSingleResult();
                     ResourceType type = (existingType != null) ? existingType : newType;
-                    log.info("Adding type [" + toConciseString(type) + "] as child of type ["
-                            + toConciseString(realParentType) + "]...");
+                    if (existingType != null) {
+                        log.info("Adding type [" + toConciseString(type) + "] as child of type ["
+                                + toConciseString(realParentType) + "]...");
+                    }
                     realParentType.addChildResourceType(type);
                 }
             } catch (NoResultException nre) {

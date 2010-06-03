@@ -23,7 +23,7 @@
    </target>
 
    <target name="prepare-bin-dir">
-      <echo>*** Populating bin scripts</echo>
+      <echo>*** Populating bin scripts...</echo>
       <copy verbose="true" toDir="${bin.home}">
          <fileset dir="${basedir}/src/etc/" includes="rhq-cli*.*" />
       </copy>
@@ -31,20 +31,20 @@
    </target>
 
    <target name="prepare-conf-dir">
-      <echo>*** Creating conf dir</echo>
+      <echo>*** Creating conf dir...</echo>
       <mkdir dir="${conf.home}" />
-      <echo>*** Populating conf files</echo>
+      <echo>*** Populating conf files...</echo>
       <copy verbose="true" toDir="${conf.home}">
          <fileset dir="${basedir}/src/main/resources/" includes="*.*" />
       </copy>
    </target>
 
    <target name="prepare-lib-dir">
-      <echo>*** Creating lib dir</echo>
+      <echo>*** Creating lib dir...</echo>
       <mkdir dir="${lib.home}" />
       <mkdir dir="${lib.home}/endorsed" />
-      <echo>*** Populating lib</echo>
-      <copy file="${settings.localRepository}/org/rhq/rhq-remoting-webservices/${rhq-remoting-ws.version}/rhq-remoting-webservices-${rhq-remoting-ws.version}.jar" tofile="${lib.home}/rhq-remoting-webservices-${rhq-remoting-ws.version}.jar" verbose="true" />
+
+      <echo>*** Populating lib dir...</echo>
       <copy file="${settings.localRepository}/commons-logging/commons-logging/${commons-logging.version}/commons-logging-${commons-logging.version}.jar" tofile="${lib.home}/commons-logging-${commons-logging.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/gnu-getopt/getopt/${getopt.version}/getopt-${getopt.version}.jar" tofile="${lib.home}/getopt-${getopt.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/i18nlog/i18nlog/${i18nlog.version}/i18nlog-${i18nlog.version}.jar" tofile="${lib.home}/i18nlog-${i18nlog.version}.jar" verbose="true" />
@@ -67,3 +67,4 @@
    </target>
 
 </project>
+

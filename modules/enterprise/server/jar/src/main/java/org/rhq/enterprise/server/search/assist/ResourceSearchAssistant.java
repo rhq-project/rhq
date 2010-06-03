@@ -4,9 +4,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.core.domain.search.assist.AlertSearchAssistParam;
 
 public class ResourceSearchAssistant extends AbstractSearchAssistant {
 
@@ -14,7 +16,8 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
     private static final List<String> simpleContexts;
 
     static {
-        parameterizedContexts = Collections.unmodifiableList(Arrays.asList("connection", "configuration", "trait"));
+        parameterizedContexts = Collections.unmodifiableList(Arrays.asList("alerts", "connection", "configuration",
+            "trait"));
         simpleContexts = Collections.unmodifiableList(Arrays.asList("availability", "category", "type", "plugin",
             "name"));
     }
@@ -39,8 +42,20 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
     }
 
     @Override
+    public boolean isEnumContext(String context) {
+        if (context.equals("alerts")) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     public List<String> getParameters(String context, String filter) {
-        if (context.equals("connection")) {
+        filter = stripQuotes(filter);
+        if (context.equals("alerts")) {
+            return filter(AlertSearchAssistParam.class, filter);
+
+        } else if (context.equals("connection")) {
             return execute("" //
                 + "SELECT DISTINCT definition.name " //
                 + "  FROM ResourceType type " //
@@ -71,6 +86,7 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
 
     @Override
     public List<String> getValues(String context, String param, String filter) {
+        filter = stripQuotes(filter);
         if (context.equals("availability")) {
             return filter(AvailabilityType.class, filter);
 
@@ -97,6 +113,9 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
                 + "  FROM Resource res " //
                 + add(" WHERE LOWER(res.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY res.name ");
+
+        } else if (context.equals("alerts")) {
+            return filter(AlertPriority.class, filter, true);
 
         } else if (context.equals("connection")) {
             return execute("" //

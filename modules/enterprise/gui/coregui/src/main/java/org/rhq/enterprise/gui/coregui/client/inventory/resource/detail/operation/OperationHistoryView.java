@@ -42,6 +42,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordDoubleClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordDoubleClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -125,7 +126,7 @@ public class OperationHistoryView extends VLayout {
                     }
                 });
 
-        MenuButton operationsButton = new MenuButton("Run Operation", operationMenu);
+        IMenuButton operationsButton = new IMenuButton("Run Operation", operationMenu);
         operationsButton.setShowMenuBelow(false);
         table.addExtraWidget(operationsButton);
 

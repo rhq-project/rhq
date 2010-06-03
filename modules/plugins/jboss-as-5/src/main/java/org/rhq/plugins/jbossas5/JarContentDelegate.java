@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * Discovers Jar files as artifacts including loading their manifest version into the artifact config.
@@ -118,6 +119,7 @@ public class JarContentDelegate extends FileContentDelegate {
                 details.setFileName(file.getName());
                 details.setFileSize(file.length());
                 details.setClassification(MIME_TYPE_JAR);
+                details.setSHA256(MessageDigestGenerator.getDigestString(file));
 
                 details.setExtraProperties(config);
             } catch (IOException e) {

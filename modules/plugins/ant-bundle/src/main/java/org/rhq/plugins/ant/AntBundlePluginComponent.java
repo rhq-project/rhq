@@ -36,6 +36,8 @@ import org.apache.tools.ant.Project;
 import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
 import org.rhq.bundle.ant.DeployPropertyNames;
+import org.rhq.bundle.ant.DeploymentPhase;
+import org.rhq.bundle.ant.InvalidBuildFileException;
 import org.rhq.bundle.ant.LoggerAntBuildListener;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
@@ -54,6 +56,8 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeployDifferences;
+import org.rhq.core.util.updater.Deployer;
+import org.rhq.core.util.updater.DeploymentsMetadata;
 
 /**
  * @author John Mazzitelli
@@ -121,9 +125,17 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 buildListeners.add(auditor);
 
                 // Parse and execute the Ant script.
-                AntLauncher antLauncher = new AntLauncher();
-                BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, null, antProps,
-                    buildListeners);
+                executeDeploymentPhase(recipeFile, antProps, buildListeners,
+                        DeploymentPhase.STOP);
+                String deployDirString = bundleDeployment.getDestination().getDeployDir();
+                File deployDir = new File(deployDirString);
+                DeploymentsMetadata deployMetadata = new DeploymentsMetadata(deployDir);
+                DeploymentPhase installPhase = (deployMetadata.isManaged()) ? DeploymentPhase.UPGRADE :
+                        DeploymentPhase.INSTALL;
+                BundleAntProject project = executeDeploymentPhase(recipeFile, antProps, buildListeners,
+                        installPhase);
+                executeDeploymentPhase(recipeFile, antProps, buildListeners,
+                        DeploymentPhase.START);
 
                 // Send the diffs to the Server so it can store them as an entry in the deployment history.
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
@@ -151,6 +163,12 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
             result.setErrorMessage(t);
         }
         return result;
+    }
+
+    private BundleAntProject executeDeploymentPhase(File recipeFile, Properties antProps, List<BuildListener> buildListeners, DeploymentPhase stop) throws InvalidBuildFileException {
+        AntLauncher antLauncher = new AntLauncher();
+        BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, antProps, buildListeners);
+        return project;
     }
 
     private Properties createAntProperties(BundleDeployRequest request) {

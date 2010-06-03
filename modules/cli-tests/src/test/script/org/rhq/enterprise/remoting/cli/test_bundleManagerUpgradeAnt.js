@@ -86,24 +86,42 @@ function testGroupDeployment() {
    var property23 = new PropertySimple("upgrade.test.new", "A NEW REPLACEMENT");
    config2.put( property23 );
    
+   // create a destination to deploy to
+   var testDest = BundleManager.createBundleDestination(testBundleVersion1.getBundle().getId(), "upgrade destination", "upgrade destination", "/tmp/upgrade-bundle-ant-test", groupId);
+
    // create a deployment of 1.0 using the 1.0 config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion1.getId(), "Upgrade Deployment with  Ant Test 1", "Creating initial ant bundle deployment to be upgraded", "/tmp/upgrade-bundle-ant-test", config1);
-   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion1.getId(), testDest.getId(), "Creating initial ant bundle deployment to be upgraded", config1);
+   var bgd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), true);
    Assert.assertNotNull( bgd, "Failed to create 1.0 deployment" );
    
    // upgrade the deployment to 2.0 using the 2.0 config
-   testDeployment = BundleManager.createBundleDeployment(testBundleVersion2.getId(), "Upgrade Deployment with Ant Test 2", "Testing ant bundle upgrade deployment", "/tmp/upgrade-bundle-ant-test", config2);
-   bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
+   testDeployment = BundleManager.createBundleDeployment(testBundleVersion2.getId(), testDest.getId(), "Testing ant bundle upgrade deployment", config2);
+   bgd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), false);
    Assert.assertNotNull( bgd, "Failed to upgrade to 2.0 deployment" );
 }
 
 function getGroupId() {
-   // Find a target platform group
-   var rgc = new ResourceGroupCriteria();
-   rgc.addFilterName("platforms");
-   var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
-   Assert.assertTrue( groups.size() > 0, "need a group called platforms for this test" );
-   return groups.get(0).getId();
+    // Find a target platform group
+    var rgc = new ResourceGroupCriteria();
+    rgc.addFilterName("platforms");
+    var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
+    var groupId;
+    // create if needed (and possible)
+    if ( groups.isEmpty() ) {
+      var c = new ResourceCriteria();
+      c.addFilterResourceCategory(ResourceCategory.PLATFORM);
+      var platforms = ResourceManager.findResourcesByCriteria(c);
+      Assert.assertTrue( platforms.size() > 0 );
+      var rg = new ResourceGroup("platforms");
+      var platformSet = new java.util.HashSet();
+      platformSet.addAll( platforms );
+      rg.setExplicitResources(platformSet);
+      rg = ResourceGroupManager.createResourceGroup(rg);
+      groupId = rg.getId();
+   } else { 
+      groupId = groups.get(0).getId();
+   }
+   return groupId;
 }
 
 function getBundleType() {

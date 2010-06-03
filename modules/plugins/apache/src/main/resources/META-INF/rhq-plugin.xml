@@ -243,6 +243,7 @@
         displayName="Apache HTTP Server"
         description="Management of Apache web servers"
         package="org.rhq.plugins.apache"
+        pluginLifecycleListener="ApachePluginLifecycleListener"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -291,6 +292,13 @@
           
           <!-- Augeas Configuration -->
           <c:group name="Augeas Configuration">
+              <c:simple-property name="augeasEnabled" displayName="Enable augeas support" description="Enable augeas support" default="no">
+                   <c:property-options>
+                     <c:option value="yes" name="Yes"/>
+                     <c:option value="no" name="No" default="true"/>
+                   </c:property-options>
+              </c:simple-property>
+              
               <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Httpd" required="true" readOnly="true"
                                             description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
               <c:simple-property name="configurationFilesInclusionPatterns" 

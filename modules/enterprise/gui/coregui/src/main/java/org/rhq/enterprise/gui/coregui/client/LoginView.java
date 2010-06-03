@@ -22,8 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import java.util.HashMap;
-
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -31,12 +29,10 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.docs.Image;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
@@ -46,24 +42,22 @@ import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 
 /**
  * @author Greg Hinkle
  */
 public class LoginView extends Canvas {
 
+    private static boolean loginShowing = false;
 
     private Window window;
     private DynamicForm form;
+
+    private SubmitItem loginButton;
 
 
     public LoginView() {
@@ -89,67 +83,72 @@ public class LoginView extends Canvas {
 
     public void showLoginDialog() {
 
-        form = new DynamicForm();
-        form.setMargin(10);
-        form.setShowInlineErrors(false);
+        if (!loginShowing) {
+            loginShowing = true;
+
+            form = new DynamicForm();
+            form.setMargin(10);
+            form.setShowErrorText(true);
+            form.setErrorOrientation(FormErrorOrientation.BOTTOM);
+
+            CanvasItem logo = new CanvasItem();
+            logo.setCanvas(new Img("header/rhq_logo_28px.png", 80, 28));
+            logo.setShowTitle(false);
+
+            HeaderItem header = new HeaderItem();
+            header.setValue("RHQ Login");
 
 
-        CanvasItem logo = new CanvasItem();
-        logo.setCanvas(new Img("header/rhq_logo_28px.png", 80, 28));
-        logo.setShowTitle(false);
+            TextItem user = new TextItem("user", "User");
+            user.setRequired(true);
+            user.setAttribute("canAutocomplete", true);
+            user.setAttribute("autoComplete", true);
+            PasswordItem password = new PasswordItem("password", "Password");
+            password.setRequired(true);
+            password.setAttribute("autocomplete", true);
 
-        HeaderItem header = new HeaderItem();
-        header.setValue("RHQ Login");
+            loginButton = new SubmitItem("login", "Login");
+            loginButton.setAlign(Alignment.CENTER);
+            loginButton.setColSpan(2);
 
-
-        TextItem user = new TextItem("user", "User");
-        user.setRequired(true);
-        user.setAttribute("canAutocomplete", true);
-        user.setAttribute("autoComplete", true);
-        PasswordItem password = new PasswordItem("password", "Password");
-        password.setRequired(true);
-        password.setAttribute("autocomplete", true);
-
-        final SubmitItem login = new SubmitItem("login", "Login");
-        login.setAlign(Alignment.CENTER);
-        login.setColSpan(2);
-
-        password.addKeyPressHandler(new KeyPressHandler() {
-            public void onKeyPress(KeyPressEvent event) {
-                if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
-                    form.submit();
+            password.addKeyPressHandler(new KeyPressHandler() {
+                public void onKeyPress(KeyPressEvent event) {
+                    if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
+                        form.submit();
+                    }
                 }
-            }
-        });
+            });
 
-        form.setFields(logo, header, user, password, login);
+            form.setFields(logo, header, user, password, loginButton);
 
 
-        window = new Window();
-        window.setTitle("RHQ Login");
-        window.setWidth(400);
-        window.setHeight(250);
-        window.setIsModal(true);
-        window.setShowModalMask(true);
-        window.setCanDragResize(true);
-        window.centerInPage();
-        window.addItem(form);
-        window.show();
+            window = new Window();
+            window.setTitle("RHQ Login");
+            window.setWidth(400);
+            window.setHeight(250);
+            window.setIsModal(true);
+            window.setShowModalMask(true);
+            window.setCanDragResize(true);
+            window.centerInPage();
+            window.addItem(form);
+            window.show();
 
-        form.focusInItem(user);
+            form.focusInItem(user);
 
-        form.addSubmitValuesHandler(new SubmitValuesHandler() {
-            public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
-                if (form.validate()) {
-                    login(form.getValueAsString("user"), form.getValueAsString("password"));
+            form.addSubmitValuesHandler(new SubmitValuesHandler() {
+                public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
+                    if (form.validate()) {
+                        login(form.getValueAsString("user"), form.getValueAsString("password"));
+                    }
                 }
-            }
-        });
+            });
+        }
 
     }
 
     private void login(String user, String password) {
 
+        loginButton.setDisabled(true);
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
                 "/j_security_check.do?j_username=" + user + "&j_password=" + password);
         try {
@@ -158,18 +157,22 @@ public class LoginView extends Canvas {
                     if (response.getStatusCode() == 200) {
                         System.out.println("Portal-War logged in");
                         window.destroy();
+                        loginShowing = false;
                         CoreGUI.checkLoginStatus();
                     } else {
-                        form.setFieldErrors("user", "The username or password provided does not match our records.", true);
+                        form.setFieldErrors("login", "The username or password provided does not match our records.", true);
+                        loginButton.setDisabled(false);
                     }
                 }
 
                 public void onError(Request request, Throwable exception) {
                     System.out.println("Portal-War login failed");
+                    loginButton.setDisabled(false);
                 }
             });
             b.send();
         } catch (RequestException e) {
+            loginButton.setDisabled(false);
             e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
 

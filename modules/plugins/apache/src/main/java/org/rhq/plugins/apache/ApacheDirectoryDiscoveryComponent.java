@@ -60,6 +60,10 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
 
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
 
+        if (!context.getParentResourceComponent().isAugeasEnabled())
+            return discoveredResources;
+
+
         AugeasTree tree = null;
         
         try {

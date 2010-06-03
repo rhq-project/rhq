@@ -94,6 +94,13 @@
          <artifactId>sigar</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
+      
+      <dependency>
+         <groupId>net.augeas</groupId>
+         <artifactId>augeas-native</artifactId>
+         <version>0.7.1.1</version>
+         <type>zip</type>
+      </dependency>
 
       <dependency>
          <groupId>${groupId}</groupId>
@@ -197,7 +204,7 @@
          </snapshots>
       </repository>
 
-      <!-- This is for SIGAR 1.6.4. -->
+      <!-- This is for SIGAR 1.6.5 and Augeas 0.7.1. -->
       <repository>
           <id>jboss-thirdparty-uploads</id>
           <name>JBoss Third Party Uploads</name>

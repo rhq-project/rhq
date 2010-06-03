@@ -124,8 +124,7 @@
                                                 <include name="META-INF/**" />
                                             </patternset>
                                         </unjar>
-                                        <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
-                                            update="true">
+                                        <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                                         </jar>
                                     </tasks>
                                 </configuration>

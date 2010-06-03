@@ -58,7 +58,6 @@ public class BundleAntProject extends Project {
     private File deployDir;
     private final Set<String> bundleFileNames = new HashSet<String>();
     private int deploymentId;
-    private String deploymentName;
     private DeploymentPhase deploymentPhase;
     private DeployDifferences deployDiffs = new DeployDifferences();
     private boolean dryRun;

@@ -60,6 +60,9 @@ tokens {
     
     OP_NOT_EQUALS;
     OP_NOT_EQUALS_STRICT;
+    
+    OP_LESS_THAN;
+    OP_GREATER_THAN;
 }
 
 @header {
@@ -144,6 +147,8 @@ comparisonOperator
     |   '=='  -> ^(OP_EQUALS_STRICT)
     |   '!='  -> ^(OP_NOT_EQUALS)
     |   '!==' -> ^(OP_NOT_EQUALS_STRICT)
+    |   '<'   -> ^(OP_LESS_THAN)
+    |   '>'   -> ^(OP_GREATER_THAN)
     ; // use imaginary nodes for all operators, which further removes the AST from the real lexical elements
 
 /* 

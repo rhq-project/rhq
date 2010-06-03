@@ -30,18 +30,20 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -51,9 +53,10 @@ import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.content.version.PackageVersions;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
-import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
@@ -64,9 +67,10 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  *
  * @author Ian Springer
  */
-public class ApplicationComponent
-    extends MBeanResourceComponent<JBossASServerComponent> implements ContentFacet, DeleteResourceFacet, OperationFacet {
+public class ApplicationComponent extends MBeanResourceComponent<JBossASServerComponent> implements ContentFacet,
+    DeleteResourceFacet, OperationFacet {
     private static final String BACKUP_FILE_EXTENSION = ".rej";
+    public static final String RHQ_SHA256 = "RHQ-Sha256";
 
     /**
      * Name of the backing package type that will be used when discovering packages. This corresponds to the name
@@ -106,12 +110,10 @@ public class ApplicationComponent
             if (packageFile.isDirectory()) {
                 fileToSend = File.createTempFile("rhq", ".zip");
                 ZipUtil.zipFileOrDirectory(packageFile, fileToSend);
-            }
-            else
+            } else
                 fileToSend = packageFile;
             return new BufferedInputStream(new FileInputStream(fileToSend));
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Failed to retrieve package bits for " + packageDetails, e);
         }
     }
@@ -124,13 +126,13 @@ public class ApplicationComponent
         String fullFileName = pluginConfiguration.getSimpleValue(FILENAME_PLUGIN_CONFIG_PROP, null);
 
         if (fullFileName == null) {
-            throw new IllegalStateException("Plugin configuration does not contain the full file name of the EAR/WAR file.");
+            throw new IllegalStateException(
+                "Plugin configuration does not contain the full file name of the EAR/WAR file.");
         }
 
         // If the parent EAR/WAR resource was found, this file should exist
         File file = new File(fullFileName);
-        if (file.exists())
-        {
+        if (file.exists()) {
             // Package name and file name of the application are the same
             String fileName = new File(fullFileName).getName();
 
@@ -151,12 +153,52 @@ public class ApplicationComponent
             if (!file.isDirectory())
                 details.setFileSize(file.length());
 
-            details.setFileCreatedDate(file.lastModified()); // TODO: get created date via SIGAR
+            details.setFileCreatedDate(file.lastModified()); // TODO: get created date via SIGAR            
+            details.setSHA256(getSHA256(details));
+            details.setInstallationTimestamp(Long.valueOf(System.currentTimeMillis()));
 
             packages.add(details);
         }
 
         return packages;
+    }
+
+    // TODO: if needed we can speed this up by looking in the ResourceContainer's installedPackage
+    // list for previously discovered packages. If there use the sha256 from that record. We'd have to
+    // get access to that info by adding access in org.rhq.core.pluginapi.content.ContentServices
+    private String getSHA256(ResourcePackageDetails detail) {
+
+        String sha256 = null;
+
+        try {
+            //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
+            File app = new File(detail.getLocation());
+            if (app.isDirectory()) {
+                // when deployed exploded then don't calculate digest but check for META-INF entry
+                // this will be populated for uploaded files                 
+                File manifestFile = new File(app, "META-INF/MANIFEST.MF");
+                Manifest manifest;
+                if (manifestFile.exists()) {
+                    FileInputStream inputStream = new FileInputStream(manifestFile);
+                    manifest = new Manifest(inputStream);
+                    inputStream.close();
+                    Attributes attribs = manifest.getMainAttributes();
+                    String retrievedShaValue = attribs.getValue(RHQ_SHA256);
+                    if ((retrievedShaValue != null) && (!retrievedShaValue.trim().isEmpty())) {
+                        sha256 = retrievedShaValue;
+                    }
+                }
+            } else {
+                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(app);
+            }
+        } catch (IOException iex) {
+            //log exception but move on, discovery happens often. No reason to hold up anything.
+            if (log.isDebugEnabled()) {
+                log.debug("Problem calculating digest of package [" + detail.getName() + "]." + iex.getMessage());
+            }
+        }
+
+        return sha256;
     }
 
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
@@ -174,7 +216,8 @@ public class ApplicationComponent
         if (packages.size() != 1) {
             log.warn("Request to update an EAR/WAR file contained multiple packages.");
             DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
-            response.setOverallRequestErrorMessage("When deploying an EAR/WAR, only one EAR/WAR can be updated at a time.");
+            response
+                .setOverallRequestErrorMessage("When deploying an EAR/WAR, only one EAR/WAR can be updated at a time.");
             return response;
         }
 
@@ -191,10 +234,9 @@ public class ApplicationComponent
         File tempFile;
         try {
             tempFile = writeNewAppBitsToTempFile(appFile, contentServices, packageDetails);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
-                    packageDetails);
+                packageDetails);
         }
 
         // Backup the existing app file/dir to <filename>.rej.
@@ -208,8 +250,7 @@ public class ApplicationComponent
         MainDeployer mainDeployer = getParentResourceComponent().getMainDeployer();
         try {
             mainDeployer.redeploy(appFile);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // Deploy failed - rollback to the original app file...
             String errorMessage = ThrowableUtil.getAllMessages(e);
             try {
@@ -218,10 +259,9 @@ public class ApplicationComponent
                 // Need to redeploy the original file - this generally should succeed.
                 mainDeployer.redeploy(appFile);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
-            }
-            catch (Exception e1) {
+            } catch (Exception e1) {
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
-                        + ThrowableUtil.getAllMessages(e1);
+                    + ThrowableUtil.getAllMessages(e1);
             }
             return failApplicationDeployment(errorMessage, packageDetails);
         }
@@ -232,8 +272,8 @@ public class ApplicationComponent
         persistApplicationVersion(packageDetails, appFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
-        DeployIndividualPackageResponse packageResponse =
-            new DeployIndividualPackageResponse(packageDetails.getKey(), ContentResponseResult.SUCCESS);
+        DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
+            ContentResponseResult.SUCCESS);
         response.addPackageResponse(packageResponse);
 
         return response;
@@ -247,21 +287,16 @@ public class ApplicationComponent
 
         File file = new File(fullFileName);
 
-
         if (file.exists()) {
             try {
                 getParentResourceComponent().undeployFile(file);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.error("Failed to undeploy file [" + file + "].", e);
                 throw e;
-            }
-            finally
-            {
+            } finally {
                 try {
                     FileUtils.purge(file, true);
-                }
-                catch(IOException e) {
+                } catch (IOException e) {
                     log.error("Failed to delete file [" + file + "].", e);
                     // if the undeploy also failed that exception will be lost
                     // and this one will be seen by the caller instead.
@@ -271,8 +306,7 @@ public class ApplicationComponent
                     throw e;
                 }
             }
-        }
-        else {
+        } else {
             log.info("deleteResource: File [" + fullFileName + "] was not found - ignoring.");
         }
 
@@ -286,39 +320,36 @@ public class ApplicationComponent
             Configuration pluginConfig = getResourceContext().getPluginConfiguration();
             String path = pluginConfig.getSimpleValue(FILENAME_PLUGIN_CONFIG_PROP, null);
             for (MeasurementScheduleRequest request : requests) {
-                 String metricName = request.getName();
-                 if (metricName.equals(APPLICATION_PATH_TRAIT)) {
-                     MeasurementDataTrait trait = new MeasurementDataTrait(request, path);
-                     report.addData(trait);
-                 }
-                 else if (metricName.equals(APPLICATION_EXPLODED_TRAIT)) {
-                     boolean exploded = new File(path).isDirectory();
-                     MeasurementDataTrait trait = new MeasurementDataTrait(request, (exploded) ? "yes" : "no");
-                     report.addData(trait);
-                 }
+                String metricName = request.getName();
+                if (metricName.equals(APPLICATION_PATH_TRAIT)) {
+                    MeasurementDataTrait trait = new MeasurementDataTrait(request, path);
+                    report.addData(trait);
+                } else if (metricName.equals(APPLICATION_EXPLODED_TRAIT)) {
+                    boolean exploded = new File(path).isDirectory();
+                    MeasurementDataTrait trait = new MeasurementDataTrait(request, (exploded) ? "yes" : "no");
+                    report.addData(trait);
+                }
             }
         }
     }
 
-
     // OperationFacet Implementation ------------------------------------------------
 
-    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
+        Exception {
         if ("revert".equals(name)) {
             try {
                 revertFromBackupFile();
                 return new OperationResult("Successfully reverted from backup");
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException("Error reverting from Backup: " + e.getMessage());
             }
-        }
-        else {
-            return super.invokeOperation(name,parameters);
+        } else {
+            return super.invokeOperation(name, parameters);
         }
     }
 
-     // Public  --------------------------------------------
+    // Public  --------------------------------------------
 
     /**
      * Returns the name of the application.
@@ -357,20 +388,19 @@ public class ApplicationComponent
         String fileName;
         // Check if we have an exploded war or not.
         if (fullFileName != null && fullFileName.endsWith("/")) {
-            fileName = fullFileName.substring(0,fullFileName.length()-1);
-        }
-        else {
+            fileName = fullFileName.substring(0, fullFileName.length() - 1);
+        } else {
             fileName = fullFileName;
         }
 
-        backup = new File (fileName + ".bak");
+        backup = new File(fileName + ".bak");
 
         if (!backup.exists()) {
             throw new FileNotFoundException("Backup file " + backup + " does not exist");
         }
         File directory = backup.getParentFile();
         if (!directory.canWrite()) {
-            throw new IOException("Can not modify directory " + directory );
+            throw new IOException("Can not modify directory " + directory);
         }
 
         File tmpBackup = new File(fileName + ".tmp.bak");
@@ -388,20 +418,16 @@ public class ApplicationComponent
             // move backup in failed
             good = tmpBackup.renameTo(file);
             if (!good) {
-                throw new IOException("Installing backup " + backup + " failed and re-installing the original from " +
-                        tmpBackup + " failed too. Please correct this manually" );
+                throw new IOException("Installing backup " + backup + " failed and re-installing the original from "
+                    + tmpBackup + " failed too. Please correct this manually");
             }
-        }
-        else {
+        } else {
             // installing from backup worked
-            FileUtils.purge(tmpBackup,true);
+            FileUtils.purge(tmpBackup, true);
         }
         getParentResourceComponent().deployFile(file);
 
-
     }
-
-
 
     // Private  --------------------------------------------
 
@@ -423,8 +449,8 @@ public class ApplicationComponent
 
             String dataDirectory = dataDirectoryFile.getAbsolutePath();
 
-            log.debug("Creating application versions store with plugin name [" + pluginName +
-                "] and data directory [" + dataDirectory + "]");
+            log.debug("Creating application versions store with plugin name [" + pluginName + "] and data directory ["
+                + dataDirectory + "]");
 
             versions = new PackageVersions(pluginName, dataDirectory);
             versions.loadFromDisk();
@@ -444,8 +470,8 @@ public class ApplicationComponent
     private DeployPackagesResponse failApplicationDeployment(String errorMessage, ResourcePackageDetails packageDetails) {
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
 
-        DeployIndividualPackageResponse packageResponse =
-            new DeployIndividualPackageResponse(packageDetails.getKey(), ContentResponseResult.FAILURE);
+        DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
+            ContentResponseResult.FAILURE);
         packageResponse.setErrorMessage(errorMessage);
 
         response.addPackageResponse(packageResponse);
@@ -462,8 +488,7 @@ public class ApplicationComponent
     private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
         try {
             FileUtils.purge(backupOfOriginalFile, true);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // not critical.
             log.warn("Failed to delete backup of original file: " + backupOfOriginalFile);
         }
@@ -494,8 +519,8 @@ public class ApplicationComponent
         }
     }
 
-    private File writeNewAppBitsToTempFile(File file, ContentServices contentServices, ResourcePackageDetails packageDetails
-    ) throws Exception {
+    private File writeNewAppBitsToTempFile(File file, ContentServices contentServices,
+        ResourcePackageDetails packageDetails) throws Exception {
         File tempDir = getResourceContext().getTemporaryDirectory();
         File tempFile = new File(tempDir.getAbsolutePath(), file.getName() + System.currentTimeMillis());
 
@@ -507,7 +532,8 @@ public class ApplicationComponent
         OutputStream tempOutputStream = null;
         try {
             tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-            contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(), tempOutputStream, true);
+            contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(),
+                tempOutputStream, true);
         } catch (IOException e) {
             log.error("Error writing updated application bits to temporary location: " + tempFile, e);
             throw e;

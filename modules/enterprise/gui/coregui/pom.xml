@@ -219,6 +219,7 @@
                 <configuration>
                     <noServer>true</noServer>
                     <inplace>false</inplace>
+                    <!-- <logLevel>INFO' -bindAddress 0.0.0.0 -logLevel 'INFO</logLevel> -->
                     <logLevel>INFO</logLevel>
                     <runTarget>http://localhost:7080/coregui/CoreGUI.html</runTarget>
                     <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>

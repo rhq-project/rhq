@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -51,7 +52,7 @@ public class DashboardView extends VLayout {
 
     PortalLayout portalLayout;
     DynamicForm form;
-    MenuButton addPortlet;
+    IMenuButton addPortlet;
 
 
     public DashboardView(StoredDashboard storedDashboard) {
@@ -150,7 +151,7 @@ public class DashboardView extends VLayout {
         }
 
 
-        addPortlet = new MenuButton("Add Portlet", addPorletMenu);
+        addPortlet = new IMenuButton("Add Portlet", addPorletMenu);
 
 
 //        addPortlet = new ButtonItem("addPortlet", "Add Portlet");

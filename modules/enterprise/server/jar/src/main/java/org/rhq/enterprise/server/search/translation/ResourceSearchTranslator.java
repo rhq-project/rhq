@@ -1,6 +1,8 @@
 package org.rhq.enterprise.server.search.translation;
 
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.search.assist.AlertSearchAssistParam;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
@@ -35,6 +37,19 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
         } else if (path.equals("name")) {
             return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
                 getJPQLForString(alias + ".name", op, filter));
+
+        } else if (path.equals("alerts")) {
+            return new SearchFragment( //
+                SearchFragmentType.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
+                    + "  FROM Resource res " //
+                    + "  JOIN res.alertDefinitions alertDef " //
+                    + "  JOIN alertDef.alerts alert " //
+                    + " WHERE alert.ctime > "
+                    + AlertSearchAssistParam.getLastTime(param) //
+                    + (filter.equalsIgnoreCase("any") ? "" : "   and "
+                        + getJPQLForEnum("alertDef.priority", op, filter, AlertPriority.class, false)) //
+                    + " GROUP BY res.id " //
+                    + "HAVING COUNT(alert) > 0 ");
 
         } else if (path.equals("trait")) {
             return new SearchFragment( //
@@ -72,5 +87,4 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
             }
         }
     }
-
 }

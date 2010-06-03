@@ -39,6 +39,14 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
         return Collections.emptyList();
     }
 
+    public boolean isNumericalContext(String context) {
+        return false; // all contexts are assumed string, unless otherwise stated
+    }
+
+    public boolean isEnumContext(String context) {
+        return false; // all contexts are assumed string, unless otherwise stated
+    }
+
     public List<String> getParameters(String context, String filter) {
         if (getParameterizedContexts().contains(context) == false) {
             throw new IllegalArgumentException("context[" + context
@@ -94,7 +102,14 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
     }
 
     protected final List<String> filter(Class<? extends Enum<?>> enumType, String filter) {
+        return filter(enumType, filter, false);
+    }
+
+    protected final List<String> filter(Class<? extends Enum<?>> enumType, String filter, boolean includeAnyOption) {
         List<String> results = new ArrayList<String>();
+        if (includeAnyOption && "any".contains(filter)) {
+            results.add("any");
+        }
         for (Enum<?> next : enumType.getEnumConstants()) {
             String enumName = next.name().toLowerCase();
             if (filter == null || filter.equals("") || enumName.contains(filter)) {

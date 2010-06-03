@@ -629,11 +629,12 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
             PackageVersions versions = loadApplicationVersions();
             String version = versions.getVersion(fileName);
+            String sha256 = getSHA256(file);
 
             // First discovery of this WAR
             if (null == version) {
                 JarContentFileInfo info = new JarContentFileInfo(file);
-                version = info.getVersion("1.0");
+                version = info.getVersion((null == sha256) ? "0" : sha256);
                 versions.putVersion(fileName, version);
                 versions.saveToDisk();
             }
@@ -645,7 +646,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             if (!file.isDirectory())
                 details.setFileSize(file.length());
             details.setFileCreatedDate(null); // TODO: get created date via SIGAR
-            details.setSHA256(getSHA256(details));
+            details.setSHA256(sha256);
 
             packages.add(details);
         }
@@ -656,13 +657,13 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     // TODO: if needed we can speed this up by looking in the ResourceContainer's installedPackage
     // list for previously discovered packages. If there use the sha256 from that record. We'd have to
     // get access to that info by adding access in org.rhq.core.pluginapi.content.ContentServices
-    private String getSHA256(ResourcePackageDetails detail) {
+    private String getSHA256(File file) {
 
         String sha256 = null;
 
         try {
             //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
-            File app = new File(detail.getLocation());
+            File app = new File(file.getPath());
             if (app.isDirectory()) {
                 File associatedWarFile = new File(app.getAbsolutePath() + ".war");
                 sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(associatedWarFile);
@@ -672,7 +673,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         } catch (IOException iex) {
             //log exception but move on, discovery happens often. No reason to hold up anything.
             if (log.isDebugEnabled()) {
-                log.debug("Problem calculating digest of package [" + detail.getName() + "]." + iex.getMessage());
+                log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
             }
         }
 

@@ -33,8 +33,6 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -65,6 +63,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 /**
@@ -141,11 +140,16 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         String fileName = this.deploymentFile.getName();
         PackageVersions packageVersions = loadPackageVersions();
         String version = packageVersions.getVersion(fileName);
+
+        JarContentFileInfo fileInfo = new JarContentFileInfo(this.deploymentFile);
+        String sha256 = getSHA256(fileInfo);
+
+        // First discovery of this EAR/WAR
         if (version == null) {
-            // This is either the first time we've discovered this EAR/WAR, or someone purged the PC's data dir.
-            version = "1.0";
-            packageVersions.putVersion(fileName, version);
-            packageVersions.saveToDisk();
+            // try to use version from manifest. if not there use the sha256. if that fails default to "0".
+            version = fileInfo.getVersion((null == sha256) ? "0" : sha256);
+            versions.putVersion(fileName, version);
+            versions.saveToDisk();
         }
 
         // Package name is the deployment's file name (e.g. foo.ear).
@@ -156,7 +160,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         if (!this.deploymentFile.isDirectory())
             packageDetails.setFileSize(this.deploymentFile.length());
         packageDetails.setFileCreatedDate(null); // TODO: get created date via SIGAR
-        packageDetails.setSHA256(getSHA256(packageDetails));
+        packageDetails.setSHA256(sha256);
         packageDetails.setInstallationTimestamp(Long.valueOf(System.currentTimeMillis()));
 
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
@@ -168,35 +172,21 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
     // TODO: if needed we can speed this up by looking in the ResourceContainer's installedPackage
     // list for previously discovered packages. If there use the sha256 from that record. We'd have to
     // get access to that info by adding access in org.rhq.core.pluginapi.content.ContentServices
-    private String getSHA256(ResourcePackageDetails detail) {
+    private String getSHA256(JarContentFileInfo fileInfo) {
 
         String sha256 = null;
 
         try {
-            //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
-            File app = new File(detail.getLocation());
-            if (app.isDirectory()) {
-                // when deployed exploded then don't calculate digest but check for META-INF entry
-                // this will be populated for uploaded files                 
-                File manifestFile = new File(app, "META-INF/MANIFEST.MF");
-                Manifest manifest;
-                if (manifestFile.exists()) {
-                    FileInputStream inputStream = new FileInputStream(manifestFile);
-                    manifest = new Manifest(inputStream);
-                    inputStream.close();
-                    Attributes attribs = manifest.getMainAttributes();
-                    String retrievedShaValue = attribs.getValue(RHQ_SHA256);
-                    if ((retrievedShaValue != null) && (!retrievedShaValue.trim().isEmpty())) {
-                        sha256 = retrievedShaValue;
-                    }
-                }
-            } else {
-                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(app);
+            sha256 = fileInfo.getAttributeValue(RHQ_SHA256, null);
+            if (null == sha256) {
+                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(fileInfo
+                    .getContentFile());
             }
         } catch (IOException iex) {
             //log exception but move on, discovery happens often. No reason to hold up anything.
             if (log.isDebugEnabled()) {
-                log.debug("Problem calculating digest of package [" + detail.getName() + "]." + iex.getMessage());
+                log.debug("Problem calculating digest of package [" + fileInfo.getContentFile().getPath() + "]."
+                    + iex.getMessage());
             }
         }
 

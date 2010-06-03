@@ -390,8 +390,18 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                 for (File file : discoveredFiles) {
                     String fullPath = file.getAbsolutePath();
                     String shortName = file.getName();
-                    String version = BytemanAgentDiscoveryComponent.getJarAttribute(fullPath,
-                        java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION.toString(), "0");
+                    // try to get version from manifest. if not there calculate sha256 and use that
+                    // as the version. if that fails default to "0".
+                    String version = "0";
+                    String sha256 = null;
+                    try {
+                        sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(file);
+                        version = sha256;
+                    } catch (Exception e) {
+                        log.debug("Failed to generate sha256 for [" + file + "]. Setting version to 0");
+                    }
+                    version = BytemanAgentDiscoveryComponent.getJarAttribute(fullPath,
+                        java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION.toString(), version);
                     PackageDetailsKey detailsKey = new PackageDetailsKey(shortName, version, typeName, "noarch");
                     ResourcePackageDetails detail = new ResourcePackageDetails(detailsKey);
                     detail.setDisplayName(shortName);
@@ -399,8 +409,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                     detail.setFileName(shortName);
                     detail.setFileSize(file.length());
                     detail.setMD5(MessageDigestGenerator.getDigestString(file));
-                    detail.setSHA256(MessageDigestGenerator.getDigestString(file));
-
+                    detail.setSHA256(sha256);
                     details.add(detail);
                 }
             }

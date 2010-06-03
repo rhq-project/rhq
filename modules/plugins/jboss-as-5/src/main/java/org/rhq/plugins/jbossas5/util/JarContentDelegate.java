@@ -84,13 +84,13 @@ public class JarContentDelegate extends FileContentDelegate {
         });
 
         for (File file : files) {
+            String version = null;
             JarFile jf = null;
             try {
                 Configuration config = new Configuration();
                 jf = new JarFile(file);
 
                 Manifest manifest = jf.getManifest();
-                String version = null;
 
                 if (manifest != null) {
                     Attributes attributes = manifest.getMainAttributes();
@@ -107,8 +107,16 @@ public class JarContentDelegate extends FileContentDelegate {
                     config.put(new PropertySimple("sealed", attributes.getValue(Attributes.Name.SEALED)));
                 }
 
-                if (version == null) {
-                    version = "1.0";
+                String sha256 = null;
+                try {
+                    sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(file);
+                } catch (Exception e) {
+                    // leave as null
+                }
+
+                // try to use version from manifest. if not there use the sha256. if that fails default to "0".
+                if (null == version) {
+                    version = (null == sha256) ? "0" : sha256;
                 }
 
                 ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(file.getName(),
@@ -119,7 +127,7 @@ public class JarContentDelegate extends FileContentDelegate {
                 details.setFileName(file.getName());
                 details.setFileSize(file.length());
                 details.setClassification(MIME_TYPE_JAR);
-                details.setSHA256(MessageDigestGenerator.getDigestString(file));
+                details.setSHA256(sha256);
 
                 details.setExtraProperties(config);
             } catch (IOException e) {

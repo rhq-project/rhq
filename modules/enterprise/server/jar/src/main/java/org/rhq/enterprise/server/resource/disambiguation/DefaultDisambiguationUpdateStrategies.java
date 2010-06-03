@@ -103,10 +103,13 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
             updateResources(policy, report);
             //do nothing to the parents, keep them as they are...
         }
-
-        @Override
+        
         public EnumSet<ResourceResolution> resourceLevelRepartitionableResolutions() {
-            return EnumSet.allOf(ResourceResolution.class);
+            return EnumSet.of(ResourceResolution.NAME);
+        }
+
+        public EnumSet<ResourceResolution> alwaysRepartitionableResolutions() {
+            return EnumSet.of(ResourceResolution.NAME);
         }
     };
 
@@ -142,16 +145,27 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
             updateResource(ResourceResolution.TYPE, report.parents.get(disambiguationPolicyIndex));
         }
 
-        //don't replicate the plugin information on the parents if it was reported
-        //on the resource already.
-        //this has to be done on all the parents, not just the ones that are immediately needed
-        //for disambiguation. The parents update strategies might leave more parents than those needed.
-        if (policy.get(0) == ResourceResolution.PLUGIN) {
-            for (MutableDisambiguationReport.Resource parent : report.parents) {
-                if (report.resource.resourceType.plugin.equals(parent.resourceType.plugin)) {
-
-                    parent.resourceType.plugin = null;
+        //include the plugin information only if it was actually the deciding resolution of the policy.
+        if (policy.get(policy.size() - 1) == ResourceResolution.PLUGIN) {
+            String decidingPlugin = policy.size() > 1 ? report.parents.get(policy.size() - 2).resourceType.plugin : report.resource.resourceType.plugin;
+            
+            for (int i = policy.size() - 3; i >= 0; i--) {
+                if (decidingPlugin.equals(report.parents.get(i).resourceType.plugin)) {
+                    updateResource(ResourceResolution.TYPE, report.parents.get(i));
                 }
+            }
+            
+            if (policy.size() > 1 && decidingPlugin.equals(report.resource.resourceType.plugin)) {
+                updateResource(ResourceResolution.TYPE, report.resource);
+            }
+        } else {
+            //ok, this report was in the end resolved by some name or type at the resource level
+            //or higher up in the parents. This alone uniquely identifies the resource, so there's
+            //no need to show the (ambigous anyway) plugin info.
+            updateResource(ResourceResolution.TYPE, report.resource);
+            
+            for (MutableDisambiguationReport.Resource parent : report.parents) {
+                updateResource(ResourceResolution.TYPE, parent);
             }
         }
     }

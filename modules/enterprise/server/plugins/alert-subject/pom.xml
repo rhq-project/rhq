@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
         <groupId>org.rhq</groupId>
@@ -93,11 +91,10 @@
                                 <phase>compile</phase>
                                 <configuration>
                                     <tasks>
-                                        <mkdir dir="${rhq.deploymentDir}"/>
-                                        <property name="deployment.file"
-                                                  location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                                        <mkdir dir="${rhq.deploymentDir}" />
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Updating ${deployment.file}...</echo>
-                                        <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                                        <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
                                     </tasks>
                                 </configuration>
                                 <goals>
@@ -110,10 +107,9 @@
                                 <phase>clean</phase>
                                 <configuration>
                                     <tasks>
-                                        <property name="deployment.file"
-                                                  location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Deleting ${deployment.file}...</echo>
-                                        <delete file="${deployment.file}"/>
+                                        <delete file="${deployment.file}" />
                                     </tasks>
                                 </configuration>
                                 <goals>

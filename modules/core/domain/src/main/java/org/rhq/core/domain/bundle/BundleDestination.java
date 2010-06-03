@@ -96,7 +96,7 @@ public class BundleDestination implements Serializable {
     @ManyToOne
     private ResourceGroup group;
 
-    @OneToMany(mappedBy = "destination", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "destination", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<BundleDeployment> deployments;
 
     @ManyToMany(mappedBy = "bundleDestinations", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)

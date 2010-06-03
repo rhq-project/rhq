@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.search;
 
-import java.util.List;
-
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -37,22 +35,17 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
-import org.rhq.core.domain.criteria.SavedSearchCriteria;
-import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchGrid;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchManager;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchGrid.PatternSelectionHandler;
-import org.rhq.enterprise.gui.coregui.client.search.suggest.SuggestTextBox;
+import org.rhq.enterprise.gui.coregui.client.search.suggest.SuggestTextBox_v3;
 
 /**
  * @author Joseph Marques
@@ -74,7 +67,8 @@ public class SearchBar {
 
     public static final String TRASH = IMAGE_DIR + "trash.png";
 
-    private final SuggestTextBox autoCompletePatternField = new SuggestTextBox(this);
+    private final TextBox patternField = new TextBox();
+    private final SuggestTextBox_v3 autoCompletePatternField = new SuggestTextBox_v3(this, patternField);
     private final TextBox patternNameField = new TextBox();
     private final Label patternNameLabel = new Label();
 
@@ -87,10 +81,10 @@ public class SearchBar {
     private String currentSearch = "";
     private long lastNameFieldBlurTime = 0;
 
-    private final SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
-
     private final SavedSearchManager savedSearchManager;
     private SearchSubsystem searchSubsystem;
+
+    private Element searchButton;
 
     public static boolean existsOnPage() {
         return getSearchBarElement() != null;
@@ -104,10 +98,15 @@ public class SearchBar {
         Element searchBarElement = getSearchBarElement();
 
         String searchButtonId = searchBarElement.getAttribute("searchButtonId");
-        DOM.setEventListener(DOM.getElementById(searchButtonId), new EventListener() {
+        searchButton = DOM.getElementById(searchButtonId);
+
+        DOM.sinkEvents(searchButton, Event.ONKEYDOWN);
+        DOM.setEventListener(searchButton, new EventListener() {
             @Override
             public void onBrowserEvent(Event event) {
-                executeSearch();
+                if (event.getKeyCode() == Event.ONKEYDOWN) {
+                    prepareSearchExecution();
+                }
             }
         });
 
@@ -126,9 +125,6 @@ public class SearchBar {
         savedSearchManager = new SavedSearchManager(this);
 
         RootPanel.get("patternFieldContainer").add(autoCompletePatternField);
-        RootPanel.get("patternFieldSuggestionsContainer").add(autoCompletePatternField.getSuggestionComponent());
-        autoCompletePatternField.hideInitialSuggestions();
-
         RootPanel.get("patternNameFieldContainer").add(patternNameField);
         RootPanel.get("patternNameLabelContainer").add(patternNameLabel);
         RootPanel.get("starImageContainer").add(starImage);
@@ -144,6 +140,11 @@ public class SearchBar {
 
         // presume the enclosing page logic loads results without a button click
     }
+
+    public static native String getUserAgent()
+    /*-{
+        return navigator.userAgent.toLowerCase();
+    }-*/;
 
     public SavedSearchManager getSavedSearchManager() {
         return savedSearchManager;
@@ -164,43 +165,15 @@ public class SearchBar {
         return welcomeMessage;
     }
 
-    public void executeSearch() {
+    public void prepareSearchExecution() {
         String searchTerms = autoCompletePatternField.getText().toLowerCase().trim();
-        executeSearch(searchTerms);
+        prepareSearchExecution(searchTerms);
     }
 
-    public void executeSearch(String searchTerms) {
+    public void prepareSearchExecution(String searchTerms) {
         if (searchTerms.equals(welcomeMessage)) {
-            searchTerms = "";
+            autoCompletePatternField.setValue("", false);
         }
-
-        SavedSearchCriteria criteria = new SavedSearchCriteria();
-        criteria.addFilterName(searchTerms);
-        criteria.setCaseSensitive(true);
-
-        searchService.findSavedSearchesByCriteria(criteria, new AsyncCallback<List<SavedSearch>>() {
-
-            @Override
-            public void onSuccess(List<SavedSearch> result) {
-                if (result.size() == 1) {
-                    process(result.get(0));
-                }
-
-            }
-
-            private void process(SavedSearch savedSearch) {
-                autoCompletePatternField.setValue(savedSearch.getPattern(), true);
-                patternNameField.setValue(savedSearch.getName(), true);
-                currentSearch = "";
-                turnNameFieldIntoLabel();
-            }
-
-            @Override
-            public void onFailure(Throwable caught) {
-                // TODO Auto-generated method stub
-            }
-        });
-
     }
 
     private void setupAutoCompletingPatternField() {
@@ -208,7 +181,8 @@ public class SearchBar {
         autoCompletePatternField.addStyleName("patternField");
 
         AutoCompletePatternFieldEventHandler handler = new AutoCompletePatternFieldEventHandler();
-        autoCompletePatternField.addClickHandler(handler);
+        autoCompletePatternField.getTextBox().addClickHandler(handler);
+        autoCompletePatternField.getTextBox().addBlurHandler(handler);
         autoCompletePatternField.addKeyPressHandler(handler);
     }
 
@@ -258,24 +232,28 @@ public class SearchBar {
     }
 
     private void turnNameFieldIntoLabel() {
-        String pattern = autoCompletePatternField.getValue();
         String name = patternNameField.getText();
 
         if (name.equalsIgnoreCase(DEFAULT_PATTERN_NAME)) {
             name = "";
         }
 
-        savedSearchManager.removePatternByName(currentSearch);
-
         arrowImage.setVisible(true);
         patternNameField.setVisible(false);
 
         if (name.equals("")) {
+            savedSearchManager.removePatternByName(currentSearch);
             starImage.setUrl(STAR_OFF_URL);
         } else {
-            savedSearchManager.updatePatternByName(name, pattern);
-            patternNameLabel.setVisible(true);
+            if (currentSearch.equals("")) {
+                String pattern = autoCompletePatternField.getText();
+                savedSearchManager.updatePatternByName(name, pattern); // create case
+            } else {
+                savedSearchManager.renamePattern(currentSearch, name);
+            }
+            //savedSearchManager.updatePatternByName(name, pattern);
             patternNameLabel.setText(elipse(name));
+            patternNameLabel.setVisible(true);
             starImage.setUrl(STAR_ON_URL);
         }
         currentSearch = name;
@@ -299,11 +277,14 @@ public class SearchBar {
     /*
      * Event Handlers
      */
-
-    class AutoCompletePatternFieldEventHandler implements KeyPressHandler, ClickHandler {
+    class AutoCompletePatternFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
         @Override
         public void onKeyPress(KeyPressEvent event) {
             // hide pattern field/label, turn off star
+            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+                return;
+            }
+
             patternNameLabel.setText("");
             patternNameLabel.setVisible(false);
             patternNameField.setValue("", true);
@@ -311,16 +292,8 @@ public class SearchBar {
             currentSearch = "";
             starImage.setUrl(STAR_OFF_URL);
 
-            // enter submits a search result under certain conditions, escape hides the suggestions drop-down
-            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
-                boolean suggestionsHidden = !autoCompletePatternField.isSuggestionListShowing();
-                boolean suggestionSelected = !suggestionsHidden && autoCompletePatternField.isItemSelected();
-                if (suggestionsHidden || !suggestionSelected) {
-                    executeSearch();
-                    autoCompletePatternField.hidePopup();
-                }
-            } else if (event.getCharCode() == KeyCodes.KEY_ESCAPE) {
-                autoCompletePatternField.hidePopup();
+            if (event.getCharCode() == KeyCodes.KEY_ESCAPE) {
+                autoCompletePatternField.hideSuggestionList();
                 event.preventDefault();
                 event.stopPropagation();
             }
@@ -332,6 +305,15 @@ public class SearchBar {
             if (autoCompletePatternField.getText().equals(welcomeMessage)) {
                 autoCompletePatternField.setValue("", true);
             }
+            autoCompletePatternField.showSuggestionList();
+            savedSearchesPanel.hide();
+        }
+
+        @Override
+        public void onBlur(BlurEvent event) {
+            if (autoCompletePatternField.getText().equals("")) {
+                autoCompletePatternField.setValue(welcomeMessage, true);
+            }
             savedSearchesPanel.hide();
         }
     }
@@ -339,7 +321,7 @@ public class SearchBar {
     class PatternNameFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
         @Override
         public void onKeyPress(KeyPressEvent event) {
-            if (event.getCharCode() == 13) {
+            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
                 SearchLogger.debug("key press pattern name field");
                 turnNameFieldIntoLabel();
             }
@@ -454,22 +436,31 @@ public class SearchBar {
 
                 savedSearches.removeRow(rowIndex);
             } else {
-                currentSearch = "";
-                String patternValue = savedSearchManager.getPatternByName(patternName);
-                autoCompletePatternField.setValue(patternValue, true);
-                patternNameField.setValue(patternName, true);
-                SearchLogger.debug("search results change: [" + patternName + "," + patternValue + "]");
-                turnNameFieldIntoLabel();
-                savedSearchesPanel.hide();
-                executeSearch();
+                activateSavedSearch(patternName);
+                click(searchButton);
             }
         }
+    }
+
+    private static native void click(Element button)
+    /*-{
+        button.click();
+    }-*/;
+
+    public void activateSavedSearch(String savedSearchName) {
+        currentSearch = "";
+        String patternValue = savedSearchManager.getPatternByName(savedSearchName);
+        autoCompletePatternField.setValue(patternValue, true);
+        patternNameField.setValue(savedSearchName, true);
+        SearchLogger.debug("search results change: [" + savedSearchName + "," + patternValue + "]");
+        turnNameFieldIntoLabel();
+        savedSearchesPanel.hide();
     }
 
     class SearchButtonEventHandler implements ClickHandler {
         @Override
         public void onClick(ClickEvent event) {
-            executeSearch();
+            prepareSearchExecution();
         }
     }
 

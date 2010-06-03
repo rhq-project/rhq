@@ -457,9 +457,9 @@ import org.rhq.core.domain.util.Summary;
         + "       ( SELECT rc.resource.id " //
         + "           FROM ResourceRepo rc " //
         + "          WHERE rc.repo.id = :repoId ) " //
-        + "     AND (:category = res.resourceType.category OR :category IS NULL) " //
+        + "     AND (res.resourceType.category = :category  OR :category IS NULL) " //
         + "     AND (res.inventoryStatus = :inventoryStatus) " //
-        + "     AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar) OR (UPPER(res.resourceType.name) LIKE :search ESCAPE :escapeChar) OR :search is null"),
+        + "     AND ((UPPER(res.name) LIKE :search ESCAPE :escapeChar) OR (UPPER(res.resourceType.name) LIKE :search ESCAPE :escapeChar) OR :search is null)"),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //

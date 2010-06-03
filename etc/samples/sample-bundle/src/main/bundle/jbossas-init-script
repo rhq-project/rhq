@@ -1,0 +1,328 @@
+#!/bin/bash
+#
+# jbossas - This shell script takes care of starting and stopping
+#           a JBoss Application Server (AS) instance on a Red Hat 
+#           Linux system. It can be run as a system service (init
+#           script) and/or run manually.
+#
+# chkconfig: 345 84 16
+# description: JBoss AS server
+# processname: java
+# pidfile: /var/run/jbossas.pid
+
+# Source init-script function library.
+FUNCTIONS=/etc/rc.d/init.d/functions
+if [ ! -f "$FUNCTIONS" ]; then
+    echo "Functions library ($FUNCTIONS) not found." >&2
+    exit 1
+fi
+. $FUNCTIONS
+  
+# Find the name of this service (e.g. "jbossas").
+NAME=`basename $0`
+if [ ${NAME:0:1} = "S" -o ${NAME:0:1} = "K" ]; then
+	NAME=${NAME:3}
+fi
+
+# Set names of pid, lock, and log files - all based on the service name.
+PIDFILE="/var/run/$NAME.pid"
+LOCKFILE="/var/lock/subsys/$NAME"
+LOGFILE="/var/log/$NAME.log"
+
+# Set defaults for optional configuration variables.
+JAVA_HOME="/usr/java/default"
+JAVA_OPTS="-Xms128M -Xmx512M -XX:MaxPermSize=256M"
+JAVA_OPTS="$JAVA_OPTS -Dorg.jboss.resolver.warning=true -Dsun.rmi.dgc.client.gcInterval=3600000 -Dsun.rmi.dgc.server.gcInterval=3600000"
+# (Prefer IPv4 stack as as temporary workaround to avoid 'all' config startup 
+# issues from IPv4 multicast addresses. See JBAS-7936.)
+JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"
+
+# Source the service's config file, potentially overriding the defaults set 
+# above.
+CONFIG="/etc/sysconfig/${NAME}"
+if [ ! -f "$CONFIG" ]; then
+    echo "Required configuration file $CONFIG not found." >&2
+    exit 1
+fi
+. "$CONFIG"
+
+# Bail out if required variables were not set in the config file.
+if [ -z "$JBOSS_HOME" ]; then
+    echo "Required variable JBOSS_HOME was not set in $CONFIG." >&2
+    exit 1
+fi
+
+    
+start()
+{
+    # See if the service is already running, and, if so, exit with an error.
+    PID=`pidfileofproc "$NAME"`
+    if [ -n "$PID" ]; then
+       # pid file exists - see if process is actually running.
+       kill -0 $PID 2>/dev/null       
+       if [ $? -eq 0 ]; then
+           echo "$NAME service is already running (pid=$PID)." >&2
+           exit 1
+       else                      
+           echo "Removing bogus pid file $PIDFILE..."
+           rm -f "$PIDFILE"           
+           if [ -f "$LOCKFILE" ]; then
+               echo "Removing bogus lock file $LOCKFILE..."
+               rm -f "$LOCKFILE"
+           fi              
+       fi
+    fi
+
+    # Check that JAVA_HOME is valid.
+    JAVA="$JAVA_HOME/bin/java"
+    if [ ! -f "$JAVA" ]; then
+        echo "Java not found at $JAVA - please set JAVA_HOME in $CONFIG." >&2
+        exit 1
+    fi
+    if [ ! -x "$JAVA" ]; then
+        echo "$JAVA is not executable." >&2
+        exit 5
+    fi
+
+    # Setup the classpath
+    JBOSS_BOOT_CLASSPATH="$JBOSS_HOME/bin/run.jar"
+    if [ ! -f "$JBOSS_BOOT_CLASSPATH" ]; then
+        echo "Missing required file: $JBOSS_BOOT_CLASSPATH" >&2
+        exit 1
+    fi
+
+    # By default, Tomcat uses the JDT Compiler for compiling JSPs. However,
+    # include tools.jar in the classpath if we can find it under JAVA_HOME
+    # or if the user specified it via the JAVAC_JAR variable.
+    JAVAC_JAR_FILE="${JAVAC_JAR:-$JAVA_HOME/lib/tools.jar}"
+    if [ ! -f "$JAVAC_JAR_FILE" ]; then
+       [ -n "$JAVAC_JAR" ] && echo "Missing javac jar file $JAVAC_JAR as defined by the JAVAC_JAR variable. Unexpected results may occur."       
+       unset JAVAC_JAR_FILE
+    fi
+
+    # If -server not set in JAVA_OPTS, set it, if supported.
+    SERVER_SET=`echo $JAVA_OPTS | grep "\-server"`
+    if [ -z "$SERVER_SET" ]; then
+        # Check for Sun JVM w/ HotSpot support.        
+        HAS_HOTSPOT=`"$JAVA" -version 2>&1 | grep -i HotSpot`
+        
+        # Check for OpenJDK JVM w/ server support.
+        HAS_OPENJDK=`"$JAVA" -version 2>&1 | grep -i OpenJDK`        
+
+        # Enable -server if we have Hotspot or OpenJDK, unless we can't
+        if [ -n "$HAS_HOTSPOT" ] || [ -n "$HAS_OPENJDK" ]; then
+            JAVA_OPTS="-server $JAVA_OPTS"
+        fi
+    fi
+
+    # Setup JBoss-specific properties.
+    JAVA_OPTS="-Dprogram.name=$NAME $JAVA_OPTS"
+     
+    # Setup JBoss Native library path.    
+    unset JBOSS_NATIVE_DIR
+    for DIR in "$JBOSS_HOME/../native/lib" "$JBOSS_HOME/../native" "$JBOSS_HOME/../native/lib64" "$JBOSS_HOME/native/lib64" "$JBOSS_HOME/native/bin" "$JBOSS_HOME/bin/native"; do
+        if [ -d "$DIR" ]; then          
+            JBOSS_NATIVE_DIR=`cd "$DIR/.." && pwd`
+            break
+        fi
+    done
+    if [ -d "$JBOSS_NATIVE_DIR" ]; then
+        IS_64_BIT_JVM=`"$JAVA" $JAVA_OPTS -version 2>&1 | grep -i 64-bit`
+        if [ -n "$IS_64_BIT_JVM" ]; then
+           JBOSS_NATIVE_DIR="$JBOSS_NATIVE_DIR/lib64"
+        else
+           JBOSS_NATIVE_DIR="$JBOSS_NATIVE_DIR/lib"
+        fi
+        LD_LIBRARY_PATH="$JBOSS_NATIVE_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        export LD_LIBRARY_PATH
+        JAVA_OPTS="$JAVA_OPTS -Djava.library.path=$LD_LIBRARY_PATH"
+    fi
+
+    # Setup the Java endorsed dirs.
+    JBOSS_ENDORSED_DIRS="$JBOSS_HOME/lib/endorsed"    
+    JAVA_OPTS="$JAVA_OPTS -Djava.endorsed.dirs=\"$JBOSS_ENDORSED_DIRS\""
+
+    # Setup the Java classpath.
+    JBOSS_CLASSPATH="${JBOSS_CLASSPATH:+$JBOSS_CLASSPATH:$JBOSS_BOOT_CLASSPATH}"
+    JBOSS_CLASSPATH="${JBOSS_CLASSPATH:-$JBOSS_BOOT_CLASSPATH}"
+    JBOSS_CLASSPATH="$JBOSS_CLASSPATH${JAVAC_JAR_FILE:+:$JAVAC_JAR_FILE}"
+    JAVA_OPTS="$JAVA_OPTS -classpath \"$JBOSS_CLASSPATH\""
+    
+    # Display a summary of our environment if we're associated with a terminal.
+    if tty -s; then 
+        echo "========================================================================="; echo
+        echo "  JBoss AS Bootstrap Environment"                                         ; echo
+        echo "  JBOSS_HOME: $JBOSS_HOME"                                                ; echo
+        echo "  JAVA: $JAVA"                                                            ; echo
+        echo "  JAVA_OPTS: $JAVA_OPTS"                                                  ; echo
+        echo "  JBOSS_OPTS: $JBOSS_OPTS"                                                ; echo
+        echo "========================================================================="; echo
+    fi
+
+    # JBoss AS expects its current working dir to be $JBOSS_HOME/bin
+    cd "$JBOSS_HOME/bin"
+
+    # JBoss AS expects JBOSS_HOME to be set in its environment.
+    export JBOSS_HOME
+   
+    # We only need to bother with nohup if we're associated with a terminal.
+    if tty -s; then
+        NOHUP=nohup
+    else
+        unset NOHUP
+    fi
+
+    # If they set NICELEVEL in the config file, honor it.	
+    [ -n "${NICELEVEL:-}" ] && NICE="nice -n $NICELEVEL"
+
+    # If JBOSS_USER was specified in the config and current user is root, we
+    # want to setuid the JBoss AS process to JBOSS_USER.
+    if [ -n "$JBOSS_USER" ] && [ "$EUID" -eq 0 ]; then    
+        # For SELinux we need to use 'runuser', not 'su'.
+        if [ -x /sbin/runuser ]; then
+            SU=runuser
+        else
+            SU=su
+        fi
+    else
+        unset SU
+    fi
+
+    if [ -n "$SU" ]; then
+        WRAPPER="$NOHUP $NICE $SU -s /bin/bash - $JBOSS_USER -c"
+    else
+ 	    WRAPPER="$NOHUP $NICE bash -c"
+    fi
+
+    # Make sure log file exists and has correct ownership and permissions.    
+	if [ "$EUID" -eq 0 ]; then    
+		touch -a "$LOGFILE" || exit 4        
+		[ -n "$JBOSS_USER" ] && chown $JBOSS_USER "$LOGFILE"
+        [ -n "$JBOSS_GROUP" ] && chgrp $JBOSS_GROUP "$LOGFILE"
+		chmod u=rw "$LOGFILE"
+        [ -n "$JBOSS_GROUP" ] && chmod g+r "$LOGFILE"
+		[ -x /sbin/restorecon ] && /sbin/restorecon "$LOGFILE"
+	fi
+
+    # Make sure pid file has correct ownership and permissions.    
+	if [ "$EUID" -eq 0 ] && [ -f "$PIDFILE" ]; then
+		[ -n "$JBOSS_USER" ] && chown $JBOSS_USER "$PIDFILE"
+        [ -n "$JBOSS_GROUP" ] && chgrp $JBOSS_GROUP "$PIDFILE"
+		chmod u=rw "$PIDFILE"
+        [ -n "$JBOSS_GROUP" ] && chmod g+r
+		[ -x /sbin/restorecon ] && /sbin/restorecon "$PIDFILE"
+	fi
+
+    echo -n "Starting $NAME service: "
+
+    # Make sure to escape the $$'s within the subshell to prevent our own shell
+    # from evaluating them and writing our own pid to the pid file.
+    $WRAPPER "echo \$\$ >\"$PIDFILE\" || ( echo \"Failed to write pid (\$\$) to $PIDFILE.\" >&2; exit 4 ); exec \"$JAVA\" $JAVA_OPTS org.jboss.Main $JBOSS_OPTS" >>"$LOGFILE" 2>&1 &
+    if [ $? -ne 0 ]; then
+        failure "$NAME startup"
+        echo
+        EXIT_STATUS=$?
+    fi    
+ 
+    # Wait a few seconds and then check that the process is running. Note, this
+    # will *not* verify that JBoss AS started properly without any configuration
+    # or deployment errors.
+    sleep 3
+      
+    if pidfileofproc "$NAME"; then
+		success "$NAME startup"
+        echo                
+		touch "$LOCKFILE"		
+        EXIT_STATUS=0
+    else
+        failure "$NAME startup"
+        echo
+        EXIT_STATUS=1
+    fi	
+}
+
+stop()
+{
+    # See if service is running, and, if not, exit without any error.
+    PID=`pidfileofproc "$NAME"`
+    unset NOT_RUNNING
+    if [ -z "$PID" ]; then
+       NOT_RUNNING=1
+    else
+       # pid file exists - see if process is actually running.
+       kill -0 $PID 2>/dev/null
+       if [ $? -ne 0 ]; then
+           NOT_RUNNING=1           
+           if [ -f "$PIDFILE" ]; then
+               echo "Removing bogus pid file $PIDFILE..."
+               rm -f "$PIDFILE"
+           fi
+           if [ -f "$LOCKFILE" ]; then
+               echo "Removing bogus lock file $LOCKFILE..."
+               rm -f "$LOCKFILE"
+           fi              
+       fi     
+    fi
+    if [ -n "$NOT_RUNNING" ]; then
+       echo "$NAME service is not running."
+       exit 0
+    fi
+
+	echo -n "Stopping $NAME service: "	
+    killproc -d 30 "$NAME"
+    EXIT_STATUS=$?      
+    if [ $EXIT_STATUS -eq 0 ]; then
+       rm -f "$LOCKFILE"
+    fi
+    echo    
+}
+
+# NOTE: We don't name this function 'status', since that would override the
+#       'status function defined in /etc/init.d/functions.     
+_status()
+{
+    status "$NAME"
+    EXIT_CODE=$?
+}
+
+restart()
+{
+    stop || exit $?
+    start
+}
+
+condrestart()
+{
+    [ -f "$PIDFILE" ] && restart 
+}
+
+usage()
+{
+	echo "Usage: $NAME {start|stop|status|restart|condrestart}" >&2
+	EXIT_CODE=2
+}
+
+# The
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  status)    
+	_status
+	;;
+  restart)
+	restart
+	;;
+  condrestart)
+	condrestart
+	;;
+  *)
+    usage
+    ;;
+esac
+
+exit $EXIT_STATUS
+

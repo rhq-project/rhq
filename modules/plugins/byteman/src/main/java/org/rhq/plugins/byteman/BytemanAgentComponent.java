@@ -18,9 +18,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.byteman.agent.submit.Submit;
 
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -29,7 +26,10 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
@@ -399,6 +399,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                     detail.setFileName(shortName);
                     detail.setFileSize(file.length());
                     detail.setMD5(MessageDigestGenerator.getDigestString(file));
+                    detail.setSHA256(MessageDigestGenerator.getDigestString(file));
 
                     details.add(detail);
                 }

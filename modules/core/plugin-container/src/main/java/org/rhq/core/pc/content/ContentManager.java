@@ -22,12 +22,8 @@
  */
 package org.rhq.core.pc.content;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -40,8 +36,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -78,12 +72,10 @@ import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.util.MessageDigestGenerator;
 
 public class ContentManager extends AgentService implements ContainerService, ContentAgentService, ContentServices {
 
     private static final int FACET_METHOD_TIMEOUT = 60 * 60 * 1000; // 60 minutes
-    public static final String RHQ_SHA256 = "RHQ-Sha256";
     private final Log log = LogFactory.getLog(ContentManager.class);
 
     /**
@@ -620,8 +612,6 @@ public class ContentManager extends AgentService implements ContainerService, Co
             if (log.isDebugEnabled()) {
                 log.debug("Found [" + updatedPackageSet.size() + "] new packages for resource id [" + resourceId + "]");
             }
-            //from set of new packages discovered, iterate through pkg details to get information for pkg version mapping.
-            updatedPackageSet = updateResourcePackageDetails(updatedPackageSet);
         }
 
         // Add new content (yes, existingInstalledPackagesSet is same as details, but use the container's reference)
@@ -649,72 +639,6 @@ public class ContentManager extends AgentService implements ContainerService, Co
         }
 
         return report;
-    }
-
-    /** Goes through newly discovered packages and calculates SHA256 for the packages discovered, updating
-     *  ResourcePackageDetails in the process.
-     *
-     * @param discoveredPackageSet
-     * @return updated discoveredPackageSet
-     */
-    private Set<ResourcePackageDetails> updateResourcePackageDetails(Set<ResourcePackageDetails> discoveredPackageSet) {
-        if (discoveredPackageSet != null && discoveredPackageSet.size() > 0) {
-            //iterate through pkg details list
-            ResourcePackageDetails list[] = new ResourcePackageDetails[discoveredPackageSet.size()];
-            ResourcePackageDetails[] recentlyDiscoveredArray = discoveredPackageSet.toArray(list);
-
-            for (ResourcePackageDetails detail : recentlyDiscoveredArray) {
-                try {
-                    //only operate on .ear/.war
-                    String currentFile = detail.getFileName();
-                    if (currentFile != null) {
-                        currentFile = currentFile.toLowerCase();
-                    }
-                    if (currentFile != null && (currentFile.endsWith(".ear") || currentFile.endsWith(".war"))) {
-                        //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
-                        if ((detail.getFileSize() == null) || (detail.getFileSize() == 0)) {
-                            //when deployed exploded then don't calculate digest but check for META-INF entry
-                            File explodedDirectory = new File(detail.getLocation());
-                            File manifestFile = new File(explodedDirectory, "META-INF/MANIFEST.MF");
-                            Manifest manifest;
-                            if (manifestFile.exists()) {
-                                FileInputStream inputStream = new FileInputStream(manifestFile);
-                                manifest = new Manifest(inputStream);
-                                inputStream.close();
-                                Attributes attribs = manifest.getMainAttributes();
-                                String retrievedShaValue = attribs.getValue(RHQ_SHA256);
-                                if ((retrievedShaValue != null) && (!retrievedShaValue.trim().isEmpty())) {
-                                    detail.setSHA256(retrievedShaValue);
-                                }
-                            }
-                        }
-                        //and for each detail where size != null or non empty ... then an un-exploded war/ear
-                        else if ((detail.getFileSize() != null) || (detail.getFileSize() > 0)) {
-                            File localCopy = null;
-                            if ((detail.getLocation() != null) && (!detail.getLocation().isEmpty())) {
-                                localCopy = new File(detail.getLocation());
-                                //calculate md5
-                                String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
-                                    .calcDigestString(localCopy);
-                                //and attach it to the report returned to be picked up on server side in merge
-                                detail.setSHA256(sha256);
-                                //attach fileCreatedDate as well
-                                detail.setInstallationTimestamp(Long.valueOf(System.currentTimeMillis()));
-                            }
-                        }
-                    }
-                } catch (IOException iex) {
-                    //log exception but move on, discovery happens often. No reason to hold up anything.
-                    if (log.isDebugEnabled()) {
-                        log.debug("Problem calculating digest of package [" + detail.getName() + "]."
-                            + iex.getMessage());
-                    }
-                }
-            }
-            discoveredPackageSet.clear();
-            discoveredPackageSet.addAll(Arrays.asList(recentlyDiscoveredArray));
-        }
-        return discoveredPackageSet;
     }
 
     /**

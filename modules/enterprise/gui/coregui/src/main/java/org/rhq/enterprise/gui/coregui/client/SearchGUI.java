@@ -19,12 +19,18 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.util.SC;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
 
 /**
@@ -49,30 +55,67 @@ public class SearchGUI implements EntryPoint {
             return;
         }
 
-        portalWarLogin();
+        checkLoginStatus();
     }
 
     public void buildSearchGUI() {
         searchBar = new SearchBar();
     }
 
-    private static void portalWarLogin() {
-        SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
+    public static void checkLoginStatus() {
+        RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
+        try {
+            b.setCallback(new RequestCallback() {
+                public void onResponseReceived(final Request request, final Response response) {
+                    String sessionIdString = response.getText();
+                    if (sessionIdString != null && sessionIdString.length() > 0) {
 
-        subjectService.login("rhqadmin", "rhqadmin", new AsyncCallback<Subject>() {
-            public void onFailure(Throwable caught) {
-                System.out.println("Failed to login - cause: " + caught);
-                Label loginFailed = new Label("Failed to login - cause: " + caught);
-                loginFailed.draw();
-            }
+                        int subjectId = Integer.parseInt(sessionIdString.split(":")[0]);
+                        final int sessionId = Integer.parseInt(sessionIdString.split(":")[1]);
 
-            public void onSuccess(Subject result) {
-                System.out.println("Logged in: " + result.getSessionId());
-                GWTServiceLookup.registerSession(String.valueOf(result.getSessionId()));
-                SearchGUI.sessionSubject = result;
-                singleton.buildSearchGUI();
-            }
-        });
+                        Subject subject = new Subject();
+                        subject.setId(subjectId);
+                        subject.setSessionId(sessionId);
+
+                        GWTServiceLookup.registerSession(String.valueOf(subject.getSessionId()));
+
+                        // look up real user prefs
+
+                        SubjectCriteria criteria = new SubjectCriteria();
+                        criteria.fetchConfiguration(true);
+                        criteria.addFilterId(subjectId);
+                        criteria.fetchRoles(true);
+
+                        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
+                            new AsyncCallback<PageList<Subject>>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError("Failed to load user's subject", caught);
+                                    new LoginView().showLoginDialog();
+                                }
+
+                                public void onSuccess(PageList<Subject> result) {
+
+                                    Subject subject = result.get(0);
+                                    subject.setSessionId(sessionId);
+                                    SearchGUI.sessionSubject = subject;
+                                    singleton.buildSearchGUI();
+
+                                }
+                            });
+                    } else {
+                        new LoginView().showLoginDialog();
+                    }
+                }
+
+                public void onError(Request request, Throwable exception) {
+                    SC.say("Unable to determine login status, check server status");
+                }
+            });
+            b.send();
+        } catch (RequestException e) {
+            SC.say("Unable to determine login status, check server status");
+            e.printStackTrace();
+        }
     }
 
     public static Subject getSessionSubject() {

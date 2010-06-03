@@ -388,20 +388,16 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
 
             if (discoveredFiles != null) {
                 for (File file : discoveredFiles) {
-                    String fullPath = file.getAbsolutePath();
                     String shortName = file.getName();
-                    // try to get version from manifest. if not there calculate sha256 and use that
-                    // as the version. if that fails default to "0".
-                    String version = "0";
                     String sha256 = null;
                     try {
                         sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(file);
-                        version = sha256;
                     } catch (Exception e) {
-                        log.debug("Failed to generate sha256 for [" + file + "]. Setting version to 0");
+                        if (log.isDebugEnabled()) {
+                            log.debug("Failed to generate sha256 for [" + file + "]");
+                        }
                     }
-                    version = BytemanAgentDiscoveryComponent.getJarAttribute(fullPath,
-                        java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION.toString(), version);
+                    String version = getVersion(file, sha256);
                     PackageDetailsKey detailsKey = new PackageDetailsKey(shortName, version, typeName, "noarch");
                     ResourcePackageDetails detail = new ResourcePackageDetails(detailsKey);
                     detail.setDisplayName(shortName);
@@ -417,6 +413,32 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
             log.error("Failed to perform discovery for packages of type [" + typeName + "]", e);
         }
         return details;
+    }
+
+    private String getVersion(File file, String sha256) {
+        // Version string in order of preference
+        // manifestVersion + sha256, sha256, manifestVersion, "0"
+        String version = "0";
+        String manifestVersion = null;
+        try {
+            manifestVersion = BytemanAgentDiscoveryComponent.getJarAttribute(file.getAbsolutePath(),
+                java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION.toString(), null);
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to determine manifestVersion for [" + file + "]");
+            }
+        }
+
+        if ((null != manifestVersion) && (null != sha256)) {
+            // this protects against the occasional differing binaries with poor manifest maintenance  
+            version = manifestVersion + " [sha256=" + sha256 + "]";
+        } else if (null != sha256) {
+            version = "[sha256=" + sha256 + "]";
+        } else if (null != manifestVersion) {
+            version = manifestVersion;
+        }
+
+        return version;
     }
 
     /**

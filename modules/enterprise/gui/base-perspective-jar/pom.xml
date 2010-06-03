@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0.Beta0</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -29,7 +29,7 @@
     <seam.version>2.1.0.SP1</seam.version>
     <jboss-el.version>1.0_02.CR5</jboss-el.version>
     <richfaces.version>3.3.2.SR1</richfaces.version>
-    <rhq.version>3.0.0-SNAPSHOT</rhq.version>
+    <rhq.version>3.0.0.Beta0</rhq.version>
   </properties>
 
   <dependencyManagement>

@@ -6,7 +6,7 @@
     <parent>
       <groupId>org.rhq.helpers</groupId>
       <artifactId>rhq-helpers</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>3.0.0.Beta0</version>
     </parent>
 
 
@@ -16,7 +16,7 @@
 
     <name>RHQ plugin generator</name>
     <description>Helper to generate plugin skeletons</description>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0.Beta0</version>
 
     <scm>
       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginGen</connection>

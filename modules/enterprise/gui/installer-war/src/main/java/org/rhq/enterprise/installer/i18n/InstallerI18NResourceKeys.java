@@ -51,290 +51,182 @@ public interface InstallerI18NResourceKeys {
     @I18NMessages( { @I18NMessage(locale = "en", value = "${product.help.doc.root}") })
     String HELP_DOC_ROOT = "helpDocRoot";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database/User"),
-        @I18NMessage(locale = "de", value = "Datenbank mit -benutzer anlegen") })
+    @I18NMessage(locale = "en", value = "Create Database/User")
     String CREATE_DATABASE_USER_TITLE = "createDatabaseUserTitle";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Enter your database administrator's information here and press the button to create a database and user."),
-        @I18NMessage(locale = "de", value = "Geben Sie die Administratoreninformation hier ein, und clicken Sie den Button, um eine Datenbank mit Benutzer anzulegen.") })
+     @I18NMessage(locale = "en", value = "Enter your database administrator's information here and press the button to create a database and user.")
     String CREATE_DATABASE_USER_HELP = "createDatabaseUserHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Connection URL"),
-        @I18NMessage(locale = "de", value = "URL der Datenbankverbindung") })
+    @I18NMessage(locale = "en", value = "DB Connection URL")
     String ADMIN_CONNECTION_URL = "adminConnectionUrl";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Admin Username"),
-        @I18NMessage(locale = "de", value = "Benutzername des Datenbankadministrators") })
+    @I18NMessage(locale = "en", value = "DB Admin Username")
     String ADMIN_USERNAME = "adminUsername";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Admin Password"),
-        @I18NMessage(locale = "de", value = "Passwort des Datenbankadministrators") })
+    @I18NMessage(locale = "en", value = "DB Admin Password")
     String ADMIN_PASSWORD = "adminPassword";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Usage of the selected database is for demo purposes only. It should not be used in production installations. No support is available for installations that use H2 or MS SQL Server for their database."),
-        @I18NMessage(locale = "de", value = "Unterstützung für diese Datenbank ist experimentell und ist nur für Demo-und Testzwecke geeignet.") })
+    @I18NMessage(locale = "en", value = "Usage of the selected database is for demo purposes only. It should not be used in production installations. No support is available for installations that use H2 or MS SQL Server for their database.")
     String EXPERIMENTAL_DB = "experimentalDb";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Create a database/user if needed"),
-        @I18NMessage(locale = "de", value = "DB mit -benutzer anlegen, falls nötig") })
+    @I18NMessage(locale = "en", value = "Create a database/user if needed")
     String CREATE_DATABASE_NOTE = "createDatabaseNote";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database"),
-        @I18NMessage(locale = "de", value = "Datenbank anlegen") })
+    @I18NMessage(locale = "en", value = "Create Database")
     String CREATE_DATABASE_BUTTON = "createDatabaseButton";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Confirm database settings"),
-        @I18NMessage(locale = "de", value = "Überprüfen Sie, dass die Einstellungen für die Datenbank gültig sind") })
+    @I18NMessage(locale = "en", value = "Confirm database settings")
     String TEST_DATABASE_NOTE = "testDatabaseNote";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Test Connection"),
-        @I18NMessage(locale = "de", value = "Verbindung testen") })
+    @I18NMessage(locale = "en", value = "Test Connection")
     String TEST_DATABASE_BUTTON = "testDatabaseButton";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "A database schema already exists. What do you want to do?"),
-        @I18NMessage(locale = "de", value = "Das gewünschte Datenbankschema existiert schon. Was wollen Sie machen?") })
+    @I18NMessage(locale = "en", value = "A database schema already exists. What do you want to do?")
     String EXISTING_SCHEMA_QUESTION = "existingSchemaQuestion";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Overwrite (lose existing data)"),
-        @I18NMessage(locale = "de", value = "Überschreiben (vorhandene Daten gehen verloren)") })
+    @I18NMessage(locale = "en", value = "Overwrite (lose existing data)")
     String EXISTING_SCHEMA_OPTION_OVERWRITE = "existingSchemaAnswerOverwrite";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Keep (maintain existing data)"),
-        @I18NMessage(locale = "de", value = "Behalten (existierende Daten werden aktualisiert)") })
+    @I18NMessage(locale = "en", value = "Keep (maintain existing data)")
     String EXISTING_SCHEMA_OPTION_KEEP = "existingSchemaAnswerUpgrade";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Skip (leave database as-is)"),
-        @I18NMessage(locale = "de", value = "Umgehen (Datenbank bleibt wie sie ist)") })
+    @I18NMessage(locale = "en", value = "Skip (leave database as-is)")
     String EXISTING_SCHEMA_OPTION_SKIP = "existingSchemaAnswerSkip";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]"),
-        @I18NMessage(locale = "de", value = "[{1}] ist ein ungültiger Zahlenwert für die Eigenschaft {0}"),
-        @I18NMessage(locale = "fr", value = "La valeur du paramètre {0} n'est pas un nombre valide [{1}]") })
+    @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]")
     String INVALID_NUMBER = "invalidNumber";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "The {0} boolean property value must be either 'true' or 'false' but was [{1}]"),
-        @I18NMessage(locale = "de", value = "Die boolesche Eigenschaft {0} muss entweder 'true' oder 'false' sein, war aber [{1}]"),
-        @I18NMessage(locale = "fr", value = "La valeur booléenne du paramètre {0} devait être 'true' ou 'false', mais était [{1}]") })
+    @I18NMessage(locale = "en", value = "The {0} boolean property value must be either 'true' or 'false' but was [{1}]")
     String INVALID_BOOLEAN = "invalidBoolean";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value must be set."),
-        @I18NMessage(locale = "de", value = "Die Eigenschaft {0} muss gesetzt werden.") })
+    @I18NMessage(locale = "en", value = "The {0} property value must be set.")
     String INVALID_STRING = "invalidString";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Failed to save properties and fully deploy - ${product.shortName} Server will not function properly\\n\\\nCause: {0}"),
-        @I18NMessage(locale = "de", value = "Konnte die Einstellungen nicht speichern und den Server vollständig starten.\\n\\\n"
-            + "Der ${product.shortName} Server wird nicht korrekt funktionieren.\\n\\\nGrund: {0}"),
-        @I18NMessage(locale = "fr", value = "Impossible de sauvegarder les paramètres et de déployer entièrement - RHQ Server ne fonctionnera pas correctement\\n\\\nCause: {0}") })
+    @I18NMessage(locale = "en", value = "Failed to save properties and fully deploy - ${product.shortName} Server will not function properly\\n\\\nCause: {0}")
     String SAVE_FAILURE = "saveFailure";
 
-    @I18NMessages( {
-            @I18NMessage(locale = "en", value = "Error"),
-            @I18NMessage(locale = "de", value = "Fehler"),
-            @I18NMessage(locale = "fr", value = "Erreur")})
+    @I18NMessage(locale = "en", value = "Error")
     String ERROR_LABEL = "errorLabel";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Could not save the settings for some reason."),
-        @I18NMessage(locale = "de", value = "Kann die Einstellungen nicht sichern"),
-        @I18NMessage(locale = "fr", value = "Impossible de sauvegarder les paramètres pour une raison inconnue")})
+    @I18NMessage(locale = "en", value = "Could not save the settings for some reason.")
     String SAVE_ERROR = "saveError";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Could not connect to the database with the given database settings. \\n\\\n"
-            + "Please check the database settings and make sure your database is running."),
-        @I18NMessage(locale = "de", value = "Eine Verbindung zur Datenbank ist mit den gebenen Einstellungen für die Datenbank nicht möglich. \\n\\\n"
-            + "Bitte überprüfen Sie die Einstellungen und stellen Sie sicher, dass die Datenbak aktiv ist"),
-        @I18NMessage(locale = "fr", value = "Impossible de se connecter à la base de données avec les paramètres donnés. \\n\\\n"
-            + "Veuillez vérifier les paramètres et que la base de données est opérationnelle.")    })
+    @I18NMessage(locale = "en", value = "Could not connect to the database with the given database settings. \\n\\\n"
+            + "Please check the database settings and make sure your database is running.")
     String INVALID_DATABASE_SETTINGS = "invalidDatabaseSettings";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "These are the configuration settings for this ${product.shortName} Server installation. \\n\\\n"
+    @I18NMessage(locale = "en", value = "These are the configuration settings for this ${product.shortName} Server installation. \\n\\\n"
             + "You may customize some, all or none as required.  Click on the setting name for setting-specific help. Changes to settings marked as \"Restart Required\" \\n\\\n"
-            + "will not take effect until after restarting the server. In this case restart the server immediately after successful installation."),
-        @I18NMessage(locale = "de", value = "Diese Seite zeigt Ihnen die Konfigurationseinstellungen \\n\\\n"
-            + "für die Installation des ${product.shortName} Servers. Sie können keinen, einige oder alle\\n\\\n"
-            + "dieser Werte nach Ihren Anforderungen ändern. Sie können auf den Namen einer Einstellung klicken, um direkt weitere Informationen zu erhalten.\\n\\\n"
-            + "Bitte beachten sie, dass \\n\\\n"
-            + "einige dieser Änderungen erst nach einem Neustart des Servers aktiv werden. \\n\\\n"
-            + "Wenn Sie diese Einstellungen ändern, müssen Sie den Server sofort neu starten, damit \\n\\\n"
-            + "sie aufgegriffen werden."),
-        @I18NMessage(locale = "fr", value = "Cette page vous montre les valeurs actuelles de la configuration \\n\\\n"
-            + "pour cette installation de RHQ Server. Vous pouvez en changez certains, tous, ou aucun \\n\\\n"
-            + "d'entre elles pour vos besoin personnels.  Veuillez noter que certains de \\n\\\n"
-            + "ces changements ne prendront place qu'après un redémarrage du \\n\\\n"
-            + "serveur.  Si vous changez l'une de ces valeurs, vous devrez \\n\\\n"
-            + "immediatement arrêter et redémarrer le serveur pour appliquer les changements.")})
+            + "will not take effect until after restarting the server. In this case restart the server immediately after successful installation.")
     String SET_PROPERTIES_INSTRUCTIONS = "setPropertiesInstructions";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Click this checkbox to see both standard and advanced configuration settings."),
-        @I18NMessage(locale = "de", value = "Markieren Sie diese Checkbox, um die standardmäßigen und weiterführende Einstellungen anzuzeigen.") })
+    @I18NMessage(locale = "en", value = "Click this checkbox to see both standard and advanced configuration settings.")
     String ADVANCED_SETTINGS_INSTRUCTIONS = "advancedSettingsInstructions";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Press the 'Production Installation' button for a normal installation.\\n\\\n"
+    @I18NMessage(locale = "en", value = "Press the 'Production Installation' button for a normal installation.\\n\\\n"
             + "Press the 'Embedded Installation' button to quickly create a complete environment with the help of the embedded database and embedded agent. "
-            + "The embedded installation is for demonstration and evaluation purposes ONLY!"),
-        @I18NMessage(locale = "de", value = "Drücken Sie die 'Produktion Installation'-Taste für eine normale Installation durchzuführen.\\n\\\n"
-            + "Drücken Sie die 'Embedded Installation'-Taste, um schnell eine vollständige Umgebung mit Hilfe der eingebetteten Datenbank und Embedded Agenten zu erstellen. "
-            + "Die Embedded-Installation ist nur für Demonstrations- und Evaluierungszwecke geeignet!") })
+            + "The embedded installation is for demonstration and evaluation purposes ONLY!")
     String INSTALL_BUTTONS_TEXT = "installButtonsText";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "-- or --"), @I18NMessage(locale = "de", value = "-- oder --") })
+    @I18NMessage(locale = "en", value = "-- or --")
     String OR_TEXT = "orText";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Installation"),
-        @I18NMessage(locale = "de", value = "Embedded Installation") })
+    @I18NMessage(locale = "en", value = "Embedded Installation")
     String SAVE_EMBEDDED_MODE = "saveEmbeddedMode";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Database Settings define the database configured for this installation. All are required. Use the \"Test Connection\" button to validate the settings."),
-        @I18NMessage(locale = "de", value = "Die Datenbankeinstellungen definieren die Datenbank für diese Installation. Alle Einstellungen werden benötigt.\\n\\\n"
-            + "Klicken Sie auf den \"Verbindung testen\" Button, um die Einstellungen zu validieren.") })
+    @I18NMessage(locale = "en", value = "Database Settings define the database configured for this installation. All are required. Use the \"Test Connection\" button to validate the settings.")
     String DATABASE_SETTINGS_INSTRUCTIONS = "databaseSettingsInstructions";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Installation Settings define the required server endpoint for this installation."),
-        @I18NMessage(locale = "de", value = "Diese Einstellungen definieren den notwendigen Server-Endpunkt für diese Installation.") })
+    @I18NMessage(locale = "en", value = "Installation Settings define the required server endpoint for this installation.")
     String INSTALL_SETTINGS_INSTRUCTIONS = "installSettingsInstructions";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "If performing an upgrade or re-installation then select from the list of registered servers: "),
-        @I18NMessage(locale = "de", value = "Wählen Sie aus der Liste der registrierten Server, wenn Sie ein Upgrade oder eine Neuinstallation durchführen.") })
+    @I18NMessage(locale = "en", value = "If performing an upgrade or re-installation then select from the list of registered servers: ")
     String INSTALL_SETTINGS_NOTE_1 = "installSettingsNote1";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "If installing a new server enter the server endpoint settings below:"),
-        @I18NMessage(locale = "de", value = "Geben Sie den Serverendpunkt unten ein, wenn Sie eine Neuinstallation durchführen:") })
+    @I18NMessage(locale = "en", value = "If installing a new server enter the server endpoint settings below:")
     String INSTALL_SETTINGS_NOTE_2 = "installSettingsNote2";
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Server Settings configure the server for this installation. All server settings are required."),
-        @I18NMessage(locale = "de", value = "Diese Servereinstellungen konfigurieren den Server für diese Installation. Alle Einstellungen werden benötigt.") })
+    @I18NMessage(locale = "en", value = "Server Settings configure the server for this installation. All server settings are required.")
     String SERVER_SETTINGS_INSTRUCTIONS = "serverSettingsInstructions";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Install Server!"),
-        @I18NMessage(locale = "de", value = "Server installieren!"),
-        @I18NMessage(locale = "fr", value = "Installez ${product.shortName} Server!")})
+    @I18NMessage(locale = "en", value = "Install Server!")
     String SAVE = "save";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Yes"), @I18NMessage(locale = "de", value = "Ja"), @I18NMessage(locale = "fr", value = "Oui") })
+    @I18NMessage(locale = "en", value = "Yes")
     String YES_STRING = "yesString";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "No"), @I18NMessage(locale = "de", value = "Nein"), @I18NMessage(locale = "fr", value = "Non") })
+    @I18NMessage(locale = "en", value = "No")
     String NO_STRING = "noString";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Property Name"),
-        @I18NMessage(locale = "de", value = "Eigenschaft") ,
-        @I18NMessage(locale = "fr", value = "Propriété")    })
+    @I18NMessage(locale = "en", value = "Property Name")
     String PROPERTY_NAME = "propertyName";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Value"), @I18NMessage(locale = "de", value = "Wert"), @I18NMessage(locale = "fr", value = "Valeur") })
+    @I18NMessage(locale = "en", value = "Value")
     String VALUE = "value";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Requires Restart?"),
-        @I18NMessage(locale = "de", value = "Neustart erforderlich?"),
-        @I18NMessage(locale = "fr", value = "Redémarrage nécessaire?")})
+    @I18NMessage(locale = "en", value = "Requires Restart?")
     String REQUIRES_RESTART = "requiresRestart";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Welcome to ${product.shortName}!"),
-        @I18NMessage(locale = "de", value = "Willkommen bei ${product.shortName}!"),
-        @I18NMessage(locale = "fr", value = "Bienvenue sur ${product.shortName}!")})
+    @I18NMessage(locale = "en", value = "Welcome to ${product.shortName}!")
     String WELCOME_TITLE = "welcomeTitle";
 
-    @I18NMessages( {
         @I18NMessage(locale = "en", value = "You have reached the ${product.shortName} Installer. Use this page \\n\\\n"
             + "to install and configure the ${product.shortName} Server. \\n\\\n"
-            + "Once complete you will be able to log on and use ${product.shortName}."),
-        @I18NMessage(locale = "de", value = "Willkommen beim Installationsprogramm von ${product.shortName}. Mit diesem können Sie \\n\\\n"
-            + "${product.shortName} installieren und konfigurieren. \\n\\\n"
-            + "Nachdem dies geschehen ist, können Sie sich einloggen und mit ${product.shortName} arbeiten"),
-        @I18NMessage(locale = "fr", value = "Voici le programme d'installation de ${product.shortName}. Vous allez utiliser cette page \\n\\\n"
-             + "pour compléter l'installation et configurer ${product.shortName} Server. \\n\\\n"
-             + "Une fois complétée, vous pourrez vous identifier et commencer à utiliser ${product.shortName}") })
+            + "Once complete you will be able to log on and use ${product.shortName}.")
     String WELCOME_MESSAGE = "welcomeMessage";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Starting up, please wait..."),
-        @I18NMessage(locale = "de", value = "Bitte warten Sie bis der Server gestartet ist"),
-        @I18NMessage(locale = "fr", value = "Démarrage, veuillez patienter...")})
+    @I18NMessage(locale = "en", value = "Starting up, please wait...")
     String STARTING = "starting";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.shortName} will be installed!"),
-        @I18NMessage(locale = "de", value = "${product.shortName} wird installiert"),
-        @I18NMessage(locale = "fr", value = "${product.shortName} sera installé")})
+    @I18NMessage(locale = "en", value = "${product.shortName} will be installed!")
     String ALREADY_INSTALLED = "alreadyInstalled";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Done! Click here to get started!"),
-        @I18NMessage(locale = "de", value = "Fertig! Klicken Sie hier, um fortzufahren!"),
-        @I18NMessage(locale = "fr", value = "Terminé! Cliquez ici pour commencer!")})
+    @I18NMessage(locale = "en", value = "Done! Click here to get started!")
     String ALREADY_INSTALLED_STARTED_LINK = "alreadyInstalledStartedLink";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Click here to continue the installation"),
-        @I18NMessage(locale = "de", value = "Klicken Sie hier, um mit der Installation fortzufahren"),
-        @I18NMessage(locale = "fr", value = "Cliquez ici pour continuer l'installation")})
+    @I18NMessage(locale = "en", value = "Click here to continue the installation")
     String START_INSTALLING_LINK = "startInstallingLink";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Back to configuration page"),
-        @I18NMessage(locale = "de", value = "Zurück zur Seite mit den Einstellungen") ,
-        @I18NMessage(locale = "fr", value = "Retour à la page de configuration")})
+    @I18NMessage(locale = "en", value = "Back to configuration page")
     String BACK_TO_SETTINGS_LINK = "backToSettingsLink";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Show Advanced Settings"),
-        @I18NMessage(locale = "de", value = "Erweiterte Einstellungen anzeigen"),
-        @I18NMessage(locale = "fr", value = "Montrer les options avancées")})
+    @I18NMessage(locale = "en", value = "Show Advanced Settings")
     String SHOW_ADVANCED_SETTINGS = "showAdvancedSettings";
 
     // Below are the localized names of all the properties that can be configured
     // The _HELP I18NMessage strings refer to links under HELP_DOC_RHQ_SERVER_PROP_PARENT_PAGE
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Database Type"),
-        @I18NMessage(locale = "de", value = "Datenbanktyp"),
-        @I18NMessage(locale = "fr", value = "Type de Base de Données") })
+    @I18NMessage(locale = "en", value = "Database Type")
     String PROP_DATABASE_TYPE = "propertyDatabaseType";
     @I18NMessage("-DatabaseType")
     String PROP_DATABASE_TYPE_HELP = "propertyDatabaseTypeHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Database Connection URL"),
-        @I18NMessage(locale = "de", value = "URL der Datenbankverbindung"),
-        @I18NMessage(locale = "fr", value = "URL de connexion à la base de données") })
+    @I18NMessage(locale = "en", value = "Database Connection URL")
     String PROP_DATABASE_CONNECTION_URL = "propertyDatabaseConnectionUrl";
     @I18NMessage("-DatabaseConnectionURL")
     String PROP_DATABASE_CONNECTION_URL_HELP = "propertyDatabaseConnectionUrlHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Database JDBC Driver Class"),
-        @I18NMessage(locale = "de", value = "Klassnname des JDBC-Datenbanktreibers"),
-        @I18NMessage(locale = "fr", value = "Classe du driver JDBC de la base de données") })
+    @I18NMessage(locale = "en", value = "Database JDBC Driver Class")
     String PROP_DATABASE_DRIVER_CLASS = "propertyDatabaseDriverClass";
     @I18NMessage("-DatabaseJDBCDriverClass")
     String PROP_DATABASE_DRIVER_CLASS_HELP = "propertyDatabaseDriverClassHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Database XA DataSource Class"),
-        @I18NMessage(locale = "de", value = "Klassnname des XA-Datenbanktreibers") })
+    @I18NMessage(locale = "en", value = "Database XA DataSource Class")
     String PROP_DATABASE_XA_DS_CLASS = "propertyDatabaseXADataSourceClass";
     @I18NMessage("-DatabaseXADataSourceClass")
     String PROP_DATABASE_XA_DS_CLASS_HELP = "propertyDatabaseXADataSourceClassHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Database User Name"),
-        @I18NMessage(locale = "de", value = "Name des Datenbankbenutzers"),
-        @I18NMessage(locale = "fr", value = "Nom d'utilisateur de la base de données") })
+    @I18NMessage(locale = "en", value = "Database User Name")
     String PROP_DATABASE_USERNAME = "propertyDatabaseUserName";
     @I18NMessage("-DatabaseUserName")
     String PROP_DATABASE_USERNAME_HELP = "propertyDatabaseUserNameHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Database Password"),
-        @I18NMessage(locale = "de", value = "Password des Datenbankbenutzers"),
-        @I18NMessage(locale = "fr", value = "Mot de passe de la base de données") })
+    @I18NMessage(locale = "en", value = "Database Password")
     String PROP_DATABASE_PASSWORD = "propertyDatabasePassword";
     @I18NMessage("-DatabasePassword")
     String PROP_DATABASE_PASSWORD_HELP = "propertyDatabasePasswordHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Bind Address"),
-        @I18NMessage(locale = "de", value = "IP-Adresse an die der Sever sich binden soll"),
-        @I18NMessage(locale = "fr", value = "Adresse IP à laquelle le serveur doit se lier") })
+    @I18NMessage(locale = "en", value = "Server Bind Address")
     String PROP_SERVER_BIND_ADDRESS = "propertyBindAddress";
     @I18NMessage("-ServerBindAddress")
     String PROP_SERVER_BIND_ADDRESS_HELP = "propertyBindAddressHelp";
@@ -344,8 +236,7 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("-HTTPPort")
     String PROP_HTTP_PORT_HELP = "propertyHttpPortHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Secure HTTPS Port"),
-        @I18NMessage(locale = "de", value = "HTTPS Port"), @I18NMessage(locale = "fr", value = "Port HTTPS Sécurisé") })
+    @I18NMessage(locale = "en", value = "Secure HTTPS Port")
     String PROP_HTTPS_PORT = "propertyHttpsPort";
     @I18NMessage("-SecureHTTPSPort")
     String PROP_HTTPS_PORT_HELP = "propertyHttpsPortHelp";
@@ -600,16 +491,12 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("-OutgoingServerAuthenticationModeEnabled")
     String PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED_HELP = "propertySecurityClientServerAuthModeEnabledHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Enabled"),
-        @I18NMessage(locale = "de", value = "Eingebetteten Agent verwenden"),
-        @I18NMessage(locale = "fr", value = "Activer l'Agent embarqué")})
+    @I18NMessage(locale = "en", value = "Embedded Agent Enabled")
     String PROP_EMBEDDED_RHQ_AGENT_ENABLED = "propertyEmbeddedRHQAgentEnabled";
     @I18NMessage("-EmbeddedRHQAgentEnabled")
     String PROP_EMBEDDED_RHQ_AGENT_ENABLED_HELP = "propertyEmbeddedRHQAgentEnabledHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Name"),
-        @I18NMessage(locale = "de", value = "Name des eingebetteten Agent"),
-        @I18NMessage(locale = "fr", value = "Nom du Agent embarqué")})
+    @I18NMessage(locale = "en", value = "Embedded Agent Name")
     String PROP_EMBEDDED_RHQ_AGENT_NAME = "propertyEmbeddedRHQAgentName";
     @I18NMessage("-EmbeddedRHQAgentName")
     String PROP_EMBEDDED_RHQ_AGENT_NAME_HELP = "propertyEmbeddedRHQAgentNameHelp";
@@ -624,8 +511,7 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("-EmbeddedRHQAgentResetConfiguration")
     String PROP_EMBEDDED_RHQ_AGENT_RESET_CONFIGURATION_HELP = "propertyEmbeddedRHQAgentResetConfigurationHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Email SMTP Hostname"),
-        @I18NMessage(locale = "de", value = "Hostname des SMTP Servers") })
+    @I18NMessage(locale = "en", value = "Email SMTP Hostname")
     String PROP_EMAIL_SMTP_HOST = "propertyEmailSmtpHost";
     @I18NMessage("-EmailSMTPHostname")
     String PROP_EMAIL_SMTP_HOST_HELP = "propertyEmailSmtpHostHelp";
@@ -635,9 +521,7 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("-EmailSMTPPort")
     String PROP_EMAIL_SMTP_PORT_HELP = "propertyEmailSmtpPortHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Email From Address"),
-        @I18NMessage(locale = "de", value = "E-Mail Absenderadresse"),
-        @I18NMessage(locale = "fr", value = "E-Mail de l'expéditeur") })
+    @I18NMessage(locale = "en", value = "Email From Address")
     String PROP_EMAIL_FROM_ADDRESS = "propertyEmailFromAddress";
     @I18NMessage("-EmailFromAddress")
     String PROP_EMAIL_FROM_ADDRESS_HELP = "propertyEmailFromAddressHelp";
@@ -759,45 +643,32 @@ public interface InstallerI18NResourceKeys {
 
     // Help Documentation - links to the wiki
 
-    @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Please review the documentation linked below to learn more about ${product.shortName}:"),
-        @I18NMessage(locale = "de", value = "Die unten aufgeführten Links enthalten weitere Informationen zu ${product.shortName}:"),
-        @I18NMessage(locale = "fr", value = "Veuillez consulter la documentation ci-dessous pour en apprendre plus sur ${product.shortName}:")})
+    @I18NMessage(locale = "en", value = "Please review the documentation linked below to learn more about ${product.shortName}:")
     String INTRODUCE_HELP_DOCS = "introduceHelpDocs";
 
     @I18NMessage("${product.help.installation}")
     String HELP_DOC_RHQ_SERVER_INSTALL_GUIDE = "helpDocRHQServerInstallGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.shortName} Server Installation Guide"),
-        @I18NMessage(locale = "de", value = "${product.shortName} Server Installationsanleitung"),
-        @I18NMessage(locale = "fr", value = "Guide d'installation de ${product.shortName} Server")})
+    @I18NMessage(locale = "en", value = "${product.shortName} Server Installation Guide")
     String HELP_DOC_RHQ_SERVER_INSTALL_GUIDE_LABEL = "helpDocRHQServerInstallGuideLabel";
 
     @I18NMessage("GUI+Console+Users+Guide")
     String HELP_DOC_RHQ_GUI_CONSOLE_USERS_GUIDE = "helpDocRHQGuiConsoleUsersGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.shortName} GUI Console Users Guide"),
-        @I18NMessage(locale = "de", value = "Benutzerhandbuch ${product.shortName} GUI"),
-        @I18NMessage(locale = "fr", value = "Guide d'utilisation de la ${product.shortName} GUI Console")})
+    @I18NMessage(locale = "en", value = "${product.shortName} GUI Console Users Guide")
     String HELP_DOC_RHQ_GUI_CONSOLE_USERS_GUIDE_LABEL = "helpDocRHQGuiConsoleUsersGuideLabel";
 
     @I18NMessage("${product.help.guide.server}")
     String HELP_DOC_RHQ_SERVER_USERS_GUIDE = "helpDocRHQServerUsersGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.shortName} Server Users Guide"),
-        @I18NMessage(locale = "de", value = "Benutzerhandbuch ${product.shortName} Server"),
-        @I18NMessage(locale = "fr", value = "Guide d'utilisation de ${product.shortName} Server")})
+    @I18NMessage(locale = "en", value = "${product.shortName} Server Users Guide")
     String HELP_DOC_RHQ_SERVER_USERS_GUIDE_LABEL = "helpDocRHQServerUsersGuideLabel";
 
     @I18NMessage("${product.help.guide.agent}")
     String HELP_DOC_RHQ_AGENT_USERS_GUIDE = "helpDocRHQAgentUsersGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.shortName} Agent Users Guide"),
-        @I18NMessage(locale = "de", value = "Benutzerhandbuch ${product.shortName} Agent"),
-        @I18NMessage(locale = "fr", value = "Guide d'utilisation de ${product.shortName} Agent")})
+    @I18NMessage(locale = "en", value = "${product.shortName} Agent Users Guide")
     String HELP_DOC_RHQ_AGENT_USERS_GUIDE_LABEL = "helpDocRHQAgentUsersGuideLabel";
 
     @I18NMessage("${product.help.FAQ}")
     String HELP_DOC_FAQ = "helpDocFaq";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Frequently Asked Questions"),
-        @I18NMessage(locale = "de", value = "Häufig gestellte Fragen"),
-        @I18NMessage(locale = "fr", value = "Foire Aux Questions") })
+    @I18NMessage(locale = "en", value = "Frequently Asked Questions")
     String HELP_DOC_FAQ_LABEL = "helpDocFaqLabel";
 
     // the page that contains all the config props help text
@@ -805,31 +676,25 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("${product.help.config.props}")
     String HELP_DOC_RHQ_SERVER_PROP_PARENT_PAGE = "helpDocRHQServerPropParentPage";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "New Server"),
-        @I18NMessage(locale = "de", value = "Neuer Server") })
+    @I18NMessage(locale = "en", value = "New Server")
     String NEW_SERVER_SELECT_ITEM = "newServerSelectItem";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Registered Servers:"),
-        @I18NMessage(locale = "de", value = "Registrierte Server:") })
+    @I18NMessage(locale = "en", value = "Registered Servers:")
     String REGISTERED_SERVERS_LABEL = "registeredServersLabel";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Name"),
-        @I18NMessage(locale = "de", value = "Servername") })
+    @I18NMessage(locale = "en", value = "Server Name")
     String PROP_HIGH_AVAILABILITY_NAME = "propertyHighAvailabilityName";
     @I18NMessage("-ServerName")
     String PROP_HIGH_AVAILABILITY_NAME_HELP = "propertyHighAvailabilityNameHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Maintenance Mode At Start"),
-        @I18NMessage(locale = "de", value = "Maintenance Mode At Start") })
+    @I18NMessage(locale = "en", value = "Maintenance Mode At Start")
     String PROP_MM_AT_START = "propertyMaintenanceModeAtStart";
     @I18NMessage("-MaintenanceModeAtStart")
     String PROP_MM_AT_START_HELP = "propertyMaintenanceModeAtStartHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Public Address"),
-        @I18NMessage(locale = "de", value = "HA-Endpunkt-Adresse des Servers") })
+    @I18NMessage(locale = "en", value = "Server Public Address")
     String PROP_HIGH_AVAILABILITY_ENDPOINT_ADDRESS = "propertyHighAvailabilityEndpointAddress";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Affinity Group Name"),
-        @I18NMessage(locale = "de", value = "Name der zugehörigen Servergruppe") })
+    @I18NMessage(locale = "en", value = "Server Affinity Group Name")
     String PROP_HIGH_AVAILABILITY_AFFINITY_GROUP = "propertyHighAvailabilityAffinityGroup";
 }

@@ -22,6 +22,8 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
@@ -39,6 +41,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -50,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.search.suggest.SuggestTextBox_v3;
 /**
  * @author Joseph Marques
  */
-public class SearchBar {
+public class SearchBar extends SimplePanel {
 
     public String welcomeMessage;
 
@@ -178,16 +181,16 @@ public class SearchBar {
 
     private void setupAutoCompletingPatternField() {
         autoCompletePatternField.getElement().setId("patternField");
-        autoCompletePatternField.addStyleName("patternField");
+        autoCompletePatternField.setStyleName("patternField");
 
         AutoCompletePatternFieldEventHandler handler = new AutoCompletePatternFieldEventHandler();
-        autoCompletePatternField.getTextBox().addClickHandler(handler);
+        autoCompletePatternField.getTextBox().addFocusHandler(handler);
         autoCompletePatternField.getTextBox().addBlurHandler(handler);
         autoCompletePatternField.addKeyPressHandler(handler);
     }
 
     private void setupPatternNameField() {
-        patternNameField.addStyleName("patternNameField");
+        patternNameField.setStyleName("patternNameField");
         patternNameField.setVisible(false);
 
         PatternNameFieldEventHandler handler = new PatternNameFieldEventHandler();
@@ -197,7 +200,7 @@ public class SearchBar {
     }
 
     private void setupPatternNameLabel() {
-        patternNameLabel.addStyleName("patternNameLabel");
+        patternNameLabel.setStyleName("patternNameLabel");
         patternNameLabel.setVisible(false);
 
         PatternNameLabelEventHandler handler = new PatternNameLabelEventHandler();
@@ -218,8 +221,7 @@ public class SearchBar {
 
     private void setupSavedSearches() {
         savedSearchesPanel.add(savedSearches);
-        savedSearchesPanel.removeStyleName("gwt-PopupPanel");
-        savedSearchesPanel.addStyleName("savedSearchesPanel");
+        savedSearchesPanel.setStyleName("savedSearchesPanel");
         savedSearches.addStyleName("savedSearchesPanel");
 
         // panel position will be re-calculated on down-arrow click
@@ -277,7 +279,7 @@ public class SearchBar {
     /*
      * Event Handlers
      */
-    class AutoCompletePatternFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
+    class AutoCompletePatternFieldEventHandler implements KeyPressHandler, FocusHandler, BlurHandler {
         @Override
         public void onKeyPress(KeyPressEvent event) {
             // hide pattern field/label, turn off star
@@ -300,7 +302,7 @@ public class SearchBar {
         }
 
         @Override
-        public void onClick(ClickEvent event) {
+        public void onFocus(FocusEvent event) {
             // clear default search text if necessary
             if (autoCompletePatternField.getText().equals(welcomeMessage)) {
                 autoCompletePatternField.setValue("", true);

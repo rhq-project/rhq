@@ -33,7 +33,7 @@
   <c:when test="${not empty problemResources}">   
     <display:table cellspacing="0" cellpadding="0" width="100%" action="/Dashboard.do"
                    var="obj" items="${problemResources}" >
-       <display:column width="20%" title="dash.home.TableHeader.ResourceName">
+       <display:column width="20%" title="dash.home.TableHeader.Resource">
          <display:disambiguatedResourceNameDecorator resourceName="${obj.original.resourceName}" resourceId="${obj.original.resourceId}" disambiguationReport="${obj}"/>
        </display:column>
        <display:column width="20%" title="dash.home.TableHeader.Location">

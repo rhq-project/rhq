@@ -46,7 +46,7 @@
             <c:otherwise>
               <c:if test="${!empty lastCompletedResource}">
               <tr>
-                <td width="25%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.ResourceName"/></td>
+                <td width="25%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.Resource"/></td>
                 <td width="20%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.Location"/></td>
                 <td width="15%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.ControlAction"/></td>
                 <td width="20%" class="ListHeaderInactiveSorted"><fmt:message key="dash.home.TableHeader.DateTime"/><html:img page="/images/tb_sortdown_inactive.gif" width="9" height="9" border="0"/></td>
@@ -139,7 +139,7 @@
             <c:otherwise>              
               <c:if test="${!empty nextScheduledResource}">
                 <tr>
-                  <td width="20%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.ResourceName"/></td>
+                  <td width="20%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.Resource"/></td>
                   <td width="35%" class="ListHeaderInactive" colspan="2"><fmt:message key="dash.home.TableHeader.Location"/></td>
                   <td width="15%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.ControlAction"/></td>
                   <td width="15%" class="ListHeaderInactiveSorted"><fmt:message key="dash.home.TableHeader.DateTime"/><html:img page="/images/tb_sortdown_inactive.gif" width="9" height="9" border="0"/></td>

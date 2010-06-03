@@ -27,7 +27,7 @@
   <c:when test="${not empty resourceHealth}">    
    <display:table cellspacing="0" cellpadding="0" width="100%" action="/Dashboard.do"
                    var="item" items="${resourceHealth}" >
-        <display:column width="25%" sortAttr="res.name" title="dash.home.TableHeader.ResourceName">
+        <display:column width="25%" sortAttr="res.name" title="dash.home.TableHeader.Resource">
           <display:disambiguatedResourceNameDecorator resourceName="${item.original.name}" disambiguationReport="${item}" resourceId="${item.original.id}"/>
         </display:column>
         <display:column width="25%" title="dash.home.TableHeader.Location">

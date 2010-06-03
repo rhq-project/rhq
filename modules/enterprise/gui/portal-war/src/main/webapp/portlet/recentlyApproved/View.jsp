@@ -24,7 +24,7 @@
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td width="3%" class="ListHeaderInactive">&nbsp;</td>
-        <td width="37%" class="ListHeaderInactive" align="left"><fmt:message key="dash.home.TableHeader.ResourceName"/></td>
+        <td width="37%" class="ListHeaderInactive" align="left"><fmt:message key="dash.home.TableHeader.Resource"/></td>
         <td width="30%" class="ListHeaderInactive" align="left"><fmt:message key="dash.home.TableHeader.DateTime"/></td>
       </tr>
       <c:forEach items="${recentlyApproved}" var="platform">

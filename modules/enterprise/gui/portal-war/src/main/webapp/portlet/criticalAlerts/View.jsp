@@ -34,7 +34,7 @@
   <c:when test="${not empty criticalAlerts}">  
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td width="20%" class="ListHeaderInactiveSorted"><fmt:message key="dash.home.TableHeader.ResourceName"/><html:img page="/images/tb_sortup_inactive.gif" width="9" height="9" border="0"/></td>
+        <td width="20%" class="ListHeaderInactiveSorted"><fmt:message key="dash.home.TableHeader.Resource"/><html:img page="/images/tb_sortup_inactive.gif" width="9" height="9" border="0"/></td>
         <td width="20%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.Location"/></td>
         <td width="20%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.AlertName"/></td>
         <td width="20%" class="ListHeaderInactiveCenter"><fmt:message key="dash.home.TableHeader.DateTime"/></td>

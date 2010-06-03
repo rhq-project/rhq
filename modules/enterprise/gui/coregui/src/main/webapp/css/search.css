@@ -39,7 +39,8 @@ div {
   white-space: nowrap;
   text-align: center;
   border-style: none;
-  font-size: 
+  font-size: 11px;
+  width: 125px;
 }
 
 .patternNameField {
@@ -167,11 +168,6 @@ div {
   bottom: 1px;
 }
 
-.x-grid3-row-over {
-  background-color: rgb(245, 245, 245);
-  color: white;
-}
-
 
 /* 
  *
@@ -216,9 +212,8 @@ div {
 
 
 /*
- *
  * Rounded Corners
- *
+ * http://articles.sitepoint.com/article/rounded-corners-css-javascript
  */
  
 div.rounded {
@@ -229,13 +224,13 @@ div.rounded2 {
   background: rgb(192, 236, 207) url(/coregui/images/search/corner-upper-right-8.png) no-repeat top right;
 }
 div.rounded2 div {
-  background: url(/coregui/images/search/corner-upper-left-8.png) no-repeat top left;
+  background: transparent url(/coregui/images/search/corner-upper-left-8.png) no-repeat top left;
 }
 div.rounded2 div div {
-  background: url(/coregui/images/search/corner-lower-right-8.png) no-repeat bottom right;
+  background: transparent url(/coregui/images/search/corner-lower-right-8.png) no-repeat bottom right;
 }
 div.rounded2 div div div {
-  background: url(/coregui/images/search/corner-lower-left-8.png) no-repeat bottom left;
+  background: transparent url(/coregui/images/search/corner-lower-left-8.png) no-repeat bottom left;
 }
 
 div.rounded2 div div div div {

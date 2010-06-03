@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -29,7 +31,6 @@
     <seam.version>2.1.0.SP1</seam.version>
     <jboss-el.version>1.0_02.CR5</jboss-el.version>
     <richfaces.version>3.3.2.SR1</richfaces.version>
-    <rhq.version>3.0.0.Beta0</rhq.version>
   </properties>
 
   <dependencyManagement>
@@ -109,7 +110,7 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-gui</artifactId>
-         <version>${rhq.version}</version>
+         <version>${project.version}</version>
       </dependency>
 
     </dependencies>
@@ -192,7 +193,6 @@
           <version>2.1.1</version>
       </dependency>
 
-
   </dependencies>
 
   <repositories>
@@ -208,3 +208,4 @@
   </repositories>
 
 </project>
+

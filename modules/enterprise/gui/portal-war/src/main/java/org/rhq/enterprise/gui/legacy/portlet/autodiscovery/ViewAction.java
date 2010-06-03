@@ -38,7 +38,9 @@ import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -47,6 +49,8 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -56,14 +60,22 @@ public class ViewAction extends TilesAction {
 
     private static final Log log = LogFactory.getLog(ViewAction.class);
 
+    private static final IntExtractor<Resource> RESOURCE_ID_EXTRACTOR = new IntExtractor<Resource>() {
+        public int extract(Resource object) {
+            return object.getId();
+        }
+    };
+    
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        Map<Resource, List<Resource>> queuedResources = new HashMap<Resource, List<Resource>>();
+        Map<DisambiguationReport<Resource>, List<DisambiguationReport<Resource>>> queuedResources = new HashMap<DisambiguationReport<Resource>, List<DisambiguationReport<Resource>>>();
 
         try {
             DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+            
             WebUser user = SessionUtils.getWebUser(request.getSession());
             if (user == null) {
                 // session timed out, return prematurely
@@ -88,7 +100,7 @@ public class ViewAction extends TilesAction {
             }
 
             try {
-                queuedResources = discoveryBoss.getQueuedPlatformsAndServers(subject, pageControl);
+                queuedResources = disambiguateQueuedResources(discoveryBoss.getQueuedPlatformsAndServers(subject, pageControl), resourceManager);
 
                 // If the queue is empty, check to see if there are ANY agents defined in inventory.
                 if (queuedResources.isEmpty()) {
@@ -97,19 +109,19 @@ public class ViewAction extends TilesAction {
                 }
             } catch (PermissionException pe) {
                 // user doesn't have permissions to see or import anything, just show an empty list
-                queuedResources = new HashMap<Resource, List<Resource>>();
+                queuedResources = new HashMap<DisambiguationReport<Resource>, List<DisambiguationReport<Resource>>>();
             }
 
             // as a convienence, check every box for the user
             List<Integer> platformsToProcess = new ArrayList<Integer>(queuedResources.size());
             List<Integer> serversToProcess = new ArrayList<Integer>();
-            for (Resource platform : queuedResources.keySet()) {
-                platformsToProcess.add(platform.getId());
+            for (DisambiguationReport<Resource> platform : queuedResources.keySet()) {
+                platformsToProcess.add(platform.getOriginal().getId());
 
                 // Add all top-level servers on this platform
-                List<Resource> servers1 = queuedResources.get(platform);
-                for (Resource server : servers1) {
-                    serversToProcess.add(server.getId());
+                List<DisambiguationReport<Resource>> servers1 = queuedResources.get(platform);
+                for (DisambiguationReport<Resource> server : servers1) {
+                    serversToProcess.add(server.getOriginal().getId());
                 }
             }
 
@@ -159,5 +171,22 @@ public class ViewAction extends TilesAction {
         }
 
         return null;
+    }
+    
+    private static Map<DisambiguationReport<Resource>, List<DisambiguationReport<Resource>>> disambiguateQueuedResources(Map<Resource, List<Resource>> queuedResources, ResourceManagerLocal resourceManager) {
+        Map<DisambiguationReport<Resource>, List<DisambiguationReport<Resource>>> ret = new HashMap<DisambiguationReport<Resource>, List<DisambiguationReport<Resource>>>();
+        
+        //first disambiguate the platforms
+        List<Resource> platforms = new ArrayList<Resource>(queuedResources.keySet());
+        List<DisambiguationReport<Resource>> disambiguatedPlatforms = resourceManager.disambiguate(platforms, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
+        
+        for (DisambiguationReport<Resource> platform : disambiguatedPlatforms) {
+            List<Resource> servers = queuedResources.get(platform.getOriginal());
+            List<DisambiguationReport<Resource>> disambiguatedServers = resourceManager.disambiguate(servers, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
+
+            ret.put(platform, disambiguatedServers);
+        }
+        
+        return ret;
     }
 }

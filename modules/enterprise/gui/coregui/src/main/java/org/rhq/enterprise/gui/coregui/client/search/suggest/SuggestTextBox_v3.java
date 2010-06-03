@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.List;
 
 import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.event.dom.client.HasAllFocusHandlers;
@@ -69,7 +71,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     private final SearchSuggestOracle oracle;
 
     private int limit = 20;
-    private String currentText;
+    private int currentCursorPosition = 0;
     private final SuggestionMenu suggestionMenu;
     private final PopupPanel suggestionPopup;
     private final TextBoxBase box;
@@ -124,7 +126,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
         @Override
         public void execute() {
-            complete(suggestion, box.getCursorPos());
+            complete(suggestion, currentCursorPosition);
         }
     }
 
@@ -188,7 +190,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     }
 
     private void addEventsToTextBox() {
-        class TextBoxEvents extends HandlesAllKeyEvents implements ValueChangeHandler<String> {
+        class TextBoxEvents extends HandlesAllKeyEvents implements ValueChangeHandler<String>, ClickHandler {
 
             private boolean isInstructionalCommentSelected() {
                 SearchSuggestion searchSuggestion = suggestionMenu.getSearchSuggestion();
@@ -196,9 +198,15 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                 return kind == Kind.InstructionalTextComment;
             }
 
+            public void onClick(ClickEvent event) {
+                handleSuggestions();
+            }
+
             public void onKeyDown(KeyDownEvent event) {
-                // Make sure that the menu is actually showing. These keystrokes
-                // are only relevant when choosing a suggestion.
+                /* 
+                 * Make sure that the menu is actually showing.  These
+                 * keystrokes are only relevant when choosing a suggestion.
+                 */
                 if (suggestionPopup.isAttached()) {
                     switch (event.getNativeKeyCode()) {
                     case KeyCodes.KEY_DOWN:
@@ -240,30 +248,31 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             }
 
             public void onKeyUp(KeyUpEvent event) {
-                // After every user key input, refresh the popup's suggestions.
-                refreshSuggestions();
+                handleSuggestions();
+
                 delegateEvent(SuggestTextBox_v3.this, event);
             }
 
             public void onValueChange(ValueChangeEvent<String> event) {
                 delegateEvent(SuggestTextBox_v3.this, event);
             }
+
+            private void handleSuggestions() {
+                int nextCursorPosition = getTextBox().getCursorPos();
+                if (nextCursorPosition != -1) {
+                    // refresh suggestions if cursor moved, meaning users want suggestions from a different context
+                    if (currentCursorPosition != nextCursorPosition) {
+                        currentCursorPosition = nextCursorPosition;
+                        showSuggestions();
+                    }
+                }
+            }
         }
 
         TextBoxEvents events = new TextBoxEvents();
         events.addKeyHandlersTo(box);
+        box.addClickHandler(events);
         box.addValueChangeHandler(events);
-    }
-
-    private void refreshSuggestions() {
-        // Get the raw text.
-        String text = box.getText();
-        if (text.equals(currentText)) {
-            return;
-        } else {
-            currentText = text;
-        }
-        showSuggestions(text);
     }
 
     /*
@@ -336,8 +345,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
      */
     public void showSuggestionList() {
         if (isAttached()) {
-            currentText = null;
-            refreshSuggestions();
+            showSuggestions();
         }
     }
 
@@ -358,11 +366,13 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         return isSuggestionListShowing() ? suggestionMenu.getNumItems() : 0;
     }
 
-    void showSuggestions(String query) {
+    void showSuggestions() {
+        String query = box.getText();
+        int cursorPos = currentCursorPosition;
         if (query.length() == 0) {
-            oracle.requestDefaultSuggestions(new Request(null, limit), callback);
+            oracle.requestDefaultSuggestions(new SearchSuggestionRequest(null, cursorPos, limit), callback);
         } else {
-            oracle.requestSuggestions(new Request(query, limit), callback);
+            oracle.requestSuggestions(new SearchSuggestionRequest(query, cursorPos, limit), callback);
         }
     }
 
@@ -568,8 +578,9 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
         @Override
         public void requestSuggestions(final Request request, final Callback callback) {
-            String expression = getText();
-            int caretPosition = box.getCursorPos(); // hack, but it wasn't passed in the request
+            SearchSuggestionRequest suggestionRequest = (SearchSuggestionRequest) request;
+            String expression = suggestionRequest.getQuery();
+            int caretPosition = suggestionRequest.getCursorPosition();
 
             searchService.getSuggestions(searchBar.getSearchSubsystem(), expression, caretPosition,
                 new AsyncCallback<List<SearchSuggestion>>() {
@@ -628,16 +639,29 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
         String before = getText().substring(0, previousWhitespaceIndex);
         String after = getText().substring(futureWhitespaceIndex);
-        setValue(before + completion + after);
-
-        if (currentText.equals(getText().toLowerCase())) {
-            setValue(currentText + completion, true);
-        }
+        setValue(before + completion + after, true);
+        currentCursorPosition = before.length() + completion.length();
+        getTextBox().setCursorPos(currentCursorPosition);
 
         if (searchSuggestion.getKind() == SearchSuggestion.Kind.GlobalSavedSearch
             || searchSuggestion.getKind() == SearchSuggestion.Kind.UserSavedSearch) {
             // execute saved searches immediately, since they presumably constitute complete expressions
             searchBar.activateSavedSearch(searchSuggestion.getLabel());
+        } else {
+            showSuggestions();
+        }
+    }
+
+    class SearchSuggestionRequest extends SuggestOracle.Request {
+        private int cursorPosition;
+
+        public SearchSuggestionRequest(String query, int cursorPosition, int limit) {
+            super(query, limit);
+            this.cursorPosition = cursorPosition;
+        }
+
+        public int getCursorPosition() {
+            return cursorPosition;
         }
     }
 

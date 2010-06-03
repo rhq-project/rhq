@@ -33,6 +33,8 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
+import org.rhq.core.domain.resource.flyweight.MembersAvailabilityHint;
+import org.rhq.core.domain.resource.flyweight.MembersCategoryHint;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.flyweight.ResourceSubCategoryFlyweight;
 import org.rhq.core.domain.resource.flyweight.ResourceTypeFlyweight;
@@ -172,7 +174,12 @@ public class ResourceTreeModelUIBean {
             Map<Object, List<ResourceFlyweight>> children = new HashMap<Object, List<ResourceFlyweight>>();
             log.debug("composite parent" + compositeParent);
             if (compositeParent != null) {
+                
+                MembersCategoryHint membersCategory = MembersCategoryHint.NONE;
+                MembersAvailabilityHint membersAvailabilityHint = MembersAvailabilityHint.UP;
+                
                 for (ResourceFlyweight res : compositeParent.getParentResource().getChildResources()) {
+                    boolean process = false;
                     if (compositeParent.getSubcategory() != null) {
                         // parent is a sub category
                         if (res.getResourceType().getSubCategory() != null
@@ -182,19 +189,55 @@ public class ResourceTreeModelUIBean {
 
                             // A subSubCategory in a subcategory
                             addToList(children, res.getResourceType().getSubCategory(), res);
+                            process = true;
                         } else if (compositeParent.getSubcategory().equals(res.getResourceType().getSubCategory())
                             && compositeParent.getParentResource().equals(res.getParentResource())) {
                             // Direct entries in a subcategory... now group them by autogroup (type)
                             addToList(children, res.getResourceType(), res);
+                            process = true;
                         }
                     } else if (compositeParent.getResourceType() != null) {
                         if (compositeParent.getResourceType().equals(res.getResourceType())
                             && compositeParent.getParentResource().getId() == res.getParentResource().getId()) {
                             
                             addToList(children, res.getResourceType(), res);
+                            process = true;
+                        }
+                    }
+                    
+                    if (process) {
+                        //amend the overall category of all the members of the auto group.                
+                        switch (membersCategory) {
+                        case NONE: //this is the first child, so let's use its category as a starting point
+                            membersCategory = MembersCategoryHint.fromResourceCategory(res.getResourceType().getCategory());
+                            break;
+                        case MIXED: //this is the "final" state. The children type is not going to change from this.
+                            break;
+                        default: //check if this child has the same category as its previous siblings.
+                            if (MembersCategoryHint.fromResourceCategory(res.getResourceType().getCategory()) != membersCategory) {
+                                membersCategory = MembersCategoryHint.MIXED;
+                            }
+                        }
+                        
+                        //amend the availability hint of the autogroup. If all resources are up, the hint is UP, if some of the resources
+                        //are down, the hint is DOWN, if some of the resources' avail state is unknown, the hint is UNKNOWN.
+                        //The down state has the highest priority.
+                        switch (membersAvailabilityHint) {
+                        case UP:
+                            membersAvailabilityHint = MembersAvailabilityHint.fromAvailabilityType(res.getCurrentAvailability().getAvailabilityType());
+                            break;
+                        case UNKNOWN:
+                            if (res.getCurrentAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
+                                membersAvailabilityHint = MembersAvailabilityHint.DOWN;
+                            }
+                            break;
+                        case DOWN:; //a "terminal" state... if some resource is down, the overall state is going to be down as that is the most important information.
                         }
                     }
                 }
+                
+                compositeParent.setMembersCategoryHint(membersCategory);
+                compositeParent.setMembersAvailabilityHint(membersAvailabilityHint);
             }
 
             AutoGroupCompositeFlyweight compositeParentNode = (AutoGroupCompositeFlyweight) parentNode.getData();

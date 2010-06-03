@@ -338,7 +338,6 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
             </html:select>
             
           </td>
-          <td><html:img page="/images/spacer.gif" width="5" height="30" border="0"/></td>
         </tr>
       </table>
     </td>
@@ -364,20 +363,25 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
 	<display:table cellpadding="0" cellspacing="0" border="0" width="100%"
 	               action="${selfPaAction}"
 	               items="${AvailableResources}" 
-	               var="resource"
+	               var="item"
 	               padRows="true" 
-	               rightSidebar="true"   
+                   rightSidebar="true"
                    styleId="fromTable" 
                    postfix="a" >
-          <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"fromToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
+          <display:column width="1%" property="original.id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"fromToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
             <display:checkboxdecorator name="availableResources" onclick="ToggleSelection(this, widgetProperties)" styleClass="availableListMember"/>
           </display:column>
-          <display:column property="name" title="common.header.ResourceName" 
-                          width="40%" 
-                          sortAttr="res.name" />
-          <display:column property="description" title="common.header.Description" 
-                          width="59%" 
-                          sortAttr="res.resourceType.description" />
+          <display:column title="common.header.ResourceName" 
+                          width="49%" 
+                          sortAttr="res.name">
+                          
+            <display:disambiguatedResourceNameDecorator resourceName="${item.original.name}" disambiguationReport="${item}" nameAsLink="false"/>
+          </display:column>
+          <display:column title="resource.group.inventory.ParentTH" 
+                          width="50%">
+            <display:disambiguatedResourceLineageDecorator parents="${item.parents}" renderLinks="false" />
+          </display:column>                
+
         </display:table>
       </div>
       <!--  /  -->
@@ -411,20 +415,23 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
         <display:table cellpadding="0" cellspacing="0" border="0" width="100%"
                        action="${selfPpAction}"
                        items="${PendingResources}" 
-                       var="resource"
+                       var="item"
                        padRows="true" 
                        leftSidebar="true"   
                        styleId="toTable" 
                        postfix="p" >
-          <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"toToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
+          <display:column width="1%" property="original.id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"toToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
             <display:checkboxdecorator name="pendingResources" onclick="ToggleSelection(this, widgetProperties)" styleClass="pendingListMember"/>
           </display:column>
-          <display:column property="name" title="common.header.ResourceName" 
-                          width="40%" 
-                          sortAttr="res.name" />
-          <display:column property="description" title="common.header.Description" 
-                          width="59%" 
-                          sortAttr="res.resourceType.description" />
+          <display:column title="common.header.ResourceName" 
+                          width="49%" 
+                          sortAttr="res.name">
+            <display:disambiguatedResourceNameDecorator resourceName="${item.original.name}" disambiguationReport="${item}" nameAsLink="false"/>
+          </display:column>                
+          <display:column title="resource.group.inventory.ParentTH" 
+                          width="50%">
+            <display:disambiguatedResourceLineageDecorator parents="${item.parents}" renderLinks="false" />
+          </display:column>                
         </display:table>
       </div>
       <!--  /  -->

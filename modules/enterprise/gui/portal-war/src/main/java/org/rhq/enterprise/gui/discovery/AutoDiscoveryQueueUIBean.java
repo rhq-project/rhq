@@ -34,14 +34,19 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
@@ -50,8 +55,15 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "AutoDiscoveryQueueUIBean";
 
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-    private Map<Resource, List<Resource>> platformsAndServers = new HashMap<Resource, List<Resource>>();
+    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+    private Map<DisambiguationReport<Resource>, List<DisambiguationReport<Resource>>> platformsAndServers = new HashMap<DisambiguationReport<Resource>, List<DisambiguationReport<Resource>>>();
 
+    private static final IntExtractor<Resource> RESOURCE_ID_EXTRACTOR = new IntExtractor<Resource>() {
+        public int extract(Resource object) {
+            return object.getId();
+        }
+    };
+        
     public AutoDiscoveryQueueUIBean() {
     }
 
@@ -75,7 +87,7 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
         return 10;
     }
 
-    public Map<Resource, List<Resource>> getPlatformsAndServers() {
+    public Map<DisambiguationReport<Resource>, List<DisambiguationReport<Resource>>> getPlatformsAndServers() {
         return platformsAndServers;
     }
 
@@ -95,25 +107,25 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
             Map<Integer, Boolean> selectedResources = getSelectedResources();
 
             // do it one platform at a time so we give each its own transaction
-            List<Resource> platform = new ArrayList<Resource>(1);
+            List<DisambiguationReport<Resource>> platform = new ArrayList<DisambiguationReport<Resource>>(1);
 
             for (Map.Entry<Integer, Boolean> selected : selectedResources.entrySet()) {
                 // if current 'selected' is a platform, import the selected things for that platform
-                Resource resource = findResource(selected.getKey());
+                DisambiguationReport<Resource> resource = findResource(selected.getKey());
                 if ((resource != null) && selected.getValue().booleanValue()
                     && platformsAndServers.containsKey(resource)) {
                     platform.clear();
                     platform.add(resource);
-                    if (resource.getInventoryStatus() == InventoryStatus.NEW) {
+                    if (resource.getOriginal().getInventoryStatus() == InventoryStatus.NEW) {
                         platformCount++;
                     }
 
-                    List<Resource> allServers = platformsAndServers.get(resource);
-                    List<Resource> servers = new ArrayList<Resource>();
-                    for (Resource server : allServers) {
-                        if (selectedResources.containsKey(server.getId())
-                            && selectedResources.get(server.getId()).booleanValue()
-                            && (server.getInventoryStatus() == InventoryStatus.NEW)) {
+                    List<DisambiguationReport<Resource>> allServers = platformsAndServers.get(resource);
+                    List<DisambiguationReport<Resource>> servers = new ArrayList<DisambiguationReport<Resource>>();
+                    for (DisambiguationReport<Resource> server : allServers) {
+                        if (selectedResources.containsKey(server.getOriginal().getId())
+                            && selectedResources.get(server.getOriginal().getId()).booleanValue()
+                            && (server.getOriginal().getInventoryStatus() == InventoryStatus.NEW)) {
                             serverCount++;
                             servers.add(server);
                         }
@@ -121,7 +133,7 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
 
                     log.debug("AIQueue import: platform=" + platform + "| servers=" + servers);
                     // TODO: Why do we update the platform's status even when it was already COMMITTED?? (ips, 07/10/08)
-                    discoveryBoss.updateInventoryStatus(subject, platform, servers, InventoryStatus.COMMITTED);
+                    discoveryBoss.updateInventoryStatus(subject, getOriginals(platform), getOriginals(servers), InventoryStatus.COMMITTED);
                 }
             }
 
@@ -143,27 +155,27 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
 
         try {
             // do it one platform at a time so we give each its own transaction
-            List<Resource> platform = new ArrayList<Resource>(1);
+            List<DisambiguationReport<Resource>> platform = new ArrayList<DisambiguationReport<Resource>>(1);
 
             Map<Integer, Boolean> selectedResources = getSelectedResources();
             for (Map.Entry<Integer, Boolean> selected : selectedResources.entrySet()) {
                 // if current 'selected' is a platform, ignore the selected things for that platform
-                Resource resource = findResource(selected.getKey());
+                DisambiguationReport<Resource> resource = findResource(selected.getKey());
                 if ((resource != null) && selected.getValue().booleanValue()
                     && platformsAndServers.containsKey(resource)) {
-                    List<Resource> allServers = platformsAndServers.get(resource);
-                    List<Resource> servers = new ArrayList<Resource>();
-                    for (Resource server : allServers) {
-                        if (selectedResources.containsKey(server.getId())
-                            && selectedResources.get(server.getId()).booleanValue()
-                            && (server.getInventoryStatus() == InventoryStatus.NEW)) {
+                    List<DisambiguationReport<Resource>> allServers = platformsAndServers.get(resource);
+                    List<DisambiguationReport<Resource>> servers = new ArrayList<DisambiguationReport<Resource>>();
+                    for (DisambiguationReport<Resource> server : allServers) {
+                        if (selectedResources.containsKey(server.getOriginal().getId())
+                            && selectedResources.get(server.getOriginal().getId()).booleanValue()
+                            && (server.getOriginal().getInventoryStatus() == InventoryStatus.NEW)) {
                             serverCount++;
                             servers.add(server);
                         }
                     }
 
                     log.debug("AIQueue ignore: platform=" + platform + "| servers=" + servers);
-                    discoveryBoss.updateInventoryStatus(subject, platform, servers, InventoryStatus.IGNORED);
+                    discoveryBoss.updateInventoryStatus(subject, getOriginals(platform), getOriginals(servers), InventoryStatus.IGNORED);
                 }
             }
 
@@ -184,35 +196,35 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
 
         try {
             // do it one platform at a time so we give each its own transaction
-            List<Resource> platform = new ArrayList<Resource>(1);
+            List<DisambiguationReport<Resource>> platform = new ArrayList<DisambiguationReport<Resource>>(1);
 
             Map<Integer, Boolean> selectedResources = getSelectedResources();
             for (Map.Entry<Integer, Boolean> selected : selectedResources.entrySet()) {
                 // if current 'selected' is a platform, unignore its servers; otherwise, just go on to the next
-                Resource resource = findResource(selected.getKey());
+                DisambiguationReport<Resource> resource = findResource(selected.getKey());
                 if ((resource != null) && selected.getValue().booleanValue()
                     && platformsAndServers.containsKey(resource)) {
-                    if (resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
+                    if (resource.getOriginal().getInventoryStatus() != InventoryStatus.COMMITTED) {
                         FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                            "Cannot un-ignore servers from an uncommitted platform [" + resource.getName()
+                            "Cannot un-ignore servers from an uncommitted platform [" + resource.getOriginal().getName()
                                 + "]. Aborting.");
 
                         break;
                     }
 
-                    List<Resource> allServers = platformsAndServers.get(resource);
-                    List<Resource> servers = new ArrayList<Resource>();
-                    for (Resource server : allServers) {
-                        if (selectedResources.containsKey(server.getId())
-                            && selectedResources.get(server.getId()).booleanValue()
-                            && (server.getInventoryStatus() == InventoryStatus.IGNORED)) {
+                    List<DisambiguationReport<Resource>> allServers = platformsAndServers.get(resource);
+                    List<DisambiguationReport<Resource>> servers = new ArrayList<DisambiguationReport<Resource>>();
+                    for (DisambiguationReport<Resource> server : allServers) {
+                        if (selectedResources.containsKey(server.getOriginal().getId())
+                            && selectedResources.get(server.getOriginal().getId()).booleanValue()
+                            && (server.getOriginal().getInventoryStatus() == InventoryStatus.IGNORED)) {
                             serverCount++;
                             servers.add(server);
                         }
                     }
 
                     log.debug("AIQueue unignore: platform=" + platform + "| servers=" + servers);
-                    discoveryBoss.updateInventoryStatus(subject, platform, servers, InventoryStatus.NEW);
+                    discoveryBoss.updateInventoryStatus(subject, getOriginals(platform), getOriginals(servers), InventoryStatus.NEW);
                 }
             }
 
@@ -235,17 +247,17 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
         return FacesContextUtility.getManagedBean(AutoDiscoverySessionUIBean.class).getExpandedMap();
     }
 
-    private Resource findResource(Integer id) {
-        for (Map.Entry<Resource, List<Resource>> entry : platformsAndServers.entrySet()) {
-            Resource platform = entry.getKey();
-            List<Resource> servers = entry.getValue();
+    private DisambiguationReport<Resource> findResource(Integer id) {
+        for (Map.Entry<DisambiguationReport<Resource>, List<DisambiguationReport<Resource>>> entry : platformsAndServers.entrySet()) {
+            DisambiguationReport<Resource> platform = entry.getKey();
+            List<DisambiguationReport<Resource>> servers = entry.getValue();
 
-            if (platform.getId() == id.intValue()) {
+            if (platform.getOriginal().getId() == id.intValue()) {
                 return platform;
             }
 
-            for (Resource server : servers) {
-                if (server.getId() == id.intValue()) {
+            for (DisambiguationReport<Resource> server : servers) {
+                if (server.getOriginal().getId() == id.intValue()) {
                     return server;
                 }
             }
@@ -269,24 +281,35 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
         return EnumSet.of(InventoryStatus.NEW);
     }
 
-    private class AutoDiscoveryQueueDataModel extends PagedListDataModel<Resource> {
+    private class AutoDiscoveryQueueDataModel extends PagedListDataModel<DisambiguationReport<Resource>> {
         public AutoDiscoveryQueueDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
-        @Override
-        public PageList<Resource> fetchPage(PageControl pc) {
+        public PageList<DisambiguationReport<Resource>> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             EnumSet<InventoryStatus> newIgnoredSet = getShowNewIgnoreEnumSet();
 
             platformsAndServers.clear();
 
             PageList<Resource> queuedPlatforms = discoveryBoss.getQueuedPlatforms(subject, newIgnoredSet, pc);
+            
+            List<DisambiguationReport<Resource>> disambiguatedQueuedPlatforms = 
+                resourceManager.disambiguate(queuedPlatforms,
+                    RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
+            
+            PageList<DisambiguationReport<Resource>> disambiguatedQueuedPlaformsPageList = 
+                new PageList<DisambiguationReport<Resource>>(disambiguatedQueuedPlatforms, queuedPlatforms.getTotalSize(), queuedPlatforms.getPageControl());
 
-            for (Resource platform : queuedPlatforms) {
-                List<Resource> queuedServers = new ArrayList<Resource>();
+            for (DisambiguationReport<Resource> platform : disambiguatedQueuedPlatforms) {
+                List<DisambiguationReport<Resource>> queuedServers = new ArrayList<DisambiguationReport<Resource>>();
                 for (InventoryStatus status : newIgnoredSet) {
-                    queuedServers.addAll(discoveryBoss.getQueuedPlatformChildServers(subject, status, platform));
+                    List<Resource> childServers = discoveryBoss.getQueuedPlatformChildServers(subject, status, platform.getOriginal());
+                    List<DisambiguationReport<Resource>> disambiguatedChildServers = 
+                        resourceManager.disambiguate(childServers, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
+                    
+                    
+                    queuedServers.addAll(disambiguatedChildServers);
                 }
 
                 platformsAndServers.put(platform, queuedServers);
@@ -296,14 +319,23 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
             // Prepare the expandedPlatforms, maintaining prior state for platforms that were already in the map.
             Map<Integer, Boolean> expandedPlatforms = getExpandedPlatforms();
             Map<Integer, Boolean> newExpandedPlatforms = new HashMap<Integer, Boolean>();
-            for (Resource platform : platformsAndServers.keySet()) {
-                Boolean expanded = expandedPlatforms.get(platform.getId());
-                newExpandedPlatforms.put(platform.getId(), (expanded != null) ? expanded : Boolean.FALSE);
+            for (DisambiguationReport<Resource> platform : platformsAndServers.keySet()) {
+                Boolean expanded = expandedPlatforms.get(platform.getOriginal().getId());
+                newExpandedPlatforms.put(platform.getOriginal().getId(), (expanded != null) ? expanded : Boolean.FALSE);
             }
             expandedPlatforms.clear();
             expandedPlatforms.putAll(newExpandedPlatforms);
 
-            return queuedPlatforms;
+            return disambiguatedQueuedPlaformsPageList;
         }
+    }
+    
+    private static <T> List<T> getOriginals(List<DisambiguationReport<T>> reports) {
+        List<T> ret = new ArrayList<T>();
+        for(DisambiguationReport<T> report : reports) {
+            ret.add(report.getOriginal());
+        }
+        
+        return ret;
     }
 }

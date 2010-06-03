@@ -5,6 +5,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
+<%@ taglib uri="/WEB-INF/tld/display.tld" prefix="display" %>
+
 <tiles:importAttribute name="criticalAlerts"/>
 
 <c:url var="rssUrl" value="/rss/ViewCriticalAlerts.rss">
@@ -32,24 +34,28 @@
   <c:when test="${not empty criticalAlerts}">  
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td width="60%" class="ListHeaderInactiveSorted"><fmt:message key="dash.home.TableHeader.ResourceName"/><html:img page="/images/tb_sortup_inactive.gif" width="9" height="9" border="0"/></td>
+        <td width="20%" class="ListHeaderInactiveSorted"><fmt:message key="dash.home.TableHeader.Resource"/><html:img page="/images/tb_sortup_inactive.gif" width="9" height="9" border="0"/></td>
+        <td width="20%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.Location"/></td>
         <td width="20%" class="ListHeaderInactive"><fmt:message key="dash.home.TableHeader.AlertName"/></td>
         <td width="20%" class="ListHeaderInactiveCenter"><fmt:message key="dash.home.TableHeader.DateTime"/></td>
       </tr>
-      <c:forEach items="${criticalAlerts}" var="alert">      
+      <c:forEach items="${criticalAlerts}" var="item">      
       <tr class="ListRow">
-        <td class="ListCell">
          <c:choose> 
-          <c:when test="{alert.resource eq null}">
-            <fmt:message key="dash.home.removed.resource"/>
+          <c:when test="{item.original.alertDefinition.resource eq null}">
+            <td class="ListCell" colspan="2">
+              <fmt:message key="dash.home.removed.resource"/>
+            </td>
           </c:when>
           <c:otherwise>
-            <html:link page="/rhq/resource/summary/overview.xhtml?id=${alert.alertDefinition.resource.id}"><c:out value="${alert.alertDefinition.resource.name}"/>&nbsp;</html:link>
+            <td class="ListCell">
+              <display:disambiguatedResourceName resourceName="${item.original.alertDefinition.resource.name}" disambiguationReport="${item}" resourceId="${item.original.alertDefinition.resource.id}"/>
+            </td>
+            <td class="ListCell"><display:disambiguatedResourceLineage parents="${item.parents}" />&nbsp;</td>
           </c:otherwise>
         </c:choose>
-        </td>
-        <td class="ListCell"><html:link page="/alerts/Alerts.do?mode=viewAlert&id=${alert.alertDefinition.resource.id}&a=${alert.id}"><c:out value="${alert.alertDefinition.name}"/>&nbsp;</html:link></td>
-        <td class="ListCell" align="center"><hq:dateFormatter value="${alert.ctime}"/>&nbsp;</td>
+        <td class="ListCell"><html:link page="/alerts/Alerts.do?mode=viewAlert&id=${item.original.alertDefinition.resource.id}&a=${item.original.id}"><c:out value="${item.original.alertDefinition.name}"/>&nbsp;</html:link></td>
+        <td class="ListCell" align="center"><hq:dateFormatter value="${item.original.ctime}"/>&nbsp;</td>
       </tr>  
       </c:forEach>
     </table>

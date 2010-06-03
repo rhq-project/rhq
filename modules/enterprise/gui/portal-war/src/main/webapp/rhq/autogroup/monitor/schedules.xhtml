@@ -17,7 +17,7 @@
 
 <ui:composition template="/rhq/autogroup/layout/main.xhtml">
 
-<ui:param name="pageTitle" value="#{AutoGroupUIBean.parentResourceName}'.'#{AutoGroupUIBean.childResourceTypeName}' - Metric Schedules"/>
+<ui:param name="pageTitle" value="#{AutoGroupUIBean.parentResource.name}'.'#{AutoGroupUIBean.childResourceType.name}' - Metric Schedules"/>
 <ui:param name="selectedTabName" value="Monitor.Schedules"/>
 
 <ui:define name="content">

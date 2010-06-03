@@ -52,26 +52,18 @@ public class AutoGroupUIBean {
         this.measurementManager = determineMeasurementManager();
     }
 
-    public int getParentResourceId() {
-        return this.parentResource.getId();
-    }
-
-    public String getParentResourceName() {
-        return this.parentResource.getName();
-    }
-
-    public int getChildResourceTypeId() {
-        return this.childResourceType.getId();
-    }
-
-    public String getChildResourceTypeName() {
-        return this.childResourceType.getName();
-    }
-
     public boolean isMeasurementManager() {
         return this.measurementManager;
     }
 
+    public Resource getParentResource() {
+        return parentResource;
+    }
+    
+    public ResourceType getChildResourceType() {
+        return childResourceType;
+    }
+    
     /**
      * To manipulate autogroup schedules the subject must have measurement perms for each of the AG's
      * resources.  There is no simple query for this. Since this is rare and AG size is usually fairly small
@@ -90,8 +82,8 @@ public class AutoGroupUIBean {
             return true;
         }
 
-        List<Resource> resources = LookupUtil.getResourceGroupManager().findResourcesForAutoGroup(this.subject, this.getParentResourceId(),
-            this.getChildResourceTypeId());
+        List<Resource> resources = LookupUtil.getResourceGroupManager().findResourcesForAutoGroup(this.subject, this.getParentResource().getId(),
+            this.getChildResourceType().getId());
         // Note, authManager does offer a single query solution for this but it has limits and is inefficient, for now let's
         // opt for more round trips on the assumption that the AG size is typically small.          
         for (Resource resource : resources) {

@@ -27,9 +27,17 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 
 /**
+ * This class is mostly a copy of {@link AutoGroupComposite} but is linked together
+ * with {@link ResourceFlyweight}, {@link ResourceTypeFlyweight} and {@link ResourceSubCategoryFlyweight} instances as opposed to 
+ * their fully featured counterparts which is  what makes this class flyweight.
+ * <p>
+ * In addition to the {@link AutoGroupComposite}, this class contains some more properties used
+ * in the UI layer.
+ * 
  * @see AutoGroupComposite
  * 
  * @author Lukas Krejci
@@ -46,7 +54,9 @@ public class AutoGroupCompositeFlyweight implements Serializable {
     private boolean mainResource;
     private ResourceFlyweight parentResource;
     private String name;
-
+    private MembersAvailabilityHint membersAvailabilityHint;
+    private MembersCategoryHint membersCategoryHint;
+    
     private List<ResourceFlyweight> resources;
 
     public AutoGroupCompositeFlyweight(AutoGroupCompositeFlyweight other) {
@@ -152,6 +162,22 @@ public class AutoGroupCompositeFlyweight implements Serializable {
 
     public String getName() {
         return name;
+    }
+
+    public MembersAvailabilityHint getMembersAvailabilityHint() {
+        return membersAvailabilityHint;
+    }
+
+    public void setMembersAvailabilityHint(MembersAvailabilityHint membersAvailabilityHint) {
+        this.membersAvailabilityHint = membersAvailabilityHint;
+    }
+
+    public MembersCategoryHint getMembersCategoryHint() {
+        return membersCategoryHint;
+    }
+
+    public void setMembersCategoryHint(MembersCategoryHint membersCategoryHint) {
+        this.membersCategoryHint = membersCategoryHint;
     }
 
     @Override

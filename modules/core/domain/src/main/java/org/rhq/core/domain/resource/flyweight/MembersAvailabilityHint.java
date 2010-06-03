@@ -21,39 +21,48 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.domain.resource.composite;
+package org.rhq.core.domain.resource.flyweight;
 
-import java.io.Serializable;
+import org.rhq.core.domain.measurement.AvailabilityType;
 
 /**
- * A light-weight representation of a resource parent.
+ * Hints about the availability of resources in an {@link AutoGroupCompositeFlyweight}.
  * 
  * @author Lukas Krejci
  */
-public class ResourceParentFlyweight implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-    private int parentId;
-    private String parentName;
+public enum MembersAvailabilityHint {
 
     /**
-     * @param parentId
-     * @param parentName
+     * All member resources are up.
      */
-    public ResourceParentFlyweight(int parentId, String parentName) {
-        this.parentId = parentId;
-        this.parentName = parentName;
-    }
+    UP,
 
-    public int getParentId() {
-        return parentId;
-    }
+    /**
+     * Some member resources are down.
+     */
+    DOWN,
 
-    public String getParentName() {
-        return parentName;
+    /**
+     * Some member resources don't have a known availability state.
+     */
+    UNKNOWN;
+
+    public static MembersAvailabilityHint fromAvailabilityType(AvailabilityType availType) {
+        if (availType == null) {
+            return UNKNOWN;
+        }
+        
+        switch (availType) {
+        case UP:
+            return UP;
+        case DOWN:
+            return DOWN;
+        default:
+            return UNKNOWN;
+        }
     }
     
     public String toString() {
-        return "ResourceParentFlyweight(id=" + parentId + ", name=" + parentName + ")";
+        return name().toLowerCase();
     }
 }

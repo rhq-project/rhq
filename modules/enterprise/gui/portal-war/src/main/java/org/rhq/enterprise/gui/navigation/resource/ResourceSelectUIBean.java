@@ -27,12 +27,11 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
-import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -54,39 +53,6 @@ public class ResourceSelectUIBean {
         }
     };
     
-    public static class DisambiguationReportWrapper extends DisambiguationReport<ResourceComposite> {
-        private static final long serialVersionUID = 1L;
-        
-        private boolean typeResolutionNeeded;
-        private boolean parentResolutionNeeded;
-        private boolean pluginResolutionNeeded;
-        
-        /**
-         * @param original
-         * @param parents
-         * @param resourceTypeName
-         * @param resourceTypePluginName
-         */
-        public DisambiguationReportWrapper(DisambiguationReport<ResourceComposite> report, boolean typeResolutionNeeded, boolean parentResolutionNeeded, boolean pluginResolutionNeeded) {
-            super(report.getOriginal(), report.getParents(), report.getResourceTypeName(), report.getResourceTypePluginName());
-            this.typeResolutionNeeded = typeResolutionNeeded;
-            this.parentResolutionNeeded = parentResolutionNeeded;
-            this.pluginResolutionNeeded = pluginResolutionNeeded;
-        }
-
-        public boolean isTypeResolutionNeeded() {
-            return typeResolutionNeeded;
-        }
-
-        public boolean isParentResolutionNeeded() {
-            return parentResolutionNeeded;
-        }
-
-        public boolean isPluginResolutionNeeded() {
-            return pluginResolutionNeeded;
-        }
-    }
-    
     public Resource getResource() {
         return resource;
     }
@@ -103,7 +69,7 @@ public class ResourceSelectUIBean {
         this.searchString = searchString;
     }
 
-    public List<DisambiguationReportWrapper> autocomplete(Object suggest) {
+    public List<DisambiguationReport<ResourceComposite>> autocomplete(Object suggest) {
         String pref = (String) suggest;
         ArrayList<ResourceComposite> result;
 
@@ -113,24 +79,6 @@ public class ResourceSelectUIBean {
         result = resourceManager.findResourceComposites(EnterpriseFacesContextUtility.getSubject(), null, null, null,
             null, pref, true, pc);
 
-        return wrap(resourceManager.disambiguate(result, false, RESOURCE_ID_EXTRACTOR));
-    }
-    
-    private List<DisambiguationReportWrapper> wrap(ResourceNamesDisambiguationResult<ResourceComposite> result) {
-        List<DisambiguationReportWrapper> ret = new ArrayList<DisambiguationReportWrapper>();
-        if (result == null) {
-            return ret;
-        }
-        
-        boolean typeRes = result.isTypeResolutionNeeded();
-        boolean parentRes = result.isParentResolutionNeeded();
-        boolean pluginRes = result.isPluginResolutionNeeded();
-        
-        
-        for (DisambiguationReport<ResourceComposite> r : result.getResolution()) {
-            ret.add(new DisambiguationReportWrapper(r, typeRes, parentRes, pluginRes));
-        }
-        
-        return ret;
+        return resourceManager.disambiguate(result, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
     }
 }

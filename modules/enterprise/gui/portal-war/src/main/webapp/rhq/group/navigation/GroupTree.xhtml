@@ -55,9 +55,12 @@
                                adviseNodeSelected="#{ResourceGroupTreeStateAdvisor.adviseNodeSelected}"
                                ajaxSubmitSelection="true"
                                status="commonStatus"
-                               icon="/images/icons/Platform_16.png"
+                               icon="/images/icons/Platform_up_16.png"
+                               iconCollapsed="/images/icons/dir_closed.png"
+                               iconExpanded="/images/icons/dir_open.png"
                                nodeFace="#{treeNode.nodeType}"
                                eventsQueue="groupTreeQueue"
+                               showConnectingLines="false"
                                ignoreDupResponses="true">
 
                         <rich:recursiveTreeNodesAdaptor roots="#{ResourceGroupTreeModelUIBean.roots}"
@@ -85,8 +88,8 @@
                         </rich:treeNode>
 
                         <rich:treeNode type="AutoGroupComposite"
-                                       iconLeaf="/images/icons/#{groupTreeItem.data.subcategory != null ? 'Subcategory' : 'Auto_group'}_16.png"
-                                       icon="/images/icons/#{groupTreeItem.data.subcategory != null ? 'Subcategory' : 'Auto_group'}_16.png" >
+                                       iconLeaf="/images/icons/#{groupTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_#{groupTreeItem.data.membersCategoryHint}_#{groupTreeItem.data.membersAvailabilityHint}_16.png"
+                                       icon="/images/icons/#{groupTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_#{groupTreeItem.data.membersCategoryHint}_#{groupTreeItem.data.membersAvailabilityHint}_16.png" >
 
                             <h:outputText
                                     value="#{groupTreeItem.data.subcategory == null ? groupTreeItem.data.resourceType.name : groupTreeItem.data.subcategory.name}"/>
@@ -95,8 +98,8 @@
                         </rich:treeNode>
 
                         <rich:treeNode type="ClusterKey"
-                                       icon="/images/icons/Cluster_up_16.png"
-                                       iconLeaf="/images/icons/Cluster_up_16.png">
+                                       icon="/images/icons/#{groupTreeItem.members[0].data.resourceType.category}_up_16.png"
+                                       iconLeaf="/images/icons/#{groupTreeItem.members[0].data.resourceType.category}_up_16.png">
 
                             <a4j:support event="oncontextmenu" reRender="groupMenu" timeout="5000"
                                          disableDefault="true" status="commonStatus" limitToList="true"
@@ -115,8 +118,8 @@
 
 
                         <rich:treeNode type="Resource"
-                                       icon="/images/icons/#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png"
-                                       iconLeaf="/images/icons/#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png">
+                                       icon="/images/icons/#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == null ? 'unknown' : (groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up')}_16.png"
+                                       iconLeaf="/images/icons/#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == null ? 'unknown' : (groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up')}_16.png">
 
                             <h:outputText value="#{groupTreeItem}"/>
                         </rich:treeNode>

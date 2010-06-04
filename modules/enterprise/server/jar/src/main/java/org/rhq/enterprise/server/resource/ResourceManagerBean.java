@@ -324,6 +324,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query descendantQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME);
         descendantQuery.setParameter("resourceId", resourceId);
         descendantQuery.setParameter("resourceTypeId", resourceTypeId);
+        name = QueryUtility.formatSearchParameter(name);
         descendantQuery.setParameter("name", name);
         List<Integer> descendants = descendantQuery.getResultList();
         return descendants;

@@ -680,7 +680,7 @@ import org.rhq.core.domain.util.Summary;
         + "SELECT r.id " //
         + "  FROM Resource r " //
         + " WHERE ( r.resourceType.id = :resourceTypeId OR :resourceTypeId IS NULL ) " //
-        + "   AND ( LOWER(r.name) like :name OR :name IS NULL ) " //
+        + "   AND ( UPPER(r.name) like :name OR :name IS NULL ) " //
         + "   AND ( r.id = :resourceId " //
         + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.id = :resourceId) "
         + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.id = :resourceId) "

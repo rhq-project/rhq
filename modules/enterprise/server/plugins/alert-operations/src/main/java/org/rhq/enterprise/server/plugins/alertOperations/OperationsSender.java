@@ -26,7 +26,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -66,7 +65,7 @@ public class OperationsSender extends AlertSender {
                 }
             }
         } catch (Exception e) {
-            String message = getResultMessage(operation.getName(), info.resourceId, "failed with " + e.getMessage());
+            String message = getResultMessage(info, "failed with " + e.getMessage());
             return new SenderResult(ResultState.FAILURE, message);
         }
 
@@ -77,16 +76,16 @@ public class OperationsSender extends AlertSender {
             ResourceOperationSchedule schedule = LookupUtil.getOperationManager().scheduleResourceOperation(subject,
                 targetResource.getId(), operation.getName(), 0, 0, 0, 0, replacedParameters, description);
 
-            String message = getResultMessage(operation.getName(), info.resourceId, "jobId was " + schedule.getJobId());
+            String message = getResultMessage(info, "jobId was " + schedule.getJobId());
             return new SenderResult(ResultState.SUCCESS, message);
-        } catch (ScheduleException e) {
-            String message = getResultMessage(operation.getName(), info.resourceId, "failed with " + e.getMessage());
+        } catch (Throwable t) {
+            String message = getResultMessage(info, "failed with " + t.getMessage());
             return new SenderResult(ResultState.FAILURE, message);
         }
     }
 
-    private String getResultMessage(String operationName, int resourceId, String details) {
-        return operationName + " scheduled on resource " + resourceId + ": " + details;
+    private String getResultMessage(OperationInfo info, String details) {
+        return info.getResourceInfo() + ": " + details;
     }
 
     @Override

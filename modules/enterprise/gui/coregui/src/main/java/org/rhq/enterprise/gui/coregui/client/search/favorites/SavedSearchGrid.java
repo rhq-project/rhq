@@ -84,7 +84,7 @@ public class SavedSearchGrid extends Grid {
             int rowIndex = DOM.getChildIndex(table, tr);
             String text = getHTML(rowIndex, 0);
             int startIndex = text.indexOf('>') + 1;
-            int endIndex = text.indexOf("</span>", startIndex);
+            int endIndex = text.toLowerCase().indexOf("</span>", startIndex);
             String patternName = text.substring(startIndex, endIndex);
             patternSelectionHandler.handleSelection(rowIndex, columnIndex, patternName);
             if (columnIndex == 0) {
@@ -105,15 +105,18 @@ public class SavedSearchGrid extends Grid {
 
     protected void onRowOut(Element row) {
         Element actionCell = DOM.getChild(row, 1);
-        actionCell.setAttribute("style", "");
-        row.setAttribute("style", "background-color: white;");
+        DOM.setStyleAttribute(actionCell, "background", "");
+        DOM.setStyleAttribute(row, "backgroundColor", "white");
     }
 
     protected void onRowOver(Element row) {
         Element actionCell = DOM.getChild(row, 1);
-        actionCell.setAttribute("style", "width: 24px; height: 24px; background: url(" + SearchBar.TRASH
-            + ") no-repeat center;");
-        row.setAttribute("style", "background-color: #eeeeee;");
+        DOM.setStyleAttribute(actionCell, "backgroundImage", "url(" + SearchBar.TRASH + ")");
+        DOM.setStyleAttribute(actionCell, "backgroundRepeat", "no-repeat");
+        DOM.setStyleAttribute(actionCell, "backgroundPosition", "center");
+        DOM.setStyleAttribute(actionCell, "width", "24px");
+        DOM.setStyleAttribute(actionCell, "height", "24px");
+        DOM.setStyleAttribute(row, "backgroundColor", "rgb(222,222,222)");
     }
 
     public void updateModel() {
@@ -137,7 +140,7 @@ public class SavedSearchGrid extends Grid {
     }
 
     private static String trashify() {
-        return "<div name=\"action\">&nbsp;</div>";
+        return "<div name=\"action\"></div>";
     }
 
     private int count() {

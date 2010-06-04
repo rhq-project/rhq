@@ -33,6 +33,12 @@
       </dependency>
       
       <dependency>
+         <groupId>net.java.dev.jna</groupId>
+         <artifactId>jna</artifactId>
+         <version>${jna.version}</version>
+      </dependency>
+      
+      <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-platform-plugin</artifactId>
          <version>${project.version}</version>
@@ -51,7 +57,6 @@
         <version>${sigar.version}</version>
         <scope>provided</scope>
       </dependency>
-
    </dependencies>
 
    <build>

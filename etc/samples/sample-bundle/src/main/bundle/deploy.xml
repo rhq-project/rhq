@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+
+<project name="petstore" default="main"
+         xmlns:rhq="antlib:org.rhq.bundle">
+
+    <rhq:bundle name="Java Petstore" version="2.0"
+                description="a sample bundle consisting of JBossAS 6.0 running the Java Petstore application">
+
+      <rhq:input-property
+       name="jboss.bind.address"
+       description="the IP address the JBoss AS server should bind to"
+       required="true"/>
+
+      <rhq:input-property
+       name="http.port"
+       description="the HTTP port the JBoss AS server should listen on"
+       required="true"
+       type="integer"/>
+
+      <rhq:input-property
+       name="https.port"
+       description="the HTTPS port the JBoss AS server should listen on"
+       required="true"
+       type="integer"/>
+
+      <rhq:deployment-unit name="appserver"
+                           preinstallTarget="appserver-preinstall" postinstallTarget="appserver-postinstall">
+        <rhq:system-service name="jbossas-petstore" scriptFile="jbossas-init-script"
+                     configFile="jbossas-init-config" overwriteScript="true"
+                     startLevels="3,4,5" startPriority="80" stopPriority="20"/>
+
+        <rhq:archive name="jbossas-petstore.zip"/>
+
+        <!-- the files that should be ignored during upgrades -->
+        <rhq:ignore>
+            <rhq:fileset>
+                <include name="server/default/data/**"/>
+                <include name="server/default/logs/**"/>
+                <include name="server/default/tmp/**"/>
+                <include name="server/default/work/**"/>
+            </rhq:fileset>
+        </rhq:ignore>
+      </rhq:deployment-unit>
+
+    </rhq:bundle>
+
+    <target name="main"/>
+
+    <target name="appserver-preinstall">
+        <echo>Installing Java Petstore App Server to ${rhq.deploy.dir}...</echo>
+    </target>
+
+    <target name="appserver-postinstall">
+        <echo>Done installing Java Petstore App Server to ${rhq.deploy.dir}.</echo>
+    </target>
+
+</project>

@@ -63,8 +63,21 @@ import org.rhq.core.domain.tagging.Tag;
  * @author Jay Shaughnessy
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = BundleDeployment.QUERY_FIND_ALL, query = "SELECT bd FROM BundleDeployment bd") //
-})
+@NamedQueries( { //
+@NamedQuery(name = BundleDeployment.QUERY_FIND_ALL, query = "" //
+    + "SELECT bd FROM BundleDeployment bd "),
+    @NamedQuery(name = BundleDeployment.QUERY_UPDATE_FOR_DESTINATION_REMOVE, query = "" //
+        + "UPDATE BundleDeployment bd " //
+        + "   SET bd.replacedBundleDeployment = NULL " //
+        + " WHERE bd.replacedBundleDeployment.id IN " //
+        + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
+        + "        WHERE innerbd.destination.id  = :destinationId ) "),
+    @NamedQuery(name = BundleDeployment.QUERY_UPDATE_FOR_VERSION_REMOVE, query = "" //
+        + "UPDATE BundleDeployment bd " //
+        + "   SET bd.replacedBundleDeployment = NULL " //
+        + " WHERE bd.replacedBundleDeployment.id IN " //
+        + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
+        + "        WHERE innerbd.bundleVersion.id  = :bundleVersionId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOYMENT_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_DEPLOYMENT")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -72,6 +85,8 @@ public class BundleDeployment implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "BundleDeployment.findAll";
+    public static final String QUERY_UPDATE_FOR_DESTINATION_REMOVE = "BundleDeployment.updateForDestinationRemove";
+    public static final String QUERY_UPDATE_FOR_VERSION_REMOVE = "BundleDeployment.updateForVersionRemove";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")

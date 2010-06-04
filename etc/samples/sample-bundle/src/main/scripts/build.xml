@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<project name="sample-bundle" basedir="." default="build">
+
+   <target name="build">
+           
+      <!-- download JBossAS 6.0 dist from sourceforge and unzip it -->      
+      <property name="tmp.dir" location="${java.io.tmpdir}/${user.name}"/>       
+      <echo>tmp.dir="${tmp.dir}"</echo>
+      <mkdir dir="${tmp.dir}"/>
+
+      <get src="http://downloads.sourceforge.net/project/jboss/JBoss/JBoss-6.0.0.M3/jboss-as-distribution-6.0.0.20100429-M3.zip" 
+           dest="${tmp.dir}/jbossas.zip" 
+           usetimestamp="true"/>
+      <property name="jboss.home" location="target/jbossas-petstore"/>
+      <echo>jboss.home="${jboss.home}"</echo>
+      <mkdir dir="${jboss.home}"/>
+      <unzip src="${tmp.dir}/jbossas.zip" dest="${jboss.home}">
+        <mapper>
+          <globmapper from="jboss-6.0.0.20100429-M3/*" to="*"/>
+        </mapper>
+      </unzip>
+
+      <!-- delete all server configs, except 'default' -->
+      <delete includeemptydirs="true">
+         <fileset dir="${jboss.home}/server">
+             <exclude name="default/**"/>
+         </fileset>
+      </delete>
+
+      <!-- delete docs dir and README files... -->
+      <delete dir="${jboss.home}/docs"/>
+      <delete>
+         <fileset dir="${jboss.home}" includes="*.*" />
+      </delete>
+
+      <property name="jboss.config.dir" location="${jboss.home}/server/default"/>
+
+      <echo>Copying Derby JDBC driver jar to $${jboss.home}/server/default/lib/...</echo>
+      <copy file="${settings.localRepository}/org/apache/derby/derbyclient/${derbyclient.version}/derbyclient-${derbyclient.version}.jar"
+            toDir="${jboss.config.dir}/lib" failonerror="false" verbose="true" />
+
+      <!-- copy petstore files into the jbossas install -->
+      <copy todir="${jboss.home}">
+         <fileset dir="src/main/petstore"/>
+      </copy>
+
+      <mkdir dir="target/bundle"/>
+
+      <!-- zip up our modified jbossas install - this zipfile will be used as a bundle file -->
+      <zip destfile="target/bundle/jbossas-petstore.zip" basedir="${jboss.home}"/>
+
+      <!-- copy the recipe and other bundle files into the bundle -->
+      <copy todir="target/bundle">
+          <fileset dir="src/main/bundle"/>
+      </copy>
+       
+   </target>
+  
+</project>
+

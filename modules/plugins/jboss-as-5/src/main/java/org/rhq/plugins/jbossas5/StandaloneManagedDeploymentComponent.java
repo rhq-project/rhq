@@ -33,21 +33,24 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
@@ -59,6 +62,7 @@ import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.content.version.PackageVersions;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
@@ -72,6 +76,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
     MeasurementFacet, ContentFacet, DeleteResourceFacet {
     private static final String CUSTOM_PATH_TRAIT = "custom.path";
     private static final String CUSTOM_EXPLODED_TRAIT = "custom.exploded";
+    public static final String RHQ_SHA256 = "RHQ-Sha256";
 
     /**
      * Name of the backing package type that will be used when discovering packages. This corresponds to the name of the
@@ -86,8 +91,6 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
      */
     private static final String ARCHITECTURE = "noarch";
 
-    private static final String BACKUP_FILE_EXTENSION = ".rej";
-
     private final Log log = LogFactory.getLog(this.getClass());
 
     private PackageVersions versions;
@@ -96,7 +99,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
-        Set<MeasurementScheduleRequest> remainingRequests = new HashSet();
+        Set<MeasurementScheduleRequest> remainingRequests = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             if (metricName.equals(CUSTOM_PATH_TRAIT)) {
@@ -153,10 +156,51 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         if (!this.deploymentFile.isDirectory())
             packageDetails.setFileSize(this.deploymentFile.length());
         packageDetails.setFileCreatedDate(null); // TODO: get created date via SIGAR
+        packageDetails.setSHA256(getSHA256(packageDetails));
+        packageDetails.setInstallationTimestamp(Long.valueOf(System.currentTimeMillis()));
+
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
         packages.add(packageDetails);
 
         return packages;
+    }
+
+    // TODO: if needed we can speed this up by looking in the ResourceContainer's installedPackage
+    // list for previously discovered packages. If there use the sha256 from that record. We'd have to
+    // get access to that info by adding access in org.rhq.core.pluginapi.content.ContentServices
+    private String getSHA256(ResourcePackageDetails detail) {
+
+        String sha256 = null;
+
+        try {
+            //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
+            File app = new File(detail.getLocation());
+            if (app.isDirectory()) {
+                // when deployed exploded then don't calculate digest but check for META-INF entry
+                // this will be populated for uploaded files                 
+                File manifestFile = new File(app, "META-INF/MANIFEST.MF");
+                Manifest manifest;
+                if (manifestFile.exists()) {
+                    FileInputStream inputStream = new FileInputStream(manifestFile);
+                    manifest = new Manifest(inputStream);
+                    inputStream.close();
+                    Attributes attribs = manifest.getMainAttributes();
+                    String retrievedShaValue = attribs.getValue(RHQ_SHA256);
+                    if ((retrievedShaValue != null) && (!retrievedShaValue.trim().isEmpty())) {
+                        sha256 = retrievedShaValue;
+                    }
+                }
+            } else {
+                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(app);
+            }
+        } catch (IOException iex) {
+            //log exception but move on, discovery happens often. No reason to hold up anything.
+            if (log.isDebugEnabled()) {
+                log.debug("Problem calculating digest of package [" + detail.getName() + "]." + iex.getMessage());
+            }
+        }
+
+        return sha256;
     }
 
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
@@ -176,8 +220,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         if (packages.size() != 1) {
             log.warn("Request to update " + resourceTypeName + " file contained multiple packages: " + packages);
             DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
-            response
-                .setOverallRequestErrorMessage("Only one " + resourceTypeName + " can be updated at a time.");
+            response.setOverallRequestErrorMessage("Only one " + resourceTypeName + " can be updated at a time.");
             return response;
         }
 
@@ -217,8 +260,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 FileUtils.copyFile(this.deploymentFile, backupOfOriginalFile, true);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to backup existing "  + resourceTypeName + "'" + this.deploymentFile + "' to '"
-                + backupOfOriginalFile + "'.");
+            throw new RuntimeException("Failed to backup existing " + resourceTypeName + "'" + this.deploymentFile
+                + "' to '" + backupOfOriginalFile + "'.");
         }
 
         // Now stop the original app.
@@ -253,10 +296,9 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 if (this.deploymentFile.exists()) {
                     try {
                         FileUtils.forceDelete(this.deploymentFile);
-                    }
-                    catch (IOException e1) {
+                    } catch (IOException e1) {
                         log.debug("Failed to delete application file '" + this.deploymentFile
-                                + "' that failed to deploy.", e1);
+                            + "' that failed to deploy.", e1);
                     }
                 }
                 // Now redeploy the original file - this generally should succeed.
@@ -267,8 +309,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
                     + ThrowableUtil.getAllMessages(e1);
             }
-            log.info("Failed to update " + resourceTypeName + " file '"
-                    + this.deploymentFile + "' using [" + packageDetails + "].");
+            log.info("Failed to update " + resourceTypeName + " file '" + this.deploymentFile + "' using ["
+                + packageDetails + "].");
             return failApplicationDeployment(errorMessage, packageDetails);
         }
 
@@ -282,7 +324,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         response.addPackageResponse(packageResponse);
 
         log.debug("Updated " + resourceTypeName + " file '" + this.deploymentFile
-                + "' successfully - returning response [" + response + "]...");
+            + "' successfully - returning response [" + response + "]...");
 
         return response;
     }
@@ -297,10 +339,10 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         } catch (Exception e) {
             // The deployment no longer exists, so there's nothing for us to do. Someone most likely undeployed it
             // outside of Jopr or EmbJopr, e.g. via the jmx-console or by deleting the app file from the deploy dir.
-        	log.warn("Cannot delete the deployment [" + this.deploymentName + "], since it no longer exists");
+            log.warn("Cannot delete the deployment [" + this.deploymentName + "], since it no longer exists");
             return;
         }
-        
+
         log.debug("Stopping deployment [" + this.deploymentName + "]...");
         DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
         DeploymentStatus stopStatus = DeploymentUtils.run(progress);

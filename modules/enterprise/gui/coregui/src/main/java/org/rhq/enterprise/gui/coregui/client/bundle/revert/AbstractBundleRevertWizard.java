@@ -30,20 +30,11 @@ public abstract class AbstractBundleRevertWizard extends AbstractBundleWizard {
 
     // the things we build up in the wizard
     private BundleDestination destination;
-    private String deploymentName;
     private String deploymentDescription;
     private BundleDeployment deployment;
     private boolean isCleanDeployment = false;
     private BundleDeployment liveDeployment;
     private BundleDeployment previousDeployment;
-
-    public String getDeploymentName() {
-        return deploymentName;
-    }
-
-    public void setDeploymentName(String deploymentName) {
-        this.deploymentName = deploymentName;
-    }
 
     public String getDeploymentDescription() {
         return deploymentDescription;

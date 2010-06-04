@@ -47,7 +47,6 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
 
     @SuppressWarnings("unchecked")
     public Set<Permission> getExplicitGlobalPermissions(Subject subject) {
-        entityManager.flush();
         Query query = entityManager.createNamedQuery(Subject.QUERY_GET_GLOBAL_PERMISSIONS);
         query.setParameter("subject", subject);
         List<Permission> results = query.getResultList();

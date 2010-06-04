@@ -8,8 +8,8 @@
 
 body, p, td, th, option, input, textarea, select {
     color: #000000;
-    font-family: tahoma, verdana, sans-serif;
-    font-size: 11px;
+    font-family: tahoma, verdana, sans-serif !important;
+    font-size: 11px !important;
 }
 
 img {
@@ -27,22 +27,15 @@ hr {
     width: 100%;
 }
 
-a:link {
-    color: #4A5D75;
-    font-weight: bold;
-    text-decoration: none;
-}
+a, a:link, a:visited, a:hover {
+    color: #4A5D75 !important;
+    font-weight: bold !important;
+    text-decoration: none !important;
 
-a:visited {
-    color: #4A5D75;
-    font-weight: bold;
-    text-decoration: none;
 }
 
 a:hover {
-    color: #4A5D75;
-    font-weight: bold;
-    text-decoration: underline;
+    text-decoration: underline !important;
 }
 
 
@@ -214,7 +207,7 @@ a:hover {
 .SubTabButtonSelectedFocusedOver,
 .SubTabButtonDisabled,
 .SubTabButtonSelectedDisabled {
-    font-family: Arial, Verdana, Bitstream Vera Sans, sans-serif;
+    font-family: tahoma, verdona, sans-serif;
     font-size: 11px;
     padding: 2px;
     }
@@ -297,8 +290,58 @@ a:hover {
 .SimpleButtonSelectedOver,
 .SimpleButtonSelectedFocusedOver,
 .SimpleButtonSelectedDisabled{
-    font-family: Arial, Verdana, Bitstream Vera Sans, sans-serif;
+    font-family: tahoma, verdana, sans-serif;
     font-size: 11px;
     padding: 2px;
     font-weight: bold;
+}
+
+
+.topMenuBar {
+    background: url('/coregui/org.rhq.enterprise.gui.coregui.CoreGUI/sc/skins/Enterprise/images/cssButton/button_stretch.png') repeat-x scroll 0 0 #DDDDDD;
+}
+
+.menuButton, .menuButtonOver, .menuButtonDown, .menuButtonDisabled, .menuButtonSelected, .menuButtonSelectedDown, .menuButtonSelectedOver, .menuButtonSelectedDisabled {
+    border: none;
+    font-weight: bold;
+}
+
+
+
+/** Not used right now **/
+.gwtMenuBar {
+    background-image: url('images/header/header_bg.png');
+    /*background-image: url("http://localhost:7080/coregui/org.rhq.enterprise.gui.coregui.CoreGUI/sc/skins/Enterprise/images/SectionHeader/header_opened_stretch.png");*/
+    background-repeat: repeat-x;
+    padding: 0px;
+    -moz-box-sizing: border-box;
+    overflow: hidden;
+    cursor: auto;
+    z-index: 9999999;
+}
+
+.gwtMenu, .gwt-MenuBarPopup, .gwt-MenuPopup {
+    z-index: 9999999;
+    background-color: white;
+}
+
+.gwt-MenuItem {
+    padding: 0 10px;
+    font-weight: bold;
+    color: #666666;
+    font-size: 9pt;
+}
+
+.gwt-MenuItemSeparator {
+    background-color: #666666;
+}
+
+.gwt-MenuItem-Selected {
+    background-color: #999999;
+}
+
+.selectedTag {
+    background-color: lightblue;
+    padding: 5px;
+    border: 1px solid darkblue;
 }

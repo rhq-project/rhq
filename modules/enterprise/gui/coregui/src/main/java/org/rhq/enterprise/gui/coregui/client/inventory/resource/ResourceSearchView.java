@@ -75,18 +75,20 @@ public class ResourceSearchView extends Table {
     public ResourceSearchView(Criteria criteria, String title, SortSpecifier[] sortSpecifier, String[] excludeFields) {
         super(title, criteria, sortSpecifier, excludeFields);
 
+        setHeaderIcon("types/Platform_up_24.png");
+
         setWidth100();
         setHeight100();
 
-        DynamicForm searchPanel = new DynamicForm();
-        final TextItem searchBox = new TextItem("query", "Search Resources");
-        searchBox.setValue("");
-        searchPanel.setWrapItemTitles(false);
-        searchPanel.setFields(searchBox);
+//        DynamicForm searchPanel = new DynamicForm();
+//        final TextItem searchBox = new TextItem("query", "Search Resources");
+//        searchBox.setValue("");
+//        searchPanel.setWrapItemTitles(false);
+//        searchPanel.setFields(searchBox);
 
 
         final ResourceDatasource datasource = new ResourceDatasource();
-        setTitleComponent(searchPanel);
+//        setTitleComponent(searchPanel);
         setDataSource(datasource);
 
         getListGrid().setSelectionType(SelectionStyle.SIMPLE);
@@ -95,6 +97,7 @@ public class ResourceSearchView extends Table {
 
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
+        ListGridField iconField = new ListGridField("icon","", 40);
         ListGridField nameField = new ListGridField("name", "Name", 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -109,7 +112,7 @@ public class ResourceSearchView extends Table {
 
         ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
         availabilityField.setAlign(Alignment.CENTER);
-        getListGrid().setFields(idField, nameField, descriptionField, typeNameField, pluginNameField,
+        getListGrid().setFields(idField, iconField, nameField, descriptionField, typeNameField, pluginNameField,
                 categoryField, availabilityField);
 
         addTableAction("Uninventory", Table.SelectionEnablement.ANY,
@@ -120,7 +123,7 @@ public class ResourceSearchView extends Table {
                 });
 
 
-        searchBox.addKeyPressHandler(new KeyPressHandler() {
+        /*searchBox.addKeyPressHandler(new KeyPressHandler() {
             public void onKeyPress(KeyPressEvent event) {
                 if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
                     datasource.setQuery((String) searchBox.getValue());
@@ -137,7 +140,7 @@ public class ResourceSearchView extends Table {
                     System.out.println("Loaded in: " + (System.currentTimeMillis() - start));
                 }
             }
-        });
+        });*/
     }
 
 

@@ -14,8 +14,11 @@ public interface SearchAssistant {
 
     List<String> getParameterizedContexts();
 
+    boolean isNumericalContext(String context);
+
+    boolean isEnumContext(String context);
+
     List<String> getParameters(String context, String filter);
 
     List<String> getValues(String context, String param, String filter);
-
 }

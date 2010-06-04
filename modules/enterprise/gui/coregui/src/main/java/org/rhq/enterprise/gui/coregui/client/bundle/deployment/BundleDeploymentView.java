@@ -30,6 +30,7 @@ import java.util.HashSet;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -53,6 +54,7 @@ import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
@@ -88,11 +90,10 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         this.version = bundleDeployment.getBundleVersion();
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
 
-        addMember(new BackButton("Back to Destination: " + deployment.getDestination().getName(), "Bundles/" + version.getBundle().getId() + "/destinations/" + deployment.getDestination().getId()));
+        addMember(new BackButton("Back to Destination: " + deployment.getDestination().getName(), "Bundles/Bundle/" + version.getBundle().getId() + "/destinations/" + deployment.getDestination().getId()));
 
 
-        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png")
-                + "\"/> " + deployment.getName()));
+        addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png"), deployment.getName()));
 
         DynamicForm form = new DynamicForm();
         form.setNumCols(4);
@@ -129,7 +130,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
 
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle("Group");
-        destinationGroup.setValue("#ResourceGroup/" + deployment.getDestination().getGroup().getId());
+        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
         destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
         destinationGroup.setTarget("_self");
 
@@ -158,6 +159,8 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         Table table = new Table("Deployment Machines");
 
 
+        table.setTitleComponent(new HTMLFlow("Select a row to show install detials"));
+
         ListGridField resourceIcon = new ListGridField("resourceAvailabity", "");
         HashMap<String, String> icons = new HashMap<String, String>();
         icons.put("UP", "types/Platform_up_16.png");
@@ -175,7 +178,8 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         ListGridField resource = new ListGridField("resource", "Platform");
         resource.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId")) + "\">" + o + "</a>";
+
             }
         });
         ListGridField resourceVersion = new ListGridField("resourceVersion", "Operating System");

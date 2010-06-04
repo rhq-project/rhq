@@ -26,8 +26,11 @@ public class SearchAssistManager {
     private static final Log LOG = LogFactory.getLog(SearchAssistManager.class);
     private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
 
-    private static List<String> comparisonOperators = Arrays.asList("!==", "!=", "==", "=");
-    private static List<String> booleanOperators = Arrays.asList("and", "or", "|");
+    private static List<String> stringComparisonOperators = Arrays.asList("!==", "!=", "==", "=");
+    private static List<String> numericComparisonOperators = Arrays.asList("<", ">", "!=", "=");
+    private static List<String> enumComparisonOperators = Arrays.asList("!=", "=");
+    private static List<String> allComparisonOperators = Arrays.asList("!==", "!=", "==", "=", "<", ">");
+    private static List<String> booleanOperators = Arrays.asList("|");
 
     private Subject subject;
     private SearchSubsystem searchSubsystem;
@@ -124,7 +127,7 @@ public class SearchAssistManager {
             while (i < fragments.size() - 1) {
                 String before = fragments.get(i - 1);
                 String term = fragments.get(i);
-                if (comparisonOperators.contains(term)) {
+                if (allComparisonOperators.contains(term)) {
                     String after = fragments.get(i + 1);
                     terms.add(before + term + after);
                     i += 3; // a triple of terms were processed
@@ -138,7 +141,7 @@ public class SearchAssistManager {
             if (i < fragments.size()) {
                 String nextToLast = fragments.get(fragments.size() - 2);
                 String last = fragments.get(fragments.size() - 1);
-                if (comparisonOperators.contains(last)) { // last couple was an incomplete term
+                if (allComparisonOperators.contains(last)) { // last couple was an incomplete term
                     terms.add(nextToLast + last);
                 } else {
                     terms.add(nextToLast); // there are unrelated terms, possibly simple text matches
@@ -201,18 +204,47 @@ public class SearchAssistManager {
             CONTEXT, PARAM, OPERATOR, VALUE;
         }
 
+        public enum Type {
+            SIMPLE, ADVANCED;
+        }
+
         public final String context;
         public final String param;
         public final String operator;
         public final String value;
         public final State state;
+        public final Type type;
 
         private ParsedContext(String context, String param, String operator, String value) {
-            this.context = context;
+            this.state = computeState(context, param, operator, value);
+            this.type = computeType(param, operator);
+
+            this.context = (this.type == Type.SIMPLE) ? stripQuotes(context) : context;
             this.param = param;
             this.operator = operator;
             this.value = value;
-            this.state = computeState(context, param, operator, value);
+        }
+
+        private String stripQuotes(String data) {
+            if (data.length() == 0) {
+                return "";
+            }
+
+            char first = data.charAt(0);
+            char last = data.charAt(data.length() - 1);
+            if (first == '\'' || first == '"') {
+                if (data.length() == 1) {
+                    return "";
+                }
+                data = data.substring(1);
+            }
+            if (last == '\'' || last == '"') {
+                if (data.length() == 1) {
+                    return "";
+                }
+                data = data.substring(0, data.length() - 1);
+            }
+            return data;
         }
 
         private State computeState(String context, String param, String operator, String value) {
@@ -276,13 +308,13 @@ public class SearchAssistManager {
             return new ParsedContext(context, param, operator, value);
         }
 
-        public boolean isSimple() {
+        private Type computeType(String param, String operator) {
             if (operator != null) {
-                return false; // non-null operator implies an incomplete, advanced term
+                return Type.ADVANCED; // non-null operator implies an incomplete, advanced term
             }
 
             if (param != null) {
-                return false; // non-null operator implies an incomplete, advanced term
+                return Type.ADVANCED; // non-null operator implies an incomplete, advanced term
             }
 
             /*
@@ -291,7 +323,7 @@ public class SearchAssistManager {
              * note: it should not be necessary to check for non-null 'value' because operation/param would have
              *       had to be non-null first, which we've already verified by getting to here.
              */
-            return true;
+            return Type.SIMPLE;
         }
 
         public String toString() {
@@ -324,22 +356,37 @@ public class SearchAssistManager {
     }
 
     public List<SearchSuggestion> getSuggestions(String expression, int caretPos) {
-        if (expression == null) {
-            expression = "";
-        }
-
-        List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos);
-        List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos);
-        List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);
-        //List<SearchSuggestion> globalSavedSearches = getGlobalSavedSearchSuggestions(expression);
-
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
-        results.addAll(simple);
-        results.addAll(advanced);
-        results.addAll(userSavedSearches);
-        //results.addAll(globalSavedSearches);
-        Collections.sort(results);
 
+        try {
+            if (expression == null) {
+                expression = "";
+            }
+
+            List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos);
+            List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos);
+            List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);
+            //List<SearchSuggestion> globalSavedSearches = getGlobalSavedSearchSuggestions(expression);
+
+            results.addAll(simple);
+            results.addAll(advanced);
+            results.addAll(userSavedSearches);
+            //results.addAll(globalSavedSearches);
+
+            if (results.isEmpty()) {
+                SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
+                    "Start typing for more simple text matches");
+                results.add(footerMessage);
+            } else {
+                Collections.sort(results);
+            }
+
+        } catch (Throwable t) {
+            SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
+                "Error retrieving suggestions: " + t.getMessage() + ", see server log for more details");
+            results.add(footerMessage);
+            LOG.info("Error retrieving suggestions", t);
+        }
         return results;
     }
 
@@ -352,7 +399,7 @@ public class SearchAssistManager {
         String beforeCaret = assistant.getFragmentBeforeCaret();
         ParsedContext parsed = ParsedContext.get(beforeCaret);
 
-        if (parsed.isSimple() == false) {
+        if (parsed.type != ParsedContext.Type.SIMPLE) {
             return Collections.emptyList();
         }
 
@@ -385,11 +432,18 @@ public class SearchAssistManager {
         String beforeCaret = assistant.getFragmentBeforeCaret();
         debug("getAdvancedSuggestions: beforeCaret is '" + beforeCaret + "'");
 
+        if (beforeCaret.startsWith("'") || beforeCaret.startsWith("\"")) {
+            return Collections.emptyList();
+        }
+
         ParsedContext parsed = ParsedContext.get(beforeCaret);
         debug("getAdvancedSuggestions: parsed is " + parsed);
         switch (parsed.state) {
         case CONTEXT:
             if (parsed.context.equals("")) {
+                debug("getAdvancedSuggestions: empty term, suggesting all contexts");
+                return convert(getAllContexts());
+                /*
                 if (tokens.length == 1) {
                     debug("getAdvancedSuggestions: no terms yet, suggesting contexts");
                     return convert(getAllContexts());
@@ -400,6 +454,7 @@ public class SearchAssistManager {
                     debug("getAdvancedSuggestions: previous term was not boolean, suggesting boolean");
                     return convert(booleanOperators);
                 }
+                */
             } else if (isBooleanTerm(parsed.context)) {
                 debug("getAdvancedSuggestions: beforeCaret is whole boolean operator");
                 return convert(getAllContexts()); // TODO: should we tell user to type a space first?
@@ -407,7 +462,9 @@ public class SearchAssistManager {
                 // check if this context is complete or not
                 if (completor.getSimpleContexts().contains(parsed.context)) {
                     debug("getAdvancedSuggestions: search term is simple context, wants operator");
-                    return convert(pad(parsed.context, comparisonOperators, ""), parsed, parsed.context);
+                    List<String> contextComparisonOperators = getComparisonOperatorsForContext(parsed.context,
+                        completor);
+                    return convert(pad(parsed.context, contextComparisonOperators, ""), parsed, parsed.context);
                 }
                 if (completor.getParameterizedContexts().contains(parsed.context)) {
                     debug("getAdvancedSuggestions: search term is parameterized context, wants open bracket");
@@ -435,7 +492,7 @@ public class SearchAssistManager {
                 parsed, parsed.param);
         case OPERATOR:
             debug("getAdvancedSuggestions: operator state");
-            if (comparisonOperators.contains(parsed.operator)) {
+            if (allComparisonOperators.contains(parsed.operator)) {
                 debug("search term is complete operator, suggesting values instead");
                 List<String> valueSuggestions = pad("\"", completor.getValues(parsed.context, parsed.param, ""), "\"");
                 if (completor.getSimpleContexts().contains(parsed.context)) {
@@ -449,7 +506,8 @@ public class SearchAssistManager {
             }
 
             List<String> operatorSuggestions = new ArrayList<String>();
-            for (String op : comparisonOperators) {
+            List<String> contextComparisonOperators = getComparisonOperatorsForContext(parsed.context, completor);
+            for (String op : contextComparisonOperators) {
                 if (op.startsWith(parsed.operator)) {
                     operatorSuggestions.add(op);
                 }
@@ -475,6 +533,16 @@ public class SearchAssistManager {
             }
         default:
             return Collections.emptyList();
+        }
+    }
+
+    private List<String> getComparisonOperatorsForContext(String context, SearchAssistant completor) {
+        if (completor.isNumericalContext(context)) {
+            return numericComparisonOperators;
+        } else if (completor.isNumericalContext(context)) {
+            return enumComparisonOperators;
+        } else {
+            return stringComparisonOperators;
         }
     }
 

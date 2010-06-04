@@ -106,7 +106,7 @@ public class SuggestResultsListBox extends ListBox {
         SelectElement select = getElement().cast();
         OptionElement option = Document.get().createOptionElement();
         option.setValue(item.getValue());
-        String style = "font-variant: small-caps; font-weight: bold; font-size: 11px; float: left; margin-left: 2px;";
+        String style = "font-variant: small-caps; font-weight: bold; font-size: 11px; float: left; margin-left: 2px; width: 50px;";
         int marginOffset = 20;
         if (className.endsWith("suggestDataSavedSearch")) {
             style += " color: green;";
@@ -120,7 +120,8 @@ public class SuggestResultsListBox extends ListBox {
         String decoratedPrefix = decorate(prefix, style);
         String highlightedSuggestion = colorOperator(decorate(item.getLabel(), "background-color: yellow;", item
             .getStartIndex(), item.getEndIndex()));
-        String decoratedSuffix = decorate(highlightedSuggestion, "float: left; margin-left: " + marginOffset + "px;");
+        //String decoratedSuffix = decorate(highlightedSuggestion, "float: left; margin-left: " + marginOffset + "px;");
+        String decoratedSuffix = decorate(highlightedSuggestion, "float: left; ");
         String floatClear = "<br style=\"clear: both;\" />";
 
         String innerHTML = decoratedPrefix + decoratedSuffix + floatClear;

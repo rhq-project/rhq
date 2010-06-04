@@ -38,12 +38,13 @@ import org.apache.tools.ant.input.InputHandler;
 import org.apache.tools.ant.util.ClasspathUtils;
 import org.apache.tools.ant.util.FileUtils;
 import org.apache.tools.ant.util.ProxySetup;
+import org.rhq.core.util.updater.DeploymentsMetadata;
 
 /**
  * Command line entry point into RHQ Ant. This class is entered
  * via the canonical `public static void main` entry point and
  * reads the command line arguments. It then assembles and
- * executes an RHQ Ant project (rhq-bundle.xml).
+ * executes an RHQ Ant bundle recipe (deploy.xml).
  * <p>
  * <b>NOTE:</b> This is a modified copy of the
  * org.apache.tools.ant.Main class from Ant 1.8.0.
@@ -65,7 +66,7 @@ public class AntMain implements org.apache.tools.ant.launch.AntMain {
     }
     
     /** The build file name. {@value} (RHQ: changed from build.xml) */
-    private static final String BUILD_FILE_NAME = "rhq-bundle.xml";
+    private static final String BUILD_FILE_NAME = "deploy.xml";
 
     /** Our current message output status. Follows Project.MSG_XXX. */
     private int msgOutputLevel = Project.MSG_INFO;
@@ -606,134 +607,158 @@ public class AntMain implements org.apache.tools.ant.launch.AntMain {
      * @exception BuildException if the build fails
      */
     private void runBuild(ClassLoader coreLoader) throws BuildException {
-
         if (!readyToRun) {
             return;
         }
 
-        // RHQ: We use our own special Project subclass that adds a few extra bundle-related fields.
-        final Project project = new BundleAntProject();
-        project.setCoreLoader(coreLoader);
-
-        Throwable error = null;
-
-        try {
-            addBuildListeners(project);
-            addInputHandler(project);
-
-            PrintStream savedErr = System.err;
-            PrintStream savedOut = System.out;
-            InputStream savedIn = System.in;
-
-            // use a system manager that prevents from System.exit()
-            SecurityManager oldsm = null;
-            oldsm = System.getSecurityManager();
-
-                //SecurityManager can not be installed here for backwards
-                //compatibility reasons (PD). Needs to be loaded prior to
-                //ant class if we are going to implement it.
-                //System.setSecurityManager(new NoExitSecurityManager());
+        // RHQ
+        DeploymentPhase[] lifecycle = getLifecycle();
+        for (DeploymentPhase phase : lifecycle) {
+            System.out.println("***** Executing " + phase + " phase *****...");
+            // RHQ: We use our own special Project subclass that adds a few extra bundle-related fields.
+            Project project = new BundleAntProject();
+            Throwable error = null;
             try {
-                if (allowInput) {
-                    project.setDefaultInputStream(System.in);
-                }
-                System.setIn(new DemuxInputStream(project));
-                System.setOut(new PrintStream(new DemuxOutputStream(project, false)));
-                System.setErr(new PrintStream(new DemuxOutputStream(project, true)));
-
-
-                if (!projectHelp) {
-                    project.fireBuildStarted();
-                }
-
-                // set the thread priorities
-                if (threadPriority != null) {
-                    try {
-                        project.log("Setting Ant's thread priority to "
-                                + threadPriority, Project.MSG_VERBOSE);
-                        Thread.currentThread().setPriority(threadPriority.intValue());
-                    } catch (SecurityException swallowed) {
-                        //we cannot set the priority here.
-                        project.log("A security manager refused to set the -nice value");
-                    }
-                }
-
-
-                project.init();
-
-                // set user-define properties
-                Enumeration e = definedProps.keys();
-                while (e.hasMoreElements()) {
-                    String arg = (String) e.nextElement();
-                    String value = (String) definedProps.get(arg);
-                    project.setUserProperty(arg, value);
-                }
-
-                project.setUserProperty(MagicNames.ANT_FILE,
-                                        buildFile.getAbsolutePath());
-                project.setUserProperty(MagicNames.ANT_FILE_TYPE,
-                                        MagicNames.ANT_FILE_TYPE_FILE);
-
-                project.setKeepGoingMode(keepGoingMode);
-                if (proxy) {
-                    //proxy setup if enabled
-                    ProxySetup proxySetup = new ProxySetup(project);
-                    proxySetup.enableProxies();
-                }
-
-                ProjectHelper.configureProject(project, buildFile);
-
+                initProject(project, coreLoader, phase);
                 if (projectHelp) {
                     printDescription(project);
                     printTargets(project, msgOutputLevel > Project.MSG_INFO);
-                    return;
-                }
-
-                // make sure that we have a target to execute
-                if (targets.size() == 0) {
-                    if (project.getDefaultTarget() != null) {
-                        targets.addElement(project.getDefaultTarget());
+                } else {
+                    // make sure that we have a target to execute
+                    // TODO: For RHQ, we actually might want to enforce that they do NOT specify a target and just always
+                    //       execute the "" target.
+                    if (targets.isEmpty()) {
+                        if (project.getDefaultTarget() != null) {
+                            targets.addElement(project.getDefaultTarget());
+                        }
                     }
+                    project.executeTargets(targets);
                 }
-
-                project.executeTargets(targets);
+            } catch (RuntimeException exc) {
+                error = exc;
+                throw exc;
+            } catch (Error e) {
+                error = e;
+                throw e;
             } finally {
-                // put back the original security manager
-                //The following will never eval to true. (PD)
-                if (oldsm != null) {
-                    System.setSecurityManager(oldsm);
-                }
-
-                System.setOut(savedOut);
-                System.setErr(savedErr);
-                System.setIn(savedIn);
-            }
-        } catch (RuntimeException exc) {
-            error = exc;
-            throw exc;
-        } catch (Error e) {
-            error = e;
-            throw e;
-        } finally {
-            if (!projectHelp) {
-                try {
-                    project.fireBuildFinished(error);
-                } catch (Throwable t) {
-                    // yes, I know it is bad style to catch Throwable,
-                    // but if we don't, we lose valuable information
-                    System.err.println("Caught an exception while logging the"
-                                       + " end of the build.  Exception was:");
-                    t.printStackTrace();
-                    if (error != null) {
-                        System.err.println("There has been an error prior to"
-                                           + " that:");
-                        error.printStackTrace();
+                if (!projectHelp) {
+                    try {
+                        project.fireBuildFinished(error);
+                    } catch (Throwable t) {
+                        // yes, I know it is bad style to catch Throwable,
+                        // but if we don't, we lose valuable information
+                        System.err.println("Caught an exception while logging the"
+                                           + " end of the build.  Exception was:");
+                        t.printStackTrace();
+                        if (error != null) {
+                            System.err.println("There has been an error prior to"
+                                               + " that:");
+                            error.printStackTrace();
+                        }
+                        throw new BuildException(t);
                     }
-                    throw new BuildException(t);
+                } else if (error != null) {
+                    project.log(error.toString(), Project.MSG_ERR);
                 }
-            } else if (error != null) {
-                project.log(error.toString(), Project.MSG_ERR);
             }
+        }
+    }
+
+    private DeploymentPhase[] getLifecycle() {
+        String deployDirString = definedProps.getProperty(DeployPropertyNames.DEPLOY_DIR);
+        File deployDir = new File(deployDirString);
+        DeploymentsMetadata deployMetadata = new DeploymentsMetadata(deployDir);
+        boolean isRedeploy = deployMetadata.isManaged();
+
+        DeploymentPhase[] lifecycle;
+        String phaseString = definedProps.getProperty(DeployPropertyNames.DEPLOY_PHASE);
+        if (phaseString == null) {
+            lifecycle = (isRedeploy) ? DeploymentPhase.REDEPLOY_LIFECYCLE : DeploymentPhase.DEPLOY_LIFECYCLE;
+        } else {
+            DeploymentPhase phase = DeploymentPhase.valueOf(phaseString.toUpperCase());
+            lifecycle = new DeploymentPhase[] {phase};
+        }
+        return lifecycle;
+    }
+
+    private void initProject(Project project, ClassLoader coreLoader, DeploymentPhase phase) {
+        project.setCoreLoader(coreLoader);
+        project.setProperty(DeployPropertyNames.DEPLOY_PHASE, phase.name());
+
+        addBuildListeners(project);
+        addInputHandler(project);
+
+        PrintStream savedErr = System.err;
+        PrintStream savedOut = System.out;
+        InputStream savedIn = System.in;
+
+        // use a system manager that prevents from System.exit()
+        SecurityManager oldsm = null;
+        oldsm = System.getSecurityManager();
+
+        //SecurityManager can not be installed here for backwards
+        //compatibility reasons (PD). Needs to be loaded prior to
+        //ant class if we are going to implement it.
+        //System.setSecurityManager(new NoExitSecurityManager());
+        try {
+            if (allowInput) {
+                project.setDefaultInputStream(System.in);
+            }
+            System.setIn(new DemuxInputStream(project));
+            System.setOut(new PrintStream(new DemuxOutputStream(project, false)));
+            System.setErr(new PrintStream(new DemuxOutputStream(project, true)));
+
+
+            if (!projectHelp) {
+                project.fireBuildStarted();
+            }
+
+            // set the thread priorities
+            if (threadPriority != null) {
+                try {
+                    project.log("Setting Ant's thread priority to "
+                            + threadPriority, Project.MSG_VERBOSE);
+                    Thread.currentThread().setPriority(threadPriority.intValue());
+                } catch (SecurityException swallowed) {
+                    //we cannot set the priority here.
+                    project.log("A security manager refused to set the -nice value");
+                }
+            }
+
+
+            project.init();
+
+            // set user-define properties
+            Enumeration e = definedProps.keys();
+            while (e.hasMoreElements()) {
+                String arg = (String) e.nextElement();
+                String value = (String) definedProps.get(arg);
+                project.setUserProperty(arg, value);
+            }
+
+            project.setUserProperty(MagicNames.ANT_FILE,
+                                    buildFile.getAbsolutePath());
+            project.setUserProperty(MagicNames.ANT_FILE_TYPE,
+                                    MagicNames.ANT_FILE_TYPE_FILE);
+
+            project.setKeepGoingMode(keepGoingMode);
+            if (proxy) {
+                //proxy setup if enabled
+                ProxySetup proxySetup = new ProxySetup(project);
+                proxySetup.enableProxies();
+            }
+
+            ProjectHelper.configureProject(project, buildFile);
+        } finally {
+            // put back the original security manager
+            //The following will never eval to true. (PD)
+            if (oldsm != null) {
+                System.setSecurityManager(oldsm);
+            }
+
+            System.setOut(savedOut);
+            System.setErr(savedErr);
+            System.setIn(savedIn);
         }
     }
 

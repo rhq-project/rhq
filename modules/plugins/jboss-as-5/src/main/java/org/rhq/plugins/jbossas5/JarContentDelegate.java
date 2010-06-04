@@ -84,7 +84,7 @@ public class JarContentDelegate extends FileContentDelegate {
         });
 
         for (File file : files) {
-            String version = null;
+            String manifestVersion = null;
             JarFile jf = null;
             try {
                 Configuration config = new Configuration();
@@ -95,9 +95,9 @@ public class JarContentDelegate extends FileContentDelegate {
                 if (manifest != null) {
                     Attributes attributes = manifest.getMainAttributes();
 
-                    version = attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+                    manifestVersion = attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
 
-                    config.put(new PropertySimple("version", version));
+                    config.put(new PropertySimple("version", manifestVersion));
                     config.put(new PropertySimple("title", attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE)));
                     config.put(new PropertySimple("url", attributes.getValue(Attributes.Name.IMPLEMENTATION_URL)));
                     config
@@ -113,12 +113,7 @@ public class JarContentDelegate extends FileContentDelegate {
                 } catch (Exception e) {
                     // leave as null
                 }
-
-                // try to use version from manifest. if not there use the sha256. if that fails default to "0".
-                if (null == version) {
-                    version = (null == sha256) ? "0" : sha256;
-                }
-
+                String version = getVersion(manifestVersion, sha256);
                 ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(file.getName(),
                     version, getPackageTypeName(), "noarch"));
 
@@ -144,4 +139,22 @@ public class JarContentDelegate extends FileContentDelegate {
 
         return packages;
     }
+
+    private String getVersion(String manifestVersion, String sha256) {
+        // Version string in order of preference
+        // manifestVersion + sha256, sha256, manifestVersion, "0"
+        String version = "0";
+
+        if ((null != manifestVersion) && (null != sha256)) {
+            // this protects against the occasional differing binaries with poor manifest maintenance  
+            version = manifestVersion + " [sha256=" + sha256 + "]";
+        } else if (null != sha256) {
+            version = "[sha256=" + sha256 + "]";
+        } else if (null != manifestVersion) {
+            version = manifestVersion;
+        }
+
+        return version;
+    }
+
 }

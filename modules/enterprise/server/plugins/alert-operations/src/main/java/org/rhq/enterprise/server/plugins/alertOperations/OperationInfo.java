@@ -79,12 +79,23 @@ public class OperationInfo {
     }
 
     private String getErrorString(OperationInfo info) {
-        if (resourceId == null) {
-            return "<no resource selected>";
+        if (mode == ResourceSelectionMode.RELATIVE) {
+            if (ancestorTypeId == null) {
+                return "<no 'start search from' selected>";
+            }
+            if (descendantTypeId == null) {
+                return "<no 'filter by' selected>";
+            }
+        } else if (mode == ResourceSelectionMode.SPECIFIC) {
+            if (resourceId == null) {
+                return "<no resource selected>";
+            }
         }
+
         if (operationId == null) {
             return "<no operation selected>";
         }
+
         return null;
     }
 
@@ -219,8 +230,17 @@ public class OperationInfo {
 
             Resource targetResource = null;
             if (descendantTypeId != null) {
-                LookupUtil.getResourceManager().getResourceDescendantsByTypeAndName(getOverlord(), searchFrom.getId(),
-                    descendantTypeId, descendantName);
+                List<Integer> candidateResourceIds = LookupUtil.getResourceManager()
+                    .getResourceDescendantsByTypeAndName(getOverlord(), searchFrom.getId(), descendantTypeId,
+                        descendantName);
+                if (candidateResourceIds.size() == 0) {
+                    throw new IllegalStateException("Could not find target resource");
+                } else if (candidateResourceIds.size() != 1) {
+                    throw new IllegalStateException("Found multiple resources, need exactly one match");
+                } else {
+                    int targetResourceId = candidateResourceIds.get(0);
+                    targetResource = LookupUtil.getResourceManager().getResourceById(getOverlord(), targetResourceId);
+                }
             } else {
                 targetResource = searchFrom;
             }

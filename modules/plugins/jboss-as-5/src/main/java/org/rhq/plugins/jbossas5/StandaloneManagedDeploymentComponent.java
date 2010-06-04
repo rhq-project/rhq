@@ -147,7 +147,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         // First discovery of this EAR/WAR
         if (version == null) {
             // try to use version from manifest. if not there use the sha256. if that fails default to "0".
-            version = fileInfo.getVersion((null == sha256) ? "0" : sha256);
+            version = getVersion(fileInfo, sha256);
             versions.putVersion(fileName, version);
             versions.saveToDisk();
         }
@@ -191,6 +191,24 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         }
 
         return sha256;
+    }
+
+    private String getVersion(JarContentFileInfo fileInfo, String sha256) {
+        // Version string in order of preference
+        // manifestVersion + sha256, sha256, manifestVersion, "0"
+        String version = "0";
+        String manifestVersion = fileInfo.getVersion(null);
+
+        if ((null != manifestVersion) && (null != sha256)) {
+            // this protects against the occasional differing binaries with poor manifest maintenance  
+            version = manifestVersion + " [sha256=" + sha256 + "]";
+        } else if (null != sha256) {
+            version = "[sha256=" + sha256 + "]";
+        } else if (null != manifestVersion) {
+            version = manifestVersion;
+        }
+
+        return version;
     }
 
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {

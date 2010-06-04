@@ -141,23 +141,22 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/alerts/Config.do" rendered="#{empty item.original.alertDefinition.resourceType and empty item.original.alertDefinition.resourceGroup}">
+                  <h:outputLink value="/alerts/Config.do" >
                      <f:param name="mode" value="viewRoles" />
-                     <f:param name="id" value="#{item.original.alertDefinition.resource.id}"  />
+                     
+                     <f:param name="id" value="#{item.original.alertDefinition.resource.id}"
+                                        rendered="#{not empty item.original.alertDefinition.resource}" />
+                     <f:param name="type" value="#{item.original.alertDefinition.resourceType.id}" 
+                                          rendered="#{not empty item.original.alertDefinition.resourceType}" />
+                     <f:param name="groupId" value="#{item.original.alertDefinition.resourceGroup.id}" 
+                                             rendered="#{not empty item.original.alertDefinition.resourceGroup}" />
+                     
                      <f:param name="ad" value="#{item.original.alertDefinition.id}" />
                      <h:outputText value="#{item.original.alertDefinition.name}" />
-                  </h:outputLink>
-                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.original.alertDefinition.resourceType}">
-                     <f:param name="mode" value="viewRoles" />
-                     <f:param name="type" value="#{item.original.alertDefinition.resourceType.id}" />
-                     <f:param name="ad" value="#{item.original.alertDefinition.id}" />
-                     <h:outputText value="#{item.original.alertDefinition.name}" />
-                  </h:outputLink>
-                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.original.alertDefinition.resourceGroup}">
-                     <f:param name="mode" value="viewRoles" />
-                     <f:param name="groupId" value="#{item.original.alertDefinition.resourceGroup.id}" />
-                     <f:param name="ad" value="#{item.original.alertDefinition.id}" />
-                     <h:outputText value="#{item.original.alertDefinition.name}" />
+                     
+                      <h:graphicImage rendered="#{item.original.alertDefinition.priority == 'LOW'}" value="/images/icons/Flag_blue_16.png"/>
+                      <h:graphicImage rendered="#{item.original.alertDefinition.priority == 'MEDIUM'}" value="/images/icons/Flag_yellow_16.png"/>
+                      <h:graphicImage rendered="#{item.original.alertDefinition.priority == 'HIGH'}" value="/images/icons/Flag_red_16.png"/>
                   </h:outputLink>
                </rich:column>
 

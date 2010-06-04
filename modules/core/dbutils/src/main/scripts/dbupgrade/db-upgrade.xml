@@ -2295,9 +2295,9 @@
                 <schema-alterColumn table="RHQ_REPO_SYNC" column="ID" nullable="false" />
                 <schema-addColumn table="RHQ_REPO_SYNC" column="STATUS" precision="16" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_REPO_SYNC" column="STATUS" nullable="false" />
-                <schema-addColumn table="RHQ_REPO_SYNC" column="START_TIME" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_REPO_SYNC" column="START_TIME" columnType="LONG" />
                 <schema-alterColumn table="RHQ_REPO_SYNC" column="START_TIME" nullable="false" />
-                <schema-addColumn table="RHQ_REPO_SYNC" column="END_TIME" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_REPO_SYNC" column="END_TIME" columnType="LONG" />
                 <schema-addColumn table="RHQ_REPO_SYNC" column="RESULTS" columnType="LONGVARCHAR" />
                 <schema-addColumn table="RHQ_REPO_SYNC" column="PERCENT_COMPLETE" columnType="LONG" />
                 <schema-addColumn table="RHQ_REPO_SYNC" column="REPO_ID" columnType="INTEGER" />
@@ -2305,7 +2305,7 @@
                 <schema-directSQL>
                     <statement desc="Creating RHQ_REPO_SYNC foreign key relation to RHQ_REPO for scheduled jobs">
                         ALTER TABLE RHQ_REPO_SYNC
-                        ADD CONSTRAINT RHQ_RS_REPO_ID_FKEY
+                        ADD CONSTRAINT RHQ_REPO_SYNC_REPO_ID_FKEY
                         FOREIGN KEY (REPO_ID)
                         REFERENCES RHQ_REPO (ID)
                     </statement>

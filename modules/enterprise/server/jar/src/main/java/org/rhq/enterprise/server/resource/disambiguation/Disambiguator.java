@@ -44,6 +44,9 @@ import org.rhq.core.util.IntExtractor;
  */
 public class Disambiguator {
 
+    /**
+     * The maximum depth of the resource tree.
+     */
     public static final int MAXIMUM_DISAMBIGUATED_TREE_DEPTH = 7;
 
     private static final String PARENT_INFO_QUERY;
@@ -95,11 +98,12 @@ public class Disambiguator {
      * @param disambiguationUpdateStrategy how is the disambiguation info going to be applied to the results.
      * @param resourceIdExtractor an object able to extract resource id from an instance of type parameter.
      * @param entityManager an entityManager to be used to access the database
+     * @param duplicateTypeNames the list of type names that are ambiguous without plugin spec
      * @return the disambiguation result or null on error
      */
     public static <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results,
         DisambiguationUpdateStrategy disambiguationUpdateStrategy, IntExtractor<? super T> extractor,
-        EntityManager entityManager) {
+        EntityManager entityManager, List<String> duplicateTypeNames) {
 
         if (results.isEmpty()) {
             return new ResourceNamesDisambiguationResult<T>(new ArrayList<DisambiguationReport<T>>());
@@ -143,7 +147,7 @@ public class Disambiguator {
             //requires different level of disambiguation, I will then process them individually.
 
             ReportPartitions<T> partitionedReports = new ReportPartitions<T>(DisambiguationPolicy
-                .getUniqueNamePolicy(disambiguationUpdateStrategy));
+                .getUniqueNamePolicy(disambiguationUpdateStrategy, duplicateTypeNames));
 
             @SuppressWarnings("unchecked")
             List<Object[]> parentsResults = (List<Object[]>) parentsQuery.getResultList();
@@ -206,12 +210,16 @@ public class Disambiguator {
 
             List<ReportPartitions<T>> ambiguousSubPartitions = new ArrayList<ReportPartitions<T>>();
 
-            if (!partitionedReports.isPartitionsUnique()) {
-                ambiguousSubPartitions.add(partitionedReports);
+            if (!disambiguationUpdateStrategy.partitionFurther(partitionedReports)) {
+                updateResourcesInPartitions(disambiguationUpdateStrategy, partitionedReports.getDisambiguationPolicy(), partitionedReports.getAllPartitions());
             } else {
-                repartitionUnique(partitionedReports, disambiguationUpdateStrategy, ambiguousSubPartitions);                
+                if (!partitionedReports.isPartitionsUnique()) {
+                    ambiguousSubPartitions.add(partitionedReports);
+                } else {
+                    repartitionUnique(partitionedReports, disambiguationUpdateStrategy, ambiguousSubPartitions);                
+                }
             }
-
+            
             while (ambiguousSubPartitions.size() > 0) {
                 Iterator<ReportPartitions<T>> subPartitionIterator = ambiguousSubPartitions.iterator();
                 List<ReportPartitions<T>> newAmbiguousPartitions = new ArrayList<ReportPartitions<T>>();
@@ -219,17 +227,21 @@ public class Disambiguator {
                 while (subPartitionIterator.hasNext()) {
                     ReportPartitions<T> subPartition = subPartitionIterator.next();
 
-                    repartitionUnique(subPartition, disambiguationUpdateStrategy, newAmbiguousPartitions);                
-
-                    for (List<MutableDisambiguationReport<T>> partitionReports : subPartition.getAmbiguousPartitions()) {
-                        ReportPartitions<T> replacementSubpartition = new ReportPartitions<T>(subPartition
-                            .getDisambiguationPolicy().getNext());
-                        replacementSubpartition.putAll(partitionReports);
-                        if (!replacementSubpartition.isPartitionsUnique()) {
-                            newAmbiguousPartitions.add(replacementSubpartition);
-                        } else {
-                            repartitionUnique(replacementSubpartition, disambiguationUpdateStrategy, newAmbiguousPartitions);            
+                    if (disambiguationUpdateStrategy.partitionFurther(subPartition)) {
+                        repartitionUnique(subPartition, disambiguationUpdateStrategy, newAmbiguousPartitions);                
+    
+                        for (List<MutableDisambiguationReport<T>> partitionReports : subPartition.getAmbiguousPartitions()) {
+                            ReportPartitions<T> replacementSubpartition = new ReportPartitions<T>(subPartition
+                                .getDisambiguationPolicy().getNext());
+                            replacementSubpartition.putAll(partitionReports);
+                            if (!replacementSubpartition.isPartitionsUnique()) {
+                                newAmbiguousPartitions.add(replacementSubpartition);
+                            } else {
+                                repartitionUnique(replacementSubpartition, disambiguationUpdateStrategy, newAmbiguousPartitions);            
+                            }
                         }
+                    } else {
+                        updateResourcesInPartitions(disambiguationUpdateStrategy, subPartition.getDisambiguationPolicy(), subPartition.getAllPartitions());
                     }
                     subPartitionIterator.remove();
                 }
@@ -266,13 +278,16 @@ public class Disambiguator {
             } else {
                 //ok, there is no other repartitioning policy that we can try. 
                 //Let's update the reports in the unique partitions...
-                for (List<MutableDisambiguationReport<T>> partition : partitions.getUniquePartitions()) {
-                    for (MutableDisambiguationReport<T> report : partition) {
-                        updateStrategy.update(partitions.getDisambiguationPolicy(), report);
-                    }
-                }
-                
+                updateResourcesInPartitions(updateStrategy, partitions.getDisambiguationPolicy(), partitions.getUniquePartitions());                
                 return;
+            }
+        }
+    }
+    
+    private static <T> void updateResourcesInPartitions(DisambiguationUpdateStrategy strategy, DisambiguationPolicy policy, List<List<MutableDisambiguationReport<T>>> partitions) {
+        for (List<MutableDisambiguationReport<T>> partition : partitions) {
+            for (MutableDisambiguationReport<T> report : partition) {
+                strategy.update(policy, report);
             }
         }
     }

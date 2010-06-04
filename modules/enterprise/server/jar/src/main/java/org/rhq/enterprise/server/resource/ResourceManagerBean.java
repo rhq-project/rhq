@@ -2094,6 +2094,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> extractor,
         DisambiguationUpdateStrategy updateStrategy) {
-        return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager);
+        return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager, typeManager.getDuplicateTypeNames());
     }
 }

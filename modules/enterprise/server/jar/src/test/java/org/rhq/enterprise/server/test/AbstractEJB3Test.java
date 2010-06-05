@@ -151,7 +151,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
 
     @AfterMethod
     public static void endTest() {
-        System.out.println("Connections used: " + (stats.getQueryExecutionCount() - start));
+        //System.out.println("Connections used: " + (stats.getQueryExecutionCount() - start));
     }
 
     private TransactionManager tm;

@@ -480,7 +480,11 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
             getTransactionManager().begin();
             EntityManager em = getEntityManager();
             try {
-                ResourceType deleteMeType = em.find(ResourceType.class, parentResourceType.getId());
+                // Remove the child first.
+                ResourceType deleteMeType = em.find(ResourceType.class, childResourceType.getId());
+                em.remove(deleteMeType);
+
+                deleteMeType = em.find(ResourceType.class, parentResourceType.getId());
                 em.remove(deleteMeType);
 
                 getTransactionManager().commit();

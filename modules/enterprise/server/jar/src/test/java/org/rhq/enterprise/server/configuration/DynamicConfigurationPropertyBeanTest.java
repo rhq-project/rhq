@@ -27,6 +27,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.NotSupportedException;
+import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
@@ -113,7 +114,9 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
             tx.commit();
         }
         catch (Exception e) {
-            tx.rollback();
+            if (tx.getStatus() == Status.STATUS_ACTIVE) {
+                tx.rollback();
+            }
         }
 
         int existingPackageTypes = countForQuery(PackageType.QUERY_FIND_ALL);
@@ -141,7 +144,9 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
             tx.commit();
         }
         catch (Exception e) {
-            tx.rollback();
+            if (tx.getStatus() == Status.STATUS_ACTIVE) {
+                tx.rollback();
+            }
         }
     }
 

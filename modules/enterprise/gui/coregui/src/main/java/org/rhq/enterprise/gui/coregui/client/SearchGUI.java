@@ -63,6 +63,12 @@ public class SearchGUI implements EntryPoint {
     }
 
     public static void checkLoginStatus() {
+
+        if (CoreGUI.detectIe6()) {
+            CoreGUI.forceIe6Hacks();
+        }
+
+
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
         try {
             b.setCallback(new RequestCallback() {
@@ -115,6 +121,10 @@ public class SearchGUI implements EntryPoint {
         } catch (RequestException e) {
             SC.say("Unable to determine login status, check server status");
             e.printStackTrace();
+        } finally {
+            if (CoreGUI.detectIe6()) {
+                CoreGUI.unforceIe6Hacks();
+            }
         }
     }
 

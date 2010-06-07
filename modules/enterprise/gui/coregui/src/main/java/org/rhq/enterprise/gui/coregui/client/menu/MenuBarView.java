@@ -78,7 +78,7 @@ public class MenuBarView extends VLayout {
         this.aboutModalWindow = new AboutModalWindow();
 
 
-        // TODO GH: This is a nasty hack... it injects the css to override the smartgwt skin
+        /*// TODO GH: This is a nasty hack... it injects the css to override the smartgwt skin
         String css = ".menuButton, .menuButtonOver, .menuButtonDown, .menuButtonDisabled, .menuButtonSelected, .menuButtonSelectedDown, .menuButtonSelectedOver, .menuButtonSelectedDisabled {\n" +
                 "    border: none;\n" +
                 "    font-size: 9pt; \n" +
@@ -92,7 +92,7 @@ public class MenuBarView extends VLayout {
         style.setInnerText(css);
         Document.get().getBody().appendChild(style);
 
-
+*/
 
 
 

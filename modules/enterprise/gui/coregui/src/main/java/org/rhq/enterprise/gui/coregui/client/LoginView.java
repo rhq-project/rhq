@@ -148,6 +148,10 @@ public class LoginView extends Canvas {
 
     private void login(String user, String password) {
 
+        if (CoreGUI.detectIe6()) {
+            CoreGUI.forceIe6Hacks();
+        }
+
         loginButton.setDisabled(true);
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
                 "/j_security_check.do?j_username=" + user + "&j_password=" + password);
@@ -171,9 +175,13 @@ public class LoginView extends Canvas {
                 }
             });
             b.send();
-        } catch (RequestException e) {
+        } catch (Exception e) {
             loginButton.setDisabled(false);
             e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+        } finally {
+            if (CoreGUI.detectIe6()) {
+                CoreGUI.unforceIe6Hacks();
+            }
         }
 
 

@@ -103,6 +103,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 //        String sessionIdString = com.google.gwt.user.client.Cookies.getCookie("RHQ_Sesssion");
 //        if (sessionIdString == null) {
 
+        if (detectIe6()) {
+          forceIe6Hacks();
+        }
+
+
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
         try {
             b.setCallback(new RequestCallback() {
@@ -155,6 +160,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         } catch (RequestException e) {
             SC.say("Unable to determine login status, check server status");
             e.printStackTrace();
+        } finally {
+            if (detectIe6()) {
+              unforceIe6Hacks();
+            }            
         }
     }
 
@@ -317,4 +326,29 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             }
         }
     }
+
+
+    /**
+     * Detects IE6.
+     * <p/>
+     * This is a nasty hack; but it's extremely reliable when running with other
+     * js libraries on the same page at the same time as gwt.
+     */
+    public static native boolean detectIe6() /*-{
+  if (typeof $doc.body.style.maxHeight != "undefined")
+    return(false);
+  else
+    return(true);
+}-*/;
+
+    public static native void forceIe6Hacks() /*-{
+  $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
+  $wnd.XMLHttpRequest = null;
+}-*/;
+
+    public static native void unforceIe6Hacks() /*-{
+  $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
+  $wnd.XMLHttpRequestBackup = null;
+}-*/;
+
 }

@@ -634,7 +634,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             // First discovery of this WAR
             if (null == version) {
                 JarContentFileInfo info = new JarContentFileInfo(file);
-                version = info.getVersion((null == sha256) ? "0" : sha256);
+                version = getVersion(info, sha256);
                 versions.putVersion(fileName, version);
                 versions.saveToDisk();
             }
@@ -678,6 +678,24 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         }
 
         return sha256;
+    }
+
+    private String getVersion(JarContentFileInfo fileInfo, String sha256) {
+        // Version string in order of preference
+        // manifestVersion + sha256, sha256, manifestVersion, "0"
+        String version = "0";
+        String manifestVersion = fileInfo.getVersion(null);
+
+        if ((null != manifestVersion) && (null != sha256)) {
+            // this protects against the occasional differing binaries with poor manifest maintenance  
+            version = manifestVersion + " [sha256=" + sha256 + "]";
+        } else if (null != sha256) {
+            version = "[sha256=" + sha256 + "]";
+        } else if (null != manifestVersion) {
+            version = manifestVersion;
+        }
+
+        return version;
     }
 
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {

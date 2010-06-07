@@ -72,12 +72,13 @@ public class PersistenceUtility {
 
     public static final String HIBERNATE_STATISTICS_MBEAN_OBJECTNAME = "Hibernate:type=statistics,application=RHQ";
 
+    @SuppressWarnings("unchecked")
     public static String getDisplayString(Type hibernateType) {
         if (hibernateType instanceof EntityType) {
             return hibernateType.getName() + " (enter integer of ID / primary key field)";
         } else if (hibernateType instanceof CustomType) {
             if (Enum.class.isAssignableFrom(hibernateType.getReturnedClass())) {
-                Class<? extends Enum<?>> enumClass = hibernateType.getReturnedClass();
+                Class<? extends Enum<?>> enumClass = (Class<? extends Enum<?>>) hibernateType.getReturnedClass();
                 StringBuilder result = new StringBuilder();
                 result.append(enumClass.getName());
                 result.append(" (");
@@ -317,14 +318,6 @@ public class PersistenceUtility {
             query.setFirstResult(pageControl.getStartRow());
             query.setMaxResults(pageControl.getPageSize());
         }
-    }
-
-    public static String formatSearchParameter(String value) {
-        if (value == null || value.trim().equals("")) {
-            return null;
-        }
-
-        return "%" + value.replaceAll("\\_", "\\\\_").toUpperCase() + "%";
     }
 
     /**

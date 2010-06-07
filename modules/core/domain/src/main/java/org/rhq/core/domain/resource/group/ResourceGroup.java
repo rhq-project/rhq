@@ -183,13 +183,15 @@ import org.rhq.core.domain.tagging.Tag;
         + "    AND res.id NOT IN ( SELECT explicitRes.id " //
         + "                          FROM ResourceGroup rg " //
         + "                          JOIN rg.explicitResources explicitRes " //
-        + "                         WHERE rg.id = :groupId ) ") })
+        + "                         WHERE rg.id = :groupId ) ")
+})
 @SequenceGenerator(name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_GROUP")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ResourceGroup extends Group {
     private static final long serialVersionUID = 1L;
 
+    //------- Names of Named Queries -------
     public static final String QUERY_FIND_ALL_BY_CATEGORY_COUNT = "ResourceGroup.findAllByCategory_Count";
     public static final String QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin = "ResourceGroup.findAllByCategory_Count_admin";
 
@@ -208,9 +210,13 @@ public class ResourceGroup extends Group {
 
     public static final String QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID = "ResourceGroup.findResourceNamesByGroupId";
     public static final String QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION = "ResourceGroup.findByGroupDefinitionAndExpression";
+
     public static final String QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_EXP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
     public static final String QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_IMP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
+    public static final String QUERY_FIND_ALL_FILTERED_COUNT = "ResourceGroup.findAllFiltered_Count";
+    public static final String QUERY_FIND_ALL_FILTERED_COUNT_ADMIN = "ResourceGroup.findAllFiltered_Count_Admin";
 
+    //------- Actual Queries -------
     public static final String QUERY_UPDATE_REMOVE_IMPLICIT = "" //
         + "DELETE FROM rhq_resource_group_res_imp_map implicitMap " //
         + "      WHERE implicitMap.resource_group_id = ?";
@@ -220,8 +226,6 @@ public class ResourceGroup extends Group {
         + "       FROM rhq_resource_group_res_exp_map explicitMap " //
         + "      WHERE explicitMap.resource_group_id = ?";
 
-    public static final String QUERY_FIND_ALL_FILTERED_COUNT = "ResourceGroup.findAllFiltered_Count";
-    public static final String QUERY_FIND_ALL_FILTERED_COUNT_ADMIN = "ResourceGroup.findAllFiltered_Count_Admin";
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER = "" //
         + "         SELECT "
         + "              (     SELECT COUNT(eresAvail.ID) "

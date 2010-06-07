@@ -136,15 +136,16 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml">
-                     <f:param name="id" value="#{item.original.alert.alertDefinition.resource.id}" />
+                  <h:outputLink value="/alerts/Config.do" >
+                     <f:param name="mode" value="viewRoles" />
+
+                     <f:param name="id" value="#{item.original.alert.alertDefinition.resource.id}"/>
                      <f:param name="ad" value="#{item.original.alert.alertDefinition.id}" />
-
-
+                     <h:outputText value="#{item.original.alert.alertDefinition.name}" />
+                     
                       <h:graphicImage rendered="#{item.original.alert.alertDefinition.priority == 'LOW'}" value="/images/icons/Flag_blue_16.png"/>
                       <h:graphicImage rendered="#{item.original.alert.alertDefinition.priority == 'MEDIUM'}" value="/images/icons/Flag_yellow_16.png"/>
                       <h:graphicImage rendered="#{item.original.alert.alertDefinition.priority == 'HIGH'}" value="/images/icons/Flag_red_16.png"/>
-                     <h:outputText value="#{item.original.alert.alertDefinition.name}" />
                   </h:outputLink>
                </rich:column>
 

@@ -112,12 +112,6 @@ public class CreateNewPackageUIBean {
     private String newRepoName;
 
     /**
-     * Type of resource against which the package is being created. This is loaded from information in the request
-     * and is used to determine if we need to perform different handling for package-backed resources.
-     */
-    private ResourceType resourceType;
-
-    /**
      * If this create is against a package-backed resource, this will hold the current package backing the resource.
      * We'll use this to auto-populate the name, architecture, and type in the case of pushing an update.
      */
@@ -139,7 +133,6 @@ public class CreateNewPackageUIBean {
             selectedArchitectureId = getBackingPackageArchitectureId();
             selectedPackageTypeId = getBackingPackageTypeId();
         }
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
         String response = createNewPackage(packageName, version, selectedArchitectureId, selectedPackageTypeId);
         return response;
     }

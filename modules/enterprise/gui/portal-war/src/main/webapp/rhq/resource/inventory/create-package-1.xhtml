@@ -61,7 +61,7 @@
          </h:panelGrid>
 
          <h:outputText rendered="#{!ResourceUIBean.permissions.content}"
-                       value="You do not have permissions to upload content"/>
+                       value="You do not have permissions to upload content."/>
 
 	        <rich:panel >
 
@@ -91,12 +91,15 @@
 	            </h:panelGrid>
 	     </rich:panel>
 
-         <div class="note-panel"><span class="required-marker-text">*</span><span> denotes a required field.</span></div>
+         <h:panelGroup styleClass="note-panel" rendered="#{CreateNewPackageChildResourceUIBean.configurationDefinition eq null}">
+             <span class="required-marker-text">*</span><span> denotes a required field.</span>
+         </h:panelGroup>
 
          <onc:config configurationDefinition="#{CreateNewPackageChildResourceUIBean.configurationDefinition}"
                      configuration="#{CreateNewPackageChildResourceUIBean.configuration}"
                      nullConfigurationDefinitionMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationDefinitionMessage}"
-                     nullConfigurationMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationMessage}"/>
+                     nullConfigurationMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationMessage}"
+                     rendered="#{CreateNewPackageChildResourceUIBean.configurationDefinition ne null}"/>
 
          <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
 

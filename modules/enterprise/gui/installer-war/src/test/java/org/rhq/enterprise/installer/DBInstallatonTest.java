@@ -100,7 +100,7 @@ public class DBInstallatonTest {
         try {
             String dbUrl = "jdbc:postgresql://127.0.0.1:5432/postgres";
 
-            connection = DbUtil.getConnection(dbUrl, USERNAME, PASSWORD);
+            connection = DbUtil.getConnection(dbUrl, "postgres", "postgres");
             dropDB = connection.createStatement();
             createDB = connection.createStatement();
 

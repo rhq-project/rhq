@@ -83,9 +83,7 @@ public class OperationInfo {
             if (ancestorTypeId == null) {
                 return "<no 'start search from' selected>";
             }
-            if (descendantTypeId == null) {
-                return "<no 'filter by' selected>";
-            }
+            // if (descendantTypeId == null) wants to execute operation on direct ancestor
         } else if (mode == ResourceSelectionMode.SPECIFIC) {
             if (resourceId == null) {
                 return "<no resource selected>";

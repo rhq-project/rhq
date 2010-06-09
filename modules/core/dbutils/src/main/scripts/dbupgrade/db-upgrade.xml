@@ -2100,7 +2100,7 @@
             <schemaSpec version="2.70.5">
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="4000" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4000" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>

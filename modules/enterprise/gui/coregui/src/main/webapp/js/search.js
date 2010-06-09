@@ -32,4 +32,30 @@ function roundedCorners() {
     br.appendChild(original);
   }
 }
-window.onload = roundedCorners;
+
+function loadRoundedCorners() {
+/*
+  var pos = navigator.userAgent.indexOf('MSIE');
+  if (pos > -1) {
+    var longVersion = navigator.userAgent.substring(pos + 5);
+    var shortVersion = longVersion.substring(0, longVersion.indexOf(';'));
+    if (shortVersion.indexOf('8') == -1) {
+      return;
+    }
+  }
+*/
+
+  if (typeof window.onload != 'function') {
+    window.onload = roundedCorners;
+  } else {
+    var oldMethod = window.onload;
+    window.onload = function() {
+      if (oldMethod) {
+        oldMethod();
+      }
+      roundedCorners();
+    }
+  }
+}
+
+loadRoundedCorners();

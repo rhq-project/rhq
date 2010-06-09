@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * Collects data necessary for creating an artifact and provides actions to perform the create.
  *
+ * The associated Facelets page is: /rhq/resource/content/create.xhtml
+ *
  * @author Jason Dobies
+ * @author Ian Springer
  */
 public class CreateNewPackageUIBean {
 
@@ -83,7 +86,6 @@ public class CreateNewPackageUIBean {
 
     /**
      * Option value for no repo.  This is a standalone war that may not be related to any repo.
-     * 
      */
     private static final String REPO_OPTION_NONE = "none";
 
@@ -99,7 +101,7 @@ public class CreateNewPackageUIBean {
     private String subscribedRepoId;
 
     /**
-     * If the user selects to add the package to an existing repo taht the resource is not already subscribed to,
+     * If the user selects to add the package to an existing repo that the resource is not already subscribed to,
      * this will be populated with that repo ID.
      */
     private String unsubscribedRepoId;
@@ -132,20 +134,13 @@ public class CreateNewPackageUIBean {
     }
 
     public String createPackage() {
-        HttpServletRequest request = FacesContextUtility.getRequest();
-
-        String response;
-        if (request.getParameter("newPackage") != null) {
-            response = createNewPackage(packageName, version, selectedArchitectureId, selectedPackageTypeId);
-        } else {
-            String packageName = getBackingPackageName();
-            String version = Long.toString(System.currentTimeMillis());
-            int architectureId = getBackingPackageArchitectureId();
-            int packageTypeId = getBackingPackageTypeId();
-
-            response = createNewPackage(packageName, version, architectureId, packageTypeId);
+        if (!isNeedRequestPackageDetails()) {
+            packageName = getBackingPackageName();
+            selectedArchitectureId = getBackingPackageArchitectureId();
+            selectedPackageTypeId = getBackingPackageTypeId();
         }
-
+        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        String response = createNewPackage(packageName, version, selectedArchitectureId, selectedPackageTypeId);
         return response;
     }
 
@@ -298,7 +293,7 @@ public class CreateNewPackageUIBean {
         String[] selectedPackages = FacesContextUtility.getRequest().getParameterValues("selectedPackages");
 
         if (selectedPackages == null || selectedPackages.length == 0) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "At least one package must be selected");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "At least one package must be selected.");
             return "failure";
         }
 
@@ -384,7 +379,7 @@ public class CreateNewPackageUIBean {
         return items;
     }
 
-    public boolean getNeedRequestPackageDetails() {
+    public boolean isNeedRequestPackageDetails() {
         boolean isPackageBacked = isResourcePackageBacked();
         boolean backingPackageExists = lookupBackingPackage() != null;
 
@@ -411,11 +406,11 @@ public class CreateNewPackageUIBean {
     }
 
     public String getBackingPackageName() {
-        InstalledPackage ip = lookupBackingPackage();
-        PackageVersion pv = ip.getPackageVersion();
-        Package p = pv.getGeneralPackage();
+        InstalledPackage installedPackage = lookupBackingPackage();
+        PackageVersion packageVersion = installedPackage.getPackageVersion();
+        Package pkg = packageVersion.getGeneralPackage();
 
-        return p.getName();
+        return pkg.getName();
     }
 
     public int getBackingPackageArchitectureId() {

@@ -2117,7 +2117,7 @@
 
             <!-- RHQ Advisory Representation -->
             <schemaSpec version="2.71">
-                <schema-createSequence name="RHQ_ADVISORY_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_ADVISORY_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_ADVISORY">
                         CREATE TABLE RHQ_ADVISORY ( ID INTEGER PRIMARY KEY )

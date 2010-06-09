@@ -225,42 +225,20 @@
    <rich:column>
       <f:facet name="header">
          <onc:sortableColumnHeader sort="res.name">
-            <h:outputText styleClass="headerText" value="Name"/>
+            <h:outputText styleClass="headerText" value="Resource"/>
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-         <f:param name="id" value="#{resourceWithAvailability.original.resource.id}"/>
-         <h:outputText value="#{resourceWithAvailability.original.resource.name}"/>
-      </h:outputLink>
+      <onc:disambiguatedResourceName resourceName="#{resourceWithAvailability.original.resource.name}"
+         resourceId="#{resourceWithAvailability.original.resource.id}" disambiguationReport="#{resourceWithAvailability}" />
    </rich:column>
 
    <rich:column >
       <f:facet name="header">
-         <h:outputText styleClass="headerText" value="Parent"/>
+         <h:outputText styleClass="headerText" value="Location"/>
       </f:facet>
 
-      <onc:resourcePartialLineage parents="#{resourceWithAvailability.parents}" />
-   </rich:column>
-
-   <rich:column>
-      <f:facet name="header">
-         <onc:sortableColumnHeader sort="res.resourceType.category">
-            <h:outputText styleClass="headerText" value="Category"/>
-         </onc:sortableColumnHeader>
-      </f:facet>
-
-      <h:outputText value="#{resourceWithAvailability.original.resource.resourceType.category}"/>
-   </rich:column>
-
-   <rich:column>
-      <f:facet name="header">
-         <onc:sortableColumnHeader sort="res.resourceType.name">
-            <h:outputText styleClass="headerText" value="Type"/>
-         </onc:sortableColumnHeader>
-      </f:facet>
-
-      <h:outputText value="#{resourceWithAvailability.resourceTypeName}"/>
+      <onc:disambiguatedResourceLineage parents="#{resourceWithAvailability.parents}" />
    </rich:column>
 
    <rich:column>

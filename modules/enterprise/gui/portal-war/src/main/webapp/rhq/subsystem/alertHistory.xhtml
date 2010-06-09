@@ -100,10 +100,8 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{item.original.alert.alertDefinition.resource.id}" />
-                     <h:outputText value="#{item.original.alert.alertDefinition.resource.name}" />
-                  </h:outputLink>
+                  <onc:disambiguatedResourceName resourceName="#{item.original.alert.alertDefinition.resource.name}" 
+                      resourceId="#{item.original.alert.alertDefinition.resource.id}" disambiguationReport="#{item}"/>
                </rich:column>
 
                <rich:column>
@@ -111,7 +109,7 @@
                      <h:outputText styleClass="headerText" value="Parent" />
                   </f:facet>
 
-                  <onc:resourcePartialLineage parents="#{item.parents}"/>
+                  <onc:disambiguatedResourceLineage parents="#{item.parents}"/>
                </rich:column>
 
                <rich:column>
@@ -138,15 +136,16 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml">
-                     <f:param name="id" value="#{item.original.alert.alertDefinition.resource.id}" />
+                  <h:outputLink value="/alerts/Config.do" >
+                     <f:param name="mode" value="viewRoles" />
+
+                     <f:param name="id" value="#{item.original.alert.alertDefinition.resource.id}"/>
                      <f:param name="ad" value="#{item.original.alert.alertDefinition.id}" />
-
-
+                     <h:outputText value="#{item.original.alert.alertDefinition.name}" />
+                     
                       <h:graphicImage rendered="#{item.original.alert.alertDefinition.priority == 'LOW'}" value="/images/icons/Flag_blue_16.png"/>
                       <h:graphicImage rendered="#{item.original.alert.alertDefinition.priority == 'MEDIUM'}" value="/images/icons/Flag_yellow_16.png"/>
                       <h:graphicImage rendered="#{item.original.alert.alertDefinition.priority == 'HIGH'}" value="/images/icons/Flag_red_16.png"/>
-                     <h:outputText value="#{item.original.alert.alertDefinition.name}" />
                   </h:outputLink>
                </rich:column>
 
@@ -168,7 +167,7 @@
                    <f:facet name="header">
                             <h:outputText styleClass="headerText" value="Ack by" />
                      </f:facet>
-                     <h:outputText value="#{item.original.alert.ackBy.name}" title="#{item.original.alert.ackBy.firstName} #{item.original.alert.ackBy.lastName}"/>
+                     <h:outputText value="#{item.original.alert.acknowledgingSubject}" title="#{item.original.alert.acknowledgingSubject}"/>
                  </rich:column>
 
                  <rich:column>
@@ -177,7 +176,7 @@
                             <h:outputText styleClass="headerText" value="Ack date" />
                          </onc:sortableColumnHeader>
                      </f:facet>
-                     <h:outputText value="#{item.original.alert.ackTime}">
+                     <h:outputText value="#{item.original.alert.acknowledgeTime}">
                           <f:converter converterId="RelativeDurationConverter" />
                      </h:outputText>
                  </rich:column>

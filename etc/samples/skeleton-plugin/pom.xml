@@ -8,14 +8,14 @@
 
    <groupId>org.rhq.sample.skeletonplugin</groupId>
    <artifactId>skeleton-plugin</artifactId>
-   <version>1.0</version>
+   <version>1.0-SNAPSHOT</version>
    <packaging>jar</packaging>
 
    <name>Skeleton RHQ Plugin Template</name>
-   <description>A template for building a custom RHQ agent plugin</description>
+   <description>A template for building a custom RHQ Agent plugin</description>
 
    <properties>
-      <rhq.version>3.0.0.B04</rhq.version>
+      <rhq.version>3.0.0.B05</rhq.version>
    </properties>
 
    <dependencies>
@@ -227,25 +227,14 @@
 
    <repositories>
       <repository>
-         <id>jboss</id>
-         <name>JBoss Repository</name>
-         <url>http://repository.jboss.org/maven2/</url>
-         <snapshots>
+          <id>jboss-public-repository-group</id>
+          <name>JBoss Public Maven Repository Group</name>
+          <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+          <snapshots>
             <enabled>false</enabled>
-         </snapshots>
+          </snapshots>
       </repository>
    </repositories>
-
-   <pluginRepositories>
-      <pluginRepository>
-         <id>jboss</id>
-         <name>JBoss Plugin Repository</name>
-         <url>http://repository.jboss.org/maven2/</url>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-      </pluginRepository>
-   </pluginRepositories>
 
 </project>
 

@@ -71,7 +71,7 @@ public class SavedSearch implements Serializable {
 
     @Column(name = "CONTEXT", nullable = false)
     @Enumerated(EnumType.STRING)
-    private SearchSubsystem context;
+    private SearchSubsystem searchSubsystem;
 
     @Column(name = "NAME")
     private String name;
@@ -104,7 +104,7 @@ public class SavedSearch implements Serializable {
 
     public SavedSearch(SearchSubsystem context, String name, String pattern, Subject subject) {
         // call setters to go through parameter validation
-        setContext(context);
+        setSearchSubsystem(context);
         setPattern(pattern);
         setSubject(subject);
         setName(name); // name can be null, to allow for saving searches quickly
@@ -123,22 +123,22 @@ public class SavedSearch implements Serializable {
         this.id = id;
     }
 
-    public SearchSubsystem getContext() {
-        return context;
+    public SearchSubsystem getSearchSubsystem() {
+        return searchSubsystem;
     }
 
-    private void setContext(SearchSubsystem context) {
-        if (context == null) {
-            throw new IllegalArgumentException("All saved searches must be bound to a SearchContext");
+    private void setSearchSubsystem(SearchSubsystem searchSubsystem) {
+        if (searchSubsystem == null) {
+            throw new IllegalArgumentException("All saved searches must be bound to a SearchSubsystem");
         }
-        this.context = context;
+        this.searchSubsystem = searchSubsystem;
     }
 
     public String getName() {
         return name;
     }
 
-    private void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -206,7 +206,7 @@ public class SavedSearch implements Serializable {
         final int prime = 31;
         int result = 1;
         result = (prime * result) + subjectId;
-        result = (prime * result) + context.hashCode();
+        result = (prime * result) + searchSubsystem.hashCode();
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
         result = (prime * result) + pattern.hashCode();
         return result;
@@ -228,7 +228,7 @@ public class SavedSearch implements Serializable {
             return false;
         }
 
-        if (context != other.context) {
+        if (searchSubsystem != other.searchSubsystem) {
             return false;
         }
 
@@ -251,7 +251,7 @@ public class SavedSearch implements Serializable {
     public String toString() {
         return "SavedSearch [" //
             + "id=" + id //
-            + ", context=" + context //
+            + ", searchSubsystem=" + searchSubsystem //
             + ", description=" + description //
             + ", global=" + global //
             + ", lastComputeTime=" + lastComputeTime //

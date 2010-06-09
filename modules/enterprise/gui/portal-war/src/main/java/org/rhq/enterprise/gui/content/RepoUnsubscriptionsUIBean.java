@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.content;
 
-
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
@@ -48,7 +47,7 @@ public class RepoUnsubscriptionsUIBean extends PagedDataTableUIBean {
             return r.getId();
         }
     };
-    
+
     public RepoUnsubscriptionsUIBean() {
     }
 
@@ -87,10 +86,10 @@ public class RepoUnsubscriptionsUIBean extends PagedDataTableUIBean {
                 }
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Subscribed [" + resourceIds.length
-                    + "] resources with repo");
+                    + "] resources with repository");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to subscribe one or more resources with repo", e);
+                    "Failed to subscribe one or more resources with repository", e);
             }
         }
 
@@ -100,8 +99,7 @@ public class RepoUnsubscriptionsUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new RepoUnsubscriptionsDataModel(PageControlView.RepoUnsubscriptionsList,
-                MANAGED_BEAN_NAME);
+            dataModel = new RepoUnsubscriptionsDataModel(PageControlView.RepoUnsubscriptionsList, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
@@ -130,14 +128,14 @@ public class RepoUnsubscriptionsUIBean extends PagedDataTableUIBean {
                 categoryEnum = ResourceCategory.valueOf(category);
             }
 
-            PageList<Resource> results = manager.findAvailableResourcesForRepo(subject, repoId, search,
-                categoryEnum, pc);
+            PageList<Resource> results = manager.findAvailableResourcesForRepo(subject, repoId, search, categoryEnum,
+                pc);
 
             //PageList<ResourceComposite> results = manager.findResourceComposites(subject, categoryEnum, null, null, search, pc);
 
             return results;
         }
-        
+
         protected IntExtractor<Resource> getResourceIdExtractor() {
             return RESOURCE_ID_EXTRACTOR;
         }

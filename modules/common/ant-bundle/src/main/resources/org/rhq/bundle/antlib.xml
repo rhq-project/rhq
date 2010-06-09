@@ -6,18 +6,16 @@
     <!-- bundle task -->
     <taskdef name="bundle" classname="org.rhq.bundle.ant.task.BundleTask"/>
 
-    <!-- inputProperty task -->
-    <taskdef name="input-property" classname="org.rhq.bundle.ant.task.InputPropertyTask"/>
+    <!-- bundle task's child types -->
+    <typedef name="input-property" classname="org.rhq.bundle.ant.type.InputPropertyType"/>
+    <typedef name="deployment-unit" classname="org.rhq.bundle.ant.type.DeploymentUnitType"/>
 
-    <!-- deploy task and its child types -->
-    <taskdef name="deploy" classname="org.rhq.bundle.ant.task.DeployTask"/>
-
+    <!-- deployment type's child types -->
     <typedef name="file" classname="org.rhq.bundle.ant.type.FileType"/>
     <typedef name="archive" classname="org.rhq.bundle.ant.type.ArchiveType"/>
     <typedef name="replace" classname="org.rhq.bundle.ant.type.ReplaceType"/>
     <typedef name="ignore" classname="org.rhq.bundle.ant.type.IgnoreType"/>
     <typedef name="fileset" classname="org.rhq.bundle.ant.type.FileSet"/>
-
-    <!-- install-system-service task -->
-    <taskdef name="install-system-service" classname="org.rhq.bundle.ant.task.InstallSystemServiceTask"/>
+    <typedef name="system-service" classname="org.rhq.bundle.ant.type.SystemServiceType"/>
+    
 </antlib>

@@ -165,5 +165,9 @@ public class ApacheIfModuleComponent implements ResourceComponent<ApacheVirtualH
         }
     }
     
+    
+    public boolean isAugeasEnabled(){
+        return parentComponent.isAugeasEnabled();          
+    }
  
 }

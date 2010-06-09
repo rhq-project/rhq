@@ -46,34 +46,44 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
         idField.setPrimaryKey(true);
         addField(idField);
 
+        DataSourceTextField latestVersionField = new DataSourceTextField("version", "Version");
+        addField(latestVersionField);
+
         DataSourceTextField nameField = new DataSourceTextField("name", "Name");
         addField(nameField);
 
         DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
         addField(descriptionField);
 
-        DataSourceTextField latestVersionField = new DataSourceTextField("version", "Version");
-        addField(latestVersionField);
+
 
         DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("fileCount", "File Count");
         addField(deploymentCountField);
-    }
-
-    public int getBundleId() {
-        return bundleId;
-    }
-
-    public void setBundleId(int bundleId) {
-        this.bundleId = bundleId;
     }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
         BundleVersionCriteria criteria = new BundleVersionCriteria();
-        criteria.addFilterBundleId(this.bundleId);
         criteria.fetchBundleFiles(true);
+        criteria.fetchBundle(true);
         criteria.setPageControl(getPageControl(request));
+
+        if (request.getCriteria().getValues().get("bundleId") != null) {
+            criteria.addFilterBundleId(Integer.parseInt(String.valueOf(request.getCriteria().getValues().get("bundleId"))));
+        }
+
+        if (request.getCriteria().getValues().get("tagNamespace") != null) {
+            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
+        }
+
+        if (request.getCriteria().getValues().get("tagSemantic") != null) {
+            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
+        }
+
+        if (request.getCriteria().getValues().get("tagName") != null) {
+            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
+        }
 
         bundleService.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
             public void onFailure(Throwable caught) {
@@ -112,6 +122,7 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute("id", from.getId());
+        record.setAttribute("bundleId", from.getBundle().getId());
         record.setAttribute("name", from.getName());
         record.setAttribute("description", from.getDescription());
         record.setAttribute("version", from.getVersion());

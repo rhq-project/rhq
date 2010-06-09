@@ -50,16 +50,17 @@ public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local 
     /**
      * @see SavedSearchManagerRemote#createSavedSearch(Subject, SavedSearch)
      */
-    public void createSavedSearch(Subject subject, SavedSearch savedSearch) {
+    public int createSavedSearch(Subject subject, SavedSearch savedSearch) {
         validateManipulatePermission(subject, savedSearch);
         entityManager.persist(savedSearch);
-        return;
+        return savedSearch.getId();
     }
 
     /**
      * @see SavedSearchManagerRemote#updateSavedSearch(Subject, SavedSearch)
      */
     public void updateSavedSearch(Subject subject, SavedSearch savedSearch) {
+        // this needs to prevent certains types of updates, be more sophisticated, etc
         validateManipulatePermission(subject, savedSearch);
         entityManager.merge(savedSearch);
         return;
@@ -102,7 +103,7 @@ public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local 
             }
             // note: inventory managers can modify any saved search pattern, not just their own
         } else {
-            if (subject.equals(savedSearch.getSubject())) {
+            if (subject.getId() != savedSearch.getSubjectId() && !authorizationManager.isInventoryManager(subject)) {
                 throw new PermissionException("Users without inventory manager permission "
                     + "can only manipulate their own saved searches");
             }
@@ -111,7 +112,7 @@ public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local 
 
     private void validateReadPermission(Subject subject, SavedSearch savedSearch) {
         if (!savedSearch.isGlobal()) {
-            if (subject.equals(savedSearch.getSubject())) {
+            if (subject.getId() != savedSearch.getSubjectId() && !authorizationManager.isInventoryManager(subject)) {
                 throw new PermissionException("Users without inventory manager permission "
                     + "can only view their own or global saved saved searches");
             }

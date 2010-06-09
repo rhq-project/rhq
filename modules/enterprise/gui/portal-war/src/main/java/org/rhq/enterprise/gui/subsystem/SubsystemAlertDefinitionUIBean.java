@@ -205,8 +205,6 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
             // then delete templates and group alert defs, which are both tolerant of missing child definitions
             groupAlertDefinitionManager.disableGroupAlertDefinitions(subject, groupDefinitions
                 .toArray(new Integer[groupDefinitions.size()]));
-            alertTemplateManager.removeAlertTemplates(subject, typeDefinitions.toArray(new Integer[typeDefinitions
-                .size()]));
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disable selected alert definitions.");
         } catch (Exception e) {
@@ -244,8 +242,6 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
             // then delete templates and group alert defs, which are both tolerant of missing child definitions
             groupAlertDefinitionManager.enableGroupAlertDefinitions(subject, groupDefinitions
                 .toArray(new Integer[groupDefinitions.size()]));
-            alertTemplateManager.removeAlertTemplates(subject, typeDefinitions.toArray(new Integer[typeDefinitions
-                .size()]));
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enable selected alert definitions.");
         } catch (Exception e) {

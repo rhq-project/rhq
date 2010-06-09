@@ -302,7 +302,6 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
      * @param newProperty
      */
     private void updatePropertyDefinition(PropertyDefinition existingProperty, PropertyDefinition newProperty) {
-
         existingProperty.setDescription(newProperty.getDescription());
         existingProperty.setDisplayName(newProperty.getDisplayName());
         existingProperty.setActivationPolicy(newProperty.getActivationPolicy());
@@ -350,7 +349,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             PropertyDefinitionList exList = (PropertyDefinitionList) existingProperty;
             if (newProperty instanceof PropertyDefinitionList) {
                 PropertyDefinitionList newList = (PropertyDefinitionList) newProperty;
-                replaceListPropertyMemberDefinition(exList, newList);
+                replaceListProperty(exList, newList);
             } else { // simple property or map-property
                 replaceProperty(existingProperty, newProperty);
             }
@@ -437,28 +436,36 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
     }
 
     /**
-     * This replaces the member property for the list.  If it is a nested structure the whole thing
-     * is replaced from the top. The previous member property is removed. cascading should remove a nested
-     * structure.
+     * This replaces an existing list property def with a new list property definition. Primarily it replaces
+     * the member prop def for the list.  If the member prop def is a nested structure the whole thing
+     * is replaced from the top.
      *
-     * @param existingProperty the existing prop
-     * @param newProperty the new prop that should replace the existing prop
+     * @param exList the existing prop def list 
+     * @param newList the new prop def list
      */
-    private void replaceListPropertyMemberDefinition(PropertyDefinitionList exList, PropertyDefinitionList newList) {
-        PropertyDefinition doomedMember = null;
+    private void replaceListProperty(PropertyDefinitionList exList, PropertyDefinitionList newList) {
+        PropertyDefinition doomedMemberDef = null;
 
         // only remove the existing member if it is a different entity
         if (exList.getMemberDefinition().getId() != newList.getMemberDefinition().getId()) {
-            doomedMember = exList.getMemberDefinition();
+            doomedMemberDef = exList.getMemberDefinition();
         }
 
         exList.setMemberDefinition(newList.getMemberDefinition());
         exList.setMax(newList.getMax());
         exList.setMin(newList.getMin());
 
-        if (null != doomedMember) {
-            entityManager.remove(doomedMember);
+        // BZ 594706
+        // Don't clean this up here because it's causing deadlocks in Oracle.  Instead we'll just leave
+        // garbage in the db.  Although annoying, and confusing for db queries, it's not a lot of data,
+        // just some extra prop defs and prop_def_enums.
+        if (null != doomedMemberDef) {
+            // entityManager.remove(doomedMemberDef);
+            if (log.isDebugEnabled()) {
+                log.debug("Ignoring cleanup of [" + doomedMemberDef + "] due to BZ 594706");
+            }
         }
+
         entityManager.merge(exList);
         entityManager.flush();
     }

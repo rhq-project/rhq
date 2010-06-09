@@ -345,7 +345,7 @@ public interface InstallerI18NResourceKeys {
     String PROP_HTTP_PORT_HELP = "propertyHttpPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Secure HTTPS Port"),
-        @I18NMessage(locale = "de", value = "HTTPS Port"), @I18NMessage(locale = "de", value = "Port HTTPS Sécurisé") })
+        @I18NMessage(locale = "de", value = "HTTPS Port"), @I18NMessage(locale = "fr", value = "Port HTTPS Sécurisé") })
     String PROP_HTTPS_PORT = "propertyHttpsPort";
     @I18NMessage("-SecureHTTPSPort")
     String PROP_HTTPS_PORT_HELP = "propertyHttpsPortHelp";

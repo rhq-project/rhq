@@ -30,63 +30,31 @@
    
       <a4j:keepAlive beanName="BrowseResourcesUIBean"/>
 
+      <a4j:form>
+         <a4j:jsFunction name="applySearchFilter">
+            <a4j:actionparam name="param1" assignTo="#{BrowseResourcesUIBean.search}" />
+         </a4j:jsFunction>
+      </a4j:form>
       <h:form id="browseResourcesForm">
             <input type="hidden" name="subtab" value="${param.subtab}" />
             
             <p/>
-            <h:panelGroup>
-               <h:outputLabel for="search" value="Search: " />
-               <h:inputText id="search"
-                            binding="#{BrowseResourcesUIBean.searchInput}"
-                            value="#{BrowseResourcesUIBean.search}"
-                            onkeypress="return ignoreEnterKey(event);"
-                            style="width: 600px;">
-                   <ui:remove>
-                   <a4j:support event="onfocus" reRender="suggest"
-                                disableDefault="true" status="commonStatus" limitToList="true" 
-                                ajaxSingle="true" oncomplete="#{rich:component('suggest')}.show(event, {})"/>
-                   </ui:remove>
-               </h:inputText>
-               <rich:suggestionbox id="suggest" for="search" 
-                                   width="600" height="400"
-                                   border="1" cellpadding="1" cellspacing="1"
-                                   minChars="0"
-                                   first="0" rows="10"
-                                   frequency="0"
-                                   var="suggestItem" 
-                                   fetchValue="#{suggestItem.value}"
-                                   selfRendered="true"
-                                   suggestionAction="#{BrowseResourcesUIBean.autocomplete}" 
-                                   nothingLabel="Start typing for simple text matches" 
-                                   usingSuggestObjects="true"
-                                   eventsQueue="resourceSearchSuggestions"
-                                   ignoreDupResponses="true"
-                                   rendered="true"> <!-- disable until auto-completer is added -->
-                   <h:column width="10%">
-                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: gray;" 
-                                    rendered="#{suggestItem.kind.name eq 'Simple'}" />
-                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; " 
-                                    rendered="#{suggestItem.kind.name eq 'Advanced'}" />
-                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: yellow" 
-                                    rendered="#{suggestItem.kind.name eq 'AdvancedOperator'}" />
-                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: green;" 
-                                    rendered="#{suggestItem.kind.name eq 'UserSavedSearch'}" />
-                      <h:outputText value="#{suggestItem.kind.displayName}" style="font-variant: small-caps; color: orange;" 
-                                    rendered="#{suggestItem.kind.name eq 'GlobalSavedSearch'}" />
-                   </h:column>
-                   <h:column width="90%">
-                      <h:outputText value="#{suggestItem.label}" />
-                   </h:column>
-               </rich:suggestionbox>
-               <rich:spacer/>
-               <a4j:commandButton value="GO" 
+            <h:panelGrid columns="3">
+               <h:outputText value="Search: " />
+               <ui:include src="/rhq/common/searchInterface.xhtml">
+                  <ui:param name="searchButtonId" value="browseResourcesForm:searchButtonJSF" />
+                  <ui:param name="searchSubsystem" value="RESOURCE" />
+               </ui:include>
+
+               <a4j:commandButton id="searchButtonJSF" value="GO" 
                                   reRender="browseResourcesDataTable, browseResourcesDataTableScroller"
                                   status="commonStatus"
                                   actionListener="#{BrowseResourcesUIBean.clearDataModel}"
-                                  styleClass="buttonmed">
+                                  styleClass="buttonmed"
+                                  onclick="applySearchFilter(getElementCrossBrowser('patternField').value);">
                    <s:defaultAction/>
                </a4j:commandButton>
-            </h:panelGroup>
+            </h:panelGrid>
             <p/>
 
             <h:panelGrid columns="1" width="100%">
@@ -97,7 +65,7 @@
                             value="#{browseResourcesDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 5%, 20%, 20%, 5%, 10%, 10%, 25%, 4%"
+                            columnsWidth="1%, 5%, 30%, 44%, 19%, 1%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -157,58 +125,36 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="name">
-                        <h:outputText styleClass="headerText" value="Name" />
+                     <onc:sortableColumnHeader sort="r.name">
+                        <h:outputText styleClass="headerText" value="Resource" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{item.original.resource.id}" />
-                     <h:outputText value="#{item.original.resource.name}" />
-                  </h:outputLink>
+                  <onc:disambiguatedResourceName resourceName="#{item.original.resource.name}" 
+                      resourceId="#{item.original.resource.id}" disambiguationReport="#{item}"/>
                </rich:column>
-               
+<!--                
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Parent" />
-                  </f:facet>
-
-                  <onc:resourcePartialLineage parents="#{item.parents}" renderLinks="true"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="resourceType.category">
-                        <h:outputText styleClass="headerText" value="Category" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{item.original.resource.resourceType.category.name}" />
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="resourceType.name">
+                     <onc:sortableColumnHeader sort="r.resourceType.name">
                         <h:outputText styleClass="headerText" value="Type" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputText value="#{item.original.resource.resourceType.name}" />
                </rich:column>
-               
+ -->
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="resourceType.plugin">
-                        <h:outputText styleClass="headerText" value="Plugin" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Location" />
                   </f:facet>
 
-                  <h:outputText value="#{item.original.resource.resourceType.plugin}" />
+                  <onc:disambiguatedResourceLineage parents="#{item.parents}" renderLinks="true"/>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="description">
+                     <onc:sortableColumnHeader sort="r.description">
                         <h:outputText styleClass="headerText" value="Description" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -228,7 +174,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="9" width="100%">
+                     <rich:column colspan="6" width="100%">
                         <onc:selectCommandButton action="#{BrowseResourcesUIBean.uninventorySelectedResources}"
                                                  value="UNINVENTORY SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.inventory}" />

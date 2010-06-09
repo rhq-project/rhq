@@ -30,44 +30,31 @@
    
       <a4j:keepAlive beanName="BrowseGroupsUIBean"/>
 
+      <a4j:form>
+         <a4j:jsFunction name="applySearchFilter">
+            <a4j:actionparam name="param1" assignTo="#{BrowseGroupsUIBean.search}" />
+         </a4j:jsFunction>
+      </a4j:form>
       <h:form id="browseGroupsForm">
             <input type="hidden" name="subtab" value="${param.subtab}"/>
             
             <p/>
-            <h:panelGroup>
-               <h:outputLabel for="filter" value="Search: " />
-               <h:inputText id="filter" value="#{BrowseGroupsUIBean.filter}"
-                            onkeypress="return ignoreEnterKey(event);"
-                            style="width: 600px;" />
-               <ui:remove>
-               <rich:suggestionbox id="suggest" for="filter" 
-                                   tokens=",[]"
-                                   width="600" height="400"
-                                   border="1" cellpadding="1" cellspacing="1"
-                                   minChars="0"
-                                   first="0" rows="10"
-                                   frequency="0.1"
-                                   var="suggestItem" 
-                                   fetchValue="#{suggestItem.value}"
-                                   suggestionAction="#{BrowseGroupsUIBean.autocomplete}" 
-                                   nothingLabel="Start typing for simple text matches" 
-                                   usingSuggestObjects="true"
-                                   eventsQueue="groupSearchSuggestions"
-                                   ignoreDupResponses="true"
-                                   rendered="false"> <!-- disable until auto-completer is added -->
-                   <h:column>
-                      <h:outputText value="#{suggestItem.label}" />
-                   </h:column>
-               </rich:suggestionbox>
-               </ui:remove>
-               <rich:spacer/>
-               <a4j:commandButton value="GO" 
+            <h:panelGrid columns="3">
+               <h:outputText value="Search: " />
+               <ui:include src="/rhq/common/searchInterface.xhtml">
+                  <ui:param name="searchButtonId" value="browseGroupsForm:searchButtonJSF" />
+                  <ui:param name="searchSubsystem" value="GROUP" />
+               </ui:include>
+
+               <a4j:commandButton id="searchButtonJSF" value="GO" 
                                   reRender="browseGroupsDataTable, browseGroupsDataTableScroller"
+                                  status="commonStatus"
                                   actionListener="#{BrowseGroupsUIBean.clearDataModel}"
-                                  styleClass="buttonmed">
+                                  styleClass="buttonmed"
+                                  onclick="applySearchFilter(getElementCrossBrowser('patternField').value);">
                    <s:defaultAction/>
                </a4j:commandButton>
-            </h:panelGroup>
+            </h:panelGrid>
             <p/>
 
             <h:panelGrid columns="1" width="100%">

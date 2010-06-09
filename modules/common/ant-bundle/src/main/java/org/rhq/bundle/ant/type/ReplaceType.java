@@ -22,8 +22,6 @@
  */
 package org.rhq.bundle.ant.type;
 
-import org.apache.tools.ant.types.DataType;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +31,7 @@ import java.util.List;
  *
  * @author Ian Springer
  */
-public class ReplaceType extends DataType {
+public class ReplaceType extends AbstractBundleType {
     private List<FileSet> fileSets = new ArrayList<FileSet>();
 
     public void addConfigured(FileSet fileSet) {

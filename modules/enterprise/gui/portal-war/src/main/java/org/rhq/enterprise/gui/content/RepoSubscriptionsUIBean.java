@@ -48,7 +48,7 @@ public class RepoSubscriptionsUIBean extends PagedDataTableUIBean {
             return r.getId();
         }
     };
-    
+
     public String deleteSelectedRepoSubscriptions() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedRepoSubscriptions();
@@ -65,10 +65,10 @@ public class RepoSubscriptionsUIBean extends PagedDataTableUIBean {
                 }
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Unsubscribed [" + resourceIds.length
-                    + "] resources from repo");
+                    + "] resources from repository");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to unsubscribe one or more resources from repo", e);
+                    "Failed to unsubscribe one or more resources from repository", e);
             }
         }
 
@@ -97,7 +97,7 @@ public class RepoSubscriptionsUIBean extends PagedDataTableUIBean {
             PageList<Resource> results = manager.findSubscribedResources(subject, id, pc);
             return results;
         }
-        
+
         protected IntExtractor<Resource> getResourceIdExtractor() {
             return RESOURCE_ID_EXTRACTOR;
         }

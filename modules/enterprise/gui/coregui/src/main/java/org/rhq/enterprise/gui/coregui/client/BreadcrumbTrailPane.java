@@ -40,7 +40,8 @@ public class BreadcrumbTrailPane extends HTMLPane {
         setBackgroundColor("#E6E3E3");
         setBackgroundImage("[skin]images/SectionHeader/header_opened_stretch.png");   //ToolStrip/background.png");
         setBackgroundRepeat(BkgndRepeat.REPEAT_X);
-        setPadding(5);
+//        setPadding(5);
+
         setOverflow(Overflow.CLIP_V);
     }
 
@@ -55,11 +56,13 @@ public class BreadcrumbTrailPane extends HTMLPane {
 
             for (ViewId viewId : viewPath.getViewPath()) {
 
-                if (!first) {
-                    path.append("/");
-                    content.append(" > ");
-                } else {
-                    first = false;
+                if (!viewId.getBreadcrumbs().isEmpty()) {
+                    if (!first) {
+                        path.append("/");
+                        content.append("<img src=\"images/header/breadcrumb_space.png\" style=\"vertical-align: middle;\" width=\"28\" height=\"28\"/>");
+                    } else {
+                        first = false;
+                    }
                 }
 
                 boolean firstBC = true;
@@ -79,7 +82,7 @@ public class BreadcrumbTrailPane extends HTMLPane {
                         content.append("<a href=\"#");
                         // NOTE: We have to call toString() below, because GWT chokes if you try to append a StringBuilder.
                         content.append(path.toString() + breadcrumb.getName());
-                        content.append("\">");
+                        content.append("\" style=\"padding: 0 10px;\">");
                         content.append(breadcrumb.getDisplayName());
                         content.append("</a>");
                     }

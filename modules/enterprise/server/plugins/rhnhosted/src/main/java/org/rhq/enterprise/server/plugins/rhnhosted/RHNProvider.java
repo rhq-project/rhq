@@ -220,7 +220,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
             //helper.disconnect();
             summary.markEnded();
             report.setSummary(summary.toString());
-            log.info("synchronizing with repo: " + helper + " finished\n" + summary);
+            log.info("synchronizing with repository: " + helper + " finished\n" + summary);
         }
     }
 

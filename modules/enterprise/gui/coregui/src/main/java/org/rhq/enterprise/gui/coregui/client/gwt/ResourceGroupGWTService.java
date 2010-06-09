@@ -41,4 +41,8 @@ public interface ResourceGroupGWTService extends RemoteService {
     PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria);
 
     void ensureMembershipMatches(int groupId, int[] resourceIds);
+
+    ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds);
+
+    void deleteResourceGroup(int groupId);
 }

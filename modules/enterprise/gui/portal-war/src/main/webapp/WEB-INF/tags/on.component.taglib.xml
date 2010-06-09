@@ -97,10 +97,18 @@
     </tag>
 
     <tag>
-        <tag-name>resourcePartialLineage</tag-name>
+        <tag-name>disambiguatedResourceLineage</tag-name>
         <component>
-            <component-type>org.jboss.on.ResourcePartialLineage</component-type>
-            <renderer-type>org.jboss.on.ResourcePartialLineage</renderer-type>
+            <component-type>org.jboss.on.DisambiguatedResourceLineage</component-type>
+            <renderer-type>org.jboss.on.DisambiguatedResourceLineage</renderer-type>
+        </component>
+    </tag>
+
+    <tag>
+        <tag-name>disambiguatedResourceName</tag-name>
+        <component>
+            <component-type>org.jboss.on.DisambiguatedResourceName</component-type>
+            <renderer-type>org.jboss.on.DisambiguatedResourceName</renderer-type>
         </component>
     </tag>
 

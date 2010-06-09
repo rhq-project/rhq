@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.perspective;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -188,7 +189,10 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
     private CacheEntry getCacheEntry(Subject subject) {
         Integer sessionId = subject.getSessionId();
-        CacheEntry cacheEntry = CACHE.get(sessionId);
+        CacheEntry cacheEntry;
+        synchronized (CACHE) {
+            cacheEntry = CACHE.get(sessionId);
+        }
         long metadataLastModifiedTime = getPluginMetadataManager().getLastModifiedTime();
         if (cacheEntry == null || cacheEntry.getMetadataLastModifiedTime() < metadataLastModifiedTime) {
             // Take this opportunity to clean expired sessions from the cache.
@@ -207,7 +211,9 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
             List<PageLink> filteredPageLinks = applyActivatorsToPageLinks(context, scopes, basePageLinks);
 
             cacheEntry = new CacheEntry(metadataLastModifiedTime, filteredMenu, filteredTabs, filteredPageLinks);
-            CACHE.put(sessionId, cacheEntry);
+            synchronized (CACHE) {
+                CACHE.put(sessionId, cacheEntry);
+            }
         }
         return cacheEntry;
     }
@@ -222,16 +228,20 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     private void cleanCache() {
         Subject subject;
 
-        for (Integer sessionId : CACHE.keySet()) {
-            try {
-                subject = subjectManager.getSubjectBySessionId(sessionId);
-                if (null == subject) {
-                    log.debug("Removing perspective cache entry for session " + sessionId);
-                    CACHE.remove(sessionId);
+        synchronized (CACHE) {
+            Iterator<Integer> iterator = CACHE.keySet().iterator(); // so we can use iterator.remove and avoid concurrent-mod-exception
+            while (iterator.hasNext()) {
+                Integer sessionId = iterator.next();
+                try {
+                    subject = subjectManager.getSubjectBySessionId(sessionId);
+                    if (null == subject) {
+                        log.debug("Removing perspective cache entry for session. " + sessionId);
+                        iterator.remove();
+                    }
+                } catch (Exception e) {
+                    log.debug("Removing perspective cache entry for session: " + sessionId);
+                    iterator.remove();
                 }
-            } catch (Exception e) {
-                log.debug("Removing perspective cache entry for session " + sessionId);
-                CACHE.remove(sessionId);
             }
         }
     }

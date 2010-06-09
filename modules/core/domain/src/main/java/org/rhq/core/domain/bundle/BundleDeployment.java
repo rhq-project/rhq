@@ -31,6 +31,8 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -49,6 +51,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.tagging.Tag;
 
 /**
@@ -60,15 +63,30 @@ import org.rhq.core.domain.tagging.Tag;
  * @author Jay Shaughnessy
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = BundleDeployment.QUERY_FIND_ALL, query = "SELECT bd FROM BundleDeployment bd") //
-})
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOY_ID_SEQ")
-@Table(name = "RHQ_BUNDLE_DEPLOY")
+@NamedQueries( { //
+@NamedQuery(name = BundleDeployment.QUERY_FIND_ALL, query = "" //
+    + "SELECT bd FROM BundleDeployment bd "),
+    @NamedQuery(name = BundleDeployment.QUERY_UPDATE_FOR_DESTINATION_REMOVE, query = "" //
+        + "UPDATE BundleDeployment bd " //
+        + "   SET bd.replacedBundleDeployment = NULL " //
+        + " WHERE bd.replacedBundleDeployment.id IN " //
+        + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
+        + "        WHERE innerbd.destination.id  = :destinationId ) "),
+    @NamedQuery(name = BundleDeployment.QUERY_UPDATE_FOR_VERSION_REMOVE, query = "" //
+        + "UPDATE BundleDeployment bd " //
+        + "   SET bd.replacedBundleDeployment = NULL " //
+        + " WHERE bd.replacedBundleDeployment.id IN " //
+        + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
+        + "        WHERE innerbd.bundleVersion.id  = :bundleVersionId ) ") })
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOYMENT_ID_SEQ")
+@Table(name = "RHQ_BUNDLE_DEPLOYMENT")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleDeployment implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "BundleDeployment.findAll";
+    public static final String QUERY_UPDATE_FOR_DESTINATION_REMOVE = "BundleDeployment.updateForDestinationRemove";
+    public static final String QUERY_UPDATE_FOR_VERSION_REMOVE = "BundleDeployment.updateForVersionRemove";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -81,14 +99,28 @@ public class BundleDeployment implements Serializable {
     @Column(name = "DESCRIPTION", nullable = true)
     private String description;
 
+    @Column(name = "STATUS", nullable = false)
+    @Enumerated(EnumType.STRING)
+    protected BundleDeploymentStatus status;
+
+    @Column(name = "ERROR_MESSAGE")
+    protected String errorMessage;
+
+    @Column(name = "SUBJECT_NAME")
+    protected String subjectName;
+
+    @Column(name = "IS_LIVE")
+    private boolean isLive = false;
+
     @Column(name = "CTIME")
     private Long ctime = System.currentTimeMillis();
 
     @Column(name = "MTIME")
     private Long mtime = System.currentTimeMillis();
 
-    @Column(name = "INSTALL_DIR", nullable = false)
-    private String installDir;
+    @JoinColumn(name = "REPLACED_BUNDLE_DEPLOYMENT_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
+    private BundleDeployment replacedBundleDeployment;
 
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
@@ -98,23 +130,26 @@ public class BundleDeployment implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private BundleVersion bundleVersion;
 
-    @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
+    @JoinColumn(name = "BUNDLE_DESTINATION_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private BundleDestination destination;
 
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<BundleGroupDeployment> groupDeployments = new ArrayList<BundleGroupDeployment>();
+    private List<BundleResourceDeployment> resourceDeployments;
 
-    @ManyToMany(mappedBy = "bundleDeployments", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "bundleDeployments", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
 
     public BundleDeployment() {
         // for JPA use
     }
 
-    public BundleDeployment(BundleVersion bundleVersion, String name, String installDir) {
+    public BundleDeployment(BundleVersion bundleVersion, BundleDestination destination, String name) {
         this.bundleVersion = bundleVersion;
+        this.destination = destination;
         this.name = name;
-        this.installDir = installDir;
+        this.status = BundleDeploymentStatus.PENDING;
+        this.isLive = false;
     }
 
     public int getId() {
@@ -163,12 +198,98 @@ public class BundleDeployment implements Serializable {
         this.mtime = mtime;
     }
 
-    public String getInstallDir() {
-        return installDir;
+    /**
+     * The status of the request which indicates that the request is either still in progress, or it has completed and
+     * either succeeded or failed.
+     *
+     * @return the request status
+     */
+    public BundleDeploymentStatus getStatus() {
+        return status;
     }
 
-    public void setInstallDir(String installDir) {
-        this.installDir = installDir;
+    public void setStatus(BundleDeploymentStatus status) {
+        this.status = status;
+    }
+
+    /**
+     * If not <code>null</code>, this is an error message (possibly a full stack trace) to indicate the overall error
+     * that occurred when the configuration update failed. This will normally be <code>null</code> unless the
+     * {@link #getStatus() status} indicates a {@link BundleDeploymentStatus#FAILURE}.
+     *
+     * @return overall error that occurred
+     */
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    /**
+     * Calling this method with a non-<code>null</code> error message implies that the request's status is
+     * {@link ConfigurationUpdateStatus#FAILURE}. The inverse is <i>not</i> true - that is, if you set the error message
+     * to <code>null</code>, the status is left as-is; it will not assume that a <code>null</code> error message means
+     * the status is successful.
+     *
+     * @param errorMessage
+     */
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+
+        if (this.errorMessage != null) {
+            setStatus(BundleDeploymentStatus.FAILURE);
+        }
+    }
+
+    /**
+     * For auditing purposes, this method tells you the username of the person that created the request. This is not a
+     * relationship to an actual Subject because we want to maintain the audit trail, even if a Subject has been deleted
+     * from the database.
+     *
+     * @return the actual name string of the submitter of the request
+     */
+    public String getSubjectName() {
+        return subjectName;
+    }
+
+    public void setSubjectName(String subjectName) {
+        this.subjectName = subjectName;
+    }
+
+    public boolean isLive() {
+        return isLive;
+    }
+
+    public void setLive(boolean isLive) {
+        this.isLive = isLive;
+    }
+
+    /**
+     * The duration of the configuration update request which simply is the difference between the
+     * {@link #getCreatedTime()} and the {@link #getModifiedTime()}. If the request hasn't completed yet, this will be
+     * the difference between the current time and the created time.
+     *
+     * @return the duration of time that the request took or is taking to complete
+     */
+    public long getDuration() {
+        long start = this.ctime;
+        long end;
+        if ((status == null) || (status == BundleDeploymentStatus.IN_PROGRESS)) {
+            end = System.currentTimeMillis();
+        } else {
+            end = this.mtime;
+        }
+
+        return end - start;
+    }
+
+    /** 
+     * @return The previously "live" BundleDeployment.
+     */
+    public BundleDeployment getReplacedBundleDeployment() {
+        return replacedBundleDeployment;
+    }
+
+    public void setReplacedBundleDeployment(BundleDeployment replacedBundleDeployment) {
+        this.replacedBundleDeployment = replacedBundleDeployment;
     }
 
     public Configuration getConfiguration() {
@@ -187,6 +308,14 @@ public class BundleDeployment implements Serializable {
         this.bundleVersion = bundleVersion;
     }
 
+    public BundleDestination getDestination() {
+        return destination;
+    }
+
+    public void setDestination(BundleDestination destination) {
+        this.destination = destination;
+    }
+
     public List<BundleResourceDeployment> getResourceDeployments() {
         return resourceDeployments;
     }
@@ -196,21 +325,11 @@ public class BundleDeployment implements Serializable {
     }
 
     public void addResourceDeployment(BundleResourceDeployment resourceDeployment) {
+        if (null == this.resourceDeployments) {
+            resourceDeployments = new ArrayList<BundleResourceDeployment>();
+        }
         this.resourceDeployments.add(resourceDeployment);
         resourceDeployment.setBundleDeployment(this);
-    }
-
-    public List<BundleGroupDeployment> getGroupDeployments() {
-        return groupDeployments;
-    }
-
-    public void addGroupDeployment(BundleGroupDeployment groupDeployment) {
-        this.groupDeployments.add(groupDeployment);
-        groupDeployment.setBundleDeployment(this);
-    }
-
-    public void setGroupDeployments(List<BundleGroupDeployment> groupDeployments) {
-        this.groupDeployments = groupDeployments;
     }
 
     public Set<Tag> getTags() {
@@ -245,9 +364,10 @@ public class BundleDeployment implements Serializable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((bundleVersion == null) ? 0 : bundleVersion.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((installDir == null) ? 0 : installDir.hashCode());
+        result = prime * result + ((this.bundleVersion == null) ? 0 : this.bundleVersion.hashCode());
+        result = prime * result + ((this.destination == null) ? 0 : this.destination.hashCode());
+        result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
+        result = prime * result + ((this.ctime == null) ? 0 : this.ctime.hashCode());
         return result;
     }
 
@@ -262,27 +382,35 @@ public class BundleDeployment implements Serializable {
 
         BundleDeployment other = (BundleDeployment) obj;
 
-        if (bundleVersion == null) {
+        if (this.bundleVersion == null) {
             if (other.bundleVersion != null) {
                 return false;
             }
-        } else if (!bundleVersion.equals(other.bundleVersion)) {
+        } else if (!this.bundleVersion.equals(other.bundleVersion)) {
             return false;
         }
 
-        if (name == null) {
+        if (this.destination == null) {
+            if (other.destination != null) {
+                return false;
+            }
+        } else if (!this.destination.equals(other.destination)) {
+            return false;
+        }
+
+        if (this.name == null) {
             if (other.name != null) {
                 return false;
             }
-        } else if (!name.equals(other.name)) {
+        } else if (!this.name.equals(other.name)) {
             return false;
         }
 
-        if (installDir == null) {
-            if (other.installDir != null) {
+        if (this.ctime == null) {
+            if (other.ctime != null) {
                 return false;
             }
-        } else if (!installDir.equals(other.installDir)) {
+        } else if (!this.ctime.equals(other.ctime)) {
             return false;
         }
 

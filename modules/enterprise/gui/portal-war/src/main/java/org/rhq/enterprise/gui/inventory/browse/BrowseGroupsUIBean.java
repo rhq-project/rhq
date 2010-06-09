@@ -1,8 +1,5 @@
 package org.rhq.enterprise.gui.inventory.browse;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
@@ -13,7 +10,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -29,8 +25,10 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
 
     public static final String MANAGED_BEAN_NAME = "BrowseGroupsUIBean";
 
-    private String filter;
+    private String search;
     private GroupCategory category;
+
+    private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
     public BrowseGroupsUIBean() {
         String subtab = FacesContextUtility.getOptionalRequestParameter("subtab", "").toLowerCase();
@@ -40,15 +38,17 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
             category = GroupCategory.MIXED;
         }
 
-        filter = FacesContextUtility.getOptionalRequestParameter("filter");
+        /*
+            search = FacesContextUtility.getOptionalRequestParameter("search");
+        */
     }
 
-    public String getFilter() {
-        return filter;
+    public String getSearch() {
+        return this.search;
     }
 
-    public void setFilter(String filter) {
-        this.filter = filter;
+    public void setSearch(String search) {
+        this.search = search;
     }
 
     public GroupCategory getCategory() {
@@ -63,8 +63,6 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
-
     private class ResultsDataModel extends PagedListDataModel<ResourceGroupComposite> {
 
         public ResultsDataModel(PageControlView view, String beanName) {
@@ -72,13 +70,13 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
         }
 
         public PageList<ResourceGroupComposite> fetchPage(PageControl pc) {
-            String filter = getFilter();
+            String search = getSearch();
             GroupCategory category = getCategory();
 
             ResourceGroupCriteria criteria = new ResourceGroupCriteria();
             criteria.setPageControl(pc);
-            if (filter != null && !filter.equals("")) {
-                criteria.addFilterName(filter);
+            if (search != null && !search.trim().equals("")) {
+                criteria.setSearchExpression(search);
             }
             criteria.addFilterGroupCategory(category);
 
@@ -86,15 +84,6 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
             results = groupManager.findResourceGroupCompositesByCriteria(getSubject(), criteria);
             return results;
         }
-    }
-
-    public List<SearchSuggestion> autocomplete(Object suggest) {
-        String currentInputText = (String) suggest;
-
-        List<SearchSuggestion> suggestions = new ArrayList<SearchSuggestion>();
-
-        // offer suggestions based on currentInputText
-        return suggestions;
     }
 
     public String deleteSelectedGroups() {

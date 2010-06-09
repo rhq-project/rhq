@@ -52,6 +52,7 @@ import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
+import org.rhq.enterprise.server.plugin.pc.bundle.UnknownRecipeException;
 
 /**
  * A bundle server-side plugin component that the server uses to process file template bundles.
@@ -81,10 +82,17 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
         log.debug("The filetemplate bundle plugin has been shut down!!! : " + this);
     }
 
-    public RecipeParseResults parseRecipe(String recipe) throws Exception {
+    public RecipeParseResults parseRecipe(String recipe) throws UnknownRecipeException, Exception {
         RecipeParser parser = new RecipeParser();
         RecipeContext recipeContext = new RecipeContext(recipe);
-        parser.parseRecipe(recipeContext);
+        try {
+            parser.parseRecipe(recipeContext);
+        } catch (Exception e) {
+            if (recipeContext.isUnknownRecipe()) {
+                throw new UnknownRecipeException("Not a valid file template recipe");
+            }
+            throw e;
+        }
 
         DeploymentProperties bundleMetadata = recipeContext.getDeploymentProperties();
 
@@ -112,7 +120,8 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
 
     }
 
-    public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws Exception {
+    public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws UnknownRecipeException,
+        Exception {
         if (null == distributionFile) {
             throw new IllegalArgumentException("distributionFile == null");
         }
@@ -133,19 +142,14 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
             // so see if we can parse it, but note that we don't even bother if its a really big file since
             // that's probably not a recipe file and we don't want to risk loading in a huge file in memory
             if (distributionFile.length() < 50000L) {
-                try {
-                    byte[] content = StreamUtil.slurp(new FileInputStream(distributionFile));
-                    recipe = new String(content);
-                    content = null;
-                    recipeParseResults = parseRecipe(recipe);
-                } catch (Exception e) {
-                    throw new IllegalArgumentException("Not a File Template Bundle"); // nope, its not a recipe file either
-                }
+                byte[] content = StreamUtil.slurp(new FileInputStream(distributionFile));
+                recipe = new String(content);
+                content = null;
+                recipeParseResults = parseRecipe(recipe); // if it isn't a recipe either, this will throw UnknownRecipeException
             } else {
-                throw new IllegalArgumentException("Not a File Template Bundle");
+                throw new UnknownRecipeException("Not a File Template Bundle");
             }
         } else {
-
             // if we parsed the recipe, then this is a distribution zip we can deal with, get the bundle file Map                 
             BundleFileVisitor bundleFileVisitor = new BundleFileVisitor(recipeParseResults.getBundleMetadata()
                 .getBundleName(), recipeParseResults.getBundleFileNames());
@@ -211,11 +215,7 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
                 StreamUtil.copy(stream, out, false);
                 this.recipe = new String(out.toByteArray());
                 out = null; // no need for this anymore, help out GC
-                try {
-                    this.results = this.facet.parseRecipe(this.recipe);
-                } catch (Throwable t) {
-                    this.results = null;
-                }
+                this.results = this.facet.parseRecipe(this.recipe);
                 return false; // whether we parsed it or not, we found the file we are looking for so stop walking
             }
             return true;

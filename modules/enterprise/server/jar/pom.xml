@@ -428,16 +428,16 @@
                         </tstamp>
 
                         <echo file="${project.build.outputDirectory}/rhq-server-version.properties" append="false">Product-Name=${rhq.product.name}
-                           Product-Version=${project.version}
-                           Module-Name=${pom.name}
-                           Module-Version=${pom.version}
-                           Build-Number=${buildNumber}
-                           Build-Date=${build.time}
-                           Build-Jdk-Vendor=${java.vendor}
-                           Build-Jdk=${java.version}
-                           Build-OS-Name=${os.name}
-                           Build-OS-Version=${os.version}
-                        </echo>
+Product-Version=${project.version}
+Module-Name=${pom.name}
+Module-Version=${pom.version}
+Build-Number=${buildNumber}
+Build-Date=${build.time}
+Build-Jdk-Vendor=${java.vendor}
+Build-Jdk=${java.version}
+Build-OS-Name=${os.name}
+Build-OS-Version=${os.version}
+</echo>
                      </tasks>
                   </configuration>
                   <goals>

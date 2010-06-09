@@ -27,13 +27,15 @@ import org.apache.tools.ant.BuildException;
 import java.io.File;
 
 /**
- * A file to be copied during the bundle deployment.
+ * A file to be copied during the bundle deployment. If the replace attribute is set to true, any template variables
+ * (e.g. @@http.port@@) inside the file will be replaced with the value of the corresponding property.
  *
  * @author Ian Springer
  */
 public class FileType extends AbstractFileType {
     private File destinationDir;
     private File destinationFile;
+    private boolean replace;
 
     public File getDestinationDir() {
         return this.destinationDir;
@@ -56,5 +58,13 @@ public class FileType extends AbstractFileType {
             throw new BuildException("Both 'destinationDir' and 'destinationFile' attributes are defined - only one or the other may be specified.");
         }
         this.destinationFile = new File(destinationFile);
+    }
+
+    public boolean isReplace() {
+        return replace;
+    }
+
+    public void setReplace(boolean replace) {
+        this.replace = replace;
     }
 }

@@ -20,6 +20,9 @@ package org.rhq.enterprise.server.plugin.pc.bundle;
 
 import java.io.File;
 
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.enterprise.server.bundle.BundleDistributionInfo;
 import org.rhq.enterprise.server.bundle.RecipeParseResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -114,10 +117,64 @@ public class BundleServerPluginManager extends ServerPluginManager {
         try {
             Thread.currentThread().setContextClassLoader(pluginEnv.getPluginClassLoader());
             RecipeParseResults results = facet.parseRecipe(recipe);
+            ensureDisplayNameIsSet(results);
             return results;
         } finally {
             Thread.currentThread().setContextClassLoader(originalContextClassLoader);
         }
+    }
+
+    /**
+     * Given just a recipe, this will attempt to parse the given recipe by asking all the
+     * bundle plugins to see if any can parse it successfully. If the recipe cannot be
+     * parsed by any plugin, an exception is thrown, otherwise, results are returned.
+     * 
+     * @param recipe the recipe to parse
+     *
+     * @return the results of the parse, which also includes the bundle type
+     * 
+     * @throws Exception if the recipe could not be parsed successfully
+     */
+    public BundleDistributionInfo parseRecipe(String recipe) throws Exception {
+
+        if (recipe == null) {
+            throw new IllegalArgumentException("recipe == null");
+        }
+
+        BundleDistributionInfo info = null;
+
+        for (ServerPluginEnvironment env : getPluginEnvironments()) {
+            BundlePluginDescriptorType descriptor = (BundlePluginDescriptorType) env.getPluginDescriptor();
+
+            // get the facet and see if this plugin can deal with the recipe
+            String pluginName = env.getPluginKey().getPluginName();
+            ServerPluginComponent component = getServerPluginComponent(pluginName);
+            BundleServerPluginFacet facet = (BundleServerPluginFacet) component; // we know this cast will work because our loadPlugin ensured so
+            getLog().debug("Bundle server plugin [" + pluginName + "] is parsing a recipe");
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
+                try {
+                    RecipeParseResults results = facet.parseRecipe(recipe);
+                    info = new BundleDistributionInfo(recipe, results, null);
+                    info.setBundleTypeName(descriptor.getBundle().getType());
+                    break;
+                } catch (UnknownRecipeException ure) {
+                    // the recipe is not a type that the plugin can handle, go on to the next
+                    info = null;
+                }
+            } finally {
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+            }
+        }
+
+        if (null == info) {
+            throw new IllegalArgumentException("Invalid recipe not recognized by any deployed server bundle plugin.");
+        }
+
+        ensureDisplayNameIsSet(info.getRecipeParseResults());
+
+        return info;
     }
 
     /**
@@ -155,7 +212,8 @@ public class BundleServerPluginManager extends ServerPluginManager {
                     info = facet.processBundleDistributionFile(distributionFile);
                     info.setBundleTypeName(descriptor.getBundle().getType());
                     break;
-                } catch (Exception e) {
+                } catch (UnknownRecipeException ure) {
+                    // the recipe is not a type that the plugin can handle, go on to the next
                     info = null;
                 }
             } finally {
@@ -167,6 +225,22 @@ public class BundleServerPluginManager extends ServerPluginManager {
                 "Invalid bundle distribution file. BundleType/Recipe not recognized by any deployed server bundle plugin.");
         }
 
+        ensureDisplayNameIsSet(info.getRecipeParseResults());
+
         return info;
+    }
+
+    private void ensureDisplayNameIsSet(RecipeParseResults recipeParseResults) {
+        if (recipeParseResults != null && recipeParseResults.getConfigurationDefinition() != null) {
+            ConfigurationDefinition configDef = recipeParseResults.getConfigurationDefinition();
+            for (PropertyDefinition propDef : configDef.getPropertyDefinitions().values()) {
+                if (propDef instanceof PropertyDefinitionSimple) {
+                    if (propDef.getDisplayName() == null) {
+                        propDef.setDisplayName(propDef.getName());
+                    }
+                }
+            }
+        }
+        return;
     }
 }

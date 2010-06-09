@@ -85,28 +85,29 @@ public class LoggerAntBuildListener implements BuildListener {
         Task task = event.getTask();
 
         if (additionalMessage != null) {
-            output.println(additionalMessage);
+            this.output.println(additionalMessage);
         }
 
         if (target != null) {
-            output.print("[" + target.getName() + "] ");
+            String targetName = (target.getName() != null) ? target.getName() : "";
+            this.output.print("[" + targetName + "] ");
         }
 
         if (task != null) {
-            output.print("<" + task.getTaskName() + "> ");
+            this.output.print("<" + task.getTaskName() + "> ");
         }
 
         if (message != null) {
-            output.print(message);
+            this.output.print(message);
         }
 
         if (exception != null) {
-            output.println();
+            this.output.println();
             exception.printStackTrace(output);
         }
 
-        output.println();
-        output.flush();
+        this.output.println();
+        this.output.flush();
 
         return;
     }

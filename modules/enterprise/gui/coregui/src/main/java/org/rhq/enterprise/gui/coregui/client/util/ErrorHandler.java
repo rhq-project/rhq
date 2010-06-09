@@ -30,11 +30,13 @@ public class ErrorHandler {
 
     private ArrayList<String> errors = new ArrayList<String>();
 
+    public void handleError(String message) {
+        handleError(message, null);
+    }
+
     public void handleError(String message, Throwable t) {
-
-//        SC.say(message);
-
-        CoreGUI.getMessageCenter().notify(new Message(message, t.toString(), Message.Severity.Error));
+        Message errorMessage = new Message(message, (t == null) ? null : t.toString(), Message.Severity.Error);
+        CoreGUI.getMessageCenter().notify(errorMessage);
 
         t.printStackTrace();
         this.errors.add(message);

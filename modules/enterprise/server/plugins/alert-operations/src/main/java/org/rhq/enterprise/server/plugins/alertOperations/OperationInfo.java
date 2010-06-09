@@ -67,7 +67,7 @@ public class OperationInfo {
         this.operationId = get(operationId);
         this.argumentsConfigurationId = get(argumentsConfigurationId);
 
-        this.error = getErrorString(this);
+        this.error = getErrorString();
     }
 
     private Integer get(String data) {
@@ -78,13 +78,22 @@ public class OperationInfo {
         return Integer.parseInt(data);
     }
 
-    private String getErrorString(OperationInfo info) {
-        if (resourceId == null) {
-            return "<no resource selected>";
+    private String getErrorString() {
+        if (mode == ResourceSelectionMode.RELATIVE) {
+            if (ancestorTypeId == null) {
+                return "<no 'start search from' selected>";
+            }
+            // if (descendantTypeId == null) wants to execute operation on direct ancestor
+        } else if (mode == ResourceSelectionMode.SPECIFIC) {
+            if (resourceId == null) {
+                return "<no resource selected>";
+            }
         }
+
         if (operationId == null) {
             return "<no operation selected>";
         }
+
         return null;
     }
 
@@ -106,24 +115,23 @@ public class OperationInfo {
     }
 
     public String toString() {
+        String errorInfo = getErrorString();
+        if (errorInfo != null) {
+            return errorInfo;
+        }
+
         String resourceInfo = getResourceInfo();
-
-        if (resourceInfo == null) {
-            return "<no resource selected>";
-        }
-
-        if (operationId == null) {
-            return "<no operation selected> for " + resourceInfo;
-        }
-
-        return getOperationDefinition().getDisplayName() + " on " + resourceInfo;
+        OperationDefinition operation = getOperationDefinition();
+        return "'" + operation.getDisplayName() + "' on " + resourceInfo;
     }
 
     public String getResourceInfo() {
         /*
-         * <operation> on this resource (<resource ancestry>)
-         * <operation> on other resource (<resource ancestry>)
-         * <operation> on { { name } <descendant> } { under <ancestor> }
+         * 1) "on" this resource 
+         * 2) "on" the ( <resource ancestry> ) resource 
+         * 3a) "on" the <ancestorType> ancestor
+         * 3b) "on" the '{name}' <descendantType> descendant 
+         * 3c) "on" the '{name}' <descendantType> descendant under the <ancestorType> ancestor
          */
         if (mode == null) {
             return null;
@@ -144,14 +152,14 @@ public class OperationInfo {
                 }
                 builder.append(next.getName());
             }
-            return "other resource ( " + builder.toString() + " )";
+            return "the ( " + builder.toString() + " ) resource";
         } else if (mode == ResourceSelectionMode.RELATIVE) {
             ResourceType ancestor = getType(ancestorTypeId);
             ResourceType descendant = getType(descendantTypeId);
 
             StringBuilder builder = new StringBuilder();
+            builder.append(" the ");
             if (descendant != null) {
-                builder.append(" the ");
                 if (descendantName != null) {
                     builder.append('\'');
                     builder.append(descendantName); // name only relevant if type is chosen
@@ -159,10 +167,10 @@ public class OperationInfo {
                 }
                 builder.append(' ');
                 builder.append(descendant.getName());
-                builder.append(" resource");
+                builder.append(" descendant");
 
                 if (ancestor != null) {
-                    builder.append(" under ");
+                    builder.append(" under the ");
                 }
             }
 
@@ -219,8 +227,17 @@ public class OperationInfo {
 
             Resource targetResource = null;
             if (descendantTypeId != null) {
-                LookupUtil.getResourceManager().getResourceDescendantsByTypeAndName(getOverlord(), searchFrom.getId(),
-                    descendantTypeId, descendantName);
+                List<Integer> candidateResourceIds = LookupUtil.getResourceManager()
+                    .getResourceDescendantsByTypeAndName(getOverlord(), searchFrom.getId(), descendantTypeId,
+                        descendantName);
+                if (candidateResourceIds.size() == 0) {
+                    throw new IllegalStateException("Could not find target resource");
+                } else if (candidateResourceIds.size() != 1) {
+                    throw new IllegalStateException("Found multiple resources, need exactly one match");
+                } else {
+                    int targetResourceId = candidateResourceIds.get(0);
+                    targetResource = LookupUtil.getResourceManager().getResourceById(getOverlord(), targetResourceId);
+                }
             } else {
                 targetResource = searchFrom;
             }

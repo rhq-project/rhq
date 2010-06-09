@@ -21,11 +21,18 @@ package org.rhq.enterprise.gui.coregui.client.bundle.list;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -35,6 +42,7 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
@@ -43,11 +51,19 @@ import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
+import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
+import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
+import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationView;
+import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
+import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -57,6 +73,8 @@ public class BundleView extends VLayout implements BookmarkableView {
     private HeaderLabel headerLabel;
     DynamicForm form;
     private Table bundleVersionsTable;
+
+    private BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
 
     private Bundle bundle;
 
@@ -75,28 +93,33 @@ public class BundleView extends VLayout implements BookmarkableView {
     }
 
     public void viewBundle(Bundle bundle, ViewId nextViewId) {
+        removeMembers(getMembers());
+
         this.bundle = bundle;
 
-        headerLabel = new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/Bundle_24.png") + "\"/> " + bundle.getName());
+        addMember(new BackButton("Back to All Bundles", "Bundles"));
 
+
+        headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
+
+        addMember(headerLabel);
+
+        addMember(createSummaryForm());
 
         TabSet tabs = new TabSet();
-        Tab summaryTab = createSummaryTab();
-        tabs.addTab(summaryTab);
 
         Tab versionsTab = createVersionsTab();
         tabs.addTab(versionsTab);
 
-        Tab deploymentsTab = createDeploymentsTab();
+        Tab deploymentsTab = createDestinationsTab();
         tabs.addTab(deploymentsTab);
 
-        addMember(headerLabel);
         addMember(tabs);
 
         if (nextViewId != null) {
             if (nextViewId.getPath().equals("versions")) {
                 tabs.selectTab(versionsTab);
-            } else if (nextViewId.getPath().equals("deployments")) {
+            } else if (nextViewId.getPath().equals("desinations")) {
                 tabs.selectTab(deploymentsTab);
             }
         }
@@ -104,79 +127,55 @@ public class BundleView extends VLayout implements BookmarkableView {
         markForRedraw();
     }
 
-    private Tab createDeploymentsTab() {
-        Tab deploymentsTab = new Tab("Deployments");
-        return deploymentsTab;
+    private Tab createDestinationsTab() {
+        Tab destinationsTab = new Tab("Destinations");
+
+        Criteria criteria = new Criteria();
+        criteria.addCriteria("bundleId", bundle.getId());
+
+        destinationsTab.setPane(new BundleDestinationListView(criteria));
+
+        return destinationsTab;
     }
 
     private Tab createVersionsTab() {
         Tab versionsTab = new Tab("Versions");
 
-        bundleVersionsTable = new Table();
-        bundleVersionsTable.setHeight100();
+        Criteria criteria = new Criteria();
+        criteria.addCriteria("bundleId", bundleBeingViewed);
 
-        BundleVersionDataSource bundleVersionsDataSource = new BundleVersionDataSource();
-        bundleVersionsTable.setDataSource(bundleVersionsDataSource);
-
-        bundleVersionsTable.getListGrid().getField("id").setWidth("60");
-        bundleVersionsTable.getListGrid().getField("name").setWidth("25%");
-        bundleVersionsTable.getListGrid().getField("name").setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + bundle.getId() + "/versions/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
-            }
-        });
-
-        bundleVersionsTable.getListGrid().getField("version").setWidth("10%");
-        bundleVersionsTable.getListGrid().getField("fileCount").setWidth("10%");
-        bundleVersionsTable.getListGrid().getField("description").setWidth("*");
-
-        bundleVersionsTable.getListGrid().setSelectionType(SelectionStyle.NONE);
-        bundleVersionsTable.getListGrid().setSelectionAppearance(SelectionAppearance.ROW_STYLE);
+        bundleVersionsTable = new BundleVersionListView(criteria);
 
         versionsTab.setPane(bundleVersionsTable);
-
-        // versions tab
-        BundleVersionDataSource bvDataSource;
-        bvDataSource = (BundleVersionDataSource) bundleVersionsTable.getDataSource();
-        bvDataSource.setBundleId(bundleBeingViewed);
-        bvDataSource.fetchData();
-        bundleVersionsTable.getListGrid().invalidateCache(); // TODO: is there a better way to refresh?
 
         return versionsTab;
     }
 
-    private Tab createSummaryTab() {
-        Tab summaryTab = new Tab("Summary");
+    private DynamicForm createSummaryForm() {
 
         form = new DynamicForm();
-        form.setWidth("50%");
+        form.setWidth100();
+        form.setColWidths("20%","30%","25%","25%");
+        form.setNumCols(4);
         form.setWrapItemTitles(false);
         form.setPadding(10);
 
         StaticTextItem descriptionItem = new StaticTextItem("description", "Description");
         descriptionItem.setWrap(false);
+        descriptionItem.setValue(bundle.getDescription());
 
         StaticTextItem versionCountItem = new StaticTextItem("versionCount", "Version Count");
+        versionCountItem.setValue(bundle.getBundleVersions() != null ? bundle.getBundleVersions().size() : 0);
 
+        StaticTextItem destinationsCountItem = new StaticTextItem("destinationsCount", "Destinations Count");
+        destinationsCountItem.setValue(bundle.getDestinations() != null ? bundle.getDestinations().size() : 0);
 
-        StaticTextItem latestVersionItem = new StaticTextItem("latestVersion", "Latest Version");
-        latestVersionItem.setWrap(false);
+        form.setFields(descriptionItem, getTagItem(), getActionItem(), versionCountItem, destinationsCountItem);
 
+        return form;
+    }
 
-        StaticTextItem liveDeployments = new StaticTextItem("liveDeployments", "Live Deployments");
-
-
-        form.setFields(descriptionItem, versionCountItem, latestVersionItem, liveDeployments);
-
-
-        form.setValue("description", bundle.getDescription());
-        form.setValue("versionCount", bundle.getBundleVersions() != null ? bundle.getBundleVersions().size() : 0);
-
-
-        HLayout layout = new HLayout();
-        layout.setWidth100();
-
-        layout.addMember(form);
+    private CanvasItem getTagItem() {
 
         TagEditorView tagEditor = new TagEditorView(bundle.getTags(), false, new TagsChangedCallback() {
             public void tagsChanged(HashSet<Tag> tags) {
@@ -191,15 +190,84 @@ public class BundleView extends VLayout implements BookmarkableView {
                 });
             }
         });
-        layout.addMember(tagEditor);
+        tagEditor.setVertical(true);
 
+        CanvasItem tagItem = new CanvasItem("tags");
+        tagItem.setShowTitle(false);
+        tagItem.setRowSpan(3);
+        tagItem.setCanvas(tagEditor);
 
-        summaryTab.setPane(layout);
-
-
-        return summaryTab;
+        return tagItem;
     }
 
+    private CanvasItem getActionItem() {
+        VLayout layout = new VLayout(10);
+
+        IButton deleteButton = new IButton("Delete");
+        deleteButton.setIcon("subsystems/bundle/BundleAction_Delete_16.png");
+        deleteButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                SC.ask("Are you sure you want to delete this bundle?", new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            bundleManager.deleteBundle(bundleBeingViewed, new AsyncCallback<Void>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                            "Failed to delete bundle [" + bundle.getName() + "]", caught);
+                                }
+
+                                public void onSuccess(Void result) {
+                                    CoreGUI.getMessageCenter().notify(
+                                            new Message("Deleted bundle [" + bundle.getName() + "]", Message.Severity.Info));
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+
+
+        IButton deployButton = new IButton("Deploy");
+        deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
+        deployButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+
+                // can change this back to SINGLE selection when we feel like it. currently allowing the wizard to
+                // select the bundle.
+
+                BundleCriteria bc = new BundleCriteria();
+                bc.addFilterId(bundle.getId());
+                BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
+                bundleManager.findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                                "Failed to load bundle to deploy [" + bundle.getName() + "]", caught);
+                    }
+
+                    public void onSuccess(PageList<Bundle> result) {
+                        if (result == null || result.size() != 1) {
+                            CoreGUI.getMessageCenter().notify(
+                                    new Message("Failed to get single bundle to deploy [" + bundle.getName() + "]",
+                                            Message.Severity.Error));
+                            return;
+                        }
+                        new BundleDeployWizard(result.get(0).getId()).startBundleWizard();
+                    }
+                });
+            }
+        });
+
+        layout.addMember(deleteButton);
+        layout.addMember(deployButton);
+
+
+        CanvasItem actionItem = new CanvasItem("actions");
+        actionItem.setRowSpan(3);
+        actionItem.setShowTitle(false);
+        actionItem.setCanvas(layout);
+        return actionItem;
+    }
 
 
     public void renderView(final ViewPath viewPath) {
@@ -216,6 +284,7 @@ public class BundleView extends VLayout implements BookmarkableView {
                 BundleCriteria criteria = new BundleCriteria();
                 criteria.addFilterId(bundleId);
                 criteria.fetchBundleVersions(true);
+                criteria.fetchDestinations(true);
                 criteria.fetchTags(true);
 
                 GWTServiceLookup.getBundleService().findBundlesByCriteria(criteria,
@@ -226,13 +295,15 @@ public class BundleView extends VLayout implements BookmarkableView {
 
                             public void onSuccess(PageList<Bundle> result) {
                                 Bundle bundle = result.get(0);
+                                viewId.getBreadcrumbs().set(0, new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                                 viewBundle(bundle, viewPath.getCurrent());
-                                viewId.getBreadcrumbs().add(new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
+//                                viewId.getBreadcrumbs().add(new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                                 CoreGUI.refreshBreadCrumbTrail();
                             }
                         });
             }
         } else {
+            bundleBeingViewed = 0;
             if (viewPath.getCurrent().getPath().equals("versions")) {
                 if (viewPath.isEnd()) {
 
@@ -241,6 +312,28 @@ public class BundleView extends VLayout implements BookmarkableView {
                     // one version
                     removeMembers(getMembers());
                     BundleVersionView view = new BundleVersionView();
+                    addMember(view);
+                    view.renderView(viewPath.next());
+                }
+            } else if (viewPath.getCurrent().getPath().equals("deployments")) {
+                if (viewPath.isEnd()) {
+
+                    // versions list screen
+                } else {
+                    // one version
+                    removeMembers(getMembers());
+                    BundleDeploymentView view = new BundleDeploymentView();
+                    addMember(view);
+                    view.renderView(viewPath.next());
+                }
+            } else if (viewPath.getCurrent().getPath().equals("destinations")) {
+                if (viewPath.isEnd()) {
+
+                    // versions list screen
+                } else {
+                    // one version
+                    removeMembers(getMembers());
+                    BundleDestinationView view = new BundleDestinationView();
                     addMember(view);
                     view.renderView(viewPath.next());
                 }

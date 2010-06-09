@@ -40,6 +40,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlType;
 
 /**
  * This is a many-to-one entity that provides audit capability for a bundle deployment (a bundle-platform pairing).
@@ -72,27 +73,40 @@ public class BundleResourceDeploymentHistory implements Serializable {
     @Column(name = "AUDIT_TIME", nullable = false)
     private Long auditTime = System.currentTimeMillis();
 
-    @Column(name = "AUDIT_ACTION", nullable = false)
-    private String auditAction;
+    @Column(name = "ACTION", nullable = false)
+    private String action;
 
-    @Column(name = "AUDIT_STATUS", nullable = false)
+    @Column(name = "INFO", nullable = false)
+    private String info;
+
+    @Column(name = "CATEGORY", nullable = true)
     @Enumerated(EnumType.STRING)
-    private BundleDeploymentStatus auditStatus;
+    private Category category;
 
-    @Column(name = "AUDIT_MESSAGE", nullable = true)
-    private String auditMessage;
+    @Column(name = "STATUS", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    @Column(name = "MESSAGE", nullable = true)
+    private String message;
+
+    @Column(name = "ATTACHMENT", nullable = true)
+    private String attachment;
 
     // required for JPA
     protected BundleResourceDeploymentHistory() {
     }
 
-    public BundleResourceDeploymentHistory(String subjectName, String auditAction, BundleDeploymentStatus auditStatus,
-        String auditMessage) {
+    public BundleResourceDeploymentHistory(String subjectName, String action, String info, Category category,
+        Status status, String message, String attachment) {
 
         this.subjectName = subjectName;
-        this.auditAction = auditAction;
-        this.auditStatus = auditStatus;
-        this.auditMessage = auditMessage;
+        this.action = action;
+        this.info = info;
+        this.category = category;
+        this.status = status;
+        this.message = message;
+        this.attachment = attachment;
     }
 
     public int getId() {
@@ -119,28 +133,52 @@ public class BundleResourceDeploymentHistory implements Serializable {
         this.auditTime = auditTime;
     }
 
-    public String getAuditAction() {
-        return auditAction;
+    public String getAction() {
+        return action;
     }
 
-    public void setAuditAction(String auditAction) {
-        this.auditAction = auditAction;
+    public void setAction(String action) {
+        this.action = action;
     }
 
-    public BundleDeploymentStatus getAuditStatus() {
-        return auditStatus;
+    public String getInfo() {
+        return info;
     }
 
-    public void setAuditStatus(BundleDeploymentStatus auditStatus) {
-        this.auditStatus = auditStatus;
+    public void setInfo(String info) {
+        this.info = info;
     }
 
-    public String getAuditMessage() {
-        return this.auditMessage;
+    public Category getCategory() {
+        return category;
     }
 
-    public void setAuditMessage(String auditMessage) {
-        this.auditMessage = auditMessage;
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(String attachment) {
+        this.attachment = attachment;
     }
 
     public BundleResourceDeployment getResourceDeployment() {
@@ -156,8 +194,47 @@ public class BundleResourceDeploymentHistory implements Serializable {
         StringBuilder str = new StringBuilder("BundleDeploymentAudit: ");
         str.append(", time=[").append(this.auditTime).append("]");
         str.append(", rd=[").append(this.resourceDeployment).append("]");
-        str.append(", action=[").append(this.auditAction).append("]");
-        str.append(", message=[").append(this.auditMessage).append("]");
+        str.append(", action=[").append(this.action).append("]");
+        str.append(", info=[").append(this.info).append("]");
+        str.append(", category=[").append(this.category).append("]");
+        str.append(", status=[").append(this.status).append("]");
         return str.toString();
     }
+
+    @XmlType(name = "BundleResourceDeploymentHistoryStatus")
+    public enum Status {
+        SUCCESS("Success"), //
+        FAILURE("Failure"), //
+        WARN("Warning");
+
+        private String displayName;
+
+        Status(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String toString() {
+            return displayName;
+        }
+    }
+
+    @XmlType(name = "BundleResourceDeploymentHistoryCategory")
+    public enum Category {
+        DEPLOY_STEP("Deploy Step"), //        
+        FILE_ADD("File Add"), //
+        FILE_CHANGE("File Change"), //
+        FILE_DOWNLOAD("File Download"), //        
+        FILE_REMOVE("File Remove");
+
+        private String displayName;
+
+        Category(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String toString() {
+            return displayName;
+        }
+    }
+
 }

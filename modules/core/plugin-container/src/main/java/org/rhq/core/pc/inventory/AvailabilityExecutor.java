@@ -51,7 +51,25 @@ import org.rhq.core.pluginapi.availability.AvailabilityFacet;
  * @author John Mazzitelli  
  */
 public class AvailabilityExecutor implements Runnable, Callable<AvailabilityReport> {
-    private static final int GET_AVAILABILITY_TIMEOUT = 5 * 1000; // 5 seconds
+    // the get-availability-timeout will rarely, if ever, want to be overridden. It will default to be 5 seconds
+    // and that's what it probably should always be. However, there may be a rare instance where someone wants
+    // to give this availability executor a bit more time to wait for the resource's availability response
+    // and is willing to live with the possible consequences (that being, delayed avail reports and possibly
+    // false-down alerts getting triggered). Rather than changing this timeout, people should be using
+    // the asynchronous-availability-check capabilities that are exposed to the plugins. Because we do not
+    // want to encourage people from changing this, we do not expose this "backdoor" system property as a
+    // standard plugin configuration setting/agent preference - if someone wants to do this, they must
+    // explicitly pass in -D to the JVM running the plugin container.
+    private static final int GET_AVAILABILITY_TIMEOUT;
+    static {
+        int timeout;
+        try {
+            timeout = Integer.parseInt(System.getProperty("rhq.agent.plugins.availability-scan.timeout", "5000"));
+        } catch (Throwable t) {
+            timeout = 5000;
+        }
+        GET_AVAILABILITY_TIMEOUT = timeout;
+    }
 
     private final Log log = LogFactory.getLog(AvailabilityExecutor.class);
 

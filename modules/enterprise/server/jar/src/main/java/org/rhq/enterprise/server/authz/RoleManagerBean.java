@@ -292,7 +292,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public Role updateRole(Subject subject, Role role) {
         processDependentPermissions(role);
-        return entityManager.merge(role);
+        Role updatedRole = entityManager.merge(role);
+        // Load the roles
+        updatedRole.getResourceGroups().size();
+        return updatedRole;
     }
 
     /**

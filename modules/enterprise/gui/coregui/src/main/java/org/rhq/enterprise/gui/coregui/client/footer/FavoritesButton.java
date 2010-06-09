@@ -59,48 +59,51 @@ public class FavoritesButton extends IMenuButton {
 
                 Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
 
-                Integer[] resourceIds = new Integer[favorites.size()];
-                final MenuItem[] items = new MenuItem[favorites.size()];
-                final Map<Integer, MenuItem> idToMenuItemMap = new HashMap<Integer, MenuItem>(favorites.size());
-                int i = 0;
-                for (final Integer resourceId : favorites) {
-                    resourceIds[i] = resourceId;
-                    MenuItem item = new MenuItem(String.valueOf(resourceId));
-                    item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-                        public void onClick(MenuItemClickEvent event) {
-                            History.newItem("Resource/" + resourceId);
-                        }
-                    });
-                    items[i] = item;
-                    idToMenuItemMap.put(resourceId, item);
-                    i++;
-                }
+                if (!favorites.isEmpty()) {
 
-                ResourceCriteria criteria = new ResourceCriteria();
-                criteria.addFilterIds(resourceIds);
-                GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                    new AsyncCallback<PageList<Resource>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to load favorite Resources.", caught);
-                        }
-
-                        public void onSuccess(PageList<Resource> resources) {
-                            for (Resource resource : resources) {
-                                MenuItem item = idToMenuItemMap.get(resource.getId());
-                                // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
-                                //       disambiguated Resource names.
-                                item.setTitle(resource.getName());
-
-                                String category = resource.getResourceType().getCategory().getDisplayName();
-
-                                String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability().getAvailabilityType() != null)
-                                        ? (resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
-                                item.setIcon("types/" + category + "_" + avail + "_16.png");
+                    Integer[] resourceIds = new Integer[favorites.size()];
+                    final MenuItem[] items = new MenuItem[favorites.size()];
+                    final Map<Integer, MenuItem> idToMenuItemMap = new HashMap<Integer, MenuItem>(favorites.size());
+                    int i = 0;
+                    for (final Integer resourceId : favorites) {
+                        resourceIds[i] = resourceId;
+                        MenuItem item = new MenuItem(String.valueOf(resourceId));
+                        item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                            public void onClick(MenuItemClickEvent event) {
+                                History.newItem("Resource/" + resourceId);
                             }
-                            favoritesMenu.setItems(items);
-                            favoritesMenu.showContextMenu();
-                        }
-                    });
+                        });
+                        items[i] = item;
+                        idToMenuItemMap.put(resourceId, item);
+                        i++;
+                    }
+
+                    ResourceCriteria criteria = new ResourceCriteria();
+                    criteria.addFilterIds(resourceIds);
+                    GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
+                            new AsyncCallback<PageList<Resource>>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError("Failed to load favorite Resources.", caught);
+                                }
+
+                                public void onSuccess(PageList<Resource> resources) {
+                                    for (Resource resource : resources) {
+                                        MenuItem item = idToMenuItemMap.get(resource.getId());
+                                        // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
+                                        //       disambiguated Resource names.
+                                        item.setTitle(resource.getName());
+
+                                        String category = resource.getResourceType().getCategory().getDisplayName();
+
+                                        String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability().getAvailabilityType() != null)
+                                                ? (resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
+                                        item.setIcon("types/" + category + "_" + avail + "_16.png");
+                                    }
+                                    favoritesMenu.setItems(items);
+                                    favoritesMenu.showContextMenu();
+                                }
+                            });
+                }
             }
         });
     }

@@ -33,14 +33,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.template.TemplateEngine;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
+import org.rhq.core.util.ZipUtil.ZipEntryVisitor;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamCopyDigest;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -78,108 +81,236 @@ import org.rhq.core.util.stream.StreamUtil;
  * from the original; the second is when there was no original file, but there is now a current
  * file on disk and a new file to be installed. In either case, the current file is backed up
  * before the new file is copied over top the current file. Files that need to be
- * backed up that are located under the destination directory will have its backup copied
- * to its original deployment's backup metadata directory. If a file that needs to be backed up
- * is referred to via an absolute path (that is, outside the destination directory), it
- * will be copied with the {@link #BACKUP_EXTENSION} extension added to the end
- * of the backup file's filename but in the same directory as its original. 
+ * backed up will have its backup copied to new deployment's metadata directory, under
+ * the backup subdirectory called {@link DeploymentsMetadata#BACKUP_DIR}. If a file
+ * that needs to be backed up is referred to via an absolute path (that is, outside the destination
+ * directory), it will be copied to the {@link DeploymentsMetadata#EXT_BACKUP_DIR} directory found
+ * in the metadata directory. 
  * 
  * @author John Mazzitelli
  */
 public class Deployer {
     private final Log log = LogFactory.getLog(Deployer.class);
 
-    private final DeploymentProperties deploymentProps;
-    private final Set<File> zipFiles;
-    private final Map<File, File> rawFiles;
-    private final File destDir;
-    private final Pattern filesToRealizeRegex;
-    private final TemplateEngine templateEngine;
-    private final Pattern ignoreRegex;
+    private final DeploymentData deploymentData;
     private final DeploymentsMetadata deploymentsMetadata;
 
     /**
-     * Constructors that prepares this object to deploy the given archive's content to the destination directory.
+     * Constructors that prepares this object to deploy content to a destination on the local file system.
      *  
-     * @param deploymentProps metadata about this deployment
-     * @param zipFiles the archives containing the content to be deployed
-     * @param rawFiles files that are to be copied into the destination directory - the keys are the current
-     *                 locations of the files, the values are where the files should be copied (the values may be relative
-     *                 in which case they are relative to destDir and can have subdirectories and/or a different filename
-     *                 than what the file is named currently)
-     * @param destDir the root directory where the content is to be deployed
-     * @param filesToRealizeRegex the patterns of files (whose paths are relative to destDir) that
-     *                            must have replacement variables within them replaced with values
-     *                            obtained via the given template engine
-     * @param templateEngine if one or more filesToRealize are specified, this template engine is used to determine
-     *                       the values that should replace all replacement variables found in those files
-     * @param ignoreRegex the files/directories to ignore when updating an existing deployment
+     * @param deploymentData the data needed to know what to do for this deployment
      */
-    public Deployer(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, File> rawFiles, File destDir,
-        Pattern filesToRealizeRegex, TemplateEngine templateEngine, Pattern ignoreRegex) {
-
-        if (deploymentProps == null) {
-            throw new IllegalArgumentException("deploymentProps == null");
-        }
-        if (destDir == null) {
-            throw new IllegalArgumentException("destDir == null");
+    public Deployer(DeploymentData deploymentData) {
+        if (deploymentData == null) {
+            throw new IllegalArgumentException("deploymentData == null");
         }
 
-        if (zipFiles == null) {
-            zipFiles = new HashSet<File>();
-        }
-        if (rawFiles == null) {
-            rawFiles = new HashMap<File, File>();
-        }
-        if ((zipFiles.size() == 0) && (rawFiles.size() == 0)) {
-            throw new IllegalArgumentException("zipFiles/rawFiles are empty - nothing to do");
-        }
-
-        this.deploymentProps = deploymentProps;
-        this.zipFiles = zipFiles;
-        this.rawFiles = rawFiles;
-        this.destDir = destDir;
-        this.ignoreRegex = ignoreRegex;
-
-        if (filesToRealizeRegex == null || templateEngine == null) {
-            // we don't need these if there is nothing to realize or we have no template engine to obtain replacement values
-            this.filesToRealizeRegex = null;
-            this.templateEngine = null;
-        } else {
-            this.filesToRealizeRegex = filesToRealizeRegex;
-            this.templateEngine = templateEngine;
-        }
-
-        this.deploymentsMetadata = new DeploymentsMetadata(destDir);
+        this.deploymentData = deploymentData;
+        this.deploymentsMetadata = new DeploymentsMetadata(deploymentData.getDestinationDir());
         return;
     }
 
+    /**
+     * @return information about the particular deployment that this deployer will install.
+     */
+    public DeploymentData getDeploymentData() {
+        return deploymentData;
+    }
+
+    /** 
+     * @return <code>true</code> if the deployer is to install the deployment data in a directory
+     *         that already has a managed deployment in it. <code>false</code> if there is currently
+     *         no managed deployments in the destination directory.
+     */
+    public boolean isDestinationDirectoryManaged() {
+        return deploymentsMetadata.isManaged();
+    }
+
+    /**
+     * Convienence method that is equivalent to {@link #deploy(DeployDifferences, boolean) deploy(diff, false)}.
+     * @see #deploy(DeployDifferences, boolean) 
+     */
     public FileHashcodeMap deploy(DeployDifferences diff) throws Exception {
+        return deploy(diff, false, false);
+    }
+
+    /**
+     * Convienence method that is equivalent to {@link #deploy(DeployDifferences, boolean) deploy(diff, true)}.
+     * @see #deploy(DeployDifferences, boolean) 
+     */
+    public FileHashcodeMap dryRun(DeployDifferences diff) throws Exception {
+        return deploy(diff, false, true);
+    }
+
+    /**
+     * Deploys all files to their destinations. Everything this method has to do is determined
+     * by the data passed into this object's constructor.
+     * 
+     * This method allows one to ask for a dry run to be performed; meaning don't actually change
+     * the file system, just populate the <code>diff</code> object with what would have been done.
+     * 
+     * The caller can ask that an existing deployment directory be cleaned (i.e. wiped from the file system)
+     * before the new deployment is laid down. This is useful if there are ignored files/directories
+     * that would be left alone as-is, had a clean not been requested. Note that the <code>clean</code>
+     * parameter is ignored if a dry run is being requested.
+     * 
+     * @param diff this method will populate this object with information about what
+     *             changed on the file system due to this deployment
+     * @param clean if <code>true</code>, the caller is telling this method to first wipe clean
+     *              any existing deployment files found in the destination directory before installing the
+     *              new deployment. Note that this will have no effect if <code>dryRun</code>
+     *              is <code>true</code> since a dry run by definition never affects the file system.
+     * @param dryRun if <code>true</code>, the file system won't actually be changed; however,
+     *               the <code>diff</code> object will still be populated with information about
+     *               what would have occurred on the file system had it not been a dry run
+     * @return file/hashcode information for all files that were deployed
+     * @throws Exception if the deployment failed for some reason
+     */
+    public FileHashcodeMap deploy(DeployDifferences diff, boolean clean, boolean dryRun) throws Exception {
         FileHashcodeMap map = null;
+
+        // fail-fast if we don't have enough disk space
+        checkDiskUsage();
 
         if (!this.deploymentsMetadata.isManaged()) {
             // the destination dir has not been used to deploy a bundle yet, therefore, this is the first deployment
-            map = performInitialDeployment(diff, false);
+            map = performInitialDeployment(diff, dryRun);
         } else {
             // we have metadata in the destination directory, therefore, this deployment is updating a current one
-            map = performUpdateDeployment(diff, false);
+            map = performUpdateDeployment(diff, clean, dryRun);
         }
 
         return map;
     }
 
-    public FileHashcodeMap dryRun(DeployDifferences diff) throws Exception {
+    /**
+     * This will first perform a deploy (e.g. {@link #deploy(DeployDifferences, boolean, boolean) deploy(diff, clean, dryRun)})
+     * and then, if there are backup files from the previous deployment, those backup files will be restored to their
+     * original locations.
+     * 
+     * This is useful when you want to "undeploy" something where "undeploy" infers you want to go back to
+     * how the file system looked previously to a subsequent deployment (the one this method is being told
+     * to "redeploy"), including manual changes that were made over top the previous deployment.
+     * 
+     * For example, suppose you deployed deployment ID #1 and then the user manually changed some files
+     * within that #1 deployment. Later on, you deploy deployment ID #2 (which will not only deploy
+     * #2's files but will also backup the files that were manually changed within deployment #1).
+     * You find that deployment #2 is bad and you want to revert back to how the file system looked
+     * previously. You could opt to rollback to deployment ID #1 minus those manual changes - to do
+     * this you simply {@link #deploy(DeployDifferences) deploy} #1 again. However, if you want to
+     * go back to the previous content including those manual changes, you first deploy #1 and
+     * then restore the backup files - essentially overlaying the manual changes over top #1 files. This
+     * method accomplishes that latter task.
+     *
+     * @param diff see {@link #deploy(DeployDifferences, boolean, boolean)}
+     * @param clean see {@link #deploy(DeployDifferences, boolean, boolean)}
+     * @param dryRun see {@link #deploy(DeployDifferences, boolean, boolean)}
+     * @return see {@link #deploy(DeployDifferences, boolean, boolean)}
+     * @throws Exception if either the deployment or backup file restoration failed
+     */
+    public FileHashcodeMap redeployAndRestoreBackupFiles(DeployDifferences diff, boolean clean, boolean dryRun)
+        throws Exception {
         FileHashcodeMap map = null;
+
+        // fail-fast if we don't have enough disk space
+        checkDiskUsage();
 
         if (!this.deploymentsMetadata.isManaged()) {
             // the destination dir has not been used to deploy a bundle yet, therefore, this is the first deployment
-            map = performInitialDeployment(diff, true);
+            map = performInitialDeployment(diff, dryRun);
         } else {
-            // we have metadata in the destination directory, therefore, this deployment is updating a current one
-            map = performUpdateDeployment(diff, true);
+            // we have metadata in the destination directory, therefore, this deployment is updating a current one.
+            // First get the ID of the currently existing deployment - this is where our backup files exist.
+            // Then we update the current deployment with the new deployment (which actually should be restoring to the previous one).
+            // Finally, we restore the backup files into the new deployment, overlaying them over top the new deployment.
+            int id = this.deploymentsMetadata.getCurrentDeploymentProperties().getDeploymentId();
+            map = performUpdateDeployment(diff, clean, dryRun);
+            restoreBackupFiles(id, map, diff, dryRun);
+            if (!dryRun) {
+                // if we restored one or more files, we need to persist the new deployment hashcode data with the restored hashcodes
+                if (!diff.getRestoredFiles().isEmpty()) {
+                    this.deploymentsMetadata.setCurrentDeployment(this.deploymentData.getDeploymentProps(), map, false);
+                }
+            }
         }
 
         return map;
+    }
+
+    /**
+     * Returns an estimated amount of disk space the deployment will need if it gets installed.
+     * @return information on the estimated disk usage
+     * @throws Exception if cannot determine the estimated disk usage
+     */
+    public DeploymentDiskUsage estimateDiskUsage() throws Exception {
+        final DeploymentDiskUsage diskUsage = new DeploymentDiskUsage();
+
+        File partition = this.deploymentData.getDestinationDir();
+        long usableSpace = partition.getUsableSpace();
+        while (usableSpace == 0L && partition != null) {
+            partition = partition.getParentFile();
+            if (partition != null) {
+                usableSpace = partition.getUsableSpace();
+            }
+        }
+
+        diskUsage.setMaxDiskUsable(usableSpace);
+
+        Set<File> zipFiles = this.deploymentData.getZipFiles();
+        for (File zipFile : zipFiles) {
+            ZipUtil.walkZipFile(zipFile, new ZipEntryVisitor() {
+                public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+                    if (!entry.isDirectory()) {
+                        diskUsage.increaseDiskUsage(entry.getSize());
+                        diskUsage.incrementFileCount();
+                    }
+                    return true;
+                }
+            });
+        }
+
+        Map<File, File> rawFiles = this.deploymentData.getRawFiles();
+        for (File rawFile : rawFiles.keySet()) {
+            diskUsage.increaseDiskUsage(rawFile.length());
+            diskUsage.incrementFileCount();
+        }
+
+        return diskUsage;
+    }
+
+    /**
+     * This will get an {@link #estimateDiskUsage() estimate} of how much disk space the deployment will need
+     * and compare it to the amount of estimated disk space is currently usable. If there does not appear to be
+     * enough usable disk space to fit the deployment, this method will thrown an exception. Otherwise, this
+     * method will simply return normally.
+     * 
+     * This can be used to fail-fast a deployment - there is no need to process the deployment if there is not
+     * enough disk space to start with.
+     * 
+     * @throws Exception if there does not appear to be enough disk space to store the deployment content
+     */
+    public void checkDiskUsage() throws Exception {
+        DeploymentDiskUsage usage;
+
+        try {
+            usage = estimateDiskUsage();
+        } catch (Exception e) {
+            debug("Cannot estimate disk usage - will assume there is enough space and will continue. Cause: ", e);
+            return;
+        }
+
+        debug("Estimated disk usage for this deployment is [", usage.getDiskUsage(), "] bytes (file count=[", usage
+            .getFileCount(), "]). The maximum disk space currently usable is estimated to be [", usage
+            .getMaxDiskUsable(), "] bytes.");
+
+        if (usage.getDiskUsage() > usage.getMaxDiskUsable()) {
+            throw new Exception(
+                "There does not appear to be enough disk space for this deployment. Its estimated disk usage ["
+                    + usage.getDiskUsage() + "] is larger than the estimated amount of usable disk space ["
+                    + usage.getMaxDiskUsable() + "].");
+        }
+
+        return;
     }
 
     private FileHashcodeMap performInitialDeployment(DeployDifferences diff, boolean dryRun) throws Exception {
@@ -194,7 +325,8 @@ public class Deployer {
         return newFileHashcodeMap;
     }
 
-    private FileHashcodeMap performUpdateDeployment(DeployDifferences diff, boolean dryRun) throws Exception {
+    private FileHashcodeMap performUpdateDeployment(DeployDifferences diff, boolean clean, boolean dryRun)
+        throws Exception {
         debug("Analyzing original, current and new files as part of update deployment. dryRun=", dryRun);
 
         // NOTE: remember that data that goes in diff are only things affecting the current file set such as:
@@ -205,10 +337,9 @@ public class Deployer {
         //       * if a file is realized on the filesystem before its stored on the file system
         //       * if a current file is backed up
 
-        DeploymentProperties originalDeploymentProps = this.deploymentsMetadata.getCurrentDeploymentProperties();
-
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
-        ChangesFileHashcodeMap current = original.rescan(this.destDir, this.ignoreRegex);
+        ChangesFileHashcodeMap current = original.rescan(this.deploymentData.getDestinationDir(), this.deploymentData
+            .getIgnoreRegex());
         FileHashcodeMap newFiles = getNewDeploymentFileHashcodeMap();
 
         if (current.getUnknownContent() != null) {
@@ -317,10 +448,11 @@ public class Deployer {
 
         // 1. backup the files we want to retain for the admin to review
         if (!currentFilesToBackup.isEmpty()) {
-            int deploymentId = originalDeploymentProps.getDeploymentId();
+            DeploymentProperties props = this.deploymentData.getDeploymentProps(); // changed from: deploymentsMetadata.getCurrentDeploymentProperties
+            int backupDeploymentId = props.getDeploymentId();
             debug("Backing up files as part of update deployment. dryRun=", dryRun);
             for (String fileToBackupPath : currentFilesToBackup) {
-                backupFile(diff, deploymentId, fileToBackupPath, dryRun);
+                backupFile(diff, backupDeploymentId, fileToBackupPath, dryRun);
             }
         }
 
@@ -330,7 +462,7 @@ public class Deployer {
             for (String fileToDeletePath : currentFilesToDelete) {
                 File doomedFile = new File(fileToDeletePath);
                 if (!doomedFile.isAbsolute()) {
-                    doomedFile = new File(this.destDir, fileToDeletePath);
+                    doomedFile = new File(this.deploymentData.getDestinationDir(), fileToDeletePath);
                 }
                 boolean deleted;
                 if (!dryRun) {
@@ -350,7 +482,15 @@ public class Deployer {
             }
         }
 
-        // 3. copy all new files except for those to be kept as-is
+        // 3. copy all new files except for those to be kept as-is (perform a clean first, if requested)
+        if (clean) {
+            debug("Cleaning the existing deployment's files found in the destination directory. dryRun=", dryRun);
+            if (!dryRun) {
+                purgeFileOrDirectory(this.deploymentData.getDestinationDir(), false);
+            }
+        }
+        diff.setCleaned(clean);
+
         debug("Copying new files as part of update deployment. dryRun=", dryRun);
         FileHashcodeMap newFileHashCodeMap = extractZipAndRawFiles(currentFilesToLeaveAlone, diff, dryRun);
 
@@ -377,7 +517,8 @@ public class Deployer {
         if (fileToBackup.isAbsolute()) {
             File backupDir = this.deploymentsMetadata.getDeploymentExternalBackupDirectory(deploymentId);
             if (isWindows && driveLetter != null) {
-                backupDir = new File(backupDir, "_" + driveLetter.toUpperCase());
+                String dirName = this.deploymentsMetadata.getExternalBackupDirectoryNameForWindows(driveLetter);
+                backupDir = new File(backupDir, dirName);
                 bakFile = new File(backupDir, fileToBackupPathNoDriveLetter.toString());
             } else {
                 bakFile = new File(backupDir, fileToBackupPath);
@@ -385,19 +526,21 @@ public class Deployer {
         } else {
             File backupDir = this.deploymentsMetadata.getDeploymentBackupDirectory(deploymentId);
             if (isWindows && driveLetter != null) {
-                StringBuilder destDirAbsPathBuilder = new StringBuilder(this.destDir.getAbsolutePath());
+                StringBuilder destDirAbsPathBuilder = new StringBuilder(this.deploymentData.getDestinationDir()
+                    .getAbsolutePath());
                 String destDirDriveLetter = FileUtil.stripDriveLetter(destDirAbsPathBuilder);
                 if (destDirDriveLetter == null || driveLetter.equals(destDirDriveLetter)) {
                     bakFile = new File(backupDir, fileToBackupPath);
-                    fileToBackup = new File(this.destDir, fileToBackupPathNoDriveLetter.toString());
+                    fileToBackup = new File(this.deploymentData.getDestinationDir(), fileToBackupPathNoDriveLetter
+                        .toString());
                 } else {
                     throw new Exception("Cannot backup relative path [" + fileToBackupPath
                         + "] whose drive letter is different than the destination directory ["
-                        + this.destDir.getAbsolutePath() + "]");
+                        + this.deploymentData.getDestinationDir().getAbsolutePath() + "]");
                 }
             } else {
                 bakFile = new File(backupDir, fileToBackupPath);
-                fileToBackup = new File(this.destDir, fileToBackupPath);
+                fileToBackup = new File(this.deploymentData.getDestinationDir(), fileToBackupPath);
             }
         }
 
@@ -424,17 +567,22 @@ public class Deployer {
 
         // extract all zip files
         ExtractorZipFileVisitor visitor;
-        for (File zipFile : this.zipFiles) {
+        for (File zipFile : this.deploymentData.getZipFiles()) {
             debug("Extracting zip [", zipFile, "] entries. dryRun=", dryRun);
-            visitor = new ExtractorZipFileVisitor(this.destDir, this.filesToRealizeRegex, this.templateEngine,
-                currentFilesToLeaveAlone.keySet(), diff, dryRun);
+
+            Pattern realizeRegex = null;
+            if (this.deploymentData.getZipEntriesToRealizeRegex() != null) {
+                realizeRegex = this.deploymentData.getZipEntriesToRealizeRegex().get(zipFile);
+            }
+            visitor = new ExtractorZipFileVisitor(this.deploymentData.getDestinationDir(), realizeRegex,
+                this.deploymentData.getTemplateEngine(), currentFilesToLeaveAlone.keySet(), diff, dryRun);
             ZipUtil.walkZipFile(zipFile, visitor);
             newFileHashCodeMap.putAll(visitor.getFileHashcodeMap());
         }
 
         // copy all raw files
         StreamCopyDigest copyDigester = new StreamCopyDigest();
-        for (Map.Entry<File, File> rawFile : this.rawFiles.entrySet()) {
+        for (Map.Entry<File, File> rawFile : this.deploymentData.getRawFiles().entrySet()) {
             // determine where the original file is and where it needs to go
             File currentLocationFile = rawFile.getKey();
             File newLocationFile = rawFile.getValue();
@@ -444,7 +592,7 @@ public class Deployer {
                 continue;
             }
             if (!newLocationFile.isAbsolute()) {
-                newLocationFile = new File(this.destDir, newLocationFile.getPath());
+                newLocationFile = new File(this.deploymentData.getDestinationDir(), newLocationFile.getPath());
             }
 
             if (!dryRun) {
@@ -457,14 +605,19 @@ public class Deployer {
 
             String hashcode;
 
-            if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocationPath).matches()) {
+            boolean realize = false;
+            if (this.deploymentData.getRawFilesToRealize() != null) {
+                realize = this.deploymentData.getRawFilesToRealize().contains(currentLocationFile);
+            }
+
+            if (realize) {
                 debug("Realizing file [", currentLocationFile, "] to [", newLocationFile, "]. dryRun=", dryRun);
 
                 // this entry needs to be realized, do it now in-memory (we assume realizable files will not be large)
                 // note: tempateEngine will never be null if we got here
                 FileInputStream in = new FileInputStream(currentLocationFile);
                 byte[] rawFileContent = StreamUtil.slurp(in);
-                String content = this.templateEngine.replaceTokens(new String(rawFileContent));
+                String content = this.deploymentData.getTemplateEngine().replaceTokens(new String(rawFileContent));
 
                 if (diff != null) {
                     diff.addRealizedFile(newLocationPath, content);
@@ -516,7 +669,8 @@ public class Deployer {
         newFileHashCodeMap.putAll(currentFilesToLeaveAlone); // remember that these are still there
 
         if (!dryRun) {
-            this.deploymentsMetadata.setCurrentDeployment(deploymentProps, newFileHashCodeMap);
+            this.deploymentsMetadata.setCurrentDeployment(this.deploymentData.getDeploymentProps(), newFileHashCodeMap,
+                true);
         }
 
         return newFileHashCodeMap;
@@ -534,9 +688,13 @@ public class Deployer {
 
         // perform in-memory extraction and calculate hashcodes for all zip files 
         InMemoryZipFileVisitor visitor;
-        for (File zipFile : this.zipFiles) {
+        for (File zipFile : this.deploymentData.getZipFiles()) {
             debug("Extracting zip [", zipFile, "] in-memory to determine hashcodes for all entries");
-            visitor = new InMemoryZipFileVisitor(this.filesToRealizeRegex, this.templateEngine);
+            Pattern realizeRegex = null;
+            if (this.deploymentData.getZipEntriesToRealizeRegex() != null) {
+                realizeRegex = this.deploymentData.getZipEntriesToRealizeRegex().get(zipFile);
+            }
+            visitor = new InMemoryZipFileVisitor(realizeRegex, this.deploymentData.getTemplateEngine());
             ZipUtil.walkZipFile(zipFile, visitor);
             fileHashcodeMap.putAll(visitor.getFileHashcodeMap());
         }
@@ -544,25 +702,30 @@ public class Deployer {
         MessageDigestGenerator generator = new MessageDigestGenerator();
 
         // calculate hashcodes for all raw files, perform in-memory realization when necessary
-        for (Map.Entry<File, File> rawFile : this.rawFiles.entrySet()) {
+        for (Map.Entry<File, File> rawFile : this.deploymentData.getRawFiles().entrySet()) {
             // determine where the original file is and where it would go if we were writing it to disk
             File currentLocationFile = rawFile.getKey();
             File newLocationFile = rawFile.getValue();
             String newLocationPath = rawFile.getValue().getPath();
             if (!newLocationFile.isAbsolute()) {
-                newLocationFile = new File(this.destDir, newLocationFile.getPath());
+                newLocationFile = new File(this.deploymentData.getDestinationDir(), newLocationFile.getPath());
             }
 
             String hashcode;
 
-            if (this.filesToRealizeRegex != null && this.filesToRealizeRegex.matcher(newLocationPath).matches()) {
+            boolean realize = false;
+            if (this.deploymentData.getRawFilesToRealize() != null) {
+                realize = this.deploymentData.getRawFilesToRealize().contains(currentLocationFile);
+            }
+
+            if (realize) {
                 debug("Realizing file [", currentLocationFile, "] in-memory to determine its hashcode");
 
                 // this entry needs to be realized, do it now in-memory (we assume realizable files will not be large)
                 // note: tempateEngine will never be null if we got here
                 FileInputStream in = new FileInputStream(currentLocationFile);
                 byte[] rawFileContent = StreamUtil.slurp(in);
-                String content = this.templateEngine.replaceTokens(new String(rawFileContent));
+                String content = this.deploymentData.getTemplateEngine().replaceTokens(new String(rawFileContent));
 
                 // now calculate the hashcode of the realized content
                 generator.add(content.getBytes());
@@ -589,12 +752,161 @@ public class Deployer {
         return fileHashcodeMap;
     }
 
+    /**
+     * Takes all backup files found in a previous deployment and restores those files to their
+     * original locations.
+     * 
+     * This method is usually called after a {@link #deploy(DeployDifferences, boolean)} has been completed
+     * because it would be at that time when the previous deployment's information has been persisted
+     * and is available. Rarely will you ever want to restore backup files without first deploying
+     * content.
+     *
+     * @param prevDeploymentId the previous deployment ID which contains the backup files 
+     * @param map the map containing filenames/hashcodes that will be adjusted to reflect the restored file hashcodes
+     * @param diff used to store information about the restored files
+     * @param dryRun if <code>true</code>, don't really restore the files, but log the files that would
+     *               have been restored; <code>false</code> means you really want to restore the files
+     * @throws Exception
+     */
+    private void restoreBackupFiles(int prevDeploymentId, FileHashcodeMap map, DeployDifferences diff, boolean dryRun)
+        throws Exception {
+
+        // do the relative backup files first - these go into the destination directory
+        File backupDir = this.deploymentsMetadata.getDeploymentBackupDirectory(prevDeploymentId);
+        String backupDirBase = backupDir.getAbsolutePath();
+        if (!backupDirBase.endsWith(File.separator)) {
+            backupDirBase += File.separator; // make sure it ends with a file separator so our string manipulation works
+        }
+        File destDir = this.deploymentData.getDestinationDir();
+        restoreBackupFilesRecursive(backupDir, backupDirBase, destDir, map, diff, dryRun);
+
+        // now do the external backup files - these go into directories external to the destination directory
+        // note that if we are on windows, we have to do special things due to the existence of multiple root
+        // directories (i.e. drive letters).
+        Map<String, File> extBackupDirs;
+        extBackupDirs = this.deploymentsMetadata.getDeploymentExternalBackupDirectoriesForWindows(prevDeploymentId);
+        if (extBackupDirs == null) {
+            // we are on a non-windows platform; there is only one main root directory - "/"
+            File extBackupDir = this.deploymentsMetadata.getDeploymentExternalBackupDirectory(prevDeploymentId);
+            extBackupDirs = new HashMap<String, File>(1);
+            extBackupDirs.put("/", extBackupDir);
+        }
+
+        for (Map.Entry<String, File> entry : extBackupDirs.entrySet()) {
+            String rootDir = entry.getKey();
+            File extBackupDir = entry.getValue();
+            String extBackupDirBase = extBackupDir.getAbsolutePath();
+            if (!extBackupDirBase.endsWith(File.separator)) {
+                extBackupDirBase += File.separator;
+            }
+            restoreExternalBackupFilesRecursive(rootDir, extBackupDir, extBackupDirBase, map, diff, dryRun);
+        }
+
+        return;
+    }
+
+    private void restoreBackupFilesRecursive(File file, String base, File destDir, FileHashcodeMap map,
+        DeployDifferences diff, boolean dryRun) throws Exception {
+
+        File[] children = file.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                if (child.isDirectory()) {
+                    restoreBackupFilesRecursive(child, base, destDir, map, diff, dryRun);
+                } else {
+                    String childRelativePath = child.getAbsolutePath().substring(base.length());
+                    File restoredFile = new File(destDir, childRelativePath);
+                    debug("Restoring backup file [" + child + "] to [" + restoredFile + "]. dryRun=" + dryRun);
+                    if (!dryRun) {
+                        restoredFile.getParentFile().mkdirs();
+                        String hashcode = copyFileAndCalcHashcode(child, restoredFile);
+                        map.put(childRelativePath, hashcode);
+                    } else {
+                        map.put(childRelativePath, MessageDigestGenerator.getDigestString(child));
+                    }
+                    diff.addRestoredFile(childRelativePath, child.getAbsolutePath());
+                }
+            }
+        }
+        return;
+    }
+
+    private void restoreExternalBackupFilesRecursive(String rootDir, File backupDir, String base, FileHashcodeMap map,
+        DeployDifferences diff, boolean dryRun) throws Exception {
+
+        File[] children = backupDir.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                if (child.isDirectory()) {
+                    restoreExternalBackupFilesRecursive(rootDir, child, base, map, diff, dryRun);
+                } else {
+                    String childRelativePath = child.getAbsolutePath().substring(base.length());
+                    File restoredFile = new File(rootDir, childRelativePath);
+                    debug("Restoring backup file [" + child + "] to external location [" + restoredFile + "]. dryRun="
+                        + dryRun);
+                    if (!dryRun) {
+                        restoredFile.getParentFile().mkdirs();
+                        String hashcode = copyFileAndCalcHashcode(child, restoredFile);
+                        map.put(restoredFile.getAbsolutePath(), hashcode);
+                    } else {
+                        map.put(restoredFile.getAbsolutePath(), MessageDigestGenerator.getDigestString(child));
+                    }
+                    diff.addRestoredFile(restoredFile.getAbsolutePath(), child.getAbsolutePath());
+                }
+            }
+        }
+        return;
+    }
+
+    private String copyFileAndCalcHashcode(File src, File dest) throws Exception {
+        BufferedInputStream is = null;
+        BufferedOutputStream os = null;
+        try {
+            is = new BufferedInputStream(new FileInputStream(src));
+            os = new BufferedOutputStream(new FileOutputStream(dest));
+            StreamCopyDigest copier = new StreamCopyDigest();
+            return copier.copyAndCalculateHashcode(is, os);
+        } finally {
+            try {
+                if (is != null)
+                    is.close();
+            } catch (Exception ignore) {
+            }
+
+            try {
+                if (os != null)
+                    os.close();
+            } catch (Exception ignore) {
+            }
+        }
+    }
+
+    private void purgeFileOrDirectory(File fileOrDir, boolean deleteIt) {
+        // make sure we only purge deployment files, never the metadata directory or its files
+        if (fileOrDir != null && !fileOrDir.getName().equals(DeploymentsMetadata.METADATA_DIR)) {
+            if (fileOrDir.isDirectory()) {
+                File[] doomedFiles = fileOrDir.listFiles();
+                if (doomedFiles != null) {
+                    for (File doomedFile : doomedFiles) {
+                        purgeFileOrDirectory(doomedFile, true); // call this method recursively
+                    }
+                }
+            }
+
+            if (deleteIt) {
+                fileOrDir.delete();
+            }
+        }
+
+        return;
+    }
+
     private void debug(Object... objs) {
         if (log.isDebugEnabled()) {
+            String bundleName = this.deploymentData.getDeploymentProps().getBundleName();
+            String bundleVersion = this.deploymentData.getDeploymentProps().getBundleVersion();
+            int deploymentId = this.deploymentData.getDeploymentProps().getDeploymentId();
             StringBuilder str = new StringBuilder();
-            String bundleName = this.deploymentProps.getBundleName();
-            String bundleVersion = this.deploymentProps.getBundleVersion();
-            int deploymentId = this.deploymentProps.getDeploymentId();
             str.append("Bundle [").append(bundleName).append(" v").append(bundleVersion).append(']');
             str.append("; Deployment [").append(deploymentId).append("]: ");
             for (Object o : objs) {

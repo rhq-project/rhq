@@ -15,11 +15,11 @@
    <description>RHQ Enterprise Remoting Parent POM</description>
 
    <modules>
-      <module>webservices</module>
       <module>client-api</module>
    </modules>
 
    <profiles>
+
       <profile>
          <id>cli</id>
 
@@ -31,6 +31,22 @@
             <module>cli</module>
          </modules>
       </profile>
+
+      <profile>
+         <id>enterprise</id>
+
+         <activation>
+            <property>
+               <name>enterprise</name>
+            </property>
+         </activation>
+
+         <modules>
+            <module>webservices</module>
+         </modules>
+      </profile>
+
    </profiles>
 
 </project>
+

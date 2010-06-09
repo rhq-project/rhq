@@ -578,32 +578,34 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         Query q = entityManager.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_NO_FETCH);
 
         for (int id : contentSourceIds) {
-            ContentSource cs = entityManager.find(ContentSource.class, id);
-            if (cs == null) {
+            ContentSource contentSource = entityManager.find(ContentSource.class, id);
+            if (contentSource == null) {
                 throw new Exception("There is no content source with id [" + id + "]");
             }
 
-            RepoContentSource repoContentSourceMapping = repo.addContentSource(cs);
-            entityManager.persist(repoContentSourceMapping);
+            Set<ContentSource> alreadyAssociatedContentSources = repo.getContentSources();
+            // Only add it if it's not already associated with this repo.
+            if (!alreadyAssociatedContentSources.contains(contentSource)) {
+                RepoContentSource repoContentSourceMapping = repo.addContentSource(contentSource);
+                entityManager.persist(repoContentSourceMapping);
+            }
+            Set<PackageVersion> alreadyAssociatedPackageVersions = new HashSet<PackageVersion>(repo.getPackageVersions());
 
-            Set<PackageVersion> alreadyAssociatedPVs = new HashSet<PackageVersion>(repo.getPackageVersions());
-
-            // automatically associate all of the content source's package versions with this repo
-            // but, *skip* over the ones that are already linked to this repo from a previous association
-            q.setParameter("id", cs.getId());
+            // Automatically associate all of the content source's package versions with this repo,
+            // but *skip* over the ones that are already linked to this repo from a previous association.
+            q.setParameter("id", contentSource.getId());
             List<PackageVersionContentSource> pvcss = q.getResultList();
             for (PackageVersionContentSource pvcs : pvcss) {
-                PackageVersion pv = pvcs.getPackageVersionContentSourcePK().getPackageVersion();
-                if (alreadyAssociatedPVs.contains(pv)) {
-                    continue; // skip if already associated with this repo
+                PackageVersion packageVersion = pvcs.getPackageVersionContentSourcePK().getPackageVersion();
+                // Only add it if it's not already associated with this repo.
+                if (!alreadyAssociatedPackageVersions.contains(packageVersion)) {
+                    RepoPackageVersion mapping = new RepoPackageVersion(repo, packageVersion);
+                    entityManager.persist(mapping);
                 }
-                RepoPackageVersion mapping = new RepoPackageVersion(repo, pv);
-                entityManager.persist(mapping);
             }
 
             entityManager.flush();
             entityManager.clear();
-
         }
     }
 
@@ -640,7 +642,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     public void removeContentSourcesFromRepo(Subject subject, int repoId, int[] contentSourceIds) throws RepoException {
         Repo repo = getRepo(subject, repoId);
 
-        log.debug("User [" + subject + "] is removing content sources from repo [" + repo + "]");
+        log.debug("User [" + subject + "] is removing content sources from repository [" + repo + "]");
 
         Set<RepoContentSource> currentSet = repo.getRepoContentSources();
 
@@ -715,7 +717,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         // make sure the user has permissions to unsubscribe this resource
         if (!authzManager.hasResourcePermission(subject, Permission.MANAGE_CONTENT, resourceId)) {
             throw new PermissionException("[" + subject
-                + "] does not have permission to unsubscribe this resource from repos");
+                + "] does not have permission to unsubscribe this resource from repositories");
         }
 
         // find the resource - abort if it does not exist

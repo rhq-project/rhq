@@ -22,6 +22,7 @@ import java.util.ArrayList;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionAppearance;
@@ -41,10 +42,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 /**
  * @author Greg Hinkle
  */
-public class ResourceSearchView extends VLayout {
+public class ResourceSearchView extends Table {
     private static final String DEFAULT_TITLE = "Resources";
-
-    private Table table;
 
     private ArrayList<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
@@ -55,6 +54,10 @@ public class ResourceSearchView extends VLayout {
         this(null);
     }
 
+    public ResourceSearchView(String title, String[] excludeFields) {
+        this(null, title, null, excludeFields);
+    }
+
     /**
      * A Resource list filtered by a given criteria.
      */
@@ -62,32 +65,39 @@ public class ResourceSearchView extends VLayout {
         this(criteria, DEFAULT_TITLE);
     }
 
+    public ResourceSearchView(Criteria criteria, String title) {
+        this(criteria, title, null, null);
+    }
+
     /**
      * A Resource list filtered by a given criteria with the given title.
      */
-    public ResourceSearchView(Criteria criteria, String title) {
+    public ResourceSearchView(Criteria criteria, String title, SortSpecifier[] sortSpecifier, String[] excludeFields) {
+        super(title, criteria, sortSpecifier, excludeFields);
+
+        setHeaderIcon("types/Platform_up_24.png");
 
         setWidth100();
         setHeight100();
 
-        DynamicForm searchPanel = new DynamicForm();
-        final TextItem searchBox = new TextItem("query", "Search Resources");
-        searchBox.setValue("");
-        searchPanel.setWrapItemTitles(false);
-        searchPanel.setFields(searchBox);
+//        DynamicForm searchPanel = new DynamicForm();
+//        final TextItem searchBox = new TextItem("query", "Search Resources");
+//        searchBox.setValue("");
+//        searchPanel.setWrapItemTitles(false);
+//        searchPanel.setFields(searchBox);
 
-        addMember(searchPanel);
 
         final ResourceDatasource datasource = new ResourceDatasource();
-        table = new Table(title, criteria);
-        table.setDataSource(datasource);
+//        setTitleComponent(searchPanel);
+        setDataSource(datasource);
 
-        table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-        table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
-        table.getListGrid().setResizeFieldsInRealTime(true);
+        getListGrid().setSelectionType(SelectionStyle.SIMPLE);
+//        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
+        getListGrid().setResizeFieldsInRealTime(true);
 
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
+        ListGridField iconField = new ListGridField("icon","", 40);
         ListGridField nameField = new ListGridField("name", "Name", 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -102,24 +112,23 @@ public class ResourceSearchView extends VLayout {
 
         ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
         availabilityField.setAlign(Alignment.CENTER);
-        table.getListGrid().setFields(idField, nameField, descriptionField, typeNameField, pluginNameField,
-            categoryField, availabilityField);
+        getListGrid().setFields(idField, iconField, nameField, descriptionField, typeNameField, pluginNameField,
+                categoryField, availabilityField);
 
-        table.addTableAction("Uninventory", Table.SelectionEnablement.ANY,
-            "Are you sure you want to delete # resources?", new TableAction() {
-                public void executeAction(ListGridRecord[] selection) {
-                    table.getListGrid().removeSelectedData();
-                }
-            });
+        addTableAction("Uninventory", Table.SelectionEnablement.ANY,
+                "Are you sure you want to delete # resources?", new TableAction() {
+                    public void executeAction(ListGridRecord[] selection) {
+                        getListGrid().removeSelectedData();
+                    }
+                });
 
-        addMember(table);
 
-        searchBox.addKeyPressHandler(new KeyPressHandler() {
+        /*searchBox.addKeyPressHandler(new KeyPressHandler() {
             public void onKeyPress(KeyPressEvent event) {
                 if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
                     datasource.setQuery((String) searchBox.getValue());
 
-                    Criteria c = table.getListGrid().getCriteria();
+                    Criteria c = getListGrid().getCriteria();
                     if (c == null) {
                         c = new Criteria();
                     }
@@ -127,12 +136,19 @@ public class ResourceSearchView extends VLayout {
                     c.addCriteria("name", (String) searchBox.getValue());
 
                     long start = System.currentTimeMillis();
-                    table.getListGrid().fetchData(c);
+                    getListGrid().fetchData(c);
                     System.out.println("Loaded in: " + (System.currentTimeMillis() - start));
                 }
             }
-        });
+        });*/
     }
+
+
+
+    public int getMatches() {
+        return this.getListGrid().getTotalRows();
+    }
+
 
     public void addResourceSelectedListener(ResourceSelectListener listener) {
         selectListeners.add(listener);

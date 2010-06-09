@@ -134,7 +134,7 @@ public class RepoProvider implements ContentProvider, PackageSource {
     public void synchronizePackages(String repoName, PackageSyncReport report,
         Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
         Summary summary = new Summary(reader);
-        log.info("synchronizing with repo: " + reader + " started");
+        log.info("synchronizing with repository: " + reader + " started");
         try {
             summary.markStarted();
             repo = new Repo(reader);
@@ -163,7 +163,7 @@ public class RepoProvider implements ContentProvider, PackageSource {
             repo.disconnect();
             summary.markEnded();
             report.setSummary(summary.toString());
-            log.info("synchronizing with repo: " + reader + " finished\n" + summary);
+            log.info("synchronizing with repository: " + reader + " finished\n" + summary);
         }
     }
 

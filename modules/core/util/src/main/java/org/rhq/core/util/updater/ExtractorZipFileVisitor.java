@@ -34,6 +34,7 @@ import java.util.zip.ZipInputStream;
 import org.rhq.core.template.TemplateEngine;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
+import org.rhq.core.util.stream.StreamCopyDigest;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**

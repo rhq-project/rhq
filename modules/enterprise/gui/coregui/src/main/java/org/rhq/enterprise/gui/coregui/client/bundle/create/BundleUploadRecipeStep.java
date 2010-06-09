@@ -134,32 +134,30 @@ public class BundleUploadRecipeStep implements WizardStep {
         wizard.setRecipe(recipe.getValue().toString());
 
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-        bundleServer.createBundleAndBundleVersion(this.wizard.getBundleName(), this.wizard.getBundleType().getId(),
-            this.wizard.getBundleName(), this.wizard.getBundleVersionString(), this.wizard.getBundleDescription(),
-            this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
-                public void onSuccess(BundleVersion result) {
-                    form.hideItem(validatingItem.getName());
+        bundleServer.createBundleVersionViaRecipe(this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
+            public void onSuccess(BundleVersion result) {
+                form.hideItem(validatingItem.getName());
 
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("Created bundle [" + result.getName() + "] version [" + result.getVersion() + "]",
-                            Message.Severity.Info));
-                    wizard.setBundleVersion(result);
-                    wizard.getView().incrementStep();
-                    setButtonsDisableMode(false);
-                }
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Created bundle [" + result.getName() + "] version [" + result.getVersion() + "]",
+                        Message.Severity.Info));
+                wizard.setBundleVersion(result);
+                wizard.getView().incrementStep();
+                setButtonsDisableMode(false);
+            }
 
-                public void onFailure(Throwable caught) {
-                    form.hideItem(validatingItem.getName());
+            public void onFailure(Throwable caught) {
+                form.hideItem(validatingItem.getName());
 
-                    HashMap<String, String> errors = new HashMap<String, String>();
-                    errors.put(recipe.getName(), "Invalid Recipe: " + caught.getMessage());
-                    form.setErrors(errors, true);
-                    CoreGUI.getErrorHandler().handleError("Failed to create bundle", caught);
-                    wizard.setBundleVersion(null);
-                    wizard.setRecipe("");
-                    setButtonsDisableMode(false);
-                }
-            });
+                HashMap<String, String> errors = new HashMap<String, String>();
+                errors.put(recipe.getName(), "Invalid Recipe: " + caught.getMessage());
+                form.setErrors(errors, true);
+                CoreGUI.getErrorHandler().handleError("Failed to create bundle", caught);
+                wizard.setBundleVersion(null);
+                wizard.setRecipe("");
+                setButtonsDisableMode(false);
+            }
+        });
     }
 
     private void setButtonsDisableMode(boolean disabled) {

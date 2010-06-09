@@ -41,6 +41,9 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ObjectUtil;
 import org.rhq.core.system.CpuInformation;
 
+/**
+ * A Resource component representing a CPU core.
+ */
 public class CpuComponent implements ResourceComponent<PlatformComponent>, MeasurementFacet {
     private CpuInformation cpuInformation = null;
     private CpuEntry startCpuEntry = null;
@@ -48,7 +51,7 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
     /** 
      * A Map of cpu metric names to the last (Sigar) Cpu record used in calculations for that metric in getValues.
      * This allows us to take proper cpu usage deltas for each metric, on different schedules. See
-     * RHQ-2457 for why this is necessary. 
+     * RHQ-245 for why this is necessary.
      */
     private Map<String, CpuEntry> cpuCache;
 
@@ -59,9 +62,11 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
             cpuCache = new HashMap<String, CpuEntry>();
             startCpuEntry = new CpuEntry(cpuInformation.getCpu());
         }
+        return;
     }
 
     public void stop() {
+        return;
     }
 
     public AvailabilityType getAvailability() {
@@ -85,7 +90,7 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
                 String property = request.getName();
 
                 if (property.startsWith("Cpu.")) {
-                    // Grab the current cpu info from Sigar, only once for this cpu for all processed schedules
+                    // Grab the current cpu info from SIGAR, only once for this cpu for all processed schedules
                     if (cpu == null) {
                         cpu = cpuInformation.getCpu();
                     }
@@ -99,14 +104,14 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
                 } else if (property.startsWith("CpuPerc.")) {
 
                     /*
-                     * ! we no longer use the Sigar CpuPerc object to report cpu percentage metrics. See
+                     * ! we no longer use the SIGAR CpuPerc object to report cpu percentage metrics. See
                      * ! RHQ-245 for an explanation.  We now calculate our own percentages using
                      * ! the current raw cpu info from Sigar and the previous cpu numbers, cached per metric.
                      * ! This allows us to avoid the problem in RHQ-245 while handling perCpu-perMetric schedule
                      * ! granularity. 
                      */
 
-                    // Grab the current cpu info from Sigar, only once for this cpu for all processed schedules
+                    // Grab the current cpu info from SIGAR, only once for this cpu for all processed schedules
                     if (null == cpu) {
                         cpu = cpuInformation.getCpu();
                     }
@@ -119,20 +124,20 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
                     CpuEntry previousCpu = cpuCache.put(property, currentCpu);
                     previousCpu = (null == previousCpu) ? startCpuEntry : previousCpu;
 
-                    // if for some reason the delta time is excessive then toss the
-                    // the metric, it depends on a reasonable interval between prev
-                    // and curr. This can happen due to avail down or a newly
+                    // if for some reason the delta time is excessive then toss
+                    // the metric, since it depends on a reasonable interval between
+                    // prev and curr. This can happen due to avail down or a newly
                     // activated metric. Allow up to twice the metric interval.
                     Number num = null;
                     long deltaTime = currentCpu.getTimestamp() - previousCpu.getTimestamp();
 
                     if (deltaTime <= (2 * request.getInterval())) {
-                        // Use the same calculation as Sigar uses to generate the percentages. The difference is that
+                        // Use the same calculation that SIGAR uses to generate the percentages. The difference is that
                         // we use a safe "previous" cpu record.                      
                         num = getPercentage(previousCpu.getCpu(), cpu, property);
                     }
 
-                    // uncomment to see details about the calculations
+                    // Uncomment to see details about the calculations.
                     //System.out.println("\nCPU-" + cpuInformation.getCpuIndex() + " Interval="
                     //    + ((currentCpu.getTimestamp() - previousCpu.getTimestamp()) / 1000) + " " + property + "="
                     //    + num + "\n   Prev=" + previousCpu + "\n   Curr=" + currentCpu);
@@ -168,11 +173,12 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
                 }
             }
         }
+        return;
     }
 
     /**
      * Calculate the percentage of CPU taken up by the requested cpu property (metric) for the interval
-     * defined by the prev and curr cpu numbers.  This algorithm is taken from Sigar. See
+     * defined by the prev and curr cpu numbers.  This algorithm is taken from SIGAR. See
      * http://svn.hyperic.org/projects/sigar/trunk/src/sigar_format.c ( sigar_cpu_perc_calculate() ) 
      */
     private Number getPercentage(Cpu prev, Cpu curr, String property) {
@@ -191,7 +197,7 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
         diff_soft_irq = curr.getSoftIrq() - prev.getSoftIrq();
         diff_stolen = curr.getStolen() - prev.getStolen();
 
-        // It's not exactly clear to me what Sigar is doing here. It may be to handle a rollover of
+        // It's not exactly clear to me what SIGAR is doing here. It may be to handle a rollover of
         // the cumulative cpu usage numbers. If so, this code could maybe be improved to still
         // determine the total usage.
         diff_user = diff_user < 0 ? 0 : diff_user;
@@ -228,7 +234,7 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
     }
 
     /**
-     * Just a private, immutable, utility class for associating a CPU and timestamp with teh raw Cpu object from Sigar. 
+     * Just a private, immutable, utility class for associating a CPU and timestamp with the raw Cpu object from SIGAR.
      */
     private class CpuEntry {
         private Cpu cpu;

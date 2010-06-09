@@ -43,54 +43,34 @@
 
     <table name="RHQ_PERMISSION">
         <!-- give super-user-role all permissions (resource perms is mainly just to show on view-role page) -->
-        <data ROLE_ID="1" OPERATION="0"/>
-        <!-- Permission.MANAGE_SECURITY -->
-        <data ROLE_ID="1" OPERATION="1"/>
-        <!-- Permission.MANAGE_INVENTORY -->
-        <data ROLE_ID="1" OPERATION="2"/>
-        <!-- Permission.MANAGE_SETTINGS -->
+        <data ROLE_ID="1" OPERATION="0"/>        <!-- Permission.MANAGE_SECURITY -->
+        <data ROLE_ID="1" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
+        <data ROLE_ID="1" OPERATION="2"/>        <!-- Permission.MANAGE_SETTINGS -->
+        <data ROLE_ID="1" OPERATION="12"/>       <!-- Permission.MANAGE_BUNDLE -->
         <!-- resource permissions start here-->
-        <data ROLE_ID="1" OPERATION="3"/>
-        <!-- Permission.VIEW_RESOURCE -->
-        <data ROLE_ID="1" OPERATION="4"/>
-        <!-- Permission.MODIFY_RESOURCE -->
-        <data ROLE_ID="1" OPERATION="5"/>
-        <!-- Permission.DELETE_RESOURCE -->
-        <data ROLE_ID="1" OPERATION="6"/>
-        <!-- Permission.CREATE_CHILD_RESOURCES -->
-        <data ROLE_ID="1" OPERATION="7"/>
-        <!-- Permission.MANAGE_ALERTS -->
-        <data ROLE_ID="1" OPERATION="8"/>
-        <!-- Permission.MANAGE_MEASUREMENTS -->
-        <data ROLE_ID="1" OPERATION="9"/>
-        <!-- Permission.MANAGE_CONTENT -->
-        <data ROLE_ID="1" OPERATION="10"/>
-        <!-- Permission.CONTROL -->
-        <data ROLE_ID="1" OPERATION="11"/>
-        <!-- Permission.CONFIGURE -->
+        <data ROLE_ID="1" OPERATION="3"/>        <!-- Permission.VIEW_RESOURCE -->
+        <data ROLE_ID="1" OPERATION="4"/>        <!-- Permission.MODIFY_RESOURCE -->
+        <data ROLE_ID="1" OPERATION="5"/>        <!-- Permission.DELETE_RESOURCE -->
+        <data ROLE_ID="1" OPERATION="6"/>        <!-- Permission.CREATE_CHILD_RESOURCES -->
+        <data ROLE_ID="1" OPERATION="7"/>        <!-- Permission.MANAGE_ALERTS -->
+        <data ROLE_ID="1" OPERATION="8"/>        <!-- Permission.MANAGE_MEASUREMENTS -->
+        <data ROLE_ID="1" OPERATION="9"/>        <!-- Permission.MANAGE_CONTENT -->
+        <data ROLE_ID="1" OPERATION="10"/>       <!-- Permission.CONTROL -->
+        <data ROLE_ID="1" OPERATION="11"/>       <!-- Permission.CONFIGURE -->
 
         <!-- give all-resources-role all permissions (resource perms is mainly just to show on view-role page) -->
-        <data ROLE_ID="2" OPERATION="1"/>
-        <!-- Permission.MANAGE_INVENTORY -->
+        <data ROLE_ID="2" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
+        <data ROLE_ID="2" OPERATION="12"/>       <!-- Permission.MANAGE_BUNDLE -->
         <!-- resource permissions start here-->
-        <data ROLE_ID="2" OPERATION="3"/>
-        <!-- Permission.VIEW_RESOURCE -->
-        <data ROLE_ID="2" OPERATION="4"/>
-        <!-- Permission.MODIFY_RESOURCE -->
-        <data ROLE_ID="2" OPERATION="5"/>
-        <!-- Permission.DELETE_RESOURCE -->
-        <data ROLE_ID="2" OPERATION="6"/>
-        <!-- Permission.CREATE_CHILD_RESOURCES -->
-        <data ROLE_ID="2" OPERATION="7"/>
-        <!-- Permission.MANAGE_ALERTS -->
-        <data ROLE_ID="2" OPERATION="8"/>
-        <!-- Permission.MANAGE_MEASUREMENTS -->
-        <data ROLE_ID="2" OPERATION="9"/>
-        <!-- Permission.MANAGE_CONTENT -->
-        <data ROLE_ID="2" OPERATION="10"/>
-        <!-- Permission.CONTROL -->
-        <data ROLE_ID="2" OPERATION="11"/>
-        <!-- Permission.CONFIGURE -->
+        <data ROLE_ID="2" OPERATION="3"/>        <!-- Permission.VIEW_RESOURCE -->
+        <data ROLE_ID="2" OPERATION="4"/>        <!-- Permission.MODIFY_RESOURCE -->
+        <data ROLE_ID="2" OPERATION="5"/>        <!-- Permission.DELETE_RESOURCE -->
+        <data ROLE_ID="2" OPERATION="6"/>        <!-- Permission.CREATE_CHILD_RESOURCES -->
+        <data ROLE_ID="2" OPERATION="7"/>        <!-- Permission.MANAGE_ALERTS -->
+        <data ROLE_ID="2" OPERATION="8"/>        <!-- Permission.MANAGE_MEASUREMENTS -->
+        <data ROLE_ID="2" OPERATION="9"/>        <!-- Permission.MANAGE_CONTENT -->
+        <data ROLE_ID="2" OPERATION="10"/>       <!-- Permission.CONTROL -->
+        <data ROLE_ID="2" OPERATION="11"/>       <!-- Permission.CONFIGURE -->
     </table>
 
 </dbsetup>

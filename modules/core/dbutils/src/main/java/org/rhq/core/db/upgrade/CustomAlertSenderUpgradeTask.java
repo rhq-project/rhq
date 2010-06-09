@@ -202,8 +202,8 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
     }
 
     private String getInsertConfigSQL(int id) {
-        return "INSERT INTO rhq_config ( id, ctime, mtime )" //
-            + "      VALUES ( " + id + ", " + NOW + ", " + NOW + " ) ";
+        return "INSERT INTO rhq_config ( id, version, ctime, mtime )" //
+            + "      VALUES ( " + id + ", 0, " + NOW + ", " + NOW + " ) ";
     }
 
     private String getInsertPropertySQL(int id, int configId, String name, String value) {

@@ -35,23 +35,33 @@ import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.RecentlyApprovedPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
+import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
 
     private static final Log log = LogFactory.getLog(ViewAction.class);
 
+    private static final IntExtractor<RecentlyAddedResourceComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<RecentlyAddedResourceComposite>() {    
+        public int extract(RecentlyAddedResourceComposite object) {
+            return object.getId();
+        }
+    };
+    
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        List<RecentlyAddedResourceComposite> platformList = new ArrayList<RecentlyAddedResourceComposite>();
+        List<DisambiguatedRecentlyAddedResourceComposite> platformList = new ArrayList<DisambiguatedRecentlyAddedResourceComposite>();
 
         try {
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -74,13 +84,15 @@ public class ViewAction extends TilesAction {
                 ts = System.currentTimeMillis() - (range * 60 * 60 * 1000);
             }
 
-            platformList = resourceManager.findRecentlyAddedPlatforms(subject, ts, recentlyApprovedPreferences.range);
+            platformList = DisambiguatedRecentlyAddedResourceComposite.fromResolution(resourceManager.disambiguate(
+                resourceManager.findRecentlyAddedPlatforms(subject, ts, recentlyApprovedPreferences.range),
+                RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution());
 
-            Map<Integer, RecentlyAddedResourceComposite> platformMap;
-            platformMap = new HashMap<Integer, RecentlyAddedResourceComposite>();
+            Map<Integer, DisambiguatedRecentlyAddedResourceComposite> platformMap;
+            platformMap = new HashMap<Integer, DisambiguatedRecentlyAddedResourceComposite>();
 
-            for (RecentlyAddedResourceComposite platform : platformList) {
-                platformMap.put(platform.getId(), platform);
+            for (DisambiguatedRecentlyAddedResourceComposite platform : platformList) {
+                platformMap.put(platform.getOriginal().getId(), platform);
             }
 
             // Set the show servers flag on all expanded platforms.
@@ -95,11 +107,13 @@ public class ViewAction extends TilesAction {
                     removeExpandedPlatforms.add(expandedPlatform);
                     continue;
                 }
-                RecentlyAddedResourceComposite miniPlatform = platformMap.get(platformId);
+                DisambiguatedRecentlyAddedResourceComposite miniPlatform = platformMap.get(platformId);
                 if (miniPlatform != null) {
-                    miniPlatform.setShowChildren(true);
-                    miniPlatform.setChildren(resourceManager
-                        .findRecentlyAddedServers(subject, ts, platformId.intValue()));
+                    miniPlatform.getOriginal().setShowChildren(true);
+                    miniPlatform.setChildren(DisambiguatedRecentlyAddedResourceComposite.fromResolution(
+                        resourceManager.disambiguate(resourceManager
+                        .findRecentlyAddedServers(subject, ts, platformId.intValue()), RESOURCE_ID_EXTRACTOR,
+                        DefaultDisambiguationUpdateStrategies.getDefault()).getResolution()));
                 } else {
                     removeExpandedPlatforms.add(expandedPlatform);
                 }
@@ -124,5 +138,33 @@ public class ViewAction extends TilesAction {
         }
 
         return null;
+    }
+    
+    public static class DisambiguatedRecentlyAddedResourceComposite extends DisambiguationReport<RecentlyAddedResourceComposite> {
+        private static final long serialVersionUID = 1L;
+
+        private List<DisambiguatedRecentlyAddedResourceComposite> children;
+        
+        public static List<DisambiguatedRecentlyAddedResourceComposite> fromResolution(List<DisambiguationReport<RecentlyAddedResourceComposite>> resolution) {
+            List<DisambiguatedRecentlyAddedResourceComposite> ret = new ArrayList<DisambiguatedRecentlyAddedResourceComposite>();
+            for(DisambiguationReport<RecentlyAddedResourceComposite> report : resolution) {
+                ret.add(new DisambiguatedRecentlyAddedResourceComposite(report));
+            }
+            
+            return ret;
+        }
+        
+        public DisambiguatedRecentlyAddedResourceComposite(DisambiguationReport<RecentlyAddedResourceComposite> report) {
+            super(report.getOriginal(), report.getParents(), report.getResourceType());
+            children = new ArrayList<DisambiguatedRecentlyAddedResourceComposite>();
+        }
+        
+        public List<DisambiguatedRecentlyAddedResourceComposite> getChildren() {
+            return children;
+        }
+        
+        public void setChildren(List<DisambiguatedRecentlyAddedResourceComposite> children) {
+            this.children = children;
+        }
     }
 }

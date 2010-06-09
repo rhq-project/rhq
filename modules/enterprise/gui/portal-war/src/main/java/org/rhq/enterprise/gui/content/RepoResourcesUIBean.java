@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -28,7 +29,6 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -42,7 +42,7 @@ public class RepoResourcesUIBean extends PagedDataTableUIBean {
             return r.getId();
         }
     };
-    
+
     public RepoResourcesUIBean() {
     }
 
@@ -64,10 +64,10 @@ public class RepoResourcesUIBean extends PagedDataTableUIBean {
                 }
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Unsubscribed [" + resourceIds.length
-                    + "] resources from repo");
+                    + "] resources from repository");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to unsubscribe one or more resources from repo", e);
+                    "Failed to unsubscribe one or more resources from repository", e);
             }
         }
 

@@ -18,14 +18,27 @@
  */
 package org.rhq.enterprise.gui.coregui.client.menu;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.ui.TextBox;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormLayoutType;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.TextMatchStyle;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.FormItemIfFunction;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuButton;
@@ -33,6 +46,10 @@ import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
 
 import java.util.LinkedHashMap;
+
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 
 /**
  * @author Greg Hinkle
@@ -49,41 +66,102 @@ public class SearchBarPane extends HLayout {
     protected void onDraw() {
         super.onDraw();
 
-        DynamicForm form = new DynamicForm();
+        final DynamicForm form = new DynamicForm();
         form.setNumCols(6);
-//        form.setWidth100();
+        form.setColWidths("120", "140", "400");
 
-
-
-        LinkedHashMap<String, String> values = new LinkedHashMap<String, String>();
-        values.put("Resources", "Resources");
-        values.put("Resources Groups", "Resources Groups");
-        values.put("Bundles", "Bundles");
-        values.put("Packages", "Package");
-        values.put("Users", "Users");
-        values.put("Roles", "Roles");
-
-
-        SelectItem searchType = new SelectItem("searchType", "Search");
+        final SelectItem searchType = new SelectItem("searchType", "Search");
         searchType.setWidth(120);
-        searchType.setValueMap(values);
+        searchType.setValueMap("Resources", "Resource Groups", "Bundles", "Packages", "Users", "Roles");
         searchType.setValue("Resources");
 
+        ComboBoxItem resourceSearch = getResourceComboBox();
+        resourceSearch.setShowIfCondition(new FormItemIfFunction() {
+            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+                return form.getValueAsString("searchType").equals("Resources");
+            }
+        });
+
         TextItem query = new TextItem("query");
-        query.setLeft(210);
-        query.setWidth(400);
         query.setShowTitle(false);
 
         ButtonItem search = new ButtonItem("Search", "Search");
         search.setStartRow(false);
         search.setEndRow(false);
         search.setShowTitle(false);
-        search.setLeft(620);
         search.setIcon(Window.getImgURL("[SKIN]/actions/view.png"));
 
-
-        form.setItems(searchType, query, search, new SpacerItem());
+        form.setItems(searchType, resourceSearch, search, new SpacerItem());
 
         addMember(form);
     }
+
+
+    private ComboBoxItem getResourceComboBox() {
+
+        final ComboBoxItem comboBox = new ComboBoxItem("query", "Query");
+        comboBox.setWidth(400);
+        comboBox.setShowTitle(false);
+        comboBox.setHint("resource search");
+        comboBox.setShowHintInField(true);
+
+        comboBox.setOptionDataSource(new ResourceDatasource());
+
+        ListGridField nameField = new ListGridField("name", "Name", 250);
+        ListGridField descriptionField = new ListGridField("description", "Description");
+        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
+        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
+        ListGridField categoryField = new ListGridField("category", "Category", 60);
+        ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
+        availabilityField.setAlign(Alignment.CENTER);
+
+        comboBox.setPickListFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
+
+        comboBox.setValueField("id");
+        comboBox.setDisplayField("name");
+        comboBox.setPickListWidth(800);
+        comboBox.setTextMatchStyle(TextMatchStyle.SUBSTRING);
+        comboBox.setCompleteOnTab(true);
+
+        comboBox.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent changedEvent) {
+                try {
+                    Integer resourceId = (Integer) changedEvent.getValue();
+                    comboBox.setValue("");
+
+                    String link = LinkManager.getResourceLink(resourceId);
+                    if (!link.contains("#")) {
+                        com.google.gwt.user.client.Window.Location.assign(link);
+                    } else {
+                        History.newItem(link);
+                    }
+                } catch (Exception e) {
+                }
+            }
+        });
+
+        return comboBox;
+    }
+
+
+    private ComboBoxItem getGroupComboBox() {
+        ComboBoxItem comboBox = new ComboBoxItem("query", "Query");
+        comboBox.setWidth(400);
+        comboBox.setShowTitle(false);
+
+
+        comboBox.setOptionDataSource(new ResourceGroupsDataSource());
+        ListGridField nameField = new ListGridField("name");
+        ListGridField descriptionField = new ListGridField("description");
+        comboBox.setPickListFields(nameField, descriptionField);
+
+
+        comboBox.setValueField("id");
+        comboBox.setDisplayField("name");
+        comboBox.setPickListWidth(600);
+        comboBox.setTextMatchStyle(TextMatchStyle.SUBSTRING);
+
+        return comboBox;
+    }
+
 }

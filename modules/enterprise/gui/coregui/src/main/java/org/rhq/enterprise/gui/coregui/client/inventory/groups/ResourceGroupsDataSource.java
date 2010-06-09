@@ -55,8 +55,6 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     }
 
     public ResourceGroupsDataSource() {
-//        super("ResourceGroups");
-
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
 
@@ -77,19 +75,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     public void executeFetch(final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
 
-        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.setPageControl(getPageControl(request));
-        criteria.addFilterName(query);
-
-        if (request.getCriteria().getValues().get("category") != null) {
-            criteria.addFilterGroupCategory(GroupCategory.valueOf(((String) request.getCriteria().getValues().get(
-                "category")).toUpperCase()));
-        }
-
-        if (request.getCriteria().getValues().get("downMemberCount") != null) {
-            criteria.addFilterDownMemberCount(Integer.parseInt((String) request.getCriteria().getValues().get(
-                "downMemberCount")));
-        }
+        ResourceGroupCriteria criteria = getFetchCriteria(request);
 
         groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
             public void onFailure(Throwable caught) {
@@ -108,6 +94,25 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         });
     }
 
+    protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+
+        criteria.setPageControl(getPageControl(request));
+        criteria.addFilterName(query);
+
+        if (request.getCriteria().getValues().get("category") != null) {
+            criteria.addFilterGroupCategory(GroupCategory.valueOf(((String) request.getCriteria().getValues().get(
+                "category")).toUpperCase()));
+        }
+
+        if (request.getCriteria().getValues().get("downMemberCount") != null) {
+            criteria.addFilterDownMemberCount(Integer.parseInt((String) request.getCriteria().getValues().get(
+                "downMemberCount")));
+        }
+
+        return criteria;
+    }
+
     @Override
     public ResourceGroup copyValues(ListGridRecord from) {
         return null; // TODO: Implement this method.
@@ -120,7 +125,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         record.setAttribute("id", from.getId());
         record.setAttribute("name", from.getName());
         record.setAttribute("description", from.getDescription());
-        record.setAttribute("groupCategory", from.getGroupCategory());
+        record.setAttribute("category", from.getGroupCategory().toString());
 
         if (from.getResourceType() != null) {
             record.setAttribute("resourceType", from.getResourceType());

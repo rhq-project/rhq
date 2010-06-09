@@ -65,8 +65,8 @@
                     <rich:treeNode type="AutoGroupComposite"
                                    iconCollapsed="/images/icons/dir_closed.png"
                                    iconExpanded="/images/icons/dir_open.png"
-                                   iconLeaf="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_16.png"
-                                   icon="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_16.png">
+                                   iconLeaf="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_#{resourceTreeItem.data.membersCategoryHint}_#{resourceTreeItem.data.membersAvailabilityHint}_16.png"
+                                   icon="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_#{resourceTreeItem.data.membersCategoryHint}_#{resourceTreeItem.data.membersAvailabilityHint}_16.png">
 
                         <a4j:support event="oncontextmenu" reRender="autoGroupMenu" timeout="5000"
                                      disableDefault="true" status="commonStatus" limitToList="true"
@@ -91,10 +91,10 @@
                     </rich:treeNode>
 <!-- Tree Node supporting context menu -->
                     <rich:treeNode type="Resource"
-                                   icon="/images/icons/#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png"
+                                   icon="/images/icons/#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == null ? 'unknown' : (resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up')}_16.png"
                                    iconCollapsed="/images/icons/dir_closed.png"
                                    iconExpanded="/images/icons/dir_open.png"
-                                   iconLeaf="/images/icons/#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png">
+                                   iconLeaf="/images/icons/#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == null ? 'unknown' : (resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up')}_16.png">
                         <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
                                      disableDefault="true" status="commonStatus" limitToList="true"
                                      ajaxSingle="true" oncomplete="#{rich:component('resourceMenu')}.show(event, {})">

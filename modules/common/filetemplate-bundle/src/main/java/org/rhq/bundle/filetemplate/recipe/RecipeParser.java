@@ -48,12 +48,22 @@ import org.rhq.core.template.TemplateEngine;
  *
  */
 public class RecipeParser {
+
+    private final static String PROPERTY_DEPLOY_DIR = "rhq.deploy.dir";
+    /** properties that will be set by the deployment automatically and do not need user definition */
+    private final static Set<String> IGNORE_PROPERTIES;
+
     private Map<String, RecipeCommand> recipeCommands;
 
     private Pattern replacementVariableDeclarationPattern;
     private Pattern replacementVariableNamePattern;
     private String systemReplacementVariablePrefix;
     private boolean replaceVariables = false;
+
+    static {
+        IGNORE_PROPERTIES = new HashSet<String>();
+        IGNORE_PROPERTIES.add(PROPERTY_DEPLOY_DIR);
+    }
 
     public RecipeParser() {
         this.recipeCommands = createRecipeCommands();
@@ -76,13 +86,17 @@ public class RecipeParser {
     }
 
     public void parseRecipe(RecipeContext context) throws Exception {
-
         context.setParser(this);
         try {
             BufferedReader recipeReader = new BufferedReader(new StringReader(context.getRecipe()));
             String line = recipeReader.readLine();
             while (line != null) {
-                parseRecipeCommandLine(context, line);
+                line = line.trim();
+                if (line.length() > 0 && !line.startsWith("#")) {
+                    // only process lines that aren't blank or aren't comment lines that start with #
+                    parseRecipeCommandLine(context, line);
+                    context.setUnknownRecipe(false); // we've successfully processed at least one line, this must be a file template recipe
+                }
                 line = recipeReader.readLine();
             }
         } finally {
@@ -93,11 +107,6 @@ public class RecipeParser {
     }
 
     protected void parseRecipeCommandLine(RecipeContext context, String line) throws Exception {
-        line = (null == line) ? line : line.trim();
-        // ignore blank lines or comment lines that start with #
-        if (null == line || line.length() == 0 || line.startsWith("#")) {
-            return;
-        }
 
         if (isReplaceReplacementVariables()) {
             line = replaceReplacementVariables(context, line);
@@ -163,6 +172,9 @@ public class RecipeParser {
             }
         }
 
+        if (null != replacementVariables) {
+            replacementVariables.removeAll(IGNORE_PROPERTIES);
+        }
         return replacementVariables;
     }
 

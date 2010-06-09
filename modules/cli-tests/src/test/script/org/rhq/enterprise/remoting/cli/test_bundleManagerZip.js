@@ -37,24 +37,43 @@ executeAllTests();
 
 rhq.logout();
 
-function testGroupDeployment() {
+function testDeployment() {
    if ( !TestsEnabled ) {
       return;
    }
    
    // delete the test bundle if it exists
-   var bc = new BundleCriteria();
-   bc.addFilterName( bundleName );
-   var bundles = BundleManager.findBundlesByCriteria( bc );
-   if ( null != bundles && bundles.size() > 0 ) {
-      print( "\n Deleting existing testScriptBundle in order to test a fresh deploy...")
-      BundleManager.deleteBundle( bundles.get(0).getId() );      
-   }
-
+   cleanupTestBundle();
+   
    // create bundleVersion 1.0
    var distributionFile = new java.io.File("./src/test/resources/cli-test-bundle-zip.zip");
    distributionFile = new java.io.File(distributionFile.getAbsolutePath());
    var testBundleVersion = BundleManager.createBundleVersionViaFile( distributionFile );
+
+   // Find a target platform group
+   var rgc = new ResourceGroupCriteria();
+   rgc.addFilterName("platforms"); // wINdows, lINux
+   var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
+   var groupId;
+   // create if needed (and possible)
+   if ( groups.isEmpty() ) {
+      var c = new ResourceCriteria();
+      c.addFilterResourceCategory(ResourceCategory.PLATFORM);
+      var platforms = ResourceManager.findResourcesByCriteria(c);
+      Assert.assertTrue( platforms.size() > 0 );
+      
+      var rg = new ResourceGroup("platforms");
+      var platformSet = new java.util.HashSet();
+      platformSet.addAll( platforms );
+      rg.setExplicitResources(platformSet);
+      rg = ResourceGroupManager.createResourceGroup(rg);
+      groupId = rg.getId();
+   } else { 
+      groupId = groups.get(0).getId();
+   }
+
+   // create a destination to deploy to
+   var testDest = BundleManager.createBundleDestination( testBundleVersion.getBundle().getId(), "test-cli-bundle-zip destination", "test-cli-bundle-zip destination", "/tmp/bundle-zip-test", groupId);
 
    // create the config, setting the required properties from the recipe
    var config = new Configuration();   
@@ -64,17 +83,28 @@ function testGroupDeployment() {
    config.put( property );
 
    // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of dummy ZIP", "/tmp/bundle-test", config);
-
-   // Find a target platform group
-   var rgc = new ResourceGroupCriteria();
-   rgc.addFilterName("platforms");
-   var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
-   Assert.assertTrue( groups.size() > 0 );
-   var groupId = groups.get(0).getId();
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Deployment Test of dummy ZIP", config);
    
-   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
-   Assert.assertNotNull( bgd );      
+   var bd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), false);
+   Assert.assertNotNull( bd );      
+
+   // Now performa redeploy, the same thing but a change to the config
+   // create the config, setting the required properties from the recipe
+   var config2 = new Configuration();   
+   var property = new PropertySimple("dummy.name", "NAME REPLACED HERE!!!");
+   config2.put( property );
+   var property = new PropertySimple("dummy.description", "FLOPPY V2.0 !!!");
+   config2.put( property );
+   
+   // create a deployment using the above config   
+   var testRedeploy = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Redeploy Test of dummy ZIP", config2);
+      
+   var bd2 = BundleManager.scheduleBundleDeployment(testRedeploy.getId(), false);
+   Assert.assertNotNull( bd2 );
+
+   // delete the test bundle if it exists (after allowing agent audit messages to complete)
+   //sleep( 5000 );
+   //cleanupTestBundle();
 }
 
 function getBundleType() {
@@ -88,3 +118,16 @@ function getBundleType() {
    
    print( "\n Could not find template bundle type, is the plugin loaded?");
 }
+
+function cleanupTestBundle() {
+   // delete the test bundle if it exists
+   var bc = new BundleCriteria();
+   bc.setStrict( true );   
+   bc.addFilterName( bundleName );
+   var bundles = BundleManager.findBundlesByCriteria( bc );
+   if ( null != bundles && bundles.size() > 0 ) {
+      print( "\n Deleting existing testScriptBundle in order to test a fresh deploy...")
+      BundleManager.deleteBundle( bundles.get(0).getId() );      
+   }
+}
+

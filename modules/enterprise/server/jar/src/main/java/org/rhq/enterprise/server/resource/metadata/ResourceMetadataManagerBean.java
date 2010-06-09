@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,6 +74,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -84,6 +86,8 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -121,6 +125,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private ResourceManagerLocal resourceManager;
+
+    @EJB
+    private ResourceGroupManagerLocal resourceGroupManager;
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
@@ -422,94 +429,197 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return;
     }
 
-    private void updateTypes(Set<ResourceType> rootResourceTypes) throws Exception {
+    private void updateTypes(Set<ResourceType> resourceTypes) throws Exception {        
+        // Only process the type if it is a non-runs-inside type (i.e. not a child of some other type X at this same
+        // level in the type hierarchy). runs-inside types which we skip here will get processed at the next level down
+        // when we recursively process type X's children.
+        Set<ResourceType> allChildren = new HashSet<ResourceType>();
+        for (ResourceType resourceType : resourceTypes) {
+            allChildren.addAll(resourceType.getChildResourceTypes());
+        }
+        Set<ResourceType> nonRunsInsideResourceTypes = new LinkedHashSet<ResourceType>();
+        for (ResourceType resourceType : resourceTypes) {
+            if (!allChildren.contains(resourceType)) {
+                nonRunsInsideResourceTypes.add(resourceType);
+            }
+        }
+
         // Iterate the resource types breadth-first, so all platform types get added before any server types or platform
         // service types. This way, we'll be able to set all of the platform types as parents of the server types and
         // platform service types. It's also helpful for other types with multiple "runs-inside" parent types (e.g
         // Hibernate Entities), since it ensures the parent types will get persisted prior to the child types.
-        for (ResourceType rootResourceType : rootResourceTypes) {
-            updateType(rootResourceType);
+        if (log.isDebugEnabled()) {
+            log.debug("Processing types: " + nonRunsInsideResourceTypes + "...");
         }
-        for (ResourceType rootResourceType : rootResourceTypes) {
-            updateTypes(rootResourceType.getChildResourceTypes());
+        Set<ResourceType> legitimateChildren = new HashSet<ResourceType>();
+        for (ResourceType resourceType : nonRunsInsideResourceTypes) {
+            updateType(resourceType);
+            legitimateChildren.addAll(resourceType.getChildResourceTypes());
+        }
+        // Only recurse if there are actually children - this prevents infinite recursion.
+        if (!legitimateChildren.isEmpty()) {
+            updateTypes(legitimateChildren);
         }
     }
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void removeObsoleteTypesInNewTransaction(String pluginName) {
+        try {
+            Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN);
+            query.setParameter("plugin", pluginName);
+            List<ResourceType> existingTypes = query.getResultList();
 
-        Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN);
-        query.setParameter("plugin", pluginName);
-        List<ResourceType> existingTypes = query.getResultList();
+            if (existingTypes != null) {
+                Set<ResourceType> obsoleteTypes = new HashSet<ResourceType>();
+                Set<ResourceType> legitTypes = new HashSet<ResourceType>();
+                Subject overlord = subjectManager.getOverlord();
+                for (ResourceType existingType : existingTypes) {
+                    if (PLUGIN_METADATA_MANAGER.getType(existingType.getName(), existingType.getPlugin()) == null) {
+                        // The type is obsolete - (i.e. it's no longer defined by the plugin).
+                        obsoleteTypes.add(existingType);
+                    } else {
+                        legitTypes.add(existingType);
+                    }
+                }
 
-        if (existingTypes != null) {
-            Subject overlord = subjectManager.getOverlord();
-            for (Iterator<ResourceType> iter = existingTypes.iterator(); iter.hasNext();) {
-                ResourceType existingType = iter.next();
-                if (PLUGIN_METADATA_MANAGER.getType(existingType.getName(), existingType.getPlugin()) == null) {
-                    if (entityManager.contains(existingType))
-                        entityManager.refresh(existingType);
-                    // This type no longer exists
-                    removeFromParents(existingType);
-                    // clean out the measurement stuff hanging on the type;
-                    List<Resource> resources = existingType.getResources();
-                    if (resources != null) {
-                        Iterator<Resource> resIter = resources.iterator();
-                        while (resIter.hasNext()) {
-                            Resource res = resIter.next();
-                            List<Integer> deletedIds = resourceManager.deleteResource(overlord, res.getId());
-                            // do this out of band because the current transaction is locking rows that due to
-                            // updates that may need to get deleted. If you do it here the NewTrans used below
-                            // may deadlock with the current transactions locks.
-                            for (Integer deletedResourceId : deletedIds) {
-                                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
-                            }
-                            resIter.remove();
+                if (!obsoleteTypes.isEmpty()) {
+                    // TODO: Log this at DEBUG instead.
+                    log.info("Removing " + obsoleteTypes.size() + " obsolete types: " + obsoleteTypes + "...");
+                    removeResourceTypes(overlord, obsoleteTypes, new HashSet<ResourceType>(obsoleteTypes));
+                }
+
+                // Now it's safe to remove any obsolete subcategories on the legit types.
+                for (ResourceType legitType : legitTypes) {
+                    ResourceType updateType = PLUGIN_METADATA_MANAGER.getType(legitType.getName(), legitType
+                        .getPlugin());
+
+                    // If we've got a type from the descriptor which matches an existing one,
+                    // then let's see if we need to remove any subcategories from the existing one.
+                    if (updateType != null) {
+                        try {
+                            removeObsoleteSubCategories(updateType, legitType);
+                        } catch (Exception e) {
+                            throw new Exception("Failed to delete obsolete subcategories from " + legitType + ".", e);
                         }
                     }
-                    entityManager.flush();
-                    Set<MeasurementDefinition> definitions = existingType.getMetricDefinitions();
-                    if (definitions != null) {
-                        Iterator<MeasurementDefinition> defIter = definitions.iterator();
-                        while (defIter.hasNext()) {
-                            MeasurementDefinition def = defIter.next();
-                            if (entityManager.contains(def)) {
-                                entityManager.refresh(def);
-                                measurementDefinitionManager.removeMeasurementDefinition(def);
-                            }
-                            defIter.remove();
-                        }
-                    }
-                    entityManager.flush();
-                    // TODO clean out event definitions ?
-                    entityManager.remove(existingType);
-                    entityManager.flush();
-                    iter.remove();
                 }
             }
+        } catch (Exception e) {
+            // Catch all exceptions, so a failure here does not cause the outer tx to rollback.
+            log.error("Failure during removal of obsolete ResourceTypes and Subcategories.", e);
+        }
+    }
 
-            // finally, its safe to remove any existing subcategories
-            for (ResourceType remainingType : existingTypes) {
-                ResourceType updateType = PLUGIN_METADATA_MANAGER.getType(remainingType.getName(), remainingType
-                    .getPlugin());
-
-                // if we've got a type from the descriptor which matches an existing one
-                // then lets see if we need to remove any subcategories from the existing one
-                if (updateType != null) {
-                    removeSubCategories(updateType, remainingType);
-                    entityManager.flush();
+    private void removeResourceTypes(Subject overlord, Set<ResourceType> candidateTypes,
+                                     Set<ResourceType> typesToBeRemoved)
+            throws Exception {
+        for (ResourceType candidateType : candidateTypes) {
+            // Remove obsolete descendant types first.
+            Set<ResourceType> childTypes = candidateType.getChildResourceTypes();
+            if (childTypes != null && !childTypes.isEmpty()) {
+                // Wrap child types in new HashSet to avoid ConcurrentModificationExceptions.
+                removeResourceTypes(overlord, new HashSet<ResourceType>(childTypes), typesToBeRemoved);
+            }
+            if (typesToBeRemoved.contains(candidateType)) {
+                try {
+                    removeResourceType(overlord, candidateType);
+                } catch (Exception e) {
+                    throw new Exception("Failed to remove " + candidateType + ".", e);
                 }
+                typesToBeRemoved.remove(candidateType);
             }
         }
     }
 
+    private void removeResourceType(Subject overlord, ResourceType existingType) {
+        log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");        
+
+        if (entityManager.contains(existingType)) {
+            entityManager.refresh(existingType);
+        }
+
+        // Completely remove the type from the type hierarchy.
+        removeFromParents(existingType);
+        removeFromChildren(existingType);
+        entityManager.merge(existingType);
+
+        // Remove all Resources that are of the type.
+        List<Resource> resources = existingType.getResources();
+        if (resources != null) {
+            Iterator<Resource> resIter = resources.iterator();
+            while (resIter.hasNext()) {
+                Resource res = resIter.next();
+                List<Integer> deletedIds = resourceManager.deleteResource(overlord, res.getId());
+                // do this out of band because the current transaction is locking rows that due to
+                // updates that may need to get deleted. If you do it here the NewTrans used below
+                // may deadlock with the current transactions locks.
+                for (Integer deletedResourceId : deletedIds) {
+                    resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                }
+                resIter.remove();
+            }
+        }
+        entityManager.flush();
+
+        // Remove all compatible groups that are of the type.
+        List<ResourceGroup> compatGroups = existingType.getResourceGroups();
+        if (compatGroups != null) {
+            Iterator<ResourceGroup> compatGroupIterator = compatGroups.iterator();
+            while (compatGroupIterator.hasNext()) {
+                ResourceGroup compatGroup = compatGroupIterator.next();
+                try {
+                    resourceGroupManager.deleteResourceGroup(overlord, compatGroup.getId());
+                } catch (ResourceGroupDeleteException e) {
+                    throw new RuntimeException(e);
+                }
+                compatGroupIterator.remove();
+            }
+        }
+        entityManager.flush();
+
+        // Remove the type's metric definitions. We do this separately, rather than just relying on cascade
+        // upon deletion of the ResourceType, because the removeMeasurementDefinition() will also take care
+        // of removing any associated schedules and those schedules' OOBs.
+        Set<MeasurementDefinition> definitions = existingType.getMetricDefinitions();
+        if (definitions != null) {
+            Iterator<MeasurementDefinition> defIter = definitions.iterator();
+            while (defIter.hasNext()) {
+                MeasurementDefinition def = defIter.next();
+                if (entityManager.contains(def)) {
+                    entityManager.refresh(def);
+                    measurementDefinitionManager.removeMeasurementDefinition(def);
+                }
+                defIter.remove();
+            }
+        }
+        entityManager.flush();
+
+        // TODO: Clean out event definitions?
+
+        // Finally, remove the type itself.
+        // Refresh it first to make sure any newly discovered Resources of the type get added to the persistence
+        // context and hopefully get removed via cascade when we remove the type.
+        entityManager.refresh(existingType);
+        entityManager.remove(existingType);
+        entityManager.flush();
+    }
 
     private void removeFromParents(ResourceType typeToBeRemoved) {
         // Wrap in new HashSet to avoid ConcurrentModificationExceptions.
-        Set<ResourceType> parents = new HashSet<ResourceType>(typeToBeRemoved.getParentResourceTypes());
-        for (ResourceType parent : parents) {
-            parent.removeChildResourceType(typeToBeRemoved);
+        Set<ResourceType> parentTypes = new HashSet<ResourceType>(typeToBeRemoved.getParentResourceTypes());
+        for (ResourceType parentType : parentTypes) {
+            parentType.removeChildResourceType(typeToBeRemoved);
+            entityManager.merge(parentType);
+        }
+    }
+
+    private void removeFromChildren(ResourceType typeToBeRemoved) {
+        // Wrap in new HashSet to avoid ConcurrentModificationExceptions.
+        Set<ResourceType> childTypes = new HashSet<ResourceType>(typeToBeRemoved.getChildResourceTypes());
+        for (ResourceType childType : childTypes) {
+            childType.removeParentResourceType(typeToBeRemoved);
+            entityManager.merge(childType);
         }
     }
 
@@ -613,7 +723,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private void persistNewType(ResourceType resourceType) {
-        log.info("Persisting new type [" + resourceType + "]...");
+        log.info("Persisting new ResourceType [" + toConciseString(resourceType) + "]...");
         // If the type didn't exist then we'll persist here which will cascade through
         // all child types as well as plugin and resource configs and their delegate types and
         // metric and operation definitions and their dependent types,
@@ -649,9 +759,18 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private void updateParentResourceTypes(ResourceType newType, ResourceType existingType) {
+        if (log.isDebugEnabled()) {
+            if (existingType != null) {
+                log.debug("Setting parent types on existing type: " + existingType + " to ["
+                        + newType.getParentResourceTypes() + "] - current parent types are ["
+                        + existingType.getParentResourceTypes() + "]...");
+            } else {
+                log.debug("Setting parent types on new type: " + newType
+                        + " to [" + newType.getParentResourceTypes() + "]...");
+            }
+        }
+        
         Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
-        log.debug("Setting parent types on type: " + ((existingType != null) ? existingType : newType )
-                + " to [" + newParentTypes + "]...");
         newType.setParentResourceTypes(new HashSet<ResourceType>());
         Set<ResourceType> originalExistingParentTypes = new HashSet<ResourceType>();
         if (existingType != null) {
@@ -659,14 +778,16 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
         for (ResourceType newParentType : newParentTypes) {
             try {
-                boolean parentNew = existingType == null || !originalExistingParentTypes.remove(newParentType) ;
-                if (parentNew) {
+                boolean isExistingParent = originalExistingParentTypes.remove(newParentType);                
+                if (existingType == null || !isExistingParent) {
                     ResourceType realParentType = (ResourceType) entityManager.createNamedQuery(
                         ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", newParentType.getName())
                         .setParameter("plugin", newParentType.getPlugin()).getSingleResult();
                     ResourceType type = (existingType != null) ? existingType : newType;
-                    log.info("Adding type [" + toConciseString(type) + "] as child of type ["
-                            + toConciseString(realParentType) + "]...");
+                    if (existingType != null) {
+                        log.info("Adding ResourceType [" + toConciseString(type) + "] as child of ResourceType ["
+                                + toConciseString(realParentType) + "]...");
+                    }
                     realParentType.addChildResourceType(type);
                 }
             } catch (NoResultException nre) {
@@ -757,7 +878,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return result;
     }
 
-    /** Update the &lt;event> tags */
+    /* Update the <event> tags */
     private void updateEventDefinitions(ResourceType newType, ResourceType existingType) {
         Set<EventDefinition> newEventDefs = newType.getEventDefinitions();
         // Loop over the newEventDefs and set the resourceTypeId, so equals() will work
@@ -806,9 +927,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     /**
      * Update the stuff below a <plugin-configuration>
-     *
-     * @param resourceType
-     * @param existingType
      */
     private void updatePluginConfiguration(ResourceType resourceType, ResourceType existingType) {
         ConfigurationDefinition existingConfigurationDefinition = existingType.getPluginConfigurationDefinition();
@@ -1114,7 +1232,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // Easy case: If the existing type did not have any definitions, simply save the new type defs and return
         if (existingType.getChildSubCategories() == null) {
             for (ResourceSubCategory newSubCategory : newType.getChildSubCategories()) {
-                log.debug("Metadata update: Adding new child SubCategory [" + newSubCategory.getName()
+                log.info("Metadata update: Adding new child SubCategory [" + newSubCategory.getName()
                     + "] to ResourceType [" + existingType.getName() + "]...");
                 existingType.addChildSubCategory(newSubCategory);
                 entityManager.persist(newSubCategory);
@@ -1144,7 +1262,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         List<ResourceSubCategory> newSubCategories = new ArrayList<ResourceSubCategory>(newType.getChildSubCategories());
         newSubCategories.removeAll(existingType.getChildSubCategories());
         for (ResourceSubCategory newSubCat : newSubCategories) {
-            log.debug("Metadata update: Adding new child SubCategory [" + newSubCat.getName() + "] to ResourceType ["
+            log.info("Metadata update: Adding new child SubCategory [" + newSubCat.getName() + "] to ResourceType ["
                 + existingType.getName() + "]...");
             existingType.addChildSubCategory(newSubCat);
             entityManager.persist(newSubCat);
@@ -1195,7 +1313,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             .getChildSubCategories());
         newChildSubCategories.removeAll(existingSubCat.getChildSubCategories());
         for (ResourceSubCategory newChildSubCategory : newChildSubCategories) {
-            log.debug("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
+            log.info("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
                 + "] to SubCategory [" + existingSubCat.getName() + "]...");
             existingSubCat.addChildSubCategory(newChildSubCategory);
             entityManager.persist(newChildSubCategory);
@@ -1203,12 +1321,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     /**
-     * Remove all sub category definitions that are in the existing type but not in the new type
+     * Remove all subcategory definitions that are in the existing type but not in the new type.
      *
      * @param newType      new resource type containing updated definitions
      * @param existingType old resource type with existing definitions
      */
-    private void removeSubCategories(ResourceType newType, ResourceType existingType) {
+    private void removeObsoleteSubCategories(ResourceType newType, ResourceType existingType) {
         // Remove all definitions that are in the existing type but not in the new type
         List<ResourceSubCategory> removedSubCategories = new ArrayList<ResourceSubCategory>(existingType
             .getChildSubCategories());
@@ -1222,6 +1340,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         // now need to recursively remove any child sub categories which no longer appear
         removeChildSubCategories(existingType.getChildSubCategories(), newType.getChildSubCategories());
+        entityManager.flush();
     }
 
     private void removeChildSubCategories(List<ResourceSubCategory> existingSubCategories,
@@ -1241,7 +1360,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 .getChildSubCategories();
             removedChildSubCategories.removeAll(newChildSubCategories);
             for (ResourceSubCategory removedChildSubCat : removedChildSubCategories) {
-                // remove  subcat and all its children, due to the CASCADE.DELETE
+                // remove subcat and all its children, due to the CASCADE.DELETE
                 existingSubCat.removeChildSubCategory(removedChildSubCat);
                 entityManager.remove(removedChildSubCat);
             }

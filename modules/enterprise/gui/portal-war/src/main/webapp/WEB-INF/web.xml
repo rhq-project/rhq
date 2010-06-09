@@ -328,6 +328,12 @@
       <load-on-startup>1</load-on-startup>
    </servlet>
 
+    <servlet>
+        <servlet-name>sessionAccess</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.authentication.SessionAccessServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
    <!-- Servlet that serves the agent update binaries and version information -->
    <servlet>
       <servlet-name>AgentUpdateServlet</servlet-name>
@@ -436,6 +442,13 @@
       <servlet-name>RemoteClientServlet</servlet-name>
       <url-pattern>/client/download</url-pattern>
    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>sessionAccess</servlet-name>
+      <url-pattern>/sessionAccess</url-pattern>
+   </servlet-mapping>
+
+
 
    <!-- The download servlet; this URI /downloads will effectively look like its pointing to rhq-downloads -->
    <servlet-mapping>

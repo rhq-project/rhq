@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,10 +23,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
+import javax.persistence.NoResultException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,25 +49,28 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Handles the workflow for creating a new package-backed resource.
+ * Handles the workflow for creating a new package-backed Resource.
+ *
+ * The associated Facelets page is: /rhq/resource/inventory/create-package-1.xhtml
  *
  * @author Jason Dobies
  * @author Ian Springer
  */
 public class CreateNewPackageChildResourceUIBean {
-    private final Log log = LogFactory.getLog(this.getClass());
-
     // Constants  --------------------------------------------
 
     public static final String MANAGED_BEAN_NAME = "CreateNewPackageChildResourceUIBean";
@@ -73,12 +79,19 @@ public class CreateNewPackageChildResourceUIBean {
     // private static final String OUTCOME_SUCCESS = "success";
     private static final String OUTCOME_CANCEL = "cancel";
 
+    private static final String DEFAULT_VERSION = "1.0";
+
     // Attributes  --------------------------------------------
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceType resourceType;
     private PackageType packageType;
 
-    private int selectedArchitectureId;
+    private String packageName;
+    private String version = DEFAULT_VERSION;
+
+    private Integer selectedArchitectureId;
 
     private CreateResourceHistory retryCreateItem;
     private ConfigurationDefinition configurationDefinition;
@@ -94,7 +107,7 @@ public class CreateNewPackageChildResourceUIBean {
     // Actions  --------------------------------------------
 
     /**
-     * Performs the creation of an package-backed resource.
+     * Performs the creation of an package-backed Resource.
      *
      * @return outcome of the creation attempt
      */
@@ -105,9 +118,31 @@ public class CreateNewPackageChildResourceUIBean {
         uploadUIBean = FacesContextUtility.getManagedBean(UploadNewChildPackageUIBean.class);
         UploadItem fileItem = uploadUIBean.getFileItem();
 
+        //store information about uploaded file for packageDetails as most of it is already available
+        Map<String, String> packageUploadDetails = new HashMap<String, String>();
+        packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
+        packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_INSTALL_DATE, String
+            .valueOf(System.currentTimeMillis()));
+        packageUploadDetails.put(ContentManagerBean.UPLOAD_OWNER, user.getName());
+        packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_NAME, fileItem.getFileName());
+
+        try {//Easier to implement here than in server side bean. Shouldn't affect performance too much.
+            packageUploadDetails.put(ContentManagerBean.UPLOAD_MD5, new MessageDigestGenerator(
+                MessageDigestGenerator.MD5).calcDigestString(fileItem.getFile()));
+            packageUploadDetails.put(ContentManagerBean.UPLOAD_SHA256, new MessageDigestGenerator(
+                MessageDigestGenerator.SHA_256).calcDigestString(fileItem.getFile()));
+        } catch (IOException e1) {
+            log.warn("Error calculating file digest(s) : " + e1.getMessage());
+            e1.printStackTrace();
+        }
+
         // Validate
         if ((fileItem == null) || fileItem.getFile() == null) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be uploaded");
+            return null;
+        }
+        if ((getVersion() == null) || (getVersion().trim().length() == 0)) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package version must be specified.");
             return null;
         }
 
@@ -132,12 +167,9 @@ public class CreateNewPackageChildResourceUIBean {
                 return OUTCOME_SUCCESS_OR_FAILURE;
             }
 
-            // If the type does not support architectures, load the no architecture entity and use that
-            if (!packageType.isSupportsArchitecture()) {
-                ContentManagerLocal contentManager = LookupUtil.getContentManager();
-                Architecture noArchitecture = contentManager.getNoArchitecture();
-
-                selectedArchitectureId = noArchitecture.getId();
+            if (isSupportsArchitecture()) {
+                // pull in architecture selection
+                selectedArchitectureId = getSelectedArchitectureId();
             }
 
             // Collect data for create call
@@ -160,13 +192,27 @@ public class CreateNewPackageChildResourceUIBean {
 
                 // RHQ-666 - Changed to not request the resource name from the user; simply pass null
                 // JON 2.0 RC3 - use timestamp versioning; pass null for version
-                resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
-                    pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
-                    packageContentStream);
+                //                resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
+                //                    pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
+                //                    packageContentStream);
+                if (packageUploadDetails != null) {
+                    resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
+                        pluginConfiguration, packageName, getVersion(), selectedArchitectureId,
+                        deployTimeConfiguration, packageContentStream, packageUploadDetails);
+                } else {
+                    resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
+                        pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
+                        packageContentStream);
+
+                }
+
+            } catch (NoResultException nre) {
+                //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
             } catch (Exception e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                     "Failed to send create resource request to agent. Cause: " + errorMessages);
+                log.error("Failed to create new child Resource of type [" + getResourceType() + "].", e);
                 return OUTCOME_SUCCESS_OR_FAILURE;
             }
 
@@ -179,6 +225,10 @@ public class CreateNewPackageChildResourceUIBean {
         }
 
         return OUTCOME_SUCCESS_OR_FAILURE;
+    }
+
+    public boolean isSupportsArchitecture() {
+        return packageType.isSupportsArchitecture();
     }
 
     private void cleanup(UploadNewChildPackageUIBean uploadUIBean) {
@@ -228,16 +278,18 @@ public class CreateNewPackageChildResourceUIBean {
     }
 
     private PackageType lookupPackageType() {
-        if (resourceType == null)
+        if (resourceType == null) {
             resourceType = lookupResourceType();
+        }
         ContentManagerLocal contentManager = LookupUtil.getContentManager();
         PackageType packageType = contentManager.getResourceCreationPackageType(this.resourceType.getId());
         return packageType;
     }
 
     protected ConfigurationDefinition lookupConfigurationDefinition() {
-        if (packageType == null)
+        if (packageType == null) {
             packageType = lookupPackageType();
+        }
         ConfigurationDefinition configurationDefinition = this.packageType.getDeploymentConfigurationDefinition();
         return configurationDefinition;
     }
@@ -340,11 +392,11 @@ public class CreateNewPackageChildResourceUIBean {
     }
 
     public String getNullConfigurationDefinitionMessage() {
-        return "This resource type does not expose deployment time configuration values.";
+        return "This resource type does not expose deployment-time configuration values.";
     }
 
     public String getNullConfigurationMessage() {
-        return "Unable to create an initial deployment time configuration for resource being added.";
+        return "Unable to create an initial deployment-time configuration for resource being added.";
     }
 
     private int getResourceTypeId() {
@@ -354,5 +406,37 @@ public class CreateNewPackageChildResourceUIBean {
             return (Integer) FacesContextUtility.getFacesContext().getExternalContext().getRequestMap().get(
                 ParamConstants.RESOURCE_TYPE_ID_PARAM);
         }
+    }
+
+    public String getPackageName() {
+        return packageName;
+    }
+
+    public void setPackageName(String packageName) {
+        this.packageName = packageName;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public SelectItem[] getPackageTypes() {
+        Resource resource = EnterpriseFacesContextUtility.getResource();
+
+        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+        List<PackageType> packageTypes = contentUIManager.getPackageTypes(resource.getResourceType().getId());
+
+        SelectItem[] items = new SelectItem[packageTypes.size()];
+        int itemCounter = 0;
+        for (PackageType packageType : packageTypes) {
+            SelectItem item = new SelectItem(packageType.getId(), packageType.getDisplayName());
+            items[itemCounter++] = item;
+        }
+
+        return items;
     }
 }

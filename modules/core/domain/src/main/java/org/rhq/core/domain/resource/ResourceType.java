@@ -65,6 +65,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.Summary;
 
 /**
@@ -314,7 +315,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @Column(name = "MTIME")
     private Long mtime;
 
-    @ManyToMany(mappedBy = "parentResourceTypes", cascade = { CascadeType.REFRESH, CascadeType.REMOVE })
+    @ManyToMany(mappedBy = "parentResourceTypes", cascade = { CascadeType.REFRESH })
     @OrderBy
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private Set<ResourceType> childResourceTypes;
@@ -370,6 +371,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.REMOVE)
     private List<Resource> resources;
+
+    @OneToMany(mappedBy = "resourceType", cascade = CascadeType.REMOVE)
+    private List<ResourceGroup> resourceGroups;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private Set<ProductVersion> productVersions;
@@ -550,6 +554,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setResources(List<Resource> resources) {
         this.resources = resources;
+    }
+
+    public List<ResourceGroup> getResourceGroups() {
+        return resourceGroups;
+    }
+
+    public void setResourceGroups(List<ResourceGroup> resourceGroups) {
+        this.resourceGroups = resourceGroups;
     }
 
     public Set<ResourceType> getParentResourceTypes() {

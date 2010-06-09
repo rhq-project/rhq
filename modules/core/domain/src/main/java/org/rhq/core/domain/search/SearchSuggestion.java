@@ -30,11 +30,15 @@ public class SearchSuggestion implements Serializable, Comparable<SearchSuggesti
         }
     }
 
-    private final Kind kind;
-    private final String value;
-    private final String label;
-    private final int startIndex;
-    private final int endIndex;
+    private Kind kind;
+    private String value;
+    private String label;
+    private int startIndex;
+    private int endIndex;
+
+    public SearchSuggestion() {
+        // public ctor for GWT
+    }
 
     public SearchSuggestion(Kind kind, String value) {
         this(kind, value, 0, 0);
@@ -60,6 +64,10 @@ public class SearchSuggestion implements Serializable, Comparable<SearchSuggesti
         return kind;
     }
 
+    public void setKind(Kind kind) {
+        this.kind = kind;
+    }
+
     public String getLabel() {
         return label;
     }
@@ -81,7 +89,7 @@ public class SearchSuggestion implements Serializable, Comparable<SearchSuggesti
         if (kindComparision != 0) {
             return kindComparision;
         }
-        return label.compareTo(other.label);
+        return label.toLowerCase().compareTo(other.label.toLowerCase());
     }
 
     public String toString() {

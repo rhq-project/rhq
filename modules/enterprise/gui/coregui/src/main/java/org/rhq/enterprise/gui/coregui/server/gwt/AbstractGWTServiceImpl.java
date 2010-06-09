@@ -18,19 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
-import org.rhq.enterprise.server.util.LookupUtil;
-
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import java.io.IOException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.io.IOException;
+import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Greg Hinkle
@@ -38,7 +38,6 @@ import java.io.IOException;
 public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
 
     private ThreadLocal<Subject> sessionSubject = new ThreadLocal<Subject>();
-
 
     protected Subject getSessionSubject() {
         return sessionSubject.get();

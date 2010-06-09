@@ -18,9 +18,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.byteman.agent.submit.Submit;
 
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -29,7 +26,10 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
@@ -388,10 +388,16 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
 
             if (discoveredFiles != null) {
                 for (File file : discoveredFiles) {
-                    String fullPath = file.getAbsolutePath();
                     String shortName = file.getName();
-                    String version = BytemanAgentDiscoveryComponent.getJarAttribute(fullPath,
-                        java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION.toString(), "0");
+                    String sha256 = null;
+                    try {
+                        sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(file);
+                    } catch (Exception e) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Failed to generate sha256 for [" + file + "]");
+                        }
+                    }
+                    String version = getVersion(file, sha256);
                     PackageDetailsKey detailsKey = new PackageDetailsKey(shortName, version, typeName, "noarch");
                     ResourcePackageDetails detail = new ResourcePackageDetails(detailsKey);
                     detail.setDisplayName(shortName);
@@ -399,7 +405,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                     detail.setFileName(shortName);
                     detail.setFileSize(file.length());
                     detail.setMD5(MessageDigestGenerator.getDigestString(file));
-
+                    detail.setSHA256(sha256);
                     details.add(detail);
                 }
             }
@@ -407,6 +413,32 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
             log.error("Failed to perform discovery for packages of type [" + typeName + "]", e);
         }
         return details;
+    }
+
+    private String getVersion(File file, String sha256) {
+        // Version string in order of preference
+        // manifestVersion + sha256, sha256, manifestVersion, "0"
+        String version = "0";
+        String manifestVersion = null;
+        try {
+            manifestVersion = BytemanAgentDiscoveryComponent.getJarAttribute(file.getAbsolutePath(),
+                java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION.toString(), null);
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to determine manifestVersion for [" + file + "]");
+            }
+        }
+
+        if ((null != manifestVersion) && (null != sha256)) {
+            // this protects against the occasional differing binaries with poor manifest maintenance  
+            version = manifestVersion + " [sha256=" + sha256 + "]";
+        } else if (null != sha256) {
+            version = "[sha256=" + sha256 + "]";
+        } else if (null != manifestVersion) {
+            version = manifestVersion;
+        }
+
+        return version;
     }
 
     /**

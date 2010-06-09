@@ -1,0 +1,238 @@
+
+input {
+  white-space: no-wrap;
+}
+
+div {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.searchButton {
+  display: block;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+
+/* 
+ *
+ * pattern field items 
+ *
+ */
+
+.patternField {
+  font-size: 13px;
+  font-family: arial, sans-serif;
+  width: 675px;
+  padding: 0;
+  margin: 0;
+  border-color: white;
+  border-style: none;
+  outline: none;
+}
+
+.patternNameLabel {
+  background-color: rgb(192, 236, 207);
+  color: rgb(51, 106, 63);
+  font-weight: bold;
+  white-space: nowrap;
+  text-align: center;
+  border-style: none;
+  font-size: 11px;
+  width: 125px;
+}
+
+.patternNameField {
+  font-size: 11px;
+  color: green;
+  width: 125px;
+  white-space: no-wrap;
+  border-color: gray;
+  border-style: dotted;
+  border-width: thin;
+  outline: none;
+}
+
+
+/*
+ *
+ * search container elements
+ *
+ */
+ 
+.searchBarContainer {
+  width: 800px;
+  position: relative;
+  background-color: rgb(233, 230, 225);
+  height: 34px;
+  vertical-align: bottom;
+}
+
+.searchBarBackgroundContainer {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background-color: white;
+  border-style: inset;
+  border-top-color: rgb(222, 222, 222);
+  border-left-color: rgb(222, 222, 222);
+  border-bottom-color: white;
+  border-right-color: white;
+  border-width: 1px 1px 1px 1px;
+  padding: 0;
+  width: 785px;
+  height: 20px;
+}
+
+.searchBarComponentsContainer {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.searchBarComponentLHS {
+  background-color: white;
+  float: left;
+  width: 200px;
+}
+
+.searchBarComponentRHS {
+  background-color: white;
+  float: right;
+  padding-right: 5px;
+  padding-top: 2px;
+}
+
+.searchBarButtonContainer {
+  float: right;
+  padding: 5px 5px 0 0;
+  margin: 0;
+}
+
+/*
+ *
+ * saved search items
+ *
+ */
+
+.savedSearchesPanel {
+  background-color: white;
+  border-style: none;
+  padding: 0;
+  margin: 0;
+  width: 785px;
+}
+
+.savedSearchesPanel-row {
+  background-color: white;
+  border-style: none;  
+  border-bottom-width: thin;
+  border-bottom-style: solid;
+  border-bottom-color: gray;
+  padding: 0px 0px 0px 0px;
+  margin: 0px 5px 0px 5px;
+  width: 785px;
+}
+
+.savedSearchesGrid {
+  background-color: white;
+  border-style: solid;
+  border-width: thin;
+  border-color: buttonshadow;
+
+  border-style: outset;
+  border-top-color: silver;
+  border-left-color: silver;
+  border-bottom-color: gray;
+  border-right-color: gray;
+  border-width: 1px 1px 1px 1px;
+  
+  padding: 0;
+  margin: 0;
+}
+
+.savedSearchesPanel-top {
+  color: green;
+  position: relative;
+  padding: 0;
+  margin: 0;
+  top: 1px;
+}
+
+.savedSearchesPanel-bottom {
+  font-size: 16px;
+  position: relative;
+  padding: 0;
+  margin: 0;
+  bottom: 1px;
+}
+
+
+/* 
+ *
+ * suggest items
+ * 
+ */
+ 
+.suggestPanel {
+  width: 785px;
+  background: white;
+  border-style: outset;
+  border-top-color: silver;
+  border-left-color: silver;
+  border-bottom-color: gray;
+  border-right-color: gray;
+  border-width: 1px 1px 1px 1px;
+}
+
+.suggestData {
+  width: 785px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.suggestData-selected {
+  width: 785px;
+  background: rgb(222,222,222);
+}
+
+.suggestDataSimple {
+  color: black;
+}
+
+.suggestDataAdvanced {
+  color: blue;
+}
+
+.suggestDataSavedSearch {
+  color: green;
+}
+
+
+/*
+ * Rounded Corners
+ * http://articles.sitepoint.com/article/rounded-corners-css-javascript
+ */
+ 
+div.rounded {
+  /* just a container for rounded2 div replacement algorithm */
+}
+div.rounded2 {
+  width: 125px;
+  background: rgb(192, 236, 207) url(/coregui/images/search/corner-upper-right-8.png) no-repeat top right;
+}
+div.rounded2 div {
+  background: transparent url(/coregui/images/search/corner-upper-left-8.png) no-repeat top left;
+}
+div.rounded2 div div {
+  background: transparent url(/coregui/images/search/corner-lower-right-8.png) no-repeat bottom right;
+}
+div.rounded2 div div div {
+  background: transparent url(/coregui/images/search/corner-lower-left-8.png) no-repeat bottom left;
+}
+
+div.rounded2 div div div div {
+  background-image: none;
+}

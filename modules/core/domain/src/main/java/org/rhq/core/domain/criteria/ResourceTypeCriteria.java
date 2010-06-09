@@ -22,6 +22,9 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -31,9 +34,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageOrdering;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Joseph Marques
@@ -54,6 +54,7 @@ public class ResourceTypeCriteria extends Criteria {
     private CreateDeletePolicy filterCreateDeletePolicy;
     private Boolean filterSupportsManualAdd;
     private String filterPluginName; // needs overrides
+    private Integer filterBundleTypeId; // needs overrides    
 
     private boolean fetchSubCategory;
     private boolean fetchChildResourceTypes;
@@ -67,6 +68,7 @@ public class ResourceTypeCriteria extends Criteria {
     private boolean fetchPackageTypes;
     private boolean fetchSubCategories;
     private boolean fetchProductVersions;
+    private boolean fetchBundleType;
 
     private PageOrdering sortName;
     private PageOrdering sortCategory;
@@ -75,12 +77,13 @@ public class ResourceTypeCriteria extends Criteria {
     public ResourceTypeCriteria() {
         filterOverrides.put("pluginName", "plugin like ?");
         filterOverrides.put("ids", "id in ( ? )");
+        filterOverrides.put("bundleTypeId", "bundleType.id = ?");
 
         sortOverrides.put("pluginName", "plugin");
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<?> getPersistentClass() {
         return ResourceType.class;
     }
 
@@ -118,6 +121,10 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void addFilterPluginName(String filterPluginName) {
         this.filterPluginName = filterPluginName;
+    }
+
+    public void addFilterBundleTypeId(Integer filterBundleTypeId) {
+        this.filterBundleTypeId = filterBundleTypeId;
     }
 
     public void fetchSubCategory(boolean fetchSubCategory) {
@@ -166,6 +173,10 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void fetchProductVersions(boolean fetchProductVersions) {
         this.fetchProductVersions = fetchProductVersions;
+    }
+
+    public void fetchBundleType(boolean fetchBundleType) {
+        this.fetchBundleType = fetchBundleType;
     }
 
     public void addSortName(PageOrdering sortName) {

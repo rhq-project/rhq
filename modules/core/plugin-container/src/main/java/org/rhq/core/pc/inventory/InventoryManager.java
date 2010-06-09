@@ -1535,8 +1535,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private void loadFromDisk() {
         this.inventoryLock.writeLock().lock();
 
+        File file = null;
         try {
-            File file = new File(this.configuration.getDataDirectory(), "inventory.dat");
+            file = new File(this.configuration.getDataDirectory(), "inventory.dat");
             if (file.exists()) {
                 long start = System.currentTimeMillis();
                 log.info("Loading inventory from data file [" + file + "]...");
@@ -1558,7 +1559,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     + (System.currentTimeMillis() - start) + "ms]");
             }
         } catch (Exception e) {
-            log.error("Could not load inventory from data file.", e);
+            this.platform = null;
+            this.resourceContainers.clear();
+            if (file != null) {
+                file.renameTo(new File(file.getAbsolutePath() + ".invalid")); // move it out of the way if we can, retain it for later analysis
+            }
+            log.error(
+                "Could not load inventory from data file. The agent has lost knowledge of its previous inventory - "
+                    + "it will resync its inventory once it can reconnect with a server.", e);
         } finally {
             this.inventoryLock.writeLock().unlock();
         }

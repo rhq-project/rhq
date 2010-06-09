@@ -21,8 +21,8 @@ package org.rhq.core.pluginapi.bundle;
 import java.io.OutputStream;
 import java.util.List;
 
-import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.PackageVersion;
 
@@ -36,13 +36,17 @@ public interface BundleManagerProvider {
      * Bundle plugins call back into this manager to add progressive auditing of a deployment.
      * 
      * @param deployment The resource deployment tracking this bundle deployment
-     * @param action The audit action, a short summary easily displayed
+     * @param action The audit action, a short summary easily displayed (e.g "File Download")
+     * @param info Info about the action target, easily displayed (e.g. "myfile.zip")
+     * @param category A useful categorization of the audit, defaults to null
      * @param status Optional, defaults to SUCCESS
-     * @param message Optional, verbose message being audited, failure message, text file, etc  
+     * @param message Optional, verbose message being audited, failure message, etc
+     * @param attachment Optional, verbose data, such as full file text  
      * @throws Exception
      */
-    void auditDeployment(BundleResourceDeployment deployment, String action, BundleDeploymentStatus status,
-        String message) throws Exception;
+    void auditDeployment(BundleResourceDeployment deployment, String action, String info,
+        BundleResourceDeploymentHistory.Category category, BundleResourceDeploymentHistory.Status status,
+        String message, String attachment) throws Exception;
 
     /**
      * Bundle plugins call back into this manager to obtain the bundle files that belong to a given bundle version.

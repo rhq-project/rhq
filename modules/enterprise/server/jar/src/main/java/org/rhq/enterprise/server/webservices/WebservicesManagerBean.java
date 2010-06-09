@@ -40,8 +40,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleFile;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -77,6 +77,7 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -330,8 +331,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
-        Architecture architecture, URL url) throws Exception {
-        return bundleManager.addBundleFileViaURL(subject, bundleVersionId, name, version, architecture, url);
+        Architecture architecture, String bundleFileUrl) throws Exception {
+        return bundleManager.addBundleFileViaURL(subject, bundleVersionId, name, version, architecture, bundleFileUrl);
     }
 
     public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
@@ -339,17 +340,26 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.addBundleFileViaPackageVersion(subject, bundleVersionId, name, packageVersionId);
     }
 
-    public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, String name,
-        String description, String installDir, Configuration configuration) throws Exception {
-        return bundleManager.createBundleDeployment(subject, bundleVersionId, name, description, installDir,
+    public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, int bundleDestinationId,
+        String description, Configuration configuration) throws Exception {
+        return bundleManager.createBundleDeployment(subject, bundleVersionId, bundleDestinationId, description,
             configuration);
+    }
+
+    public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
+        String deployDir, Integer groupId) throws Exception {
+        return bundleManager.createBundleDestination(subject, bundleId, name, description, deployDir, groupId);
+    }
+
+    public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {
+        return bundleManager.createBundleVersionViaRecipe(subject, recipe);
     }
 
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
         return bundleManager.createBundleVersionViaFile(subject, distributionFile);
     }
 
-    public BundleVersion createBundleVersionViaURL(Subject subject, URL distributionFileUrl) throws Exception {
+    public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
         return bundleManager.createBundleVersionViaURL(subject, distributionFileUrl);
     }
 
@@ -363,6 +373,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
         return bundleManager.findBundleDeploymentsByCriteria(subject, criteria);
+    }
+
+    public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject,
+        BundleDestinationCriteria criteria) {
+        return bundleManager.findBundleDestinationsByCriteria(subject, criteria);
     }
 
     public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(Subject subject,
@@ -400,15 +415,15 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return bundleManager.getBundleVersionFilenames(subject, bundleVersionId, withoutBundleFileOnly);
     }
 
-    /*
-    public Map<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception {
-        return bundleManager.getAllBundleVersionFilenames(subject, bundleVersionId);
+    public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeploymentId, boolean isCleanDeployment)
+        throws Exception {
+        return bundleManager.scheduleBundleDeployment(subject, bundleDeploymentId, isCleanDeployment);
     }
-    */
 
-    public BundleGroupDeployment scheduleBundleGroupDeployment(Subject subject, int bundleDeploymentId,
-        int resourceGroupId) throws Exception {
-        return bundleManager.scheduleBundleGroupDeployment(subject, bundleDeploymentId, resourceGroupId);
+    public BundleDeployment scheduleRevertBundleDeployment(Subject subject, int bundleDestinationId,
+        String deploymentDescription, boolean isCleanDeployment) throws Exception {
+        return bundleManager.scheduleRevertBundleDeployment(subject, bundleDestinationId, deploymentDescription,
+            isCleanDeployment);
     }
 
     //BUNDLEMANAGER: END ----------------------------------  

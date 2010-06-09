@@ -32,18 +32,18 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -256,8 +256,9 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
             List<String> pkgs = new ArrayList<String>();
             for (ResourcePackageDetails p : packages) {
                 String pkgInfo = p.getName();
-                if ((p.getVersion() != null) && (!p.getVersion().equals(""))) {
-                    pkgInfo = pkgInfo + "-" + p.getVersion();
+                String version = p.getVersion();
+                if ((version != null) && (!"".equals(version))) {
+                    pkgInfo = pkgInfo + "-" + version;
                 }
                 log.info("Adding <" + pkgInfo + "> to list of packages to deploy, original package object was: " + p);
                 pkgs.add(pkgInfo);

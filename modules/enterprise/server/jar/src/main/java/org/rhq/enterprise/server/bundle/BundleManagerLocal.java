@@ -22,14 +22,16 @@ import java.util.HashMap;
 
 import javax.ejb.Local;
 
+import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.configuration.Configuration;
 
 /**
  * Local interface to the manager responsible for creating and managing bundles.
@@ -117,17 +119,61 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * This is typically not called directly, typically scheduleBundleResourceDeployment() is called externally. This executes
      * in a New Transaction and supports scheduleBundleResourceDeployment. 
      */
-    BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId, int resourceId,
-        int groupDeploymentId) throws Exception;
+    BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId, int resourceId)
+        throws Exception;
 
     /**
-     * This is typically not called directly, typically scheduleBundleGroupDeployment() is called externally.
-     * This executes in a New Transaction and supports scheduleBundleGroupDeployment. 
+     * Similar to {@link BundleManagerRemote#createBundleDeployment(Subject, int, int, String, Configuration)} but
+     * supplies the internally generated deploymentName and has different transaction semantics. Useful when an
+     * slsb method needs to both create a deployment and schedules it prior to returning to an external caller.
      */
-    BundleGroupDeployment createBundleGroupDeployment(BundleGroupDeployment groupDeployment) throws Exception;
+    public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
+        int bundleDestinationId, String name, String description, Configuration configuration) throws Exception;
 
     // added here because the same method in @Remote was commented out to bypass a WSProvide issue
     HashMap<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception;
+
+    /**
+     * Needed by the Bundle Deploy and Revert wizards GUI to generate a deployment name for display.
+     *
+     * @param subject
+     * @param bundleDestinationId required
+     * @param bundleVersionId required for progressive deployment, -1 for revert
+     * @param prevDeploymentId required for revert deployment, -1 for progressive
+     * @return
+     */
+    public String getBundleDeploymentName(Subject subject, int bundleDestinationId, int bundleVersionId,
+        int prevDeploymentId);
+
+    /** 
+     * Not for general consumption.  A special case method to build the pojo that can be sent to the agent to
+     * schedule the deployment request. Uses NOT_SUPPORTED transaction attribute to avoid having the cleaned pojo
+     * affect the persistence context.
+     * @throws Exception
+     */
+    public BundleScheduleRequest getScheduleRequest(Subject subject, int resourceDeploymentId,
+        boolean isCleanDeployment, boolean isRevert) throws Exception;
+
+    /**
+     * This is a simple attempt at delete, typically used for removing a poorly defined deployment before it is
+     * actually scheduled for deployment. The status must be PENDING. It will
+     * fail if anything actually refers to it.
+     *    
+     * @param subject
+     * @param bundleDeploymentId
+     * @throws Exception if any part of the removal fails. 
+     */
+    void deleteBundleDeployment(Subject subject, int bundleDeploymentId) throws Exception;
+
+    /**
+     * This is a simple attempt at delete, typically used for removing a poorly defined destination. It will
+     * fail if any actual deployments are referring to the destination.
+     *    
+     * @param subject
+     * @param bundleDestinationId
+     * @throws Exception if any part of the removal fails. 
+     */
+    void deleteBundleDestination(Subject subject, int bundleDestinationId) throws Exception;
 
     /**
      * Called internally to set deployment status. Typically to a completion status when deployment ends.

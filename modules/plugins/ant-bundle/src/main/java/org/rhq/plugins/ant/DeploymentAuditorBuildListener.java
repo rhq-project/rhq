@@ -26,8 +26,8 @@ import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.util.StringUtils;
 
-import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 
 /**
@@ -75,13 +75,13 @@ public class DeploymentAuditorBuildListener implements BuildListener {
     }
 
     private void auditEvent(BuildEvent event) {
-        BundleDeploymentStatus status = (event.getException() == null) ? BundleDeploymentStatus.SUCCESS
-            : BundleDeploymentStatus.FAILURE;
+        BundleResourceDeploymentHistory.Status status = (event.getException() == null) ? BundleResourceDeploymentHistory.Status.SUCCESS
+            : BundleResourceDeploymentHistory.Status.FAILURE;
         String action = createAction(event);
         String message = createMessage(action, event);
         try {
-            this.bundleManagerProvider.auditDeployment(this.bundleResourceDeployment, "Build Event: " + action, status,
-                message);
+            this.bundleManagerProvider.auditDeployment(this.bundleResourceDeployment, "Build Event", action, null,
+                status, message, null);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

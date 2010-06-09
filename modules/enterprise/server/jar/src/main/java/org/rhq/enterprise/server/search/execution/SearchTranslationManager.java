@@ -13,9 +13,13 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.server.search.RHQLLexer;
 import org.rhq.enterprise.server.search.RHQLParser;
 import org.rhq.enterprise.server.search.antlr.RHQLNodeAdaptor;
+import org.rhq.enterprise.server.search.assist.SearchAssistant;
+import org.rhq.enterprise.server.search.assist.SearchAssistantFactory;
 import org.rhq.enterprise.server.search.translation.SearchTranslator;
 import org.rhq.enterprise.server.search.translation.SearchTranslatorFactory;
+import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
+import org.rhq.enterprise.server.search.translation.antlr.RHQLSimpleTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLTreeOperator;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
@@ -26,6 +30,7 @@ public class SearchTranslationManager {
     private SearchSubsystem context;
     private String expression;
     private SearchTranslator translator;
+    private SearchAssistant assistant;
 
     private RHQLLexer lexer;
     private RHQLParser parser;
@@ -44,11 +49,12 @@ public class SearchTranslationManager {
         this.expression = expression;
 
         this.translator = SearchTranslatorFactory.getTranslator(this.context);
+        this.assistant = SearchAssistantFactory.getAssistant(this.context);
 
-        ANTLRStringStream input = new ANTLRStringStream(expression); // Create an input character stream from standard in
+        ANTLRStringStream input = new ANTLRStringStream(this.expression); // Create an input character stream from standard in
         this.lexer = new RHQLLexer(input); // Create an echoLexer that feeds from that stream
 
-        CommonTokenStream tokens = new CommonTokenStream(lexer); // Create a stream of tokens fed by the lexer
+        CommonTokenStream tokens = new CommonTokenStream(this.lexer); // Create a stream of tokens fed by the lexer
         this.parser = new RHQLParser(tokens); // Create a parser that feeds off the token stream
 
         this.adaptor = new RHQLNodeAdaptor();
@@ -103,7 +109,16 @@ public class SearchTranslationManager {
                     first = false;
                 }
 
-                SearchFragment searchFragment = translator.getSearchFragment(alias, nextTerm);
+                RHQLAdvancedTerm advancedTerm = null;
+                if (nextTerm instanceof RHQLSimpleTerm) {
+                    RHQLSimpleTerm simpleTerm = (RHQLSimpleTerm) nextTerm;
+                    advancedTerm = new RHQLAdvancedTerm(null, assistant.getPrimarySimpleContext(), null,
+                        RHQLComparisonOperator.EQUALS, simpleTerm.getValue());
+                } else {
+                    advancedTerm = (RHQLAdvancedTerm) nextTerm;
+                }
+
+                SearchFragment searchFragment = translator.getSearchFragment(alias, advancedTerm);
                 String jpqlFragment = searchFragment.getFragment();
                 if (searchFragment.getType() == SearchFragmentType.PRIMARY_KEY_SUBQUERY) {
                     jpqlFragment = " " + alias + ".id IN (" + jpqlFragment + ")";
@@ -120,11 +135,19 @@ public class SearchTranslationManager {
     public static List<RHQLTerm> getFromAST(CommonTree tree) {
         List<RHQLTerm> terms = new ArrayList<RHQLTerm>();
 
-        CommonTree contextTree = (CommonTree) tree.getChild(0);
+        // simple text match
+        if (tree.getToken().getType() == RHQLLexer.IDENT) {
+            String value = PrintUtils.collapseStringChildren(tree);
+            RHQLTerm nextTerm = new RHQLSimpleTerm(value);
+            terms.add(nextTerm);
+            return terms;
+        }
 
+        // advanced query match
         String lineage = null;
         String path = null;
         String param = null;
+        CommonTree contextTree = (CommonTree) tree.getChild(0);
         for (int childIndex = 0; childIndex < contextTree.getChildCount(); childIndex++) {
             CommonTree child = (CommonTree) contextTree.getChild(childIndex);
             if (child.getToken().getType() == RHQLLexer.LINEAGE) {
@@ -147,7 +170,7 @@ public class SearchTranslationManager {
                 int type = tree.getToken().getType();
                 RHQLComparisonOperator operator = getComparisonOperatorFromTokenType(type, value);
 
-                RHQLTerm nextTerm = new RHQLTerm(lineage, path, param, operator, value);
+                RHQLTerm nextTerm = new RHQLAdvancedTerm(lineage, path, param, operator, value);
                 terms.add(nextTerm);
             }
         }
@@ -167,6 +190,10 @@ public class SearchTranslationManager {
             return nullValue ? RHQLComparisonOperator.NOT_NULL : RHQLComparisonOperator.NOT_EQUALS;
         case RHQLLexer.OP_NOT_EQUALS_STRICT:
             return nullValue ? RHQLComparisonOperator.NOT_NULL : RHQLComparisonOperator.NOT_EQUALS_STRICT;
+        case RHQLLexer.OP_LESS_THAN:
+            return RHQLComparisonOperator.LESS_THAN;
+        case RHQLLexer.OP_GREATER_THAN:
+            return RHQLComparisonOperator.GREATER_THAN;
         default:
             throw new IllegalArgumentException("There is no known RHQLComparisonOperator for token type " + tokenType);
         }

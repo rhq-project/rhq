@@ -52,6 +52,8 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
         DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
         addField(descriptionField);
 
+        DataSourceTextField bundleTypeDataField = new DataSourceTextField("bundleType", "Bundle Type");
+        addField(bundleTypeDataField);
     }
 
     @Override
@@ -59,6 +61,20 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
 
         BundleCriteria criteria = new BundleCriteria();
         criteria.setPageControl(getPageControl(request));
+
+
+        if (request.getCriteria().getValues().get("tagNamespace") != null) {
+            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
+        }
+
+        if (request.getCriteria().getValues().get("tagSemantic") != null) {
+            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
+        }
+
+        if (request.getCriteria().getValues().get("tagName") != null) {
+            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
+        }
+
 
         bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
             public void onFailure(Throwable caught) {
@@ -88,12 +104,11 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
         record.setAttribute("id", from.getId());
         record.setAttribute("name", from.getName());
         record.setAttribute("description", from.getDescription());
-        record.setAttribute("bundleType", from.getBundleType());
-        record.setAttribute("repos", from.getRepo());
+        record.setAttribute("bundleType", from.getBundleType().getName());
+        record.setAttribute("repo", from.getRepo().getName());
 
         record.setAttribute("object", from);
 
         return record;
-
     }
 }

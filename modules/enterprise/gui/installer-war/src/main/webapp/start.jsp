@@ -75,7 +75,7 @@
                                           document.getElementById('propForm:databasedriverclass').value = 'org.postgresql.Driver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'org.postgresql.xa.PGXADataSource';
                                           hideDiv('experimentalDbMsg');
-                                       } else if (this.options[this.selectedIndex].value == 'Oracle10g') {
+                                       } else if (this.options[this.selectedIndex].value == 'Oracle') {
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:oracle:thin:@127.0.0.1:1521:rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'oracle.jdbc.driver.OracleDriver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'oracle.jdbc.xa.client.OracleXADataSource';

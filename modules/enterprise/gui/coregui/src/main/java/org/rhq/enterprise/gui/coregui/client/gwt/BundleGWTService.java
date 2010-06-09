@@ -25,47 +25,68 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
+import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleDestinationCriteria;
+import org.rhq.core.domain.criteria.BundleFileCriteria;
+import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 
 public interface BundleGWTService extends RemoteService {
 
-    Bundle createBundle(String name, int bundleTypeId) throws Exception;
+    BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
 
-    BundleVersion createBundleAndBundleVersion(String bundleName, int bundleTypeId, String name, String version,
-        String description, String recipe) throws Exception;
+    BundleVersion createBundleVersionViaURL(String url) throws Exception;
 
-    BundleDeployment createBundleDeployment(int bundleVersionId, String name, String description, String installDir,
+    BundleVersion createBundleVersionViaRecipe(String recipe) throws Exception;
+
+    BundleDeployment createBundleDeployment(int bundleVersionId, int bundleDestinationId, String description,
         Configuration configuration, boolean enforcePolicy, int enforcementInterval, boolean pinToBundle)
         throws Exception;
 
-    BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception;
+    BundleDestination createBundleDestination(int bundleId, String name, String description, String deployDir,
+        int groupId) throws Exception;
 
     void deleteBundle(int bundleId) throws Exception;
+
+    void deleteBundleDeployment(int bundleDeploymentId) throws Exception;
+
+    void deleteBundleDestination(int bundleDestinationId) throws Exception;
 
     void deleteBundleVersion(int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception;
 
     PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception;
 
+    PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria);
+
+    PageList<BundleDestination> findBundleDestinationsByCriteria(BundleDestinationCriteria criteria);
+
+    PageList<BundleFile> findBundleFilesByCriteria(BundleFileCriteria criteria);
+
+    PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(BundleResourceDeploymentCriteria criteria);
+
     PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) throws Exception;
 
-    PageList<BundleWithLatestVersionComposite> findBundlesWithLastestVersionCompositesByCriteria(BundleCriteria criteria)
+    PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(BundleCriteria criteria)
         throws Exception;
 
     HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception;
 
     ArrayList<BundleType> getAllBundleTypes() throws Exception;
 
-    /*
-    BundleResourceDeployment scheduleBundleResourceDeployment(int bundleDeploymentId, int resourceId)
-        throws Exception;
-        */
+    String getBundleDeploymentName(int bundleDestinationId, int bundleVersionId, int prevDeploymentId);
 
-    BundleGroupDeployment scheduleBundleGroupDeployment(int bundleDeploymentId, int resourceGroupId) throws Exception;
+    BundleDeployment scheduleBundleDeployment(int bundleDeploymentId, boolean isCleanDeployment) throws Exception;
+
+    BundleDeployment scheduleRevertBundleDeployment(int bundleDestinationId, String deploymentDescription,
+        boolean isCleanDeployment) throws Exception;
+
 }

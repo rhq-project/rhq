@@ -39,15 +39,14 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
-import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
-import org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageComponent;
-import org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageRenderer;
+import org.rhq.enterprise.gui.inventory.resource.DisambiguatedResourceLineageComponent;
 import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.util.DisambiguatedResourceListUtil;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -121,13 +120,11 @@ public class AddGroupResourcesFormPrepareAction extends Action {
         PageList<Resource> pendingResources = resourceManager.findResourceByIds(user, pendingResourceIds, true,
             pcPending);
 
-        ResourceNamesDisambiguationResult<Resource> pendingResourcesDisambiguation =
-            resourceManager.disambiguate(pendingResources, true, RESOURCE_ID_EXTRACTOR);
-
-        pendingResources = buildResourceList(pendingResourcesDisambiguation, pendingResources.getTotalSize(), pendingResources.getPageControl());
+        PageList<DisambiguationReport<Resource>> disambiguatedpeningResources = 
+            DisambiguatedResourceListUtil.disambiguate(resourceManager, pendingResources, RESOURCE_ID_EXTRACTOR);
         
-        request.setAttribute(Constants.PENDING_RESOURCES_ATTR, pendingResources);
-        request.setAttribute(Constants.NUM_PENDING_RESOURCES_ATTR, pendingResources.size());
+        request.setAttribute(Constants.PENDING_RESOURCES_ATTR, disambiguatedpeningResources);
+        request.setAttribute(Constants.NUM_PENDING_RESOURCES_ATTR, disambiguatedpeningResources.size());
 
         /*
          * available resources are all resources in the system that are not associated with the user and are not pending
@@ -152,13 +149,11 @@ public class AddGroupResourcesFormPrepareAction extends Action {
                 + resourceGroup.getClass().getSimpleName() + " group type");
         }
 
-        ResourceNamesDisambiguationResult<Resource> availableResourcesDisambiguation =
-            resourceManager.disambiguate(availableResources, true, RESOURCE_ID_EXTRACTOR);
-        
-        availableResources = buildResourceList(availableResourcesDisambiguation, availableResources.getTotalSize(), availableResources.getPageControl());
+        PageList<DisambiguationReport<Resource>> disambiguatedAvailResources = 
+            DisambiguatedResourceListUtil.disambiguate(resourceManager, availableResources, RESOURCE_ID_EXTRACTOR);
                 
-        request.setAttribute(Constants.AVAIL_RESOURCES_ATTR, availableResources);
-        request.setAttribute(Constants.NUM_AVAIL_RESOURCES_ATTR, availableResources.size());
+        request.setAttribute(Constants.AVAIL_RESOURCES_ATTR, disambiguatedAvailResources);
+        request.setAttribute(Constants.NUM_AVAIL_RESOURCES_ATTR, disambiguatedAvailResources.size());
 
         return null;
     }
@@ -211,17 +206,17 @@ public class AddGroupResourcesFormPrepareAction extends Action {
         return new PageList<Resource>(convertedResults, totalSize, pageControl);
     }
     
-    private static String buildLineage(List<ResourceParentFlyweight> parents) {
+    private static String buildLineage(List<DisambiguationReport.Resource> parents) {
         if (parents == null || parents.size() == 0) {
             return "";
         }
         
-        Iterator<ResourceParentFlyweight> it = parents.iterator();
+        Iterator<DisambiguationReport.Resource> it = parents.iterator();
         
-        StringBuilder bld = new StringBuilder(it.next().getParentName());
+        StringBuilder bld = new StringBuilder(it.next().getName());
         
         while (it.hasNext()) {
-            bld.append(ResourcePartialLineageComponent.DEFAULT_SEPARATOR).append(it.next().getParentName());
+            bld.append(DisambiguatedResourceLineageComponent.DEFAULT_SEPARATOR).append(it.next().getName());
         }
         
         return bld.toString();

@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -83,6 +84,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -110,6 +112,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      * Amount of time a request may be outstanding against an agent before it is marked as timed out.
      */
     private static final int REQUEST_TIMEOUT = 1000 * 60 * 60;
+
+    public static final String UPLOAD_FILE_SIZE = "fileSize";
+    public static final String UPLOAD_FILE_INSTALL_DATE = "fileInstallDate";
+    public static final String UPLOAD_OWNER = "owner";
+    public static final String UPLOAD_FILE_NAME = "fileName";
+    public static final String UPLOAD_MD5 = "md5";
+    public static final String UPLOAD_SHA256 = "sha256";
 
     // Attributes  --------------------------------------------
 
@@ -142,8 +151,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // For performance tracking
         long start = System.currentTimeMillis();
 
-        log.debug("Merging [" + report.getDeployedPackages().size() + "] packages for Resource with id ["
-                + resourceId + "]...");
+        log.debug("Merging [" + report.getDeployedPackages().size() + "] packages for Resource with id [" + resourceId
+            + "]...");
 
         // Load the resource and its installed packages
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -165,57 +174,58 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // The report contains an entire snapshot of packages, so each of these has to be represented
         // as an InstalledPackage
-        for (ResourcePackageDetails resourcePackage : report.getDeployedPackages()) {
+        for (ResourcePackageDetails discoveredPackage : report.getDeployedPackages()) {
+
+            Package generalPackage = null;
+            PackageVersion packageVersion = null;
+
             // Load the overall package (used in a few places later in this loop)
             Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_RESOURCE_TYPE);
             packageQuery.setFlushMode(FlushModeType.COMMIT);
-            packageQuery.setParameter("name", resourcePackage.getName());
-            packageQuery.setParameter("packageTypeName", resourcePackage.getPackageTypeName());
+            packageQuery.setParameter("name", discoveredPackage.getName());
+            packageQuery.setParameter("packageTypeName", discoveredPackage.getPackageTypeName());
             packageQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
-
-            List<Package> existingPackages = packageQuery.getResultList();
-
-            Package generalPackage = null;
-            if (existingPackages.size() > 0) {
-                generalPackage = existingPackages.get(0);
+            List<Package> resultPackages = packageQuery.getResultList();
+            if (resultPackages.size() > 0) {
+                generalPackage = resultPackages.get(0);
             }
 
-            // See if package version already exists for the resource package
-            Query packageVersionQuery = entityManager
-                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
-            packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
-            packageVersionQuery.setParameter("packageName", resourcePackage.getName());
-            packageVersionQuery.setParameter("packageTypeName", resourcePackage.getPackageTypeName());
-            packageVersionQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
-            packageVersionQuery.setParameter("architectureName", resourcePackage.getArchitectureName());
-            packageVersionQuery.setParameter("version", resourcePackage.getVersion());
-
-            List<PackageVersion> existingPackageVersionList = packageVersionQuery.getResultList();
-
-            PackageVersion packageVersion = null;
-            if (existingPackageVersionList.size() > 0) {
-                packageVersion = existingPackageVersionList.get(0);
+            // If the package exists see if package version already exists
+            if (null != generalPackage) {
+                Query packageVersionQuery = entityManager
+                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS);
+                packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
+                packageVersionQuery.setParameter("packageName", discoveredPackage.getName());
+                packageVersionQuery.setParameter("packageTypeName", discoveredPackage.getPackageTypeName());
+                packageVersionQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
+                packageVersionQuery.setParameter("architectureName", discoveredPackage.getArchitectureName());
+                packageVersionQuery.setParameter("version", discoveredPackage.getVersion());
+                packageVersionQuery.setParameter("sha", discoveredPackage.getSHA256());
+                List<PackageVersion> resultPackageVersions = packageVersionQuery.getResultList();
+                if (resultPackageVersions.size() > 0) {
+                    packageVersion = resultPackageVersions.get(0);
+                }
             }
 
             // If we didn't find a package version for this deployed package, we will need to create it
-            if (packageVersion == null) {
-                if (generalPackage == null) {
+            if (null == packageVersion) {
+                if (null == generalPackage) {
                     Query packageTypeQuery = entityManager
                         .createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
                     packageTypeQuery.setFlushMode(FlushModeType.COMMIT);
                     packageTypeQuery.setParameter("typeId", resource.getResourceType().getId());
-                    packageTypeQuery.setParameter("name", resourcePackage.getPackageTypeName());
+                    packageTypeQuery.setParameter("name", discoveredPackage.getPackageTypeName());
 
                     PackageType packageType = (PackageType) packageTypeQuery.getSingleResult();
 
-                    generalPackage = new Package(resourcePackage.getName(), packageType);
+                    generalPackage = new Package(discoveredPackage.getName(), packageType);
                     generalPackage = persistOrMergePackageSafely(generalPackage);
                 }
 
                 // Create a new package version and attach to the general package
                 Query architectureQuery = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
                 architectureQuery.setFlushMode(FlushModeType.COMMIT);
-                architectureQuery.setParameter("name", resourcePackage.getArchitectureName());
+                architectureQuery.setParameter("name", discoveredPackage.getArchitectureName());
 
                 Architecture packageArchitecture;
 
@@ -226,25 +236,25 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     packageArchitecture = (Architecture) architectureQuery.getSingleResult();
                 } catch (Exception e) {
                     log.warn("Could not load architecture for architecture name ["
-                        + resourcePackage.getArchitectureName() + "] for package [" + resourcePackage.getName()
+                        + discoveredPackage.getArchitectureName() + "] for package [" + discoveredPackage.getName()
                         + "]. Cause: " + ThrowableUtil.getAllMessages(e));
                     continue;
                 }
 
-                packageVersion = new PackageVersion(generalPackage, resourcePackage.getVersion(), packageArchitecture);
-                packageVersion.setDisplayName(resourcePackage.getDisplayName());
-                packageVersion.setDisplayVersion(resourcePackage.getDisplayVersion());
-                packageVersion.setFileCreatedDate(resourcePackage.getFileCreatedDate());
-                packageVersion.setFileName(resourcePackage.getFileName());
-                packageVersion.setFileSize(resourcePackage.getFileSize());
-                packageVersion.setLicenseName(resourcePackage.getLicenseName());
-                packageVersion.setLicenseVersion(resourcePackage.getLicenseVersion());
-                packageVersion.setLongDescription(resourcePackage.getLongDescription());
-                packageVersion.setMD5(resourcePackage.getMD5());
-                packageVersion.setMetadata(resourcePackage.getMetadata());
-                packageVersion.setSHA256(resourcePackage.getSHA256());
-                packageVersion.setShortDescription(resourcePackage.getShortDescription());
-                packageVersion.setExtraProperties(resourcePackage.getExtraProperties());
+                packageVersion = new PackageVersion(generalPackage, discoveredPackage.getVersion(), packageArchitecture);
+                packageVersion.setDisplayName(discoveredPackage.getDisplayName());
+                packageVersion.setDisplayVersion(discoveredPackage.getDisplayVersion());
+                packageVersion.setFileCreatedDate(discoveredPackage.getFileCreatedDate());
+                packageVersion.setFileName(discoveredPackage.getFileName());
+                packageVersion.setFileSize(discoveredPackage.getFileSize());
+                packageVersion.setLicenseName(discoveredPackage.getLicenseName());
+                packageVersion.setLicenseVersion(discoveredPackage.getLicenseVersion());
+                packageVersion.setLongDescription(discoveredPackage.getLongDescription());
+                packageVersion.setMD5(discoveredPackage.getMD5());
+                packageVersion.setMetadata(discoveredPackage.getMetadata());
+                packageVersion.setSHA256(discoveredPackage.getSHA256());
+                packageVersion.setShortDescription(discoveredPackage.getShortDescription());
+                packageVersion.setExtraProperties(discoveredPackage.getExtraProperties());
 
                 packageVersion = persistOrMergePackageVersionSafely(packageVersion);
             } // end package version null check
@@ -283,13 +293,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             InstalledPackage newlyInstalledPackage = new InstalledPackage();
             newlyInstalledPackage.setPackageVersion(packageVersion);
             newlyInstalledPackage.setResource(resource);
-            newlyInstalledPackage.setInstallationDate(resourcePackage.getInstallationTimestamp());
+            newlyInstalledPackage.setInstallationDate(discoveredPackage.getInstallationTimestamp());
 
             entityManager.persist(newlyInstalledPackage);
 
             // Create an audit trail entry to show how this package was added to the system
             InstalledPackageHistory history = new InstalledPackageHistory();
-            history.setDeploymentConfigurationValues(resourcePackage.getDeploymentTimeConfiguration());
+            history.setDeploymentConfigurationValues(discoveredPackage.getDeploymentTimeConfiguration());
             history.setPackageVersion(packageVersion);
             history.setResource(resource);
             history.setStatus(InstalledPackageHistoryStatus.DISCOVERED);
@@ -1216,6 +1226,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
 
+        //        PackageBits bits = loadPackageBits(packageBitStream);
         // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
         // Write the content into the newly created package version. This may eventually move, but for now we'll just
         // use the byte array in the package version to store the bits.
@@ -1230,10 +1241,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         try {
             bits.setBits(packageBits);
         } catch (Exception e) {
-            log.error("Error savinf the package.", e);
+            log.error("Error saving the package.", e);
         }
-        newPackageVersion.setPackageBits(bits);
 
+        newPackageVersion.setPackageBits(bits);
+        newPackageVersion.setFileSize((long) bits.getBits().length);
+        try {
+            newPackageVersion.setSHA256(new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
+                .calcDigestString(packageBits));
+        } catch (IOException e) {
+            newPackageVersion.setSHA256(null);
+        }
         newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
 
         existingPackage.addVersion(newPackageVersion);
@@ -1302,7 +1320,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
                     + "you can normally ignore that. We detected that a package version was already created when we"
                     + " tried to do it also - we will ignore this and just use the new package version that was "
-                    + "created in the other thread");
+                    + "created in the other thread", new Throwable("Stack Trace:"));
             }
         } else {
             // the persisted object is unattached right now,
@@ -1488,5 +1506,124 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         return result;
+    }
+
+    /** Does much of same functionality as createPackageVersion, but uses same named query
+     *  as the agent side discovery mechanism, and passes in additional parameters available
+     *  when file has been uploaded via the UI.
+     */
+    public PackageVersion getUploadedPackageVersion(String packageName, int packageTypeId, String version,
+        int architectureId, InputStream packageBitStream, Map<String, String> packageUploadDetails,
+        int newResourceTypeId) {
+
+        PackageVersion packageVersion = null;
+
+        //default version to 1.0 if is null, not provided for any reason.
+        if ((version == null) || (version.trim().isEmpty())) {
+            version = "1.0";
+        }
+
+        // See if package version already exists for the resource package
+        Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+        packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
+        packageVersionQuery.setParameter("packageName", packageName);
+        PackageType packageType = contentManager.getResourceCreationPackageType(newResourceTypeId);
+        packageVersionQuery.setParameter("packageTypeName", packageType.getName());
+        packageVersionQuery.setParameter("resourceTypeId", newResourceTypeId);
+
+        Architecture architecture = entityManager.find(Architecture.class, architectureId);
+        packageVersionQuery.setParameter("architectureName", architecture.getName());
+        packageVersionQuery.setParameter("version", version);
+
+        // Result of the query should be either 0 or 1
+        List<PackageVersion> existingPackageVersionList = packageVersionQuery.getResultList();
+
+        if (existingPackageVersionList.size() > 0) {
+            packageVersion = existingPackageVersionList.get(0);
+        }
+
+        Package existingPackage = null;
+
+        Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
+        packageQuery.setParameter("name", packageName);
+        packageQuery.setParameter("packageTypeId", packageTypeId);
+        List<Package> existingPackageList = packageQuery.getResultList();
+
+        if (existingPackageList.size() == 0) {
+            // If the package doesn't exist, create that here
+            existingPackage = new Package(packageName, packageType);
+            existingPackage = persistOrMergePackageSafely(existingPackage);
+        } else {
+            existingPackage = existingPackageList.get(0);
+        }
+
+        //initialize package version if not already
+        if (packageVersion == null) {
+            packageVersion = new PackageVersion(existingPackage, version, architecture);
+            packageVersion.setDisplayName(existingPackage.getName());
+            entityManager.persist(packageVersion);
+        }
+
+        //get the data and persist/merge packageVersion
+        //        PackageBits bits = loadPackageBits(packageBitStream);
+        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
+        // Write the content into the newly created package version. This may eventually move, but for now we'll just
+        // use the byte array in the package version to store the bits.
+        byte[] packageBits;
+        try {
+            packageBits = StreamUtil.slurp(packageBitStream);
+        } catch (RuntimeException re) {
+            throw new RuntimeException("Error reading in the package file", re);
+        }
+
+        PackageBits bits = new PackageBits();
+        try {
+            bits.setBits(packageBits);
+        } catch (Exception e) {
+            log.error("Error savinf the package.", e);
+        }
+
+        packageVersion.setPackageBits(bits);
+
+        //populate extra details, persist
+        if (packageUploadDetails != null) {
+            packageVersion.setFileCreatedDate(Long.valueOf(packageUploadDetails
+                .get(ContentManagerBean.UPLOAD_FILE_INSTALL_DATE)));
+            packageVersion.setFileName(packageUploadDetails.get(ContentManagerBean.UPLOAD_FILE_NAME));
+            packageVersion.setFileSize(Long.valueOf(packageUploadDetails.get(ContentManagerBean.UPLOAD_FILE_SIZE)));
+            packageVersion.setMD5(packageUploadDetails.get(ContentManagerBean.UPLOAD_MD5));
+            packageVersion.setSHA256(packageUploadDetails.get(ContentManagerBean.UPLOAD_SHA256));
+        }
+        entityManager.merge(packageVersion);
+        entityManager.flush();
+
+        return packageVersion;
+
+    }
+
+    /** Pulls in package bits from the stream. Currently inefficient.
+     *
+     * @param packageBitStream
+     * @return PackageBits ref populated.
+     */
+    private PackageBits loadPackageBits(InputStream packageBitStream) {
+        PackageBits bits = null;
+        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
+        // Write the content into the newly created package version. This may eventually move, but for now we'll just
+        // use the byte array in the package version to store the bits.
+        byte[] packageBits;
+        try {
+            packageBits = StreamUtil.slurp(packageBitStream);
+        } catch (RuntimeException re) {
+            throw new RuntimeException("Error reading in the package file", re);
+        }
+
+        bits = new PackageBits();
+        try {
+            bits.setBits(packageBits);
+        } catch (Exception e) {
+            log.error("Error saving the package.", e);
+        }
+        return bits;
     }
 }

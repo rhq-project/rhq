@@ -30,6 +30,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreateWizard;
 
 /**
  * @author Greg Hinkle
@@ -87,6 +89,14 @@ public class ResourceGroupListView extends VLayout {
                     // TODO: Implement this method.
                 }
             });
+
+        table.addTableAction("New Group", new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                WizardView view = new WizardView(new GroupCreateWizard());
+                view.displayDialog();
+            }
+        });
+
 
         addMember(table);
 

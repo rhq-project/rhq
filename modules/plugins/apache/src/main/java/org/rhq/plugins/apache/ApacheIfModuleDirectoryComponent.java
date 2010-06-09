@@ -22,8 +22,6 @@
  */
 package org.rhq.plugins.apache;
 
-import java.util.List;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.augeas.node.AugeasNode;
@@ -99,5 +97,9 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
         AugeasNode directory = AugeasNodeSearch.findNodeById(virtualHost, context.getResourceKey());
         return directory;
       }
+    
+    public boolean isAugeasEnabled(){
+        return parentComponent.isAugeasEnabled();          
+    }
 }
 

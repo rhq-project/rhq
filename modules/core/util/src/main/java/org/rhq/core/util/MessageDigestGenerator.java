@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -35,7 +36,7 @@ import java.security.NoSuchAlgorithmException;
  * An object that generates a message digest or hash for algorithms such as MD5 or SHA. This class is basically a
  * wrapper around {@link java.security.MessageDigest} and provides convenience methods making it easier to generate
  * hashes.
- * 
+ *
  * There are static methods in here that use MD5 as the default algorithm. If you want to use another
  * algorithm, instantiate an instance of this object and use its instance methods.
  */
@@ -260,6 +261,18 @@ public class MessageDigestGenerator {
         }
     }
 
+    public byte[] calcDigest(URL url) throws IOException {
+        InputStream is = null;
+        try {
+            is = url.openStream();
+            return calcDigest(new BufferedInputStream(is, 1024 * 32));
+        } finally {
+            if (is != null) {
+                is.close();
+            }
+        }
+    }
+
     /**
      * Calculates the digest for a given file. The file's contents will be used as the source data for the digest calculation.
      *
@@ -276,6 +289,33 @@ public class MessageDigestGenerator {
 
     public String calcDigestString(File file) throws IOException {
         return calculateDigestStringFromBytes(calcDigest(file));
+    }
+
+    public String calcDigestString(byte[] bytes) throws IOException {
+        try {
+            ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+            return calcDigestString(bs);
+        } catch (IOException e) {
+            throw new RuntimeException("IOException reading a byte array input stream, this should never happen", e);
+        }
+    }
+
+    /**
+     * Calculates the digest for a given file. The file's contents will be used as the source data for the digest calculation.
+     *
+     * @param  url the URL whose contents are to be used to calculate the digest.
+     *
+     * @return the URL content's digest as a String
+     *
+     * @throws IOException if the URL could not be read or accessed
+     */
+    public static String getDigestString(URL url) throws IOException {
+        MessageDigestGenerator md5 = new MessageDigestGenerator(MD5);
+        return md5.calcDigestString(url);
+    }
+
+    public String calcDigestString(URL url) throws IOException {
+        return calculateDigestStringFromBytes(calcDigest(url));
     }
 
     /**

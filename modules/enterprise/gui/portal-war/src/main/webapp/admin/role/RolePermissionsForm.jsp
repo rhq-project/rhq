@@ -92,6 +92,27 @@
   </c:choose>
   </tr>
 
+  <!-- MANAGE_BUNDLE  -->
+  <tr class="ListRow">
+    <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.MANAGE_BUNDLE"/></b></td>
+
+  <c:choose>
+    <c:when test="${mode eq 'view'}">
+      <c:choose>
+        <c:when test="${rolePermissions['MANAGE_BUNDLE']}">
+    <td align="center" class="ListCell"><html:img page="/images/permission_enabled.gif" width="11" height="11" border="0"/></td>
+        </c:when>
+        <c:otherwise>
+    <td align="center" class="ListCell"><html:img page="/images/permission_disabled.gif" width="11" height="11" border="0"/></td>
+        </c:otherwise>
+      </c:choose>
+    </c:when>
+    <c:otherwise>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_BUNDLE" onclick="ToggleSelection(this, 'MANAGE_BUNDLE')"/></td>
+    </c:otherwise>
+  </c:choose>
+  </tr>
+
   <!-- END GLOBAL PERM ROWS -->
 
   <!-- THE RESOURCE PERMISSIONS HEADER ROW -->

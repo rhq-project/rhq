@@ -1,38 +1,41 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.content;
 
 import java.io.InputStream;
+
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
 import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.content.ContentRequestStatus;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.util.MessageDigestGenerator;
 
- /**
- * Runnable implementation to allow threaded requests to get a package content.
- *
- * @author Jason Dobies
- */
+/**
+* Runnable implementation to allow threaded requests to get a package content.
+*
+* @author Jason Dobies
+*/
 public class RetrieveContentBitsRunner implements Runnable {
     // Attributes  --------------------------------------------
 
@@ -77,6 +80,25 @@ public class RetrieveContentBitsRunner implements Runnable {
         ContentServerService serverService = contentManager.getContentServerService();
         if (serverService != null) {
             serverService.completeRetrievePackageBitsRequest(response, inputStream);
+        }
+        ResourcePackageDetails pkgDetails = request.getPackageDetails();
+        if ((pkgDetails != null) && ((pkgDetails.getSHA256() == null) || (pkgDetails.getSHA256().trim().isEmpty()))) {
+            InputStream is;
+            try {
+                is = contentManager.performGetPackageBits(request.getResourceId(), request.getPackageDetails());
+                pkgDetails.setSHA256(new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(is));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if ((pkgDetails != null) && ((pkgDetails.getMD5() == null) || (pkgDetails.getMD5().trim().isEmpty()))) {
+            InputStream is;
+            try {
+                is = contentManager.performGetPackageBits(request.getResourceId(), request.getPackageDetails());
+                pkgDetails.setMD5((new MessageDigestGenerator(MessageDigestGenerator.MD5).calcDigestString(is)));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

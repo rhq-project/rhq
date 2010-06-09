@@ -69,6 +69,32 @@
     </build>
 
     <profiles>
+
+        <!-- Unlike most of RHQ, this module requires JDK6, so replace the Java 5 bootclasspath that was added to the compiler args by the root POM with a bootclasspath based on the java.home sysprop (which should be Java 6 or later if the enforcer plugin did its job). -->
+        <profile>
+           <id>check-java-api</id>
+
+           <activation>
+              <property>
+                 <name>java5.home</name>
+              </property>
+           </activation>
+
+           <build>
+             <plugins>
+                <plugin>
+                  <artifactId>maven-compiler-plugin</artifactId>
+                  <configuration>
+                    <compilerArguments>
+                      <bootclasspath>${java.home}/lib/rt.jar${path.separator}${java.home}/lib/jsse.jar${path.separator}${java.home}/lib/jce.jar</bootclasspath>
+                    </compilerArguments>
+                  </configuration>
+                </plugin>
+              </plugins>
+            </build>
+
+        </profile>
+
         <profile>
             <id>dev</id>
 

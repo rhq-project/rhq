@@ -25,6 +25,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -55,4 +56,19 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         groupManager.ensureMembershipMatches(getSessionSubject(), groupId, resourceIds);
     }
 
+    public ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds) {
+        group = groupManager.createResourceGroup(getSessionSubject(), group);
+
+        ensureMembershipMatches(group.getId(), resourceIds);
+
+        return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
+    }
+
+    public void deleteResourceGroup(int groupId) {
+        try {
+            groupManager.deleteResourceGroup(getSessionSubject(), groupId);
+        } catch (ResourceGroupDeleteException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
 }

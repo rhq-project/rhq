@@ -20,7 +20,7 @@
 
    <properties>
       <scm.module.path>modules/enterprise/remoting/</scm.module.path>
-      
+
       <i18nlog.version>1.0.9</i18nlog.version>
       <log4j.version>1.2.14</log4j.version>
       <persistence-api.version>1.0</persistence-api.version>
@@ -57,43 +57,43 @@
             <exclusion>
               <groupId>oswego-concurrent</groupId>
               <artifactId>concurrent</artifactId>
-            </exclusion>            
-         </exclusions>          
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>rhq-enterprise-server</artifactId>
-         <version>${project.version}</version>         
+         <version>${project.version}</version>
          <exclusions>
             <exclusion>
               <groupId>ant</groupId>
               <artifactId>ant</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>commons-beanutils</groupId>
               <artifactId>commons-beanutils</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>commons-collections</groupId>
               <artifactId>commons-collections</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>commons-httpclient</groupId>
               <artifactId>commons-httpclient</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>commons-lang</groupId>
               <artifactId>commons-lang</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>commons-validator</groupId>
               <artifactId>commons-validator</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>dom4j</groupId>
               <artifactId>dom4j</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>gnu-getopt</groupId>
               <artifactId>getopt</artifactId>
@@ -101,15 +101,15 @@
             <exclusion>
               <groupId>jboss</groupId>
               <artifactId>jboss-cache</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>jboss</groupId>
               <artifactId>jbpm</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>junit</groupId>
               <artifactId>junit</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>org.rhq</groupId>
               <artifactId>rhq-core-client-api</artifactId>
@@ -133,20 +133,20 @@
             <exclusion>
               <groupId>org.snmp4j</groupId>
               <artifactId>snmp4j</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>oswego-concurrent</groupId>
               <artifactId>concurrent</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>postgresql</groupId>
               <artifactId>postgresql</artifactId>
-            </exclusion>            
+            </exclusion>
             <exclusion>
               <groupId>rss4j</groupId>
               <artifactId>rss4j</artifactId>
-            </exclusion>                        
-         </exclusions>          
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>
@@ -164,7 +164,7 @@
               <groupId>jdom</groupId>
               <artifactId>jdom</artifactId>
             </exclusion>
-         </exclusions> 
+         </exclusions>
       </dependency>
 
       <dependency>
@@ -176,7 +176,7 @@
           <groupId>jboss</groupId>
           <artifactId>javassist</artifactId>
        </dependency>
-      
+
       <dependency>
          <groupId>javax.persistence</groupId>
          <artifactId>persistence-api</artifactId>
@@ -186,7 +186,7 @@
               <groupId>hibernate-annotations</groupId>
               <artifactId>hibernate-annotations</artifactId>
             </exclusion>
-         </exclusions> 
+         </exclusions>
       </dependency>
 
       <dependency>
@@ -198,9 +198,16 @@
          <groupId>hibernate-annotations</groupId>
          <artifactId>hibernate-annotations</artifactId>
       </dependency>
-      
+
+      <dependency>
+         <groupId>jboss.jbossws</groupId>
+         <artifactId>jboss-jaxws</artifactId>
+         <version>3.0.1-native-2.0.4.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
    </dependencies>
-   
+
    <profiles>
          <profile>
          <id>javadoc</id>
@@ -232,7 +239,7 @@
                            <breakiterator>true</breakiterator>
                            <links>
                               <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
-                              <link>../remote-api</link>                              
+                              <link>../remote-api</link>
                            </links>
                         </configuration>
                         <goals>
@@ -247,6 +254,6 @@
 
       </profile>
 
-   </profiles>   
+   </profiles>
 
 </project>

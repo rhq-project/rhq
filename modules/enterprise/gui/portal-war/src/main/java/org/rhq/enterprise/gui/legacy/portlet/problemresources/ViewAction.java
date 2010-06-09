@@ -36,25 +36,36 @@ import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
+import org.rhq.enterprise.gui.legacy.util.DisambiguatedResourceListUtil;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
 
     private static final Log log = LogFactory.getLog(ViewAction.class);
 
+    private static final IntExtractor<ProblemResourceComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<ProblemResourceComposite>() {
+        public int extract(ProblemResourceComposite object) {
+            return object.getResourceId();
+        }
+    };
+    
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        List<ProblemResourceComposite> list = new ArrayList<ProblemResourceComposite>();
+        List<DisambiguationReport<ProblemResourceComposite>> disambiguatedList = new ArrayList<DisambiguationReport<ProblemResourceComposite>>();
 
         String timeRange = getResources(request).getMessage("dash.home.ProblemResources.timeRangeUnlimited");
         try {
@@ -88,9 +99,14 @@ public class ViewAction extends TilesAction {
 
             try {
                 MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
+                ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
                 long start = System.currentTimeMillis();
-                list = problemManager.findProblemResources(subject, begin, new PageControl(0,
+                PageList<ProblemResourceComposite> list = problemManager.findProblemResources(subject, begin, new PageControl(0,
                     problemResourcePreferences.range));
+                
+                disambiguatedList = DisambiguatedResourceListUtil.disambiguate(
+                    resourceManager, list, RESOURCE_ID_EXTRACTOR);
+                
                 long end = System.currentTimeMillis();
                 log.debug("Performance: Took [" + (end - start) + "]ms to find " + problemResourcePreferences.range
                     + " problem resources");
@@ -105,7 +121,7 @@ public class ViewAction extends TilesAction {
             }
         } finally {
             request.setAttribute("timeRange", timeRange);
-            context.putAttribute("problemResources", list);
+            context.putAttribute("problemResources", disambiguatedList);
         }
 
         return null;

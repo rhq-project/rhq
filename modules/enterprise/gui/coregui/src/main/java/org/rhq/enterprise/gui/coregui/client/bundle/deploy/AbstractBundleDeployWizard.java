@@ -18,13 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
-import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
-import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
 
 /**
@@ -34,27 +31,25 @@ import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
 public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     // the things we build up in the wizard
-    private Bundle bundle;
+    private Integer bundleId;
+    private BundleDestination destination;
+    private boolean isNewDestination = false;
     private BundleVersion bundleVersion;
-    private BundleDeployment bundleDeployment;
-    private BundleResourceDeployment resourceDeployment;
-    private BundleGroupDeployment groupDeployment;
-    private String name;
-    private String description;
-    private String installDir;
-    private ConfigurationTemplate template;
-    private Configuration config;
-    private Integer deployTargetId;
-    private Boolean newDefinition = Boolean.TRUE;
-    private boolean deployNow = true;
-    private boolean resourceDeploy = true;
+    private boolean initialDeployment = false;
+    private Configuration newDeploymentConfig;
+    private String newDeploymentDescription;
+    private BundleDeployment newDeployment;
+    private boolean isCleanDeployment = false;
+    private BundleDeployment liveDeployment;
 
-    public Bundle getBundle() {
-        return bundle;
+    private boolean deployNow = true;
+
+    public Integer getBundleId() {
+        return bundleId;
     }
 
-    public void setBundle(Bundle bundle) {
-        this.bundle = bundle;
+    public void setBundleId(Integer bundleId) {
+        this.bundleId = bundleId;
     }
 
     public BundleVersion getBundleVersion() {
@@ -65,76 +60,52 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
         this.bundleVersion = bundleVersion;
     }
 
-    public String getName() {
-        return name;
+    public String getNewDeploymentDescription() {
+        return newDeploymentDescription;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setNewDeploymentDescription(String newDeploymentDescription) {
+        this.newDeploymentDescription = newDeploymentDescription;
     }
 
-    public String getDescription() {
-        return description;
+    public Configuration getNewDeploymentConfig() {
+        return newDeploymentConfig;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setNewDeploymentConfig(Configuration newDeploymentConfig) {
+        this.newDeploymentConfig = newDeploymentConfig;
     }
 
-    public Configuration getConfig() {
-        return config;
+    public BundleDeployment getNewDeployment() {
+        return newDeployment;
     }
 
-    public ConfigurationTemplate getTemplate() {
-        return template;
+    public void setNewDeployment(BundleDeployment newDeployment) {
+        this.newDeployment = newDeployment;
     }
 
-    public void setTemplate(ConfigurationTemplate template) {
-        this.template = template;
+    public BundleDeployment getLiveDeployment() {
+        return liveDeployment;
     }
 
-    public void setConfig(Configuration config) {
-        this.config = config;
+    public void setLiveDeployment(BundleDeployment liveDeployment) {
+        this.liveDeployment = liveDeployment;
     }
 
-    public BundleDeployment getBundleDeployment() {
-        return bundleDeployment;
+    public boolean isInitialDeployment() {
+        return initialDeployment;
     }
 
-    public void setBundleDeployment(BundleDeployment bundleDeployment) {
-        this.bundleDeployment = bundleDeployment;
+    public void setInitialDeployment(boolean initialDeployment) {
+        this.initialDeployment = initialDeployment;
     }
 
-    public boolean isNewDefinition() {
-        return Boolean.TRUE.equals(newDefinition);
+    public BundleDestination getDestination() {
+        return destination;
     }
 
-    public Boolean getNewDefinition() {
-        return newDefinition;
-    }
-
-    public void setNewDefinition(Boolean newDefinition) {
-        this.newDefinition = newDefinition;
-    }
-
-    public Integer getPlatformGroupId() {
-        return deployTargetId;
-    }
-
-    public void setPlatformGroupId(Integer platformGroupId) {
-        this.deployTargetId = platformGroupId;
-    }
-
-    public Integer getDeployTargetId() {
-        return deployTargetId;
-    }
-
-    public void setDeployTargetId(Integer deployTargetId) {
-        this.deployTargetId = deployTargetId;
-    }
-
-    public boolean isResourceDeploy() {
-        return resourceDeploy;
+    public void setDestination(BundleDestination destination) {
+        this.destination = destination;
     }
 
     public Boolean isDeployNow() {
@@ -145,32 +116,20 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
         this.deployNow = deployNow;
     }
 
-    public void setResourceDeploy(boolean resourceDeploy) {
-        this.resourceDeploy = resourceDeploy;
+    public boolean isCleanDeployment() {
+        return isCleanDeployment;
     }
 
-    public BundleResourceDeployment getResourceDeployment() {
-        return resourceDeployment;
+    public void setCleanDeployment(boolean isCleanDeployment) {
+        this.isCleanDeployment = isCleanDeployment;
     }
 
-    public void setResourceDeployment(BundleResourceDeployment resourceDeployment) {
-        this.resourceDeployment = resourceDeployment;
+    public boolean isNewDestination() {
+        return isNewDestination;
     }
 
-    public BundleGroupDeployment getGroupDeployment() {
-        return groupDeployment;
-    }
-
-    public void setGroupDeployment(BundleGroupDeployment groupDeployment) {
-        this.groupDeployment = groupDeployment;
-    }
-
-    public String getInstallDir() {
-        return installDir;
-    }
-
-    public void setInstallDir(String installDir) {
-        this.installDir = installDir;
+    public void setNewDestination(boolean isNewDestination) {
+        this.isNewDestination = isNewDestination;
     }
 
 }

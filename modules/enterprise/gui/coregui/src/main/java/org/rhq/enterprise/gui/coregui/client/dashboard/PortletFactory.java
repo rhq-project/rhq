@@ -33,6 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.Re
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
 
 /**
@@ -57,6 +58,7 @@ public class PortletFactory {
 
         registeredPortlets.put(GraphPortlet.KEY, GraphPortlet.Factory.INSTANCE);
 
+        registeredPortlets.put(TagCloudPortlet.KEY, TagCloudPortlet.Factory.INSTANCE);
     }
 
     public static Canvas buildPortlet(StoredPortlet storedPortlet) {

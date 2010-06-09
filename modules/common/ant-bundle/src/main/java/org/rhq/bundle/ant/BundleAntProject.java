@@ -44,17 +44,23 @@ import org.rhq.core.util.updater.DeployDifferences;
  * are happening as the Ant script is being parsed and/or executed.
  * 
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class BundleAntProject extends Project {
+    // Bundle-level attributes
     private String bundleName;
     private String bundleVersion;
     private String bundleDescription;
     private ConfigurationDefinition configDef;
+
+    // Deployment-level attributes
     private Configuration config;
     private File deployDir;
     private final Set<String> bundleFileNames = new HashSet<String>();
     private int deploymentId;
+    private DeploymentPhase deploymentPhase;
     private DeployDifferences deployDiffs = new DeployDifferences();
+    private boolean dryRun;
 
     public Set<String> getBundleFileNames() {
         return bundleFileNames;
@@ -114,7 +120,23 @@ public class BundleAntProject extends Project {
         this.deploymentId = deploymentId;
     }
 
+    public DeploymentPhase getDeploymentPhase() {
+        return deploymentPhase;
+    }
+
+    public void setDeploymentPhase(DeploymentPhase deploymentPhase) {
+        this.deploymentPhase = deploymentPhase;
+    }
+
     public DeployDifferences getDeployDifferences() {
         return deployDiffs;
+    }
+
+    public void setDryRun(boolean dryRun) {
+        this.dryRun = dryRun;
+    }
+
+    public boolean isDryRun() {
+        return dryRun;
     }
 }

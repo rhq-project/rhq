@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleGroupDeployment;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -46,12 +45,12 @@ public class DeployStep implements WizardStep {
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
-    public DeployStep(BundleDeployWizard bundleCreationWizard) {
-        this.wizard = bundleCreationWizard;
+    public DeployStep(BundleDeployWizard wizard) {
+        this.wizard = wizard;
     }
 
     public String getName() {
-        return "Deploy Bundle to Target Platforms";
+        return "Deploy Bundle to Destination Platforms";
     }
 
     public Canvas getCanvas() {
@@ -72,75 +71,46 @@ public class DeployStep implements WizardStep {
             canvas.addMember(deployingImage);
             canvas.addMember(deployingMessage);
 
-            if (wizard.isNewDefinition()) {
-                bundleServer.createBundleDeployment(wizard.getBundleVersion().getId(), wizard.getName(), wizard
-                    .getDescription(), wizard.getInstallDir(), wizard.getConfig(), false, -1, false, //
-                    new AsyncCallback<BundleDeployment>() {
-                        public void onSuccess(BundleDeployment result) {
-                            deployingImage.setSrc("/images/status_complete.gif");
-                            deployingMessage.setText("Created Deployment...");
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Created deployment [" + result.getName() + "] description ["
-                                    + result.getDescription(), Severity.Info));
-                            wizard.setBundleDeployment(result);
+            bundleServer.createBundleDeployment(wizard.getBundleVersion().getId(), wizard.getDestination().getId(),
+                wizard.getNewDeploymentDescription(), wizard.getNewDeploymentConfig(), false, -1, false, //
+                new AsyncCallback<BundleDeployment>() {
+                    public void onSuccess(BundleDeployment result) {
+                        deployingImage.setSrc("/images/status_complete.gif");
+                        deployingMessage.setText("Created Deployment...");
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Created deployment [" + result.getName() + "] description ["
+                                + result.getDescription() + "]", Severity.Info));
+                        wizard.setNewDeployment(result);
 
-                            if (wizard.isResourceDeploy()) {
-                                /*
-                                bundleServer.scheduleBundleResourceDeployment(wizard.getBundleDeployment().getId(),
-                                    wizard.getDeployTargetId(), //
-                                    new AsyncCallback<BundleResourceDeployment>() {
-                                        public void onSuccess(BundleResourceDeployment result) {
-                                            deployingImage.setSrc("/images/status_complete.gif");
-                                            deployingMessage.setText("Bundle Deployment Scheduled!");
-                                            CoreGUI.getMessageCenter().notify(
-                                                new Message("Schedule bundle deployment ["
-                                                    + wizard.getBundleDeployment().getName() + "] resource ["
-                                                    + result.getResource() + "]", Severity.Info));
-                                            wizard.setResourceDeployment(result);
-                                        }
+                        bundleServer.scheduleBundleDeployment(wizard.getNewDeployment().getId(), wizard
+                            .isCleanDeployment(), //
+                            new AsyncCallback<BundleDeployment>() {
+                                public void onSuccess(BundleDeployment result) {
+                                    deployingImage.setSrc("/images/status_complete.gif");
+                                    deployingMessage.setText("Bundle Deployment Scheduled!");
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message("Scheduled bundle deployment [" + result.getName()
+                                            + "] resource group [" + result.getDestination().getGroup() + "]",
+                                            Severity.Info));
+                                    wizard.setNewDeployment(result);
+                                }
 
-                                        public void onFailure(Throwable caught) {
-                                            deployingImage.setSrc("/images/status_error.gif");
-                                            deployingMessage.setText("Failed to Schedule Deployment!");
-                                            CoreGUI.getErrorHandler().handleError(
-                                                "Failed to schedule deployment: " + caught.getMessage(), caught);
-                                            wizard.setResourceDeployment(null);
-                                        }
-                                    });
-                                    */
-                            } else {
-                                bundleServer.scheduleBundleGroupDeployment(wizard.getBundleDeployment().getId(), wizard
-                                    .getDeployTargetId(), //
-                                    new AsyncCallback<BundleGroupDeployment>() {
-                                        public void onSuccess(BundleGroupDeployment result) {
-                                            deployingImage.setSrc("/images/status_complete.gif");
-                                            deployingMessage.setText("Bundle Group Deployment Scheduled!");
-                                            CoreGUI.getMessageCenter().notify(
-                                                new Message("Schedule bundle group deployment ["
-                                                    + wizard.getBundleDeployment().getName() + "] resource group ["
-                                                    + result.getGroup() + "]", Severity.Info));
-                                            wizard.setGroupDeployment(result);
-                                        }
+                                public void onFailure(Throwable caught) {
+                                    deployingImage.setSrc("/images/status_error.gif");
+                                    deployingMessage.setText("Failed to Schedule Deployment!");
+                                    CoreGUI.getErrorHandler().handleError(
+                                        "Failed to schedule deployment: " + caught.getMessage(), caught);
+                                }
+                            });
+                    }
 
-                                        public void onFailure(Throwable caught) {
-                                            deployingImage.setSrc("/images/status_error.gif");
-                                            deployingMessage.setText("Failed to Schedule Group Deployment!");
-                                            CoreGUI.getErrorHandler().handleError(
-                                                "Failed to schedule group deployment: " + caught.getMessage(), caught);
-                                            wizard.setGroupDeployment(null);
-                                        }
-                                    });
-                            }
-                        }
-
-                        public void onFailure(Throwable caught) {
-                            deployingImage.setSrc("/images/status_error.gif");
-                            deployingMessage.setText("Failed to create deployment!");
-                            CoreGUI.getErrorHandler().handleError(
-                                "Failed to create deployment: " + caught.getMessage(), caught);
-                        }
-                    });
-            }
+                    public void onFailure(Throwable caught) {
+                        deployingImage.setSrc("/images/status_error.gif");
+                        deployingMessage.setText("Failed to create deployment!");
+                        CoreGUI.getErrorHandler().handleError("Failed to create deployment: " + caught.getMessage(),
+                            caught);
+                    }
+                });
         }
 
         return canvas;

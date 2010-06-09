@@ -45,14 +45,14 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -71,6 +71,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.JarContentFileInfo;
@@ -628,11 +629,12 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
             PackageVersions versions = loadApplicationVersions();
             String version = versions.getVersion(fileName);
+            String sha256 = getSHA256(file);
 
             // First discovery of this WAR
             if (null == version) {
                 JarContentFileInfo info = new JarContentFileInfo(file);
-                version = info.getVersion("1.0");
+                version = getVersion(info, sha256);
                 versions.putVersion(fileName, version);
                 versions.saveToDisk();
             }
@@ -644,11 +646,56 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             if (!file.isDirectory())
                 details.setFileSize(file.length());
             details.setFileCreatedDate(null); // TODO: get created date via SIGAR
+            details.setSHA256(sha256);
 
             packages.add(details);
         }
 
         return packages;
+    }
+
+    // TODO: if needed we can speed this up by looking in the ResourceContainer's installedPackage
+    // list for previously discovered packages. If there use the sha256 from that record. We'd have to
+    // get access to that info by adding access in org.rhq.core.pluginapi.content.ContentServices
+    private String getSHA256(File file) {
+
+        String sha256 = null;
+
+        try {
+            //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
+            File app = new File(file.getPath());
+            if (app.isDirectory()) {
+                File associatedWarFile = new File(app.getAbsolutePath() + ".war");
+                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(associatedWarFile);
+            } else {
+                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(app);
+            }
+        } catch (IOException iex) {
+            //log exception but move on, discovery happens often. No reason to hold up anything.
+            if (log.isDebugEnabled()) {
+                log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
+            }
+        }
+
+        return sha256;
+    }
+
+    private String getVersion(JarContentFileInfo fileInfo, String sha256) {
+        // Version string in order of preference
+        // manifestVersion + sha256, sha256, manifestVersion, "0"
+        String version = "0";
+        String manifestVersion = fileInfo.getVersion(null);
+
+        if ((null != manifestVersion) && (null != sha256)) {
+            // this protects against the occasional differing binaries with poor manifest maintenance  
+            version = manifestVersion + " [sha256=" + sha256 + "]";
+        } else if (null != sha256) {
+            version = "[sha256=" + sha256 + "]";
+        } else if (null != manifestVersion) {
+            version = manifestVersion;
+        }
+
+        return version;
     }
 
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {

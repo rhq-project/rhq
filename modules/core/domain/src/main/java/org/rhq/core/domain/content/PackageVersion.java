@@ -55,6 +55,14 @@ import org.rhq.core.domain.resource.ProductVersion;
  */
 @Entity
 @NamedQueries( {
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS, query = "" //
+        + "SELECT pv FROM PackageVersion AS pv " //
+        + " WHERE pv.generalPackage.name = :packageName " //
+        + "   AND pv.generalPackage.packageType.name = :packageTypeName " //
+        + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId " //        
+        + "   AND ( ( NOT pv.sha256 IS NULL AND pv.sha256 = :sha ) OR "
+        + "         ( pv.sha256 IS NULL AND pv.architecture.name = :architectureName AND pv.version = :version ) "
+        + "       ) "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :name " + "   AND pv.generalPackage.packageType.id = :packageTypeId "
         + "   AND pv.architecture.id = :architectureId " + "   AND pv.version = :version "),
@@ -239,8 +247,12 @@ public class PackageVersion implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String QUERY_FIND_BY_PACKAGE_DETAILS = "PackageVersion.findByPackageDetails";
     public static final String QUERY_FIND_BY_PACKAGE_VER_ARCH = "PackageVersion.findByPackageVerArch";
+    public static final String QUERY_FIND_BY_PACKAGE_SHA = "PackageVersion.findByPackageSha";
+    public static final String QUERY_FIND_BY_PACKAGE_SHA_RES_TYPE = "PackageVersion.findByPackageShaResType";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY = "PackageVersion.findByPackageDetailsKey";
+    public static final String QUERY_FIND_BY_PACKAGE_DETAILS_SHA = "PackageVersion.findByPackageDetailsSha";
     public static final String QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID = "PackageVersion.findIdByPackageDetailsKeyAndResId";
     public static final String QUERY_FIND_BY_REPO_ID = "PackageVersion.findByRepoId";
     public static final String QUERY_FIND_BY_REPO_ID_FILTERED = "PackageVersion.findByRepoIdFiltered";

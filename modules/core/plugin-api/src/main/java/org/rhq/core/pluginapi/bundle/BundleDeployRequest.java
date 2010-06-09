@@ -38,6 +38,8 @@ public class BundleDeployRequest implements Serializable {
     private BundleManagerProvider bundleManagerProvider;
     private File bundleFilesLocation;
     private Map<PackageVersion, File> packageVersionFiles;
+    private boolean isCleanDeployment = false;
+    private boolean isRevert = false;
 
     public BundleDeployRequest() {
     }
@@ -86,4 +88,38 @@ public class BundleDeployRequest implements Serializable {
         this.bundleManagerProvider = provider;
     }
 
+    /**
+     * @return flag to indicate if the deployment directory should have all of its files deleted
+     *         prior to deploying the new files. All files in the deployment directory should be cleaned,
+     *         including files/directories that are marked to be "ignored".
+     */
+    public boolean isCleanDeployment() {
+        return isCleanDeployment;
+    }
+
+    public void setCleanDeployment(boolean isCleanDeployment) {
+        this.isCleanDeployment = isCleanDeployment;
+    }
+
+    /**
+     * @return flag to indicate if this bundle deployment request should revert a deployment back to
+     *         a previous state. Reverting means that any files backed up from the last deployment
+     *         are reverted to their original state.
+     */
+    public boolean isRevert() {
+        return isRevert;
+    }
+
+    public void setRevert(boolean isRevert) {
+        this.isRevert = isRevert;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder(this.getClass() + ": ");
+        str.append("deployment=[").append(resourceDeployment.toString()).append("], ");
+        str.append("clean=[").append(isCleanDeployment).append("], ");
+        str.append("revert=[").append(isRevert).append("]");
+        return str.toString();
+    }
 }

@@ -48,8 +48,10 @@ public class DeployDifferences {
     private final Set<String> addedFiles = new HashSet<String>();
     private final Set<String> changedFiles = new HashSet<String>();
     private final Map<String, String> backedUpFiles = new HashMap<String, String>();
+    private final Map<String, String> restoredFiles = new HashMap<String, String>();
     private final Map<String, String> realizedFiles = new HashMap<String, String>();
     private final Map<String, String> errors = new HashMap<String, String>();
+    private boolean cleaned = false;
 
     public void addIgnoredFile(String path) {
         this.ignoredFiles.add(convertPath(path));
@@ -127,12 +129,20 @@ public class DeployDifferences {
         this.backedUpFiles.put(convertPath(originalPath), convertPath(backupPath));
     }
 
+    public void addRestoredFile(String restoredPath, String backupPath) {
+        this.restoredFiles.put(convertPath(restoredPath), convertPath(backupPath));
+    }
+
     public void addRealizedFile(String path, String content) {
         this.realizedFiles.put(convertPath(path), content);
     }
 
     public void addError(String path, String errorMsg) {
         this.errors.put(convertPath(path), errorMsg);
+    }
+
+    public void setCleaned(boolean cleaned) {
+        this.cleaned = cleaned;
     }
 
     /**
@@ -183,6 +193,18 @@ public class DeployDifferences {
     }
 
     /**
+     * Returns the set of files that have been restored from a backup copy.
+     * The key is the restored path of the file (i.e. the location where the
+     * file now resides after being restored); the value is the path where
+     * the backup copy of the file is.
+     * 
+     * @return the information on files that were restored
+     */
+    public Map<String, String> getRestoredFiles() {
+        return this.restoredFiles;
+    }
+
+    /**
      * Returns the set of files that have been realized.
      * When a file is said to be "realized", it means the file was original
      * a template with replacement tokens but those replacement tokens have
@@ -210,6 +232,18 @@ public class DeployDifferences {
         return this.errors;
     }
 
+    /**
+     * Returns <code>true</code> if the delpoyment's destination directory was
+     * wiped of all files/directories before the new deployment files were
+     * copied to it. This means any ignored files or directories that were
+     * in the deployment's destination directory will have been deleted.
+     *  
+     * @return the cleaned flag
+     */
+    public boolean wasCleaned() {
+        return cleaned;
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
@@ -218,7 +252,9 @@ public class DeployDifferences {
         str.append("changed=").append(this.changedFiles).append('\n');
         str.append("ignored=").append(this.ignoredFiles).append('\n');
         str.append("backed-up=").append(this.backedUpFiles).append('\n');
+        str.append("restored=").append(this.restoredFiles).append('\n');
         str.append("realized=").append(this.realizedFiles.keySet()).append('\n');
+        str.append("cleaned=[").append(this.cleaned).append(']').append('\n');
         str.append("errors=").append(this.errors);
         return str.toString();
     }

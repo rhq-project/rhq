@@ -36,8 +36,11 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -51,7 +54,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class BundleTreeDataSource extends RPCDataSource {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-
 
 
     public BundleTreeDataSource() {
@@ -80,6 +82,7 @@ public class BundleTreeDataSource extends RPCDataSource {
         if (p == null) {
 
             BundleCriteria criteria = new BundleCriteria();
+            criteria.fetchDestinations(true);
             criteria.setPageControl(getPageControl(request));
 
             bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
@@ -113,7 +116,38 @@ public class BundleTreeDataSource extends RPCDataSource {
                         processResponse(request.getRequestId(), response);
                     }
                 });
+            } else if (p.endsWith(":deployments")) {
+                int bundleId = Integer.parseInt(p.substring(0, p.indexOf(":")));
+                BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
+                criteria.fetchBundleVersion(true);
+                criteria.addFilterBundleId(bundleId);
+                bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load bundle", caught);
+                    }
+
+                    public void onSuccess(PageList<BundleDeployment> result) {
+                        response.setData(buildRecords(result));
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
+            } else if (p.endsWith(":destinations")) {
+                int bundleId = Integer.parseInt(p.substring(0, p.indexOf(":")));
+                BundleDestinationCriteria criteria = new BundleDestinationCriteria();
+                criteria.addFilterBundleId(bundleId);
+                bundleService.findBundleDestinationsByCriteria(criteria, new AsyncCallback<PageList<BundleDestination>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load bundle destinations", caught);
+                    }
+
+                    public void onSuccess(PageList<BundleDestination> result) {
+                        response.setData(buildRecords(result));
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
+
             }
+
         }
 
 
@@ -145,14 +179,12 @@ public class BundleTreeDataSource extends RPCDataSource {
                 versionNode.setAttribute("name", "Versions");
                 records.add(versionNode);
 
-                TreeNode deploymentsNode = new TreeNode("Deployments");
-                deploymentsNode.setID(bundle.getId() + ":deployments");
+                TreeNode deploymentsNode = new TreeNode("Destinations");
+                deploymentsNode.setID(bundle.getId() + ":destinations");
                 deploymentsNode.setParentID(String.valueOf(bundle.getId()));
-                deploymentsNode.setName("Deployments");
+                deploymentsNode.setName("Destinations");
                 records.add(deploymentsNode);
-
             }
-
         }
         return records.toArray(new ListGridRecord[records.size()]);
     }
@@ -169,7 +201,7 @@ public class BundleTreeDataSource extends RPCDataSource {
 
         } else if (from instanceof BundleVersion) {
             BundleVersion version = (BundleVersion) from;
-            node.setName(version.getName() + " (" + version.getVersion() + ")");
+            node.setName(version.getVersion());
             node.setID(version.getBundle().getId() + ":versions:" + version.getId());
             node.setParentID(version.getBundle().getId() + ":versions");
             node.setIsFolder(false);
@@ -178,10 +210,17 @@ public class BundleTreeDataSource extends RPCDataSource {
         } else if (from instanceof BundleDeployment) {
             BundleDeployment deployment = (BundleDeployment) from;
             node.setName(deployment.getName() + " (" + deployment.getBundleVersion().getVersion() + ")");
-            node.setParentID(deployment.getBundleVersion().getBundle().getId() + ":deployments:" + deployment.getId());
+            node.setID(deployment.getBundleVersion().getBundle().getId() + ":deployments:" + deployment.getId());
             node.setParentID(deployment.getBundleVersion().getBundle().getId() + ":deployments");
             node.setIsFolder(false);
             node.setIcon("subsystems/bundle/BundleDeployment_16.png");
+        } else if (from instanceof BundleDestination) {
+            BundleDestination destination = (BundleDestination) from;
+            node.setName(destination.getName());
+            node.setID(destination.getBundle().getId() + ":destinations:" +destination.getId());
+            node.setParentID(destination.getBundle().getId() + ":destinations");
+            node.setIsFolder(false);
+            node.setIcon("subsystems/bundle/BundleDestination_16.png");
         }
         return node;
     }

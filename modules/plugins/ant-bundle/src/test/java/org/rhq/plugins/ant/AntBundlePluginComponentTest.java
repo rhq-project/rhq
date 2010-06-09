@@ -23,10 +23,11 @@
 package org.rhq.plugins.ant;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Properties;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -35,8 +36,9 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
@@ -47,6 +49,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
@@ -56,9 +59,7 @@ import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 @Test
-public class AntBundlePluginComponentTest {
-    private static final String USER_HOME = System.getProperty("user.home");
-
+public class AntBundlePluginComponentTest {    
     private AntBundlePluginComponent plugin;
     private File tmpDir;
 
@@ -82,46 +83,15 @@ public class AntBundlePluginComponentTest {
         this.plugin.start(context);
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void cleanTmpDir() {
         FileUtil.purge(this.tmpDir, true);
     }
 
-    @Test(enabled = false)
     /**
-     * Test a simple Ant script that contains no RHQ tasks other than rhq:bundle.
+     * Test deployment of an RHQ bundle recipe.
      */
-    public void testSimpleBundle() throws Exception {
-        ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
-        BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
-        Repo repo = new Repo("testSimpleBundle");
-        PackageType packageType = new PackageType("testSimpleBundle", resourceType);
-        Bundle bundle = new Bundle("testSimpleBundle", bundleType, repo, packageType);
-        BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
-            getRecipeFromFile("test-bundle-v1.xml"));
-
-        BundleDeployment deployment = new BundleDeployment();
-        deployment.setBundleVersion(bundleVersion);
-        deployment.setConfiguration(null);
-
-        BundleDeployRequest request = new BundleDeployRequest();
-        request.setBundleFilesLocation(tmpDir);
-        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
-
-        BundleDeployResult results = plugin.deployBundle(request);
-
-        assertResultsSuccess(results);
-
-        // our ant script wrote some output that we should verify to make sure we ran it
-        File outputFile = new File(tmpDir, "output.1");
-        String output = new String(StreamUtil.slurp(new FileInputStream(outputFile)));
-        assert output.equals("Hello World!!") : output;
-
-    }
-
-    /**
-     * Test a Ant script that includes all of the RHQ tasks.
-     */
+    @Test
     public void testAntBundle() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
@@ -129,21 +99,26 @@ public class AntBundlePluginComponentTest {
         PackageType packageType = new PackageType("testSimpleBundle", resourceType);
         Bundle bundle = new Bundle("testSimpleBundle", bundleType, repo, packageType);
         BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
-            getRecipeFromFile("test-build.xml"));
+            getRecipeFromFile("test-bundle.xml"));
+        BundleDestination destination = new BundleDestination(bundle, "testSimpleBundle", new ResourceGroup(
+            "testSimpleBundle"), "/tmp/rhq-testAntBundle");
 
         Configuration config = new Configuration();
-        config.put(new PropertySimple("custom.prop1", "custom property 1"));
-        config.put(new PropertySimple("custom.prop2", "custom property 2"));
+        config.put(new PropertySimple("custom.prop1", "ABC123"));
 
         BundleDeployment deployment = new BundleDeployment();
+        deployment.setName("test bundle deployment name");
         deployment.setBundleVersion(bundleVersion);
         deployment.setConfiguration(config);
-        deployment.setInstallDir(USER_HOME + "/jboss");
+        deployment.setDestination(destination);
 
-        File file1 = new File(tmpDir, "test-v2.properties");
-        File file2 = new File(tmpDir, "package.zip");
-        assert file1.createNewFile() : "could not create our mock bundle file";
-        assert file2.createNewFile() : "could not create our mock bundle file";
+        // create test file
+        File file1 = new File(tmpDir, "test.properties");
+        Properties props = new Properties();
+        props.setProperty("custom.prop1", "@@custom.prop1@@");
+        FileOutputStream outputStream = new FileOutputStream(file1);
+        props.store(outputStream, "blah");
+        outputStream.close();
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(tmpDir);
@@ -153,6 +128,7 @@ public class AntBundlePluginComponentTest {
         BundleDeployResult results = plugin.deployBundle(request);
 
         assertResultsSuccess(results);
+        // TODO: Check that custom.prop1 got replaced.
     }
 
     private void assertResultsSuccess(BundleDeployResult results) {
@@ -163,13 +139,15 @@ public class AntBundlePluginComponentTest {
 
     private String getRecipeFromFile(String filename) {
         InputStream stream = getClass().getClassLoader().getResourceAsStream(filename);
+
         byte[] contents = StreamUtil.slurp(stream);
         return new String(contents);
     }
 
     private class MockBundleManagerProvider implements BundleManagerProvider {
-        public void auditDeployment(BundleResourceDeployment deployment, String action, BundleDeploymentStatus status,
-            String message) throws Exception {
+        public void auditDeployment(BundleResourceDeployment deployment, String action, String info,
+            BundleResourceDeploymentHistory.Category category, BundleResourceDeploymentHistory.Status status,
+            String message, String attachment) throws Exception {
             System.out.println("Auditing deployment step [" + message + "]...");
         }
 

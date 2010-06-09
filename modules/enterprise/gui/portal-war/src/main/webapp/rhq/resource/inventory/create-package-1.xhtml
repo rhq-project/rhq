@@ -61,12 +61,45 @@
          </h:panelGrid>
 
          <h:outputText rendered="#{!ResourceUIBean.permissions.content}"
-                       value="You do not have permissions to upload content"/>
+                       value="You do not have permissions to upload content."/>
+
+	        <rich:panel >
+
+	            <f:facet name="header">Package Version Details</f:facet>	            
+
+                <h:panelGrid columns="2">
+
+	               <ui:remove><!-- row 1 --></ui:remove>
+                   <h:panelGroup style="float: right">
+	                  <b>Version <span class="required-marker-text">*</span></b>
+                   </h:panelGroup>
+                   <h:panelGroup style="clear: both">
+	                  <h:inputText id="version" value="#{CreateNewPackageChildResourceUIBean.version}" required="true"/>
+                      <h:message for="version" styleClass="ValidationErrorText"/>
+	               </h:panelGroup>
+
+                   <ui:remove><!-- row 2 --></ui:remove>
+	               <h:panelGroup style="float: right" rendered="#{CreateNewPackageChildResourceUIBean.supportsArchitecture}">
+	                  <b>Architecture <span class="required-marker-text">*</span></b>
+                   </h:panelGroup>
+                   <h:panelGroup style="clear: both" rendered="#{CreateNewPackageChildResourceUIBean.supportsArchitecture}">
+                     <h:selectOneMenu value="#{CreateNewPackageChildResourceUIBean.selectedArchitectureId}">
+                        <f:selectItems value="#{CreateNewPackageChildResourceUIBean.architectures}" />
+                     </h:selectOneMenu>
+                   </h:panelGroup>
+
+	            </h:panelGrid>
+	     </rich:panel>
+
+         <h:panelGroup styleClass="note-panel" rendered="#{CreateNewPackageChildResourceUIBean.configurationDefinition eq null}">
+             <span class="required-marker-text">*</span><span> denotes a required field.</span>
+         </h:panelGroup>
 
          <onc:config configurationDefinition="#{CreateNewPackageChildResourceUIBean.configurationDefinition}"
                      configuration="#{CreateNewPackageChildResourceUIBean.configuration}"
                      nullConfigurationDefinitionMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationDefinitionMessage}"
-                     nullConfigurationMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationMessage}"/>
+                     nullConfigurationMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationMessage}"
+                     rendered="#{CreateNewPackageChildResourceUIBean.configurationDefinition ne null}"/>
 
          <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
 

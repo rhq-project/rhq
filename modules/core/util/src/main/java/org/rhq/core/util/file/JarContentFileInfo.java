@@ -131,6 +131,18 @@ public class JarContentFileInfo extends ContentFileInfo {
      * @return the attribute value or the default if it doesn't exist or cannot be retrieved
      */
     public String getAttributeValue(Name attributeName, String defaultValue) {
+        return getAttributeValue(attributeName.toString(), defaultValue);
+    }
+
+    /**
+     * Returns an attribute value as found in the manifest.
+     * 
+     * @param attributeName the attribute name
+     * @param defaultValue the default if the attribute does not exist in the manifest 
+     *
+     * @return the attribute value or the default if it doesn't exist or cannot be retrieved
+     */
+    public String getAttributeValue(String attributeName, String defaultValue) {
         String result = defaultValue;
 
         if (null != this.mainAttributes) {

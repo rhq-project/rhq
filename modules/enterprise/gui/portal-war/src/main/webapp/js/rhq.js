@@ -272,9 +272,8 @@ function displayMessageModal(title, message) {
 		draggable : true,
 		wiredDrag : true
 	});
-	var escapedMessage = escape(message);
-	win.getContent().innerHTML = "<div style='padding:10px'>" + escapedMessage
-			+ "</div>";
+	//var escapedMessage = escape(message);
+	win.getContent().innerHTML = "<div style='padding:10px'>" + message + "</div>";
 	win.setTitle(title);
 	win.showCenter(true); // true == modal
 }

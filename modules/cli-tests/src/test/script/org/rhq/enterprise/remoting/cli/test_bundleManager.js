@@ -37,7 +37,7 @@ executeAllTests();
 
 rhq.logout();
 
-function testGroupDeployment() {
+function testDeployment() {
    if ( !TestsEnabled ) {
       return;
    }
@@ -50,27 +50,43 @@ function testGroupDeployment() {
    distributionFile = new java.io.File(distributionFile.getAbsolutePath());
    var testBundleVersion = BundleManager.createBundleVersionViaFile( distributionFile );
          
-   // create the config, setting the required properties from the recipe
-   var config = new Configuration();   
-   var property = new PropertySimple("bundleTest.deployHome", "/tmp/bundle-test");
-   config.put( property );
-
-   // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), "Deployment Test", "Deployment Test of testBundle WAR", "/tmp/bundle-test", config);
+   // there in no required config, it uses only the built in rhq.deploy.dir property
 
    // Find a target platform group
    var rgc = new ResourceGroupCriteria();
    rgc.addFilterName("platforms"); // wINdows, lINux
    var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
-   Assert.assertTrue( groups.size() > 0 );
-   var groupId = groups.get(0).getId();
-   
-   var bgd = BundleManager.scheduleBundleGroupDeployment(testDeployment.getId(), groupId);
-   Assert.assertNotNull( bgd );      
+   var groupId;
+   // create if needed (and possible)
+   if ( groups.isEmpty() ) {
+      var c = new ResourceCriteria();
+      c.addFilterResourceCategory(ResourceCategory.PLATFORM);
+      var platforms = ResourceManager.findResourcesByCriteria(c);
+      Assert.assertTrue( platforms.size() > 0 );
+      
+      var rg = new ResourceGroup("platforms");
+      var platformSet = new java.util.HashSet();
+      platformSet.addAll( platforms );
+      rg.setExplicitResources(platformSet);
+      rg = ResourceGroupManager.createResourceGroup(rg);
+      groupId = rg.getId();
+   } else { 
+      groupId = groups.get(0).getId();
+   }
+
+   // create a destination to deploy to
+   var testDest = BundleManager.createBundleDestination( testBundleVersion.getBundle().getId(), "Deployment Test Dest", "test Dest", "/tmp/bundle-test", groupId);
+
+   // create a deployment using the above config
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Deployment Test of testBundle WAR", new Configuration());
+
+   // deploy to the destination
+   var bd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), false);
+   Assert.assertNotNull( bd );      
    
    // delete the test bundle if it exists (after allowing agent audit messages to complete)
-   sleep( 5000 );
-   cleanupTestBundle();
+   //sleep( 5000 );
+   //cleanupTestBundle();
 }
 
 function getBundleType() {
@@ -88,6 +104,7 @@ function getBundleType() {
 function cleanupTestBundle() {
    // delete the test bundle if it exists
    var bc = new BundleCriteria();
+   bc.setStrict( true );
    bc.addFilterName( bundleName );
    var bundles = BundleManager.findBundlesByCriteria( bc );
    if ( null != bundles && bundles.size() > 0 ) {

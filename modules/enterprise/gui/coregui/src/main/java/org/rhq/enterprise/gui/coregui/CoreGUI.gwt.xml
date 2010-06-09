@@ -9,6 +9,7 @@
     <inherits name='com.smartgwt.SmartGwt' />
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
 
+    <inherits name='com.google.gwt.user.theme.standard.Standard'/>
 <!--
     <inherits name="com.smartclient.theme.graphite.Graphite"/>
 -->
@@ -22,17 +23,16 @@
 <!--    <generate-with class="org.rhq.core.rebind.RecordBuilderGenerator">
         <when-type-assignable class="org.rhq.core.domain.util.Recordizable"/>
     </generate-with>-->
-
+  
 
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
-		<when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
-	</replace-with>
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
+    </replace-with>
 
-	<replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE6">
-		<when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
-		<when-property-is name="user.agent" value="ie6"/>
-	</replace-with>
-
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE6">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
+        <when-property-is name="user.agent" value="ie6"/>
+    </replace-with>
 
     <!-- limit builds to your preferred browser -->
 
@@ -40,25 +40,29 @@
     <!--<set-property name="user.agent" value="safari"/>-->
 
     <!-- Firefox 3 -->
-    <set-property name="user.agent" value="gecko1_8"/>
+    <!-- <set-property name="user.agent" value="gecko1_8"/>-->
 
 
     <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/>
+    <entry-point class='org.rhq.enterprise.gui.coregui.client.SearchGUI'/>
 
-    <servlet path="/RoleGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RoleGWTServiceImpl"/>
-    <servlet path="/SubjectGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.SubjectGWTServiceImpl"/>
-    <servlet path="/ResourceGroupGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceGroupGWTServiceImpl"/>
-    <servlet path="/ResourceGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceGWTServiceImpl"/>
-    <servlet path="/ConfigurationGwtService" class="org.rhq.enterprise.gui.coregui.server.gwt.ConfigurationGWTServiceImpl"/>
-    <servlet path="/ResourceTypeGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceTypeGWTServiceImpl"/>
-    <servlet path="/MeasurementDataGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl"/>
     <servlet path="/AlertGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl"/>
-    <servlet path="/OperationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.OperationGWTServiceImpl"/>
-    <servlet path="/BundleGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.BundleGWTServiceImpl"/>
-    <servlet path="/ResourceBossGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl"/>
     <servlet path="/AuthorizationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AuthorizationGWTServiceImpl"/>
     <servlet path="/AvailabilityGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl"/>
-    <servlet path="/TagGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl"/>
+    <servlet path="/BundleGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.BundleGWTServiceImpl"/>
+    <servlet path="/ConfigurationGwtService" class="org.rhq.enterprise.gui.coregui.server.gwt.ConfigurationGWTServiceImpl"/>
+    <servlet path="/ContentGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ContentGWTServiceImpl"/>
+    <servlet path="/MeasurementDataGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl"/>
+    <servlet path="/OperationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.OperationGWTServiceImpl"/>
     <servlet path="/RemoteInstallGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl"/>
+    <servlet path="/RepoGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RepoGWTServiceImpl"/>
+    <servlet path="/ResourceBossGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl"/>
+    <servlet path="/ResourceGroupGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceGroupGWTServiceImpl"/>
+    <servlet path="/ResourceGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceGWTServiceImpl"/>
+    <servlet path="/ResourceTypeGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceTypeGWTServiceImpl"/>
+    <servlet path="/RoleGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RoleGWTServiceImpl"/>
+    <servlet path="/SearchGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.SearchGWTServiceImpl"/>
+    <servlet path="/SubjectGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.SubjectGWTServiceImpl"/>
+    <servlet path="/TagGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl"/>
 
 </module>

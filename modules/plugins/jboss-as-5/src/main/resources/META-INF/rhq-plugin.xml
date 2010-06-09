@@ -485,10 +485,10 @@
         </c:description>
     </c:simple-property>
 
-    <c:simple-property name="use-try-lock" type="long" required="false">
+    <c:simple-property name="use-try-lock" type="long" required="false" defaultValue="0">
         <c:description>
-            Any configured timeout, in seconds, for internal locks on the resource adapter objects. A value of 0
-            means no timeout. The default is 60.
+            Any configured timeout, in milliseconds, for internal locks on the resource adapter objects. A value of 0
+            means no timeout. The default is 0.
         </c:description>
     </c:simple-property>
 
@@ -940,22 +940,19 @@
             classLoader="instance"
             class="ApplicationServerComponent"
             discovery="ApplicationServerDiscoveryComponent"
-            description="JBoss Application Server (AS) or Enterprise Application Platform (EAP) 5.x"
+            description="JBoss Application Server (AS), Enterprise Application Platform (EAP), Enterprise SOA Platform (SOA-P), or Enterprise Web Platform (EWP) 5.x or 6.x instance"
             supportsManualAdd="true">
 
         <subcategories>
             <subcategory name="Resources"
                          description="Different types of Resources">
                 <subcategory name="Datasources"
-                    description="Different types of Datasources"/>
+                             description="Different types of Datasources"/>
                 <subcategory name="Connection Factories"
-                    description="Different types of Connection Factories"/>
-                <subcategory name="JMS Destinations"
-                             description="Different types of JMS Destinations"/>
+                             description="Different types of Connection Factories"/>
             </subcategory>
             <subcategory name="Applications"
-                description="Different types of Applications (WARs, EARs, etc.)">
-            </subcategory>
+                         description="Different types of Applications (WARs, EARs, etc.)"/>
         </subcategories>
 
         <plugin-configuration>

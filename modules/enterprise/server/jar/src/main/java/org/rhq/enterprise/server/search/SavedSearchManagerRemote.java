@@ -52,7 +52,7 @@ public interface SavedSearchManagerRemote {
      *         their own accounts.
      */
     @WebMethod
-    public void createSavedSearch( //
+    public int createSavedSearch( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "savedSearch") SavedSearch savedSearch);
 

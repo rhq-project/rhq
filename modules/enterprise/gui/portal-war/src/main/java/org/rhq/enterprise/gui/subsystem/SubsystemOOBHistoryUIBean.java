@@ -24,12 +24,15 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import java.util.List;
 
 /**
  * Backing bean fr the OOB subsysems view, oobHistory.xhtml
@@ -115,6 +118,8 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
 
             result = manager.getSchedulesWithOOBs(getSubject(), metricFilter, resourceFilter, parentFilter, pc);
 
+            applyFormatting(result);
+
             return result;
         }
 
@@ -127,6 +132,19 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
             outer.metricFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "metricFilter");
             outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");
             outer.parentFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "parentFilter");
+        }
+
+        private void applyFormatting(List<MeasurementOOBComposite> composites) {
+            for (MeasurementOOBComposite oob : composites) {
+                oob.setFormattedOutlier(MeasurementConverter.format(oob.getOutlier(), oob.getUnits(), true));
+                formatBaseband(oob);
+            }
+        }
+
+        private void formatBaseband(MeasurementOOBComposite oob) {
+            String min = MeasurementConverter.format(oob.getBlMin(), oob.getUnits(), true);
+            String max = MeasurementConverter.format(oob.getBlMax(), oob.getUnits(), true);
+            oob.setFormattedBaseband(min + ", " + max);
         }
     }
 }

@@ -54,6 +54,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -371,7 +372,6 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         PageList<MeasurementOOBComposite> result = new PageList<MeasurementOOBComposite>(results, (int) totalCount, pc);
 
         return result;
-
     }
 
     /**

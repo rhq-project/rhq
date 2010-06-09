@@ -36,8 +36,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordDoubleClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordDoubleClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -80,31 +85,25 @@ public class OperationHistoryView extends VLayout {
 
         table.setDataSource(new OperationHistoryDataSource());
 
+        table.getListGrid().getField("id").setWidth(40);
+        table.getListGrid().getField("operationName").setWidth("*");
+        table.getListGrid().getField("status").setWidth(100);
+        table.getListGrid().getField("startedTime").setWidth(120);
 
-        table.addTableAction("Details", Table.SelectionEnablement.SINGLE,null, new TableAction() {
+
+        table.getListGrid().addRecordDoubleClickHandler(new RecordDoubleClickHandler() {
+            public void onRecordDoubleClick(RecordDoubleClickEvent recordDoubleClickEvent) {
+                ResourceOperationHistory history = (ResourceOperationHistory) recordDoubleClickEvent.getRecord().getAttributeAsObject("entity");
+
+                showDetails(history);            }
+        });
+
+
+        table.addTableAction("Details", Table.SelectionEnablement.SINGLE, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 ResourceOperationHistory history = (ResourceOperationHistory) selection[0].getAttributeAsObject("entity");
 
-                ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
-
-                criteria.addFilterId(history.getId());
-
-                criteria.fetchOperationDefinition(true);
-                criteria.fetchParameters(true);
-                criteria.fetchResults(true);
-
-                GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(
-                        criteria, new AsyncCallback<PageList<ResourceOperationHistory>>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failure loading operation history", caught);
-                            }
-
-                            public void onSuccess(PageList<ResourceOperationHistory> result) {
-                                ResourceOperationHistory item = result.get(0);
-                                OperationDetailsView.displayDetailsDialog(item);
-                            }
-                        }
-                );
+                showDetails(history);
             }
         });
 
@@ -127,12 +126,35 @@ public class OperationHistoryView extends VLayout {
                     }
                 });
 
-        MenuButton operationsButton = new MenuButton("Run Operation",operationMenu);
+        IMenuButton operationsButton = new IMenuButton("Run Operation", operationMenu);
         operationsButton.setShowMenuBelow(false);
         table.addExtraWidget(operationsButton);
 
 
         addMember(table);
+    }
+
+    private void showDetails(ResourceOperationHistory history) {
+        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+
+        criteria.addFilterId(history.getId());
+
+        criteria.fetchOperationDefinition(true);
+        criteria.fetchParameters(true);
+        criteria.fetchResults(true);
+
+        GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(
+                criteria, new AsyncCallback<PageList<ResourceOperationHistory>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failure loading operation history", caught);
+                    }
+
+                    public void onSuccess(PageList<ResourceOperationHistory> result) {
+                        ResourceOperationHistory item = result.get(0);
+                        OperationDetailsView.displayDetailsDialog(item);
+                    }
+                }
+        );
     }
 
 

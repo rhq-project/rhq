@@ -31,7 +31,7 @@ import org.rhq.core.domain.bundle.BundleVersion;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class BundleVersionCriteria extends Criteria {
+public class BundleVersionCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
@@ -45,7 +45,6 @@ public class BundleVersionCriteria extends Criteria {
     private boolean fetchBundleDeployments;
     private boolean fetchBundleFiles;
     private boolean fetchConfigurationDefinition;
-    private boolean fetchTags;
 
     public BundleVersionCriteria() {
         filterOverrides.put("bundleId", "bundle.id = ?");
@@ -96,10 +95,5 @@ public class BundleVersionCriteria extends Criteria {
     public void fetchConfigurationDefinition(boolean fetchConfigurationDefinition) {
         this.fetchConfigurationDefinition = fetchConfigurationDefinition;
     }
-
-    public void fetchTags(boolean fetchTags) {
-        this.fetchTags = fetchTags;
-    }
-
 
 }

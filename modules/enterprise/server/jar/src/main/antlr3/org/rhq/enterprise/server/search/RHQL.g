@@ -60,6 +60,9 @@ tokens {
     
     OP_NOT_EQUALS;
     OP_NOT_EQUALS_STRICT;
+    
+    OP_LESS_THAN;
+    OP_GREATER_THAN;
 }
 
 @header {
@@ -75,11 +78,11 @@ tokens {
  */
  
 searchExpression
-    :   conditionalExpression { /* System.out.println($conditionalExpression.tree.toStringTree()); */ }
+    :   conditionalExpression
     ;
 
 conditionalExpression
-    :   conds+=conditionalFactor ( WS+ ( 'or' | '|' ) WS+ conds+=conditionalFactor )* -> { $conds.size() == 1 }? ^($conds)
+    :   conds+=conditionalFactor ( WS+ ( '|' ) WS+ conds+=conditionalFactor )*        -> { $conds.size() == 1 }? ^($conds)
                                                                                       -> ^(OR conditionalFactor+)
     ; // use rewrite predicates to eliminate superfluous 'or' node if only one child
 
@@ -136,7 +139,7 @@ boundedValue
     ; // consume until we find a whitespace char or ']' to terminate the current phrase
     
 openEndedvalue
-    :   ~( '(' | ')' | WS )*
+    :   ~( '|' ) ~( '(' | ')' | WS )*
     ; // consume until we find a whitespace char to ')' terminate the current phrase, or '(' begin the next phrase
 
 comparisonOperator  
@@ -144,12 +147,14 @@ comparisonOperator
     |   '=='  -> ^(OP_EQUALS_STRICT)
     |   '!='  -> ^(OP_NOT_EQUALS)
     |   '!==' -> ^(OP_NOT_EQUALS_STRICT)
+    |   '<'   -> ^(OP_LESS_THAN)
+    |   '>'   -> ^(OP_GREATER_THAN)
     ; // use imaginary nodes for all operators, which further removes the AST from the real lexical elements
 
 /* 
  * lexical elements 
  */ 
- 
+
 ID
     :   'a'..'z' | 'A'..'Z'
     ;

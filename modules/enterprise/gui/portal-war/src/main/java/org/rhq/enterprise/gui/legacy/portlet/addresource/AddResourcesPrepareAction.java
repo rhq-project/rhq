@@ -37,13 +37,16 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.StringUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
+import org.rhq.enterprise.gui.legacy.util.DisambiguatedResourceListUtil;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -59,6 +62,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class AddResourcesPrepareAction extends Action {
     private static final int DEFAULT_RESOURCE_TYPE = -1;
 
+    private static final IntExtractor<Resource> RESOURCE_ID_EXTRACTOR = new IntExtractor<Resource>() {
+        public int extract(Resource object) {
+            return object.getId();
+        }
+    }; 
+    
     @Override
     @SuppressWarnings( { "unchecked", "deprecation" })
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
@@ -101,10 +110,13 @@ public class AddResourcesPrepareAction extends Action {
         PageList<Resource> pendingResources = resourceManager.findResourceByIds(subject, pendingResourceArray, false,
             pcPending);
 
+        PageList<DisambiguationReport<Resource>> disambiguatedPendingResources = 
+            DisambiguatedResourceListUtil.disambiguate(resourceManager, pendingResources, RESOURCE_ID_EXTRACTOR);
+        
         // give 'em to the jsp page
         log.debug("put selected page of pending resources in request");
-        request.setAttribute(Constants.PENDING_RESOURCES_ATTR, pendingResources);
-        request.setAttribute(Constants.NUM_PENDING_RESOURCES_ATTR, pendingResources.getTotalSize());
+        request.setAttribute(Constants.PENDING_RESOURCES_ATTR, disambiguatedPendingResources);
+        request.setAttribute(Constants.NUM_PENDING_RESOURCES_ATTR, disambiguatedPendingResources.getTotalSize());
 
         // available resources are all resources in the system that are not associated with the user and are not pending
         log.debug("determine if user wants to filter available resources");
@@ -119,9 +131,12 @@ public class AddResourcesPrepareAction extends Action {
         availableResources = resourceManager.findAvailableResourcesForDashboardPortlet(subject, typeIdFilter,
             categoryFilter, excludeIds, pcAvail);
 
+        PageList<DisambiguationReport<Resource>> disambiguatedAvailableResources = 
+            DisambiguatedResourceListUtil.disambiguate(resourceManager, availableResources, RESOURCE_ID_EXTRACTOR);
+                
         log.debug("put selected page of available resources in request");
-        request.setAttribute(Constants.AVAIL_RESOURCES_ATTR, availableResources);
-        request.setAttribute(Constants.NUM_AVAIL_RESOURCES_ATTR, availableResources.getTotalSize());
+        request.setAttribute(Constants.AVAIL_RESOURCES_ATTR, disambiguatedAvailableResources);
+        request.setAttribute(Constants.NUM_AVAIL_RESOURCES_ATTR, disambiguatedAvailableResources.getTotalSize());
 
         log.debug("get the available resources user can filter by");
         setDropDowns(addForm, request, subject, categoryFilter);

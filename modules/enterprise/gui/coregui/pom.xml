@@ -1,6 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -35,6 +34,10 @@
         <product.support.email>info@rhq-project.org</product.support.email>
         <product.version>${project.version}</product.version>
         <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
+        
+        <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
+              in your settings.xml -->
+        <gwt-plugin.extraJvmArgs>-Xms1024M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
     </properties>
 
 
@@ -68,7 +71,7 @@
 
 
         <!-- =============== 3rd Party Deps =============== -->
-        
+
         <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-servlet</artifactId>
@@ -92,7 +95,7 @@
         <dependency>
             <groupId>com.smartgwt</groupId>
             <artifactId>smartgwt</artifactId>
-            <version>2.1</version>
+            <version>2.2</version>
         </dependency>
         <!--
         <dependency>
@@ -183,6 +186,13 @@
             <!-- by JBossAS -->
         </dependency>
 
+        <dependency>
+           <groupId>jboss.jbossws</groupId>
+           <artifactId>jboss-jaxws</artifactId>
+           <version>3.0.1-native-2.0.4.GA</version>
+           <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
     </dependencies>
 
 
@@ -209,9 +219,10 @@
                 <configuration>
                     <noServer>true</noServer>
                     <inplace>false</inplace>
+                    <!-- <logLevel>INFO' -bindAddress 0.0.0.0 -logLevel 'INFO</logLevel> -->
                     <logLevel>INFO</logLevel>
                     <runTarget>http://localhost:7080/coregui/CoreGUI.html</runTarget>
-                    <extraJvmArgs>-Xms1024M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=256M</extraJvmArgs>
+                    <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
                     <localWorkers>2</localWorkers>
                     <draftCompile>true</draftCompile>
                     <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
@@ -335,13 +346,13 @@
                                            <fileset dir="war/WEB-INF/classes" />
                                         </copy>
                                         -->
-                                        <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
                                         <echo>*** Copying updated files from
                                             src${file.separator}main${file.separator}webapp${file.separator} to
                                             ${deployment.dir}${file.separator}...
                                         </echo>
                                         <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                                            <fileset dir="${basedir}/src/main/webapp"/>
+                                            <fileset dir="${basedir}/src/main/webapp" />
                                         </copy>
                                     </tasks>
                                 </configuration>
@@ -355,13 +366,13 @@
                                 <phase>package</phase>
                                 <configuration>
                                     <tasks>
-                                        <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
                                         <echo>*** Copying updated files from
                                             target${file.separator}${project.build.finalName}${file.separator} to
                                             ${deployment.dir}${file.separator}...
                                         </echo>
                                         <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                                            <fileset dir="${basedir}/target/${project.build.finalName}"/>
+                                            <fileset dir="${basedir}/target/${project.build.finalName}" />
                                         </copy>
                                     </tasks>
                                 </configuration>
@@ -375,9 +386,9 @@
                                 <phase>clean</phase>
                                 <configuration>
                                     <tasks>
-                                        <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
                                         <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
-                                        <delete dir="${deployment.dir}"/>
+                                        <delete dir="${deployment.dir}" />
                                     </tasks>
                                 </configuration>
                                 <goals>

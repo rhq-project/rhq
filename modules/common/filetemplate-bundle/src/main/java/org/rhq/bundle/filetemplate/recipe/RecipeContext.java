@@ -43,6 +43,7 @@ public class RecipeContext {
 
     private RecipeParser parser;
     private final String recipe;
+    private boolean unknownRecipe;
     private final DeploymentProperties deploymentProperties;
     private final Map<String, String> deployFiles;
     private final Map<String, String> files;
@@ -64,6 +65,7 @@ public class RecipeContext {
         this.scripts = new ArrayList<Script>();
         this.commands = new ArrayList<Command>();
         this.deploymentProperties = new DeploymentProperties();
+        this.unknownRecipe = true; // will be false if the recipe at least looks like one we understand
     }
 
     /**
@@ -76,6 +78,22 @@ public class RecipeContext {
 
     public void setParser(RecipeParser parser) {
         this.parser = parser;
+    }
+
+    /**
+     * Returns true if the recipe content does not look like a valid type that can be at least attempted
+     * to be parsed. In other words, this returns true if the recipe does not look like a file template
+     * recipe. This returns false if it looks like its file template recipe (even though it may have
+     * syntax errors in it).
+     * 
+     * @return flag to indicate if the recipe looks like it might be a file template recipe
+     */
+    public boolean isUnknownRecipe() {
+        return unknownRecipe;
+    }
+
+    public void setUnknownRecipe(boolean unknownRecipe) {
+        this.unknownRecipe = unknownRecipe;
     }
 
     /**

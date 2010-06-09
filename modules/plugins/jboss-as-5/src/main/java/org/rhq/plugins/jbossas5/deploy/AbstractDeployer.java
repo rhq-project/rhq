@@ -23,11 +23,17 @@
 package org.rhq.plugins.jbossas5.deploy;
 
 import java.io.File;
-import java.util.Set;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.net.URI;
 import java.util.Collection;
+import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
@@ -40,6 +46,7 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
@@ -53,6 +60,7 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 public abstract class AbstractDeployer implements Deployer {
     private static final ProfileKey FARM_PROFILE_KEY = new ProfileKey("farm");
     private static final ProfileKey APPLICATIONS_PROFILE_KEY = new ProfileKey("applications");
+    public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -97,22 +105,50 @@ public abstract class AbstractDeployer implements Deployer {
                 }
                 if (!farmSupported) {
                     throw new IllegalStateException("This application server instance is not a node in a cluster, "
-                            + "so it does not support farmed deployments. Supported deployment profiles are "
-                            + profileKeys + ".");
+                        + "so it does not support farmed deployments. Supported deployment profiles are " + profileKeys
+                        + ".");
                 }
                 if (deployExploded) {
-                    throw new IllegalArgumentException("Deploying farmed applications in exploded form is not supported by the Profile Service.");
+                    throw new IllegalArgumentException(
+                        "Deploying farmed applications in exploded form is not supported by the Profile Service.");
                 }
                 deploymentManager.loadProfile(FARM_PROFILE_KEY);
             }
 
             try {
                 DeploymentUtils.deployArchive(deploymentManager, archiveFile, deployExploded);
-            }
-            finally {
+            } finally {
                 // Make sure to switch back to the 'applications' profile if we switched to the 'farm' profile above.
                 if (deployFarmed) {
                     deploymentManager.loadProfile(APPLICATIONS_PROFILE_KEY);
+                }
+            }
+
+            //if deployed exploded, we need to store the sha of source package for correct versioning
+            if (deployExploded) {
+                String shaString = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
+                    .getDigestString(archiveFile);
+                String deploymentName = deployTimeConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
+                URI deployePackageURI = URI.create(deploymentName);
+                // e.g.: foo.war
+                String path = deployePackageURI.getPath();
+                File location = new File(path);
+                //We've located the deployed
+                if ((location != null) && (location.isDirectory())) {
+                    File manifestFile = new File(location, "META-INF/MANIFEST.MF");
+                    Manifest manifest;
+                    if (manifestFile.exists()) {
+                        FileInputStream inputStream = new FileInputStream(manifestFile);
+                        manifest = new Manifest(inputStream);
+                        inputStream.close();
+                    } else {
+                        manifest = new Manifest();
+                    }
+                    Attributes attribs = manifest.getMainAttributes();
+                    attribs.putValue("RHQ-Sha256", shaString);
+                    FileOutputStream outputStream = new FileOutputStream(manifestFile);
+                    manifest.write(outputStream);
+                    outputStream.close();
                 }
             }
 

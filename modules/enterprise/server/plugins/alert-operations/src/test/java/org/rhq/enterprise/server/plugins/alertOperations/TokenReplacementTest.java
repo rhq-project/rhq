@@ -163,7 +163,7 @@ public class TokenReplacementTest {
 
         String result = PrintTokens.createTokenDescription();
         assert result != null;
-        assert !result.isEmpty();
+        assert !result.equals("");
         assert result.contains("<token ");
     }
 

@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.tree;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -47,7 +49,7 @@ public class BundleTreeView extends TreeGrid {
 
         setWidth100();
         setHeight100();
-        setShowRoot(true);
+//        setShowRoot(true);
         setAutoFetchData(true);
         setAnimateFolders(false);
         setSelectionType(SelectionStyle.SINGLE);
@@ -74,13 +76,27 @@ public class BundleTreeView extends TreeGrid {
                     key += ":";
 
                 key += view.getPath();
+
+                TreeNode node = getTree().findById(key);
+                if (node != null) {
+                    getTree().openFolder(node);
+                }
             }
 
-            TreeNode node = getTree().findById(key);
-            if (node != null) {
-                deselectAllRecords();
-                selectRecord(node);
-            }
+            final String finalKey = key;
+            GWT.runAsync(new RunAsyncCallback() {
+                public void onFailure(Throwable reason) {
+
+                }
+
+                public void onSuccess() {
+                    TreeNode node = getTree().findById(finalKey);
+                    if (node != null) {
+                        deselectAllRecords();
+                        selectRecord(node);
+                    }
+                }
+            });
         } else {
             deselectAllRecords();
             selectRecord(0);

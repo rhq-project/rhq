@@ -333,7 +333,6 @@
                 <rich:column colspan="#{param.debug ? 8 : 7}"
                   width="100%">
 
-                  <ui:remove>
                   <!-- The ability to associate/disassociate repos with content sources is not needed for JON. -->
                   <h:commandButton
                     action="#{RepoContentSourcesUIBean.associateWithContentProviders}"
@@ -344,7 +343,6 @@
                     value="DISASSOCIATE SELECTED"
                     target="selectedRepoContentProviders"
                     styleClass="on-pager-button buttonsmall" />
-                  </ui:remove>
 
                   <ui:param name="paginationDataTableName"
                     value="repoContentProvidersDataTable" />
@@ -414,35 +412,21 @@
             <rich:column>
               <f:facet name="header">
                 <onc:sortableColumnHeader sort="rc.resource.name">
-                  <h:outputText styleClass="headerText" value="Name" />
+                  <h:outputText styleClass="headerText" value="Resource" />
                 </onc:sortableColumnHeader>
               </f:facet>
 
-              <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                <f:param name="id" value="#{resourceitem.original.id}" />
-                <h:outputText value="#{resourceitem.original.name}" />
-              </h:outputLink>
+              <onc:disambiguatedResourceName resourceName="#{resourceitem.original.name}"
+                 resourceId="#{resourceitem.original.id}" disambiguationReport="#{resourceitem}" />
             </rich:column>
 
             <rich:column>
                 <f:facet name="header">
-                    <h:outputText value="Parent" />
+                    <h:outputText value="Location" />
                 </f:facet>
-                <onc:resourcePartialLineage parents="#{resourceitem.parents}"/>
+                <onc:disambiguatedResourceLineage parents="#{resourceitem.parents}"/>
             </rich:column>
             
-            <rich:column>
-              <f:facet name="header">
-                <onc:sortableColumnHeader
-                  sort="rc.resource.resourceType.name">
-                  <h:outputText styleClass="headerText"
-                    value="Resource Type" />
-                </onc:sortableColumnHeader>
-              </f:facet>
- 
-              <h:outputText value="#{resourceitem.resourceTypeName}" />
-            </rich:column>
-
             <rich:column>
               <f:facet name="header">
                 <onc:sortableColumnHeader sort="rc.resource.version">

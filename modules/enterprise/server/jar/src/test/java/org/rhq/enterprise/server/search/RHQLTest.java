@@ -41,6 +41,8 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+import org.rhq.enterprise.server.search.RHQLParser.searchExpression_return;
+
 /**
  * Test harness to verify correctness of RHQL grammar
  * 
@@ -66,7 +68,8 @@ public class RHQLTest extends AssertJUnit {
                 RHQLLexer lexer = new RHQLLexer(input); // Create an echoLexer that feeds from that stream
                 CommonTokenStream tokens = new CommonTokenStream(lexer); // Create a stream of tokens fed by the lexer
                 RHQLParser parser = new RHQLParser(tokens); // Create a parser that feeds off the token stream
-                parser.searchExpression(); // Begin parsing at 'searchExpression' rule
+                searchExpression_return parseResults = parser.searchExpression(); // Begin parsing at 'searchExpression' rule
+                System.out.println(parseResults.tree.toStringTree()); // Print result
                 return TestResult.SUCCESS;
             } catch (Throwable t) {
                 return TestResult.FAILURE;

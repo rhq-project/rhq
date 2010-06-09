@@ -67,7 +67,7 @@
                             value="#{repoSubscriptionsDataModel}"
                             var="resourceitem"
                             width="100%"
-                            columnsWidth="1%, 20%, 15%, 15%, 49%"
+                            columnsWidth="1%, 20%, 49%, 15%, 15%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -99,33 +99,21 @@
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="rc.resource.name">
-                        <h:outputText styleClass="headerText" value="Name" />
+                        <h:outputText styleClass="headerText" value="Resource" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{resourceitem.original.id}"/>
-                     <h:outputText value="#{resourceitem.original.name}" />
-                  </h:outputLink>
+                  <onc:disambiguatedResourceName resourceName="#{resourceitem.original.name}"
+                     resourceId="#{resourceitem.original.id}" disambiguationReport="#{resourceitem}" />
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText value="Parent" />
+                     <h:outputText value="Location" />
                   </f:facet> 
-                  <onc:resourcePartialLineage parents="#{resourceitem.parents}" />
+                  <onc:disambiguatedResourceLineage parents="#{resourceitem.parents}" />
                </rich:column>
                
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="rc.resource.resourceType.name">
-                        <h:outputText styleClass="headerText" value="Resource Type" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{resourceitem.resourceTypeName}"/>
-               </rich:column>
-
                <rich:column>
                   <f:facet name="header">
                         <h:outputText styleClass="headerText" value="Version" />
@@ -210,7 +198,7 @@
                             value="#{repoUnsubscriptionsDataModel}"
                             var="availableitem"
                             width="100%"
-                            columnsWidth="1%, 20%, 15%, 15%, 49%"
+                            columnsWidth="1%, 20%, 49%, 15%, 15%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -242,34 +230,22 @@
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="res.name">
-                        <h:outputText styleClass="headerText" value="Name" />
+                        <h:outputText styleClass="headerText" value="Resource" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{availableitem.original.id}"/>
-                     <h:outputText value="#{availableitem.original.name}" />
-                  </h:outputLink>
+                  <onc:disambiguatedResourceName resourceName="#{availableitem.original.name}"
+                     resourceId="#{availableitem.original.id}" disambiguationReport="#{availableitem}" />
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText value="Parent"/>
+                     <h:outputText value="Location"/>
                   </f:facet>
                   
-                  <onc:resourcePartialLineage parents="#{availableitem.parents}"/>
+                  <onc:disambiguatedResourceLineage parents="#{availableitem.parents}"/>
                </rich:column>
                
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="res.resourceType.name">
-                        <h:outputText styleClass="headerText" value="Resource Type" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{availableitem.resourceTypeName}"/>
-               </rich:column>
-
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="res.version">

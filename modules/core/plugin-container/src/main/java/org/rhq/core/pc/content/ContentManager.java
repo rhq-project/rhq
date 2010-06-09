@@ -45,15 +45,15 @@ import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
+import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
+import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
@@ -264,11 +264,11 @@ public class ContentManager extends AgentService implements ContainerService, Co
         OutputStream outputStream, boolean resourceExists) {
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
         ContentServerService serverService = getContentServerService();
-        
+
         //we need to load the content to server before we will start download the content
         // it is because of timeout on remoteStreams
         serverService.preLoadRemoteContent(contextImpl.getResourceId(), packageDetailsKey);
-        
+
         outputStream = remoteOutputStream(outputStream);
         long count = 0;
         if (resourceExists) {
@@ -704,4 +704,4 @@ public class ContentManager extends AgentService implements ContainerService, Co
             }
         }
     }
-} 
+}

@@ -44,6 +44,10 @@ import org.rhq.core.domain.test.AbstractEJB3Test;
 @Test
 @SuppressWarnings("unchecked")
 public class BundleTest extends AbstractEJB3Test {
+
+    private static final boolean ENABLED = true;
+
+    @Test(enabled = ENABLED)
     public void testBundleVersionRepo() throws Throwable {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -120,6 +124,7 @@ public class BundleTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLED)
     public void testBundleVersion() throws Throwable {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -199,6 +204,7 @@ public class BundleTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLED)
     public void testMultipleBundleVersions() throws Throwable {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -315,6 +321,7 @@ public class BundleTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLED)
     public void testBundle() throws Throwable {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -386,6 +393,7 @@ public class BundleTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLED)
     public void testBundleType() throws Throwable {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();

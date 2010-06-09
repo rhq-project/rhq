@@ -31,6 +31,8 @@ import com.smartgwt.client.widgets.ImgProperties;
 import com.smartgwt.client.widgets.TransferImgButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.events.KeyPressEvent;
 import com.smartgwt.client.widgets.events.KeyPressHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -44,7 +46,6 @@ import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.layout.VStack;
 
@@ -53,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public abstract class AbstractSelector<T> extends HLayout {
+public abstract class AbstractSelector<T> extends VLayout {
 
     protected HashSet<Integer> selection = new HashSet<Integer>();
 
@@ -70,8 +71,6 @@ public abstract class AbstractSelector<T> extends HLayout {
     protected Criteria latestCriteria;
 
     public AbstractSelector() {
-        setAlign(VerticalAlignment.BOTTOM);
-        setHeight(380);
     }
 
     public void setAssigned(ListGridRecord[] assignedRecords) {
@@ -94,11 +93,12 @@ public abstract class AbstractSelector<T> extends HLayout {
 
         final DynamicForm availableFilterForm = getAvailableFilterForm();
 
-        VLayout availableLayout = new VLayout();
-        availableLayout.addMember(new LayoutSpacer());
+        addMember(availableFilterForm);
 
-        availableLayout.addMember(availableFilterForm);
+        HLayout hlayout = new HLayout();
+        hlayout.setAlign(VerticalAlignment.BOTTOM);
 
+        // LEFT SIDE
         availableGrid = new ListGrid();
         availableGrid.setHeight(350);
         availableGrid.setCanDragRecordsOut(true);
@@ -111,9 +111,7 @@ public abstract class AbstractSelector<T> extends HLayout {
         availableGrid.setAutoFetchData(true);
         availableGrid.setFields(new ListGridField("icon", 50), new ListGridField("name"));
 
-        availableLayout.addMember(availableGrid);
-
-        addMember(availableLayout);
+        hlayout.addMember(availableGrid);
 
         availableFilterForm.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent itemChangedEvent) {
@@ -133,6 +131,7 @@ public abstract class AbstractSelector<T> extends HLayout {
             }
         });
 
+        // CENTER BUTTONS
         VStack moveButtonStack = new VStack(6);
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
         moveButtonStack.setWidth(40);
@@ -150,10 +149,9 @@ public abstract class AbstractSelector<T> extends HLayout {
         moveButtonStack.addMember(addAllButton);
         moveButtonStack.addMember(removeAllButton);
 
-        addMember(moveButtonStack);
+        hlayout.addMember(moveButtonStack);
 
-        VLayout assignedLayout = new VLayout();
-        assignedLayout.addMember(new LayoutSpacer());
+        // RIGHT SIDE
 
         assignedGrid = new ListGrid();
         assignedGrid.setHeight(350);
@@ -165,8 +163,7 @@ public abstract class AbstractSelector<T> extends HLayout {
         iconField.setType(ListGridFieldType.ICON);
         assignedGrid.setFields(iconField, new ListGridField("name"));
 
-        assignedLayout.addMember(assignedGrid);
-        addMember(assignedLayout);
+        hlayout.addMember(assignedGrid);
 
         addButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -193,6 +190,22 @@ public abstract class AbstractSelector<T> extends HLayout {
         removeAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 assignedGrid.selectAllRecords();
+                deselect(assignedGrid.getSelection());
+                assignedGrid.removeSelectedData();
+                updateButtons();
+            }
+        });
+
+        availableGrid.addDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
+                assignedGrid.transferSelectedData(availableGrid);
+                select(assignedGrid.getSelection());
+                updateButtons();
+            }
+        });
+
+        assignedGrid.addDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
                 deselect(assignedGrid.getSelection());
                 assignedGrid.removeSelectedData();
                 updateButtons();
@@ -228,8 +241,13 @@ public abstract class AbstractSelector<T> extends HLayout {
 
         if (initialSelection != null) {
             assignedGrid.setData(initialSelection);
-            select(initialSelection);
+            for (ListGridRecord record : initialSelection) {
+                selection.add(record.getAttributeAsInt("id"));
+            }
         }
+
+        addMember(hlayout);
+
     }
 
     protected void updateButtons() {

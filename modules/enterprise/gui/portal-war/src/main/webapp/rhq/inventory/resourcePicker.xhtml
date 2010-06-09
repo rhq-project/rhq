@@ -18,50 +18,36 @@
 <ui:composition template="/rhq/inventory/layout/main-picker.xhtml">
 
 
-   <ui:param name="pageTitle" value="Pick a Resource"/>
+   <ui:param name="pageTitle" value="Resource Picker"/>
    <ui:param name="selectedTabName" value="Resources.all" />
    <ui:define name="content">
 
-       <ui:remove>TODO remove top level menu ?</ui:remove>
-
       <a4j:keepAlive beanName="BrowseResourcesUIBean"/>
 
-      <h:form id="browseResourcesForm">
+      <a4j:form>
+         <a4j:jsFunction name="applyPickerFilter">
+            <a4j:actionparam name="param1" assignTo="#{BrowseResourcesUIBean.search}" />
+         </a4j:jsFunction>
+      </a4j:form>
+      <h:form id="resourcePickerForm">
             <input type="hidden" name="subtab" value="all"/>
 
             <p/>
-            <h:panelGroup>
-               <h:outputLabel for="filter" value="Search: " />
-               <h:inputText id="filter" value="#{BrowseResourcesUIBean.search}"
-                            onkeypress="return ignoreEnterKey(event);"
-                            style="width: 600px;" />
-               <rich:suggestionbox id="suggest" for="filter"
-                                   tokens=",[]"
-                                   width="600" height="400"
-                                   border="1" cellpadding="1" cellspacing="1"
-                                   minChars="0"
-                                   first="0" rows="10"
-                                   frequency="0.1"
-                                   var="suggestItem"
-                                   fetchValue="#{suggestItem.value}"
-                                   suggestionAction="#{BrowseResourcesUIBean.autocomplete}"
-                                   nothingLabel="Start typing for simple text matches"
-                                   usingSuggestObjects="true"
-                                   eventsQueue="resourceSearchSuggestions"
-                                   ignoreDupResponses="true"
-                                   rendered="true">
-                   <h:column>
-                      <h:outputText value="#{suggestItem.label}" />
-                   </h:column>
-               </rich:suggestionbox>
-               <rich:spacer/>
-               <a4j:commandButton value="GO"
+            <h:panelGrid columns="3">
+               <h:outputText value="Search: " />
+               <ui:include src="/rhq/common/searchInterface.xhtml">
+                  <ui:param name="searchButtonId" value="resourcePickerForm:searchButtonJSF" />
+                  <ui:param name="searchSubsystem" value="RESOURCE" />
+               </ui:include>
+
+               <a4j:commandButton id="searchButtonJSF" value="GO" 
                                   reRender="browseResourcesDataTable, browseResourcesDataTableScroller"
                                   actionListener="#{BrowseResourcesUIBean.clearDataModel}"
-                                  styleClass="buttonmed">
+                                  styleClass="buttonmed"
+                                  onclick="applyPickerFilter(getElementCrossBrowser('patternField').value);">
                    <s:defaultAction/>
                </a4j:commandButton>
-            </h:panelGroup>
+            </h:panelGrid>
             <p/>
 
             <h:panelGrid columns="1" width="100%">
@@ -72,7 +58,7 @@
                             value="#{browseResourcesDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 20%, 20%, 10%, 10%, 10%, 25%, 4%"
+                            columnsWidth="1%, 30%, 44%, 24%, 1%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -93,57 +79,25 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="r.name">
-                        <h:outputText styleClass="headerText" value="Name" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Name" />
                   </f:facet>
 
-                     <h:outputText value="#{item.original.resource.name}" />
+                  <onc:disambiguatedResourceName resourceName="#{item.original.resource.name}"
+                     resourceId="#{item.original.resource.id}" disambiguationReport="#{item}"
+                     nameAsLink="false"/>
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Parent" />
+                     <h:outputText styleClass="headerText" value="Location" />
                   </f:facet>
 
-                  <onc:resourcePartialLineage parents="#{item.parents}" renderLinks="false"/>
+                  <onc:disambiguatedResourceLineage parents="#{item.parents}" renderLinks="false"/>
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="r.resourceType.category">
-                        <h:outputText styleClass="headerText" value="Category" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{item.original.resource.resourceType.category.name}" />
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="r.resourceType.name">
-                        <h:outputText styleClass="headerText" value="Type" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{item.original.resource.resourceType.name}" />
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="r.resourceType.plugin">
-                        <h:outputText styleClass="headerText" value="Plugin" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{item.original.resource.resourceType.plugin}" />
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="r.description">
-                        <h:outputText styleClass="headerText" value="Description" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Description" />
                   </f:facet>
 
                   <h:outputText value="#{item.original.resource.description}" />
@@ -151,9 +105,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="r.currentAvailability.availabilityType">
-                        <h:outputText styleClass="headerText" value="Availability" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Availability" />
                   </f:facet>
 
                   <h:graphicImage value="#{onf:getAvailabilityURL(item.original.resource.currentAvailability.availabilityType, 16)}" />
@@ -161,14 +113,13 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="8" width="100%">
+                     <rich:column colspan="5" width="100%">
                          <onc:selectCommandButton action="#"
-                                                  value="Pick selected" target="selectedItems"
+                                                  value="PICK SELECTED" target="selectedItems"
                                                   styleClass="on-pager-button buttonsmall"
                                                   rendered="#{GlobalPermissionsUIBean.inventory}"
                                                   low="1" high="1"
-                                                  onclick="pick()"
-                                                  />
+                                                  onclick="pick()" />
 
                         <ui:param name="paginationDataTableName" value="browseResourcesDataTable"/>
                         <ui:param name="paginationDataModel" value="#{browseResourcesDataModel}"/>

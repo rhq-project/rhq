@@ -26,7 +26,9 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported
 import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 
@@ -52,6 +54,13 @@ public class RecentlyAddedView extends VLayout implements PortletView {
         treeGrid.setTreeFieldTitle("Resource Name");
 
         ListGridField resourceNameField = new ListGridField("name", "Resource Name");
+
+        resourceNameField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return "<a href=\"#Resource/" + listGridRecord.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
+            }
+        });
+
         ListGridField timestampField = new ListGridField("timestamp", "Date//Time");
 
         treeGrid.setFields(resourceNameField, timestampField);

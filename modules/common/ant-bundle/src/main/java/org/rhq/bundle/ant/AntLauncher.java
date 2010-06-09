@@ -22,18 +22,31 @@
  */
 package org.rhq.bundle.ant;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tools.ant.*;
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.BuildListener;
+import org.apache.tools.ant.MagicNames;
+import org.apache.tools.ant.ProjectHelper;
+import org.apache.tools.ant.Target;
+import org.apache.tools.ant.Task;
+import org.apache.tools.ant.UnknownElement;
 import org.apache.tools.ant.helper.AntXMLContext;
 import org.apache.tools.ant.helper.ProjectHelper2;
 
 import org.rhq.bundle.ant.task.BundleTask;
-import org.rhq.bundle.ant.task.DeployTask;
-import org.rhq.bundle.ant.task.InputPropertyTask;
+import org.rhq.bundle.ant.type.DeploymentUnitType;
 
 /**
  * This object enables you to invoke an Ant script within the running VM. You can fully run the script
@@ -42,7 +55,7 @@ import org.rhq.bundle.ant.task.InputPropertyTask;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-public class AntLauncher {        
+public class AntLauncher {
     private final Log log = LogFactory.getLog(this.getClass());
 
     // "out of box" we will provide the ant contrib optional tasks (from ant-contrib.jar)
@@ -56,14 +69,11 @@ public class AntLauncher {
 
     // TODO (ips, 04/28/10): Figure out a way to avoid assuming the prefix is "rhq".
     private static final String BUNDLE_TASK_NAME = "rhq:bundle";
-    private static final String INPUT_PROPERTY_TASK_NAME = "rhq:input-property";
-    private static final String DEPLOY_TASK_NAME = "rhq:deploy";
 
     /**
      * Executes the specified bundle deploy Ant build file (i.e. rhq-deploy.xml).
      *
      * @param buildFile       the path to the build file (i.e. rhq-deploy.xml)
-     * @param targetName      the target to run, <code>null</code> will run the default target
      * @param buildProperties the properties to pass into Ant
      * @param buildListeners  a list of build listeners (provide callback methods for targetExecuted, taskExecuted, etc.)
      *
@@ -71,11 +81,11 @@ public class AntLauncher {
      *
      * @throws InvalidBuildFileException if the build file is invalid
      */
-    public BundleAntProject executeBundleDeployFile(File buildFile, String targetName, Properties buildProperties,
+    public BundleAntProject executeBundleDeployFile(File buildFile, Properties buildProperties,
                                                     List<BuildListener> buildListeners)
             throws InvalidBuildFileException {
         parseBundleDeployFile(buildFile);
-                
+
         BundleAntProject project = new BundleAntProject();
         ClassLoader classLoader = getClass().getClassLoader();
         project.setCoreLoader(classLoader);
@@ -91,10 +101,8 @@ public class AntLauncher {
                         "\\\\"));
                 }
             }
-            project.setUserProperty(MagicNames.ANT_FILE,
-                                buildFile.getAbsolutePath());
-            project.setUserProperty(MagicNames.ANT_FILE_TYPE,
-                                    MagicNames.ANT_FILE_TYPE_FILE);
+            project.setUserProperty(MagicNames.ANT_FILE, buildFile.getAbsolutePath());
+            project.setUserProperty(MagicNames.ANT_FILE_TYPE, MagicNames.ANT_FILE_TYPE_FILE);
             ProjectHelper.configureProject(project, buildFile);
 
             if (buildListeners != null) {
@@ -111,12 +119,13 @@ public class AntLauncher {
             // targets.
             project.executeTarget("");
 
-            // Now execute the target the user actually specified.
-            project.executeTarget((targetName == null) ? project.getDefaultTarget() : targetName);
+            // Now execute the default target?
+            //project.executeTarget(project.getDefaultTarget());
 
             return project;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to execute bundle deploy file [" + buildFile.getAbsolutePath() + "]. Cause: " + e, e);
+            throw new RuntimeException("Failed to execute bundle deploy file [" + buildFile.getAbsolutePath()
+                + "]. Cause: " + e, e);
         }
     }
 
@@ -140,9 +149,8 @@ public class AntLauncher {
         project.addReference(REFID_CONTEXT, context);
         project.addReference(ProjectHelper2.REFID_TARGETS, context.getTargets());
 
-        ProjectHelper2 helper = new ProjectHelper2();
         try {
-            helper.parse(project, buildFile);
+            ProjectHelper.configureProject(project, buildFile);
         } catch (BuildException e) {
             throw new InvalidBuildFileException("Failed to parse bundle Ant build file.", e);
         }
@@ -162,13 +170,13 @@ public class AntLauncher {
     private void addTaskDefsForBundledTasks(BundleAntProject project) throws IOException, ClassNotFoundException {
         Properties taskDefs = buildTaskDefProperties(project.getCoreLoader());
         for (Map.Entry<Object, Object> taskDef : taskDefs.entrySet()) {
-            project.addTaskDefinition(taskDef.getKey().toString(), Class.forName(taskDef.getValue().toString(),
-                true, project.getCoreLoader()));
+            project.addTaskDefinition(taskDef.getKey().toString(), Class.forName(taskDef.getValue().toString(), true,
+                project.getCoreLoader()));
         }
     }
 
     private Properties buildTaskDefProperties(ClassLoader classLoader) throws IOException {
-        Set<String> customTaskDefs = new HashSet<String>(1);
+        Set<String> customTaskDefs = new HashSet<String>(2);
 
         customTaskDefs.add(ANTCONTRIB_ANT_TASKS);
         customTaskDefs.add(LIQUIBASE_ANT_TASKS);
@@ -176,10 +184,17 @@ public class AntLauncher {
         Properties taskDefProps = new Properties();
         for (String customTaskDef : customTaskDefs) {
             InputStream taskDefsStream = classLoader.getResourceAsStream(customTaskDef);
-            try {
-                taskDefProps.load(taskDefsStream);
-            } finally {
-                taskDefsStream.close();
+            if (taskDefsStream != null) {
+                try {
+                    taskDefProps.load(taskDefsStream);
+                } catch (Exception e) {
+                    log.warn("Ant task definitions [" + customTaskDef
+                        + "] failed to load - ant bundles cannot use their tasks", e);
+                } finally {
+                    taskDefsStream.close();
+                }
+            } else {
+                log.warn("Missing ant task definitions [" + customTaskDef + "] - ant bundles cannot use their tasks");
             }
         }
         return taskDefProps;
@@ -193,25 +208,11 @@ public class AntLauncher {
         for (Object targetObj : targets) {
             Target target = (Target) targetObj;
             Task[] tasks = target.getTasks();
-            for (Task task : tasks) {
-                // NOTE: For rhq:inputProperty tasks, the below call will add propDefs to the project configDef.
+            for (Task task : tasks) {                
                 if (task.getTaskName().equals(BUNDLE_TASK_NAME)) {
                     abortIfTaskWithinTarget(target, task);
                     bundleTaskCount++;
                     unconfiguredBundleTask = task;
-                } else if (task.getTaskName().equals(INPUT_PROPERTY_TASK_NAME)) {
-                    abortIfTaskWithinTarget(target, task);
-                    InputPropertyTask inputPropertyTask = (InputPropertyTask) preconfigureTask(task);
-                } else if (task.getTaskName().equals(DEPLOY_TASK_NAME)) {
-                    DeployTask deployTask = (DeployTask) preconfigureTask(task);
-                    Map<File, File> files = deployTask.getFiles();
-                    for (File file : files.values()) {
-                        project.getBundleFileNames().add(file.getName());
-                    }
-                    Set<File> archives = deployTask.getArchives();
-                    for (File archive : archives) {
-                        project.getBundleFileNames().add(archive.getName());
-                    }
                 }
             }
         }
@@ -225,6 +226,19 @@ public class AntLauncher {
         }
 
         BundleTask bundleTask = (BundleTask) preconfigureTask(unconfiguredBundleTask);
+        Collection<DeploymentUnitType> deployments = bundleTask.getDeploymentUnits().values();
+        if (deployments.isEmpty()) {
+            throw new InvalidBuildFileException("The bundle task must contain exactly one rhq:deploymentUnit child element.");
+        }
+        DeploymentUnitType deployment = deployments.iterator().next();
+        Map<File, File> files = deployment.getFiles();
+        for (File file : files.keySet()) {
+            project.getBundleFileNames().add(file.getName());
+        }
+        Set<File> archives = deployment.getArchives();
+        for (File archive : archives) {
+            project.getBundleFileNames().add(archive.getName());
+        }
     }
 
     private void abortIfTaskWithinTarget(Target target, Task task) throws InvalidBuildFileException {

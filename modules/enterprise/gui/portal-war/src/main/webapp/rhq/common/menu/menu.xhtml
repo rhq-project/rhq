@@ -6,7 +6,8 @@
             xmlns:onf="http://jboss.org/on/function"
             xmlns:ui="http://java.sun.com/jsf/facelets"
             xmlns:rich="http://richfaces.ajax4jsf.org/rich"
-            xmlns:a4j="http://richfaces.org/a4j">
+            xmlns:a4j="http://richfaces.org/a4j"
+            xmlns:onc="http://jboss.org/on/component">
 
 <h:form>
 
@@ -126,9 +127,9 @@
         </rich:menuGroup>
         
         <ui:remove>***** Resources > SAVED SEARCHES *****</ui:remove>
-        <rich:menuGroup value="Saved Searches" icon="/images/bookmark.png">
+        <rich:menuGroup value="Resource Saved Searches" icon="/images/bookmark.png">
             <c:forEach var="savedSearch" items="#{UserPreferencesUIBean.savedSearches}">
-                <c:if test="#{savedSearch.context.name == 'RESOURCE'}">
+                <c:if test="#{savedSearch.searchSubsystem.name == 'RESOURCE'}">
                 <rich:menuItem submitMode="none"
                                icon="/images/icons/Flag_#{savedSearch.global ? 'yellow' : 'blue'}_16.png"
                                onclick="window.location = '/rhq/inventory/browseResources.xhtml?subtab=all&amp;searchId=#{savedSearch.id}'">
@@ -163,11 +164,12 @@
                     </h:column>
                     <h:column>
                         <f:facet name="header">Resource</f:facet>
-                        <h:outputText value="#{result.original.resource.name}"/>
+                        <onc:disambiguatedResourceName resourceName="#{result.original.resource.name}" 
+                            resourceId="#{result.original.resource.id}" nameAsLink="false" disambiguationReport="#{result}"/>
                     </h:column>
                     <h:column>
-                        <f:facet name="header">Parent</f:facet>
-                        <h:outputText value="#{result.original.parent.name}"/>
+                        <f:facet name="header">Location</f:facet>
+                        <onc:disambiguatedResourceLineage parents="#{result.parents}" renderLinks="false"/>
                     </h:column>
                 </rich:suggestionbox>
             </h:panelGroup>
@@ -243,6 +245,21 @@
                                icon="/images/icons/#{visit.kind == 'COMPATIBLE_GROUP' ? 'Cluster' : 'Group'}_up_16.png"
                                onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{visit.id}'">
                     <h:outputText value="#{visit.name}"/>
+                </rich:menuItem>
+                </c:if>
+            </c:forEach>
+        </rich:menuGroup>
+        
+        <ui:remove>***** Groups > SAVED SEARCHES *****</ui:remove>
+        <rich:menuGroup value="Group Saved Searches" icon="/images/bookmark.png">
+            <c:forEach var="savedSearch" items="#{UserPreferencesUIBean.savedSearches}">
+                <c:if test="#{savedSearch.searchSubsystem.name == 'GROUP'}">
+                <rich:menuItem submitMode="none"
+                               icon="/images/icons/Flag_#{savedSearch.global ? 'yellow' : 'blue'}_16.png"
+                               onclick="window.location = '/rhq/inventory/browseGroups.xhtml?subtab=all&amp;searchId=#{savedSearch.id}'">
+                    <h:outputText value="#{savedSearch.name}" />
+                    <h:outputText value=" (#{savedSearch.resultCount})"
+                                  rendered="#{not empty savedSearch.resultCount}" />
                 </rich:menuItem>
                 </c:if>
             </c:forEach>
@@ -329,6 +346,9 @@
 
         <ui:remove>***** Administration > CONTENT *****</ui:remove>
         <rich:menuGroup value="Content" rendered="#{GlobalPermissionsUIBean.inventory}">
+            <rich:menuItem submitMode="none" onclick="window.location = '/coregui/CoreGUI.html#Bundles'">
+                <h:outputText value="Bundles"/>
+            </rich:menuItem>
             <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listContentProviders.xhtml'">
                 <h:outputText value="Content Sources"/>
             </rich:menuItem>
@@ -476,50 +496,71 @@ v        <rich:menuItem submitMode="none"
         </f:facet>
     </a4j:status>
 
+            <ui:remove>***** Refresh Graphic *****</ui:remove>
+            <rich:dropDownMenu rendered="#{request.method == 'GET'}">
+               <f:facet name="label">
+                  <h:panelGroup>
+                     <h:graphicImage
+                        value="/images/refreshRunning.gif"
+                        rendered="#{UserPreferencesUIBean.pageRefresh != 0}" />
+                     <h:graphicImage
+                        value="/images/refreshStopped.gif"
+                        rendered="#{UserPreferencesUIBean.pageRefresh == 0}" />
+                     <span
+                        id="refreshTimeLeft"
+                        style="width: 0px;"><h:outputText
+                        value="#{UserPreferencesUIBean.pageRefresh}"
+                        rendered="#{UserPreferencesUIBean.pageRefresh != 0}" /></span>
 
+                  </h:panelGroup>
+               </f:facet>
 
-
-
-    <rich:dropDownMenu rendered="#{request.method == 'GET'}">
-        <f:facet name="label">
-            <h:panelGroup>
-                <h:graphicImage value="/images/refreshRunning.gif" rendered="#{UserPreferencesUIBean.pageRefresh != 0}"/>
-                <h:graphicImage value="/images/refreshStopped.gif" rendered="#{UserPreferencesUIBean.pageRefresh == 0}"/>
-                <span id="refreshTimeLeft" style="width: 0px;"><h:outputText value="#{UserPreferencesUIBean.pageRefresh}" rendered="#{UserPreferencesUIBean.pageRefresh != 0}"/></span>
-
-            </h:panelGroup>
-        </f:facet>
-
-        <ui:remove>***** Logged in as > EDIT DETAILS *****</ui:remove>
-
-
-
-            <rich:menuItem submitMode="none"  onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}', 0)">
-                <h:outputText value="Stop"/>
-                <f:facet name="icon">
-                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 0 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
-                </f:facet>
-            </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',60)">
-                <h:outputText value="Refresh every 1 minute"/>
-                <f:facet name="icon">
-                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 60 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
-                </f:facet>
-            </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',300)">
-                <h:outputText value="Refresh every 5 minutes"/>
-                <f:facet name="icon">
-                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 300 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
-                </f:facet>
-            </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',600)">
-                <h:outputText value="Refresh every 10 minutes"/>
-                <f:facet name="icon">
-                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 600 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
-                </f:facet>
-            </rich:menuItem>
-
-    </rich:dropDownMenu>
+               <ui:remove>***** Refresh Intervals *****</ui:remove>
+               <rich:menuItem
+                  submitMode="none"
+                  onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}', 0)">
+                  <h:outputText value="Stop" />
+                  <f:facet name="icon">
+                     <h:graphicImage
+                        value="/images/#{UserPreferencesUIBean.pageRefresh == 0 ? 'check.png' : 'spacer.gif'}"
+                        width="16"
+                        height="16" />
+                  </f:facet>
+               </rich:menuItem>
+               <rich:menuItem
+                  submitMode="none"
+                  onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',60)">
+                  <h:outputText value="Refresh every 1 minute" />
+                  <f:facet name="icon">
+                     <h:graphicImage
+                        value="/images/#{UserPreferencesUIBean.pageRefresh == 60 ? 'check.png' : 'spacer.gif'}"
+                        width="16"
+                        height="16" />
+                  </f:facet>
+               </rich:menuItem>
+               <rich:menuItem
+                  submitMode="none"
+                  onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',300)">
+                  <h:outputText value="Refresh every 5 minutes" />
+                  <f:facet name="icon">
+                     <h:graphicImage
+                        value="/images/#{UserPreferencesUIBean.pageRefresh == 300 ? 'check.png' : 'spacer.gif'}"
+                        width="16"
+                        height="16" />
+                  </f:facet>
+               </rich:menuItem>
+               <rich:menuItem
+                  submitMode="none"
+                  onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',600)">
+                  <h:outputText value="Refresh every 10 minutes" />
+                  <f:facet name="icon">
+                     <h:graphicImage
+                        value="/images/#{UserPreferencesUIBean.pageRefresh == 600 ? 'check.png' : 'spacer.gif'}"
+                        width="16"
+                        height="16" />
+                  </f:facet>
+               </rich:menuItem>
+            </rich:dropDownMenu>
 
     <ui:remove>===== LOGGED IN AS =====</ui:remove>
 
@@ -613,23 +654,24 @@ v        <rich:menuItem submitMode="none"
 
         function refresh() {
 
-            timeLeft = timeLeft - 1;
-            document.getElementById("refreshTimeLeft").innerHTML = timeLeft;
+           if (timeLeft &gt; 0) {
+              timeLeft = timeLeft - 1;
+              document.getElementById("refreshTimeLeft").innerHTML = timeLeft;
+              setTimeout("refresh()", 1000); // call again in 1 second (1000ms)
+           }
 
-            if (timeLeft &lt; 1) {
-                window.location.href = window.location.href;
-            }
-            setTimeout("refresh()", 1000);
-        }
+           if (timeLeft == 0) {
+              document.getElementById("refreshTimeLeft").innerHTML = timeLeft;
+              window.location.reload(true); 
+           }            
+       }
 
-        var refreshTime = <h:outputText value="#{UserPreferencesUIBean.pageRefresh}"/>;
-        var timeLeft = refreshTime;
+       var refreshTime = <h:outputText value="#{UserPreferencesUIBean.pageRefresh}"/>;
+       var timeLeft = refreshTime;
 
-        if (refreshTime > 0) {
-            setTimeout("refresh()", 1000);
-        }
-
-
+       if (refreshTime &gt; 0) {
+           setTimeout("refresh()", 1000);
+       }       
 
     </script>
 

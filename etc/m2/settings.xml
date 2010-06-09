@@ -13,6 +13,7 @@
         a more convenient location under Windows. -->
    <!--<localRepository>C:\.m2-repo</localRepository>-->
 
+
    <!--**************************** PROFILES ****************************-->
 
    <!-- See: http://maven.apache.org/guides/introduction/introduction-to-profiles.html
@@ -25,12 +26,16 @@
       <!-- The 'dev' profile enables automatic copying of artifacts to a dev RHQ container. -->
       <activeProfile>dev</activeProfile>
 
-      <!-- The 'jdk6' profile can be used to build RHQ using JDK6. See the 'jdk6' profile block below. -->
-      <!--<activeProfile>jdk6</activeProfile>-->
+      <!-- The 'check-java-api' profile can be used to build RHQ using JDK6, while still enforcing that
+           only Java 5 APIs are used - see the 'check-java-api' profile block below. -->
+      <!--<activeProfile>check-java-api</activeProfile>-->
 
-      <!-- The 'dist' profile is for binary distribution builds and enables things such as JSP precompilation. -->
+      <!-- The 'dist' profile is for release builds and enables things such as JSP precompilation. -->
       <!--<activeProfile>dist</activeProfile>-->
 
+      <!-- Profiles to configure database connection settings. Use separate profiles for
+           Postgres and Oracle to allow easily switching back and forth between them. -->
+      <activeProfile>postgres</activeProfile>
       <!--<activeProfile>oracle</activeProfile>-->
    </activeProfiles>
 
@@ -39,60 +44,37 @@
       <profile>
          <id>overrides</id>
          <properties>
-            <!-- NOTE: Add properties here that you always want set, to avoid    -->
-            <!--       having to explicitly pass them on the command line. Note, -->
-            <!--       you can still override them via the command line.         -->
+            <!-- NOTE: Add properties here that you always want set, to avoid    
+                       having to explicitly pass them on the command line. Note, 
+                       you can still override the values set here via the command
+                       line. -->
 
-            <!-- Set the below property to your SVN username - used by the deploy plugin. -->
-            <maven.username>your_svn_user_name_here</maven.username>
-            <!-- Set the below property to your SVN username - used by the release plugin. -->
-            <username>your_svn_user_name_here</username>
+            <!-- *** RHQ-specific properties *** -->
             <!-- tells the dbutils tests not to fail -->
             <DatabaseTest.nofail>true</DatabaseTest.nofail>
+
             <!-- Tests that should be skipped (e.g. because they're long running), comma-separated (with no whitespace!) -
                  some possible values: agent-comm,comm-client,native-system,postgres-plugin -->
-            <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
+            <rhq.testng.excludedGroups>agent-comm,comm-client,native-system,postgres-plugin</rhq.testng.excludedGroups>
+
+            <!-- *** enforcer plugin settings *** -->
+            <!--<enforcer.skip>true</enforcer.skip>-->
+
+            <!-- *** surefire plugin settings *** -->
             <!--<maven.test.skip>true</maven.test.skip>-->
             <!--<maven.test.failure.ignore>true</maven.test.failure.ignore>-->
             <!--<maven.test.error.ignore>true</maven.test.error.ignore>-->
             <!--<surefire.useFile>false</surefire.useFile>-->
-            <!-- Set the below prop to the absolute path of your RHQ trunk dir.
-                (the Jopr plugin poms use {rhq.rootDir}/{rhq.defaultDevContainerPath} as the dev container dir) -->
-            <!--<rhq.rootDir>C:/Projects/rhq-trunk</rhq.rootDir>-->
-            <!-- The location under rhq.rootDir where the server is found. This is used as part of
-                 the default dev container location used by the build poms.
-                 i.e. {rhq.rootDir}/{rhq.defaultDevContainerPath}-->
-            <!-- <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath> -->
-            <!-- Alternatively, if you don't want to use the default location of {rhq.rootDir}/{rhq.defaultDevContainerPath}/
-                 for your dev server container, then set the below prop to the desired location. -->
-            <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->
-            
-            <!-- The full path to a checkout of the JBoss Maven repo 
-                 (svn co https://svn.jboss.org/repos/repository.jboss.org/maven2/ jboss-m2-repo) - 
-                 this is where 'mvn release' will publish distribution artifacts to. --> 
-            <!--<jboss.repository.root>C:/Projects/jboss-m2-repo</jboss.repository.root>-->
+
+            <!-- *** release plugin settings *** -->
+            <!-- Set the below properties to your fedorahosted.org username and
+                 password (used to check in poms to RHQ git). -->
+            <username>SET_ME</username>
+            <password>SET_ME</password>                        
          </properties>
 
          <repositories>
 
-            <repository>
-               <id>jboss</id>
-               <name>JBoss Repository</name>
-               <url>http://repository.jboss.org/maven2/</url>
-               <snapshots>
-                  <enabled>false</enabled>
-               </snapshots>
-            </repository>
-<!--
-            <repository>
-               <id>jboss-snapshots</id>
-               <name>JBoss Snapshot Repository</name>
-               <url>http://snapshots.jboss.org/maven2/</url>
-               <snapshots>
-                  <enabled>true</enabled>
-               </snapshots>
-            </repository>
--->
             <!-- Oracle Driver 
                  To package the Oracle OJDBC driver set -Drhq.m2.repo.url.oracle and this repo definition will
                  be used to pick it up at build time. -->
@@ -103,28 +85,6 @@
             </repository>
 
          </repositories>
-
-         <pluginRepositories>
-
-            <pluginRepository>
-               <id>jboss</id>
-               <name>JBoss Repository</name>
-               <url>http://repository.jboss.org/maven2/</url>
-               <snapshots>
-                  <enabled>false</enabled>
-               </snapshots>
-            </pluginRepository>
-<!--            
-            <pluginRepository>
-               <id>jboss-snapshots</id>
-               <name>JBoss Snapshot Repository</name>
-               <url>http://snapshots.jboss.org/maven2/</url>
-               <snapshots>
-                  <enabled>true</enabled>
-               </snapshots>
-            </pluginRepository>
--->
-         </pluginRepositories>
 
       </profile>
 
@@ -209,18 +169,27 @@
          </properties>
       </profile>
 
+      <!-- This can be used to build RHQ using JDK6, while still enforcing that
+           only Java 5 APIs are used. -->
       <profile>
-         <!-- Enable this profile if you want to compile RHQ using JDK6 javac. -->
-         <id>jdk6</id>
+         <id>check-java-api</id>
          <properties>
-            <!-- Set this to your a JRE5 installation dir (e.g. C:/opt/jdk-1.5.0_15/jre). -->
-            <java5.home>C:/opt/jdk-1.5.0_15/jre</java5.home>
+            <!-- Set this to your a JRE5 installation dir (e.g. /usr/java/jdk-1.5.0_21/jre). -->
+            <java5.home>/usr/java/jdk-1.5.0_21/jre</java5.home>
          </properties>
       </profile>
 
       <profile>
          <id>dev</id>
          <properties>
+            <!-- Set the below prop to the absolute path of your RHQ trunk dir (e.g. /home/bob/projects/rhq).
+                (${rhq.rootDir}/dev-container will be used as the dev container dir) -->
+            <rhq.rootDir>SET_ME</rhq.rootDir>
+
+            <!-- Alternatively, if you don't want to use the default location of {rhq.rootDir}/dev-container/
+                 for your dev container, then set the below prop to the desired location. -->
+            <!--<rhq.containerDir>C:/home/bob/rhq-dev-container</rhq.containerDir>-->            
+
             <!-- Set the below prop to the location to your dev JBAS 4.2/4.3 deploy location for the admin console WAR.
                  e.g.: C:/opt/jboss-eap-4.3.0.GA_CP02/jboss-as/server/production -->
             <jbas4.configDir>SET_ME</jbas4.configDir>
@@ -242,6 +211,7 @@
 
    </profiles>
 
+
    <!--**************************** PLUGIN GROUPS ****************************-->
 
    <!-- See: http://maven.apache.org/guides/introduction/introduction-to-plugin-prefix-mapping.html -->
@@ -250,28 +220,52 @@
       <pluginGroup>org.rhq</pluginGroup>
    </pluginGroups>
 
+
+   <!--**************************** SERVERS ****************************-->
+
    <!-- See: http://maven.apache.org/settings.html#Servers
         and: http://maven.apache.org/guides/mini/guide-wagon-providers.html -->
+
    <servers>
-      <server>
-         <id>jboss-snapshots</id>
-         <!-- Set the below properties to your jboss.org (i.e. external JIRA/SVN) username and password -
-              used by the release plugin to publish via WebDAV to the JBoss Snapshots repo. -->
-         <username>YOUR_USERNAME</username>
-         <password>YOUR_PASSWORD</password>
-         <configuration>            
-            <httpConfiguration>
-              <put>
-                <params>
-                  <param>
-                    <name>http.authentication.preemptive</name>
-                    <value>%b,true</value>
-                  </param>
-                </params>
-              </put>
-            </httpConfiguration>           
-         </configuration>                  
-      </server>
+
+    <server>
+      <id>jboss-developer-repository-group</id>     
+      <!-- jboss.org username and password --> 
+      <username>SET_ME</username>
+      <password>SET_ME</password>
+    </server>
+
+    <server>
+      <id>jboss-snapshots-repository</id>
+      <!-- jboss.org username and password --> 
+      <username>SET_ME</username>
+      <password>SET_ME</password>
+    </server>
+
+    <server>
+      <id>jboss-releases-repository</id>
+      <!-- jboss.org username and password --> 
+      <username>SET_ME</username>
+      <password>SET_ME</password>
+    </server>
+
    </servers>
 
+
+   <!--**************************** MIRRORS ****************************-->
+
+   <!-- Uncomment the below if you want to use the JBoss Nexus repo as a proxy
+        to the central, java.net, etc. repos. -->
+<!--
+   <mirrors>
+    <mirror>
+      <id>jboss-developer-repository-group</id>
+      <mirrorOf>*,!jboss-deprecated-repository,!ojdbc-repo</mirrorOf>
+      <name>JBoss Developer Maven Repository Group</name>
+      <url>https://repository.jboss.org/nexus/content/groups/developer/</url>
+    </mirror>
+   </mirrors>
+-->
+
 </settings>
+

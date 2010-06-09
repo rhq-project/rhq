@@ -56,7 +56,7 @@ groupId - the group id of the Group being accessed
                 <tr>
                     <td>
 
-                        <h:graphicImage value="/images/icons/${ResourceGroupUIBean.compatible ? 'Cluster' : 'Group' }_up_24.png"/>
+                        <h:graphicImage value="/images/icons/${ResourceGroupUIBean.compatible ? (ResourceGroupUIBean.clusterGroup ? ResourceGroupUIBean.resourceType.category : 'Cluster') : 'Group' }_up_24.png"/>
                         <h:outputText style="font-size: 18px;" value="#{ResourceGroupUIBean.name}"/>
 
                     </td>
@@ -175,22 +175,20 @@ groupId - the group id of the Group being accessed
                 <rich:column>
                     <f:facet name="header">
                         <onc:sortableColumnHeader sort="res.name">
-                            <h:outputText styleClass="headerText" value="Name"/>
+                            <h:outputText styleClass="headerText" value="Resource"/>
                         </onc:sortableColumnHeader>
                     </f:facet>
 
-                    <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                        <f:param name="id" value="#{resourceWithAvailability.original.resource.id}"/>
-                        <h:outputText value="#{resourceWithAvailability.original.resource.name}"/>
-                    </h:outputLink>
+                    <onc:disambiguatedResourceName resourceName="#{resourceWithAvailability.original.resource.name}"
+                       resourceId="#{resourceWithAvailability.original.resource.id}" disambiguationReport="#{resourceWithAvailability}" />
                 </rich:column>
 
                 <rich:column>
                     <f:facet name="header">
-                        <h:outputText styleClass="headerText" value="Parent"/>
+                        <h:outputText styleClass="headerText" value="Location"/>
                     </f:facet>
 
-                    <onc:resourcePartialLineage parents="#{resourceWithAvailability.parents}"/>
+                    <onc:disambiguatedResourceLineage parents="#{resourceWithAvailability.parents}"/>
                 </rich:column>
 
 

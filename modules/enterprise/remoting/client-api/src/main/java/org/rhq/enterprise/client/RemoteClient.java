@@ -41,6 +41,7 @@ import org.rhq.enterprise.server.content.DistributionManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
+import org.rhq.enterprise.server.install.remote.RemoteInstallManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerRemote;
@@ -58,6 +59,7 @@ import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
+import org.rhq.enterprise.server.tagging.TagManagerRemote;
 
 /**
  * A remote access client that provides transparent servlet-based proxies to an RHQ Server.
@@ -98,8 +100,9 @@ public class RemoteClient {
         SavedSearchManager(SavedSearchManagerRemote.class), //
         SubjectManager(SubjectManagerRemote.class), //
         SupportManager(SupportManagerRemote.class), //
-        SystemManager(SystemManagerRemote.class) //
-        //        RemoteInstallManager(RemoteInstallManagerRemote.class),
+        SystemManager(SystemManagerRemote.class), //
+        RemoteInstallManager(RemoteInstallManagerRemote.class), //
+        TagManager(TagManagerRemote.class)
         ;
 
         private Class<?> remote;
@@ -421,9 +424,13 @@ public class RemoteClient {
         return RemoteClientProxy.getProcessor(this, Manager.SystemManager);
     }
 
-    //    public RemoteInstallManagerRemote getRemoteInstallManagerRemote() {
-    //        return RemoteClientProxy.getProcessor(this, Manager.RemoteInstallManager);
-    //    }
+    public RemoteInstallManagerRemote getRemoteInstallManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.RemoteInstallManager);
+    }
+
+    public TagManagerRemote getTagManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.TagManager);
+    }
 
     /**
      * Returns the map of all remote managers running in the server that this

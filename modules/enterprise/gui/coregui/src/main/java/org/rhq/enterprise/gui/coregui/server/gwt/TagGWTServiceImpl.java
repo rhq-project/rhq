@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.Tag;
+import org.rhq.core.domain.tagging.compsite.TagReportComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.TagGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -72,5 +73,14 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
 
     public void updateBundleDeploymentTags(int bundleDeploymentId, Set<Tag> tags) {
         tagManager.updateBundleDeploymentTags(getSessionSubject(), bundleDeploymentId, tags);
+    }
+
+    public void updateBundleDestinationTags(int bundleDestinationId, Set<Tag> tags) {
+        tagManager.updateBundleDestinationTags(getSessionSubject(), bundleDestinationId, tags);
+    }
+
+    public PageList<TagReportComposite> findTagReportCompositesByCriteria(TagCriteria tagCriteria) {
+        return SerialUtility.prepare(tagManager.findTagReportCompositesByCriteria(getSessionSubject(), tagCriteria),
+                "TagService.findTagReportCompositesByCriteria");
     }
 }

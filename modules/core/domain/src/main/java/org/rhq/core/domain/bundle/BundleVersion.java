@@ -118,13 +118,13 @@ public class BundleVersion implements Serializable {
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ConfigurationDefinition configurationDefinition;
 
-    @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<BundleDeployment> bundleDeployments = new ArrayList<BundleDeployment>();
 
     @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleFile> bundleFiles = new ArrayList<BundleFile>();
 
-    @ManyToMany(mappedBy = "bundleVersions", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "bundleVersions", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
 
     public BundleVersion() {

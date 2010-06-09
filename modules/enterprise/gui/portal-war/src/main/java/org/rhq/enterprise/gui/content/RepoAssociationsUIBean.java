@@ -77,10 +77,10 @@ public class RepoAssociationsUIBean extends PagedDataTableUIBean {
                 manager.removeContentSourcesFromRepo(subject, repoId, contentSourceIds);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disassociated [" + contentSourceIds.length
-                    + "] content sources from repo");
+                    + "] content sources from repository");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to disassociate one or more content sources from repo", e);
+                    "Failed to disassociate one or more content sources from repository", e);
             }
         }
 

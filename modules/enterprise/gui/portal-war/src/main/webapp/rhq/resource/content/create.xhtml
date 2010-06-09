@@ -45,40 +45,71 @@
 
          <rich:panel rendered="#{CreateNewPackageUIBean.needRequestPackageDetails}">
 
-            <f:facet name="header">New Package Details</f:facet>
+            <f:facet name="header">New Package Details</f:facet>            
 
-            <input type="hidden" name="newPackage" value="true"/>
+            <h:panelGrid columns="2">
 
-            <table>
-               <tr>
-                  <td align="right"><b>Name*</b></td>
-                  <td align="left"><h:inputText value="#{CreateNewPackageUIBean.packageName}"/></td>
-               </tr>
-               <tr>
-                  <td align="right"><b>Version*</b></td>
-                  <td align="left"><h:inputText value="#{CreateNewPackageUIBean.version}"/></td>
-               </tr>
-               <tr>
-                  <td align="right"><b>Architecture*</b></td>
-                  <td align="left">
-                     <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedArchitectureId}">
-                        <f:selectItems value="#{CreateNewPackageUIBean.architectures}" />
-                     </h:selectOneMenu>
-                  </td>
-               </tr>
-               <tr>
-                  <td align="right"><b>Type*</b></td>
-                  <td align="left">
-                     <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedPackageTypeId}">
-                        <f:selectItems value="#{CreateNewPackageUIBean.packageTypes}" />
-                     </h:selectOneMenu>
-                  </td>
-               </tr>
-            </table>
+                <ui:remove><!-- row 1 --></ui:remove>
+                <h:panelGroup style="float: right">
+                   <b>Type <span class="required-marker-text">*</span></b>
+                </h:panelGroup>
+                <h:panelGroup style="clear: both">
+                   <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedPackageTypeId}">
+                      <f:selectItems value="#{CreateNewPackageUIBean.packageTypes}"/>
+                   </h:selectOneMenu>
+                </h:panelGroup>
 
-            <div class="note-panel"><span class="required-marker-text">*</span><span> denotes a required field.</span></div>
+                <ui:remove><!-- row 2 --></ui:remove>
+                <h:panelGroup style="float: right">
+                   <b>Name <span class="required-marker-text">*</span></b>
+                </h:panelGroup>
+                <h:panelGroup style="clear: both">
+                   <h:inputText id="packageName" value="#{CreateNewPackageUIBean.packageName}" required="true"/>
+                   <h:message for="packageName" styleClass="ValidationErrorText"/>
+                </h:panelGroup>
+
+               <ui:remove><!-- row 3 --></ui:remove>
+               <h:panelGroup style="float: right">
+                  <b>Version <span class="required-marker-text">*</span></b>
+               </h:panelGroup>
+               <h:panelGroup style="clear: both">
+                  <h:inputText id="initialVersion" value="#{CreateNewPackageUIBean.version}" required="true"/>
+                  <h:message for="initialVersion" styleClass="ValidationErrorText"/>
+               </h:panelGroup>
+
+               <ui:remove><!-- row 4 --></ui:remove>
+               <h:panelGroup style="float: right">
+                  <b>Architecture <span class="required-marker-text">*</span></b>
+               </h:panelGroup>
+               <h:panelGroup style="clear: both" rendered="#{CreateNewPackageUIBean.supportsArchitecture}">
+                 <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedArchitectureId}">
+                    <f:selectItems value="#{CreateNewPackageUIBean.architectures}" />
+                 </h:selectOneMenu>
+               </h:panelGroup>
+
+            </h:panelGrid>
 
          </rich:panel>
+
+         <rich:panel rendered="#{not CreateNewPackageUIBean.needRequestPackageDetails}">
+
+             <f:facet name="header">Package Update Details</f:facet>
+
+             <h:panelGrid columns="2">
+
+                <h:panelGroup style="float: right">
+                   <b>Version <span class="required-marker-text">*</span></b>
+                </h:panelGroup>
+                <h:panelGroup style="clear: both">
+                   <h:inputText id="updateVersion" value="#{CreateNewPackageUIBean.version}" required="true"/>
+                   <h:message for="updateVersion" styleClass="ValidationErrorText"/>
+                </h:panelGroup>
+
+             </h:panelGrid>
+
+         </rich:panel>
+
+         <div class="note-panel"><span class="required-marker-text">*</span><span> denotes a required field.</span></div>
 
          <rich:panel>
 

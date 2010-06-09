@@ -17,9 +17,8 @@ import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.search.SearchSuggestion.Kind;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
-import org.rhq.enterprise.server.search.assist.AbstractSearchAssistant;
-import org.rhq.enterprise.server.search.assist.ResourceSearchAssistant;
-import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
+import org.rhq.enterprise.server.search.assist.SearchAssistant;
+import org.rhq.enterprise.server.search.assist.SearchAssistantFactory;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class SearchAssistManager {
@@ -27,8 +26,11 @@ public class SearchAssistManager {
     private static final Log LOG = LogFactory.getLog(SearchAssistManager.class);
     private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
 
-    private static List<String> comparisonOperators = Arrays.asList("!==", "!=", "==", "=");
-    private static List<String> booleanOperators = Arrays.asList("and", "or", "|");
+    private static List<String> stringComparisonOperators = Arrays.asList("!==", "!=", "==", "=");
+    private static List<String> numericComparisonOperators = Arrays.asList("<", ">", "!=", "=");
+    private static List<String> enumComparisonOperators = Arrays.asList("!=", "=");
+    private static List<String> allComparisonOperators = Arrays.asList("!==", "!=", "==", "=", "<", ">");
+    private static List<String> booleanOperators = Arrays.asList("|");
 
     private Subject subject;
     private SearchSubsystem searchSubsystem;
@@ -125,7 +127,7 @@ public class SearchAssistManager {
             while (i < fragments.size() - 1) {
                 String before = fragments.get(i - 1);
                 String term = fragments.get(i);
-                if (comparisonOperators.contains(term)) {
+                if (allComparisonOperators.contains(term)) {
                     String after = fragments.get(i + 1);
                     terms.add(before + term + after);
                     i += 3; // a triple of terms were processed
@@ -139,7 +141,7 @@ public class SearchAssistManager {
             if (i < fragments.size()) {
                 String nextToLast = fragments.get(fragments.size() - 2);
                 String last = fragments.get(fragments.size() - 1);
-                if (comparisonOperators.contains(last)) { // last couple was an incomplete term
+                if (allComparisonOperators.contains(last)) { // last couple was an incomplete term
                     terms.add(nextToLast + last);
                 } else {
                     terms.add(nextToLast); // there are unrelated terms, possibly simple text matches
@@ -182,6 +184,19 @@ public class SearchAssistManager {
         public String toString() {
             return null;
         }
+
+        public String getExpressionWithReplacement(String replacement) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < terms.size(); i++) {
+                if (i == currentTermIndex) {
+                    builder.append(replacement);
+                } else {
+                    builder.append(terms.get(i));
+                }
+                builder.append(' ');
+            }
+            return builder.toString();
+        }
     }
 
     static class ParsedContext {
@@ -189,18 +204,47 @@ public class SearchAssistManager {
             CONTEXT, PARAM, OPERATOR, VALUE;
         }
 
+        public enum Type {
+            SIMPLE, ADVANCED;
+        }
+
         public final String context;
         public final String param;
         public final String operator;
         public final String value;
         public final State state;
+        public final Type type;
 
         private ParsedContext(String context, String param, String operator, String value) {
-            this.context = context;
+            this.state = computeState(context, param, operator, value);
+            this.type = computeType(param, operator);
+
+            this.context = (this.type == Type.SIMPLE) ? stripQuotes(context) : context;
             this.param = param;
             this.operator = operator;
             this.value = value;
-            this.state = computeState(context, param, operator, value);
+        }
+
+        private String stripQuotes(String data) {
+            if (data.length() == 0) {
+                return "";
+            }
+
+            char first = data.charAt(0);
+            char last = data.charAt(data.length() - 1);
+            if (first == '\'' || first == '"') {
+                if (data.length() == 1) {
+                    return "";
+                }
+                data = data.substring(1);
+            }
+            if (last == '\'' || last == '"') {
+                if (data.length() == 1) {
+                    return "";
+                }
+                data = data.substring(0, data.length() - 1);
+            }
+            return data;
         }
 
         private State computeState(String context, String param, String operator, String value) {
@@ -264,6 +308,24 @@ public class SearchAssistManager {
             return new ParsedContext(context, param, operator, value);
         }
 
+        private Type computeType(String param, String operator) {
+            if (operator != null) {
+                return Type.ADVANCED; // non-null operator implies an incomplete, advanced term
+            }
+
+            if (param != null) {
+                return Type.ADVANCED; // non-null operator implies an incomplete, advanced term
+            }
+
+            /*
+             * otherwise it's still possible that the user wants a simple text completion.
+             * 
+             * note: it should not be necessary to check for non-null 'value' because operation/param would have
+             *       had to be non-null first, which we've already verified by getting to here.
+             */
+            return Type.SIMPLE;
+        }
+
         public String toString() {
             StringBuilder buffer = new StringBuilder();
             buffer.append(getClass().getSimpleName()).append("[");
@@ -279,18 +341,13 @@ public class SearchAssistManager {
     public SearchAssistManager(Subject subject, SearchSubsystem searchSubsystem) {
         this.subject = subject;
         this.searchSubsystem = searchSubsystem;
-
     }
 
-    protected AbstractSearchAssistant getSearchAssistant() {
-        if (searchSubsystem == SearchSubsystem.RESOURCE) {
-            return new ResourceSearchAssistant();
-        } else {
-            throw new IllegalArgumentException("No SearchAssistant found for SearchSubsystem[" + searchSubsystem + "]");
-        }
+    protected SearchAssistant getSearchAssistant() {
+        return SearchAssistantFactory.getAssistant(searchSubsystem);
     }
 
-    public List<String> getAllContexts() {
+    private List<String> getAllContexts() {
         List<String> results = new ArrayList<String>(getSearchAssistant().getSimpleContexts());
         for (String parameterized : getSearchAssistant().getParameterizedContexts()) {
             results.add(parameterized + "[");
@@ -299,48 +356,75 @@ public class SearchAssistManager {
     }
 
     public List<SearchSuggestion> getSuggestions(String expression, int caretPos) {
-        //List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos);
-        List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos);
-        List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);
-        List<SearchSuggestion> globalSavedSearches = getGlobalSavedSearchSuggestions(expression);
-
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
-        //results.addAll(simple);
-        results.addAll(advanced);
-        results.addAll(userSavedSearches);
-        results.addAll(globalSavedSearches);
-        Collections.sort(results);
+
+        try {
+            if (expression == null) {
+                expression = "";
+            }
+
+            List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos);
+            List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos);
+            List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);
+            //List<SearchSuggestion> globalSavedSearches = getGlobalSavedSearchSuggestions(expression);
+
+            results.addAll(simple);
+            results.addAll(advanced);
+            results.addAll(userSavedSearches);
+            //results.addAll(globalSavedSearches);
+
+            if (results.isEmpty()) {
+                SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
+                    "Start typing for more simple text matches");
+                results.add(footerMessage);
+            } else {
+                Collections.sort(results);
+            }
+
+        } catch (Throwable t) {
+            SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
+                "Error retrieving suggestions: " + t.getMessage() + ", see server log for more details");
+            results.add(footerMessage);
+            LOG.info("Error retrieving suggestions", t);
+        }
         return results;
     }
 
     public List<SearchSuggestion> getSimpleSuggestions(String expression, int caretPos) {
-        AbstractSearchAssistant completor = getSearchAssistant();
+        SearchAssistant completor = getSearchAssistant();
 
-        List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
-        for (String nextContext : completor.getSimpleContexts()) {
-            String intermediateExpression = nextContext + "=" + expression;
-            List<SearchSuggestion> suggestions = getAdvancedSuggestions(intermediateExpression, caretPos);
-            results.addAll(suggestions);
+        debug("getSimpleSuggestions: START");
+
+        SearchTermAssistant assistant = new SearchTermAssistant(expression, caretPos);
+        String beforeCaret = assistant.getFragmentBeforeCaret();
+        ParsedContext parsed = ParsedContext.get(beforeCaret);
+
+        if (parsed.type != ParsedContext.Type.SIMPLE) {
+            return Collections.emptyList();
         }
-        Collections.sort(results);
-        if (results.size() > completor.getMaxResultCount()) {
-            return results.subList(0, completor.getMaxResultCount());
-        } else {
-            return results;
-        }
+
+        /*
+         * if we know the ParsedContext object may represent a simple search term, then the 'context' attribute
+         * would hold it's current value, which in this case we'll extract and use as the simple value match
+         */
+        String parsedTerm = parsed.context;
+        String primarySimpleContext = completor.getPrimarySimpleContext();
+        debug("getSimpleSuggestions: suggesting value completions for a simple context [" + primarySimpleContext + "]");
+
+        List<String> valueSuggestions = pad("\"", completor.getValues(primarySimpleContext, null, parsedTerm), "\"");
+        List<SearchSuggestion> suggestions = convert(valueSuggestions, parsed, parsedTerm, Kind.Simple);
+        return suggestions;
     }
 
     public List<SearchSuggestion> getAdvancedSuggestions(String expression, int caretPos) {
-        AbstractSearchAssistant completor = getSearchAssistant();
+        SearchAssistant completor = getSearchAssistant();
 
         debug("getAdvancedSuggestions: START");
-        long id = HibernatePerformanceMonitor.get().start();
         SearchTermAssistant assistant = new SearchTermAssistant(expression, caretPos);
-        HibernatePerformanceMonitor.get().stop(id, "SearchAssistant");
         String[] tokens = assistant.getTerms().toArray(new String[0]);
         debug("" + tokens.length + " tokens are " + Arrays.asList(tokens));
 
-        if (tokens.length == 0) {
+        if (tokens.length == 0 || caretPos == 0) {
             debug("getAdvancedSuggestions: no terms");
             return convert(getAllContexts()); // no terms yet defined
         }
@@ -348,11 +432,18 @@ public class SearchAssistManager {
         String beforeCaret = assistant.getFragmentBeforeCaret();
         debug("getAdvancedSuggestions: beforeCaret is '" + beforeCaret + "'");
 
+        if (beforeCaret.startsWith("'") || beforeCaret.startsWith("\"")) {
+            return Collections.emptyList();
+        }
+
         ParsedContext parsed = ParsedContext.get(beforeCaret);
         debug("getAdvancedSuggestions: parsed is " + parsed);
         switch (parsed.state) {
         case CONTEXT:
             if (parsed.context.equals("")) {
+                debug("getAdvancedSuggestions: empty term, suggesting all contexts");
+                return convert(getAllContexts());
+                /*
                 if (tokens.length == 1) {
                     debug("getAdvancedSuggestions: no terms yet, suggesting contexts");
                     return convert(getAllContexts());
@@ -363,6 +454,7 @@ public class SearchAssistManager {
                     debug("getAdvancedSuggestions: previous term was not boolean, suggesting boolean");
                     return convert(booleanOperators);
                 }
+                */
             } else if (isBooleanTerm(parsed.context)) {
                 debug("getAdvancedSuggestions: beforeCaret is whole boolean operator");
                 return convert(getAllContexts()); // TODO: should we tell user to type a space first?
@@ -370,33 +462,37 @@ public class SearchAssistManager {
                 // check if this context is complete or not
                 if (completor.getSimpleContexts().contains(parsed.context)) {
                     debug("getAdvancedSuggestions: search term is simple context, wants operator");
-                    return convert(pad(parsed.context, comparisonOperators, ""));
+                    List<String> contextComparisonOperators = getComparisonOperatorsForContext(parsed.context,
+                        completor);
+                    return convert(pad(parsed.context, contextComparisonOperators, ""), parsed, parsed.context);
                 }
                 if (completor.getParameterizedContexts().contains(parsed.context)) {
                     debug("getAdvancedSuggestions: search term is parameterized context, wants open bracket");
-                    return convert(Arrays.asList(parsed.context + "["));
+                    return convert(Arrays.asList(parsed.context + "["), parsed, parsed.context);
                 }
 
                 debug("getAdvancedSuggestions: search term wants context completion");
                 List<String> startsWithContexts = new ArrayList<String>();
+                String lowerCaseParsedContext = parsed.context.toLowerCase(); // contexts should already be lower-cased
                 for (String context : completor.getSimpleContexts()) {
-                    if (context.indexOf(parsed.context) != -1) {
+                    if (context.indexOf(lowerCaseParsedContext) != -1) {
                         startsWithContexts.add(context);
                     }
                 }
                 for (String context : completor.getParameterizedContexts()) {
-                    if (context.indexOf(parsed.context) != -1) {
+                    if (context.indexOf(lowerCaseParsedContext) != -1) {
                         startsWithContexts.add(context + "[");
                     }
                 }
-                return convert(startsWithContexts);
+                return convert(startsWithContexts, parsed, parsed.context);
             }
         case PARAM:
             debug("getAdvancedSuggestions: param state");
-            return convert(pad(parsed.context + "[", completor.getParameters(parsed.context, parsed.param), "]"));
+            return convert(pad(parsed.context + "[", completor.getParameters(parsed.context, parsed.param), "]"),
+                parsed, parsed.param);
         case OPERATOR:
             debug("getAdvancedSuggestions: operator state");
-            if (comparisonOperators.contains(parsed.operator)) {
+            if (allComparisonOperators.contains(parsed.operator)) {
                 debug("search term is complete operator, suggesting values instead");
                 List<String> valueSuggestions = pad("\"", completor.getValues(parsed.context, parsed.param, ""), "\"");
                 if (completor.getSimpleContexts().contains(parsed.context)) {
@@ -410,7 +506,8 @@ public class SearchAssistManager {
             }
 
             List<String> operatorSuggestions = new ArrayList<String>();
-            for (String op : comparisonOperators) {
+            List<String> contextComparisonOperators = getComparisonOperatorsForContext(parsed.context, completor);
+            for (String op : contextComparisonOperators) {
                 if (op.startsWith(parsed.operator)) {
                     operatorSuggestions.add(op);
                 }
@@ -428,21 +525,34 @@ public class SearchAssistManager {
                 "\"");
             if (completor.getSimpleContexts().contains(parsed.context)) {
                 debug("getAdvancedSuggestions: suggesting value completions for a simple context");
-                return convert(pad(parsed.context + parsed.operator, valueSuggestions, ""));
+                return convert(pad(parsed.context + parsed.operator, valueSuggestions, ""), parsed, parsed.value);
             } else {
                 debug("getAdvancedSuggestions: suggesting value completions for a parameterized context");
-                return convert(pad(parsed.context + "[" + parsed.param + "]" + parsed.operator, valueSuggestions, ""));
+                return convert(pad(parsed.context + "[" + parsed.param + "]" + parsed.operator, valueSuggestions, ""),
+                    parsed, parsed.value);
             }
         default:
             return Collections.emptyList();
         }
     }
 
+    private List<String> getComparisonOperatorsForContext(String context, SearchAssistant completor) {
+        if (completor.isNumericalContext(context)) {
+            return numericComparisonOperators;
+        } else if (completor.isNumericalContext(context)) {
+            return enumComparisonOperators;
+        } else {
+            return stringComparisonOperators;
+        }
+    }
+
     public List<SearchSuggestion> getUserSavedSearchSuggestions(String expression) {
+        expression = expression.trim().toLowerCase().replaceAll("\\s+", " ");
+
         SavedSearchCriteria criteria = new SavedSearchCriteria();
         criteria.addFilterSubjectId(subject.getId());
-        criteria.addFilterSearchContext(searchSubsystem);
-        if (expression != null && expression.trim().equals("")) {
+        criteria.addFilterSearchSubsystem(searchSubsystem);
+        if (expression.equals("") == false) {
             criteria.addFilterName(expression);
         }
 
@@ -464,9 +574,12 @@ public class SearchAssistManager {
     }
 
     public List<SearchSuggestion> getGlobalSavedSearchSuggestions(String expression) {
+        expression = expression.trim().toLowerCase().replaceAll("\\s+", " ");
+
         SavedSearchCriteria criteria = new SavedSearchCriteria();
         criteria.addFilterGlobal(true);
-        if (expression != null && expression.trim().equals("")) {
+        criteria.addFilterSearchSubsystem(searchSubsystem);
+        if (expression.equals("") == false) {
             criteria.addFilterName(expression);
         }
 
@@ -497,11 +610,38 @@ public class SearchAssistManager {
     }
 
     private List<SearchSuggestion> convert(List<String> suggestions) {
+        return convert(suggestions, null, "", Kind.Advanced);
+    }
+
+    private List<SearchSuggestion> convert(List<String> suggestions, ParsedContext parsed, String term) {
+        return convert(suggestions, parsed, term, Kind.Advanced);
+    }
+
+    private List<SearchSuggestion> convert(List<String> suggestions, ParsedContext parsed, String term, Kind kind) {
+        int startIndex = getStartIndex(parsed);
+        term = term.toLowerCase();
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>(suggestions.size());
         for (String suggestion : suggestions) {
-            results.add(new SearchSuggestion(Kind.Advanced, suggestion));
+            int index = suggestion.toLowerCase().indexOf(term, startIndex);
+            results.add(new SearchSuggestion(kind, suggestion, index, term.length()));
         }
         return results;
+    }
+
+    private int getStartIndex(ParsedContext parsed) {
+        if (parsed == null) {
+            return 0;
+        }
+        switch (parsed.state) {
+        case PARAM:
+            return parsed.context.length();
+        case OPERATOR:
+            return parsed.context.length() + (parsed.param != null ? parsed.param.length() : 0);
+        case VALUE:
+            return parsed.context.length() + (parsed.param != null ? parsed.param.length() : 0)
+                + parsed.operator.length();
+        }
+        return 0; // case CONTEXT
     }
 
     private List<String> pad(String leftPad, List<String> data, String rightPad) {
@@ -513,6 +653,6 @@ public class SearchAssistManager {
     }
 
     private void debug(String message) {
-        LOG.info(message);
+        LOG.debug(message);
     }
 }

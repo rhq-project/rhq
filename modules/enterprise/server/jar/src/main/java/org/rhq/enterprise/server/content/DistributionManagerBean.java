@@ -34,9 +34,9 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.RepoDistribution;
-import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -90,7 +90,7 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deleteDistributionMappingsForRepo(Subject user, int repoId) {
-        log.debug("User [" + user + "] is removing distribution tree mapping from repo [" + repoId + "]");
+        log.debug("User [" + user + "] is removing distribution tree mapping from repository [" + repoId + "]");
 
         entityManager.createNamedQuery(RepoDistribution.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
             .executeUpdate();
@@ -169,8 +169,6 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
         }
 
     }
-
-
 
     /**
      * Returns a list of available distribution files for requested distribution

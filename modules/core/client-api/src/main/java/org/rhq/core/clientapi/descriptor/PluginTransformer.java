@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.core.clientapi.descriptor;
 
 import org.rhq.core.domain.plugin.Plugin;
@@ -30,8 +29,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 
 import java.net.URL;
 import java.io.IOException;
-import java.io.File;
-import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.jar.Attributes;
 
@@ -94,38 +92,33 @@ public class PluginTransformer {
     }
 
     private String getMd5(URL pluginURL) throws IOException {
-        File jarFile = toFile(pluginURL);
-        return MessageDigestGenerator.getDigestString(jarFile);
+        return MessageDigestGenerator.getDigestString(pluginURL);
     }
 
     String getVersion(PluginDescriptor pluginDescriptor, URL pluginURL) throws IOException {
-        if (pluginDescriptor.getVersion() != null) {
-            return pluginDescriptor.getVersion();
-        }
-
-        File pluginJarFile = toFile(pluginURL);
-
-        String version = getVersionFromPluginJarManifest(pluginJarFile);
-
+        String version = pluginDescriptor.getVersion();
         if (version == null) {
-            throw new PluginTransformException("No version is defined for plugin jar [" + pluginJarFile
-                + "]. A version must be defined either via the MANIFEST.MF [" + Attributes.Name.IMPLEMENTATION_VERSION
-                + "] attribute or via the plugin descriptor 'version' attribute.");
+            version = getVersionFromPluginJarManifest(pluginURL);
+        }
+        
+        if (version == null) {
+            throw new PluginTransformException("No version is defined for plugin jar [" + pluginURL
+                + "]. A version must be defined either via the MANIFEST.MF '" + Attributes.Name.IMPLEMENTATION_VERSION
+                + "' attribute or via the plugin descriptor 'version' attribute.");
         }
 
         return version;
     }
 
-    private String getVersionFromPluginJarManifest(File pluginJarFile) throws IOException {
-        JarFile jarFile = new JarFile(pluginJarFile);
-        Manifest manifest = jarFile.getManifest();
-        Attributes attributes = manifest.getMainAttributes();
-
-        return attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+    private String getVersionFromPluginJarManifest(URL pluginJarUrl) throws IOException {
+        JarInputStream jarInputStream = new JarInputStream(pluginJarUrl.openStream());
+        jarInputStream.close();
+        Manifest manifest = jarInputStream.getManifest();
+        if (manifest != null) {
+            Attributes attributes = manifest.getMainAttributes();
+            return attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+        } else {
+            return null;
+        }
     }
-
-    private File toFile(URL url) {
-        return new File(url.getPath());
-    }
-
 }

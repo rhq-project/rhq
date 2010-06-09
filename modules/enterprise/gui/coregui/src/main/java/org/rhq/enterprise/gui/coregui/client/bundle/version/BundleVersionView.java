@@ -25,12 +25,15 @@ package org.rhq.enterprise.gui.coregui.client.bundle.version;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -40,11 +43,14 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.file.FileListView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -76,7 +82,10 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
         tabs.addTab(createUpdateHistoryTab());
 
 
-        addMember(new HeaderLabel("<img src=\"" + Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png") + "\"/> " + version.getName()));
+        addMember(new BackButton("Back to Bundle: " + version.getBundle().getName(),"Bundles/Bundle/" + version.getBundle().getId()));
+
+        addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png"), version.getName() + ": " + version.getVersion()));
+
         addMember(tabs);
 
         if (nextViewId != null) {
@@ -98,6 +107,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
 
         DynamicForm form = new DynamicForm();
         form.setWidth100();
+        form.setHeight100();
         form.setNumCols(4);
 
         StaticTextItem versionItem = new StaticTextItem("version","Version");
@@ -118,6 +128,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
                 });
             }
         });
+        tagEditor.setVertical(true);
         tagItem.setCanvas(tagEditor);
         tagItem.setRowSpan(4);
 
@@ -134,9 +145,11 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
 
 
         TextAreaItem recipeItem = new TextAreaItem("recipe","Recipe");
+        recipeItem.setDisabled(true);
         recipeItem.setTitleOrientation(TitleOrientation.TOP);
         recipeItem.setColSpan(4);
-        recipeItem.setWidth("100%");
+        recipeItem.setWidth("*");
+        recipeItem.setHeight("*");
         recipeItem.setValue(version.getRecipe());
 
 
@@ -148,7 +161,14 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
     }
 
     private Tab createLiveDeploymentsTab() {
-        Tab tab = new Tab("Live Deployments");
+        Tab tab = new Tab("Deployments");
+
+        Criteria criteria = new Criteria();
+        criteria.setAttribute("bundleVersionId", version.getId());
+
+        BundleDeploymentListView table = new BundleDeploymentListView(criteria);
+
+        tab.setPane(table);
 
         return tab;
     }
@@ -156,7 +176,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
     private Tab createFilesTab() {
         Tab tab = new Tab("Files");
 
-        FileListView filesView = new FileListView(version.getBundleFiles());
+        FileListView filesView = new FileListView(version.getId());
 
         tab.setPane(filesView);
 
@@ -175,6 +195,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
     public void renderView(final ViewPath viewPath) {
         int bundleVersionId = Integer.parseInt(viewPath.getCurrent().getPath());
 
+        final ViewId viewId = viewPath.getCurrent();
 
         BundleVersionCriteria criteria = new BundleVersionCriteria();
         criteria.addFilterId(bundleVersionId);
@@ -182,6 +203,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
         criteria.fetchBundleFiles(true);
         criteria.fetchBundleDeployments(true);
         criteria.fetchConfigurationDefinition(true);
+        criteria.fetchTags(true);
 
         GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria,
                 new AsyncCallback<PageList<BundleVersion>>() {
@@ -190,7 +212,9 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
                     }
 
                     public void onSuccess(PageList<BundleVersion> result) {
-                        viewBundleVersion(result.get(0), viewPath.getCurrent());
+                        BundleVersion version = result.get(0);
+                        viewBundleVersion(version, viewPath.getCurrent());
+                        viewId.getBreadcrumbs().set(0,new Breadcrumb(String.valueOf(version.getId()), version.getName()));
                     }
                 });
 

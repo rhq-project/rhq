@@ -30,6 +30,8 @@ import java.util.Date;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 
 /**
+ * The request that the server sends down to the agent to schedule a bundle deployment.
+ * 
  * @author John Mazzitelli
  */
 public class BundleScheduleRequest implements Serializable {
@@ -37,16 +39,23 @@ public class BundleScheduleRequest implements Serializable {
 
     private BundleResourceDeployment resourceDeployment;
     private long requestedDeployTime = System.currentTimeMillis();
+    private boolean isCleanDeployment = false;
+    private boolean isRevert = false;
 
     public BundleScheduleRequest(BundleResourceDeployment resourceDeployment) {
         this.resourceDeployment = resourceDeployment;
     }
 
+    /**
+     * @return Data describing what needs to get deployed.
+     */
     public BundleResourceDeployment getBundleResourceDeployment() {
         return resourceDeployment;
     }
 
-    /** In ms */
+    /**
+     * @return the time the deployment should be scheduled to happen, in epoch millis.
+     */
     public Long getRequestedDeployTime() {
         return requestedDeployTime;
     }
@@ -55,10 +64,38 @@ public class BundleScheduleRequest implements Serializable {
         return DateFormat.getInstance().format(new Date(requestedDeployTime));
     }
 
+    /**
+     * @return flag to indicate if the deployment directory should have all of its files deleted
+     *         prior to deploying the new files. All files in the deployment directory will be cleaned,
+     *         including files/directories that are marked to be "ignored".
+     */
+    public boolean isCleanDeployment() {
+        return isCleanDeployment;
+    }
+
+    public void setCleanDeployment(boolean isCleanDeployment) {
+        this.isCleanDeployment = isCleanDeployment;
+    }
+
+    /**
+     * @return flag to indicate if this bundle deployment request is reverting a deployment back to
+     *         a previous state. Reverting means that any files backed up from the last deployment
+     *         are reverted to their original state.
+     */
+    public boolean isRevert() {
+        return isRevert;
+    }
+
+    public void setRevert(boolean isRevert) {
+        this.isRevert = isRevert;
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder(this.getClass() + ": ");
-        str.append(resourceDeployment.toString());
+        str.append("deployment=[").append(resourceDeployment.toString()).append("], ");
+        str.append("clean=[").append(isCleanDeployment).append("], ");
+        str.append("revert=[").append(isRevert).append("]");
         return str.toString();
     }
 }

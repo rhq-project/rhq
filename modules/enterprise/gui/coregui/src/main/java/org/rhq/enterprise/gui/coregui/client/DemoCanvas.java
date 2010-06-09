@@ -22,6 +22,7 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
+import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
 
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.TabBarControls;
@@ -52,6 +53,7 @@ public class DemoCanvas extends Canvas {
 
         //        topTabSet.setTop(50);
 
+        Tab tagTab = new Tab("Tag Cloud");
         Tab selectorTab = new Tab("Selector");
         Tab typeTree = new Tab("Type Tree");
         Tab treeTab = new Tab("Resource Tree");
@@ -59,6 +61,8 @@ public class DemoCanvas extends Canvas {
         //Tab alertHistoryTab = new Tab("Alert History");
 
 
+        tagTab.setPane(new TagCloudView());
+        
         selectorTab.setPane(new ResourceSelector());
 
         // Agent:  resource (10005) type (10060)
@@ -70,6 +74,7 @@ public class DemoCanvas extends Canvas {
         typeTree.setPane(new ResourceTypeTreeView());
         //alertHistoryTab.setPane(new AbstractAlertsView());
 
+        topTabSet.addTab(tagTab);
         topTabSet.addTab(selectorTab);
         topTabSet.addTab(typeTree);
         topTabSet.addTab(configTab);

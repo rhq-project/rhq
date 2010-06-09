@@ -23,43 +23,85 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+
 /**
  * @author Jay Shaughnessy
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class BundleDeploymentCriteria extends Criteria {
+public class BundleDeploymentCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private Boolean filterIsLive;
     private String filterName;
     private String filterDescription;
+    private Integer filterBundleId; // needs override
+    private Integer filterBundleVersionId; // needs override    
+    private Integer filterDestinationId; // needs override
+    private String filterDestinationName; // needs override
+    private BundleDeploymentStatus filterStatus;
+    private String filterSubjectName;
 
     private boolean fetchBundleVersion;
     private boolean fetchConfiguration;
-    private boolean fetchDeployments;
-    private boolean fetchGroupDeployments;
-    private boolean fetchTags;
+    private boolean fetchDestination;
+    private boolean fetchReplacedBundleDeployment;
+    private boolean fetchResourceDeployments;
 
     public BundleDeploymentCriteria() {
+        filterOverrides.put("bundleId", "bundleVersion.bundle.id = ?");
+        filterOverrides.put("bundleVersionId", "bundleVersion.id = ?");
+        filterOverrides.put("destinationId", "destination.id = ?");
+        filterOverrides.put("destinationName", "destination.name like ?");
     }
 
     @Override
     public Class<?> getPersistentClass() {
-        return BundleDeploymentCriteria.class;
+        return BundleDeployment.class;
     }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }
 
+    public void addFilterIsLive(Boolean filterIsLive) {
+        this.filterIsLive = filterIsLive;
+    }
+
     public void addFilterName(String filterName) {
         this.filterName = filterName;
     }
 
+    public void addFilterDestinationId(Integer filterDestinationId) {
+        this.filterDestinationId = filterDestinationId;
+    }
+
+    public void addFilterDestinationName(String filterDestinationName) {
+        this.filterDestinationName = filterDestinationName;
+    }
+
+    public void addFilterStatus(BundleDeploymentStatus filterStatus) {
+        this.filterStatus = filterStatus;
+    }
+
+    public void addFilterSubjectName(String filterSubjectName) {
+        this.filterSubjectName = filterSubjectName;
+    }
+
     public void addFilterDescription(String filterDescription) {
         this.filterDescription = filterDescription;
+    }
+
+    public void addFilterBundleId(Integer filterBundleId) {
+        this.filterBundleId = filterBundleId;
+    }
+
+    public void addFilterBundleVersionId(Integer filterBundleVersionId) {
+        this.filterBundleVersionId = filterBundleVersionId;
     }
 
     public void fetchBundleVersion(boolean fetchBundleVersion) {
@@ -70,16 +112,16 @@ public class BundleDeploymentCriteria extends Criteria {
         this.fetchConfiguration = fetchConfiguration;
     }
 
-    public void fetchDeployments(boolean fetchDeployments) {
-        this.fetchDeployments = fetchDeployments;
+    public void fetchDestination(boolean fetchDestination) {
+        this.fetchDestination = fetchDestination;
     }
 
-    public void fetchGroupDeployments(boolean fetchGroupDeployments) {
-        this.fetchGroupDeployments = fetchGroupDeployments;
+    public void fetchReplacedBundleDeployment(boolean fetchReplacedBundleDeployment) {
+        this.fetchReplacedBundleDeployment = fetchReplacedBundleDeployment;
     }
 
-    public void fetchTags(boolean fetchTags) {
-        this.fetchTags = fetchTags;
+    public void fetchResourceDeployments(boolean fetchResourceDeployments) {
+        this.fetchResourceDeployments = fetchResourceDeployments;
     }
 
 }

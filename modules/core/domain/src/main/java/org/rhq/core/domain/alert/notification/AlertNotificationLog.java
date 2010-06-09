@@ -22,7 +22,6 @@
  */
 package org.rhq.core.domain.alert.notification;
 
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,21 +50,19 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.util.StringUtils;
 
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME, //
-            query = "DELETE AlertNotificationLog anl  WHERE anl.id IN ("  +
-                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an WHERE a.ctime BETWEEN :begin AND :end)"),
+@NamedQueries( { @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME, //
+    query = "DELETE AlertNotificationLog anl  WHERE anl.id IN ("
+        + "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an WHERE a.ctime BETWEEN :begin AND :end)"),
 
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCE, //
-            query = "DELETE AlertNotificationLog anl WHERE anl.id IN (" +
-                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an JOIN a.alertDefinition def " +
-                    "WHERE def.resource.id = :resourceId)"),
+    query = "DELETE AlertNotificationLog anl WHERE anl.id IN ("
+        + "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an JOIN a.alertDefinition def "
+        + "WHERE def.resource.id = :resourceId)"),
 
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //
-            query = "DELETE AlertNotificationLog anl WHERE anl.id IN (" +
-                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an JOIN a.alertDefinition def " +
-                    "WHERE def.resource.id IN ( :resourceIds ) )")
-  })
+    query = "DELETE AlertNotificationLog anl WHERE anl.id IN ("
+        + "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an JOIN a.alertDefinition def "
+        + "WHERE def.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIF_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIF_LOG")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -95,16 +92,16 @@ public class AlertNotificationLog implements Serializable {
 
     private String sender;
 
-    @Column(name ="RESULT_STATE")
+    @Column(name = "RESULT_STATE")
     @Enumerated(EnumType.STRING)
     private ResultState resultState;
 
     private String message;
 
-    @Column(name="ALL_EMAILS")
+    @Column(name = "ALL_EMAILS")
     private String allEmails;
 
-    @Column(name="EMAILS_FAILED")
+    @Column(name = "EMAILS_FAILED")
     private String badEmails;
 
     @Transient
@@ -113,8 +110,9 @@ public class AlertNotificationLog implements Serializable {
     @PrePersist
     @PreUpdate
     public void trimMessage() {
-        if (message!=null && message.length()>255)
-            message = message.substring(0,255);
+        if (message != null && message.length() > 4000) {
+            message = message.substring(0, 4000);
+        }
     }
 
     protected AlertNotificationLog() {
@@ -127,7 +125,7 @@ public class AlertNotificationLog implements Serializable {
         this.message = senderResult.getMessage();
         if (resultState == ResultState.DEFERRED_EMAIL && senderResult.getEmails() != null) {
             this.transientEmails.addAll(senderResult.getEmails());
-            this.allEmails = StringUtils.getListAsString(senderResult.getEmails(),",");
+            this.allEmails = StringUtils.getListAsString(senderResult.getEmails(), ",");
         }
     }
 
@@ -147,7 +145,6 @@ public class AlertNotificationLog implements Serializable {
     public int getId() {
         return id;
     }
-
 
     public Alert getAlert() {
         return alert;

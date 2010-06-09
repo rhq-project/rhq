@@ -18,38 +18,17 @@
 
 <ui:param name="defaultPageTitle" value="Resource Picker"/>
 
+   <ui:define name="metaHeaders">
+      <script type="text/javascript" language="javascript"
+              src="/coregui/org.rhq.enterprise.gui.coregui.CoreGUI/org.rhq.enterprise.gui.coregui.CoreGUI.nocache.js"></script>
+      <script type="text/javascript" src="/coregui/js/search.js"></script>
+      <link href="/coregui/css/search.css" rel="stylesheet" type="text/css"/>
+   </ui:define>
+   
    <ui:define name="summary"></ui:define>
    <ui:define name="breadcrumbs"></ui:define>
 
    <ui:define name="tabBar">
-      <a4j:region>
-         <h:form>
-            <a4j:poll interval="1200000" timeout="5000"
-                      reRender="browserTabBarPanel" status="commonStatus" />
-         </h:form>
-      </a4j:region>
-
-
-      <onc:tabBar id="browserTabBarPanel" selectedTabName="#{selectedTabName}" >
-         <onc:tab name="Resources"
-                  displayName="Resources #{InventorySummaryUIBean.resourceCount}"
-                  url="/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;subtab=all&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}">
-            <onc:subtab name="all"
-                        displayName="All"
-                        url="/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;subtab=all&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
-            <onc:subtab name="platform"
-                        displayName="Platforms #{InventorySummaryUIBean.platformCount}"
-                        url="/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;subtab=platform&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
-            <onc:subtab name="server"
-                        displayName="Servers #{InventorySummaryUIBean.serverCount}"
-                        url="/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;subtab=server&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
-            <onc:subtab name="service"
-                        displayName="Services #{InventorySummaryUIBean.serviceCount}"
-                        url="/rhq/inventory/resourcePicker.xhtml?nomenu=true&amp;subtab=service&amp;fieldId=#{param.fieldId}&amp;formId=#{param.formId}" />
-         </onc:tab>
-      </onc:tabBar>
-
-      <p />
 
       <h:messages showSummary="true"
                   showDetail="true"

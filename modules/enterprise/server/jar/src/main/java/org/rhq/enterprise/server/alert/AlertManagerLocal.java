@@ -24,7 +24,6 @@ import java.util.Map;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -83,8 +82,6 @@ public interface AlertManagerLocal {
     void fireAlert(int alertDefinitionId);
 
     void sendAlertNotifications(Alert alert);
-
-    void triggerOperation(AlertDefinition alertDefinition);
 
     int getAlertCountByMeasurementDefinitionAndResources(int measurementDefinitionId, int[] resources, long beginDate,
         long endDate);

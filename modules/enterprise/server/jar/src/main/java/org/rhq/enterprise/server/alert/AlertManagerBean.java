@@ -43,8 +43,6 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.SchedulerException;
-import org.quartz.SimpleTrigger;
 
 import org.jboss.annotation.IgnoreDependency;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -638,30 +636,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         // process recovery actions
         processRecovery(alertDefinition);
 
-        sendAlertNotifications(newAlert);
-
-        triggerOperation(alertDefinition);
-    }
-
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void triggerOperation(AlertDefinition alertDefinition) {
-        OperationDefinition operationDefinition = alertDefinition.getOperationDefinition();
-        if (operationDefinition == null) {
-            return;
-        }
-
-        Subject overlord = subjectManager.getOverlord(); // use overlord for system side-effects
-
-        try {
-            operationManager.scheduleResourceOperation(overlord, alertDefinition.getResource().getId(),
-                operationDefinition.getName(), null, // today, only no-arg operations can be executed via alerting
-                new SimpleTrigger("alerting", "alerting", new Date()), "Triggered when "
-                    + alertDefinition.toSimpleString() + " fired an alert off");
-        } catch (SchedulerException se) {
-            // as of 10/23/2007, there's not much we can do proactively.  just log that this happened for now.
-            log.error(alertDefinition.toSimpleString() + " could not successfully schedule " + "its operation "
-                + operationDefinition.getName());
-        }
+        sendAlertNotifications(newAlert); // this really needs to be done async,
     }
 
     /**

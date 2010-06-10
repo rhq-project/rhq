@@ -2187,7 +2187,7 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-createSequence name="RHQ_CVE_SEQ" initial="101" />
+                <schema-createSequence name="RHQ_CVE_ID_SEQ" initial="101" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_CVE ( ID INTEGER PRIMARY KEY )

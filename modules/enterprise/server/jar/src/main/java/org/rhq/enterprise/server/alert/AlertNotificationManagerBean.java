@@ -40,7 +40,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.RHQConstants;
@@ -188,14 +187,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return updated;
     }
 
-    public Configuration getAlertPropertiesConfiguration(AlertNotification notification) {
-        Configuration config = notification.getConfiguration();
-        if (config != null)
-            config = config.deepCopy();
-
-        return config;
-    }
-
     public ConfigurationDefinition getConfigurationDefinitionForSender(String shortName) {
 
         AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
@@ -250,14 +241,9 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         if (alertNotificationId != null) {
             AlertNotification notification = entityManager.find(AlertNotification.class, alertNotificationId);
             if (notification != null && bean != null) {
-                Configuration config = notification.getConfiguration();
-                Configuration config2 = config.deepCopy(true);
-
-                bean.setAlertParameters(config2);
-                try {
-                    bean.internalInit();
-                } catch (Throwable t) {
-                    LOG.error("getBackingBean, calling backingBean.internalInit() resulted in " + t.getMessage());
+                bean.setAlertParameters(notification.getConfiguration().deepCopy(true));
+                if (notification.getExtraConfiguration() != null) {
+                    bean.setExtraParameters(notification.getExtraConfiguration().deepCopy(true));
                 }
             }
         }
@@ -290,6 +276,9 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         List<AlertNotification> notifications = definition.getAlertNotifications();
         for (AlertNotification notification : notifications) {
             notification.getConfiguration().getProperties().size(); // eager load
+            if (notification.getExtraConfiguration() != null) {
+                notification.getExtraConfiguration().getProperties().size();
+            }
         }
 
         return notifications;
@@ -300,8 +289,9 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         if (notification == null) {
             return null;
         }
-        if (notification.getConfiguration() != null) { // an "incomplete" notification might not have a config yet
-            notification.getConfiguration().getProperties().size(); // eager load the alert properties
+        notification.getConfiguration().getProperties().size(); // eager load the alert properties
+        if (notification.getExtraConfiguration() != null) {
+            notification.getExtraConfiguration().getProperties().size(); // eager load the extra alert properties
         }
         return notification;
     }

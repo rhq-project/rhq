@@ -125,6 +125,7 @@
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
         <column name="SENDER_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
+        <column name="EXTRA_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
         <column name="SENDER_NAME" required="true" size="100" type="VARCHAR2" />
     </table>
 

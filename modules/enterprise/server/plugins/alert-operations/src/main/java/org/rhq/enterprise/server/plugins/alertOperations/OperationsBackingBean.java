@@ -80,13 +80,15 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
             selectionModeOptions.put(mode.displayString, mode.name());
         }
 
+        Configuration previousArguments = extraParameters;
+        /*
         String argumentsConfigurationId = get(OperationInfo.Constants.ARGUMENTS_CONFIG_ID, null);
-        Configuration previousArguments = null;
         if (argumentsConfigurationId != null && !argumentsConfigurationId.equals("none")) {
             // look it up and then delete it, because the user may switch options in the conditional form, invalidating this
             previousArguments = LookupUtil.getConfigurationManager().getConfiguration(getOverlord(),
                 Integer.parseInt(argumentsConfigurationId));
         }
+        */
 
         // load secondList if currentType is selected
         if (selectionMode.equals("none")) {
@@ -224,11 +226,6 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     @Override
-    public void internalCleanup() {
-        cleanupPreviousArguments();
-    }
-
-    @Override
     public void saveView() {
         set(selectionMode, OperationInfo.Constants.SELECTION_MODE);
         set(resourceId, OperationInfo.Constants.SPECIFIC_RESOURCE_ID);
@@ -244,19 +241,27 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         // persist new one
         if (operationDefinitionId != null && !operationDefinitionId.equals("none") && argumentsConfiguration != null) {
             argumentsConfiguration.setId(0); // force Hibernate to interpret this configuration as a new one
-            argumentsConfiguration = persistConfiguration(argumentsConfiguration);
-            set(String.valueOf(argumentsConfiguration.getId()), OperationInfo.Constants.ARGUMENTS_CONFIG_ID);
+            //argumentsConfiguration = persistConfiguration(argumentsConfiguration);
+            //set(String.valueOf(argumentsConfiguration.getId()), OperationInfo.Constants.ARGUMENTS_CONFIG_ID);
+            extraParameters = argumentsConfiguration;
+            extraParameters = persistConfiguration(extraParameters);
         }
 
         alertParameters = persistConfiguration(alertParameters);
     }
 
     private void cleanupPreviousArguments() {
+        /*
         String previousArgumentsConfigurationId = get(OperationInfo.Constants.ARGUMENTS_CONFIG_ID, null);
         set(null, OperationInfo.Constants.ARGUMENTS_CONFIG_ID);
         if (previousArgumentsConfigurationId != null && !previousArgumentsConfigurationId.equals("none")) {
             LookupUtil.getConfigurationManager().deleteConfigurations(
                 Arrays.asList(Integer.parseInt(previousArgumentsConfigurationId)));
+        }
+        */
+        if (extraParameters != null) {
+            LookupUtil.getConfigurationManager().deleteConfigurations(Arrays.asList(extraParameters.getId()));
+            extraParameters = null;
         }
     }
 

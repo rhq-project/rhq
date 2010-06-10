@@ -194,4 +194,20 @@ public class AlertNotification implements Serializable {
         return true;
     }
 
+    public boolean equalsData(AlertNotification other) {
+        boolean results = compare(configuration, other.configuration);
+        if (results) {
+            results = compare(extraConfiguration, other.extraConfiguration);
+        }
+        return results;
+    }
+
+    private boolean compare(Configuration first, Configuration second) {
+        if (first == null) {
+            return (second == null);
+        }
+
+        return first.equals(second);
+    }
+
 }

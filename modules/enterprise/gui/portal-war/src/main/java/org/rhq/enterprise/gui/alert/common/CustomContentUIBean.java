@@ -101,14 +101,20 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
     public String saveConfiguration() {
         try {
             customBackingBean.saveView();
-            AlertNotification notification = null;
+
+            int notificationId = customBackingBean.getAlertNotificationId();
+            AlertNotification notification = alertNotificationManager
+                .getAlertNotification(getSubject(), notificationId);
+
             if (customBackingBean.getExtraParameters() != null) {
-                int notificationId = customBackingBean.getAlertNotificationId();
-                notification = alertNotificationManager.getAlertNotification(getSubject(), notificationId);
                 notification.setExtraConfiguration(customBackingBean.getExtraParameters());
             }
             int alertDefinitionId = Integer.parseInt(customBackingBean.getContextId());
             alertNotificationManager.updateAlertNotification(getSubject(), alertDefinitionId, notification);
+
+            AlertNotificationsUIBean notificationsUIBean = (AlertNotificationsUIBean) Contexts
+                .lookupInStatefulContexts("alertNotificationsUIBean");
+            notificationsUIBean.reselectActiveNotificationUsingDataComparison(notification);
         } catch (Throwable t) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to save alert notification", t);
         }

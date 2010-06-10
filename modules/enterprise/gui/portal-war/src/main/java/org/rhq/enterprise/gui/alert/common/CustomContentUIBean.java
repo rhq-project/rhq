@@ -81,6 +81,7 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
             customBackingBean.setContextId(FacesContextUtility.getRequiredRequestParameter("contextId"));
             customBackingBean.setContextSubId(FacesContextUtility.getOptionalRequestParameter("contextSubId",
                 (String) null));
+            customBackingBean.setAlertNotificationId(alertNotificationId);
             customBackingBean.loadView();
             outjectBean(backingBeanName, customBackingBean);
         }
@@ -100,8 +101,20 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
     public String saveConfiguration() {
         try {
             customBackingBean.saveView();
+
+            int notificationId = customBackingBean.getAlertNotificationId();
+            AlertNotification notification = alertNotificationManager
+                .getAlertNotification(getSubject(), notificationId);
+
+            if (customBackingBean.getExtraParameters() != null) {
+                notification.setExtraConfiguration(customBackingBean.getExtraParameters());
+            }
             int alertDefinitionId = Integer.parseInt(customBackingBean.getContextId());
-            alertNotificationManager.updateAlertNotification(getSubject(), alertDefinitionId, null);
+            alertNotificationManager.updateAlertNotification(getSubject(), alertDefinitionId, notification);
+
+            AlertNotificationsUIBean notificationsUIBean = (AlertNotificationsUIBean) Contexts
+                .lookupInStatefulContexts("alertNotificationsUIBean");
+            notificationsUIBean.reselectActiveNotificationUsingDataComparison(notification);
         } catch (Throwable t) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to save alert notification", t);
         }

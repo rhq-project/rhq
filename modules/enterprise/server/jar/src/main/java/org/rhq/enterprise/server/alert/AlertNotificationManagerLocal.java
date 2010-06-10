@@ -24,7 +24,6 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
@@ -63,8 +62,6 @@ public interface AlertNotificationManagerLocal {
     int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds);
 
     int purgeOrphanedAlertNotifications();
-
-    public Configuration getAlertPropertiesConfiguration(AlertNotification notification);
 
     /**
      * Return a list of all available AlertSenders in the system by their shortname.

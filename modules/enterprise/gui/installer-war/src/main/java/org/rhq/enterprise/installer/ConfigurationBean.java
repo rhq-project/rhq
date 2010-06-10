@@ -18,11 +18,6 @@
  */
 package org.rhq.enterprise.installer;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.sql.Connection;
@@ -546,6 +541,23 @@ public class ConfigurationBean {
     public StartPageResults save() {
         LOG.info("Installer raw values: " + configuration);
 
+        // if auto-install is enabled, the db password will be encrypted - decrypt it internally and we'll re-encrypt later
+        if (isAutoinstallEnabled()) {
+            try {
+                PropertyItemWithValue prop = getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_PASSWORD);
+                String pass = prop.getValue();
+                pass = decodePassword(pass);
+                prop.setValue(pass);
+                // log the unencrypted pw, but only at the trace level so it isn't put in the log file
+                // unless someone explicitly enables the trace level so they can see the pass that is to be used for debugging
+                LOG.trace(">" + pass);
+            } catch (Exception e) {
+                LOG.fatal("Could not decrypt the password for some reason - auto-installation failed", e);
+                lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
+                return StartPageResults.ERROR;
+            }
+        }
+
         // its possible the JDBC URL was changed, clear the factory cache in case the DB version is different now
         DatabaseTypeFactory.clearDatabaseTypeCache();
 
@@ -733,7 +745,7 @@ public class ConfigurationBean {
             // encode database password and set updated properties
             String pass = configurationAsProperties.getProperty(ServerProperties.PROP_DATABASE_PASSWORD);
             pass = encryptPassword(pass);
-            configurationAsProperties.setProperty(ServerProperties.PROP_DATABASE_PASSWORD,pass);
+            configurationAsProperties.setProperty(ServerProperties.PROP_DATABASE_PASSWORD, pass);
 
             serverInfo.setServerProperties(configurationAsProperties);
 
@@ -765,13 +777,30 @@ public class ConfigurationBean {
 
         try {
             SecureIdentityLoginModule lm = new SecureIdentityLoginModule();
-            Class clazz = SecureIdentityLoginModule.class;
-            Method m = clazz.getDeclaredMethod("encode",String.class);
+            Class<?> clazz = SecureIdentityLoginModule.class;
+            Method m = clazz.getDeclaredMethod("encode", String.class);
             m.setAccessible(true);
-            String res = (String) m.invoke(lm,password);
+            String res = (String) m.invoke(lm, password);
             return res;
         } catch (Exception e) {
-            throw new Exception("Encoding db password failed: " , e);
+            throw new Exception("Encoding db password failed: ", e);
+        }
+    }
+
+    private String decodePassword(String encrypedPassword) throws Exception {
+
+        // We need to do some mumbo jumbo, as the interesting method is private
+        // in SecureIdentityLoginModule
+
+        try {
+            SecureIdentityLoginModule lm = new SecureIdentityLoginModule();
+            Class<?> clazz = SecureIdentityLoginModule.class;
+            Method m = clazz.getDeclaredMethod("decode", String.class);
+            m.setAccessible(true);
+            char[] res = (char[]) m.invoke(lm, encrypedPassword);
+            return new String(res);
+        } catch (Exception e) {
+            throw new Exception("Decoding db password failed: ", e);
         }
     }
 

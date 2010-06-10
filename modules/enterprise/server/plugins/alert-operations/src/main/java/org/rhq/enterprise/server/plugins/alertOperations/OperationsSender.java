@@ -55,14 +55,22 @@ public class OperationsSender extends AlertSender {
         OperationDefinition operation = info.getOperationDefinition();
         Configuration parameters = info.getArguments();
 
+        Resource targetResource = null;
+        try {
+            targetResource = info.getTargetResource(alert);
+        } catch (Throwable t) {
+            String message = getResultMessage(info, "could not calculate which resources to execute the operation on: "
+                + t.getMessage());
+            return new SenderResult(ResultState.FAILURE, message);
+        }
+
         Configuration replacedParameters = null;
         try {
             if (parameters != null) {
                 // the parameter-replaced configuration object will be persisted separately from the original
                 replacedParameters = parameters.deepCopy(false);
 
-                Resource resource = LookupUtil.getResourceManager().getResource(subject, info.resourceId);
-                AlertTokenReplacer replacementEngine = new AlertTokenReplacer(alert, operation, resource);
+                AlertTokenReplacer replacementEngine = new AlertTokenReplacer(alert, operation, targetResource);
                 for (PropertySimple simpleProperty : replacedParameters.getSimpleProperties().values()) {
                     String temp = simpleProperty.getStringValue();
                     temp = replacementEngine.replaceTokens(temp);
@@ -76,7 +84,6 @@ public class OperationsSender extends AlertSender {
 
         // Now fire off the operation with no delay and no repetition.
         try {
-            Resource targetResource = info.getTargetResource(alert);
             String description = "Alert operation for " + alert.getAlertDefinition().getName();
             ResourceOperationSchedule schedule = LookupUtil.getOperationManager().scheduleResourceOperation(subject,
                 targetResource.getId(), operation.getName(), 0, 0, 0, 0, replacedParameters, description);

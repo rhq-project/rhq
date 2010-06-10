@@ -171,10 +171,12 @@ public class RpmPackageDiscoveryDelegate {
                 packageDetails.setClassification(category);
                 packageDetails.setDisplayName(name);
                 packageDetails.setFileName(fileName);
-                if (md5.length() <= 32) {
-                    packageDetails.setMD5(md5);
-                } else {
-                    packageDetails.setSHA256(md5); // md5's can only be 32 chars, anything more and we assume its a SHA256
+                if (!md5.startsWith("00000000000000000000000000000000")) {
+                    if (md5.length() <= 32) {
+                        packageDetails.setMD5(md5);
+                    } else {
+                        packageDetails.setSHA256(md5); // md5's can only be 32 chars, anything more and we assume its a SHA256
+                    }
                 }
                 packageDetails.setFileSize(fileSize);
                 packageDetails.setLicenseName(license);

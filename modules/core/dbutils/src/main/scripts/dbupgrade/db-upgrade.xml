@@ -1828,7 +1828,7 @@
                      </statement>
                 </schema-directSQL>
 
-                <schema-createSequence name="RHQ_RHQ_DISTRIBUTION_ID_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_DISTRIBUTION_ID_SEQ" initial="10001" />
                 <schema-directSQL>                
                     <statement desc="Creating table RHQ_DISTRIBUTION">
                         CREATE TABLE RHQ_DISTRIBUTION ( ID INTEGER PRIMARY KEY )

@@ -2156,7 +2156,7 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-createSequence name="RHQ_ADVISORY_PACKAGE_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_ADVISORY_PACKAGE_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_ADVISORY_PACKAGE ( ID INTEGER PRIMARY KEY )
@@ -2197,6 +2197,7 @@
                 <schema-addColumn   table="RHQ_CVE" column="NAME" precision="64" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_CVE" column="NAME" nullable="false" />
 
+                <schema-createSequence name="RHQ_ADVISORY_CVE_ID_SEQ" initial="10001"/>
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_ADVISORY_CVE ( ID INTEGER PRIMARY KEY )

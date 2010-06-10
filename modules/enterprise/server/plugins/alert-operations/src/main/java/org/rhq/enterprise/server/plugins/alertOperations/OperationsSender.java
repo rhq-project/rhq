@@ -45,7 +45,7 @@ public class OperationsSender extends AlertSender {
     @Override
     public SenderResult send(Alert alert) {
 
-        OperationInfo info = OperationInfo.load(alertParameters);
+        OperationInfo info = OperationInfo.load(alertParameters, extraParameters);
         if (info.error != null) {
             return new SenderResult(ResultState.FAILURE, info.error);
         }
@@ -157,7 +157,7 @@ public class OperationsSender extends AlertSender {
 
     @Override
     public String previewConfiguration() {
-        OperationInfo info = OperationInfo.load(alertParameters);
+        OperationInfo info = OperationInfo.load(alertParameters, extraParameters);
         return info.toString();
     }
 }

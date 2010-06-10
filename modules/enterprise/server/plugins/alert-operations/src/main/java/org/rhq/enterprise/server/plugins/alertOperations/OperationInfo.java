@@ -18,8 +18,7 @@ public class OperationInfo {
         RELATIVE_ANCESTOR_TYPE_ID("selection-relative-ancestor-type-id"), //
         RELATIVE_DESCENDANT_TYPE_ID("selection-relative-descendant-type-id"), //
         RELATIVE_DESCENDANT_NAME("selection-relative-descendant-name"), //
-        OPERATION_ID("operation-definition-id"), //
-        ARGUMENTS_CONFIG_ID("operation-arguments-configuration-id");
+        OPERATION_ID("operation-definition-id");
 
         public final String propertyName;
 
@@ -46,14 +45,14 @@ public class OperationInfo {
     public final Integer descendantTypeId;
     public final String descendantName;
     public final Integer operationId;
-    public final Integer argumentsConfigurationId;
+    public final Configuration arguments;;
 
     public final String error;
 
     private Subject overlord;
 
     private OperationInfo(String mode, String resourceId, String ancestorTypeId, String descendantTypeId,
-        String descendantName, String operationId, String argumentsConfigurationId) {
+        String descendantName, String operationId, Configuration arguments) {
         ResourceSelectionMode selectionMode = null;
         try {
             selectionMode = ResourceSelectionMode.valueOf(mode);
@@ -65,7 +64,7 @@ public class OperationInfo {
         this.descendantTypeId = get(descendantTypeId);
         this.descendantName = descendantName;
         this.operationId = get(operationId);
-        this.argumentsConfigurationId = get(argumentsConfigurationId);
+        this.arguments = arguments;
 
         this.error = getErrorString();
     }
@@ -97,17 +96,16 @@ public class OperationInfo {
         return null;
     }
 
-    public static OperationInfo load(Configuration configuration) {
+    public static OperationInfo load(Configuration configuration, Configuration extraConfiguration) {
         String mode = get(configuration, Constants.SELECTION_MODE, null);
         String resourceId = get(configuration, Constants.SPECIFIC_RESOURCE_ID, null);
         String ancestorTypeId = get(configuration, Constants.RELATIVE_ANCESTOR_TYPE_ID, null);
         String descendantTypeId = get(configuration, Constants.RELATIVE_DESCENDANT_TYPE_ID, null);
         String descendantName = get(configuration, Constants.RELATIVE_DESCENDANT_NAME, null);
         String operationId = get(configuration, Constants.OPERATION_ID, null);
-        String argumentsConfigurationId = get(configuration, Constants.ARGUMENTS_CONFIG_ID, null);
 
         return new OperationInfo(mode, resourceId, ancestorTypeId, descendantTypeId, descendantName, operationId,
-            argumentsConfigurationId);
+            extraConfiguration);
     }
 
     private static String get(Configuration configuration, Constants operationInfoConstants, String defaultValue) {
@@ -192,11 +190,6 @@ public class OperationInfo {
     }
 
     public Configuration getArguments() {
-        if (argumentsConfigurationId == null) {
-            return null;
-        }
-
-        Configuration arguments = LookupUtil.getConfigurationManager().getConfigurationById(argumentsConfigurationId);
         return arguments;
     }
 

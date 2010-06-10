@@ -73,6 +73,10 @@ public class AlertNotification implements Serializable {
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     private Configuration configuration;
 
+    @JoinColumn(name = "EXTRA_CONFIG_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    private Configuration extraConfiguration;
+
     @Column(name = "SENDER_NAME")
     private String senderName;
 
@@ -92,6 +96,9 @@ public class AlertNotification implements Serializable {
 
     public AlertNotification(AlertNotification source) {
         this.configuration = source.configuration.deepCopy(false);
+        if (source.extraConfiguration != null) {
+            this.extraConfiguration = source.extraConfiguration.deepCopy(false);
+        }
         this.senderName = source.senderName;
     }
 
@@ -136,6 +143,15 @@ public class AlertNotification implements Serializable {
             throw new IllegalArgumentException("configuration must be non-null");
         }
         this.configuration = configuration;
+    }
+
+    public Configuration getExtraConfiguration() {
+        return extraConfiguration;
+    }
+
+    public void setExtraConfiguration(Configuration extraConfiguration) {
+        // extra configuration can be null
+        this.extraConfiguration = extraConfiguration;
     }
 
     @Override

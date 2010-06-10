@@ -57,7 +57,6 @@ import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
-import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -154,6 +153,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         //alertDefinition.getAlerts().size();
         for (AlertNotification notification : alertDefinition.getAlertNotifications()) {
             notification.getConfiguration().getProperties().size(); // eager load configuration and properties too
+            if (notification.getExtraConfiguration() != null) {
+                notification.getExtraConfiguration().getProperties().size();
+            }
         }
 
         return alertDefinition;
@@ -506,26 +508,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             alertDefinition.setConditionExpression(BooleanExpression.ANY);
         }
 
-        /*
-         * Since the algorithm removes all existing notifications and adds them all back, 
-         * we need to clean up all of them
-         */
-        for (AlertNotification notification : oldAlertDefinition.getAlertNotifications()) {
-            CustomAlertSenderBackingBean customBackingBean = alertNotificationManager.getBackingBeanForSender(
-                notification.getSenderName(), notification.getId());
-            if (customBackingBean != null) { // alert senders only have customBackingBeans if they have custom UIs
-                try {
-                    customBackingBean.internalCleanup();
-                } catch (Throwable t) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Error cleaning up custom alert sender data for " + notification, t);
-                    } else {
-                        LOG.error("Error cleaning up custom alert sender data for " + notification);
-                    }
-                }
-            }
-        }
-
         oldAlertDefinition.update(alertDefinition);
         if (LOG.isDebugEnabled()) {
             LOG.debug("Updating: " + oldAlertDefinition);
@@ -535,8 +517,13 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             for (AlertNotification nextNotification : oldAlertDefinition.getAlertNotifications()) {
                 LOG.debug("Notification: " + nextNotification);
                 LOG.debug("Notification-Configuration: " + nextNotification.getConfiguration().toString(true));
+                if (nextNotification.getExtraConfiguration() != null) {
+                    LOG.debug("Notification-Extra-Configuration: "
+                        + nextNotification.getExtraConfiguration().toString(true));
+                }
             }
         }
+
         fixRecoveryId(oldAlertDefinition);
         AlertDefinition newAlertDefinition = entityManager.merge(oldAlertDefinition);
 

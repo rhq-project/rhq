@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.plugin.pc.alert;
 
+import java.util.Arrays;
+
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -159,6 +162,17 @@ public class CustomAlertSenderBackingBean {
         }
 
         return ret;
+    }
+
+    final protected void deleteExtraParameters() {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        AlertNotification notification = LookupUtil.getAlertNotificationManager().getAlertNotification(overlord,
+            alertNotificationId);
+        Configuration extraParameters = notification.getExtraConfiguration();
+        notification.setExtraConfiguration(null);
+        LookupUtil.getAlertNotificationManager().updateAlertNotification(overlord,
+            notification.getAlertDefinition().getId(), notification);
+        LookupUtil.getConfigurationManager().deleteConfigurations(Arrays.asList(extraParameters.getId()));
     }
 
 }

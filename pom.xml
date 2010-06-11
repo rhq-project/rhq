@@ -32,6 +32,9 @@
 
 
   <properties>
+    <!-- explictly specify a default encoding to avoid relying on the LANG env var being set correctly -->
+    <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding> 
+
     <rhq.groupId>org.rhq</rhq.groupId>
     <rhq.product.name>RHQ</rhq.product.name>
     <rhq.earName>rhq.ear</rhq.earName>

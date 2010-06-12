@@ -2,11 +2,6 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
-  <!--
-  <changeSet id="0" author="jsanda">
-    <sql>select * from rhq_system_config</sql>
-  </changeSet>
-  -->
-
   <include file="config-schema.xml"/>
+  <include file="cluster-schema.xml"/>
 </databaseChangeLog>

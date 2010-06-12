@@ -1,0 +1,60 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+  <changeSet id="0" author="jsanda">
+    <createTable tableName="rhq_affinity_group">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_affinity_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="1" author="jsanda">
+    <createTable tableName="rhq_server">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="address" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="port" type="integer">
+        <constraints nullable="false"/>
+      </column>
+      <column name="secure_port" type="integer">
+        <constraints nullable="false"/>
+      </column>
+      <column name="ctime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="mtime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="affinity_group_id" type="integer">
+        <constraints foreignKeyName="fk_affinity_group_id_rhq_affinity_group"
+                     references="rhq_affinity_group"/>
+      </column> 
+      <column name="compute_power" type="integer">
+        <constraints nullable="false"/>
+      </column>
+      <column name="operation_mode" type="varchar(32)"/>
+      <column name="status" type="integer" defaultValue="0"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_server_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_server"
+                 indexName="rhq_server_name_unique"
+                 unique="true">
+      <column name="name"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

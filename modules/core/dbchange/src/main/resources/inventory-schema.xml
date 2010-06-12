@@ -1,0 +1,52 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+  <changeSet id="0" author="jsanda">
+    <createTable tableName="rhq_resource_type">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="category" type="varchar(16)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="creation_data_type" type="varchar(16)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="create_delete_policy" type="varchar(16)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="singleton" type="boolean">
+        <constraints nullable="false"/>
+      </column>
+      <column name="supports_manual_add" type="boolean">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="varchar(1000)"/>
+      <column name="plugin" type="varchar(100)"/>
+      <column name="ctime" type="bigint"/>
+      <column name="mtime" type="bigint"/>
+      <column name="subcategory_id" type="integer"/>
+      <column name="plugin_config_def_id" type="integer">
+        <constraints foreignKeyName="fk_plugin_config_def_id_rhq_config"
+                     references="rhq_config"/>
+      </column>
+      <column name="res_config_def_id" type="integer">
+        <constraints foreignKeyName="fk_res_config_def_id_rhq_config"
+                     references="rhq_config_def"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_resource_type_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_resource_type"
+                 indexName="rhq_res_type_idx_plg_name"
+                 unique="true">
+      <column name="name"/>
+      <column name="plugin"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

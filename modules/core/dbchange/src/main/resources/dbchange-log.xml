@@ -4,4 +4,5 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
   <include file="config-schema.xml"/>
   <include file="cluster-schema.xml"/>
+  <include file="inventory-schema.xml"/>
 </databaseChangeLog>

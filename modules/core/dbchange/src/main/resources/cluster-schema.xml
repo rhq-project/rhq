@@ -57,4 +57,154 @@
       <column name="name"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="2" author="jsanda">
+    <createTable tableName="rhq_agent">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="address" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="port" type="integer">
+        <constraints nullable="false"/>
+      </column>
+      <column name="agenttoken" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="remote_endpoint" type="varchar(4000)"/>
+      <column name="ctime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="mtime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="last_availability_report" type="bigint"/>
+      <column name="affinity_group_id" type="integer">
+        <constraints foreignKeyName="fk_affinity_group_id_rhq_affinity_group"
+                     references="rhq_affinity_group"/>
+      </column>
+      <column name="server_id" type="integer">
+        <constraints foreignKeyName="fk_server_id_rhq_server"
+                     references="rhq_server"/>
+      </column>
+      <column name="status" type="integer" defaultValue="0"/>
+      <column name="backfilled" type="boolean">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_agent_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_agent"
+                 indexName="rhq_agent_name_unique"
+                 unique="true">
+      <column name="name"/>
+    </createIndex>
+
+    <createIndex tableName="rhq_agent"
+                 indexName="rhq_agent_address_port"
+                 unique="true">
+      <column name="address"/>
+      <column name="port"/>
+    </createIndex>
+
+    <createIndex tableName="rhq_agent"
+                 indexName="rhq_agent_token_unique"
+                 unique="true">
+      <column name="agenttoken"/>
+    </createIndex> 
+  </changeSet>
+
+  <changeSet id="3" author="jsanda">
+    <createTable tableName="rhq_partition_event">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="subject_name" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="ctime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="event_type" type="varchar(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="event_detail" type="varchar(512)"/>
+      <column name="execution_status" type="varchar(32)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_partition_event_id_seq"/>
+  </changeSet>
+
+  <changeSet id="4" author="jsanda">
+    <createTable tableName="rhq_partition_details">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="partition_event_id" type="integer">
+        <constraints foreignKeyName="fk_partition_event_id_rhq_partition_event"
+                     references="rhq_partition_event"
+                     nullable="false"/>
+      </column>
+      <column name="agent_name" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="server_name" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_partition_details_id_seq" startValue="10001"/>
+  </changeSet>  
+
+  <changeSet id="5" author="jsanda">
+    <createTable tableName="rhq_failover_list">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="partition_event_id" type="integer">
+        <constraints foreignKeyName="fk_partition_event_id_rhq_partition_event"
+                     references="rhq_partition_event"
+                     nullable="false"/>
+      </column>
+      <column name="agent_id" type="integer">
+        <constraints foreignKeyName="fk_agent_id_rhq_agent"
+                     references="rhq_agent"
+                     nullable="false"/>
+      </column>
+      <column name="ctime" type="bigint">
+        <constraints nullable="false"/>
+      </column>      
+    </createTable>
+
+    <createSequence sequenceName="rhq_failover_list_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="6" author="jsanda">
+    <createTable tableName="rhq_failover_details">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="failover_list_id" type="integer">
+        <constraints foreignKeyName="fk_failover_list_id_rhq_failover_list"
+                     references="rhq_failover_list"
+                     nullable="false"/>
+      </column>
+      <column name="server_id" type="integer">
+        <constraints foreignKeyName="fk_server_id_rhq_server"
+                     references="rhq_server"/>
+      </column>
+      <column name="ordinal" type="integer">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_failover_details_id_seq" startValue="10001"/>
+  </changeSet>
 </databaseChangeLog>

@@ -1,0 +1,240 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+  <changeSet id="0" author="jsanda">
+    <createTable tableName="rhq_config_def">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>      
+      <column name="name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="varchar(250)"/>
+      <column name="version" type="varchar(50)"/>
+      <column name="config_format" type="varchar(32)"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_config__def_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="1" author="jsanda">
+    <createTable tableName="rhq_config_prop_grp_def">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="display_name" type="varchar(100)"/>
+      <column name="description" type="varchar(250)"/>
+      <column name="default_hidden" type="boolean"/>
+      <column name="order_index" type="integer"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_config_prop_grp_def_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="2" author="jsanda">
+    <createTable tableName="rhq_config_prop_def">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(255)"/>
+      <column name="display_name" type="varchar(100)"/>
+      <column name="description" type="varchar(1000)"/>
+      <column name="default_value" type="varchar(2000)"/>
+      <column name="required" type="boolean"/>
+      <column name="readonly" type="boolean"/>
+      <column name="summary" type="boolean"/>
+      <column name="activation_policy" type="varchar(20)"/>
+      <column name="group_id" type="integer">
+        <constraints foreignKeyName="fk_group_id_rhq_config_prop_grp_def"
+                     references="rhq_config_prop_grp_def"/>
+      </column>
+      <column name="order_index" type="integer"/>
+      <column name="version" type="varchar(50)"/>
+      <column name="parent_map_definition_id" type="integer">
+        <constraints foreignKeyName="fk_parent_map_definition_id_rhq_config_prop_def"
+                     references="rhq_config_prop_def"/>
+      </column>
+      <column name="parent_list_definition_id" type="integer">
+        <constraints foreignKeyName="fk_parent_list_definition_id_rhq_config_prop_def"
+                     references="rhq_config_prop_def"/>
+      </column>
+      <column name="simple_type" type="varchar(20)"/>
+      <column name="allow_custom_enum_value" type="boolean"/>
+      <column name="dtype" type="varchar(10)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="config_def_id" type="integer">
+        <constraints foreignKeyName="fk_config_def_id_rhq_config_def"
+                     references="rhq_config_def"/>
+      </column> 
+      <column name="units" type="smallint"/>
+      <column name="dynamic_type" type="varchar(20)"/>
+      <column name="dynamic_key" type="varchar(128)"/>
+    </createTable>
+ 
+    <createSequence sequenceName="rhq_config_prop_def_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="3" author="jsanda">
+    <createTable tableName="rhq_conf_prop_def_enum">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="string_value" type="varchar(500)"/>
+      <column name="order_index" type="integer"/>
+      <column name="is_default" type="boolean"/>
+      <column name="name" type="varchar(100)"/>
+      <column name="property_def_id" type="integer">
+        <constraints foreignKeyName="fk_property_def_id_rhq_config_prop_def"
+                     references="rhq_config_prop_def"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_conf_prop_def_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="4" author="jsanda">
+    <createTable tableName="rhq_config_prop_constr">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="dtype" type="varchar(15)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="details" type="varchar(250)"/>
+      <column name="config_prop_def_id" type="integer">
+        <constraints foreignKeyName="fk_config_prop_def_id_rhq_config_prop_def"
+                     references="rhq_config_prop_def"/>        
+      </column>
+      <column name="order_index" type="integer"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_conf_prop_constr_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="5" author="jsanda">
+    <createTable tableName="rhq_config">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="notes" type="varchar(512)"/>
+      <column name="version" type="varchar(50)"/>
+      <column name="ctime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="mtime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  
+    <createSequence sequenceName="rhq_config_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="6" author="jsanda">
+    <createTable tableName="rhq_config_property">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="configuration_id" type="integer">
+        <constraints foreignKeyName="fk_configuration_id_rhq_config"
+                     references="rhq_config"
+                     deleteCascade="true"/>
+      </column>
+      <column name="string_value" type="varchar(2000)"/>
+      <column name="override" type="boolean"/>
+      <column name="name" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="dtype" type="varchar(10)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="parent_list_id" type="integer">
+        <constraints foreignKeyName="fk_parent_list_id_rhq_config_property"
+                     references="rhq_config_property"
+                     deleteCascade="true"/>
+      </column>
+      <column name="parent_map_id" type="integer">
+        <constraints foreignKeyName="fk_parent_map_id_rhq_config_property"
+                     references="rhq_config_property"
+                     deleteCascade="true"/>
+      </column>
+      <column name="list_index" type="integer"/>
+      <column name="error_message" type="longvarchar"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_config_property_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_config_property" 
+                 indexName="rhq_config_prop_idx_prop_key"
+                 unique="false">
+      <column name="configuration_id"/>
+      <column name="name"/>
+    </createIndex>
+
+    <createIndex tableName="rhq_config_property"
+                 indexName="rhq_config_prop_idx_map_key"
+                 unique="false">
+      <column name="parent_map_id"/>
+      <column name="name"/>
+    </createIndex>
+
+    <createIndex tableName="rhq_config_property"
+                 indexName="rhq_config_prop_idx_list_key"
+                 unique="false">
+      <column name="parent_list_id"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="7" author="jsanda">
+    <createTable tableName="rhq_config_template">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(100)"/>
+      <column name="description" type="varchar(500)"/>
+      <column name="config_id" type="integer">
+        <constraints foreignKeyName="fk_config_id_rhq_config"
+                     references="rhq_config"/>
+      </column>
+      <column name="config_def_id" type="integer">
+        <constraints foreignKeyName="fk_config_def_id_rhq_config_def"
+                     references="rhq_config_def"/>
+      </column>
+      <column name="is_default" type="boolean"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_config_template_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="8" author="rhq_raw_config">
+    <createTable tableName="rhq_raw_config">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="config_id" type="integer">
+        <constraints foreignKeyName="fk_config_id_rhq_config"
+                     references="rhq_config"
+                     nullable="false"/>
+      </column>
+      <column name="path" type="varchar(512)"/>
+      <column name="contents" type="clob">
+        <constraints nullable="false"/>
+      </column>
+      <column name="sha256" type="varchar(64)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="ctime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="mtime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_raw_config_id_seq" startValue="10001"/>
+  </changeSet>
+</databaseChangeLog>

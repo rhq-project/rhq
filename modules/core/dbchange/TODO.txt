@@ -1,0 +1,1 @@
+* Find out into what type liquibase converts BIGINT on oracle

@@ -39,7 +39,7 @@
         <configuration>
           <changeLogFile>src/main/resources/dbchange-log.xml</changeLogFile>
           <driver>org.postgresql.Driver</driver>
-          <url>dbc:postgresql://127.0.0.1:5432/rhq</url>
+          <url>jdbc:postgresql://127.0.0.1:5432/rhq</url>
           <username>rhqadmin</username>
           <password>rhqadmin</password>
         </configuration>

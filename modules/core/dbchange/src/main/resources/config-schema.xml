@@ -210,7 +210,7 @@
     <createSequence sequenceName="rhq_config_template_id_seq" startValue="10001"/>
   </changeSet>
 
-  <changeSet id="8" author="rhq_raw_config">
+  <changeSet id="8" author="jsanda">
     <createTable tableName="rhq_raw_config">
       <column name="id" type="integer">
         <constraints primaryKey="true" nullable="false"/>

@@ -49,4 +49,73 @@
       <column name="plugin"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="1" author="jsanda">
+    <createTable tableName="rhq_resource_subcat">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(100)"/>
+      <column name="display_name" type="varchar(100)"/>
+      <column name="description" type="varchar(1000)"/>
+      <column name="ctime" type="bigint"/>
+      <column name="mtime" type="bigint"/>
+      <column name="parent_subcategory_id" type="integer">
+        <constraints foreignKeyName="fk_parent_subcategory_id_rhq_resource_subcat"
+                     references="rhq_resource_subcat"/>
+      </column>
+      <column name="resource_type_id" type="integer">
+        <constraints foreignKeyName="fk_resource_type_id_rhq_resource_type"
+                     references="rhq_resource_type"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_resource_subcat_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="2" author="jsanda">
+    <createTable tableName="rhq_resource_type_parents">
+      <column name="resource_type_id" type="integer">
+        <constraints foreignKeyName="fk_resource_type_id_rhq_resource_type"
+                     references="rhq_resource_type"
+                     nullable="false"/>
+      </column>
+      <column name="parent_resource_type_id" type="integer">
+        <constraints foreignKeyName="fk_parent_resource_type_id_rhq_resource_type"
+                     references="rhq_resource_type"
+                     nullable="false"/>
+      </column>       
+    </createTable>
+
+    <addPrimaryKey tableName="rhq_resource_type_parents"
+                     columnNames="resource_type_id,parent_resource_type_id"
+                     constraintName="rhq_res_type_parents_key"/>
+
+    <createSequence sequenceName="rhq_resource_type_parents_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="3" author="jsanda">
+    <createTable tableName="rhq_process_scan">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="query" type="varchar(256)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="name" type="varchar(100)"/>
+      <column name="resource_type_id" type="integer">
+        <constraints foreignKeyName="fk_resource_type_id_rhq_resource_type"
+                     references="rhq_resource_type"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_process_scan_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_process_scan"
+                 indexName="rhq_process_scan_query_index"
+                 unique="true">
+      <column name="query"/>
+      <column name="resource_type_id"/> 
+    </createIndex>
+  </changeSet>
 </databaseChangeLog>

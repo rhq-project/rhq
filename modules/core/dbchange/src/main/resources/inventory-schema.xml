@@ -231,4 +231,15 @@
       <column name="resource_id"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="7" author="jsanda">
+    <createTable tableName="rhq_resource_group">
+       <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      
+    </createTable>
+  
+    <createSequence sequenceName="rhq_resource_group_id_seq" startValue="10001"/>
+  </changeSet>
 </databaseChangeLog>

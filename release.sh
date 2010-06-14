@@ -4,7 +4,6 @@
 
 PROJECT_NAME="rhq"
 PROJECT_DISPLAY_NAME="RHQ"
-PROJECT_GIT_URL="ssh://git.fedorahosted.org/git/rhq/rhq.git"
 PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
 TAG_PREFIX="RHQ"
 MINIMUM_MAVEN_VERSION="2.1.0"
@@ -23,14 +22,14 @@ abort()
 
 usage() 
 {   
-   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0"   
+   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USER" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips"
 }
 
 
 # Process command line args.
 
 EXE=`basename $0`
-if [ "$#" -ne 4 ]; then
+if [ "$#" -ne 5 ]; then
    usage
 fi  
 RELEASE_TYPE="$1"
@@ -38,10 +37,9 @@ if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; th
    usage "Invalid release type: $RELEASE_TYPE"
 fi
 RELEASE_VERSION="$2"
-TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
-RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 DEVELOPMENT_VERSION="$3"
 RELEASE_BRANCH="$4"
+GIT_USER="$5"
 
 
 # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
@@ -126,6 +124,7 @@ fi
 
 
 # Set various local variables.
+
 if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
    echo "We appear to be running in a Hudson job." 
    WORK_DIR="$WORKSPACE"
@@ -134,6 +133,7 @@ elif [ -z "$WORK_DIR" ]; then
 fi
 cd "$WORK_DIR"
 
+PROJECT_GIT_URL="ssh://$GIT_USER@git.fedorahosted.org/git/rhq/rhq.git"
 
 MAVEN_LOCAL_REPO_DIR="$WORK_DIR/m2-repository"
 MAVEN_SETTINGS_FILE="$WORK_DIR/m2-settings.xml"
@@ -147,6 +147,9 @@ fi
 if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
    MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="12"
 fi
+
+TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
+RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 
 
 # Print out a summary of the environment.

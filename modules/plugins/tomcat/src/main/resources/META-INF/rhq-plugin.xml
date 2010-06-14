@@ -570,7 +570,8 @@
                name="Tomcat Cache"
                discovery="TomcatCacheDiscoveryComponent"
                class="TomcatCacheComponent"
-               description="A Tomcat Application (WAR) Cache">
+               description="A Tomcat Application (WAR) Cache"
+               singleton="true">
 
                <plugin-configuration>
                   <c:group name="General">
@@ -953,7 +954,8 @@
          name="Tomcat User Database"
          discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
          class="TomcatUserDatabaseComponent"
-         description="Tomcat User Database">
+         description="Tomcat User Database"
+         singleton="true">
 
          <plugin-configuration>
             <c:group name="General">

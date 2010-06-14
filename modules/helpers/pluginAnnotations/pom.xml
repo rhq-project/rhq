@@ -6,17 +6,15 @@
     <parent>
       <groupId>org.rhq.helpers</groupId>
       <artifactId>rhq-helpers</artifactId>
-      <version>3.0.0.Beta1</version>
+      <version>3.0.0-SNAPSHOT</version>
     </parent>
-
 
     <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-pluginAnnotations</artifactId>
     <packaging>jar</packaging>
 
-    <name>RHQ plugin annotations</name>
+    <name>RHQ Plugin Annotations</name>
     <description>Annotations to help generate plugin descriptors</description>
-    <version>3.0.0.Beta1</version>
 
     <scm>
       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginGen</connection>

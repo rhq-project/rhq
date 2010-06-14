@@ -79,7 +79,7 @@ public class CreateNewPackageChildResourceUIBean {
     // private static final String OUTCOME_SUCCESS = "success";
     private static final String OUTCOME_CANCEL = "cancel";
 
-    private static final String DEFAULT_VERSION = "1.0";
+    private static final String DEFAULT_VERSION = "0";
 
     // Attributes  --------------------------------------------
 

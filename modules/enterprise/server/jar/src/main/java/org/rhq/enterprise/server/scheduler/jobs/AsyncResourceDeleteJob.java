@@ -51,7 +51,7 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
                 log.debug("Before asynchronous deletion of resource[id=" + doomedResourceId + "]");
                 long startTime = System.currentTimeMillis();
                 unscheduleJobs(overlord, doomedResourceId);
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, doomedResourceId);
+                resourceManager.uninventoryResourceAsyncWork(overlord, doomedResourceId);
                 long endTime = System.currentTimeMillis();
                 time += (endTime - startTime);
                 log.debug("After asynchronous deletion of resource[id=" + doomedResourceId + "], took ["

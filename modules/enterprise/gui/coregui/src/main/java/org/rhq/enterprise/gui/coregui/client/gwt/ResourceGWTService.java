@@ -18,7 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import org.rhq.core.domain.auth.Subject;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
+import com.google.gwt.user.client.rpc.RemoteService;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -26,13 +31,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-
-import com.google.gwt.user.client.rpc.RemoteService;
-
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Greg Hinkle
@@ -49,11 +47,12 @@ public interface ResourceGWTService extends RemoteService {
 
     Resource getPlatformForResource(int resourceId);
 
-    List<Integer> deleteResources(int[] resourceIds);
+    List<Integer> uninventoryResources(int[] resourceIds);
 
     void updateResource(Resource resource);
 
-    void createResource(int parentResourceId, int newResourceTypeId, String newResourceName, Configuration newResourceConfiguration);
+    void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration newResourceConfiguration);
 
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc);
 

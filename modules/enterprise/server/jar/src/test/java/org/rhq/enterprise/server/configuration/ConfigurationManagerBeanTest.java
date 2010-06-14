@@ -149,9 +149,9 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         try {
             // perform in-band and out-of-band work in quick succession
             // only need to delete newResource1, which will delete his child newResource2 as well as the agent
-            List<Integer> deletedIds = resourceManager.deleteResource(overlord, newResource1.getId());
+            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, newResource1.getId());
             for (Integer deletedResourceId : deletedIds) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
             }
         } catch (Exception e) {
             System.out.println(e);
@@ -1086,7 +1086,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             return false;
         }
 
-        public void removeResource(int resourceId) {
+        public void uninventoryResource(int resourceId) {
         }
 
         @Asynchronous(guaranteedDelivery = true)

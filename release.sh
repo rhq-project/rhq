@@ -4,9 +4,10 @@
 
 PROJECT_NAME="rhq"
 PROJECT_DISPLAY_NAME="RHQ"
-PROJECT_SVN_URL="http://svn.rhq-project.org/repos/rhq"
+PROJECT_GIT_URL="ssh://git.fedorahosted.org/git/rhq/rhq.git"
+PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
 TAG_PREFIX="RHQ"
-MINIMUM_MAVEN_VERSION="2.0.10"
+MINIMUM_MAVEN_VERSION="2.1.0"
 
 
 # Functions
@@ -21,25 +22,27 @@ abort()
 }
 
 usage() 
-{
-   EXE=`basename $0`
-   abort "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION" "Example: $EXE community 1.3.1 1.3.2-SNAPSHOT"   
+{   
+   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION" "Example: $EXE 3.0.0.GA 3.0.0-SNAPSHOT"   
 }
 
 
 # Process command line args.
 
+EXE=`basename $0`
 if [ "$#" -ne 3 ]; then
    usage
 fi  
 RELEASE_TYPE="$1"
 if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
-   usage
+   usage "Invalid release type: $RELEASE_TYPE"
 fi
 RELEASE_VERSION="$2"
 TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
 RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 DEVELOPMENT_VERSION="$3"
+BRANCH="master"
+RELEASE_BRANCH="release-$RELEASE_VERSION"
 
 
 # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
@@ -114,102 +117,75 @@ if ! which mvn >/dev/null 2>&1; then
 fi
 
 
-# Make sure SUBVERSION_HOME points to a valid Subversion install.
+# Make sure git is in the PATH.
 
-if [ -z "$SUBVERSION_HOME" ]; then
-   abort "SUBVERSION_HOME environment variable is not set." >&2
+if ! which git >/dev/null 2>&1; then
+   abort "git not found in PATH ($PATH)."
 fi
 
-if [ ! -d "$SUBVERSION_HOME" ]; then
-   abort "SUBVERSION_HOME ($SUBVERSION_HOME) does not exist or is not a directory."
-fi
-
-echo "Prepending $SUBVERSION_HOME/bin to PATH..."
-PATH="$SUBVERSION_HOME/bin:$PATH"
-
-if ! which svn >/dev/null 2>&1; then
-   abort "svn not found in PATH ($PATH) - SUBVERSION_HOME must point to an SVN install dir."
-fi
-
-echo "Prepending $SUBVERSION_HOME/lib to LD_LIBRARY_PATH..."
-LD_LIBRARY_PATH="$SUBVERSION_HOME/lib:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH
-
-
-# Set additional required env vars.
-
-LANG=en_US.iso88591
-export LANG
+# TODO: Check for a minimum git version?
 
 
 # Set various local variables.
-
-if [ -z "$BASE_DIR" ]; then
-   BASE_DIR="$HOME"
+if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
+   echo "We appear to be running in a Hudson job." 
+   WORK_DIR="$WORKSPACE"
+elif [ -z "$WORK_DIR" ]; then
+   WORK_DIR="$HOME/release"
 fi
-WORK_DIR="$BASE_DIR/${PROJECT_NAME}-${RELEASE_TYPE}-${RELEASE_VERSION}"   
+cd "$WORK_DIR"
 
-RELEASE_BRANCH_CHECKOUT_DIR="$WORK_DIR/branch"
-RELEASE_TAG_CHECKOUT_DIR="$WORK_DIR/tag"
-if [ -n "$RELEASE_BRANCH" ]; then
-   RELEASE_BRANCH_SVN_URL="$PROJECT_SVN_URL/branches/$RELEASE_BRANCH"
-else
-   RELEASE_BRANCH_SVN_URL="$PROJECT_SVN_URL/trunk"
-fi
-RELEASE_TAG_SVN_URL="$PROJECT_SVN_URL/tags/$RELEASE_TAG"
 
-MAVEN_LOCAL_REPO_DIR="$BASE_DIR/release-m2-repo"
-MAVEN_SETTINGS_FILE="$WORK_DIR/settings.xml"
-MAVEN_OPTS="--settings "$MAVEN_SETTINGS_FILE" --debug --errors -Penterprise -Pdist -Prelease"
+MAVEN_LOCAL_REPO_DIR="$WORK_DIR/m2-repository"
+MAVEN_SETTINGS_FILE="$WORK_DIR/m2-settings.xml"
+MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --errors -Penterprise,dist,release"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
-   MAVEN_OPTS="$MAVEN_OPTS -Pojdbc-driver -Dpackage-connectors -Dexclude-webdav"
+   MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav"
+fi
+if [ -z "$RHQ_RELEASE_QUIET" ]; then
+   MAVEN_ARGS="$MAVEN_ARGS --debug"
 fi
 if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
-   MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="24"
+   MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="12"
 fi
 
 
-# Print out summary of environment.
+# Print out a summary of the environment.
 
 echo
-echo "========================= Environment Variables =============================="
+echo "========================== Environment Variables =============================="
 echo "JAVA_HOME=$JAVA_HOME"
+echo "JAVA5_HOME=$JAVA5_HOME"
 echo "M2_HOME=$M2_HOME"
-echo "SUBVERSION_HOME=$SUBVERSION_HOME"
+echo "MAVEN_OPTS=$MAVEN_OPTS"
 echo "PATH=$PATH"
-echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-echo "LANG=$LANG"
-echo "============================ Local Variables ================================="
+echo "============================= Local Variables ================================="
 echo "WORK_DIR=$WORK_DIR"
 echo "PROJECT_NAME=$PROJECT_NAME"
 echo "RELEASE_TYPE=$RELEASE_TYPE"
 echo "RELEASE_VERSION=$RELEASE_VERSION"
 echo "DEVELOPMENT_VERSION=$DEVELOPMENT_VERSION"
 echo "RELEASE_BRANCH=$RELEASE_BRANCH"
-echo "RELEASE_BRANCH_SVN_URL=$RELEASE_BRANCH_SVN_URL"
-echo "RELEASE_BRANCH_CHECKOUT_DIR=$RELEASE_BRANCH_CHECKOUT_DIR"
 echo "RELEASE_TAG=$RELEASE_TAG"
-echo "RELEASE_TAG_SVN_URL=$RELEASE_TAG_SVN_URL"
-echo "RELEASE_TAG_CHECKOUT_DIR=$RELEASE_TAG_CHECKOUT_DIR"
 echo "MAVEN_LOCAL_REPO_DIR=$MAVEN_LOCAL_REPO_DIR"
 echo "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS=$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS"
 echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
-echo "MAVEN_OPTS=$MAVEN_OPTS"
-echo "============================ Program Versions ================================"
-mvn --version
+echo "MAVEN_ARGS=$MAVEN_ARGS"
+echo "============================= Program Versions ================================"
+git --version
 echo
-svn --version | head -2
-echo "=============================================================================="
+java -version
+echo
+mvn --version | head -1
+echo "==============================================================================="
 echo
 
 
-# Clean the Maven local repo.
-
+# Clean the Maven local repo if it hasn't been purged recently.
 if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
    OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
-   if [ -n "$OUTPUT" ]; then 
-      
-      echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than 24 hours - purging it for a clean-clean build..."
+   if [ -n "$OUTPUT" ]; then       
+      echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
       rm -rf "$MAVEN_LOCAL_REPO_DIR"
    fi
 fi
@@ -217,12 +193,12 @@ mkdir -p "$MAVEN_LOCAL_REPO_DIR"
 
 
 # Create the Maven settings file.
-SETTINGS=${WORK_DIR}/settings.xml
-cat <<EOF >${SETTINGS}
+cat <<EOF >"${MAVEN_SETTINGS_FILE}"
 <settings>
    <localRepository>$MAVEN_LOCAL_REPO_DIR</localRepository>
    
    <profiles>
+
       <profile>
          <id>release</id>
          <properties>
@@ -247,58 +223,86 @@ cat <<EOF >${SETTINGS}
          </properties>
       </profile>
  
-      <profile>
-         <id>ojdbc-driver</id>
-         <repositories>
-            <repository>
-               <id>internal</id>
-               <name>Internal Repository</name>
-               <url>http://jon01.qa.atl2.redhat.com:8042/m2-repo/</url>
-            </repository>
-         </repositories>              
-      </profile>
    </profiles>
 </settings>
 EOF
 
 
-# Run a test build before tagging.
+# Clone and/or checkout the source from git.
 
-if [ -f "$RELEASE_BRANCH_CHECKOUT_DIR" ]; then
-   echo "Purging contents of RELEASE_BRANCH_CHECKOUT_DIR ($RELEASE_BRANCH_CHECKOUT_DIR)..."
-   rm -rf "$RELEASE_BRANCH_CHECKOUT_DIR"
+CLONE_DIR="$WORK_DIR/rhq"
+if [ -d "$CLONE_DIR" ]; then
+   cd "$CLONE_DIR"
+   git status >/dev/null 2>&1
+   # Note, git 1.6 and earlier returns an exit code of 1, rather than 0, if there are any uncommitted changes,
+   # and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if $CLONE_DIR
+   # is a git working copy.
+   if [ $? -le 1 ]; then       
+       echo "Checking out a clean copy of the master branch..."
+       git checkout "$BRANCH"
+       git reset --hard
+       git clean -dxf
+   else
+       cd "$WORK_DIR"
+       rm -rf "$CLONE_DIR"
+   fi
 fi
-mkdir -p "$RELEASE_BRANCH_CHECKOUT_DIR"
+if [ ! -d "$CLONE_DIR" ]; then
+   echo "Cloning the RHQ git repo (this will take about 10-15 minutes)..."
+   git clone ssh://git.fedorahosted.org/git/rhq/rhq.git
+   cd "$CLONE_DIR"
+   git checkout "$BRANCH"
+fi
 
-echo "Checking out branch source from $RELEASE_BRANCH_SVN_URL to $RELEASE_BRANCH_CHECKOUT_DIR (this will take about 5-10 minutes)..."
-# We only need pom.xml and modules/**. Save some time by not checking out etc/**.
-svn co -N $RELEASE_BRANCH_SVN_URL "$RELEASE_BRANCH_CHECKOUT_DIR"
-cd "$RELEASE_BRANCH_CHECKOUT_DIR"
-svn co $RELEASE_BRANCH_SVN_URL/modules
 
-echo "Building project to ensure tests pass and to boostrap local Maven repo (this will take about 10-15 minutes)..."
-# This will build everything except the CLI, enforcing Java 5 APIs.
-mvn install $MAVEN_OPTS -Ddbsetup -Djava5.home=$JAVA5_HOME/jre
+# Create a branch for the release, so we don't have to make any changes to master.
+
+echo "Creating release branch $RELEASE_BRANCH and checking it out..."
+git push origin master:$RELEASE_BRANCH
+git checkout $RELEASE_BRANCH
+
+
+# Run a test build before tagging. This will also publish the snapshot artifacts to the local repo to "bootstrap" the repo.
+
+echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
+# TODO: Add -Djava5.home=$JAVA5_HOME/jre to the below mvn command line once the Java6 API usages have been removed from the Deployer class.
+# TODO: Add -Ddbreset to the below mvn command line - this was removed temporarily to speed up development and testing of this release script.
+# TODO: Remove the -Dmaven.test.skip=true - this was added temporarily to speed up development and testing of this release script.
+# NOTE: No need to do a mvn clean, since we just did either a clone or clean checkout above.
+mvn install $MAVEN_ARGS -Dmaven.test.skip=true
 if [ "$?" -ne 0 ]; then
-   abort "Build failed. Please see above Maven output for details, fix any issues, then try again."
+   abort "Test build failed. Please see above Maven output for details, fix any issues, then try again."
 fi
-# Now build the CLI, enforcing Java 6 APIs.
-cd modules/enterprise/remoting/cli
-mvn install $MAVEN_OPTS
-if [ "$?" -ne 0 ]; then
-   abort "Build failed. Please see above Maven output for details, fix any issues, then try again."
-fi
-
 echo
 echo "Test build succeeded!"
 
 
-# Tag the release.
+# Clean up the snapshot jars produced by the test build.
+
+echo "Cleaning up snapshot jars produced by test build..."
+mvn clean $MAVEN_ARGS
+
+
+# Do a dry run of tagging the release.
+
+echo "Doing a dry run of tagging the release..."
+mvn release:prepare $MAVEN_ARGS --batch-mode -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
+EXIT_CODE=$?
+mvn release:clean $MAVEN_ARGS
+if [ "$EXIT_CODE" -ne 0 ]; then
+   abort "Tagging dry run failed. Please see above Maven output for details, fix any issues, then try again."
+fi
+echo
+echo "Tagging dry run succeeded!"
+
+
+# If the dry run succeeded, tag it for real.
 
 echo "Tagging the release..."
-cd "$RELEASE_BRANCH_CHECKOUT_DIR"
-mvn release:prepare $MAVEN_OPTS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=clean verify $MAVEN_OPTS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
-if [ "$?" -ne 0 ]; then
+mvn release:prepare $MAVEN_ARGS --batch-mode -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false
+EXIT_CODE=$?
+mvn release:clean $MAVEN_ARGS
+if [ "$EXIT_CODE" -ne 0 ]; then
    abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
 fi
 echo
@@ -307,27 +311,21 @@ echo "Tagging succeeded!"
 
 # Checkout the tag and build it.
 
-if [ -f "$RELEASE_TAG_CHECKOUT_DIR" ]; then
-   echo "Purging contents of RELEASE_TAG_CHECKOUT_DIR ($RELEASE_TAG_CHECKOUT_DIR)..."
-   rm -rf "$RELEASE_TAG_CHECKOUT_DIR"
-fi
-mkdir -p "$RELEASE_TAG_CHECKOUT_DIR"
-
-echo "Checking out tag source from $RELEASE_TAG_SVN_URL to $RELEASE_TAG_CHECKOUT_DIR (this will take about 5-10 minutes)..."
-svn co -N $RELEASE_TAG_SVN_URL "$RELEASE_TAG_CHECKOUT_DIR"
-cd "$RELEASE_TAG_CHECKOUT_DIR"
-svn co $RELEASE_TAG_SVN_URL/modules
-
-echo "Building release from tag (this will take about 10-15 minutes)..."
-mvn install $MAVEN_OPTS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
+echo "Checking out release tag $RELEASE_TAG..."
+git checkout "$RELEASE_TAG"
+echo "Building release from tag (this will take about 5-10 minutes)..."
+mvn install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
 if [ "$?" -ne 0 ]; then
-   abort "Build failed. Please see above Maven output for details, fix any issues, then try again."
+   abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 fi
 echo
 echo "Release build succeeded!"
 
-echo "=========================== Release Info ==============================="
+
+echo
+echo "=============================== Release Info =================================="
 echo "Version: $RELEASE_VERSION"
-echo "Branch SVN URL: $RELEASE_BRANCH_SVN_URL"
-echo "Tag SVN URL: $RELEASE_TAG_SVN_URL"
-echo "========================================================================"
+echo "Branch URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/heads/$RELEASE_BRANCH"
+echo "Tag URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/tags/$RELEASE_TAG"
+echo "==============================================================================="
+

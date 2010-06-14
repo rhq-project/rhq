@@ -214,21 +214,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return entityManager.merge(resource);
     }
 
-    public List<Integer> deleteResources(Subject user, int[] resourceIds) {
-        List<Integer> deletedResourceIds = new ArrayList<Integer>();
+    public List<Integer> uninventoryResources(Subject user, int[] resourceIds) {
+        List<Integer> uninventoryResourceIds = new ArrayList<Integer>();
 
         for (Integer resourceId : resourceIds) {
-            if (!deletedResourceIds.contains(resourceId)) {
-                deletedResourceIds.addAll(deleteResource(user, resourceId));
+            if (!uninventoryResourceIds.contains(resourceId)) {
+                uninventoryResourceIds.addAll(uninventoryResource(user, resourceId));
             }
         }
 
-        return deletedResourceIds;
+        return uninventoryResourceIds;
     }
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public List<Integer> deleteResource(Subject user, int resourceId) {
+    public List<Integer> uninventoryResource(Subject user, int resourceId) {
         Resource resource = resourceManager.getResourceTree(resourceId, true);
         if (resource == null) {
             log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
@@ -237,7 +237,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         // make sure the user is authorized to delete this resource (which implies you can delete all its children)
         if (!authorizationManager.hasResourcePermission(user, Permission.DELETE_RESOURCE, resourceId)) {
-            throw new PermissionException("You do not have permission to delete resource [" + resourceId + "]");
+            throw new PermissionException("You do not have permission to uninventory resource [" + resourceId + "]");
         }
 
         // if the resource has no parent, its a top root resource and its agent should be purged too
@@ -267,7 +267,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Subject overlord = subjectManager.getOverlord();
 
         // delete the resource and all its children
-        log.info("User [" + user + "] is marking resource [" + resource + "] for asynchronous deletion");
+        log.info("User [" + user + "] is marking resource [" + resource + "] for asynchronous uninventory");
 
         // set agent references null
         // foobar the resourceKeys
@@ -282,14 +282,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         int resourcesDeleted = markDeletedQuery.executeUpdate();
 
         if (resourcesDeleted != toBeDeletedResourceIds.size()) {
-            log.error("Tried to delete " + toBeDeletedResourceIds.size() + " resources, but actually deleted "
-                + resourcesDeleted);
+            log.error("Tried to uninventory " + toBeDeletedResourceIds.size()
+                + " resources, but actually uninventoried " + resourcesDeleted);
         }
 
         // still need to tell the agent about the removed resources so it stops avail reports
         if (agentClient != null) {
             try {
-                agentClient.getDiscoveryAgentService().removeResource(resourceId);
+                agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
             } catch (Exception e) {
                 log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
             }
@@ -315,7 +315,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void deleteSingleResourceInNewTransaction(Subject user, int resourceId) {
+    public void uninventoryResourceAsyncWork(Subject user, int resourceId) {
         if (!authorizationManager.isOverlord(user)) {
             throw new IllegalArgumentException("Only the overlord can execute out-of-band async resource delete method");
         }
@@ -1994,10 +1994,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         return result;
-    }
-
-    public void uninventoryResources(Subject subject, int[] resourceIds) {
-        deleteResources(subject, resourceIds);
     }
 
     @SuppressWarnings("unchecked")

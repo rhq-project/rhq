@@ -400,8 +400,8 @@
       
    </target>
 
-   <target name="package-connectors" if="package-connectors">
-      <echo>Deploying the rt-filter conectors ...</echo>
+   <target name="package-connectors">
+      <echo>Deploying the response-time servlet filter connectors ...</echo>
       <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip" />
       <zip destfile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip">
          <zipfileset dir="${basedir}/../../agent/src/etc/product_connectors">

@@ -44,6 +44,7 @@
                <ui:include src="/rhq/common/searchInterface.xhtml">
                   <ui:param name="searchButtonId" value="browseGroupsForm:searchButtonJSF" />
                   <ui:param name="searchSubsystem" value="GROUP" />
+                  <ui:param name="defaultSearchText" value="#{param.search}" />
                </ui:include>
 
                <a4j:commandButton id="searchButtonJSF" value="GO" 

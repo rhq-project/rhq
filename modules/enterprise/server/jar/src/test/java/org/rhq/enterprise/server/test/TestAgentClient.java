@@ -230,7 +230,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, Content
         return null;
     }
 
-    public void removeResource(int resourceId) {
+    public void uninventoryResource(int resourceId) {
     }
 
     public void updatePluginConfiguration(int resourceId, Configuration newPluginConfiguration)

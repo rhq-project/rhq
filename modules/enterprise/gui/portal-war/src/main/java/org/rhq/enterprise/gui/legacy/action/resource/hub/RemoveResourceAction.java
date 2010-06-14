@@ -68,7 +68,7 @@ public class RemoveResourceAction extends BaseAction {
 
         // ask the server to delete the doomed resources
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        List<Integer> deletedResourceIds = resourceManager.deleteResources(subject, ArrayUtils
+        List<Integer> deletedResourceIds = resourceManager.uninventoryResources(subject, ArrayUtils
             .unwrapCollection(doomedResourceIds));
 
         // a doomed resource is one that we asked to be deleted.

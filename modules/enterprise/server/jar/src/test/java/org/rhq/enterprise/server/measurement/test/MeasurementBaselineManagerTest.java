@@ -440,9 +440,9 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         try {
             // perform in-band and out-of-band work in quick succession
             // deleteResource will remove platform and platform2, as well as the agent 
-            List<Integer> deletedIds = resourceManager.deleteResource(overlord, platform.getId());
+            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, platform.getId());
             for (Integer deletedResourceId : deletedIds) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
             }
 
             begin();
@@ -553,9 +553,9 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             Resource root = allResources.get(0);
             // perform in-band and out-of-band work in quick succession
             // this also deletes the agent
-            List<Integer> deletedIds = resourceManager.deleteResource(overlord, root.getId());
+            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, root.getId());
             for (Integer deletedResourceId : deletedIds) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
             }
 
             begin();

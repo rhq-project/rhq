@@ -4,9 +4,10 @@
 
 PROJECT_NAME="rhq"
 PROJECT_DISPLAY_NAME="RHQ"
-PROJECT_SVN_URL="http://svn.rhq-project.org/repos/rhq"
+PROJECT_GIT_URL="ssh://git.fedorahosted.org/git/rhq/rhq.git"
+PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
 TAG_PREFIX="RHQ"
-MINIMUM_MAVEN_VERSION="2.0.10"
+MINIMUM_MAVEN_VERSION="2.1.0"
 
 
 # Functions
@@ -21,23 +22,28 @@ abort()
 }
 
 usage() 
-{
-   EXE=`basename $0`
-   abort "Usage:   $EXE RELEASE_VERSION DEVELOPMENT_VERSION" "Example: $EXE 3.0.0.Beta1 3.0.0-SNAPSHOT"   
+{   
+   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION" "Example: $EXE 3.0.0.GA 3.0.0-SNAPSHOT"   
 }
 
 
 # Process command line args.
 
-if [ "$#" -ne 2 ]; then
+EXE=`basename $0`
+if [ "$#" -ne 3 ]; then
    usage
 fi  
-RELEASE_VERSION="$1"
+RELEASE_TYPE="$1"
+if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
+   usage "Invalid release type: $RELEASE_TYPE"
+fi
+RELEASE_VERSION="$2"
 TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
 RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
-DEVELOPMENT_VERSION="$2"
+DEVELOPMENT_VERSION="$3"
 BRANCH="master"
 RELEASE_BRANCH="release-$RELEASE_VERSION"
+
 
 # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
 
@@ -111,33 +117,13 @@ if ! which mvn >/dev/null 2>&1; then
 fi
 
 
-# Make sure GIT_HOME points to a valid git install.
-
-#if [ -z "$GIT_HOME" ]; then
-#   abort "GIT_HOME environment variable is not set." >&2
-#fi
-
-#if [ ! -d "$GIT_HOME" ]; then
-#   abort "GIT_HOME ($GIT_HOME) does not exist or is not a directory."
-#fi
-
-#echo "Prepending $GIT_HOME/bin to PATH..."
-#PATH="$GIT_HOME/bin:$PATH"
+# Make sure git is in the PATH.
 
 if ! which git >/dev/null 2>&1; then
-   #abort "git not found in PATH ($PATH) - GIT_HOME must point to a git install dir."
    abort "git not found in PATH ($PATH)."
 fi
 
-#echo "Prepending $GIT_HOME/lib to LD_LIBRARY_PATH..."
-#LD_LIBRARY_PATH="$GIT_HOME/lib:$LD_LIBRARY_PATH"
-#export LD_LIBRARY_PATH
-
-
-# Set additional required env vars.
-
-LANG=en_US.iso88591
-export LANG
+# TODO: Check for a minimum git version?
 
 
 # Set various local variables.
@@ -152,49 +138,46 @@ cd "$WORK_DIR"
 
 MAVEN_LOCAL_REPO_DIR="$WORK_DIR/m2-repository"
 MAVEN_SETTINGS_FILE="$WORK_DIR/m2-settings.xml"
-MAVEN_ARGS="--settings "$MAVEN_SETTINGS_FILE" --debug --errors -Penterprise,dist,release"
+MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --errors -Penterprise,dist,release"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
-   MAVEN_OPTS="$MAVEN_OPTS -Dexclude-webdav"
+   MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav"
+fi
+if [ -z "$RHQ_RELEASE_QUIET" ]; then
+   MAVEN_ARGS="$MAVEN_ARGS --debug"
 fi
 if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
    MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="12"
 fi
 
 
-# Print out summary of environment.
+# Print out a summary of the environment.
 
 echo
-echo "========================= Environment Variables =============================="
+echo "========================== Environment Variables =============================="
 echo "JAVA_HOME=$JAVA_HOME"
+echo "JAVA5_HOME=$JAVA5_HOME"
 echo "M2_HOME=$M2_HOME"
 echo "MAVEN_OPTS=$MAVEN_OPTS"
-#echo "GIT_HOME=$GIT_HOME"
 echo "PATH=$PATH"
-echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-echo "LANG=$LANG"
-echo "============================ Local Variables ================================="
+echo "============================= Local Variables ================================="
 echo "WORK_DIR=$WORK_DIR"
 echo "PROJECT_NAME=$PROJECT_NAME"
 echo "RELEASE_TYPE=$RELEASE_TYPE"
 echo "RELEASE_VERSION=$RELEASE_VERSION"
 echo "DEVELOPMENT_VERSION=$DEVELOPMENT_VERSION"
 echo "RELEASE_BRANCH=$RELEASE_BRANCH"
-echo "RELEASE_BRANCH_SVN_URL=$RELEASE_BRANCH_SVN_URL"
-echo "RELEASE_BRANCH_CHECKOUT_DIR=$RELEASE_BRANCH_CHECKOUT_DIR"
 echo "RELEASE_TAG=$RELEASE_TAG"
-echo "RELEASE_TAG_SVN_URL=$RELEASE_TAG_SVN_URL"
-echo "RELEASE_TAG_CHECKOUT_DIR=$RELEASE_TAG_CHECKOUT_DIR"
 echo "MAVEN_LOCAL_REPO_DIR=$MAVEN_LOCAL_REPO_DIR"
 echo "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS=$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS"
 echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
 echo "MAVEN_ARGS=$MAVEN_ARGS"
-echo "============================ Program Versions ================================"
-java -version
-echo
+echo "============================= Program Versions ================================"
 git --version
 echo
+java -version
+echo
 mvn --version | head -1
-echo "=============================================================================="
+echo "==============================================================================="
 echo
 
 
@@ -244,7 +227,9 @@ cat <<EOF >"${MAVEN_SETTINGS_FILE}"
 </settings>
 EOF
 
+
 # Clone and/or checkout the source from git.
+
 CLONE_DIR="$WORK_DIR/rhq"
 if [ -d "$CLONE_DIR" ]; then
    cd "$CLONE_DIR"
@@ -270,13 +255,15 @@ if [ ! -d "$CLONE_DIR" ]; then
 fi
 
 
-# Create a branch for the release, so we don't have to mess with master.
-echo "Creating branch $RELEASE_BRANCH and checking it out..."
+# Create a branch for the release, so we don't have to make any changes to master.
+
+echo "Creating release branch $RELEASE_BRANCH and checking it out..."
 git push origin master:$RELEASE_BRANCH
 git checkout $RELEASE_BRANCH
 
 
-# Run a test build before tagging.
+# Run a test build before tagging. This will also publish the snapshot artifacts to the local repo to "bootstrap" the repo.
+
 echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
 # TODO: Add -Djava5.home=$JAVA5_HOME/jre to the below mvn command line once the Java6 API usages have been removed from the Deployer class.
 # TODO: Add -Ddbreset to the below mvn command line - this was removed temporarily to speed up development and testing of this release script.
@@ -291,11 +278,13 @@ echo "Test build succeeded!"
 
 
 # Clean up the snapshot jars produced by the test build.
+
 echo "Cleaning up snapshot jars produced by test build..."
 mvn clean $MAVEN_ARGS
 
 
 # Do a dry run of tagging the release.
+
 echo "Doing a dry run of tagging the release..."
 mvn release:prepare $MAVEN_ARGS --batch-mode -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
 EXIT_CODE=$?
@@ -308,8 +297,8 @@ echo "Tagging dry run succeeded!"
 
 
 # If the dry run succeeded, tag it for real.
+
 echo "Tagging the release..."
-cd "$RELEASE_BRANCH_CHECKOUT_DIR"
 mvn release:prepare $MAVEN_ARGS --batch-mode -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false
 EXIT_CODE=$?
 mvn release:clean $MAVEN_ARGS
@@ -321,6 +310,7 @@ echo "Tagging succeeded!"
 
 
 # Checkout the tag and build it.
+
 echo "Checking out release tag $RELEASE_TAG..."
 git checkout "$RELEASE_TAG"
 echo "Building release from tag (this will take about 5-10 minutes)..."
@@ -332,9 +322,10 @@ echo
 echo "Release build succeeded!"
 
 
-echo "=========================== Release Info ==============================="
+echo
+echo "=============================== Release Info =================================="
 echo "Version: $RELEASE_VERSION"
-echo "Branch URL: $RELEASE_BRANCH_SVN_URL"
-echo "Tag URL: http://git.fedorahosted.org/git/?p=rhq/rhq.git;a=shortlog;h=refs/heads/$RELEASE_BRANCH"
-echo "========================================================================"
+echo "Branch URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/heads/$RELEASE_BRANCH"
+echo "Tag URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/tags/$RELEASE_TAG"
+echo "==============================================================================="
 

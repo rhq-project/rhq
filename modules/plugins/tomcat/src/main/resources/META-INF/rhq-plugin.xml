@@ -152,7 +152,7 @@
       <operation
          name="start"
          displayName="Start"
-         description="Start this Tomcat server. The script used is specified in Control Properties.">
+         description="Start this Tomcat server. The script used is specified in the Control section of Connection Properties.">
          <results>
             <c:simple-property
                name="operationResult"
@@ -163,7 +163,7 @@
       <operation
          name="shutdown"
          displayName="Shutdown"
-         description="Shutdown this Tomcat server. The script used is specified in Control Properties.">
+         description="Shutdown this Tomcat server. The script used is specified in the Control section of Connection Properties.">
          <results>
             <c:simple-property
                name="operationResult"
@@ -174,7 +174,7 @@
       <operation
          name="restart"
          displayName="Restart"
-         description="Restart this Tomcat server. The scripts used are specified in Control Properties.">
+         description="Restart this Tomcat server. The scripts used are specified in the Control section of Connection Properties.">
          <results>
             <c:simple-property
                name="operationResult"

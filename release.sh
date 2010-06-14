@@ -23,14 +23,14 @@ abort()
 
 usage() 
 {   
-   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION" "Example: $EXE 3.0.0.GA 3.0.0-SNAPSHOT"   
+   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0"   
 }
 
 
 # Process command line args.
 
 EXE=`basename $0`
-if [ "$#" -ne 3 ]; then
+if [ "$#" -ne 4 ]; then
    usage
 fi  
 RELEASE_TYPE="$1"
@@ -41,8 +41,7 @@ RELEASE_VERSION="$2"
 TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
 RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 DEVELOPMENT_VERSION="$3"
-BRANCH="master"
-RELEASE_BRANCH="release-$RELEASE_VERSION"
+RELEASE_BRANCH="$4"
 
 
 # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
@@ -238,8 +237,9 @@ if [ -d "$CLONE_DIR" ]; then
    # and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if $CLONE_DIR
    # is a git working copy.
    if [ $? -le 1 ]; then       
-       echo "Checking out a clean copy of the master branch..."
-       git checkout "$BRANCH"
+       echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
+       git checkout "$RELEASE_BRANCH"
+       [ $? -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
        git reset --hard
        git clean -dxf
    else
@@ -248,18 +248,13 @@ if [ -d "$CLONE_DIR" ]; then
    fi
 fi
 if [ ! -d "$CLONE_DIR" ]; then
-   echo "Cloning the RHQ git repo (this will take about 10-15 minutes)..."
-   git clone ssh://git.fedorahosted.org/git/rhq/rhq.git
+   echo "Cloning the $PROJECT_NAME git repo (this will take about 10-15 minutes)..."
+   git clone "$PROJECT_GIT_URL"
+   [ $? -ne 0 ] && abort "Failed to clone $PROJECT_NAME git repo ($PROJECT_GIT_URL)."
    cd "$CLONE_DIR"
-   git checkout "$BRANCH"
+   git checkout "$RELEASE_BRANCH"
+   [ $? -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
 fi
-
-
-# Create a branch for the release, so we don't have to make any changes to master.
-
-echo "Creating release branch $RELEASE_BRANCH and checking it out..."
-git push origin master:$RELEASE_BRANCH
-git checkout $RELEASE_BRANCH
 
 
 # Run a test build before tagging. This will also publish the snapshot artifacts to the local repo to "bootstrap" the repo.

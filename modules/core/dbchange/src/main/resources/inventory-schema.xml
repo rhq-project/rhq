@@ -201,4 +201,34 @@
       <column name="parent_resource_id"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="6" author="jsanda">
+    <createTable tableName="rhq_resource_error">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="resource_id" type="integer">
+        <constraints foreignKeyName="fk_resource_id_rhq_resource"
+                     references="rhq_resource"
+                     nullable="false"/>
+      </column>
+      <column name="time_occurred" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="error_type" type="varchar(32)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="summary" type="varchar(1000)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="detail" type="longvarchar"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_resource_error_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_resource_error"
+                 indexName="rhq_res_error_idx_res_id">
+      <column name="resource_id"/>
+    </createIndex>
+  </changeSet>
 </databaseChangeLog>

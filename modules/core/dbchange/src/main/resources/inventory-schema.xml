@@ -118,4 +118,87 @@
       <column name="resource_type_id"/> 
     </createIndex>
   </changeSet>
+
+  <changeSet id="4" author="jsanda">
+    <createTable tableName="rhq_prd_ver">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="version" type="varchar(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="res_type_id" type="integer">
+        <constraints foreignKeyName="fk_res_type_id_rhq_resource_type"
+                     references="rhq_resource_type"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_prd_ver_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="5" author="jsanda">
+    <createTable tableName="rhq_resource">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="resource_type_id" type="integer">
+        <constraints foreignKeyName="fk_resource_type_id_rhq_resource_type"
+                     references="rhq_resource_type"
+                     nullable="false"/>
+      </column>
+      <column name="uuid" type="varchar(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="name" type="varchar(500)"/>
+      <column name="resource_key" type="varchar(500)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="agent_id" type="integer">
+        <constraints foreignKeyName="fk_agent_id_rhq_agent"
+                     references="rhq_agent"/>
+      </column>
+      <column name="inventory_status" type="varchar(20)"/>
+      <column name="connected" type="boolean"/>
+      <column name="description" type="varchar(1000)"/>
+      <column name="version" type="varchar(50)"/>
+      <column name="ctime" type="bigint"/>
+      <column name="mtime" type="bigint"/>
+      <column name="itime" type="bigint"/>
+      <column name="res_configuration_id" type="integer">
+        <constraints foreignKeyName="fk_res_configuration_id_rhq_config"
+                     references="rhq_config"/>
+      </column>
+      <column name="plugin_configuration_id" type="integer">
+        <constraints foreignKeyName="fk_plugin_configuration_id_rhq_config"
+                     references="rhq_config"/>
+      </column>
+      <column name="modified_by" type="integer"/>
+      <column name="location" type="varchar(100)"/>
+      <column name="parent_resource_id" type="integer">
+        <constraints foreignKeyName="fk_parent_resource_id_rhq_resource"
+                     references="rhq_resource"/>
+      </column>
+      <column name="product_version_id" type="integer">
+        <constraints foreignKeyName="fk_product_version_id_rhq_prd_ver"
+                     references="rhq_prd_ver"/>
+      </column>
+    </createTable>
+ 
+    <createSequence sequenceName="rhq_resource_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_resource"
+                 indexName="rhq_resource_idx_key">
+      <column name="resource_key"/>
+    </createIndex>
+
+    <createIndex tableName="rhq_resource"
+                 indexName="rhq_resource_idx_type">
+      <column name="resource_type_id"/>
+    </createIndex>
+
+    <createIndex tableName="rhq_resource"
+                 indexName="rhq_resource_idx_parent">
+      <column name="parent_resource_id"/>
+    </createIndex>
+  </changeSet>
 </databaseChangeLog>

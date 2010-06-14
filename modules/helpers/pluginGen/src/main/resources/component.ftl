@@ -152,7 +152,7 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 
 
     /**
-     * Tear down the rescource connection
+     * Tear down the resource connection
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
      */
     public void stop() {

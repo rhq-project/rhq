@@ -550,12 +550,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             Iterator<Resource> resIter = resources.iterator();
             while (resIter.hasNext()) {
                 Resource res = resIter.next();
-                List<Integer> deletedIds = resourceManager.deleteResource(overlord, res.getId());
+                List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, res.getId());
                 // do this out of band because the current transaction is locking rows that due to
                 // updates that may need to get deleted. If you do it here the NewTrans used below
                 // may deadlock with the current transactions locks.
                 for (Integer deletedResourceId : deletedIds) {
-                    resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                    resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
                 }
                 resIter.remove();
             }

@@ -44,6 +44,8 @@
                <ui:include src="/rhq/common/searchInterface.xhtml">
                   <ui:param name="searchButtonId" value="browseResourcesForm:searchButtonJSF" />
                   <ui:param name="searchSubsystem" value="RESOURCE" />
+                  <ui:param name="defaultSearchText" value="#{param.search}" />
+                  <ui:param name="defaultSavedSearchPattern" value="#{param.searchId}" />
                </ui:include>
 
                <a4j:commandButton id="searchButtonJSF" value="GO" 

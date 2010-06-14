@@ -966,8 +966,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceManager.getResource(subject, resourceId);
     }
 
-    public void uninventoryResources(Subject subject, int[] resourceIds) {
-        resourceManager.uninventoryResources(subject, resourceIds);
+    public List<Integer> uninventoryResources(Subject subject, int[] resourceIds) {
+        return resourceManager.uninventoryResources(subject, resourceIds);
     }
 
     //RESOURCEMANAGER: END ----------------------------------

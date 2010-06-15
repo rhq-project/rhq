@@ -22,6 +22,9 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
@@ -40,7 +43,7 @@ public class EventCriteria extends Criteria {
     private Integer filterId;
     private String filterDetail;
     private String filterSourceName; // requires overrides
-    private EventSeverity filterSeverity;
+    private List<EventSeverity> filterSeverities;
     private Long filterStartTime; // requires overrides
     private Long filterEndTime; // requires overrides
     private Integer filterResourceId; // requires overrides
@@ -73,6 +76,7 @@ public class EventCriteria extends Criteria {
             + "    FROM Resource res " //
             + "    JOIN res.parentResource parent " //
             + "   WHERE parent.id = ? )");
+        filterOverrides.put("severities", "severity IN ( ? )");
     }
 
     @Override
@@ -100,8 +104,10 @@ public class EventCriteria extends Criteria {
         this.filterEndTime = filterEndTime;
     }
 
-    public void addFilterSeverity(EventSeverity filterSeverity) {
-        this.filterSeverity = filterSeverity;
+    public void addFilterSeverities(EventSeverity... filterSeverities) {
+        if (filterSeverities != null) {
+            this.filterSeverities = Arrays.asList(filterSeverities);
+        }
     }
 
     public void addFilterResourceId(Integer filterResourceId) {

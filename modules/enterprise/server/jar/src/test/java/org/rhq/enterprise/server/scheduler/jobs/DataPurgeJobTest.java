@@ -73,6 +73,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
@@ -402,9 +403,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
         EventManagerLocal mgr = LookupUtil.getEventManager();
         mgr.addEventData(eventMap);
-        PageList<EventComposite> persistedEvents = mgr.findEvents(LookupUtil.getSubjectManager().getOverlord(),
-            new int[] { res.getId() }, timestamp - 1L, timestamp + count + 1L,
-            new EventSeverity[] { EventSeverity.DEBUG }, null, null, new PageControl());
+
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        PageList<EventComposite> persistedEvents = mgr.findEventComposites(overlord, EntityContext.forResource(res
+            .getId()), timestamp - 1L, timestamp + count + 1L, new EventSeverity[] { EventSeverity.DEBUG }, null, null,
+            new PageControl());
         assert persistedEvents.getTotalSize() == count : "did not persist all events, only persisted: "
             + persistedEvents.getTotalSize();
 

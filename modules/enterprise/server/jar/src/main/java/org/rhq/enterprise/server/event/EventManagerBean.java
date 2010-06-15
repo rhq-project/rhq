@@ -20,10 +20,8 @@ package org.rhq.enterprise.server.event;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -64,19 +62,17 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
-import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
  * Manager for Handling of {@link Event}s.
@@ -243,7 +239,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     @NotNull
     @SuppressWarnings("unchecked")
-    public List<Event> findEventsForResources(Subject subject, List<Resource> resources, long startDate, long endDate) {
+    private List<Event> findEventsForResources(Subject subject, List<Resource> resources, long startDate, long endDate) {
 
         if (resources == null || resources.size() == 0)
             return new ArrayList<Event>();
@@ -259,80 +255,13 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return ret;
     }
 
-    public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parent, int type, long begin,
-        long endDate, EventSeverity[] severities, PageControl pc) {
-
-        List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parent, type);
-        int[] resourceIds = new int[resources.size()];
-        int i = 0;
-        for (Resource res : resources)
-            resourceIds[i++] = res.getId();
-
-        PageList<EventComposite> comp = findEvents(subject, resourceIds, begin, endDate, severities, null, null, pc);
-        return comp;
-    }
-
-    public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parent, int type, long begin,
-        long endDate, EventSeverity[] severities, String source, String searchString, PageControl pc) {
-
-        List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parent, type);
-        for (Resource res : resources) {
-            if (authorizationManager.canViewResource(subject, res.getId()) == false) {
-                throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to view event history for autoGroup[parentResourceId=" + parent
-                    + ", resourceTypeId=" + type + "], root cause: missing permission to view resource[id="
-                    + res.getId() + "]");
-            }
-        }
-
-        int[] resourceIds = new int[resources.size()];
-        int i = 0;
-        for (Resource res : resources) {
-            resourceIds[i++] = res.getId();
-        }
-
-        PageList<EventComposite> comp = findEvents(subject, resourceIds, begin, endDate, severities, source,
-            searchString, pc);
-
-        return comp;
-    }
-
-    public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity[] severities, PageControl pc) {
-
-        List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
-        int[] resourceIds = new int[resources.size()];
-        int i = 0;
-        for (Resource res : resources) {
-            resourceIds[i++] = res.getId();
-        }
-
-        PageList<EventComposite> comp = findEvents(subject, resourceIds, begin, endDate, severities, null, null, pc);
-        return comp;
-    }
-
-    public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity[] severities, String source, String searchString, PageControl pc) {
-
-        List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
-        int[] resourceIds = new int[resources.size()];
-        int i = 0;
-        for (Resource res : resources) {
-            resourceIds[i++] = res.getId();
-        }
-
-        PageList<EventComposite> comp = findEvents(subject, resourceIds, begin, endDate, severities, source,
-            searchString, pc);
-
-        return comp;
-    }
-
     public int[] getEventCounts(Subject subject, int resourceId, long begin, long end, int numBuckets) {
 
         int[] buckets = new int[numBuckets];
 
         // TODO possibly rewrite query so that the db calculates the buckets (?)
-        List<EventComposite> events = findEventsForResource(subject, resourceId, begin, end, null, null);
+        List<EventComposite> events = findEventComposites(subject, EntityContext.forResource(resourceId), begin, end,
+            null, null, null, PageControl.getUnlimitedInstance());
 
         long timeDiff = end - begin;
         long timePerBucket = timeDiff / numBuckets;
@@ -427,170 +356,6 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return buckets;
     }
 
-    @NotNull
-    public PageList<EventComposite> findEventsForResource(Subject subject, int resourceId, long startDate,
-        long endDate, EventSeverity[] severities, PageControl pc) {
-
-        PageList<EventComposite> comp = findEvents(subject, new int[] { resourceId }, startDate, endDate, severities,
-            null, null, pc);
-        return comp;
-    }
-
-    public PageList<EventComposite> findEvents(Subject subject, int[] resourceIds, long begin, long end,
-        EventSeverity[] severities, String source, String searchString, PageControl pc) {
-
-        if (pc == null) {
-            pc = new PageControl();
-        }
-
-        PageList<EventComposite> pl = new PageList<EventComposite>(pc);
-
-        if (resourceIds == null || resourceIds.length == 0) {
-            return pl;
-        }
-
-        /*
-         * We're still here - either the specified event was not found or we got called without
-         * passing any specific event. Return a bunch of events for the resource etc.
-         */
-        String query = setupEventsQuery(resourceIds, severities, source, searchString, pc, false);
-        runEventsQuery(resourceIds, begin, end, severities, source, searchString, pc, pl, query);
-        query = setupEventsQuery(resourceIds, severities, source, searchString, pc, true);
-        int totals = runEventsCountQuery(resourceIds, begin, end, severities, source, searchString, pc, pl, query);
-        pl.setTotalSize(totals);
-
-        return pl;
-    }
-
-    private void runEventsQuery(int[] resourceIds, long begin, long end, EventSeverity[] severities, String source,
-        String searchString, PageControl pc, PageList<EventComposite> pl, String query) {
-        Connection conn = null;
-        PreparedStatement stm = null;
-        ResultSet rs = null;
-        try {
-            conn = rhqDs.getConnection();
-            stm = conn.prepareStatement(query);
-            int i = 1;
-            JDBCUtil.bindNTimes(stm, resourceIds, i);
-            i += resourceIds.length;
-            stm.setLong(i++, begin);
-            stm.setLong(i++, end);
-            if (severities != null) {
-                for (int j = 0; j < severities.length; j++) {
-                    stm.setString(i++, severities[j].toString());
-                }
-            }
-            if (isFilled(searchString))
-                stm.setString(i++, QueryUtility.formatSearchParameter(searchString));
-            if (isFilled(source))
-                stm.setString(i++, QueryUtility.formatSearchParameter(source));
-
-            rs = stm.executeQuery();
-            while (rs.next()) {
-                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(6), rs.getString(7), rs.getInt(2),
-                    EventSeverity.valueOf(rs.getString(4)), rs.getString(3), rs.getLong(5));
-                pl.add(ec);
-            }
-
-        } catch (SQLException sq) {
-            log.error("runEventsQuery: Error retrieving events: " + sq.getMessage(), sq);
-            log.error("query is [" + query + "].");
-            // these values should be useful in working out how we built the query in setupEventsQuery()
-            log.error("resourceIds[] has [" + resourceIds.length + "] members.");
-            log.error("severities are [" + ((null == severities) ? severities : Arrays.asList(severities)) + "].");
-            log.error("source is [" + source + "].");
-            log.error("searchString is [" + searchString + "].");
-            log.error("PageControl is [" + pc + "].");
-        } finally {
-            JDBCUtil.safeClose(conn, stm, rs);
-        }
-        return;
-    }
-
-    private int runEventsCountQuery(int[] resourceIds, long begin, long end, EventSeverity[] severities, String source,
-        String searchString, PageControl pc, PageList<EventComposite> pl, String query) {
-        Connection conn = null;
-        PreparedStatement stm = null;
-        ResultSet rs = null;
-        int num = 0;
-        try {
-            conn = rhqDs.getConnection();
-            stm = conn.prepareStatement(query);
-            int i = 1;
-            JDBCUtil.bindNTimes(stm, resourceIds, i);
-            i += resourceIds.length;
-            stm.setLong(i++, begin);
-            stm.setLong(i++, end);
-            if (severities != null) {
-                for (int j = 0; j < severities.length; j++) {
-                    stm.setString(i++, severities[j].toString());
-                }
-            }
-            if (isFilled(searchString))
-                stm.setString(i++, QueryUtility.formatSearchParameter(searchString));
-            if (isFilled(source))
-                stm.setString(i++, QueryUtility.formatSearchParameter(source));
-
-            rs = stm.executeQuery();
-            while (rs.next()) {
-                num = rs.getInt(1);
-            }
-
-        } catch (SQLException sq) {
-            log.error("runEventsCountQuery: Error retrieving events: " + sq.getMessage(), sq);
-        } finally {
-            JDBCUtil.safeClose(conn, stm, rs);
-        }
-        return num;
-    }
-
-    private String setupEventsQuery(int[] resourceIds, EventSeverity[] severities, String source, String searchString,
-        PageControl pc, boolean isCountQuery) {
-        String query;
-
-        if (isCountQuery) {
-            query = "SELECT count(ev.id) ";
-        } else {
-            query = "SELECT ev.detail, ev.id AS evid, evs.location, ev.severity, ev.timestamp, res.id AS resid, res.name ";
-        }
-        query += " FROM RHQ_Event ev ";
-        query += " INNER JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id ";
-        if (!isCountQuery) {
-            // only join on rhq_resource if necessary, which it isn't for the count query
-            query += " LEFT JOIN rhq_resource res ON evs.resource_id = res.id ";
-        }
-        query += " WHERE evs.resource_id IN ( ";
-
-        query += JDBCUtil.generateInBinds(resourceIds.length);
-        query += " ) ";
-
-        query += " AND ev.timestamp BETWEEN ? AND ? ";
-        if (severities != null) {
-            query += " AND ev.severity IN ( ";
-            query += JDBCUtil.generateInBinds(severities.length);
-            query += " ) ";
-        }
-        if (isFilled(searchString))
-            query += " AND upper(ev.detail) LIKE ? " + QueryUtility.getEscapeClause();
-        if (isFilled(source))
-            query += " AND upper(evs.location) LIKE ? " + QueryUtility.getEscapeClause();
-        if (!isCountQuery) {
-            pc.initDefaultOrderingField("ev.timestamp", PageOrdering.DESC);
-            if (this.dbType instanceof PostgresqlDatabaseType) {
-                query = PersistenceUtility.addPostgresNativePagingSortingToQuery(query, pc);
-            } else if (this.dbType instanceof OracleDatabaseType) {
-                query = PersistenceUtility.addOracleNativePagingSortingToQuery(query, pc);
-            } else if (this.dbType instanceof H2DatabaseType) {
-                query = PersistenceUtility.addH2NativePagingSortingToQuery(query, pc);
-            } else if (this.dbType instanceof SQLServerDatabaseType) {
-                query = PersistenceUtility.addSQLServerNativePagingSortingToQuery(query, pc, true);
-            } else {
-                throw new RuntimeException("Unknown database type : " + this.dbType);
-            }
-        }
-        return query;
-    }
-
     @SuppressWarnings("unchecked")
     public EventComposite getEventDetailForEventId(Subject subject, int eventId) throws EventException {
         Query q = entityManager.createNamedQuery(Event.GET_DETAILS_FOR_EVENT_IDS);
@@ -613,18 +378,6 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         for (EventSource source : sources) {
             entityManager.remove(source);
         }
-    }
-
-    public int getEventDefinitionCountForResourceType(int resourceTypeId) {
-        Query query = PersistenceUtility.createCountQuery(entityManager,
-            EventDefinition.QUERY_EVENT_DEFINITIONS_BY_RESOURCE_TYPE_ID);
-        query.setParameter("resourceTypeId", resourceTypeId);
-        long result = (Long) query.getSingleResult();
-        return (int) result;
-    }
-
-    private boolean isFilled(String in) {
-        return in != null && !in.equals("");
     }
 
     public int deleteEvents(Subject subject, List<Integer> eventIds) {
@@ -671,41 +424,69 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return results;
     }
 
-    public PageList<EventComposite> findEventsForResource(Subject subject, int resourceId, long startDate,
-        long endDate, EventSeverity severity, String source, String detail, PageControl pc) {
+    public PageList<EventComposite> findEventComposites(Subject subject, EntityContext context, long begin, long end,
+        EventSeverity[] severities, String source, String detail, PageControl pc) {
 
-        if (authorizationManager.canViewResource(subject, resourceId) == false) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to view event history for resource[id=" + resourceId + "]");
+        if (context.category == EntityContext.Category.Resource) {
+            if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view event history for resource[id=" + context.resourceId + "]");
+            }
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view event history for resourceGroup[id=" + context.groupId + "]");
+            }
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view event history for autoGroup[parentResourceId="
+                    + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
+            }
         }
 
-        EventSeverity[] severities = { severity };
-        PageList<EventComposite> comp = findEvents(subject, new int[] { resourceId }, startDate, endDate, severities,
-            source, detail, pc);
-        return comp;
-    }
+        EventCriteria criteria = new EventCriteria();
+        criteria.addFilterStartTime(begin);
+        criteria.addFilterEndTime(end);
+        criteria.addFilterSeverities(severities);
+        criteria.addFilterSourceName(source);
+        criteria.addFilterDetail(detail);
 
-    public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity, String source, String searchString, PageControl pc) {
+        criteria.setPageControl(pc);
 
-        if (authorizationManager.canViewGroup(subject, groupId) == false) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to view event history for resourceGroup[id=" + groupId + "]");
+        if (context.category == EntityContext.Category.Resource) {
+            criteria.addFilterResourceId(context.resourceId);
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            criteria.addFilterResourceGroupId(context.groupId);
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
+            criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
         }
 
-        EventSeverity[] severities = { severity };
-
-        return findEventsForCompGroup(subject, groupId, begin, endDate, severities, source, searchString, pc);
+        return findEventCompositesByCriteria(subject, criteria);
     }
 
-    public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
-        long begin, long end, EventSeverity severity, String source, String detail, PageControl pc) {
+    @SuppressWarnings("unchecked")
+    public PageList<EventComposite> findEventCompositesByCriteria(Subject subject, EventCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        String replacementSelectList = "" //
+            + " new org.rhq.core.domain.event.composite.EventComposite( " //
+            + "   event.detail," //
+            + "   event.source.resource.id," //
+            + "   event.source.resource.name," //
+            + "   event.id," //
+            + "   event.severity," //
+            + "   event.source.location," //
+            + "   event.timestamp ) ";
+        generator.alterProjection(replacementSelectList);
 
-        EventSeverity[] severities = { severity };
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "source.resource", subject.getId());
+        }
 
-        PageList<EventComposite> comp = findEventsForAutoGroup(subject, parentResourceId, resourceTypeId, begin, end,
-            severities, source, detail, pc);
-        return comp;
+        CriteriaQueryRunner<EventComposite> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        return queryRunner.execute();
     }
 
     @SuppressWarnings("unchecked")

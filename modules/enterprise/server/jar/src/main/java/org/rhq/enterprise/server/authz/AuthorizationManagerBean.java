@@ -175,6 +175,29 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
+    public boolean canViewAutoGroup(Subject subject, int parentResourceId, int resourceTypeId) {
+        if (isInventoryManager(subject)) {
+            return true;
+        }
+
+        Query query = entityManager.createNamedQuery(Subject.QUERY_CAN_VIEW_AUTO_GROUP);
+        query.setParameter("parentResourceId", parentResourceId);
+        query.setParameter("resourceTypeId", resourceTypeId);
+
+        query.setParameter("subject", -1);
+        long baseCount = (Long) query.getSingleResult();
+
+        query.setParameter("subject", subject);
+        long subjectCount = (Long) query.getSingleResult();
+
+        /* 
+         * an auto-group is viewable if the count of resources with parent/type filters is identical
+         * to the count of those same resources additionally filtered by standard authorization
+         *  
+         */
+        return (baseCount == subjectCount);
+    }
+
     public boolean isInventoryManager(Subject subject) {
         return hasGlobalPermission(subject, Permission.MANAGE_INVENTORY);
     }

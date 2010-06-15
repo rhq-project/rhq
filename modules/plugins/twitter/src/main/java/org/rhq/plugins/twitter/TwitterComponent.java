@@ -21,11 +21,14 @@ package org.rhq.plugins.twitter;
 import java.net.URL;
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import twitter4j.Paging;
 import twitter4j.Status;
 import twitter4j.Twitter;
+import twitter4j.TwitterFactory;
+import twitter4j.conf.PropertyConfiguration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -63,6 +66,7 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
    private String password;
    private String serverUrl;
    private String searchBaseUrl;
+   private TwitterFactory tFactory;
    private TwitterEventPoller eventPoller;
    private long lastId = NOT_YET_SET;
    private static final String HTTP_TWITTER_COM = "http://twitter.com/";
@@ -111,6 +115,15 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
         eventContext = context.getEventContext();
         eventPoller = new TwitterEventPoller(TWIT_EVENT);
         eventContext.registerEventPoller(eventPoller, 53);
+       Properties props = new Properties();
+       props.put(PropertyConfiguration.SOURCE,"Jopr");
+       props.put(PropertyConfiguration.HTTP_USER_AGENT,"Jopr");
+       props.put(PropertyConfiguration.SEARCH_BASE_URL,searchBaseUrl);
+       props.put(PropertyConfiguration.REST_BASE_URL,serverUrl);
+       twitter4j.conf.Configuration tconf = new PropertyConfiguration(props);
+
+        tFactory = new TwitterFactory(tconf);
+
 
     }
 
@@ -132,7 +145,9 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
 
        for (MeasurementScheduleRequest req : metrics) {
           if (req.getName().equals("tweetCount")) {
-             Twitter twitter = new Twitter(username,password,serverUrl);
+
+             Twitter twitter = tFactory.getInstance(username,password); // TODO server url?
+//             Twitter twitter = new Twitter(username,password,serverUrl);
              Paging paging = new Paging();
              if (lastId == NOT_YET_SET) {
                 paging.setSinceId(1);
@@ -155,7 +170,7 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
                 lastId = statuses.get(0).getId(); // This is always newest first
           }
           else if (req.getName().equals("followerCount")) {
-              Twitter twitter = new Twitter(username,password,serverUrl);
+              Twitter twitter = tFactory.getInstance(username,password); // TODO server url?
               int count = twitter.getFollowersIDs().getIDs().length;
               MeasurementDataNumeric res;
               res = new MeasurementDataNumeric(req,(double)count);
@@ -181,9 +196,7 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
 
             String message = configuration.getSimpleValue("message",null);
 
-            Twitter twitter = new Twitter(username,password,serverUrl);
-            twitter.setSource("Jopr");
-            twitter.setUserAgent("Jopr");
+            Twitter twitter = tFactory.getInstance(username,password);
             Status status = twitter.updateStatus(message);
             OperationResult result = new OperationResult("Posted " + status.getText());
 

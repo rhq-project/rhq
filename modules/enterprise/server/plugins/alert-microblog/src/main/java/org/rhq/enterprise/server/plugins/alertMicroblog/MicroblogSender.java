@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.server.plugins.alertMicroblog;
 
+import java.util.Properties;
+
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.conf.PropertyConfiguration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,9 +52,16 @@ public class MicroblogSender extends AlertSender {
         String baseUrl = preferences.getSimpleValue("microblogServerUrl","http://twitter.com/");
         if (!baseUrl.endsWith("/"))
            baseUrl = baseUrl +"/";
-        Twitter twitter = new Twitter(user,password,baseUrl);
+       Properties props = new Properties();
+       props.put(PropertyConfiguration.SOURCE,"Jopr");
+       props.put(PropertyConfiguration.HTTP_USER_AGENT,"Jopr");
+       props.put(PropertyConfiguration.REST_BASE_URL,baseUrl);
+       twitter4j.conf.Configuration tconf = new PropertyConfiguration(props);
+
+        TwitterFactory tFactory = new TwitterFactory(tconf);
+
+        Twitter twitter = tFactory.getInstance(user,password);
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        twitter.setSource("Jopr");
         StringBuilder b = new StringBuilder("Alert ");
         b.append(alert.getId()).append(":'"); // Alert id
         b.append(alert.getAlertDefinition().getResource().getName());

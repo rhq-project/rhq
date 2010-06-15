@@ -254,8 +254,12 @@ if [ -d "$WORKING_DIR" ]; then
        echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
        git checkout "$RELEASE_BRANCH"
        [ $? -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
+       git pull
+       [ $? -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
        git reset --hard
+       [ $? -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
        git clean -dxf
+       [ $? -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
    else
        echo "$WORKING_DIR does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
        cd ..

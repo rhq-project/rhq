@@ -245,8 +245,6 @@ public class Deployer {
     public DeploymentDiskUsage estimateDiskUsage() throws Exception {
         final DeploymentDiskUsage diskUsage = new DeploymentDiskUsage();
 
-        /*
-        OH TO BE ABLE TO USE A MODERN JDK - THIS NEEDS JDK6
         File partition = this.deploymentData.getDestinationDir();
         long usableSpace = partition.getUsableSpace();
         while (usableSpace == 0L && partition != null) {
@@ -257,8 +255,6 @@ public class Deployer {
         }
 
         diskUsage.setMaxDiskUsable(usableSpace);
-        */
-        diskUsage.setMaxDiskUsable(Long.MAX_VALUE);
 
         Set<File> zipFiles = this.deploymentData.getZipFiles();
         for (File zipFile : zipFiles) {

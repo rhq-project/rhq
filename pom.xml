@@ -80,10 +80,11 @@
     <sigar.version>1.6.5.132</sigar.version>
     <quartz.version>1.6.5</quartz.version>
     <jna.version>3.2.2</jna.version>
+    <twitter4j.version>2.1.2</twitter4j.version>
 
     <!--
        defaults for datasource used by integration tests -
-       these may be overridden in ~/.m2/settings.xml 
+       these may be overridden in ~/.m2/settings.xml
     -->
     <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
     <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/${rhq.test.ds.db-name}</rhq.test.ds.connection-url>
@@ -103,7 +104,7 @@
 
     <!--
        defaults for datasource used by the dev container build (see dev docs on the 'dev' profile) -
-       these may be overridden in ~/.m2/settings.xml 
+       these may be overridden in ~/.m2/settings.xml
     -->
     <rhq.dev.ds.db-name>rhqdev</rhq.dev.ds.db-name>
     <rhq.dev.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/${rhq.dev.ds.db-name}</rhq.dev.ds.connection-url>
@@ -651,7 +652,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <executions>       
+        <executions>
           <execution>
             <id>read-build-properties</id>
             <phase>process-resources</phase>
@@ -671,7 +672,7 @@
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <configuration>
-            <!-- As of v2.4 of this plugin, the default delimiters are @*@ - 
+            <!-- As of v2.4 of this plugin, the default delimiters are @*@ -
                  we want the old default of ${*} instead. -->
             <useDefaultDelimiters>false</useDefaultDelimiters>
             <delimiters>

@@ -67,32 +67,36 @@ if ! javap java.util.Deque >/dev/null 2>&1; then
    abort "java.util.Deque not found - Java version appears to be less than 1.6 - Jave version must be 1.6 or later."
 fi
 
+# TODO: Check that JDK version is < 1.7.
 
-# Make sure JAVA5_HOME points to a valid JDK 1.5 install. 
+
+# If this is an enterprise release, make sure JAVA5_HOME points to a valid JDK 1.5 install. 
 # We need this to validate only Java 5 or earlier APIs are used in all modules, except the CLI, which requires Java 6.
 
-if [ -z "$JAVA5_HOME" ]; then
-   abort "JAVA5_HOME environment variable is not set - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-fi
+if [ "$RELEASE_TYPE" = "enterprise" ]; then
+    if [ -z "$JAVA5_HOME" ]; then
+       abort "JAVA5_HOME environment variable is not set - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+    fi
 
-if [ ! -d "$JAVA5_HOME" ]; then
-   abort "JAVA5_HOME ($JAVA5_HOME) does not exist or is not a directory - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-fi
+    if [ ! -d "$JAVA5_HOME" ]; then
+       abort "JAVA5_HOME ($JAVA5_HOME) does not exist or is not a directory - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+    fi
 
-if [ ! -x "$JAVA5_HOME/bin/java" ]; then
-   abort "$JAVA5_HOME/bin/java does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-fi
+    if [ ! -x "$JAVA5_HOME/bin/java" ]; then
+       abort "$JAVA5_HOME/bin/java does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+    fi
 
-if [ ! -x "$JAVA5_HOME/bin/javac" ]; then
-   abort "$JAVA5_HOME/bin/javac does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-fi
+    if [ ! -x "$JAVA5_HOME/bin/javac" ]; then
+       abort "$JAVA5_HOME/bin/javac does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+    fi
 
-if ! "$JAVA5_HOME/bin/javap" java.lang.Enum >/dev/null 2>&1; then
-   abort "java.lang.Enum not found - JAVA5_HOME ($JAVA5_HOME) version appears to be less than 1.5 - version must be 1.5.x."
-fi
+    if ! "$JAVA5_HOME/bin/javap" java.lang.Enum >/dev/null 2>&1; then
+       abort "java.lang.Enum not found - JAVA5_HOME ($JAVA5_HOME) version appears to be less than 1.5 - version must be 1.5.x."
+    fi
 
-if "$JAVA5_HOME/bin/javap" java.util.Deque >/dev/null 2>&1; then
-   abort "java.util.Deque found - JAVA5_HOME ($JAVA5_HOME) version appears to be greater than or equal to 1.6 - version must be 1.5.x."
+    if "$JAVA5_HOME/bin/javap" java.util.Deque >/dev/null 2>&1; then
+       abort "java.util.Deque found - JAVA5_HOME ($JAVA5_HOME) version appears to be greater than or equal to 1.6 - version must be 1.5.x."
+    fi
 fi
 
 
@@ -113,6 +117,8 @@ if ! which mvn >/dev/null 2>&1; then
    abort "mvn not found in PATH ($PATH) - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
 fi
 
+# TODO: Check that Maven is a supported version (2.1.0 <= maven.version < 3.0.0).
+
 
 # Make sure git is in the PATH.
 
@@ -120,7 +126,7 @@ if ! which git >/dev/null 2>&1; then
    abort "git not found in PATH ($PATH)."
 fi
 
-# TODO: Check for a minimum git version?
+# TODO: Check for a minimum git version.
 
 
 # Set various local variables.
@@ -140,7 +146,7 @@ PROJECT_GIT_URL="ssh://${GIT_USER}@git.fedorahosted.org/git/rhq/rhq.git"
 
 MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --errors -Penterprise,dist,release"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav"
+   MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
 fi
 if [ -z "$RHQ_RELEASE_QUIET" ]; then
    MAVEN_ARGS="$MAVEN_ARGS --debug"
@@ -148,6 +154,7 @@ fi
 if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
    MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="12"
 fi
+# TODO: Set MAVEN_OPTS environment variable.
 
 TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
 RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
@@ -158,7 +165,7 @@ RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 echo
 echo "========================== Environment Variables =============================="
 echo "JAVA_HOME=$JAVA_HOME"
-echo "JAVA5_HOME=$JAVA5_HOME"
+[ "$RELEASE_TYPE" = "enterprise" ] && echo "JAVA5_HOME=$JAVA5_HOME"
 echo "M2_HOME=$M2_HOME"
 echo "MAVEN_OPTS=$MAVEN_OPTS"
 echo "PATH=$PATH"
@@ -236,17 +243,18 @@ EOF
 if [ -d "$WORKING_DIR" ]; then
    cd "$WORKING_DIR"
    git status >/dev/null 2>&1
+   GIT_STATUS_EXIT_CODE=$?
    # Note, git 1.6 and earlier returns an exit code of 1, rather than 0, if there are any uncommitted changes,
    # and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if $CLONE_DIR
    # is a git working copy.
-   if [ $? -le 1 ]; then       
+   if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; then       
        echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
        git checkout "$RELEASE_BRANCH"
        [ $? -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
        git reset --hard
        git clean -dxf
    else
-       echo "$WORKING_DIR does not appear to be a git working directory - removing it so we can freshly clone the repo..."
+       echo "$WORKING_DIR does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
        cd ..
        rm -rf "$WORKING_DIR"
    fi
@@ -264,10 +272,9 @@ fi
 # Run a test build before tagging. This will also publish the snapshot artifacts to the local repo to "bootstrap" the repo.
 
 echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
-# TODO: Add -Djava5.home=$JAVA5_HOME/jre to the below mvn command line once the Java6 API usages have been removed from the Deployer class.
 # TODO: Add -Ddbreset to the below mvn command line - this was removed temporarily to speed up development and testing of this release script.
 # TODO: Remove the -Dmaven.test.skip=true - this was added temporarily to speed up development and testing of this release script.
-# NOTE: No need to do a mvn clean, since we just did either a clone or clean checkout above.
+# NOTE: There is no need to do a mvn clean below, since we just did either a clone or clean checkout above.
 mvn install $MAVEN_ARGS -Dmaven.test.skip=true
 if [ "$?" -ne 0 ]; then
    abort "Test build failed. Please see above Maven output for details, fix any issues, then try again."

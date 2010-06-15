@@ -337,4 +337,34 @@
       </column>
     </createTable>
   </changeSet>
+
+  <changeSet id="11" author="jsanda">
+    <createTable tableName="rhq_config_group_update">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="resource_group_id" type="integer">
+        <constraints foreignKeyName="fk_resource_group_id_rhq_resource_group"
+                     references="rhq_resource_group"
+                     nullable="false"/>
+      </column>
+      <column name="configuration_id" type="integer">
+        <constraints foreignKeyName="fk_configuration_id_rhq_config"
+                     references="rhq_config"
+                     nullable="false"/>
+      </column>
+      <column name="status" type="varchar(16)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="error_message" type="longvarchar"/>
+      <column name="subject_name" type="varchar(100)"/>
+      <column name="ctime" type="bigint"/>
+      <column name="mtime" type="bigint"/>
+      <column name="dtype" type="varchar(10)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_config_group_update_id_seq" startValue="10001"/>
+  </changeSet>
 </databaseChangeLog>

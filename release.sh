@@ -127,16 +127,17 @@ fi
 
 if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
    echo "We appear to be running in a Hudson job." 
-   WORK_DIR="$WORKSPACE"
-elif [ -z "$WORK_DIR" ]; then
-   WORK_DIR="$HOME/release"
+   WORKING_DIR="$WORKSPACE"
+   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-$JOB_NAME-repository"
+   MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
+elif [ -z "$WORKING_DIR" ]; then
+   WORKING_DIR="$HOME/release/rhq"
+   MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
+   MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
 fi
-cd "$WORK_DIR"
 
-PROJECT_GIT_URL="ssh://$GIT_USER@git.fedorahosted.org/git/rhq/rhq.git"
+PROJECT_GIT_URL="ssh://${GIT_USER}@git.fedorahosted.org/git/rhq/rhq.git"
 
-MAVEN_LOCAL_REPO_DIR="$WORK_DIR/m2-repository"
-MAVEN_SETTINGS_FILE="$WORK_DIR/m2-settings.xml"
 MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --errors -Penterprise,dist,release"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav"
@@ -162,7 +163,7 @@ echo "M2_HOME=$M2_HOME"
 echo "MAVEN_OPTS=$MAVEN_OPTS"
 echo "PATH=$PATH"
 echo "============================= Local Variables ================================="
-echo "WORK_DIR=$WORK_DIR"
+echo "WORKING_DIR=$WORKING_DIR"
 echo "PROJECT_NAME=$PROJECT_NAME"
 echo "RELEASE_TYPE=$RELEASE_TYPE"
 echo "RELEASE_VERSION=$RELEASE_VERSION"
@@ -232,9 +233,8 @@ EOF
 
 # Clone and/or checkout the source from git.
 
-CLONE_DIR="$WORK_DIR/rhq"
-if [ -d "$CLONE_DIR" ]; then
-   cd "$CLONE_DIR"
+if [ -d "$WORKING_DIR" ]; then
+   cd "$WORKING_DIR"
    git status >/dev/null 2>&1
    # Note, git 1.6 and earlier returns an exit code of 1, rather than 0, if there are any uncommitted changes,
    # and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if $CLONE_DIR
@@ -246,13 +246,14 @@ if [ -d "$CLONE_DIR" ]; then
        git reset --hard
        git clean -dxf
    else
-       cd "$WORK_DIR"
-       rm -rf "$CLONE_DIR"
+       echo "$WORKING_DIR does not appear to be a git working directory - removing it so we can freshly clone the repo..."
+       cd ..
+       rm -rf "$WORKING_DIR"
    fi
 fi
-if [ ! -d "$CLONE_DIR" ]; then
+if [ ! -d "$WORKING_DIR" ]; then
    echo "Cloning the $PROJECT_NAME git repo (this will take about 10-15 minutes)..."
-   git clone "$PROJECT_GIT_URL"
+   git clone "$PROJECT_GIT_URL" "$WORKING_DIR"
    [ $? -ne 0 ] && abort "Failed to clone $PROJECT_NAME git repo ($PROJECT_GIT_URL)."
    cd "$CLONE_DIR"
    git checkout "$RELEASE_BRANCH"

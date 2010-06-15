@@ -60,11 +60,9 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.pluginapi.content.version.PackageVersions;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -135,8 +133,6 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
      * Architecture string used in describing discovered packages.
      */
     private static final String ARCHITECTURE = "noarch";
-    private PackageVersions versions;
-
     private EmsBean webModuleMBean;
     private ResponseTimeLogParser logParser;
 
@@ -531,7 +527,6 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         // Deploy was successful!
 
         deleteBackupOfOriginalFile(backupFile);
-        persistApplicationVersion(packageDetails, appFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
         DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
@@ -626,18 +621,9 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         if (file.exists()) {
             // Package name and file name of the application are the same
             String fileName = new File(fullFileName).getName();
-
-            PackageVersions versions = loadApplicationVersions();
-            String version = versions.getVersion(fileName);
             String sha256 = getSHA256(file);
-
-            // First discovery of this WAR
-            if (null == version) {
-                JarContentFileInfo info = new JarContentFileInfo(file);
-                version = getVersion(info, sha256);
-                versions.putVersion(fileName, version);
-                versions.saveToDisk();
-            }
+            JarContentFileInfo info = new JarContentFileInfo(file);
+            String version = getVersion(info, sha256);
 
             PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
             ResourcePackageDetails details = new ResourcePackageDetails(key);
@@ -646,6 +632,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             if (!file.isDirectory())
                 details.setFileSize(file.length());
             details.setFileCreatedDate(null); // TODO: get created date via SIGAR
+            details.setInstallationTimestamp(System.currentTimeMillis()); // TODO: anything better than discovery time
             details.setSHA256(sha256);
 
             packages.add(details);
@@ -735,12 +722,6 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         return response;
     }
 
-    private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile) {
-        String packageName = appFile.getName();
-        PackageVersions versions = loadApplicationVersions();
-        versions.putVersion(packageName, packageDetails.getVersion());
-    }
-
     private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
         try {
             FileUtils.purge(backupOfOriginalFile, true);
@@ -752,29 +733,6 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
     public TomcatVHostComponent getParentResourceComponent() {
         return getResourceContext().getParentResourceComponent();
-    }
-
-    private PackageVersions loadApplicationVersions() {
-        if (versions == null) {
-            ResourceType resourceType = getResourceContext().getResourceType();
-            String pluginName = resourceType.getPlugin();
-
-            File dataDirectoryFile = getResourceContext().getDataDirectory();
-
-            if (!dataDirectoryFile.exists()) {
-                dataDirectoryFile.mkdir();
-            }
-
-            String dataDirectory = dataDirectoryFile.getAbsolutePath();
-
-            log.debug("Creating application versions store with plugin name [" + pluginName + "] and data directory ["
-                + dataDirectory + "]");
-
-            versions = new PackageVersions(pluginName, dataDirectory);
-            versions.loadFromDisk();
-        }
-
-        return versions;
     }
 
     public void deleteResource() throws Exception {

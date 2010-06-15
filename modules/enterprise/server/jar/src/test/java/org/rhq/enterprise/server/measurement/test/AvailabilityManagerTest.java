@@ -95,8 +95,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             if (theResource != null) {
                 // perform in-band and out-of-band work in quick succession
                 // this also deletes our attached agent
-                resourceManager.deleteResource(overlord, theResource.getId());
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, theResource.getId());
+                resourceManager.uninventoryResource(overlord, theResource.getId());
+                resourceManager.uninventoryResourceAsyncWork(overlord, theResource.getId());
                 theResource = null;
             }
 

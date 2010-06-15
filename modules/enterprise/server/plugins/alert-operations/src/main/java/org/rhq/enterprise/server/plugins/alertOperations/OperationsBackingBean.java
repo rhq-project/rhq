@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.plugins.alertOperations;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,14 +80,6 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         }
 
         Configuration previousArguments = extraParameters;
-        /*
-        String argumentsConfigurationId = get(OperationInfo.Constants.ARGUMENTS_CONFIG_ID, null);
-        if (argumentsConfigurationId != null && !argumentsConfigurationId.equals("none")) {
-            // look it up and then delete it, because the user may switch options in the conditional form, invalidating this
-            previousArguments = LookupUtil.getConfigurationManager().getConfiguration(getOverlord(),
-                Integer.parseInt(argumentsConfigurationId));
-        }
-        */
 
         // load secondList if currentType is selected
         if (selectionMode.equals("none")) {
@@ -235,34 +226,14 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         set(descendantTypeId, OperationInfo.Constants.RELATIVE_DESCENDANT_TYPE_ID);
         set(operationDefinitionId, OperationInfo.Constants.OPERATION_ID);
 
-        // cleanup previous arguments configuration
-        cleanupPreviousArguments();
-
-        // persist new one
+        // persist the updates to the argumentsConfiguration
         if (operationDefinitionId != null && !operationDefinitionId.equals("none") && argumentsConfiguration != null) {
-            argumentsConfiguration.setId(0); // force Hibernate to interpret this configuration as a new one
-            //argumentsConfiguration = persistConfiguration(argumentsConfiguration);
-            //set(String.valueOf(argumentsConfiguration.getId()), OperationInfo.Constants.ARGUMENTS_CONFIG_ID);
-            extraParameters = argumentsConfiguration;
-            extraParameters = persistConfiguration(extraParameters);
+            extraParameters = persistConfiguration(argumentsConfiguration);
+        } else {
+            deleteExtraParameters();
         }
 
         alertParameters = persistConfiguration(alertParameters);
-    }
-
-    private void cleanupPreviousArguments() {
-        /*
-        String previousArgumentsConfigurationId = get(OperationInfo.Constants.ARGUMENTS_CONFIG_ID, null);
-        set(null, OperationInfo.Constants.ARGUMENTS_CONFIG_ID);
-        if (previousArgumentsConfigurationId != null && !previousArgumentsConfigurationId.equals("none")) {
-            LookupUtil.getConfigurationManager().deleteConfigurations(
-                Arrays.asList(Integer.parseInt(previousArgumentsConfigurationId)));
-        }
-        */
-        if (extraParameters != null) {
-            LookupUtil.getConfigurationManager().deleteConfigurations(Arrays.asList(extraParameters.getId()));
-            extraParameters = null;
-        }
     }
 
     private boolean set(String value, OperationInfo.Constants operationInfoConstant) {

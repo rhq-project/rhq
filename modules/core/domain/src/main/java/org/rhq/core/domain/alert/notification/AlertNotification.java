@@ -98,6 +98,8 @@ public class AlertNotification implements Serializable {
         this.configuration = source.configuration.deepCopy(false);
         if (source.extraConfiguration != null) {
             this.extraConfiguration = source.extraConfiguration.deepCopy(false);
+        } else {
+            this.extraConfiguration = null;
         }
         this.senderName = source.senderName;
     }

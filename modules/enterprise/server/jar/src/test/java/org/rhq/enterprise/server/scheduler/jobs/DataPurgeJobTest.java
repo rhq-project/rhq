@@ -130,8 +130,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-            List<Integer> deletedIds = resourceManager.deleteResource(overlord, newResource.getId());
-            resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource.getId());
+            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, newResource.getId());
+            resourceManager.uninventoryResourceAsyncWork(overlord, newResource.getId());
 
             assert deletedIds.size() == 1 : "didn't delete resource: " + deletedIds;
             assert deletedIds.get(0).intValue() == newResource.getId() : "what was deleted? : " + deletedIds;
@@ -544,9 +544,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             // delete the resource itself
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-            List<Integer> deletedIds = resourceManager.deleteResource(overlord, doomedResource.getId());
+            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, doomedResource.getId());
             for (Integer deletedResourceId : deletedIds) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
             }
 
             // delete the agent and the type

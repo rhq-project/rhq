@@ -47,16 +47,6 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
         } else if (subtab.equals("service")) {
             category = ResourceCategory.SERVICE;
         }
-
-        /*
-        String searchId = FacesContextUtility.getOptionalRequestParameter("searchId");
-        if (searchId != null) {
-            SavedSearch savedSearch = savedSearchManager.getSavedSearchById(getSubject(), Integer.valueOf(searchId));
-            search = savedSearch.getPattern();
-        } else {
-            search = FacesContextUtility.getOptionalRequestParameter("search");
-        }
-        */
     }
 
     public String getSearch() {

@@ -367,9 +367,9 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
                 // invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
                 // perform in-band and out-of-band work in quick succession
                 for (Resource doomed : doomedResources) {
-                    List<Integer> deletedIds = resourceManager.deleteResource(overlord, doomed.getId());
+                    List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, doomed.getId());
                     for (Integer deletedResourceId : deletedIds) {
-                        resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                        resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
                     }
                 }
 

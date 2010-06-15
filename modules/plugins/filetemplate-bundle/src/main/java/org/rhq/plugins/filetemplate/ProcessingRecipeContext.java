@@ -23,7 +23,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +37,6 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
-import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
@@ -262,33 +260,12 @@ public class ProcessingRecipeContext extends RecipeContext {
     }
 
     private void ensureExecutable(File scriptFile) {
-        boolean success;
-
-        try {
-            Method m = File.class.getMethod("setExecutable", Boolean.TYPE, Boolean.TYPE);
-            Boolean r = (Boolean) m.invoke(scriptFile, Boolean.TRUE, Boolean.TRUE);
-            success = r.booleanValue();
-        } catch (Exception e) {
-            // Oh, if only we'd just stop dilly-dallying and move to JDK6 already
-            if (this.systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) {
-                ProcessExecution pe = new ProcessExecution("chmod");
-                pe.setArguments(new String[] { "u+x", scriptFile.getAbsolutePath() });
-                pe.setWaitForCompletion(30000L);
-                pe.setCheckExecutableExists(false);
-                pe.setWorkingDirectory(scriptFile.getParent());
-                ProcessExecutionResults chmodResults = this.systemInfo.executeProcess(pe);
-                success = (chmodResults.getExitCode() != null && chmodResults.getExitCode().intValue() == 0);
-            } else {
-                success = true; // assume we can execute it on windows
-            }
-        }
-
+        boolean success = scriptFile.setExecutable(true, true);
         if (!success) {
             String msg = "Cannot ensure that script [" + scriptFile + "] is executable";
             audit("ensureExecutable", BundleResourceDeploymentHistory.Status.FAILURE, msg);
             throw new RuntimeException(msg);
         }
-
         return;
     }
 

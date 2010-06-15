@@ -38,11 +38,14 @@ public class MD5GeneratorTest {
         String md5 = MessageDigestGenerator.getDigestString("calculate MD5 of this String!\n");
         assert md5.equals("ac98d9c00ea0d821cd757b0f3c628c99") : "Invalid MD5 was " + md5;
 
+        md5 = new MessageDigestGenerator(MessageDigestGenerator.MD5)
+            .calcDigestString("calculate MD5 of this String!\n");
+        assert md5.equals("ac98d9c00ea0d821cd757b0f3c628c99") : "Invalid MD5 was " + md5;
+
         String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
             .calcDigestString("calculate SHA256 of this String!");
         assert sha256.equals("10ee77d3c1ccf45c15c360ecc4f8847136d64b594b0eedc4dd2e67bde4ec8100") : "Invalid SHA256 was "
             + sha256;
-
     }
 
     public void testEmpty() {

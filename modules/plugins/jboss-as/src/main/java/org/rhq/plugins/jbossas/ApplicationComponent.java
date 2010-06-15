@@ -46,10 +46,8 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.pluginapi.content.version.PackageVersions;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -91,11 +89,6 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    /**
-     * Entry point to the persisted store of EAR/WAR package versions.
-     */
-    private PackageVersions versions;
-
     // ContentFacet Implementation  --------------------------------------------
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
@@ -135,20 +128,9 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
             // Package name and file name of the application are the same
             String fileName = new File(fullFileName).getName();
 
-            PackageVersions versions = loadApplicationVersions();
-            String version = versions.getVersion(fileName);
-
             JarContentFileInfo fileInfo = new JarContentFileInfo(file);
             String sha256 = getSHA256(fileInfo);
-
-            // First discovery of this EAR/WAR
-            if (version == null) {
-                // try to use version from manifest. if not there use the sha256. if that fails default to "0".
-                version = getVersion(fileInfo, sha256);
-                versions.putVersion(fileName, version);
-                versions.saveToDisk();
-            }
-
+            String version = getVersion(fileInfo, sha256);
             PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
             ResourcePackageDetails details = new ResourcePackageDetails(key);
             details.setFileName(fileName);
@@ -276,7 +258,6 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
         // Deploy was successful!
 
         deleteBackupOfOriginalFile(backupOfOriginalFile);
-        persistApplicationVersion(packageDetails, appFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
         DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
@@ -436,36 +417,6 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
 
     }
 
-    // Private  --------------------------------------------
-
-    /**
-     * Returns an instantiated and loaded versions store access point.
-     *
-     * @return will not be <code>null</code>
-     */
-    private PackageVersions loadApplicationVersions() {
-        if (versions == null) {
-            ResourceType resourceType = getResourceContext().getResourceType();
-            String pluginName = resourceType.getPlugin();
-
-            File dataDirectoryFile = getResourceContext().getDataDirectory();
-
-            if (!dataDirectoryFile.exists()) {
-                dataDirectoryFile.mkdir();
-            }
-
-            String dataDirectory = dataDirectoryFile.getAbsolutePath();
-
-            log.debug("Creating application versions store with plugin name [" + pluginName + "] and data directory ["
-                + dataDirectory + "]");
-
-            versions = new PackageVersions(pluginName, dataDirectory);
-            versions.loadFromDisk();
-        }
-
-        return versions;
-    }
-
     /**
      * Creates the necessary transfer objects to report a failed application deployment (update).
      *
@@ -484,12 +435,6 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
         response.addPackageResponse(packageResponse);
 
         return response;
-    }
-
-    private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile) {
-        String packageName = appFile.getName();
-        PackageVersions versions = loadApplicationVersions();
-        versions.putVersion(packageName, packageDetails.getVersion());
     }
 
     private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {

@@ -24,8 +24,8 @@ import java.util.Map;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
-
 import org.jboss.seam.international.StatusMessage;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -655,22 +655,26 @@ public class WizardBean extends AbstractPerspectiveUIBean {
     }
 
     public String getGroupsUrl() throws Exception {
-        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient().getPerspectiveManagerRemote();
-        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(),
-            ((Group.valueOf(this.groupType) == Group.Mixed) ? "groups.mixedGroups" : "groups.compatibleGroups"), false,
-            false);
+        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient()
+            .getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(), ((Group
+            .valueOf(this.groupType) == Group.Mixed) ? "groups.mixedGroups" : "groups.compatibleGroups"), false, false);
         return url;
     }
 
     public String getRolesUrl() throws Exception {
-        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient().getPerspectiveManagerRemote();
-        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(), "administration.security.roles", false, false);
+        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient()
+            .getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(),
+            "administration.security.roles", false, false);
         return url;
     }
 
     public String getUsersUrl() throws Exception {
-        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient().getPerspectiveManagerRemote();
-        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(), "administration.security.users", false, false);
+        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient()
+            .getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(),
+            "administration.security.users", false, false);
         return url;
     }
 

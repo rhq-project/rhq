@@ -36,7 +36,8 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.EventListener;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -86,6 +87,8 @@ public class SearchBar extends SimplePanel {
 
     private final SavedSearchManager savedSearchManager;
     private SearchSubsystem searchSubsystem;
+    private String defaultSearchText;
+    private String defaultSavedSearchPattern;
 
     private Element searchButton;
 
@@ -103,11 +106,11 @@ public class SearchBar extends SimplePanel {
         String searchButtonId = searchBarElement.getAttribute("searchButtonId");
         searchButton = DOM.getElementById(searchButtonId);
 
-        DOM.sinkEvents(searchButton, Event.ONKEYDOWN);
-        DOM.setEventListener(searchButton, new EventListener() {
+        Event.addNativePreviewHandler(new NativePreviewHandler() {
             @Override
-            public void onBrowserEvent(Event event) {
-                if (event.getKeyCode() == Event.ONKEYDOWN) {
+            public void onPreviewNativeEvent(NativePreviewEvent event) {
+                if (event.getNativeEvent().getEventTarget().equals(searchButton)
+                    && event.getTypeInt() == Event.ONMOUSEDOWN) {
                     prepareSearchExecution();
                 }
             }
@@ -115,18 +118,21 @@ public class SearchBar extends SimplePanel {
 
         String searchSubsystem = searchBarElement.getAttribute("searchSubsystem");
         setSearchSubsystem(SearchSubsystem.valueOf(searchSubsystem.toUpperCase()));
+
+        String defaultSearchText = searchBarElement.getAttribute("defaultSearchText");
+        setDefaultSearchText(defaultSearchText);
+
+        String defaultSavedSearchPattern = searchBarElement.getAttribute("defaultSavedSearchPattern");
+        setDefaultSavedSearchPattern(defaultSavedSearchPattern);
     }
 
     public SearchBar() {
         System.out.println("Loading SearchBar...");
 
-        // in the future, will be instantiated directly from a higher-level widget
-        if (existsOnPage()) {
-            loadAdditionalDataFromDivAttributes();
-        }
-
         savedSearchManager = new SavedSearchManager(this);
+    }
 
+    public void onSavedSearchManagerLoaded() {
         RootPanel.get("patternFieldContainer").add(autoCompletePatternField);
         RootPanel.get("patternNameFieldContainer").add(patternNameField);
         RootPanel.get("patternNameLabelContainer").add(patternNameLabel);
@@ -141,6 +147,10 @@ public class SearchBar extends SimplePanel {
         setupArrowImage();
         setupSavedSearches();
 
+        // in the future, will be instantiated directly from a higher-level widget
+        if (existsOnPage()) {
+            loadAdditionalDataFromDivAttributes();
+        }
         // presume the enclosing page logic loads results without a button click
     }
 
@@ -157,11 +167,39 @@ public class SearchBar extends SimplePanel {
         this.searchSubsystem = searchSubsystem;
 
         this.welcomeMessage = "search for " + searchSubsystem.getName().toLowerCase() + "s";
+
         this.autoCompletePatternField.setText(welcomeMessage);
     }
 
     public SearchSubsystem getSearchSubsystem() {
         return searchSubsystem;
+    }
+
+    public void setDefaultSearchText(String defaultSearchText) {
+        if (defaultSearchText == null || defaultSearchText.trim().equals("")) {
+            return; // do nothing
+        }
+
+        this.defaultSearchText = defaultSearchText;
+        this.autoCompletePatternField.setText(defaultSearchText);
+        click(searchButton); // execute the search with this default search expression
+    }
+
+    public String getDefaultSearchText() {
+        return defaultSearchText;
+    }
+
+    public void setDefaultSavedSearchPattern(String defaultSavedSearchPattern) {
+        if (defaultSavedSearchPattern == null || defaultSavedSearchPattern.trim().equals("")) {
+            return; // do nothing
+        }
+
+        this.defaultSavedSearchPattern = defaultSavedSearchPattern;
+        activateSavedSearch(defaultSavedSearchPattern);
+    }
+
+    public String getDefaultSavedSearchPattern() {
+        return defaultSavedSearchPattern;
     }
 
     public String getWelcomeMessage() {
@@ -170,12 +208,8 @@ public class SearchBar extends SimplePanel {
 
     public void prepareSearchExecution() {
         String searchTerms = autoCompletePatternField.getText().toLowerCase().trim();
-        prepareSearchExecution(searchTerms);
-    }
-
-    public void prepareSearchExecution(String searchTerms) {
         if (searchTerms.equals(welcomeMessage)) {
-            autoCompletePatternField.setValue("", false);
+            autoCompletePatternField.setText("");
         }
     }
 
@@ -438,8 +472,7 @@ public class SearchBar extends SimplePanel {
 
                 savedSearches.removeRow(rowIndex);
             } else {
-                activateSavedSearch(patternName);
-                click(searchButton);
+                activateSavedSearch(patternName); // activating the saved search also clicks the button
             }
         }
     }
@@ -452,18 +485,15 @@ public class SearchBar extends SimplePanel {
     public void activateSavedSearch(String savedSearchName) {
         currentSearch = "";
         String patternValue = savedSearchManager.getPatternByName(savedSearchName);
+        if (patternValue == null) {
+            return; // no saved search existing with the specified name
+        }
         autoCompletePatternField.setValue(patternValue, true);
         patternNameField.setValue(savedSearchName, true);
         SearchLogger.debug("search results change: [" + savedSearchName + "," + patternValue + "]");
         turnNameFieldIntoLabel();
         savedSearchesPanel.hide();
-    }
-
-    class SearchButtonEventHandler implements ClickHandler {
-        @Override
-        public void onClick(ClickEvent event) {
-            prepareSearchExecution();
-        }
+        click(searchButton);
     }
 
 }

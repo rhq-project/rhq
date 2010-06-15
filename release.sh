@@ -264,7 +264,7 @@ if [ -d "$WORKING_DIR" ]; then
        echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
        git checkout "$RELEASE_BRANCH"
        [ $? -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
-       git reset --hard
+       git reset --hard "origin/$RELEASE_BRANCH"
        [ $? -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
        git clean -dxf
        [ $? -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."

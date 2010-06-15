@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -82,7 +82,7 @@ public class RetrieveContentBitsRunner implements Runnable {
             serverService.completeRetrievePackageBitsRequest(response, inputStream);
         }
         ResourcePackageDetails pkgDetails = request.getPackageDetails();
-        if ((pkgDetails != null) && ((pkgDetails.getSHA256() == null) || (pkgDetails.getSHA256().trim().isEmpty()))) {
+        if ((pkgDetails != null) && ((pkgDetails.getSHA256() == null) || (pkgDetails.getSHA256().trim().length() == 0))) {
             InputStream is;
             try {
                 is = contentManager.performGetPackageBits(request.getResourceId(), request.getPackageDetails());
@@ -91,7 +91,7 @@ public class RetrieveContentBitsRunner implements Runnable {
                 e.printStackTrace();
             }
         }
-        if ((pkgDetails != null) && ((pkgDetails.getMD5() == null) || (pkgDetails.getMD5().trim().isEmpty()))) {
+        if ((pkgDetails != null) && ((pkgDetails.getMD5() == null) || (pkgDetails.getMD5().trim().length() == 0))) {
             InputStream is;
             try {
                 is = contentManager.performGetPackageBits(request.getResourceId(), request.getPackageDetails());

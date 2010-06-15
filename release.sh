@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
 # Constants
 
@@ -151,6 +151,9 @@ fi
 if [ -z "$RHQ_RELEASE_QUIET" ]; then
    MAVEN_ARGS="$MAVEN_ARGS --debug"
 fi
+if [ -n "$RHQ_RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
+   MAVEN_ARGS="$MAVEN_ARGS $RHQ_RELEASE_ADDITIONAL_MAVEN_ARGS"
+fi
 if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
    MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="12"
 fi
@@ -272,10 +275,8 @@ fi
 # Run a test build before tagging. This will also publish the snapshot artifacts to the local repo to "bootstrap" the repo.
 
 echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
-# TODO: Add -Ddbreset to the below mvn command line - this was removed temporarily to speed up development and testing of this release script.
-# TODO: Remove the -Dmaven.test.skip=true - this was added temporarily to speed up development and testing of this release script.
 # NOTE: There is no need to do a mvn clean below, since we just did either a clone or clean checkout above.
-mvn install $MAVEN_ARGS -Dmaven.test.skip=true
+mvn install $MAVEN_ARGS -Ddbreset
 if [ "$?" -ne 0 ]; then
    abort "Test build failed. Please see above Maven output for details, fix any issues, then try again."
 fi
@@ -315,12 +316,13 @@ echo
 echo "Tagging succeeded!"
 
 
-# Checkout the tag and build it.
+# Checkout the tag and build and publish the Maven artifacts.
 
 echo "Checking out release tag $RELEASE_TAG..."
 git checkout "$RELEASE_TAG"
-echo "Building release from tag (this will take about 5-10 minutes)..."
-mvn install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
+git clean -dxf
+echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
+mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
 if [ "$?" -ne 0 ]; then
    abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 fi

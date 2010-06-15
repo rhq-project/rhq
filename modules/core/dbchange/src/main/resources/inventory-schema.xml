@@ -299,4 +299,29 @@
       <column name="name"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="9" author="jsanda">
+    <createTable tableName="rhq_resource_group_res_imp_map">
+      <column name="resource_id" type="integer">
+        <constraints primaryKey="true"
+                     primaryKeyName="rhq_res_group_imp_map_key"
+                     foreignKeyName="fk_resource_id_rhq_resource"
+                     references="rhq_resource"
+                     nullable="false"/>
+      </column>
+      <column name="resource_group_id" type="integer">
+        <constraints primaryKey="true"
+                     primaryKeyName="rhq_res_group_imp_map_key"
+                     foreignKeyName="fk_resource_group_id_rhq_resource_group"
+                     references="rhq_resource_group"
+                     nullable="false"/>
+      </column>  
+    </createTable>
+
+<!--
+    <addPrimaryKey tableName="rhq_resource_group_res_imp_map"
+                   constraintName="rhq_res_group_imp_map_key"
+                   columnNames="resource_id,resource_group_id"/>
+-->
+  </changeSet>
 </databaseChangeLog>

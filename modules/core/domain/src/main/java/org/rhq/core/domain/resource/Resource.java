@@ -363,7 +363,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN, query = "" //
         + "SELECT res.id " //
         + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " //
-        + " WHERE rg.id = :groupId AND res.inventoryStatus = :inventoryStatus"),
+        + " WHERE rg.id = :groupId"),
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN, query = "" //
         + "SELECT res.id " //
         + "  FROM ResourceGroup rg, IN (rg.implicitResources) res " //

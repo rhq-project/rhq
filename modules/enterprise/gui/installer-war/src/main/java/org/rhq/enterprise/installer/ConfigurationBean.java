@@ -640,7 +640,7 @@ public class ConfigurationBean {
                 dialect = "org.hibernate.dialect.Oracle10gDialect";
                 quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.oracle.OracleDelegate";
             } else if (db.toLowerCase().indexOf("h2") > -1) {
-                dialect = "org.rhq.core.domain.dialect.H2CustomDialect";
+                dialect = "org.rhq.core.server.H2CustomDialect";
             } else if (db.toLowerCase().indexOf("sqlserver") > -1) {
                 dialect = "org.hibernate.dialect.SQLServerDialect";
                 quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.MSSQLDelegate";

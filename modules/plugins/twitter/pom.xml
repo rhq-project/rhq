@@ -116,9 +116,9 @@
                           <configuration>
                              <artifactItems>
                                 <artifactItem>
-                                   <groupId>net.homeip.yusuke</groupId>
-                                   <artifactId>twitter4j</artifactId>
-                                   <version>2.0.8</version>
+                                   <groupId>org.twitter4j</groupId>
+                                   <artifactId>twitter4j-core</artifactId>
+                                   <version>${twitter4j.version}</version>
                                 </artifactItem>
                              </artifactItems>
                              <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
@@ -160,9 +160,9 @@
             </dependency>
 
             <dependency>
-                <groupId>net.homeip.yusuke</groupId>
-                <artifactId>twitter4j</artifactId>
-                <version>2.0.9</version>
+                <groupId>org.twitter4j</groupId>
+                <artifactId>twitter4j-core</artifactId>
+                <version>${twitter4j.version}</version>
             </dependency>
         </dependencies>
 

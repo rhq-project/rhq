@@ -233,13 +233,70 @@
   </changeSet>
 
   <changeSet id="7" author="jsanda">
-    <createTable tableName="rhq_resource_group">
-       <column name="id" type="integer">
+    <createTable tableName="rhq_group_def">
+      <column name="id" type="integer">
         <constraints primaryKey="true" nullable="false"/>
       </column>
-      
+      <column name="name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="varchar(100)"/>
+      <column name="ctime" type="bigint"/>
+      <column name="mtime" type="bigint"/>
+      <column name="calc_time" type="bigint"/>
+      <column name="calc_interval" type="bigint"/>
+      <column name="recursive" type="boolean"/>
+      <column name="expression" type="varchar(1000)"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_group_def_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_group_def"
+                 indexName="rhq_group_def_name"
+                 unique="true">
+      <column name="name"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="8" author="jsanda">
+    <createTable tableName="rhq_resource_group">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(4000)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="varchar(100)"/>
+      <column name="location" type="varchar(100)"/>
+      <column name="resource_type_id" type="integer">
+        <constraints foreignKeyName="fk_resource_type_id_rhq_resource_type"
+                     references="rhq_resource_type"/>
+      </column>
+      <column name="ctime" type="bigint"/>
+      <column name="mtime" type="bigint"/>
+      <column name="modified_by" type="integer"/>
+      <column name="recursive" type="boolean"/>
+      <column name="group_definition_id" type="integer">
+        <constraints foreignKeyName="fk_group_definition_id_rhq_group_def"
+                     references="rhq_group_def"/>
+      </column>
+      <column name="group_by" type="varchar(500)"/>
+      <column name="category" type="varchar(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="cluster_key" type="varchar(4000)"/>
+      <column name="cluster_resource_group_id" type="integer">
+        <constraints foreignKeyName="fk_cluster_resource_group_id_rhq_resource_group"
+                     references="rhq_resource_group"/>
+      </column>
+      <column name="visible" type="boolean"/>
     </createTable>
   
     <createSequence sequenceName="rhq_resource_group_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_resource_group"
+                 indexName="rhq_res_group_name">
+      <column name="name"/>
+    </createIndex>
   </changeSet>
 </databaseChangeLog>

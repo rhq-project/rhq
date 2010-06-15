@@ -100,7 +100,7 @@ if [ "$RELEASE_TYPE" = "enterprise" ]; then
 fi
 
 
-# Make sure M2_HOME points to a valid Maven 2 install.
+# Make sure M2_HOME points to a valid Maven 2.1.x or 2.2.x install.
 
 if [ -z "$M2_HOME" ]; then
    abort "M2_HOME environment variable is not set - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
@@ -117,16 +117,26 @@ if ! which mvn >/dev/null 2>&1; then
    abort "mvn not found in PATH ($PATH) - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
 fi
 
-# TODO: Check that Maven is a supported version (2.1.0 <= maven.version < 3.0.0).
+mvn -version >/dev/null
+[ $? -ne 0 ] && abort "mvn --version failed with exit code $?."
+MAVEN_VERSION=`mvn -version | head -1 | sed 's|[^0-9]*\([^ ]*\).*|\1|'`
+if echo $MAVEN_VERSION | grep -v "^2.[12]"; then
+   abort "Unsupported Maven version - $MAVEN_VERSION. Only Maven 2.1.x or 2.2.x are supported. Please update the value of M2_HOME, then try again."
+fi
 
 
-# Make sure git is in the PATH.
+# Make sure git 1.6.x or 1.7.x is in the PATH.
 
 if ! which git >/dev/null 2>&1; then
    abort "git not found in PATH ($PATH)."
 fi
 
-# TODO: Check for a minimum git version.
+git --version >/dev/null
+[ $? -ne 0 ] && abort "git --version failed with exit code $?."
+GIT_VERSION=`git --version | sed 's|[^0-9]*\([^ ]*\).*|\1|'`
+if echo $GIT_VERSION | grep -v "^1.[67]"; then
+   abort "Unsupported git version - $GIT_VERSION. Only git 1.6.x or 1.7.x are supported. Please add a directory containing a supported version of git to your PATH, then try again."
+fi
 
 
 # Set various local variables.
@@ -144,7 +154,7 @@ fi
 
 PROJECT_GIT_URL="ssh://${GIT_USER}@git.fedorahosted.org/git/rhq/rhq.git"
 
-MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --errors -Penterprise,dist,release"
+MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
 fi
@@ -297,7 +307,7 @@ mvn clean $MAVEN_ARGS
 # Do a dry run of tagging the release.
 
 echo "Doing a dry run of tagging the release..."
-mvn release:prepare $MAVEN_ARGS --batch-mode -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
+mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
 EXIT_CODE=$?
 mvn release:clean $MAVEN_ARGS
 if [ "$EXIT_CODE" -ne 0 ]; then
@@ -310,7 +320,7 @@ echo "Tagging dry run succeeded!"
 # If the dry run succeeded, tag it for real.
 
 echo "Tagging the release..."
-mvn release:prepare $MAVEN_ARGS --batch-mode -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false
+mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false
 EXIT_CODE=$?
 mvn release:clean $MAVEN_ARGS
 if [ "$EXIT_CODE" -ne 0 ]; then

@@ -367,4 +367,46 @@
 
     <createSequence sequenceName="rhq_config_group_update_id_seq" startValue="10001"/>
   </changeSet>
+
+  <changeSet id="12" author="jsanda">
+    <createTable tableName="rhq_config_update">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="configuration_id" type="integer">
+        <constraints foreignKeyName="fk_configuration_id_rhq_config"
+                     references="rhq_config"
+                     nullable="false"
+                     deleteCascade="true"/>
+      </column>
+      <column name="status" type="varchar(16)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="error_message" type="longvarchar"/>
+      <column name="subject_name" type="varchar(100)"/>
+      <column name="ctime" type="bigint"/>
+      <column name="mtime" type="bigint"/>
+      <column name="dtype" type="varchar(10)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="config_res_id" type="integer">
+        <constraints foreignKeyName="fk_config_res_id_rhq_resource"
+                     references="rhq_resource"/>
+      </column>
+      <column name="plugin_config_res_id" type="integer">
+        <constraints foreignKeyName="fk_plugin_config_res_id"
+                     references="rhq_resource"/>
+      </column>
+      <column name="agg_res_update_id" type="integer">
+        <constraints foreignKeyName="fk_agg_res_update_id_rhq_config_group_update"
+                     references="rhq_config_group_update"/>
+      </column>
+      <column name="agg_plugin_update_id" type="integer">
+        <constraints foreignKeyName="fk_agg_plugin_update_id_rhq_config_group_update"
+                     references="rhq_config_group_update"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_config_update_id_seq" startValue="10001"/>
+  </changeSet>
 </databaseChangeLog>

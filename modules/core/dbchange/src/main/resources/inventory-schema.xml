@@ -409,4 +409,17 @@
 
     <createSequence sequenceName="rhq_config_update_id_seq" startValue="10001"/>
   </changeSet>
+
+  <changeSet id="13" author="jsanda">
+    <createTable tableName="rhq_tagging">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="namespace" type="varchar(20)"/>
+      <column name="semantic" type="varchar(50)"/>
+      <column name="name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
 </databaseChangeLog>

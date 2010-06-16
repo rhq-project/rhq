@@ -22,4 +22,46 @@
       <column name="name"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="1" author="jsanda">
+    <createTable tableName="rhq_role_resource_group_map">
+      <column name="role_id" type="integer">
+        <constraints primaryKey="true"
+                     primaryKeyName="rhq_role_res_group_map_key"
+                     foreignKeyName="fk_role_id_rhq_role"
+                     references="rhq_role"/>
+      </column>
+      <column name="resource_group_id" type="integer">
+        <constraints primaryKey="true"
+                     primaryKeyName="rhq_role_res_group_map_key"
+                     foreignKeyName="fk_resource_group_id_rhq_resource_group"
+                     references="rhq_resource_group"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="2" author="jsanda">
+    <createTable tableName="rhq_role_ldap_group">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="role_id" type="integer">
+        <constraints foreignKeyName="fk_role_id_rhq_role"
+                     references="rhq_role"
+                     nullable="false"/>
+      </column>
+      <column name="ldap_group_name" type="varchar(128)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_role_ldap_group_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_role_ldap_group"
+                 indexName="rhq_role_ldap_group_idx"
+                 unique="true">
+      <column name="role_id"/>
+      <column name="ldap_group_name"/>
+    </createIndex>
+  </changeSet>
 </databaseChangeLog>

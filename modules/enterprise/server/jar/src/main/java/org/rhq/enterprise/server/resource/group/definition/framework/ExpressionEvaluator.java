@@ -494,7 +494,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 // (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)
                 String traitName = parseTraitName(originalTokens);
                 addJoinCondition(JoinCondition.SCHEDULES);
-                populatePredicateCollections(METRIC_DEF_ALIAS + ".name", traitName, false);
+                populatePredicateCollections(METRIC_DEF_ALIAS + ".name", "%" + traitName + "%", false);
                 populatePredicateCollections(TRAIT_ALIAS + ".value", value);
                 whereStatics.add(TRAIT_ALIAS + ".schedule = " + JoinCondition.SCHEDULES.alias);
                 whereStatics.add(TRAIT_ALIAS
@@ -532,7 +532,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 addJoinCondition(joinCondition);
                 addJoinCondition(definitionJoinCondition);
 
-                populatePredicateCollections(PROP_SIMPLE_ALIAS + ".name", propertyName, false);
+                populatePredicateCollections(PROP_SIMPLE_ALIAS + ".name", "%" + propertyName + "%", false);
                 populatePredicateCollections(PROP_SIMPLE_ALIAS + ".stringValue", value);
 
                 whereStatics.add(PROP_SIMPLE_ALIAS + ".configuration = " + joinCondition.alias);
@@ -707,6 +707,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
             whereConditions.put(predicateName, argumentName);
             whereReplacements.put(argumentName, value);
+
             whereReplacementTypes.put(argumentName, expressionType);
         }
 
@@ -1036,7 +1037,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                             ending = QueryUtility.getEscapeClause();
                         }
                     }
-                    result += whereCondition.getKey() + whereConditionOperator + ":" + whereCondition.getValue() + ending;
+                    result += whereCondition.getKey() + whereConditionOperator + ":" + whereCondition.getValue()
+                        + ending;
                 }
 
                 first = false;

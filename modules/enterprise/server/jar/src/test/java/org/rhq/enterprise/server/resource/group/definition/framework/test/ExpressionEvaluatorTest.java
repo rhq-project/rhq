@@ -21,13 +21,10 @@ package org.rhq.enterprise.server.resource.group.definition.framework.test;
 import java.util.Arrays;
 import java.util.List;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionEvaluator;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.QueryUtility;
 
 public class ExpressionEvaluatorTest extends AbstractEJB3Test {
@@ -70,7 +67,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "SELECT res.id FROM Resource res " + //
             "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple, PropertyDefinition simpleDef  " + //
             "  JOIN res.resourceType.pluginConfigurationDefinition pluginConfDef " + // 
-            " WHERE simple.name = :arg1 " + //
+            " WHERE simple.name LIKE :arg1 ESCAPE '" + escapeChar + "'" + //
             "   AND simple.stringValue = :arg2 " + //
             "   AND simple.configuration = pluginConf " + //
             "   AND simpleDef.configurationDefinition = pluginConfDef " + //
@@ -81,8 +78,8 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "SELECT res.id FROM Resource res " + //
             "  JOIN res.resourceConfiguration conf, PropertySimple simple, PropertyDefinition simpleDef  " + //
             "  JOIN res.resourceType.resourceConfigurationDefinition confDef " + // 
-            " WHERE simple.name = :arg1 " + //
-            "   AND simple.stringValue like :arg2 ESCAPE '" + escapeChar + "'" + //
+            " WHERE simple.name LIKE :arg1 ESCAPE '" + escapeChar + "'" + //
+            "   AND simple.stringValue LIKE :arg2 ESCAPE '" + escapeChar + "'" + //
             "   AND simple.configuration = conf " + //
             "   AND simpleDef.configurationDefinition = confDef " + //
             "   AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " },
@@ -103,7 +100,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "  SELECT simple.stringValue FROM Resource res " + //
             "    JOIN res.resourceConfiguration conf, PropertySimple simple, PropertyDefinition simpleDef  " + //
             "    JOIN res.resourceType.resourceConfigurationDefinition confDef " + //
-            "   WHERE simple.name = :arg1 " + //
+            "   WHERE simple.name LIKE :arg1 ESCAPE '" + escapeChar + "'" + //
             "     AND simple.configuration = conf " + //
             "     AND simpleDef.configurationDefinition = confDef " + //
             "     AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " + //
@@ -112,7 +109,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "  SELECT res.id FROM Resource res " + //
             "  JOIN res.resourceConfiguration conf, PropertySimple simple, PropertyDefinition simpleDef  " + //
             "  JOIN res.resourceType.resourceConfigurationDefinition confDef " + //
-            " WHERE simple.name = :arg1 " + //
+            " WHERE simple.name LIKE :arg1 ESCAPE '" + escapeChar + "'" + //
             "   AND simple.stringValue = :arg2 " + //
             "     AND simple.configuration = conf " + //
             "     AND simpleDef.configurationDefinition = confDef " + //
@@ -124,7 +121,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "   SELECT res.id " + //
             " FROM Resource res JOIN res.schedules sched JOIN sched.definition def, MeasurementDataTrait trait" + //
             " WHERE res.resourceType.name = :arg1 " + //
-            " AND def.name = :arg2 " + //
+            " AND def.name LIKE :arg2 ESCAPE '" + escapeChar + "'" + //
             " AND trait.value = :arg3 " + //
             " AND trait.schedule = sched " + //
             " AND trait.id.timestamp = " + //
@@ -150,7 +147,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "SELECT res.id FROM Resource res " + //
             "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple, PropertyDefinition simpleDef  " + //
             "  JOIN res.resourceType.pluginConfigurationDefinition pluginConfDef " + // 
-            " WHERE simple.name = :arg1 " + //
+            " WHERE simple.name LIKE :arg1 ESCAPE '" + escapeChar + "'" + //
             "   AND simple.stringValue IS NULL " + //
             "   AND simple.configuration = pluginConf " + //
             "   AND simpleDef.configurationDefinition = pluginConfDef " + //
@@ -199,13 +196,15 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
                 expectedGroupResult = cleanUp(expectedGroupResult);
                 actualGroupResult = cleanUp(actualGroupResult);
 
-                //System.out.println("Expected[" + i + "]: \"" + expectedTopResult + "\"");
-                //System.out.println("Received[" + i + "]: \"" + actualTopResult + "\"");
-                assert expectedTopResult.equalsIgnoreCase(actualTopResult)
-                    && expectedGroupResult.equalsIgnoreCase(actualGroupResult) : "TestCase[" + i + "] = \""
-                    + inputExpressions + "\" failed. \n" + "Expected Top Result: \"" + expectedTopResult + "\"\n"
-                    + "Received Top Result: \"" + actualTopResult + "\"\n" + "Expected Group Result: \""
-                    + expectedGroupResult + "\"\n" + "Received Group Result: \"" + actualGroupResult + "\"\n";
+                boolean success = expectedTopResult.equalsIgnoreCase(actualTopResult)
+                    && expectedGroupResult.equalsIgnoreCase(actualGroupResult);
+                if (!success) {
+                    System.out.println("TestCase[" + i + "] = \"" + inputExpressions + "\" failed. \n"
+                        + "Expected Top Result: \"" + expectedTopResult + "\"\n" + "Received Top Result: \""
+                        + actualTopResult + "\"\n" + "Expected Group Result: \"" + expectedGroupResult + "\"\n"
+                        + "Received Group Result: \"" + actualGroupResult + "\"\n");
+                }
+                assert success;
             }
         } finally {
             getTransactionManager().rollback();
@@ -215,11 +214,14 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
     @Test(groups = "integration.session")
     public void testTokenizer() {
 
-        String[] input = { "resource.child.name", "resource.pluginConfiguration[partition]",
-            "resource.pluginConfiguration[partition].contains", "resource.pluginConfiguration[partition.name].contains" };
-        String[][] expectedOutput = { { "resource", "child", "name" },
-            { "resource", "pluginConfiguration[partition]" },
-            { "resource", "pluginConfiguration[partition]", "contains" },
+        String[] input = { "resource.child.name", //
+            "resource.pluginConfiguration[partition]", //
+            "resource.pluginConfiguration[partition].contains", //
+            "resource.pluginConfiguration[partition.name].contains" };
+
+        String[][] expectedOutput = { { "resource", "child", "name" }, //
+            { "resource", "pluginConfiguration[partition]" }, //
+            { "resource", "pluginConfiguration[partition]", "contains" }, //
             { "resource", "pluginConfiguration[partition.name]", "contains" } };
 
         ExpressionEvaluator evaluator = new ExpressionEvaluator();

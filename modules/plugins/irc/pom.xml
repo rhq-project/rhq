@@ -9,7 +9,7 @@
     <parent>
          <artifactId>rhq-plugins-parent</artifactId>
          <groupId>org.rhq</groupId>
-         <version>3.0.0-SNAPSHOT</version>
+         <version>4.0.0-SNAPSHOT</version>
     </parent>
  
     <groupId>org.rhq</groupId>
@@ -18,11 +18,6 @@
  
     <name>RHQ IRC Server Plugin</name>
     <description>Remote monitoring of IRC repos</description>
-
-    <properties>
-        <scm.module.path>TODO</scm.module.path>
-        <rhq.version>3.0.0-SNAPSHOT</rhq.version> <!-- TODO adjust, see above too -->
-    </properties>
 
     <build>
         <plugins>
@@ -172,7 +167,6 @@
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
-
          
             <dependency>
                 <groupId>pircbot</groupId>

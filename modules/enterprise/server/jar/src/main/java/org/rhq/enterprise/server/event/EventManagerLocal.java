@@ -91,53 +91,19 @@ public interface EventManagerLocal {
 
     int deleteAllEventsForCompatibleGroup(Subject subject, int groupId);
 
+    PageList<EventComposite> findEventComposites(Subject subject, EntityContext context, long begin, long end,
+        EventSeverity[] severities, String source, String detail, PageControl pc);
+
+    PageList<EventComposite> findEventCompositesByCriteria(Subject subject, EventCriteria criteria);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    /**
-     * Provide the buckets for a timeline with the (most severe) severity for each bucket.
-     * @param subject    Subject of the caller
-     * @param resourceId Id of the resource for which we want to know the data
-     * @param begin      Begin date
-     * @param end        End date
-     * @param numBuckets Number of buckets to distribute into.
-     * @return
-     * @throws FetchException TODO
-     */
-    EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets);
-
-    /**
-     * Provide the buckets for a timeline with the (most severe) severity for each bucket.
-     * @param subject    Subject of the caller
-     * @param parentId   Id of the parent of the autogroup for which we want to know the data
-     * @param type       Id of the children type of the autogroup
-     * @param begin      Begin date
-     * @param end        End date
-     * @param numBuckets Number of buckets to distribute into.
-     * @return
-     */
-    EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentId, int type, long begin, long end,
-        int numBuckets);
-
-    /**
-     * Provide the buckets for a timeline with the (most severe) severity for each bucket.
-     * @param subject    Subject of the caller
-     * @param groupId    Id of the compatible group for which we want to know the data
-     * @param begin      Begin date
-     * @param end        End date
-     * @param numBuckets Number of buckets to distribute into.
-     * @return
-     * @throws FetchException TODO
-     */
-    EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int groupId, long begin, long end, int numBuckets);
-
-    PageList<EventComposite> findEventComposites(Subject subject, EntityContext context, long begin, long end,
-        EventSeverity[] severities, String source, String detail, PageControl pc);
-
-    PageList<EventComposite> findEventCompositesByCriteria(Subject subject, EventCriteria criteria);
+    EventSeverity[] getSeverityBucketsByContext(Subject subject, EntityContext context, long begin, long end,
+        int bucketCount);
 
     PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria);
 }

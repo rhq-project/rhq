@@ -28,20 +28,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
 
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -58,8 +55,6 @@ import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.event.composite.EventComposite;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -70,7 +65,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -78,6 +72,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  * Manager for Handling of {@link Event}s.
  * @author Heiko W. Rupp
  * @author Ian Springer
+ * @author Joseph Marques
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
@@ -104,7 +99,6 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
-    private DatabaseType dbType;
 
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
@@ -112,23 +106,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     @EJB
     private AuthorizationManagerLocal authorizationManager;
 
-    @EJB
-    private ResourceGroupManagerLocal resGrpMgr;
-
     Log log = LogFactory.getLog(EventManagerBean.class);
-
-    @PostConstruct
-    public void init() {
-        Connection conn = null;
-        try {
-            conn = rhqDs.getConnection();
-            dbType = DatabaseTypeFactory.getDatabaseType(conn);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            JDBCUtil.safeClose(conn);
-        }
-    }
 
     public void addEventData(Map<EventSource, Set<Event>> events) {
 
@@ -237,24 +215,6 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return deleted;
     }
 
-    @NotNull
-    @SuppressWarnings("unchecked")
-    private List<Event> findEventsForResources(Subject subject, List<Resource> resources, long startDate, long endDate) {
-
-        if (resources == null || resources.size() == 0)
-            return new ArrayList<Event>();
-
-        // TODO rewrite using getEvents
-
-        Query q = entityManager.createNamedQuery(Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME);
-        q.setParameter("resources", resources);
-        q.setParameter("start", startDate);
-        q.setParameter("end", endDate);
-        List<Event> ret = q.getResultList();
-
-        return ret;
-    }
-
     public int[] getEventCounts(Subject subject, int resourceId, long begin, long end, int numBuckets) {
 
         int[] buckets = new int[numBuckets];
@@ -271,86 +231,6 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
             evTime = evTime - begin;
             int bucket = (int) (evTime / timePerBucket);
             buckets[bucket]++;
-        }
-
-        return buckets;
-    }
-
-    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets) {
-        if (authorizationManager.canViewResource(subject, resourceId) == false) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to view event buckets for resource[id=" + resourceId + "]");
-        }
-
-        try {
-            Resource res = entityManager.find(Resource.class, resourceId);
-            List<Resource> resources = new ArrayList<Resource>(1);
-            resources.add(res);
-            return getSeverityBucketsForResources(subject, resources, begin, end, numBuckets);
-        } catch (NoResultException nre) {
-            return new EventSeverity[numBuckets];
-        }
-    }
-
-    public EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentId, int type, long begin,
-        long end, int numBuckets) {
-
-        List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parentId, type);
-        for (Resource res : resources) {
-            if (authorizationManager.canViewResource(subject, res.getId()) == false) {
-                throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to view event buckets for autoGroup[parentResourceId=" + parentId
-                    + ", resourceTypeId=" + type + "], root cause: missing permission to view resource[id="
-                    + res.getId() + "]");
-            }
-        }
-
-        return getSeverityBucketsForResources(subject, resources, begin, end, numBuckets);
-
-    }
-
-    public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int groupId, long begin, long end,
-        int numBuckets) {
-
-        if (authorizationManager.canViewGroup(subject, groupId) == false) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to view event buckets for resourceGroup[id=" + groupId + "]");
-        }
-
-        List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
-        return getSeverityBucketsForResources(subject, resources, begin, end, numBuckets);
-
-    }
-
-    /**
-     * Provide the buckets for a timeline with the (most severe) severity for each bucket.
-     * @param subject    Subject of the caller
-     * @param resources  List of resources for which we want to know the data
-     * @param begin      Begin date
-     * @param end        End date
-     * @param numBuckets Number of buckets to distribute into.
-     * @return
-     */
-    private EventSeverity[] getSeverityBucketsForResources(Subject subject, List<Resource> resources, long begin,
-        long end, int numBuckets) {
-        EventSeverity[] buckets = new EventSeverity[numBuckets];
-        if (resources == null || resources.size() == 0) {
-            return buckets; // TODO fill with some fake severity 'none' ?
-        }
-
-        // TODO possibly rewrite query so that the db calculates the buckets (?)
-        List<Event> events = findEventsForResources(subject, resources, begin, end);
-
-        long timeDiff = end - begin;
-        long timePerBucket = timeDiff / numBuckets;
-
-        for (Event event : events) {
-            long evTime = event.getTimestamp();
-            evTime = evTime - begin;
-            int bucket = (int) (evTime / timePerBucket);
-            if (event.getSeverity().isMoreSevereThan(buckets[bucket])) {
-                buckets[bucket] = event.getSeverity();
-            }
         }
 
         return buckets;
@@ -422,6 +302,50 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
             results.put(severity, (int) count);
         }
         return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public EventSeverity[] getSeverityBucketsByContext(Subject subject, EntityContext context, long begin, long end,
+        int bucketCount) {
+
+        EventCriteria criteria = new EventCriteria();
+        criteria.addFilterStartTime(begin);
+        criteria.addFilterEndTime(end);
+
+        /* 
+         * if the bucket computation is pushed into the database, it saves on data transfer across the wire. this
+         * solution is currently querying N number of strings (event.severity) and N number of longs (event.timestamp), 
+         * where N is the number of events between 'begin' and 'end'.  if the severity buckets are computed in a single
+         * query, the wire load would only be K integers, where K is the bucketCount.
+         */
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        String replacementSelectList = " event.severity, event.timestamp ";
+        generator.alterProjection(replacementSelectList);
+
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "source.resource", subject.getId());
+        }
+
+        CriteriaQueryRunner<Object[]> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        PageList<Object[]> flyWeights = queryRunner.execute();
+
+        EventSeverity[] buckets = new EventSeverity[bucketCount];
+        long timeDiff = end - begin;
+        long timePerBucket = timeDiff / bucketCount;
+
+        for (Object[] nextFly : flyWeights) {
+            long eventTime = (Long) nextFly[1];
+            EventSeverity eventSeverity = (EventSeverity) nextFly[0];
+
+            eventTime = eventTime - begin;
+            int bucket = (int) (eventTime / timePerBucket);
+            if (eventSeverity.isMoreSevereThan(buckets[bucket])) {
+                buckets[bucket] = eventSeverity;
+            }
+        }
+
+        return buckets;
     }
 
     public PageList<EventComposite> findEventComposites(Subject subject, EntityContext context, long begin, long end,

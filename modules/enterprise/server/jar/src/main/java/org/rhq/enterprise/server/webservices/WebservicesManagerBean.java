@@ -126,6 +126,7 @@ import org.rhq.enterprise.server.auth.SubjectException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
 import org.rhq.enterprise.server.content.AdvisoryException;
@@ -721,19 +722,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return eventManager.findEventsByCriteria(subject, criteria);
     }
 
-    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets) {
-        return eventManager.getSeverityBuckets(subject, resourceId, begin, end, numBuckets);
-    }
-
-    public EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
-        long begin, long end, int numBuckets) {
-        return eventManager.getSeverityBucketsForAutoGroup(subject, parentResourceId, resourceTypeId, begin, end,
-            numBuckets);
-    }
-
-    public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int resourceGroupId, long begin, long end,
+    public EventSeverity[] getSeverityBucketsByContext(Subject subject, EntityContext context, long begin, long end,
         int numBuckets) {
-        return eventManager.getSeverityBucketsForCompGroup(subject, resourceGroupId, begin, end, numBuckets);
+        return eventManager.getSeverityBucketsByContext(subject, context, begin, end, numBuckets);
     }
 
     //EVENTMANAGER: END ----------------------------------

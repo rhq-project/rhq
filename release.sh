@@ -22,7 +22,7 @@ abort()
 
 usage() 
 {   
-   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USER install|deploy" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips deploy"
+   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME install|deploy" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips deploy"
 }
 
 
@@ -39,7 +39,7 @@ fi
 RELEASE_VERSION="$2"
 DEVELOPMENT_VERSION="$3"
 RELEASE_BRANCH="$4"
-GIT_USER="$5"
+GIT_USERNAME="$5"
 MAVEN_RELEASE_PERFORM_GOAL="$6"
 
 
@@ -153,7 +153,7 @@ elif [ -z "$WORKING_DIR" ]; then
    MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
 fi
 
-PROJECT_GIT_URL="ssh://${GIT_USER}@git.fedorahosted.org/git/rhq/rhq.git"
+PROJECT_GIT_URL="ssh://${GIT_USERNAME}@git.fedorahosted.org/git/rhq/rhq.git"
 
 MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
@@ -186,6 +186,7 @@ echo "PATH=$PATH"
 echo "============================= Local Variables ================================="
 echo "WORKING_DIR=$WORKING_DIR"
 echo "PROJECT_NAME=$PROJECT_NAME"
+echo "PROJECT_GIT_URL=$PROJECT_GIT_URL"
 echo "RELEASE_TYPE=$RELEASE_TYPE"
 echo "RELEASE_VERSION=$RELEASE_VERSION"
 echo "DEVELOPMENT_VERSION=$DEVELOPMENT_VERSION"

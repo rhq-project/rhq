@@ -6,4 +6,5 @@
   <include file="cluster-schema.xml"/>
   <include file="inventory-schema.xml"/>
   <include file="auth-schema.xml"/>
+  <include file="authz-schema.xml"/>
 </databaseChangeLog>

@@ -1,0 +1,25 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+  <changeSet id="0" author="jsanda">
+    <createTable tableName="rhq_role">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="varchar(100)"/>
+      <column name="fsystem" type="boolean"/>
+    </createTable>
+ 
+    <createSequence sequenceName="rhq_role_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_role"
+                 indexName="rhq_role_name_key"
+                 unique="true">
+      <column name="name"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

@@ -435,10 +435,27 @@
       </column>
       <column name="tag_id" type="integer">
         <constraints primaryKey="true"
-                     primaryKeyName="RHQ_TAGGING_RESOURCE_MAP_KEY"
+                     primaryKeyName="rhq_tagging_resource_map_key"
                      foreignKeyName="fk_tag_id_rhq_tagging"
                      references="rhq_tagging"/>
       </column>
     </createTable>    
+  </changeSet>
+
+  <changeSet id="15" author="jsanda">
+    <createTable tableName="rhq_tagging_res_group_map">
+      <column name="resource_group_id" type="integer">
+        <constraints primaryKey="true"
+                     primaryKeyName="rhq_tagging_res_group_map_key"
+                     foreignKeyName="fk_resource_group_id_rhq_resource_group"
+                     references="rhq_resource_group"/>
+      </column>
+      <column name="tag_id" type="integer">
+        <constraints primaryKey="true"
+                     primaryKeyName="rhq_tagging_res_group_map_key"
+                     foreignKeyName="fk_tag_id_rhq_tagging"
+                     references="rhq_tagging"/>
+      </column>
+    </createTable>
   </changeSet>
 </databaseChangeLog>

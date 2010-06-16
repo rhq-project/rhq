@@ -41,7 +41,6 @@
         </executions>
         <configuration>
           <changeLogFile>dbchange-log.xml</changeLogFile>
-          <propertyFile>src/test/resources/liquibase.properties</propertyFile>
           <driver>org.postgresql.Driver</driver>
           <url>jdbc:postgresql://127.0.0.1:5432/rhq</url>
           <username>rhqadmin</username>

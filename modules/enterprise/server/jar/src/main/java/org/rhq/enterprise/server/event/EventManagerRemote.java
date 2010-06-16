@@ -29,7 +29,6 @@ import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.system.ServerVersion;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
@@ -38,9 +37,26 @@ import org.rhq.enterprise.server.system.ServerVersion;
 public interface EventManagerRemote {
 
     @WebMethod
-    EventSeverity[] getSeverityBucketsByContext( //
+    EventSeverity[] getSeverityBuckets( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "context") EntityContext context, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "begin") long begin, //
+        @WebParam(name = "end") long end, //
+        @WebParam(name = "numBuckets") int numBuckets);
+
+    @WebMethod
+    EventSeverity[] getSeverityBucketsForAutoGroup( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "parentResourceId") int parentResourceId, //
+        @WebParam(name = "resourceTypeId") int resourceTypeId, //
+        @WebParam(name = "begin") long begin, //
+        @WebParam(name = "end") long end, //
+        @WebParam(name = "numBuckets") int numBuckets);
+
+    @WebMethod
+    EventSeverity[] getSeverityBucketsForCompGroup( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceGroupId") int resourceGroupId, //
         @WebParam(name = "begin") long begin, //
         @WebParam(name = "end") long end, //
         @WebParam(name = "numBuckets") int numBuckets);

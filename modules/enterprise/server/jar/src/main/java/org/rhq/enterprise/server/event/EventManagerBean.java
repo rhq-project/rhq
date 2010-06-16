@@ -425,4 +425,23 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return queryRunner.execute();
     }
 
+    /*
+     * Methods kept around because they are part of the remote interface, but all should be treated as deprecated
+     */
+
+    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets) {
+        return getSeverityBucketsByContext(subject, EntityContext.forResource(resourceId), begin, end, numBuckets);
+    }
+
+    public EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
+        long begin, long end, int numBuckets) {
+        return getSeverityBucketsByContext(subject, EntityContext.forAutoGroup(parentResourceId, resourceTypeId),
+            begin, end, numBuckets);
+    }
+
+    public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int resourceGroupId, long begin, long end,
+        int numBuckets) {
+        return getSeverityBucketsByContext(subject, EntityContext.forGroup(resourceGroupId), begin, end, numBuckets);
+    }
+
 }

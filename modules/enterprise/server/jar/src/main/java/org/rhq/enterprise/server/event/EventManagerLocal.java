@@ -96,14 +96,22 @@ public interface EventManagerLocal {
 
     PageList<EventComposite> findEventCompositesByCriteria(Subject subject, EventCriteria criteria);
 
+    EventSeverity[] getSeverityBucketsByContext(Subject subject, EntityContext context, long begin, long end,
+        int bucketCount);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    EventSeverity[] getSeverityBucketsByContext(Subject subject, EntityContext context, long begin, long end,
-        int bucketCount);
-
     PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria);
+
+    EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets);
+
+    EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
+        long begin, long end, int numBuckets);
+
+    EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int resourceGroupId, long begin, long end,
+        int numBuckets);
 }

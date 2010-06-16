@@ -421,5 +421,24 @@
         <constraints nullable="false"/>
       </column>
     </createTable>
+
+    <createSequence sequenceName="rhq_tagging_id_seq" startValue="10001"/>
+  </changeSet>
+
+  <changeSet id="14" author="jsanda">
+    <createTable tableName="rhq_tagging_resource_map">
+      <column name="resource_id" type="integer">
+        <constraints primaryKey="true"
+                     primaryKeyName="RHQ_TAGGING_RESOURCE_MAP_KEY"
+                     foreignKeyName="fk_resource_id_rhq_resource"
+                     references="rhq_resource"/>
+      </column>
+      <column name="tag_id" type="integer">
+        <constraints primaryKey="true"
+                     primaryKeyName="RHQ_TAGGING_RESOURCE_MAP_KEY"
+                     foreignKeyName="fk_tag_id_rhq_tagging"
+                     references="rhq_tagging"/>
+      </column>
+    </createTable>    
   </changeSet>
 </databaseChangeLog>

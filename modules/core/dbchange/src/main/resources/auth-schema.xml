@@ -17,4 +17,18 @@
  
     <createSequence sequenceName="rhq_principal_id_seq" startValue="10001"/>
   </changeSet>
+
+  <changeSet id="1" author="jsanda">
+    <insert tableName="rhq_principal">
+      <column name="id" value="2"/>
+      <column name="principal" value="${admin.username}"/>
+      <column name="password" value="${admin.password}"/>
+    </insert>
+
+    <rollback>
+      <delete tableName="rhq_principal">
+        <where>id = 2</where>
+      </delete>
+    </rollback>
+  </changeSet>
 </databaseChangeLog>

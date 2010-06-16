@@ -79,7 +79,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
 
         tabs.addTab(createFilesTab());
 
-        tabs.addTab(createUpdateHistoryTab());
+//        tabs.addTab(createUpdateHistoryTab());
 
 
         addMember(new BackButton("Back to Bundle: " + version.getBundle().getName(),"Bundles/Bundle/" + version.getBundle().getId()));

@@ -22,14 +22,14 @@ abort()
 
 usage() 
 {   
-   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USER" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips"
+   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USER install|deploy" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips deploy"
 }
 
 
 # Process command line args.
 
 EXE=`basename $0`
-if [ "$#" -ne 5 ]; then
+if [ "$#" -ne 6 ]; then
    usage
 fi  
 RELEASE_TYPE="$1"
@@ -40,6 +40,7 @@ RELEASE_VERSION="$2"
 DEVELOPMENT_VERSION="$3"
 RELEASE_BRANCH="$4"
 GIT_USER="$5"
+MAVEN_RELEASE_PERFORM_GOAL="$6"
 
 
 # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
@@ -263,26 +264,27 @@ if [ -d "$WORKING_DIR" ]; then
    if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; then       
        echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
        git checkout "$RELEASE_BRANCH"
-       [ $? -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
+       [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
        git reset --hard "origin/$RELEASE_BRANCH"
-       [ $? -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
+       [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
        git clean -dxf
-       [ $? -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
+       [ "$?" -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
        git pull
-       [ $? -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
+       [ "$?" -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
    else
        echo "$WORKING_DIR does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
        cd ..
        rm -rf "$WORKING_DIR"
+       [ "$?" -ne 0 ] && abort "Failed to remove bogus working directory ($WORKING_DIR)."
    fi
 fi
 if [ ! -d "$WORKING_DIR" ]; then
    echo "Cloning the $PROJECT_NAME git repo (this will take about 10-15 minutes)..."
    git clone "$PROJECT_GIT_URL" "$WORKING_DIR"
-   [ $? -ne 0 ] && abort "Failed to clone $PROJECT_NAME git repo ($PROJECT_GIT_URL)."
+   [ "$?" -ne 0 ] && abort "Failed to clone $PROJECT_NAME git repo ($PROJECT_GIT_URL)."
    cd "$CLONE_DIR"
    git checkout "$RELEASE_BRANCH"
-   [ $? -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
+   [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
 fi
 
 
@@ -291,28 +293,25 @@ fi
 echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
 # NOTE: There is no need to do a mvn clean below, since we just did either a clone or clean checkout above.
 mvn install $MAVEN_ARGS -Ddbreset
-if [ "$?" -ne 0 ]; then
-   abort "Test build failed. Please see above Maven output for details, fix any issues, then try again."
-fi
+[ "$?" -ne 0 ] && abort "Test build failed. Please see above Maven output for details, fix any issues, then try again."
 echo
 echo "Test build succeeded!"
 
 
-# Clean up the snapshot jars produced by the test build.
+# Clean up the snapshot jars produced by the test build from module target dirs.
 
-echo "Cleaning up snapshot jars produced by test build..."
+echo "Cleaning up snapshot jars produced by test build from module target dirs..."
 mvn clean $MAVEN_ARGS
+[ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
 
 # Do a dry run of tagging the release.
 
 echo "Doing a dry run of tagging the release..."
 mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
-EXIT_CODE=$?
+[ "$?" -ne 0 ] && abort "Tagging dry run failed. Please see above Maven output for details, fix any issues, then try again."
 mvn release:clean $MAVEN_ARGS
-if [ "$EXIT_CODE" -ne 0 ]; then
-   abort "Tagging dry run failed. Please see above Maven output for details, fix any issues, then try again."
-fi
+[ "$?" -ne 0 ] && abort "Failed to cleanup release plugin working files from tagging dry run. Please see above Maven output for details, fix any issues, then try again."
 echo
 echo "Tagging dry run succeeded!"
 
@@ -320,12 +319,8 @@ echo "Tagging dry run succeeded!"
 # If the dry run succeeded, tag it for real.
 
 echo "Tagging the release..."
-mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false
-EXIT_CODE=$?
-mvn release:clean $MAVEN_ARGS
-if [ "$EXIT_CODE" -ne 0 ]; then
-   abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
-fi
+mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false -Dusername=$GIT_USERNAME
+[ "$?" -ne 0 ] && abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
 echo
 echo "Tagging succeeded!"
 
@@ -334,12 +329,12 @@ echo "Tagging succeeded!"
 
 echo "Checking out release tag $RELEASE_TAG..."
 git checkout "$RELEASE_TAG"
+[ "$?" -ne 0 ] && abort "Checkout of release tag ($RELEASE_TAG) failed. Please see above git output for details, fix any issues, then try again."
 git clean -dxf
+[ "$?" -ne 0 ] && abort "Failed to cleanup unversioned files. Please see above git output for details, fix any issues, then try again."
 echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
-if [ "$?" -ne 0 ]; then
-   abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
-fi
+mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
+[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 echo
 echo "Release build succeeded!"
 

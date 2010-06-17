@@ -1,4 +1,10 @@
-#!/bin/sh -x
+#!/bin/sh
+
+if [ -n "$RELEASE_DEBUG" ]; then
+   echo "Debug output is enabled."
+   set -x
+fi
+
 
 # Constants
 
@@ -168,11 +174,11 @@ MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,d
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
 fi
-if [ -z "$RHQ_RELEASE_QUIET" ]; then
+if [ -n "$RELEASE_DEBUG" ]; then
    MAVEN_ARGS="$MAVEN_ARGS --debug"
 fi
-if [ -n "$RHQ_RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS $RHQ_RELEASE_ADDITIONAL_MAVEN_ARGS"
+if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
+   MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
 fi
 if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
    MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="12"
@@ -212,6 +218,7 @@ echo "MAVEN_LOCAL_REPO_DIR=$MAVEN_LOCAL_REPO_DIR"
 echo "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS=$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS"
 echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
 echo "MAVEN_ARGS=$MAVEN_ARGS"
+echo "MAVEN_RELEASE_PERFORM_GOAL=$MAVEN_RELEASE_PERFORM_GOAL"
 echo "============================= Program Versions ================================"
 git --version
 echo
@@ -374,7 +381,7 @@ echo
 echo "Tagging succeeded!"
 
 
-# Checkout the tag and build and publish the Maven artifacts.
+# Checkout the tag and build it. If in production mode, publish the Maven artifacts.
 
 echo "Checking out release tag $RELEASE_TAG..."
 git checkout "$RELEASE_TAG"

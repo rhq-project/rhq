@@ -201,6 +201,9 @@
                         <onc:selectCommandButton action="#{BrowseGroupsUIBean.deleteSelectedGroups}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.inventory}" />
+                        <onc:selectCommandButton action="#{BrowseGroupsUIBean.uninventoryMembers}"
+                                                 value="UNINVENTORY MEMBERS" target="selectedItems" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.inventory}" />
 
                         <ui:param name="paginationDataTableName" value="browseGroupsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{browseGroupsDataModel}"/>

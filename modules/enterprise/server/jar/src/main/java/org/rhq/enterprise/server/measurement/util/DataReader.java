@@ -43,7 +43,7 @@ public class DataReader {
         String[] tables = MeasurementDataManagerUtility.getTables(beginTime, endTime);
         for (String table : tables) {
             if (unions.length() != 0) {
-                unions.append("   UNION \n ");
+                unions.append("   UNION ALL \n ");
             }
 
             unions.append(getTableString(table));
@@ -53,7 +53,7 @@ public class DataReader {
             + "   (SELECT timestamp, avg(value) as av, max(value) as peak, min(value) as low FROM (\n"
             + unions.toString()
             + ") data GROUP BY timestamp) \n"
-            + "   UNION (select ? + (? * i) as timestamp, 0 as av, 0 as peak, 0 as low from RHQ_numbers where i < ?) ) alldata \n"
+            + "   UNION ALL (select ? + (? * i) as timestamp, 0 as av, 0 as peak, 0 as low from RHQ_numbers where i < ?) ) alldata \n"
             + "GROUP BY timestamp";
 
         //System.out.println(sql);

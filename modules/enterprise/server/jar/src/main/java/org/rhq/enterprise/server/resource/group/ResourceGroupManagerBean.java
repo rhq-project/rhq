@@ -935,6 +935,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
     }
 
+    public int getExplicitGroupMemberCount(int resourceGroupId) {
+        Query countQuery = entityManager
+            .createNamedQuery(Resource.QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN);
+        countQuery.setParameter("groupId", resourceGroupId);
+        long count = (Long) countQuery.getSingleResult();
+        return (int) count;
+    }
+
     public int getImplicitGroupMemberCount(int resourceGroupId) {
         Query countQuery = entityManager
             .createNamedQuery(Resource.QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN);
@@ -1376,6 +1384,15 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void uninventoryMembers(Subject subject, int groupId) {
+        List<Integer> resourceMemberIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
+        for (int doomedResourceId : resourceMemberIds) {
+            resourceManager.uninventoryResource(subject, doomedResourceId);
+        }
     }
 
 }

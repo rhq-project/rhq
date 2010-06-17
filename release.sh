@@ -22,7 +22,7 @@ abort()
 
 usage() 
 {   
-   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME install|deploy" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips deploy"
+   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips test"
 }
 
 
@@ -34,13 +34,16 @@ if [ "$#" -ne 6 ]; then
 fi  
 RELEASE_TYPE="$1"
 if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
-   usage "Invalid release type: $RELEASE_TYPE"
+   usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
 fi
 RELEASE_VERSION="$2"
 DEVELOPMENT_VERSION="$3"
 RELEASE_BRANCH="$4"
 GIT_USERNAME="$5"
-MAVEN_RELEASE_PERFORM_GOAL="$6"
+MODE="$6"
+if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
+   usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
+fi
 
 
 # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
@@ -140,12 +143,18 @@ if echo $GIT_VERSION | grep -v "^1.[67]"; then
 fi
 
 
+# Set various environment variables.
+
+MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
+export MAVEN_OPTS
+
+
 # Set various local variables.
 
 if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
    echo "We appear to be running in a Hudson job." 
    WORKING_DIR="$WORKSPACE"
-   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-$JOB_NAME-repository"
+   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-release-$RELEASE_TYPE-repository"
    MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
 elif [ -z "$WORKING_DIR" ]; then
    WORKING_DIR="$HOME/release/rhq"
@@ -168,7 +177,13 @@ fi
 if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
    MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="12"
 fi
-# TODO: Set MAVEN_OPTS environment variable.
+
+if [ "$MODE" = "production" ]; then
+   MAVEN_RELEASE_PERFORM_GOAL="deploy"
+else
+   MAVEN_RELEASE_PERFORM_GOAL="install"
+fi
+
 
 TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
 RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
@@ -192,6 +207,7 @@ echo "RELEASE_VERSION=$RELEASE_VERSION"
 echo "DEVELOPMENT_VERSION=$DEVELOPMENT_VERSION"
 echo "RELEASE_BRANCH=$RELEASE_BRANCH"
 echo "RELEASE_TAG=$RELEASE_TAG"
+echo "MODE=$MODE"
 echo "MAVEN_LOCAL_REPO_DIR=$MAVEN_LOCAL_REPO_DIR"
 echo "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS=$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS"
 echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
@@ -207,13 +223,14 @@ echo
 
 
 # Clean the Maven local repo if it hasn't been purged recently.
-if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
-   OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
-   if [ -n "$OUTPUT" ]; then       
-      echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
-      rm -rf "$MAVEN_LOCAL_REPO_DIR"
-   fi
-fi
+# TODO: Uncomment this.
+#if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
+#   OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
+#   if [ -n "$OUTPUT" ]; then       
+#      echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
+#      rm -rf "$MAVEN_LOCAL_REPO_DIR"
+#   fi
+#fi
 mkdir -p "$MAVEN_LOCAL_REPO_DIR"
 
 
@@ -264,7 +281,12 @@ if [ -d "$WORKING_DIR" ]; then
    # is truly a git working copy.
    if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; then       
        echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
-       git checkout "$RELEASE_BRANCH"
+       git fetch origin "$RELEASE_BRANCH"
+       [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
+       git checkout "$RELEASE_BRANCH" 2>/dev/null
+       if [ "$?" -ne 0 ]; then
+           git checkout --track -b "$RELEASE_BRANCH" "origin/$RELEASE_BRANCH"
+       fi
        [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
        git reset --hard "origin/$RELEASE_BRANCH"
        [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
@@ -284,8 +306,32 @@ if [ ! -d "$WORKING_DIR" ]; then
    git clone "$PROJECT_GIT_URL" "$WORKING_DIR"
    [ "$?" -ne 0 ] && abort "Failed to clone $PROJECT_NAME git repo ($PROJECT_GIT_URL)."
    cd "$CLONE_DIR"
-   git checkout "$RELEASE_BRANCH"
+   git checkout --track -b $RELEASE_BRANCH "origin/$RELEASE_BRANCH"
    [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
+fi
+
+
+# See if the specified tag already exists remotely - if so:
+#   - if we are in test mode, delete it.
+# or:
+#   - if we are in production mode, abort.
+OUTPUT=`git ls-remote --tags origin "$RELEASE_TAG"`
+if [ -n "$OUTPUT" ]; then
+   if [ "$MODE" = "test" ]; then
+      echo "A remote tag named $RELEASE_TAG already exists - deleting it, since we are in test mode..."      
+      git push origin ":ref/tags/$RELEASE_TAG"
+      [ "$?" -ne 0 ] && abort "Failed to delete remote tag ($RELEASE_TAG)."
+   else
+      abort "A remote tag named $RELEASE_TAG already exists. Aborting, since we are in production mode..."
+   fi
+fi
+
+
+# See if the specified tag already exists locally - if so, delete it.
+if [ -n `git tag -l "$RELEASE_TAG"` ]; then
+   echo "A local tag named $RELEASE_TAG already exists - deleting it..."      
+   git tag -d "$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
 fi
 
 

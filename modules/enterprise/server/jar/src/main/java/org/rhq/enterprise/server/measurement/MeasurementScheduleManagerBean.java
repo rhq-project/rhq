@@ -21,9 +21,7 @@ package org.rhq.enterprise.server.measurement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,7 +41,6 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.Nullable;
 
 import org.jboss.annotation.IgnoreDependency;
 
@@ -56,9 +53,9 @@ import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
-import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -69,8 +66,6 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.group.GroupCategory;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -85,13 +80,11 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.authz.RequiredPermissions;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.common.PerformanceMonitorInterceptor;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
-import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -129,17 +122,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     private ResourceGroupManagerLocal resourceGroupManager;
 
     @EJB
-    @IgnoreDependency
-    private ResourceTypeManagerLocal resourceTypeManager;
-
-    @EJB
     private MeasurementScheduleManagerLocal measurementScheduleManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
-
-    @EJB
-    private SystemManagerLocal systemManager;
 
     private final Log log = LogFactory.getLog(MeasurementScheduleManagerBean.class);
 
@@ -256,8 +242,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return findSchedulesByResourcesAndDefinitions(subject, resourceIds, new int[] { definitionId });
     }
 
-    public List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionIds(int[] resourceIds, 
-            int[] definitionIds) {
+    public List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionIds(int[] resourceIds, int[] definitionIds) {
         Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
         query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));
         query.setParameter("resourceIds", ArrayUtils.wrapInList(resourceIds));
@@ -277,7 +262,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         return findSchedulesByResourceIdsAndDefinitionIds(resourceIds, definitionIds);
     }
-
 
     /**
      * Find MeasurementSchedules that are attached to a certain definition and a resource
@@ -309,212 +293,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         } catch (NoResultException nre) {
             throw new MeasurementNotFoundException(nre);
         }
-    }
-
-    /**
-     * Get the MeasurementSchedule composits for an autogroup
-     *
-     * @param  subject
-     * @param  parentId
-     * @param  childType
-     * @param  pageControl
-     *
-     * @return
-     */
-    public PageList<MeasurementScheduleComposite> findSchedulesForAutoGroup(Subject subject, int parentId,
-        int childType, PageControl pageControl) {
-        // pageControl.initDefaultOrderingField(); // this is ignored, as this method eventually uses native queries
-
-        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentId, childType);
-        for (Resource res : resources) {
-            if (!authorizationManager.canViewResource(subject, res.getId())) {
-                throw new PermissionException("User[" + subject.getName()
-                    + "] does not have permission to view metric schedules for autoGroup[parentResourceId=" + parentId
-                    + ", resourceTypeId=" + childType + "], root cause: does not have permission to view resource[id="
-                    + res.getId() + "]");
-            }
-        }
-
-        ResourceType resType;
-        try {
-            resType = resourceTypeManager.getResourceTypeById(subject, childType);
-        } catch (ResourceTypeNotFoundException e) {
-            List<MeasurementScheduleComposite> compList = new ArrayList<MeasurementScheduleComposite>();
-            PageList<MeasurementScheduleComposite> result = new PageList<MeasurementScheduleComposite>(compList,
-                pageControl);
-            return result;
-        }
-
-        Set<MeasurementDefinition> definitions = resType.getMetricDefinitions();
-
-        return getCurrentMeasurementSchedulesForResourcesAndType(pageControl, resources, resType, definitions);
-    }
-
-    /**
-     * Get the MeasurementSchedule composites for a compatible group.
-     */
-    public PageList<MeasurementScheduleComposite> findSchedulesForCompatibleGroup(Subject subject, int groupId,
-        PageControl pageControl) {
-        // pageControl.initDefaultOrderingField(); // this is ignored, as this method eventually uses native queries
-
-        if (!authorizationManager.canViewResource(subject, groupId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to view metric schedules for resourceGroup[id=" + groupId + "]");
-        }
-
-        ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
-        Set<Resource> resources = group.getExplicitResources();
-        ResourceType resType = group.getResourceType();
-        Set<MeasurementDefinition> definitions = resType.getMetricDefinitions();
-
-        return getCurrentMeasurementSchedulesForResourcesAndType(pageControl, resources, resType, definitions);
-    }
-
-    /**
-     * @param  pageControl
-     * @param  resources
-     * @param  resType
-     * @param  definitions
-     *
-     * @return
-     */
-    PageList<MeasurementScheduleComposite> getCurrentMeasurementSchedulesForResourcesAndType(PageControl pageControl,
-        Collection<Resource> resources, ResourceType resType, Set<MeasurementDefinition> definitions) {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet resultSet = null;
-        DatabaseType type = systemManager.getDatabaseType();
-
-        String queryString;
-        if (type instanceof PostgresqlDatabaseType || type instanceof H2DatabaseType) {
-            queryString = "select defi.id, defi.display_name, defi.description,defi.category,defi.data_type, foo.coMin, foo.coMax, foo.coAny, foo.coAll "
-                + " from RHQ_measurement_def defi, "
-                + " ( "
-                + "   select d.id as did, min(s.coll_interval) as coMin, max(s.coll_interval) as coMax, bool_or(s.enabled) as coAny, bool_and(s.enabled) as coAll "
-                + "   from RHQ_MEASUREMENT_SCHED s,  RHQ_measurement_def d "
-                + "   where s.definition = d.id "
-                + "     and d.id IN (@@DEFINITIONS@@) "
-                + "     and s.resource_id IN (@@RESOURCES@@) "
-                + "   group by d.id " + " ) as foo " + " where defi.id = foo.did order by defi.display_name";
-        } else if (type instanceof OracleDatabaseType || type instanceof SQLServerDatabaseType) {
-            queryString = "select defi.id, defi.display_name, defi.description, defi.category, defi.data_type, coMin, coMax, coAny, coAll "
-                + " from RHQ_measurement_def defi, "
-                + " ( "
-                + "   select d.id as did,  min(s.coll_interval) as coMin, max(s.coll_interval) as coMax, min(s.enabled) as coAny, max(s.enabled) as coAll "
-                + "   from RHQ_MEASUREMENT_SCHED s,  RHQ_measurement_def d "
-                + "   where s.definition = d.id "
-                + "     and d.id IN (@@DEFINITIONS@@) "
-                + "     and s.resource_id IN (@@RESOURCES@@) "
-                + "   group by d.id " + " ) " + " where defi.id = did order by defi.display_name";
-        } else {
-            throw new IllegalArgumentException("unknown database type, imlement this: " + type.toString());
-        }
-
-        int numDefs = definitions.size();
-        queryString = JDBCUtil.transformQueryForMultipleInParameters(queryString, "@@DEFINITIONS@@", numDefs);
-        int numResources = resources.size();
-        if (numResources > 1000) //  if collection time is the same for 1000, assume that for all of them
-        {
-            numResources = 1000;
-        }
-
-        queryString = JDBCUtil.transformQueryForMultipleInParameters(queryString, "@@RESOURCES@@", numResources);
-
-        int[] defIds = new int[numDefs];
-        int i = 0;
-        for (MeasurementDefinition def : definitions) {
-            defIds[i++] = def.getId();
-        }
-
-        int[] resIds = new int[numResources];
-        i = 0;
-        for (Resource res : resources) {
-            resIds[i++] = res.getId();
-        }
-
-        List<MeasurementScheduleComposite> compList = new ArrayList<MeasurementScheduleComposite>(numDefs);
-
-        try {
-            conn = dataSource.getConnection();
-            ps = conn.prepareStatement(queryString);
-            JDBCUtil.bindNTimes(ps, defIds, 1);
-            JDBCUtil.bindNTimes(ps, resIds, numDefs + 1);
-            resultSet = ps.executeQuery();
-            while (resultSet.next()) {
-                int defId = resultSet.getInt(1);
-                String defDisName = resultSet.getString(2);
-                String defDescr = resultSet.getString(3);
-                int category = resultSet.getInt(4);
-                int dataType = resultSet.getInt(5);
-                int maxInterval = resultSet.getInt(6);
-                int minInterval = resultSet.getInt(7);
-                int collectionInterval = (maxInterval == minInterval) ? maxInterval : 0; // 0 will be flagged as "DIFFERENT"
-                Boolean collectionEnabled = null;
-                if (type instanceof PostgresqlDatabaseType || type instanceof H2DatabaseType) {
-                    boolean bOr = resultSet.getBoolean(8);
-                    boolean bAnd = resultSet.getBoolean(9);
-                    if (bOr == bAnd) {
-                        collectionEnabled = (bOr) ? true : false;
-                    } else {
-                        collectionInterval = 0; // will be flagged as "DIFFERENT"
-                    }
-                } else if (type instanceof OracleDatabaseType || type instanceof SQLServerDatabaseType) {
-                    int boAny = resultSet.getInt(8);
-                    int boAll = resultSet.getInt(9);
-                    if (boAny == boAll) {
-                        collectionEnabled = (boAny == 1) ? true : false;
-                    } else {
-                        collectionInterval = 0; // will be flagged as "DIFFERENT"
-                    }
-                } else {
-                    throw new IllegalArgumentException("Unimplemented db type: " + type.toString());
-                }
-
-                MeasurementDefinition dummy = new MeasurementDefinition(resType, defDisName);
-                dummy.setId(defId);
-                dummy.setDescription(defDescr);
-                dummy.setDisplayName(defDisName);
-                dummy.setCategory(MeasurementCategory.values()[category]);
-                dummy.setDataType(DataType.values()[dataType]);
-                MeasurementScheduleComposite comp = new MeasurementScheduleComposite(dummy, collectionEnabled,
-                    collectionInterval);
-                compList.add(comp);
-            }
-        } catch (SQLException e) {
-            log.error("Can not retrieve results: " + e.getMessage() + ", code= " + e.getErrorCode());
-            compList = new ArrayList<MeasurementScheduleComposite>();
-        } finally {
-            JDBCUtil.safeClose(conn, ps, resultSet);
-        }
-
-        PageList<MeasurementScheduleComposite> result = new PageList<MeasurementScheduleComposite>(compList,
-            pageControl);
-
-        return result;
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<MeasurementScheduleComposite> findScheduleCompositesForResource(Subject subject, int resourceId,
-        @Nullable DataType dataType, PageControl pageControl) {
-        if (!authorizationManager.canViewResource(subject, resourceId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to view metric schedules for resource[id=" + resourceId + "]");
-        }
-
-        pageControl.addDefaultOrderingField("ms.id");
-
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            MeasurementSchedule.FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE, pageControl);
-        query.setParameter("resourceId", resourceId);
-        query.setParameter("dataType", dataType);
-        List<MeasurementScheduleComposite> results = query.getResultList();
-        return new PageList<MeasurementScheduleComposite>(results, pageControl);
-    }
-
-    public PageList<MeasurementScheduleComposite> findSchedulesForResource(Subject subject, int resourceId,
-        PageControl pageControl) {
-
-        return findScheduleCompositesForResource(subject, resourceId, null, pageControl);
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -928,22 +706,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     /**
-     * Returns the list of MeasurementDefinitions with the given id's
-     *
-     * @param  ids id's of the desired definitions
-     *
-     * @return the list of MeasurementDefinitions for the list of id's
-     */
-    @SuppressWarnings("unchecked")
-    private List<MeasurementDefinition> getDefinitionsByIds(int[] ids) {
-        Query q = entityManager.createNamedQuery(MeasurementDefinition.FIND_BY_IDS);
-        List<Integer> idsList = ArrayUtils.wrapInList(ids);
-        q.setParameter("ids", idsList);
-        List<MeasurementDefinition> results = q.getResultList();
-        return results;
-    }
-
-    /**
      * This gets measurement schedules for a resource and optionally its dependents. It creates them as necessary.
      *
      * @param resourceIds    The ids of the resources to retrieve schedules for
@@ -1344,6 +1106,129 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     public void updateMeasurementTemplates(Subject subject, int[] measurementDefinitionIds, long collectionInterval) {
         updateDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, collectionInterval,
             true);
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(Subject subject,
+        EntityContext context, PageControl pc) {
+        pc.addDefaultOrderingField("definition.displayName");
+
+        // check authorization up front, so that criteria-based queries can run without authz checks
+        if (context.category == EntityContext.Category.Resource) {
+            if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement schedules for resource[id=" + context.resourceId
+                    + "]");
+            }
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement schedules for resourceGroup[id="
+                    + context.groupId + "]");
+            }
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement schedules for autoGroup[parentResourceId="
+                    + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
+            }
+        }
+
+        // general criteria setup
+        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+        //criteria.addFilterDefinitionIds(measurementDefinitionIds);
+        if (context.category == EntityContext.Category.Resource) {
+            criteria.addFilterResourceId(context.resourceId);
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            criteria.addFilterResourceGroupId(context.groupId);
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
+            criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
+        }
+        criteria.setPageControl(pc); // for primary return list, use passed PageControl
+
+        // get the core definitions
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        generator.alterProjection(" distinct measurementschedule.definition ");
+        CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager);
+        PageList<MeasurementDefinition> definitions = queryRunner.execute();
+
+        // reset paging -- remove ordering, add group by
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
+        generator.setGroupByClause(" measurementschedule.definition.id ");
+
+        // get the interval results
+        generator.alterProjection("" //
+            + " measurementschedule.definition.id, " //
+            + " min(measurementschedule.interval), " //
+            + " max(measurementschedule.interval) ");
+        Query query = generator.getQuery(entityManager);
+        List<Object[]> definitionIntervalResults = query.getResultList();
+
+        // get the enabled results
+        criteria.addFilterEnabled(true);
+        generator.alterProjection(" measurementschedule.definition.id, count(measurementschedule.id) ");
+        query = generator.getQuery(entityManager);
+        List<Object[]> definitionEnabledResults = query.getResultList();
+
+        // generate intermediate maps
+        Map<Integer, Long> definitionIntervalMap = new HashMap<Integer, Long>();
+        for (Object[] nextInterval : definitionIntervalResults) {
+            int definitionId = (Integer) nextInterval[0];
+            long minInterval = (Long) nextInterval[1];
+            long maxInterval = (Long) nextInterval[2];
+
+            long interval = (minInterval != maxInterval) ? 0 : minInterval;
+            definitionIntervalMap.put(definitionId, interval);
+        }
+        int size = getResourceCount(context);
+        Map<Integer, Boolean> definitionEnabledMap = new HashMap<Integer, Boolean>();
+        for (Object[] nextEnabled : definitionEnabledResults) {
+            int definitionId = (Integer) nextEnabled[0];
+            long enabledCount = (Long) nextEnabled[1];
+
+            Boolean enabled = null;
+            if (enabledCount == size) {
+                enabled = true;
+            } else if (enabledCount == 0) {
+                enabled = false;
+            }
+
+            definitionEnabledMap.put(definitionId, enabled);
+        }
+
+        // finally merge everything together
+        List<MeasurementScheduleComposite> composites = new ArrayList<MeasurementScheduleComposite>();
+        for (MeasurementDefinition next : definitions) {
+            int definitionId = next.getId();
+            Boolean enabled = false;
+            if (definitionEnabledMap.containsKey(definitionId)) {
+                enabled = definitionEnabledMap.get(definitionId);
+            }
+            long interval = definitionIntervalMap.get(definitionId);
+
+            MeasurementScheduleComposite result = new MeasurementScheduleComposite(next, enabled, interval);
+            composites.add(result);
+        }
+        return new PageList<MeasurementScheduleComposite>(composites, composites.size(), pc);
+    }
+
+    private int getResourceCount(EntityContext context) {
+        if (context.category == EntityContext.Category.Resource) {
+            return 1;
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            return resourceGroupManager.getExplicitGroupMemberCount(context.groupId);
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            ResourceCriteria criteria = new ResourceCriteria();
+            criteria.addFilterParentResourceId(context.parentResourceId);
+            criteria.addFilterResourceTypeId(context.resourceTypeId);
+            criteria.setPageControl(PageControl.getSingleRowInstance()); // get one record, then extract totalSize
+            PageList<Resource> results = resourceManager
+                .findResourcesByCriteria(subjectManager.getOverlord(), criteria);
+            return results.getTotalSize();
+        }
+        return 0;
     }
 
     @SuppressWarnings("unchecked")

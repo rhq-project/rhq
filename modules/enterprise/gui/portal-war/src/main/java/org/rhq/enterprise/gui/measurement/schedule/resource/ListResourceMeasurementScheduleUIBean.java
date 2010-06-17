@@ -12,6 +12,7 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.common.time.DurationComponent;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -90,7 +91,8 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         @Override
         public PageList<MeasurementScheduleComposite> fetchPage(PageControl pc) {
             int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
-            return measurementScheduleManager.findSchedulesForResource(getSubject(), resourceId, pc);
+            return measurementScheduleManager.getMeasurementScheduleCompositesByContext(getSubject(), EntityContext
+                .forResource(resourceId), pc);
         }
     }
 

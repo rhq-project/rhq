@@ -79,4 +79,39 @@
       </column>
     </createTable>
   </changeSet>
+
+  <changeSet id="4" author="jsanda">
+    <createTable tableName="rhq_subject">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="configuration_id" type="integer">
+        <constraints foreignKeyName="fk_configuration_id_rhq_config"
+                     references="rhq_config"/>
+      </column>
+      <column name="first_name" type="varchar(100)"/>
+      <column name="last_name" type="varchar(100)"/>
+      <column name="email_address" type="varchar(100)"/>
+      <column name="sms_address" type="varchar(100)"/>
+      <column name="phone_number" type="varchar(100)"/>
+      <column name="department" type="varchar(100)"/>
+      <column name="factive" type="boolean" defaultValue="true">
+        <constraints nullable="false"/>
+      </column>
+      <column name="fsystem" type="boolean" defaultValue="false">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_subject_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_subject"
+                 indexName="rhq_auth_subject_auth_key"
+                 unique="true">
+      <column name="name"/>
+    </createIndex>
+  </changeSet>
 </databaseChangeLog>

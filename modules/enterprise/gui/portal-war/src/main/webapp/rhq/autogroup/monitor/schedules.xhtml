@@ -73,7 +73,7 @@
 
                <rich:column style="background-color: #{item.collectionEnabled ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ms.definition.displayName">
+                     <onc:sortableColumnHeader sort="definition.displayName">
                         <h:outputText styleClass="headerText" value="Metric" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -91,7 +91,9 @@
 
                <rich:column style="background-color: #{item.collectionEnabled ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Type" />
+                     <onc:sortableColumnHeader sort="definition.dataType">
+                        <h:outputText styleClass="headerText" value="Type" />
+                     </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputText value="#{item.measurementDefinition.dataType}"/>

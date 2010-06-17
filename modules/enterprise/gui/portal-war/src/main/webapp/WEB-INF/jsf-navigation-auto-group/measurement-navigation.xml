@@ -41,6 +41,13 @@
          <redirect/>
       </navigation-case>
       
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/autogroup/monitor/schedules.xhtml?parent=#{param.parent}&amp;type=#{param.type}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
    </navigation-rule>
 
    <!-- changing metric display range on Events > History  -->

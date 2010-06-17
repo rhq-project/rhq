@@ -95,6 +95,8 @@ public interface ResourceGroupManagerLocal {
 
     void setResourceType(int resourceGroupId);
 
+    int getExplicitGroupMemberCount(int resourceGroupId);
+
     int getImplicitGroupMemberCount(int resourceGroupId);
 
     PageList<ResourceGroupComposite> findResourceGroupComposites(Subject subject, GroupCategory groupCategory,

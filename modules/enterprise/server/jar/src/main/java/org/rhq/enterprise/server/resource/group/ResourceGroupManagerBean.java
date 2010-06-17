@@ -1386,4 +1386,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         return queryRunner.execute();
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void uninventoryMembers(Subject subject, int groupId) {
+        List<Integer> resourceMemberIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
+        for (int doomedResourceId : resourceMemberIds) {
+            resourceManager.uninventoryResource(subject, doomedResourceId);
+        }
+    }
+
 }

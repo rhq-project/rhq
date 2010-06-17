@@ -64,4 +64,19 @@
       <column name="ldap_group_name"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="3" author="jsanda">
+    <createTable tableName="rhq_permission">
+      <column name="role_id" type="integer">
+        <constraints primaryKey="true"
+                     primaryKeyName="rhq_permission_pk"
+                     foreignKeyName="fk_role_id_rhq_permission"
+                     references="rhq_role"/>
+      </column>
+      <column name="operation" type="integer">
+        <constraints primaryKey="true"
+                     primaryKeyName="rhq_permission_pk"/>
+      </column>
+    </createTable>
+  </changeSet>
 </databaseChangeLog>

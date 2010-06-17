@@ -311,27 +311,11 @@ if [ ! -d "$WORKING_DIR" ]; then
 fi
 
 
-# See if the specified tag already exists remotely - if so:
-#   - if we are in test mode, delete it.
-# or:
-#   - if we are in production mode, abort.
-OUTPUT=`git ls-remote --tags origin "$RELEASE_TAG"`
-if [ -n "$OUTPUT" ]; then
-   if [ "$MODE" = "test" ]; then
-      echo "A remote tag named $RELEASE_TAG already exists - deleting it, since we are in test mode..."      
-      git push origin ":ref/tags/$RELEASE_TAG"
-      [ "$?" -ne 0 ] && abort "Failed to delete remote tag ($RELEASE_TAG)."
-   else
-      abort "A remote tag named $RELEASE_TAG already exists. Aborting, since we are in production mode..."
-   fi
-fi
+# If the specified tag already exists remotely and we're in production mode, then abort. If it exists and we're in test mode, then we'll delete it after we've had a successful dry run of release:prepare and are ready to tag.
 
-
-# See if the specified tag already exists locally - if so, delete it.
-if [ -n `git tag -l "$RELEASE_TAG"` ]; then
-   echo "A local tag named $RELEASE_TAG already exists - deleting it..."      
-   git tag -d "$RELEASE_TAG"
-   [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
+EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
+if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "production" ]; then
+   abort "A remote tag named $RELEASE_TAG already exists - aborting, since we are in production mode..."      
 fi
 
 
@@ -361,6 +345,24 @@ mvn release:clean $MAVEN_ARGS
 [ "$?" -ne 0 ] && abort "Failed to cleanup release plugin working files from tagging dry run. Please see above Maven output for details, fix any issues, then try again."
 echo
 echo "Tagging dry run succeeded!"
+
+
+# If there's an existing remote tag, and we didn't abort earlier, we must be in test mode, so we can safely delete it before we call mvn release:prepare to recreate it.
+
+if [ -n "$EXISTING_REMOTE_TAG" ]; then
+   echo "A remote tag named $RELEASE_TAG already exists - deleting it, since we are in test mode..."      
+   git push origin ":refs/tags/$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "Failed to delete remote tag ($RELEASE_TAG)."
+fi
+
+
+# See if the specified tag already exists locally - if so, delete it (even if in production mode).
+EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
+if [ -n "$EXISTING_LOCAL_TAG" ]; then
+   echo "A local tag named $RELEASE_TAG already exists - deleting it..."      
+   git tag -d "$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
+fi
 
 
 # If the dry run succeeded, tag it for real.

@@ -145,7 +145,7 @@ fi
 if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
    echo "We appear to be running in a Hudson job." 
    WORKING_DIR="$WORKSPACE"
-   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-$JOB_NAME-repository"
+   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-release-$RELEASE_TYPE-repository"
    MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
 elif [ -z "$WORKING_DIR" ]; then
    WORKING_DIR="$HOME/release/rhq"

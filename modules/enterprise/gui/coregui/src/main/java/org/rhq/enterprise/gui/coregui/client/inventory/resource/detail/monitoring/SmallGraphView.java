@@ -45,6 +45,7 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.HTMLPane;
+import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.WidgetCanvas;
 import com.smartgwt.client.widgets.Window;
@@ -122,6 +123,7 @@ public class SmallGraphView extends VLayout {
 
     public void setResourceId(int resourceId) {
         this.resourceId = resourceId;
+        this.definition = null;
     }
 
     public int getDefinitionId() {
@@ -130,15 +132,14 @@ public class SmallGraphView extends VLayout {
 
     public void setDefinitionId(int definitionId) {
         this.definitionId = definitionId;
+        this.definition = null;        
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        for (Canvas c : getChildren()) {
-            c.destroy();
-        }
+        removeMembers(getMembers());
 
         if (this.definition == null) {
 
@@ -214,11 +215,42 @@ public class SmallGraphView extends VLayout {
 
     private void drawGraph() {
 
+        HLayout titleLayout = new HLayout();
+
+        if (definition != null) {
+            titleLayout.setAutoHeight();
+
+            titleLayout.setWidth100();
+
+            HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
+            title.setWidth("*");
+            title.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    displayAsDialog();
+                }
+            });
+            titleLayout.addMember(title);
+
+            Img liveGraph = new Img("subsystems/monitor/Monitor_16.png",16,16);
+            liveGraph.setTooltip("Click for a live graph of current values");
+
+            liveGraph.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    LiveGraphView.displayAsDialog(resourceId, definition);
+                }
+            });
+            titleLayout.addMember(liveGraph);
+
+            addMember(titleLayout);
+        }
+
+
         PlotModel model = new PlotModel();
         PlotOptions plotOptions = new PlotOptions();
         plotOptions.setDefaultLineSeriesOptions(new LineSeriesOptions().setLineWidth(1).setShow(true));
         plotOptions.setDefaultPointsOptions(new PointsSeriesOptions().setRadius(2).setShow(true));
         plotOptions.setDefaultShadowSize(0);
+
 
 
         // You need make the grid hoverable <<<<<<<<<
@@ -234,7 +266,7 @@ public class SmallGraphView extends VLayout {
 
         // create the plot
         SimplePlot plot = new SimplePlot(model, plotOptions);
-        plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight() - 20));
+        plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight() - titleLayout.getHeight() - 50));
 //                "80%","80%");
 
 
@@ -276,38 +308,18 @@ public class SmallGraphView extends VLayout {
         hoverLabel.setBorder("1px solid orange");
         hoverLabel.hide();
 
-        hoverLabel.draw();
+        if (hoverLabel.isDrawn())
+            hoverLabel.redraw();
+        else
+            hoverLabel.draw();
 
         // put it on a panel
 
-        if (definition != null) {
-
-            HLayout titleLayout = new HLayout();
-            titleLayout.setWidth100();
-
-            HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
-            title.setWidth("*");
-            title.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    displayAsDialog();
-                }
-            });
-            titleLayout.addMember(title);
-
-            HTMLPane liveGraphLink = new HTMLPane();
-            liveGraphLink.setWidth(100);
-            liveGraphLink.setContents("Live Graph");
-            liveGraphLink.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    LiveGraphView.displayAsDialog(resourceId, definition);
-                }
-            });
-            titleLayout.addMember(liveGraphLink);
-
-            addMember(titleLayout);
-        }
 
         addMember(new WidgetCanvas(plot));
+
+        plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight() - titleLayout.getHeight() - 50));
+
     }
 
     private String getHover(PlotItem item) {
@@ -336,7 +348,10 @@ public class SmallGraphView extends VLayout {
         long max = System.currentTimeMillis();
         long min = max - (1000L * 60 * 60 * 8);
 
-        plotOptions.setXAxisOptions(new AxisOptions().setTicks(8).setMinimum(min).setMaximum(max).setTickFormatter(new TickFormatter() {
+
+        int xTicks = getWidth() / 140;
+
+        plotOptions.setXAxisOptions(new AxisOptions().setTicks(xTicks).setMinimum(min).setMaximum(max).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double tickValue, Axis axis) {
                 com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat.getShortDateTimeFormat();
                 return dateFormat.format(new Date((long) tickValue));

@@ -43,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
  * @author Greg Hinkle
  */
 public class ResourceSearchView extends Table {
+
     private static final String DEFAULT_TITLE = "Resources";
 
     private ArrayList<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();

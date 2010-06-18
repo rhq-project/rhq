@@ -100,6 +100,19 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
                 "parentId")));
         }
 
+        if (request.getCriteria().getValues().get("id") != null) {
+            criteria.addFilterId(request.getCriteria().getAttributeAsInt("id"));
+        }
+
+        if (request.getCriteria().getValues().get("resourceIds") != null) {
+            int[] ids = request.getCriteria().getAttributeAsIntArray("resourceIds");            
+            Integer[] oids = new Integer[ids.length];
+            for (int i = 0; i < ids.length; i++) {
+                oids[i] = ids[i++];
+            }
+            criteria.addFilterIds(oids);
+        }
+
         if (request.getCriteria().getValues().get("name") != null) {
             criteria.addFilterName((String) request.getCriteria().getValues().get("name"));
         }

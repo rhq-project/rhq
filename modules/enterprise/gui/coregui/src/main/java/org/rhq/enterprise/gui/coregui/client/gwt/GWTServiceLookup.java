@@ -108,6 +108,16 @@ public class GWTServiceLookup {
         return secure(SearchGWTServiceAsync.Util.getInstance());
     }
 
+    public static DashboardGWTServiceAsync getDashboardService() {
+        return secure(DashboardGWTServiceAsync.Util.getInstance());
+    }
+
+    public static EventGWTServiceAsync getEventService() {
+        return secure(EventGWTServiceAsync.Util.getInstance());
+    }
+
+
+
 
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget))

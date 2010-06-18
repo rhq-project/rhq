@@ -19,9 +19,13 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -49,4 +53,10 @@ public interface MeasurementDataGWTService extends RemoteService {
 
 
     PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end, PageControl pageControl);
+
+
+    public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria);
+
+    public PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria);
+
 }

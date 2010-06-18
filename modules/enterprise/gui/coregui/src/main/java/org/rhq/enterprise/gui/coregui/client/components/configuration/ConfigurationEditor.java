@@ -60,6 +60,7 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
@@ -132,6 +133,8 @@ public class ConfigurationEditor extends VLayout {
     private Configuration configuration;
     private Configuration originalConfiguration;
 
+    private ValuesManager valuesManager = new ValuesManager();
+
     private boolean changed = false;
 
     private Label loadingLabel = new Label("<b>Loading...</b>");
@@ -188,6 +191,10 @@ public class ConfigurationEditor extends VLayout {
 
     public void showError(String message) {
         addMember(new Label(message));
+    }
+
+    public boolean validate() {
+        return this.valuesManager.validate();
     }
 
     @Override
@@ -457,6 +464,7 @@ public class ConfigurationEditor extends VLayout {
 
     private DynamicForm buildPropertiesForm(ArrayList<PropertyDefinition> definitions, AbstractPropertyMap propertyMap) {
         DynamicForm form = new DynamicForm();
+        form.setValuesManager(valuesManager);
         form.setValidateOnChange(true);
 
         form.addItemChangedHandler(new ItemChangedHandler() {
@@ -501,7 +509,8 @@ public class ConfigurationEditor extends VLayout {
 
         StaticTextItem nameItem = new StaticTextItem();
         nameItem.setStartRow(true);
-        nameItem.setValue("<b>" + propertyDefinition.getDisplayName() + "</b>");
+        String title = "<b>" + (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition.getName()) + "</b>";
+        nameItem.setValue(title);
         nameItem.setShowTitle(false);
         nameItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
 

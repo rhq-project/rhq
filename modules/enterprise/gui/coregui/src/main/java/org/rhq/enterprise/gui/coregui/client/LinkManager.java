@@ -27,13 +27,13 @@ package org.rhq.enterprise.gui.coregui.client;
  */
 public class LinkManager {
 
-    private static boolean GWT = false;
+    private static boolean GWT = true;
 
 
     public static String getResourceLink(int resourceId) {
 
         if (GWT) {
-            return "Resource/" + resourceId;
+            return "#Resource/" + resourceId;
         } else {
             return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
         }
@@ -43,7 +43,7 @@ public class LinkManager {
     public static String getResourceGroupLink(int resouceGroupId) {
 
         if (GWT) {
-            return "ResourceGroup/" + resouceGroupId;
+            return "#ResourceGroup/" + resouceGroupId;
         } else {
             return "/rhq/group/inventory/view.xhtml?groupId=" + resouceGroupId;
         }
@@ -133,20 +133,36 @@ public class LinkManager {
 
 
     public static String getAdminUsersLink() {
-        return "/admin/user/UserAdmin.do?mode=list";
+        if (GWT) {
+            return "#Administration/Security/Manage%20Users";
+        } else {
+            return "/admin/user/UserAdmin.do?mode=list";
+        }
     }
 
     public static String getAdminRolesLink() {
+        if (GWT) {
+            return "#Administration/Security/Manage%20Roles";
+        } else {
         return "/admin/role/RoleAdmin.do?mode=list";
+        }
     }
 
     public static String getAdminSysConfigLink() {
+        if (GWT) {
+            return "#Administration/Configuration/System%20Settings";
+        } else {
         return "/admin/config/Config.do?mode=edit";
+        }
     }
 
 
     public static String getAdminPluginsLink() {
-        return "/rhq/admin/plugin/plugin-list.xhtml";
+        if (GWT) {
+            return "#Administration/Configuration/Plugins";
+        } else {
+            return "/rhq/admin/plugin/plugin-list.xhtml";
+        }
     }
 
 
@@ -195,7 +211,11 @@ public class LinkManager {
 
 
     public static String getAdminLicenseLink() {
-        return "/admin/license/LicenseAdmin.do?mode=view";
+        if (GWT) {
+            return "#Administration/Configuration/License";
+        } else {
+            return "/admin/license/LicenseAdmin.do?mode=view";
+        }
     }
 
 

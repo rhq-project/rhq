@@ -133,7 +133,7 @@ public class SearchBarPane extends HLayout {
                     if (!link.contains("#")) {
                         com.google.gwt.user.client.Window.Location.assign(link);
                     } else {
-                        History.newItem(link);
+                        History.newItem(link.substring(1));
                     }
                 } catch (Exception e) {
                 }

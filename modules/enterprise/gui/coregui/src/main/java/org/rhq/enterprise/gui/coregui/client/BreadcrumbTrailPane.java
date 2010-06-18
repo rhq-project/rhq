@@ -70,7 +70,7 @@ public class BreadcrumbTrailPane extends HTMLPane {
 //                    path.append(breadcrumb.getName());
 
                     if (!firstBC) {
-                        content.append(" > ");
+                        content.append("<img src=\"images/header/breadcrumb_space.png\" style=\"vertical-align: middle;\" width=\"28\" height=\"28\"/>");
                     } else {
                         firstBC = false;
                     }

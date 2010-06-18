@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle;
 
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -47,6 +48,7 @@ public class BundleTopView extends HLayout implements BookmarkableView {
     private BundleView bundleView;
 
     public BundleTopView() {
+        setOverflow(Overflow.AUTO);
         setWidth100();
         setHeight100();
     }

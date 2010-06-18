@@ -31,7 +31,6 @@ a, a:link, a:visited, a:hover {
     color: #4A5D75 !important;
     font-weight: bold !important;
     text-decoration: none !important;
-
 }
 
 a:hover {
@@ -121,6 +120,7 @@ a:hover {
     font-weight: bold;
     text-decoration: none;
     color: #363636;
+    height: 28px;
 }
 
 .SectionHeader {
@@ -302,8 +302,8 @@ a:hover {
 }
 
 .menuButton, .menuButtonOver, .menuButtonDown, .menuButtonDisabled, .menuButtonSelected, .menuButtonSelectedDown, .menuButtonSelectedOver, .menuButtonSelectedDisabled {
-    border: none;
-    font-weight: bold;
+    border: none !important;
+    font-weight: bold !important;
 }
 
 

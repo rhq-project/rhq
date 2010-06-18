@@ -195,7 +195,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                         getSessionSubject(),
                         EnumSet.copyOf(statuses),
                         pc),
-                "ResoruceService.getQueuedPlatformsAndServers");
+                "ResourceService.getQueuedPlatformsAndServers");
     }
 
     public void importResources(Integer[] resourceIds) {

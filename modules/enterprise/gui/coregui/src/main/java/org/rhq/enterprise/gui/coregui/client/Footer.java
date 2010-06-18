@@ -113,6 +113,7 @@ public class Footer extends ToolStrip {
         public void refresh() {
 
             AlertCriteria alertCriteria = new AlertCriteria();
+            alertCriteria.setPaging(1,1);
             // last eight hours
             alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8));
 
@@ -134,7 +135,7 @@ public class Footer extends ToolStrip {
 
             } else {
 
-                setContents(alerts.size() + " recent alerts");
+                setContents(alerts.getTotalSize() + " recent alerts");
                 setIcon("subsystems/alert/Alert_HIGH_16.png");
             }
         }

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+
+<project name="test-bundle-two-recipe" default="main" xmlns:rhq="antlib:org.rhq.bundle">
+
+    <echo>test-bundle-2 basedir=${basedir}</echo>
+
+    <property name="propname1" value="one.prop" />
+
+    <rhq:bundle name="test-bundle-two" version="2.5" description="test bundle two description">
+
+        <rhq:input-property name="${propname1}" />
+        <rhq:input-property name="custom.prop" />
+
+        <rhq:deployment-unit name="dunit">
+            <rhq:file name="test.properties" destinationFile="config/test.properties" replace="true"/>
+            <rhq:archive name="test-bundle-two-archive.zip">
+               <rhq:replace>
+                   <rhq:fileset>
+                       <include name="one/**"/>
+                   </rhq:fileset>
+               </rhq:replace>
+            </rhq:archive>
+        </rhq:deployment-unit>
+
+    </rhq:bundle>
+        
+    <target name="main"/>
+
+</project>

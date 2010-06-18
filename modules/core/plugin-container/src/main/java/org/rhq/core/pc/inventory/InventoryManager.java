@@ -1369,12 +1369,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 resourceContainer.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
             }
             this.resourceContainers.put(resource.getUuid(), resourceContainer);
-            if (resource.getParentResource() == null) {
-                // no parent - must be the top level platform - do some things needed for unit tests
-                if (this.platform.getResourceType().equals(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
-                    resourceContainer.setResourceComponent(createTestPlatformComponent());
-                }
-            }
         } else {
             // container already exists, but make sure the classloader exists too
             if (resourceContainer.getResourceClassLoader() == null) {
@@ -1800,6 +1794,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<DiscoveredResourceDetails> allDiscoveredPlatforms = new HashSet<DiscoveredResourceDetails>(2);
 
         if ((platformTypes != null) && (platformTypes.size() > 0)) {
+            
+            //check for fake testing type. If the test platform type is being used, it is always going to be
+            //the sole platform type available.
+            if (platformTypes.size() == 1 && platformTypes.contains(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
+                return getTestPlatform();
+            }
+            
             // Go through all the platform types that are supported and see if they can detect our platform.
             for (ResourceType platformType : platformTypes) {
                 try {
@@ -1828,7 +1829,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 .error("Missing platform plugin(s) - falling back to dummy platform impl; this should only occur in tests!");
             // TODO: Set sysprop (e.g. rhq.test.mode=true) in integration tests,
             //       and throw a runtime exception here if that sysprop is not set.
-            return createTestPlatform();
+            return getTestPlatform();
         }
 
         if (allDiscoveredPlatforms.isEmpty()) {
@@ -1870,9 +1871,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * resource. This is normally only used during tests.
      * @return A dummy platform for testing purposes only.
      */
-    private Resource createTestPlatform() {
+    private Resource getTestPlatform() {
         ResourceType type = PluginContainer.getInstance().getPluginManager().getMetadataManager().addTestPlatformType();
+        if (this.platform != null && this.platform.getResourceType() == type) {
+            return this.platform;
+        }
         Resource platform = new Resource("testkey" + configuration.getContainerName(), "testplatform", type);
+        platform.setUuid(UUID.randomUUID().toString());
         platform.setAgent(this.agent);
         return platform;
     }

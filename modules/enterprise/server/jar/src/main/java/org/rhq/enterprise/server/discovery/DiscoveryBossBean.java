@@ -156,7 +156,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // Prepare the ResourceSyncInfo tree which contains all the info the PC needs to sync itself up with us.
         Resource platform = this.resourceManager.getPlatform(knownAgent);
-        ResourceSyncInfo syncInfo = this.entityManager.find(ResourceSyncInfo.class, platform.getId());
+        
+        //the platform can be null in only one scenario.. a brand new agent has connected to the server
+        //and that agent is currently trying to upgrade its resources. For that it asks us to send down
+        //the current inventory on the server side. But at this point there isn't any since that very
+        //agent just registered and is starting up for the very first time and therefore hasn't had
+        //a chance yet to send us its full inventory report.
+        ResourceSyncInfo syncInfo = platform != null ? this.entityManager.find(ResourceSyncInfo.class, platform.getId()) : null;
 
         if (log.isDebugEnabled()) {
             log.debug("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");

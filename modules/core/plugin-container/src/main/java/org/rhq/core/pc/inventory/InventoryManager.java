@@ -900,7 +900,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     public boolean handleReport(InventoryReport report, boolean forceServerRoundtrip) {
         if (!configuration.isInsideAgent()) {
-            //TODO how does resource upgrade behave in the embedded scenario?
             return true;
         }
         
@@ -943,7 +942,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return false;
         }
 
-        synchInventory(syncInfo);
+        //sync info can be null if the server hasn't received a full inventory report
+        //from us yet. This can happen if this method is being invoked from inside the
+        //resource upgrade executor to sync up with the server side inventory *JUST AFTER*
+        //this agent registered with the server for the very first time. In that case
+        //the server hasn't received any info from us yet.
+        if (syncInfo != null) {
+            synchInventory(syncInfo);
+        }
 
         return true;
     }

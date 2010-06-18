@@ -24,6 +24,7 @@
 
         <rhq:deployment-unit name="doodibittydoo">
             <rhq:file name="test.properties" destinationFile="config/test.properties" replace="true"/>
+            <rhq:file name="noreplace.properties" destinationFile="config/noreplace.properties"/>
         </rhq:deployment-unit>
 
     </rhq:bundle>

@@ -20,6 +20,7 @@ package org.rhq.bundle.ant.type;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
+import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.system.SystemInfoFactory;
@@ -55,6 +56,12 @@ public class DeploymentUnitType extends AbstractBundleType {
     private String preinstallTarget;
     private String postinstallTarget;
 
+    public void init() throws BuildException {
+        if (this.systemService != null) {
+            this.systemService.init();
+        }
+    }
+
     public void install(boolean revert, boolean clean) throws BuildException {
         if (this.preinstallTarget != null) {
             Target target = (Target) getProject().getTargets().get(this.preinstallTarget);
@@ -69,8 +76,9 @@ public class DeploymentUnitType extends AbstractBundleType {
             getProject().getBundleVersion(), getProject().getBundleDescription());
         File deployDir = getProject().getDeployDir();
         TemplateEngine templateEngine = createTemplateEngine();
+
         if (this.files.isEmpty() && this.archives.isEmpty()) {
-            throw new BuildException("You must specify at least one file to deploy via nested rhq:file and/or rhq:archive elements.");
+            throw new BuildException("You must specify at least one file to deploy via nested rhq:file, rhq:archive, and/or rhq:system-service elements.");
         }
         if (!this.files.isEmpty()) {
             log("Deploying files " + this.files + "...", Project.MSG_VERBOSE);
@@ -90,7 +98,6 @@ public class DeploymentUnitType extends AbstractBundleType {
             } else {
                 deployer.deploy(diffs, clean, dryRun);
             }
-            deployer.deploy(diffs);
             getProject().log("Results:\n" + diffs + "\n");            
         } catch (Exception e) {
             throw new BuildException("Failed to deploy bundle '" + getProject().getBundleName() + "' version "
@@ -113,11 +120,15 @@ public class DeploymentUnitType extends AbstractBundleType {
     }
 
     public void start() throws BuildException {
-
+        if (this.systemService != null) {
+            this.systemService.start();
+        }
     }
 
     public void stop() throws BuildException {
-
+        if (this.systemService != null) {
+            this.systemService.stop();
+        }
     }
 
     public void upgrade(boolean revert, boolean clean) throws BuildException {
@@ -125,7 +136,9 @@ public class DeploymentUnitType extends AbstractBundleType {
     }
 
     public void uninstall() throws BuildException {
-        // TODO
+        if (this.systemService != null) {
+            this.systemService.uninstall();
+        }
     }
         
     public String getName() {
@@ -170,9 +183,17 @@ public class DeploymentUnitType extends AbstractBundleType {
 
     public void addConfigured(SystemServiceType systemService) {
         if (this.systemService != null) {
-            throw new IllegalStateException("A deployment can only have one system-service child element.");
+            throw new IllegalStateException("A rhq:deploymentUnit element can only have one rhq:system-service child element.");
         }
         this.systemService = systemService;
+        this.systemService.validate();
+
+        // Add the init script and its config file to the list of bundle files.
+        this.files.put(this.systemService.getScriptFile(), this.systemService.getScriptDestFile());
+        if (this.systemService.getConfigFile() != null) {
+            this.files.put(this.systemService.getConfigFile(), this.systemService.getConfigDestFile());
+            this.rawFilesToReplace.add(this.systemService.getConfigFile());
+        }
     }
 
     public void addConfigured(FileType file) {
@@ -207,6 +228,9 @@ public class DeploymentUnitType extends AbstractBundleType {
         for (PropertySimple prop : config.getSimpleProperties().values()) {
             templateEngine.getTokens().put(prop.getName(), prop.getStringValue());
         }
+        // And add the special rhq.deploy.dir prop.
+        templateEngine.getTokens().put(DeployPropertyNames.DEPLOY_DIR,
+                getProject().getProperty(DeployPropertyNames.DEPLOY_DIR));
         return templateEngine;
     }
 }

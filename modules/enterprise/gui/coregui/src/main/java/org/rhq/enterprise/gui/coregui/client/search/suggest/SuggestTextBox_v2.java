@@ -144,7 +144,7 @@ public class SuggestTextBox_v2 extends TextBox {
 
         String patternValue = searchBar.getSavedSearchManager().getPatternByName(getValue());
         if (patternValue != null) {
-            searchBar.prepareSearchExecution(getValue());
+            searchBar.prepareSearchExecution();
         } else {
             suggestBox.showSuggestionList();
         }

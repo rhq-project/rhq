@@ -472,15 +472,19 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
     private void teardownResourceEnvironment() throws Exception {
         if (parentResource != null) {
 
-            List<Integer> deletedIds = resourceManager.deleteResource(overlord, parentResource.getId());
+            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, parentResource.getId());
             for (Integer deletedResourceId : deletedIds) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
             }
 
             getTransactionManager().begin();
             EntityManager em = getEntityManager();
             try {
-                ResourceType deleteMeType = em.find(ResourceType.class, parentResourceType.getId());
+                // Remove the child first.
+                ResourceType deleteMeType = em.find(ResourceType.class, childResourceType.getId());
+                em.remove(deleteMeType);
+
+                deleteMeType = em.find(ResourceType.class, parentResourceType.getId());
                 em.remove(deleteMeType);
 
                 getTransactionManager().commit();

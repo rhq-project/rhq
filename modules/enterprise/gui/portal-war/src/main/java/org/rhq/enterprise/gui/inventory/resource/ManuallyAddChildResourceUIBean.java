@@ -74,6 +74,10 @@ public class ManuallyAddChildResourceUIBean {
             throw new IllegalStateException(this.type.getName() + " resources cannot be manually added to inventory.");
         }
 
+        lookupConfigurationAndDef();
+    }
+
+    private void lookupConfigurationAndDef() {
         this.configurationDefinition = lookupConfigurationDefinition();
         if (this.configurationDefinition != null) {
             this.configuration = lookupConfiguration();
@@ -125,6 +129,10 @@ public class ManuallyAddChildResourceUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Could not retrieve resource type.", e
                 .getLocalizedMessage());
             return OUTCOME_BAD_TYPE;
+        }
+
+        if (this.configurationDefinition == null) {
+            lookupConfigurationAndDef();
         }
 
         if (this.configurationDefinition == null) {
@@ -182,10 +190,12 @@ public class ManuallyAddChildResourceUIBean {
             outcome = OUTCOME_SUCCESS;
         }
 
+        cleanup();
         return outcome;
     }
 
     public String cancel() {
+        cleanup();
         return OUTCOME_SUCCESS;
     }
 
@@ -234,6 +244,15 @@ public class ManuallyAddChildResourceUIBean {
         } catch (ResourceTypeNotFoundException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private void cleanup() {
+       // clean out fields for next usage
+       this.configuration = null;
+       this.configurationDefinition = null;
+       this.type = null;
+       this.selectedTemplateName = null;
+
     }
 
     public String getName() {

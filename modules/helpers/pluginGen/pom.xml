@@ -9,14 +9,12 @@
       <version>3.0.0-SNAPSHOT</version>
     </parent>
 
-
     <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-pluginGen</artifactId>
     <packaging>jar</packaging>
 
     <name>RHQ plugin generator</name>
     <description>Helper to generate plugin skeletons</description>
-    <version>3.0.0-SNAPSHOT</version>
 
     <scm>
       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginGen</connection>

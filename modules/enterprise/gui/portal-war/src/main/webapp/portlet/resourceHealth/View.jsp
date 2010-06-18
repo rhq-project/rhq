@@ -24,26 +24,26 @@
 <tiles:importAttribute name="alerts"/>
 
 <c:choose >
-  <c:when test="${not empty resourceHealth}">   
-  
-    <display:table cellspacing="0" cellpadding="0" width="100%" action="/Dashboard.do"
-                   var="resource" items="${resourceHealth}" >
-                
-        <display:column width="50%" href="/rhq/resource/summary/overview.xhtml?id=${resource.id}" property="name" sortAttr="res.name" title="dash.home.TableHeader.ResourceName"/>
-        <display:column width="25%" property="typeName" title="dash.home.TableHeader.Type"/>
+  <c:when test="${not empty resourceHealth}">    
+   <display:table cellspacing="0" cellpadding="0" width="100%" action="/Dashboard.do"
+                   var="item" items="${resourceHealth}" >
+        <display:column width="25%" sortAttr="res.name" title="dash.home.TableHeader.Resource">
+          <display:disambiguatedResourceNameDecorator resourceName="${item.original.name}" disambiguationReport="${item}" resourceId="${item.original.id}"/>
+        </display:column>
+        <display:column width="25%" title="dash.home.TableHeader.Location">
+          <display:disambiguatedResourceLineageDecorator parents="${item.parents}"/>
+        </display:column>
         <c:if test="${alerts}">                  
-          <display:column width="10%" property="alerts" title="dash.home.TableHeader.Alerts" align="center"/>          
+          <display:column width="10%" property="original.alerts" title="dash.home.TableHeader.Alerts" align="center"/>          
         </c:if>
         <c:if test="${availability}">  
-          <display:column width="15%" property="availabilityType" title="resource.common.monitor.visibility.AvailabilityTH" align="center"
+          <display:column width="15%" property="original.availabilityType" title="resource.common.monitor.visibility.AvailabilityTH" align="center"
                           sortAttr="avail.availabilityType" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle">
              <display:availabilitydecorator/>
           </display:column>
         </c:if>        
     </display:table>
-     
     <tiles:insert definition=".dashContent.seeAll"/>
-    
   </c:when>
   <c:otherwise>
     <table width="100%" cellpadding="0" cellspacing="0" border="0">

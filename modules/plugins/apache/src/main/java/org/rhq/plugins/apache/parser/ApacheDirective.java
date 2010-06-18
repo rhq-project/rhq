@@ -92,7 +92,7 @@ public class ApacheDirective {
     }
     
     public String getValuesAsString(){
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (String val : values){
             buf.append(val);
         }
@@ -165,7 +165,7 @@ public class ApacheDirective {
             childNodes.remove(dir);        
     }
     
-    public void deleteDirective(){
+    public void remove(){
         parentNode.removeChilDirective(this);
     }
     
@@ -180,5 +180,19 @@ public class ApacheDirective {
           builder.append(">");
     
     return builder.toString();
+    }
+    
+    public int getSeq(){
+      List<ApacheDirective> directives = parentNode.getChildByName(name);
+       for (int i=0;i<directives.size();i++){
+         if (directives.get(i)==this){
+          return i;
+          }   
+       }
+       return 0;
+    }
+    
+    public void addValue(String val){
+        values.add(val);
     }
 }

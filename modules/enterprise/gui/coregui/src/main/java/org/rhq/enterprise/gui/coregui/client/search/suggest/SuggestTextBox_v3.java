@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.List;
 
 import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.event.dom.client.HasAllFocusHandlers;
@@ -49,6 +51,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
@@ -68,7 +71,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     private final SearchSuggestOracle oracle;
 
     private int limit = 20;
-    private String currentText;
+    private int currentCursorPosition = 0;
     private final SuggestionMenu suggestionMenu;
     private final PopupPanel suggestionPopup;
     private final TextBoxBase box;
@@ -78,8 +81,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
     };
 
-    //private final String STYLE_NAME_TEXT_BOX = "gwt-SuggestBox";
-    //private final String STYLE_NAME_POPUP_PANEL = "gwt-SuggestBoxPopup";
     private final String STYLE_NAME_TEXT_BOX = "patternField";
     private final String STYLE_NAME_POPUP_PANEL = "suggestPanel";
 
@@ -125,7 +126,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
         @Override
         public void execute() {
-            complete(suggestion, box.getCursorPos());
+            complete(suggestion, currentCursorPosition);
         }
     }
 
@@ -149,39 +150,47 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                 suggestionMenu.addItem(menuItem);
             }
 
-            suggestionPopup.showRelativeTo(getTextBox());
-            /*
-            suggestionPopup.setPopupPositionAndShow(new PositionCallback() {
-                public void setPosition(int offsetWidth, int offsetHeight) {
-                    position(getTextBox(), offsetWidth, offsetHeight + 5);
-                }
-            });
-            */
-            suggestionPopup.setAnimationEnabled(isAnimationEnabled);
+            class TextBoxSkewWrapper extends TextBox {
+                private TextBoxBase wrapped;
+                private int skewWidth;
+                private int skewHeight;
 
-            suggestionMenu.setWidth("785px");
-            suggestionPopup.setWidth("785px");
+                public TextBoxSkewWrapper(TextBoxBase textBoxBase, int skewWidth, int skewHeight) {
+                    this.wrapped = textBoxBase;
+                    this.skewWidth = skewWidth;
+                    this.skewHeight = skewHeight;
+                }
+
+                @Override
+                public int getOffsetWidth() {
+                    return wrapped.getOffsetWidth();
+                }
+
+                @Override
+                public int getOffsetHeight() {
+                    return wrapped.getOffsetHeight();
+                }
+
+                @Override
+                public int getAbsoluteLeft() {
+                    return wrapped.getAbsoluteLeft() + skewWidth;
+                }
+
+                @Override
+                public int getAbsoluteTop() {
+                    return wrapped.getAbsoluteTop() + skewHeight;
+                }
+            }
+
+            suggestionPopup.showRelativeTo(new TextBoxSkewWrapper(getTextBox(), 0, 5));
+            suggestionPopup.setAnimationEnabled(isAnimationEnabled);
         } else {
             suggestionPopup.hide();
         }
     }
 
-    /*
-    private void setNewSelection(SuggestionMenuItem menuItem) {
-        Suggestion curSuggestion = menuItem.getSuggestion();
-        currentText = curSuggestion.getReplacementString();
-        setText(currentText);
-        suggestionPopup.hide();
-        fireSuggestionEvent(curSuggestion);
-    }
-
-    private void fireSuggestionEvent(Suggestion selectedSuggestion) {
-        SelectionEvent.fire(this, selectedSuggestion);
-    }
-    */
-
     private void addEventsToTextBox() {
-        class TextBoxEvents extends HandlesAllKeyEvents implements ValueChangeHandler<String> {
+        class TextBoxEvents extends HandlesAllKeyEvents implements ValueChangeHandler<String>, ClickHandler {
 
             private boolean isInstructionalCommentSelected() {
                 SearchSuggestion searchSuggestion = suggestionMenu.getSearchSuggestion();
@@ -189,9 +198,15 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                 return kind == Kind.InstructionalTextComment;
             }
 
+            public void onClick(ClickEvent event) {
+                handleSuggestions();
+            }
+
             public void onKeyDown(KeyDownEvent event) {
-                // Make sure that the menu is actually showing. These keystrokes
-                // are only relevant when choosing a suggestion.
+                /* 
+                 * Make sure that the menu is actually showing.  These
+                 * keystrokes are only relevant when choosing a suggestion.
+                 */
                 if (suggestionPopup.isAttached()) {
                     switch (event.getNativeKeyCode()) {
                     case KeyCodes.KEY_DOWN:
@@ -203,7 +218,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                                 suggestionMenu.moveSelectionDown();
                             }
                         }
-                        //suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() + 1);
+                        event.preventDefault();
                         break;
                     case KeyCodes.KEY_UP:
                         suggestionMenu.moveSelectionUp();
@@ -214,7 +229,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                                 suggestionMenu.moveSelectionUp();
                             }
                         }
-                        //suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() - 1);
+                        event.preventDefault();
                         break;
                     case KeyCodes.KEY_ENTER:
                         if (suggestionMenu.getSelectedItemIndex() < 0) {
@@ -233,30 +248,31 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             }
 
             public void onKeyUp(KeyUpEvent event) {
-                // After every user key input, refresh the popup's suggestions.
-                refreshSuggestions();
+                handleSuggestions();
+
                 delegateEvent(SuggestTextBox_v3.this, event);
             }
 
             public void onValueChange(ValueChangeEvent<String> event) {
                 delegateEvent(SuggestTextBox_v3.this, event);
             }
+
+            private void handleSuggestions() {
+                int nextCursorPosition = getTextBox().getCursorPos();
+                if (nextCursorPosition != -1) {
+                    // refresh suggestions if cursor moved, meaning users want suggestions from a different context
+                    if (currentCursorPosition != nextCursorPosition) {
+                        currentCursorPosition = nextCursorPosition;
+                        showSuggestions();
+                    }
+                }
+            }
         }
 
         TextBoxEvents events = new TextBoxEvents();
         events.addKeyHandlersTo(box);
+        box.addClickHandler(events);
         box.addValueChangeHandler(events);
-    }
-
-    private void refreshSuggestions() {
-        // Get the raw text.
-        String text = box.getText();
-        if (text.equals(currentText)) {
-            return;
-        } else {
-            currentText = text;
-        }
-        showSuggestions(text);
     }
 
     /*
@@ -329,8 +345,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
      */
     public void showSuggestionList() {
         if (isAttached()) {
-            currentText = null;
-            refreshSuggestions();
+            showSuggestions();
         }
     }
 
@@ -343,25 +358,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     }
 
     /**
-     * Gets the specified suggestion from the suggestions currently showing.
-     * 
-     * @param index the index at which the suggestion lives
-     * 
-     * @throws IndexOutOfBoundsException if the index is greater then the number
-     *           of suggestions currently showing
-     * 
-     * @return the given suggestion
-     */
-    /*
-    Suggestion getSuggestion(int index) {
-        if (!isSuggestionListShowing()) {
-            throw new IndexOutOfBoundsException("No suggestions showing, so cannot show " + index);
-        }
-        return ((SuggestionMenuItem) suggestionMenu.getItems().get(index)).suggestion;
-    }
-    */
-
-    /**
      * Get the number of suggestions that are currently showing.
      * 
      * @return the number of suggestions currently showing, 0 if there are none
@@ -370,11 +366,13 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         return isSuggestionListShowing() ? suggestionMenu.getNumItems() : 0;
     }
 
-    void showSuggestions(String query) {
+    void showSuggestions() {
+        String query = box.getText();
+        int cursorPos = currentCursorPosition;
         if (query.length() == 0) {
-            oracle.requestDefaultSuggestions(new Request(null, limit), callback);
+            oracle.requestDefaultSuggestions(new SearchSuggestionRequest(null, cursorPos, limit), callback);
         } else {
-            oracle.requestSuggestions(new Request(query, limit), callback);
+            oracle.requestSuggestions(new SearchSuggestionRequest(query, cursorPos, limit), callback);
         }
     }
 
@@ -433,22 +431,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             SearchSuggestion searchSuggestion = extraSearchSuggestion(suggestion);
             return searchSuggestion;
         }
-
-        /**
-         * Selects the item at the specified index in the menu. Selecting the item
-         * does not perform the item's associated action; it only changes the style
-         * of the item and updates the value of SuggestionMenu.selectedItem.
-         * 
-         * @param index index
-         */
-        /*
-        public void selectItem(int index) {
-            List<MenuItem> items = getItems();
-            if (index > -1 && index < items.size()) {
-                itemOver(items.get(index), false);
-            }
-        }
-        */
     }
 
     private static SearchSuggestion extraSearchSuggestion(Suggestion suggestion) {
@@ -522,8 +504,10 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             }
 
             String decoratedPrefix = decorate(prefix, style);
-            String highlightedSuggestion = colorOperator(decorate(item.getLabel(), "background-color: yellow;", item
-                .getStartIndex(), item.getEndIndex()));
+            String formattedItemLabel = chopWithEvery(item.getLabel(), "<br/>", 110);
+            String decoratedItemLabel = decorate(formattedItemLabel, "background-color: yellow;", item.getStartIndex(),
+                item.getEndIndex());
+            String highlightedSuggestion = colorOperator(decoratedItemLabel);
             String decoratedSuffix = decorate(highlightedSuggestion, "float: left; ");
             String floatClear = "<br style=\"clear: both;\" />";
 
@@ -531,9 +515,24 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             return innerHTML;
         }
 
-        // TODO: fixing coloring strategy
+        private static String chopWithEvery(String chop, String with, int every) {
+            String[] words = chop.split("\\s");
+            StringBuilder results = new StringBuilder();
+            int currentLineLength = 0;
+            for (String next : words) {
+                if (currentLineLength + next.length() > every) {
+                    results.append(with);
+                    currentLineLength = 0;
+                }
+                results.append(next).append(' ');
+                currentLineLength += (next.length() + 1);
+            }
+            return results.toString();
+        }
+
         private static final List<String> OPERATORS = Arrays.asList("!==", "!=", "==", "=");
 
+        // TODO: fixing coloring strategy
         private static String colorOperator(String data) {
             for (String operator : OPERATORS) {
                 int index = -1;
@@ -554,6 +553,9 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
 
         private static String decorate(String data, String style, int startIndex, int endIndex) {
+            if (startIndex == -1) {
+                return data; // no match
+            }
             String before = data.substring(0, startIndex);
             String highlight = data.substring(startIndex, endIndex);
             String after = data.substring(endIndex);
@@ -576,8 +578,9 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
         @Override
         public void requestSuggestions(final Request request, final Callback callback) {
-            String expression = getText();
-            int caretPosition = box.getCursorPos(); // hack, but it wasn't passed in the request
+            SearchSuggestionRequest suggestionRequest = (SearchSuggestionRequest) request;
+            String expression = suggestionRequest.getQuery();
+            int caretPosition = suggestionRequest.getCursorPosition();
 
             searchService.getSuggestions(searchBar.getSearchSubsystem(), expression, caretPosition,
                 new AsyncCallback<List<SearchSuggestion>>() {
@@ -619,28 +622,46 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         int previousWhitespaceIndex = cursorPosition;
         if (cursorPosition != 0) {
             while (--previousWhitespaceIndex > 0) {
-                if (getText().charAt(previousWhitespaceIndex) == ' ') {
+                if (currentText.charAt(previousWhitespaceIndex) == ' ') {
                     previousWhitespaceIndex++; // put index right after found whitespace
                     break;
                 }
             }
         }
-        String before = getText().substring(0, previousWhitespaceIndex);
-        String after = getText().substring(cursorPosition);
-        setValue(before + completion + after);
 
-        // TODO: this algo screws up when it does the indexOf search on just a single char from currentText
-        //       use case is "availability=dow<enter>" -- is this still true, now that we're completing longer things for advanced search?
-
-        if (currentText.equals(getText().toLowerCase())) {
-            setValue(currentText + completion, true);
+        int futureWhitespaceIndex = cursorPosition;
+        while (futureWhitespaceIndex < currentText.length()) {
+            if (currentText.charAt(futureWhitespaceIndex) == ' ') {
+                break;
+            }
+            futureWhitespaceIndex++;
         }
+
+        String before = getText().substring(0, previousWhitespaceIndex);
+        String after = getText().substring(futureWhitespaceIndex);
+        setValue(before + completion + after, true);
+        currentCursorPosition = before.length() + completion.length();
+        getTextBox().setCursorPos(currentCursorPosition);
 
         if (searchSuggestion.getKind() == SearchSuggestion.Kind.GlobalSavedSearch
             || searchSuggestion.getKind() == SearchSuggestion.Kind.UserSavedSearch) {
             // execute saved searches immediately, since they presumably constitute complete expressions
-            searchBar.selectSavedSearch(searchSuggestion.getLabel());
-            //searchBar.executeSearch(completion);
+            searchBar.activateSavedSearch(searchSuggestion.getLabel());
+        } else {
+            showSuggestions();
+        }
+    }
+
+    class SearchSuggestionRequest extends SuggestOracle.Request {
+        private int cursorPosition;
+
+        public SearchSuggestionRequest(String query, int cursorPosition, int limit) {
+            super(query, limit);
+            this.cursorPosition = cursorPosition;
+        }
+
+        public int getCursorPosition() {
+            return cursorPosition;
         }
     }
 
@@ -664,7 +685,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         public SearchSuggestion getSearchSuggestion() {
             return suggestion;
         }
-
     }
 
     @Override

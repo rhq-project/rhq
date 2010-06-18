@@ -73,6 +73,10 @@ public class AlertNotification implements Serializable {
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     private Configuration configuration;
 
+    @JoinColumn(name = "EXTRA_CONFIG_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    private Configuration extraConfiguration;
+
     @Column(name = "SENDER_NAME")
     private String senderName;
 
@@ -92,6 +96,11 @@ public class AlertNotification implements Serializable {
 
     public AlertNotification(AlertNotification source) {
         this.configuration = source.configuration.deepCopy(false);
+        if (source.extraConfiguration != null) {
+            this.extraConfiguration = source.extraConfiguration.deepCopy(false);
+        } else {
+            this.extraConfiguration = null;
+        }
         this.senderName = source.senderName;
     }
 
@@ -138,6 +147,15 @@ public class AlertNotification implements Serializable {
         this.configuration = configuration;
     }
 
+    public Configuration getExtraConfiguration() {
+        return extraConfiguration;
+    }
+
+    public void setExtraConfiguration(Configuration extraConfiguration) {
+        // extra configuration can be null
+        this.extraConfiguration = extraConfiguration;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -176,6 +194,22 @@ public class AlertNotification implements Serializable {
         }
 
         return true;
+    }
+
+    public boolean equalsData(AlertNotification other) {
+        boolean results = compare(configuration, other.configuration);
+        if (results) {
+            results = compare(extraConfiguration, other.extraConfiguration);
+        }
+        return results;
+    }
+
+    private boolean compare(Configuration first, Configuration second) {
+        if (first == null) {
+            return (second == null);
+        }
+
+        return first.equals(second);
     }
 
 }

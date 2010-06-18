@@ -67,7 +67,6 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageOrdering;
@@ -82,6 +81,7 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.jaxb.adapter.MeasurementDataNumericHighLowCompositeAdapter;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
@@ -324,53 +324,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         } finally {
             JDBCUtil.safeClose(conn, ps, null);
         }
-    }
-
-    /**
-     * Return a List of List<MesurementDataNumeric..> where each nested list contains the data for one of the passed
-     * resource ids
-     */
-    public List<List<MeasurementDataNumericHighLowComposite>> findDataForSiblingResources(Subject subject,
-        int[] resourceIds, int measurementDefinitionId, long beginTime, long endTime, int numberOfDataPoints) {
-        return MeasurementDataManagerUtility.getInstance(rhqDs).getMeasurementDataForSiblingResources(beginTime,
-            endTime, resourceIds, measurementDefinitionId);
-    }
-
-    private List<List<MeasurementDataNumericHighLowComposite>> findDataAggregatesForSiblingResources(Subject subject,
-        int[] resourceIds, int measurementDefinitionId, long beginTime, long endTime, int numDataPoints) {
-
-        return MeasurementDataManagerUtility.getInstance(rhqDs).getMeasurementDataAggregatesForSiblingResources(
-            beginTime, endTime, resourceIds, measurementDefinitionId, numDataPoints);
-    }
-
-    public List<List<MeasurementDataNumericHighLowComposite>> findDataForAutoGroup(Subject subject,
-        int autoGroupParentResourceId, int autoGroupChildResourceTypeId, int measurementDefinitionId, long beginTime,
-        long endTime, int numberOfDataPoints, boolean aggregateOverAutoGroup) {
-        if (authorizationManager.canViewResource(subject, autoGroupParentResourceId) == false) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to view measurement data for autogroup[resourceId="
-                + autoGroupParentResourceId + ", typeId=" + autoGroupChildResourceTypeId + "]");
-        }
-
-        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, autoGroupParentResourceId,
-            autoGroupChildResourceTypeId);
-        int[] resourceIds = new int[resources.size()];
-        int i = 0;
-        for (Resource res : resources) {
-            resourceIds[i] = res.getId();
-            i++;
-        }
-
-        List<List<MeasurementDataNumericHighLowComposite>> ret;
-        if (aggregateOverAutoGroup) {
-            ret = findDataAggregatesForSiblingResources(subject, resourceIds, measurementDefinitionId, beginTime,
-                endTime, numberOfDataPoints);
-        } else {
-            ret = findDataForSiblingResources(subject, resourceIds, measurementDefinitionId, beginTime, endTime,
-                numberOfDataPoints);
-        }
-
-        return ret;
     }
 
     /**
@@ -651,7 +604,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     @Nullable
     public MeasurementDataNumeric getCurrentNumericForSchedule(int scheduleId) {
-        return MeasurementDataManagerUtility.getInstance(rhqDs).getLatestValueForSchedule(scheduleId);
+        return getConnectedUtilityInstance().getLatestValueForSchedule(scheduleId);
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, MeasurementData[] data) {
@@ -679,8 +632,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
         }
 
-        MeasurementDataManagerUtility utility = MeasurementDataManagerUtility.getInstance(rhqDs);
-        MeasurementAggregate aggregate = utility.getAggregateByScheduleId(startTime, endTime, schedule.getId());
+        MeasurementAggregate aggregate = getConnectedUtilityInstance().getAggregateByScheduleId(startTime, endTime,
+            schedule.getId());
         return aggregate;
     }
 
@@ -702,9 +655,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
         }
 
-        MeasurementDataManagerUtility utility = MeasurementDataManagerUtility.getInstance(rhqDs);
-        MeasurementAggregate aggregate = utility.getAggregateByGroupAndDefinition(startTime, endTime, groupId,
-            definitionId);
+        MeasurementAggregate aggregate = getConnectedUtilityInstance().getAggregateByGroupAndDefinition(startTime,
+            endTime, groupId, definitionId);
         return aggregate;
     }
 
@@ -762,43 +714,55 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     public @XmlJavaTypeAdapter(MeasurementDataNumericHighLowCompositeAdapter.class)
     List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
-        int definitionId, long beginTime, long endTime, int numPoints, boolean groupAggregateOnly) {
-        if (authorizationManager.canViewGroup(subject, groupId) == false) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to view measurement data for resourceGroup[id=" + groupId + "]");
-        }
+        int definitionId, long beginTime, long endTime, int numPoints) {
 
-        ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
-        Set<Resource> resources = group.getExplicitResources();
-
-        int[] resourceIds = new int[resources.size()];
-        int i = 0;
-        for (Resource res : resources) {
-            resourceIds[i] = res.getId();
-            i++;
-        }
-
-        List<List<MeasurementDataNumericHighLowComposite>> ret;
-
-        if (groupAggregateOnly) {
-            ret = findDataAggregatesForSiblingResources(subject, resourceIds, definitionId, beginTime, endTime,
-                numPoints);
-        } else {
-            ret = findDataForSiblingResources(subject, resourceIds, definitionId, beginTime, endTime, numPoints);
-        }
-
+        List<List<MeasurementDataNumericHighLowComposite>> ret = findDataForContext(subject, EntityContext
+            .forGroup(groupId), definitionId, beginTime, endTime, numPoints);
         return ret;
+    }
+
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForContext(Subject subject,
+        EntityContext context, int definitionId, long beginTime, long endTime, int numDataPoints) {
+
+        if (context.category == EntityContext.Category.Resource) {
+            if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement data for resource[id=" + context.resourceId + "]");
+            }
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement data for resourceGroup[id=" + context.groupId
+                    + "]");
+            }
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement data for autoGroup[parentResourceId="
+                    + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
+            }
+        }
+
+        List<List<MeasurementDataNumericHighLowComposite>> results = getConnectedUtilityInstance()
+            .getMeasurementDataAggregatesForContext(beginTime, endTime, context, definitionId, numDataPoints);
+        return results;
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
         int[] definitionIds, long beginTime, long endTime, int numDataPoints) {
+
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view measurement data for resource[id=" + resourceId + "]");
         }
 
-        return MeasurementDataManagerUtility.getInstance(rhqDs).getMeasurementDataForResource(beginTime, endTime,
-            resourceId, definitionIds, numDataPoints);
+        List<List<MeasurementDataNumericHighLowComposite>> results = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
+        EntityContext context = EntityContext.forResource(resourceId);
+        for (int nextDefinitionId : definitionIds) {
+            results.addAll(getConnectedUtilityInstance().getMeasurementDataAggregatesForContext(beginTime, endTime,
+                context, nextDefinitionId, numDataPoints));
+        }
+        return results;
     }
 
     @SuppressWarnings("unchecked")
@@ -857,5 +821,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
 
         return result;
+    }
+
+    private MeasurementDataManagerUtility getConnectedUtilityInstance() {
+        return MeasurementDataManagerUtility.getInstance(rhqDs);
     }
 }

@@ -37,10 +37,6 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
         } else if (subtab.equals("mixed")) {
             category = GroupCategory.MIXED;
         }
-
-        /*
-            search = FacesContextUtility.getOptionalRequestParameter("search");
-        */
     }
 
     public String getSearch() {
@@ -100,6 +96,26 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted selected groups");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete all selected groups", e);
+        }
+
+        return "success";
+    }
+
+    public String uninventoryMembers() {
+        try {
+            Subject subject = getSubject();
+
+            String[] selectedGroups = getSelectedItems();
+            int[] groupIds = StringUtility.getIntArray(selectedGroups);
+
+            for (int nextGroupId : groupIds) {
+                groupManager.uninventoryMembers(subject, nextGroupId);
+            }
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Uninventoried members of selected groups");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "Failed to uninventory members of selected groups", e);
         }
 
         return "success";

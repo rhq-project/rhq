@@ -6,6 +6,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
+<%@ taglib uri="/WEB-INF/tld/display.tld" prefix="display" %>
 
 <div class="effectsPortlet">
 <!-- Content Block Contents -->
@@ -152,45 +153,40 @@ function collapseExpandPlatform(platformId)
           <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <c:set var="platform" value="${resource.key}"/>
             <tr class="ListRowHeader">
-              <td nowrap="nowrap" class="ListCell" align="left" width="5%"><a href="." onclick="return false;"><img id="arrow_${platform.id}" align="left" vspace="4" src="/images/plus.gif" onclick="collapseExpandPlatform('${platform.id}')"/></a><html:multibox property="platformsToProcess" value="${platform.id}" onclick="setAllServers(AIQueueForm,this);"/>&nbsp;</td>
+              <td nowrap="nowrap" class="ListCell" align="left" width="5%"><a href="." onclick="return false;"><img id="arrow_${platform.original.id}" align="left" vspace="4" src="/images/plus.gif" onclick="collapseExpandPlatform('${platform.original.id}')"/></a><html:multibox property="platformsToProcess" value="${platform.original.id}" onclick="setAllServers(AIQueueForm,this);"/>&nbsp;</td>
               <td class="ListCell" align="left">
-                  <c:out value="${platform.name}"/>
-                  <c:choose>
-                    <c:when test="${empty platform.description}">
-                    - <c:out value="${platform.resourceType.name}"/>
-                    </c:when>
-                    <c:otherwise>
-                    - <c:out value="${platform.description}"/>
-                    </c:otherwise>
-                  </c:choose>
+                  <display:disambiguatedResourceName resourceName="${platform.original.name}" disambiguationReport="${platform}" nameAsLink="false"/>
+                  <c:if test="${not empty platform.original.description}">
+                  - <c:out value="${platform.original.description}"/>
+                  </c:if>
               </td>
-              <td nowrap="nowrap" class="ListCell" align="right"><c:out value="${platform.inventoryStatus}"/></td>
+              <td nowrap="nowrap" class="ListCell" align="right"><c:out value="${platform.original.inventoryStatus}"/></td>
             </tr>
           </table>
 
-          <span style="display: none" id="serverOnPlatform_${platform.id}">
+          <span style="display: none" id="serverOnPlatform_${platform.original.id}">
           <table width="100%" cellpadding="0" cellspacing="0" border="0" >
             <c:forEach items="${resource.value}" var="server">
             <hq:constant classname="org.rhq.core.domain.resource.InventoryStatus" symbol="NEW" var="status_new"/>
-            <c:if test="${server.inventoryStatus == status_new}">
+            <c:if test="${server.original.inventoryStatus == status_new}">
               <tr class="ListRow" >
-                <hq:shortenPath property="shortenedInstallPath" value="${server.resourceKey}" preChars="20" postChars="25"/>
-                <td nowrap="nowrap" class="ListCell" align="left" width="5%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<html:multibox property="serversToProcess" value="${server.id}" onclick="setPlatformCheckbox(AIQueueForm,this);"/></td>
-                <td nowrap="nowrap" class="ListCell" align="left"><hq:removePrefix prefix="IGNOREME__${platform.name}" value="${server.name}"/></td>
+                <hq:shortenPath property="shortenedInstallPath" value="${server.original.resourceKey}" preChars="20" postChars="25"/>
+                <td nowrap="nowrap" class="ListCell" align="left" width="5%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<html:multibox property="serversToProcess" value="${server.original.id}" onclick="setPlatformCheckbox(AIQueueForm,this);"/></td>
+                <td nowrap="nowrap" class="ListCell" align="left"><display:disambiguatedResourceName resourceName="${server.original.name}" disambiguationReport="${server}" nameAsLink="false"/></td>
                 <td nowrap="nowrap" class="ListCell" align="left">
                   <c:choose>
                     <c:when test="${wasShortened}">
                       <a href="." onclick="return false;" class="ListCellPopup2">
                         <c:out value="${shortenedInstallPath}"/>
-                        <span><c:out value="${server.resourceKey}"/></span>
+                        <span><c:out value="${server.original.resourceKey}"/></span>
                       </a>
                     </c:when>
                     <c:otherwise>
-                      <c:out value="${server.resourceKey}"/>
+                      <c:out value="${server.original.resourceKey}"/>
                     </c:otherwise>
                   </c:choose>
                 </td>
-                <td nowrap="nowrap" class="ListCell" align="right"><c:out value="${server.inventoryStatus}"/></td>
+                <td nowrap="nowrap" class="ListCell" align="right"><c:out value="${server.original.inventoryStatus}"/></td>
               </tr>
             </c:if>
             </c:forEach>

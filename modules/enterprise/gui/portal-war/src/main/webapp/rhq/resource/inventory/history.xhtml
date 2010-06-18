@@ -149,9 +149,12 @@
                   
                   <h:outputLink rendered="#{item.status eq 'FAILURE'}"
                                 value="javascript:displayMessageModal('Stack Trace','#{item.errorMessage}')">
+                     <h:graphicImage value="/images/icons/Configure_failed_16.png"/>
                      <h:outputText value="#{item.status}"/>
                   </h:outputLink>
-                  <h:outputText rendered="#{item.status ne 'FAILURE'}" value="#{item.status}"/>
+                  
+                  <h:graphicImage value="/images/icons/Configure_ok_16.png" rendered="#{item.status ne 'FAILURE'}"/>
+                  <h:outputText value="#{item.status}" rendered="#{item.status ne 'FAILURE'}"/>
                </rich:column>
                
                <rich:column>

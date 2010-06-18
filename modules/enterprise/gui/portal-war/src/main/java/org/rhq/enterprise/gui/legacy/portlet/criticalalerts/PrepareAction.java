@@ -30,18 +30,29 @@ import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.AlertsPortletPreferences;
+import org.rhq.enterprise.gui.legacy.util.DisambiguatedResourceListUtil;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class PrepareAction extends TilesAction {
+    
+    private static final IntExtractor<Resource> RESOURCE_ID_EXTRACTOR = new IntExtractor<Resource>() {
+        
+        public int extract(Resource object) {
+            return object.getId();
+        }
+    }; 
+    
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -65,8 +76,11 @@ public class PrepareAction extends TilesAction {
         PageList<Resource> resources = resourceManager.findResourceByIds(user.getSubject(), alertPrefs.asArray(), false,
             pageControl);
 
-        request.setAttribute("criticalAlertsList", resources);
-        request.setAttribute("criticalAlertsTotalSize", resources.getTotalSize());
+        PageList<DisambiguationReport<Resource>> disambiguatedResources = 
+            DisambiguatedResourceListUtil.disambiguate(resourceManager, resources, RESOURCE_ID_EXTRACTOR);
+        
+        request.setAttribute("criticalAlertsList", disambiguatedResources);
+        request.setAttribute("criticalAlertsTotalSize", disambiguatedResources.getTotalSize());
 
         return null;
     }

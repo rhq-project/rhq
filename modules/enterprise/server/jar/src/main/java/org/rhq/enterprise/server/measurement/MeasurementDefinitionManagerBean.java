@@ -76,10 +76,8 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
     public void removeMeasurementDefinition(MeasurementDefinition def) {
         long now = System.currentTimeMillis();
 
-        // get the schedules and unschedule them on the agents
+        // First remove the schedules and associated OOBs.
         List<MeasurementSchedule> schedules = def.getSchedules();
-
-        // remove the schedules
         Iterator<MeasurementSchedule> schedIter = schedules.iterator();
         while (schedIter.hasNext()) {
             MeasurementSchedule sched = schedIter.next();
@@ -88,12 +86,13 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
                 sched.setBaseline(null);
             }
             oobManager.removeOOBsForSchedule(subjectManager.getOverlord(), sched);
-            sched.getResource().setMtime(now); // changing MTime tells the agent this resource needs to be synced
+            // IMPORTANT: Update the mtime to tell the Agent this Resource needs to be synced.
+            sched.getResource().setMtime(now);
             entityManager.remove(sched);
             schedIter.remove();
         }
 
-        // finally remove the definition itself
+        // Now remove the definition itself.
         try {
             if ((def.getId() != 0) && entityManager.contains(def)) {
                 entityManager.remove(def);

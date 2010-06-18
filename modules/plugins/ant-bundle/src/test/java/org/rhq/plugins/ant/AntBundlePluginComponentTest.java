@@ -23,6 +23,7 @@
 package org.rhq.plugins.ant;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -59,20 +60,29 @@ import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 @Test
-public class AntBundlePluginComponentTest {    
+public class AntBundlePluginComponentTest {
     private AntBundlePluginComponent plugin;
     private File tmpDir;
+    private File bundleFilesDir;
+    private File destDir;
 
     @BeforeClass
-    public void initTempDir() throws Exception {
-        this.tmpDir = new File("target/antbundletest");
+    public void initDirs() throws Exception {
+        this.tmpDir = new File("target/antbundletest/tmp");
         FileUtil.purge(this.tmpDir, true);
+        this.bundleFilesDir = new File("target/antbundletest/bundlefiles");
+        FileUtil.purge(this.bundleFilesDir, true);
+        this.destDir = new File("target/antbundletest/destination");
+        FileUtil.purge(this.destDir, true);
     }
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
         if (!this.tmpDir.mkdirs()) {
             throw new IllegalStateException("Failed to create temp dir '" + this.tmpDir + "'.");
+        }
+        if (!this.bundleFilesDir.mkdirs()) {
+            throw new IllegalStateException("Failed to create bundle files dir '" + this.bundleFilesDir + "'.");
         }
         this.plugin = new AntBundlePluginComponent();
         ResourceType type = new ResourceType("antBundleTestType", "antBundleTestPlugin", ResourceCategory.SERVER, null);
@@ -84,8 +94,10 @@ public class AntBundlePluginComponentTest {
     }
 
     @AfterMethod(alwaysRun = true)
-    public void cleanTmpDir() {
+    public void cleanDirs() {
         FileUtil.purge(this.tmpDir, true);
+        FileUtil.purge(this.bundleFilesDir, true);
+        FileUtil.purge(this.destDir, true);
     }
 
     /**
@@ -101,10 +113,11 @@ public class AntBundlePluginComponentTest {
         BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
             getRecipeFromFile("test-bundle.xml"));
         BundleDestination destination = new BundleDestination(bundle, "testSimpleBundle", new ResourceGroup(
-            "testSimpleBundle"), "/tmp/rhq-testAntBundle");
+            "testSimpleBundle"), this.destDir.getAbsolutePath());
 
         Configuration config = new Configuration();
-        config.put(new PropertySimple("custom.prop1", "ABC123"));
+        String realPropValue = "ABC123";
+        config.put(new PropertySimple("custom.prop1", realPropValue));
 
         BundleDeployment deployment = new BundleDeployment();
         deployment.setName("test bundle deployment name");
@@ -113,28 +126,42 @@ public class AntBundlePluginComponentTest {
         deployment.setDestination(destination);
 
         // create test file
-        File file1 = new File(tmpDir, "test.properties");
+        File file1 = new File(this.bundleFilesDir, "test.properties");
         Properties props = new Properties();
         props.setProperty("custom.prop1", "@@custom.prop1@@");
         FileOutputStream outputStream = new FileOutputStream(file1);
-        props.store(outputStream, "blah");
+        props.store(outputStream, "replace");
+        outputStream.close();
+
+        // create noreplace test file
+        File noreplacefile = new File(this.bundleFilesDir, "noreplace.properties");
+        outputStream = new FileOutputStream(noreplacefile);
+        props.store(outputStream, "noreplace");
         outputStream.close();
 
         BundleDeployRequest request = new BundleDeployRequest();
-        request.setBundleFilesLocation(tmpDir);
+        request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
 
         BundleDeployResult results = plugin.deployBundle(request);
 
         assertResultsSuccess(results);
-        // TODO: Check that custom.prop1 got replaced.
+
+        // test that the prop was replaced in test.properties
+        Properties realizedProps = new Properties();
+        realizedProps.load(new FileInputStream(new File(this.destDir, "config/test.properties")));
+        assert realPropValue.equals(realizedProps.getProperty("custom.prop1")) : "didn't replace prop";
+
+        // test that the prop was not replaced in noreplace.properties
+        Properties notrealizedProps = new Properties();
+        notrealizedProps.load(new FileInputStream(new File(this.destDir, "config/noreplace.properties")));
+        assert "@@custom.prop1@@".equals(notrealizedProps.getProperty("custom.prop1")) : "replaced prop when it shouldn't";
     }
 
     private void assertResultsSuccess(BundleDeployResult results) {
-        if (results.getErrorMessage() != null) {
-            assert false : "Failed to process bundle: [" + results.getErrorMessage() + "]";
-        }
+        assert (results.getErrorMessage() == null) : "Failed to process bundle: [" + results.getErrorMessage() + "]";
+        assert results.isSuccess() : "Failed to process bundle!: [" + results.getErrorMessage() + "]";
     }
 
     private String getRecipeFromFile(String filename) {

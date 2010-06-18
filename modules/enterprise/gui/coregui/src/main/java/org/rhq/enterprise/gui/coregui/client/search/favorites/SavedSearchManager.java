@@ -125,19 +125,24 @@ public class SavedSearchManager {
     }
 
     public synchronized void renamePattern(final String oldName, final String newName) {
-        SavedSearch savedSearch = savedSearches.get(oldName);
+        final SavedSearch savedSearch = savedSearches.remove(oldName);
+        if (savedSearch == null) {
+            return;
+        }
+        savedSearch.setName(newName);
+        savedSearches.put(newName, savedSearch);
         searchService.updateSavedSearch(savedSearch, new AsyncCallback<Void>() {
 
             @Override
             public void onFailure(Throwable caught) {
+                savedSearch.setName(oldName); // revive old name because server-side change failed
                 SearchLogger.debug("Error: renaming saved search from [" + oldName + "] to [" + newName + "]: "
                     + caught.getMessage());
             }
 
             @Override
             public void onSuccess(Void result) {
-                SavedSearch savedSearch = savedSearches.remove(oldName);
-                savedSearches.put(newName, savedSearch);
+                // do nothing, reference was already renamed in-band
             }
         });
     }
@@ -155,22 +160,30 @@ public class SavedSearchManager {
 
             @Override
             public void onSuccess(List<SavedSearch> result) {
-                savedSearches.clear();
-                Collections.sort(result, new Comparator<SavedSearch>() {
+                try {
+                    savedSearches.clear();
+                    Collections.sort(result, new Comparator<SavedSearch>() {
 
-                    @Override
-                    public int compare(SavedSearch first, SavedSearch second) {
-                        return first.getName().compareTo(second.getName());
+                        @Override
+                        public int compare(SavedSearch first, SavedSearch second) {
+                            return first.getName().compareTo(second.getName());
+                        }
+                    });
+                    for (SavedSearch next : result) {
+                        savedSearches.put(next.getName(), next);
                     }
-                });
-                for (SavedSearch next : result) {
-                    savedSearches.put(next.getName(), next);
+                } finally {
+                    searchBar.onSavedSearchManagerLoaded();
                 }
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                SearchLogger.debug("Error: loading saved searches: " + caught.getMessage());
+                try {
+                    SearchLogger.debug("Error: loading saved searches: " + caught.getMessage());
+                } finally {
+                    searchBar.onSavedSearchManagerLoaded();
+                }
             }
         });
     }

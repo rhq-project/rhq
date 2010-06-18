@@ -29,6 +29,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
+import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -37,7 +39,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * <p> 
  * This class implements the {@link PagedListDataModel#fetchPage(PageControl)} method and defers
  * the actual loading of the data to a new {@link #fetchDataForPage(PageControl)} method. The result
- * of that call is supplied to the {@link ResourceManagerLocal#disambiguate(java.util.List, boolean, IntExtractor)}
+ * of that call is supplied to the {@link ResourceManagerLocal#disambiguate(java.util.List, IntExtractor, DisambiguationUpdateStrategy)}
  * method and the disambiguated results are then returned from the {@link #fetchPage(PageControl)} method.
  * 
  * @author Lukas Krejci
@@ -45,9 +47,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public abstract class ResourceNameDisambiguatingPagedListDataModel<T> extends
     PagedListDataModel<DisambiguationReport<T>> {
 
-    private boolean currentPageNeedsTypeResolution;
-    private boolean currentPageNeedsPluginResolution;
-    private boolean currentPageNeedsParentResolution;
     private boolean alwaysIncludeParents;
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -67,39 +66,11 @@ public abstract class ResourceNameDisambiguatingPagedListDataModel<T> extends
     public PageList<DisambiguationReport<T>> fetchPage(PageControl pc) {
         PageList<T> data = fetchDataForPage(pc);
 
-        ResourceNamesDisambiguationResult<T> disambiguation = resourceManager.disambiguate(data, alwaysIncludeParents,
-            getResourceIdExtractor());
-
-        currentPageNeedsParentResolution = disambiguation.isParentResolutionNeeded();
-        currentPageNeedsPluginResolution = disambiguation.isPluginResolutionNeeded();
-        currentPageNeedsTypeResolution = disambiguation.isTypeResolutionNeeded();
+        ResourceNamesDisambiguationResult<T> disambiguation = resourceManager.disambiguate(data, getResourceIdExtractor(),
+            DefaultDisambiguationUpdateStrategies.getDefault());
 
         return new PageList<DisambiguationReport<T>>(disambiguation.getResolution(), data.getTotalSize(), data
             .getPageControl());
-    }
-
-    /**
-     * @return true if the current page contains resources that need parent resolution 
-     * in order to become uniquely named.
-     */
-    public boolean isCurrentPageNeedsParentResolution() {
-        return currentPageNeedsParentResolution;
-    }
-
-    /**
-     * @return true if the current page contains resources of types that have the same name
-     * and thus need to resolve those types using their plugin names.
-     */
-    public boolean isCurrentPageNeedsPluginResolution() {
-        return currentPageNeedsPluginResolution;
-    }
-
-    /**
-     * @return true if the current page contains resources that need type resolution
-     * in order to become uniquely named.
-     */
-    public boolean isCurrentPageNeedsTypeResolution() {
-        return currentPageNeedsTypeResolution;
     }
 
     /**

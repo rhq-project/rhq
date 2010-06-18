@@ -750,7 +750,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.debug("Rolling back manual add of resource of type [" + resourceType.getName()
                     + "] - removing resource with id [" + resource.getId() + "] from inventory...");
                 deactivateResource(resource);
-                removeResource(resource.getId());
+                uninventoryResource(resource.getId());
             }
 
             if (t instanceof InvalidPluginConfigurationException) {
@@ -1069,7 +1069,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return resourceContainer.getResourceComponent();
     }
 
-    public void removeResource(int resourceId) {
+    public void uninventoryResource(int resourceId) {
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
         if (resourceContainer == null) {
             if (log.isDebugEnabled()) {
@@ -2540,7 +2540,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         Resource resource = resourceContainer.getResource();
                         // Only purge stuff that was synchronized at some point. Other stuff may just be newly discovered.
                         if (resource.getId() != 0) {
-                            removeResource(resource.getId());
+                            uninventoryResource(resource.getId());
                             removedResources++;
                         }
                     } else {

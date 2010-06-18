@@ -11,7 +11,8 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
@@ -73,47 +74,82 @@ public class SystemServiceType extends AbstractBundleType {
     private Set<Character> startLevelChars;
     private Set<Character> stopLevelChars;
 
-    public void install() throws BuildException {
+    private File scriptDestFile;
+    private File configDestFile;
+
+    public void validate() throws BuildException {
+        validateAttributes();
+        
+        this.scriptDestFile = new File(getInitDir(), this.name);
+        this.configDestFile = new File(getSysConfigDir(), this.name);
+    }
+
+    public void init() throws BuildException {
         if (!OS_NAME.equals("Linux") || !REDHAT_RELEASE_FILE.exists() ) {
             throw new BuildException("The system-service element is only supported on Red Hat Linux systems.");
         }
-        validateAttributes();
 
+        if (!this.scriptFile.exists() || this.scriptFile.isDirectory()) {
+            throw new BuildException("The 'scriptFile' attribute must be set to the path of an existing regular file.");
+        }
+        if (this.configFile != null && !this.configFile.exists() || this.configFile.isDirectory()) {
+            throw new BuildException("The 'configFile' attribute must be set to the path of an existing regular file.");
+        }
+    }
+
+    public void install() throws BuildException {
         // Install the config file if one was provided (e.g. /etc/sysconfig/named).
         if (this.configFile != null) {
-            File sysconfigDir = new File(this.root, SYSCONFIG_DIR.getPath().substring(1));
+            File sysconfigDir = getSysConfigDir();
             if (!sysconfigDir.exists()) {
                 sysconfigDir.mkdirs();
             }
             if (!sysconfigDir.canWrite()) {
                 throw new BuildException(sysconfigDir + " directory is not writeable.");
             }
-            File configDestFile = new File(sysconfigDir, this.name);
-            copyFile(this.configFile, configDestFile, this.overwriteConfig);
-            setPermissions(configDestFile, "644");
+            // Don't copy the file ourselves - let our parent DeploymentUnitType handle it, so the deployment metadata
+            // (i.e. MD5) can be calculated and saved.
+            //copyFile(this.configFile, this.configDestFile, this.overwriteConfig);
+            setPermissions(this.configDestFile, "644");
         }
 
         // Install the script itself (e.g. /etc/init.d/named).
-        File initDir = new File(this.root, INIT_DIR.getPath().substring(1));
+        File initDir = getInitDir();
         if (!initDir.exists()) {
            initDir.mkdirs();
         }
         if (!initDir.canWrite()) {
             throw new BuildException(initDir + " directory is not writeable.");
         }
-        File scriptDestFile = new File(initDir, this.name);
-        getProject().log("Installing service script " + scriptDestFile + "...");
-        copyFile(this.scriptFile, scriptDestFile, this.overwriteScript);
-        setPermissions(scriptDestFile, "755");
+        getProject().log("Installing service script " + this.scriptDestFile + "...");
+        // Don't copy the file ourselves - let our parent DeploymentUnitType handle it, so the deployment metadata
+        // (i.e. MD5) can be calculated and saved.
+        //copyFile(this.scriptFile, scriptDestFile, this.overwriteScript);
+        setPermissions(this.scriptDestFile, "755");
 
         // Create the symlinks in the rcX.d dirs (e.g. /etc/rc3.d/S24named -> ../init.d/named)
-        createScriptSymlinks(scriptDestFile, this.startPriority, this.startLevelChars, 'S');
-        createScriptSymlinks(scriptDestFile, this.stopPriority, this.stopLevelChars, 'K');
+        createScriptSymlinks(this.scriptDestFile, this.startPriority, this.startLevelChars, 'S');
+        createScriptSymlinks(this.scriptDestFile, this.stopPriority, this.stopLevelChars, 'K');
+    }
+
+    private File getInitDir() {
+        return new File(this.root, INIT_DIR.getPath().substring(1));
+    }
+
+    public File getScriptDestFile() {
+        return this.scriptDestFile;
+    }
+
+    private File getSysConfigDir() {
+        return new File(this.root, SYSCONFIG_DIR.getPath().substring(1));
+    }
+
+    public File getConfigDestFile() {
+        return this.configDestFile;
     }
 
     public void start() throws BuildException {
-        File initDir = new File(this.root, INIT_DIR.getPath().substring(1));
-        File scriptFile = new File(initDir, this.name);
+        File scriptFile = getScriptDestFile();
         String[] commandLine = {scriptFile.getAbsolutePath(), "start"};
         try {
             executeCommand(commandLine);
@@ -124,8 +160,7 @@ public class SystemServiceType extends AbstractBundleType {
     }
 
     public void stop() throws BuildException {
-        File initDir = new File(this.root, INIT_DIR.getPath().substring(1));
-        File scriptFile = new File(initDir, this.name);
+        File scriptFile = getScriptDestFile();
         String[] commandLine = {scriptFile.getAbsolutePath(), "stop"};
         try {
             executeCommand(commandLine);
@@ -151,16 +186,26 @@ public class SystemServiceType extends AbstractBundleType {
         return scriptFile;
     }
 
-    public void setScriptFile(File scriptFile) {
-        this.scriptFile = scriptFile;
+    public void setScriptFile(String scriptFile) {
+        File file = new File(scriptFile);
+        if (file.isAbsolute()) {
+            throw new BuildException("Path specified by 'scriptFile' attribute (" + scriptFile
+                + ") is not relative - it must be a relative path, relative to the Ant basedir.");
+        }
+        this.scriptFile = getProject().resolveFile(scriptFile);
     }
 
     public File getConfigFile() {
         return configFile;
     }
 
-    public void setConfigFile(File configFile) {
-        this.configFile = configFile;
+    public void setConfigFile(String configFile) {
+        File file = new File(configFile);
+        if (file.isAbsolute()) {
+            throw new BuildException("Path specified by 'configFile' attribute (" + configFile
+                + ") is not relative - it must be a relative path, relative to the Ant basedir.");
+        }
+        this.configFile = getProject().resolveFile(configFile);
     }
 
     public boolean isOverwriteScript() {
@@ -236,12 +281,6 @@ public class SystemServiceType extends AbstractBundleType {
 
         if (this.scriptFile == null) {
             throw new BuildException("The 'scriptFile' attribute is required.");
-        }
-        if (!this.scriptFile.exists() || this.scriptFile.isDirectory()) {
-            throw new BuildException("The 'scriptFile' attribute must be set to the path of an existing regular file.");
-        }
-        if (!this.configFile.exists() || this.configFile.isDirectory()) {
-            throw new BuildException("The 'configFile' attribute must be set to the path of an existing regular file.");
         }
 
         if (this.startLevels == null) {

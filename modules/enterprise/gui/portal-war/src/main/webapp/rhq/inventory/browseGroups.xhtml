@@ -44,6 +44,7 @@
                <ui:include src="/rhq/common/searchInterface.xhtml">
                   <ui:param name="searchButtonId" value="browseGroupsForm:searchButtonJSF" />
                   <ui:param name="searchSubsystem" value="GROUP" />
+                  <ui:param name="defaultSearchText" value="#{param.search}" />
                </ui:include>
 
                <a4j:commandButton id="searchButtonJSF" value="GO" 
@@ -199,6 +200,9 @@
                      <rich:column colspan="8" width="100%">
                         <onc:selectCommandButton action="#{BrowseGroupsUIBean.deleteSelectedGroups}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.inventory}" />
+                        <onc:selectCommandButton action="#{BrowseGroupsUIBean.uninventoryMembers}"
+                                                 value="UNINVENTORY MEMBERS" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.inventory}" />
 
                         <ui:param name="paginationDataTableName" value="browseGroupsDataTable"/>

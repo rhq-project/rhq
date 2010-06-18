@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.measurement.util;
 
 import java.lang.reflect.Array;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,7 +27,6 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -44,6 +42,7 @@ import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -58,6 +57,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * time. This is an irrelevant quirk.
  *
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class MeasurementDataManagerUtility {
     private static final Log LOG = LogFactory.getLog(MeasurementDataManagerUtility.class);
@@ -103,12 +103,6 @@ public class MeasurementDataManagerUtility {
     public static MeasurementDataManagerUtility getInstance(DataSource dataSource) {
         MeasurementDataManagerUtility util = new MeasurementDataManagerUtility();
         util.datasource = dataSource;
-        return util;
-    }
-
-    public static MeasurementDataManagerUtility getInstance(Connection connection) {
-        MeasurementDataManagerUtility util = new MeasurementDataManagerUtility();
-        util.connection = connection;
         return util;
     }
 
@@ -235,149 +229,43 @@ public class MeasurementDataManagerUtility {
         }
     }
 
-    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForResource(long beginTime,
-        long endTime, int resourceId, int[] measurementDefinitionIds) throws MeasurementNotFoundException {
-
-        // use default number of data points
-        return getMeasurementDataForResource(beginTime, endTime, resourceId, measurementDefinitionIds, 0);
-    }
-
-    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForResource(long beginTime,
-        long endTime, int resourceId, int[] measurementDefinitionIds, int numDataPoints)
+    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataAggregatesForContext(long beginTime,
+        long endTime, EntityContext context, int measurementDefinitionId, int numDataPoints)
         throws MeasurementNotFoundException {
         String otherTable = ", RHQ_MEASUREMENT_SCHED s ";
 
-        String conditions = "  AND d.schedule_id = s.id" + "  AND s.resource_id = ? \n" + "  AND s.definition = ? \n";
+        Object[] bindParams = null;
+        String scheduleSubQuery = null;
+        if (context.category == EntityContext.Category.Resource) {
+            scheduleSubQuery = "" //
+                + "SELECT innerSchedule.id \n" //
+                + "  FROM rhq_measurement_sched innerSchedule \n" //
+                + " WHERE innerSchedule.resource_id = ? \n";
+            bindParams = new Object[] { context.getResourceId() };
 
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        Connection myConnection = null;
-        List<List<MeasurementDataNumericHighLowComposite>> data = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            scheduleSubQuery = "" //
+                + "SELECT innerSchedule.id \n" //
+                + "  FROM rhq_measurement_sched innerSchedule \n" //
+                + "  JOIN rhq_resource_group_res_exp_map groupMap \n" //
+                + "       ON innerSchedule.resource_id = groupMap.resource_id \n" //
+                + " WHERE groupMap.resource_group_id = ? \n";
+            bindParams = new Object[] { context.getGroupId() };
 
-        try {
-            myConnection = getConnection();
-            for (int measurementDefinitionId : measurementDefinitionIds) {
-                ps = null;
-                rs = null;
-                try {
-                    ps = getFullQuery(myConnection, beginTime, endTime, numDataPoints, otherTable, conditions,
-                        resourceId, measurementDefinitionId);
-                    rs = ps.executeQuery();
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            scheduleSubQuery = "" //
+                + "SELECT innerSchedule.id \n" //
+                + "  FROM rhq_measurement_sched innerSchedule \n" //
+                + "  JOIN rhq_resource innerRes \n"//
+                + "       ON innerSchedule.resource_id = innerRes.id \n"//
+                + " WHERE innerRes.parent_resource_id = ? \n"//
+                + "   AND innerRes.resource_type_id = ? \n";
+            bindParams = new Object[] { context.getParentResourceId(), context.getResourceTypeId() };
 
-                    List<MeasurementDataNumericHighLowComposite> compositeList = new ArrayList<MeasurementDataNumericHighLowComposite>();
-                    while (rs.next()) {
-                        long timestamp = rs.getLong(1);
-                        double value = rs.getDouble(2);
-                        if (rs.wasNull()) {
-                            value = Double.NaN;
-                        }
-
-                        double peak = rs.getDouble(3);
-                        if (rs.wasNull()) {
-                            peak = Double.NaN;
-                        }
-
-                        double low = rs.getDouble(4);
-                        if (rs.wasNull()) {
-                            low = Double.NaN;
-                        }
-
-                        MeasurementDataNumericHighLowComposite next = new MeasurementDataNumericHighLowComposite(
-                            timestamp, value, peak, low);
-                        compositeList.add(next);
-                    }
-
-                    data.add(compositeList);
-                } finally {
-                    JDBCUtil.safeClose(ps, rs);
-                }
-            }
-        } catch (SQLException e) {
-            throw new MeasurementNotFoundException(e);
-        } finally {
-            JDBCUtil.safeClose(myConnection);
-            connection = null; // the close above invalidates the member
-        }
-        return data;
-    }
-
-    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForSiblingResources(long beginTime,
-        long endTime, int[] resourceIds, int measurementDefinitionId) throws MeasurementNotFoundException {
-
-        // use default numDataPoints
-        return getMeasurementDataForSiblingResources(beginTime, endTime, resourceIds, measurementDefinitionId, 0);
-
-    }
-
-    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForSiblingResources(long beginTime,
-        long endTime, int[] resourceIds, int measurementDefinitionId, int numDataPoints)
-        throws MeasurementNotFoundException {
-        String otherTable = ", RHQ_MEASUREMENT_SCHED s ";
-
-        String conditions = "  AND d.schedule_id = s.id" + "  AND s.resource_id = ? \n" + "  AND s.definition = ? \n";
-
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        Connection myConnection = null;
-        List<List<MeasurementDataNumericHighLowComposite>> data = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
-        for (int resourceId : resourceIds) {
-            try {
-                myConnection = getConnection();
-                ps = getFullQuery(myConnection, beginTime, endTime, numDataPoints, otherTable, conditions, resourceId,
-                    measurementDefinitionId);
-                rs = ps.executeQuery();
-
-                List<MeasurementDataNumericHighLowComposite> compositeList = new ArrayList<MeasurementDataNumericHighLowComposite>();
-                while (rs.next()) {
-                    long timestamp = rs.getLong(1);
-                    double value = rs.getDouble(2);
-                    if (rs.wasNull()) {
-                        value = Double.NaN;
-                    }
-
-                    double peak = rs.getDouble(3);
-                    if (rs.wasNull()) {
-                        peak = Double.NaN;
-                    }
-
-                    double low = rs.getDouble(4);
-                    if (rs.wasNull()) {
-                        low = Double.NaN;
-                    }
-
-                    MeasurementDataNumericHighLowComposite next = new MeasurementDataNumericHighLowComposite(timestamp,
-                        value, peak, low);
-                    compositeList.add(next);
-                }
-
-                data.add(compositeList);
-            } catch (SQLException e) {
-                throw new MeasurementNotFoundException(e);
-            } finally {
-                JDBCUtil.safeClose(myConnection, ps, rs);
-                connection = null; // the close above invalidates the member
-            }
         }
 
-        return data;
-    }
-
-    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataAggregatesForSiblingResources(
-        long beginTime, long endTime, int[] resourceIds, int measurementDefinitionId)
-        throws MeasurementNotFoundException {
-
-        // use default number of data points
-        return getMeasurementDataAggregatesForSiblingResources(beginTime, endTime, resourceIds,
-            measurementDefinitionId, 0);
-    }
-
-    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataAggregatesForSiblingResources(
-        long beginTime, long endTime, int[] resourceIds, int measurementDefinitionId, int numDataPoints)
-        throws MeasurementNotFoundException {
-        String otherTable = ", RHQ_MEASUREMENT_SCHED s ";
-
-        String conditions = "  AND d.schedule_id = s.id" + "  AND s.resource_id IN ( "
-            + JDBCUtil.generateInBinds(resourceIds.length) + ") \n" + "  AND s.definition = ? \n";
+        String conditions = "  AND d.schedule_id = s.id" + "  AND s.id IN ( " + scheduleSubQuery + ") \n"
+            + "  AND s.definition = ? \n";
 
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -385,30 +273,13 @@ public class MeasurementDataManagerUtility {
         List<List<MeasurementDataNumericHighLowComposite>> data = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
         try {
             myConnection = getConnection();
-            ps = getFullQuery(myConnection, beginTime, endTime, numDataPoints, otherTable, conditions, resourceIds,
-                measurementDefinitionId);
+            ps = getFullQuery("getMeasurementDataAggregatesForContext", myConnection, beginTime, endTime,
+                numDataPoints, otherTable, conditions, bindParams, measurementDefinitionId);
             rs = ps.executeQuery();
 
             List<MeasurementDataNumericHighLowComposite> compositeList = new ArrayList<MeasurementDataNumericHighLowComposite>();
             while (rs.next()) {
-                long timestamp = rs.getLong(1);
-                double value = rs.getDouble(2);
-                if (rs.wasNull()) {
-                    value = Double.NaN;
-                }
-
-                double peak = rs.getDouble(3);
-                if (rs.wasNull()) {
-                    peak = Double.NaN;
-                }
-
-                double low = rs.getDouble(4);
-                if (rs.wasNull()) {
-                    low = Double.NaN;
-                }
-
-                MeasurementDataNumericHighLowComposite next = new MeasurementDataNumericHighLowComposite(timestamp,
-                    value, peak, low);
+                MeasurementDataNumericHighLowComposite next = fillHighLowCompositeFromResultSet(rs);
                 compositeList.add(next);
             }
 
@@ -432,7 +303,8 @@ public class MeasurementDataManagerUtility {
             myConnection = getConnection();
             String condition = "         AND d.schedule_id = ?\n";
 
-            ps = getFullQuery(myConnection, beginTime, endTime, 1, "", condition, scheduleId);
+            ps = getFullQuery("getAggregateByScheduleId", myConnection, beginTime, endTime, 1, "", condition,
+                scheduleId);
 
             rs = ps.executeQuery();
             if (rs.next()) {
@@ -464,7 +336,8 @@ public class MeasurementDataManagerUtility {
                 + "                                        AND imp_map.resource_group_id = ? \n" //
                 + "                                        AND m_sched.definition = ? ) \n";
 
-            ps = getFullQuery(myConnection, beginTime, endTime, 1, "", condition, groupId, definitionId);
+            ps = getFullQuery("getAggregateByGroupAndDefinition", myConnection, beginTime, endTime, 1, "", condition,
+                groupId, definitionId);
 
             rs = ps.executeQuery();
             if (rs.next()) {
@@ -481,50 +354,70 @@ public class MeasurementDataManagerUtility {
         }
     }
 
-    /**
-     * @param  rs
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
+    //
+
+    private MeasurementDataNumericHighLowComposite fillHighLowCompositeFromResultSet(ResultSet rs) throws SQLException {
+        long timestamp = rs.getLong(1);
+        double value = getDoubleOrNanFromResultSet(rs, 2);
+        double peak = getDoubleOrNanFromResultSet(rs, 3);
+        double low = getDoubleOrNanFromResultSet(rs, 4);
+
+        MeasurementDataNumericHighLowComposite highLowComposite = new MeasurementDataNumericHighLowComposite(timestamp,
+            value, peak, low);
+        return highLowComposite;
+    }
+
     private MeasurementAggregate fillAggregateFromResultSet(ResultSet rs) throws SQLException {
-        /*
-         * ResultSet.getDouble() will return 0.0 for a SQL null so we need to explicitly check for null and set the
-         * value to NaN accordingly
-         */
-        Double min = rs.getDouble(4);
-        if (rs.wasNull()) {
-            min = Double.NaN;
-        }
-
-        Double avg = rs.getDouble(2);
-        if (rs.wasNull()) {
-            avg = Double.NaN;
-        }
-
-        Double max = rs.getDouble(3);
-        if (rs.wasNull()) {
-            max = Double.NaN;
-        }
+        Double min = getDoubleOrNanFromResultSet(rs, 4);
+        Double avg = getDoubleOrNanFromResultSet(rs, 2);
+        Double max = getDoubleOrNanFromResultSet(rs, 3);
 
         MeasurementAggregate measurementAggregate = new MeasurementAggregate(min, avg, max);
         return measurementAggregate;
     }
 
-    public MeasurementAggregate getAggregateByScheduleIds(long beginTime, long endTime, int[] scheduleIds)
+    public MeasurementAggregate getAggregateByContext(long beginTime, long endTime, EntityContext context)
         throws MeasurementNotFoundException {
 
         Connection myConnection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         String condition = null;
+        String scheduleSubQuery = null;
 
         try {
-            condition = "         AND d.schedule_id IN ( " + JDBCUtil.generateInBinds(scheduleIds.length) + ")\n";
+            Object[] bindParams = null;
+            if (context.category == EntityContext.Category.Resource) {
+                scheduleSubQuery = "" //
+                    + "SELECT innerSchedule.id \n" //
+                    + "  FROM rhq_measurement_sched innerSchedule \n" //
+                    + " WHERE innerSchedule.resource_id = ? \n";
+                bindParams = new Object[] { context.getResourceId() };
 
+            } else if (context.category == EntityContext.Category.ResourceGroup) {
+                scheduleSubQuery = "" //
+                    + "SELECT innerSchedule.id \n" //
+                    + "  FROM rhq_measurement_sched innerSchedule \n" //
+                    + "  JOIN rhq_resource_group_res_exp_map groupMap \n" //
+                    + "       ON innerSchedule.resource_id = groupMap.resource_id \n" //
+                    + " WHERE groupMap.resource_group_id = ? \n";
+                bindParams = new Object[] { context.getGroupId() };
+
+            } else if (context.category == EntityContext.Category.AutoGroup) {
+                scheduleSubQuery = "" //
+                    + "SELECT innerSchedule.id \n" //
+                    + "  FROM rhq_measurement_sched innerSchedule \n" //
+                    + "  JOIN rhq_resource innerRes \n"//
+                    + "       ON innerSchedule.resource_id = innerRes.id \n"//
+                    + " WHERE innerRes.parent_resource_id = ? \n"//
+                    + "   AND innerRes.resource_type_id = ? \n";
+                bindParams = new Object[] { context.getParentResourceId(), context.getResourceTypeId() };
+
+            }
+
+            condition = "         AND d.schedule_id IN ( " + scheduleSubQuery + " )\n";
             myConnection = getConnection();
-            ps = getFullQuery(myConnection, beginTime, endTime, 1, "", condition, scheduleIds);
+            ps = getFullQuery("getAggregateByContext", myConnection, beginTime, endTime, 1, "", condition, bindParams);
 
             rs = ps.executeQuery();
             if (rs.next()) {
@@ -579,10 +472,13 @@ public class MeasurementDataManagerUtility {
         return null;
     }
 
-    private PreparedStatement getFullQuery(Connection connection, long beginTime, long endTime, int numDataPoints,
-        String otherTables, String conditions, Object... bindParameters) throws SQLException {
+    private PreparedStatement getFullQuery(String methodName, Connection connection, long beginTime, long endTime,
+        int numDataPoints, String otherTables, String conditions, Object... bindParameters) throws SQLException {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getFullQuery for " + methodName);
+        }
 
-        // ensure valid number of data points        
+        // ensure valid number of data points
         numDataPoints = (numDataPoints <= 0) ? DEFAULT_NUM_DATA_POINTS : numDataPoints;
 
         long interval = (endTime - beginTime) / numDataPoints;
@@ -619,7 +515,7 @@ public class MeasurementDataManagerUtility {
         }
 
         int i = 1;
-        for (String table : tables) {
+        for (int tableIndex = 0; tableIndex < tables.length; tableIndex++) {
             ps.setLong(i++, beginTime);
             ps.setLong(i++, interval); //  2) interval
             ps.setInt(i++, numDataPoints); //  3) points
@@ -641,9 +537,10 @@ public class MeasurementDataManagerUtility {
                     }
 
                     for (int x = 0; x < length; x++) {
-                        ps.setObject(i++, Array.get(param, x));
+                        Object bindValue = Array.get(param, x);
+                        ps.setObject(i++, bindValue);
                         if (LOG.isDebugEnabled()) {
-                            fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(param));
+                            fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(bindValue));
                         }
                     }
                 } else {
@@ -670,10 +567,11 @@ public class MeasurementDataManagerUtility {
     }
 
     public static String getTableString(String table, String valuesClause, String otherTables, String conditions) {
-        return "      (SELECT beginTS as timestamp, value \n"
-            + "      FROM (select ? + (? * i) as beginTS, i from RHQ_numbers where i < ?) n,\n" + "         " + table
-            + " d " + otherTables + " \n" + "      WHERE time_stamp BETWEEN beginTS AND (beginTS + ?)\n" + "      "
-            + conditions + "      ) \n";
+        return "      (SELECT beginTS as timestamp, value \n" //
+            + "      FROM (select ? + (? * i) as beginTS, i from RHQ_numbers where i < ?) n,\n" //
+            + "         " + table + " d " + otherTables + " \n" //
+            + "      WHERE time_stamp BETWEEN beginTS AND (beginTS + ?)\n" //
+            + "      " + conditions + "      ) \n";
     }
 
     public long getPurge1h() {
@@ -696,73 +594,8 @@ public class MeasurementDataManagerUtility {
         return purgeAlert;
     }
 
-    public static void main(String[] args) throws Exception {
-        System.out.println(getNextRotationTime());
-        //      Class.forName("org.postgresql.Driver");
-        //      Connection c = DriverManager.getConnection("jdbc:postgresql://127.0.0.1:5432","jon","jon");
-
-        Class.forName("oracle.jdbc.driver.OracleDriver");
-        String db = "jdbc:oracle:thin:@192.168.1.5:1521:xe";
-
-        System.out.println("=============getAggregateByScheduleId=================================================");
-        Connection c = DriverManager.getConnection(db, "jon", "jon");
-        long now = System.currentTimeMillis();
-        long start = now - (1000L * 60 * 60 * 22);
-        MeasurementAggregate ag = getInstance(c).getAggregateByScheduleId(start, now, 1);
-        System.out.println(ag);
-
-        System.out.println("=============getAggregateByScheduleIds=================================================");
-        c = DriverManager.getConnection(db, "jon", "jon");
-        ag = getInstance(c).getAggregateByScheduleIds(start, now, new int[] { 1, 2, 3 });
-        System.out.println(ag);
-
-        System.out
-            .println("=============getMeasurementDataForResource=================================================");
-        c = DriverManager.getConnection(db, "jon", "jon");
-        List<List<MeasurementDataNumericHighLowComposite>> data = getInstance(c).getMeasurementDataForResource(start,
-            now, 50, new int[] { 166 });
-        System.out.println(data);
-
-        System.out
-            .println("===========getMeasurementDataForSiblingResources===================================================");
-        c = DriverManager.getConnection(db, "jon", "jon");
-        data = getInstance(c).getMeasurementDataForSiblingResources(start, now, new int[] { 50 }, 166);
-        System.out.println(data);
-
-        System.out
-            .println("=============getMeasurementDataAggregatesForSiblingResources=================================================");
-        c = DriverManager.getConnection(db, "jon", "jon");
-        data = getInstance(c).getMeasurementDataAggregatesForSiblingResources(start, now, new int[] { 50 }, 166);
-        System.out.println(data);
-
-        //      Date d = new Date(0);
-        //      System.out.println("Table for time " + d + " (" + d.getTime() + "): " + getTable(d.getTime()) + " Dead: " + getDeadTable(d.getTime()));
-        //
-        //      d = new Date();
-        //      System.out.println("Table for time " + d + " (" + d.getTime() + "): " + getTable(d.getTime()) + " Dead: " + getDeadTable(d.getTime()));
-        //
-        //      for (int i = 0; i < (24 * 7); i++)
-        //      {
-        //         d = new Date(d.getTime() + (1000L * 60 * 60));
-        //         System.out.println("Table for time " + d + " (" + d.getTime() + "): " + getTable(d.getTime()) + " Dead: " + getDeadTable(d.getTime()));
-        //      }
-
-        /* System.out.println("-----------");
-         * for (int i = 0; i < 100; i++) {
-         *
-         * long time = TimingVoodoo.roundDownTime(now - (1000L * 60 *60 * i), 1000L * 60 * 60); System.out.println("Table
-         * for " + new Date(time) + " is " + getTable(time)); System.out.println("Table for " + new Date(time-1) + " is
-         * " + getTable(time-1));
-         *
-         * }*/
-
-        String[] ts = getTables(now - (1000L * 60 * 60 * 8), now);
-        System.out.println(Arrays.toString(ts));
-        System.out.println("NOW: " + getTable(now));
-    }
-
     public static long getRawTimePeriodStart(long end) {
-        long now = System.currentTimeMillis();
+        //long now = System.currentTimeMillis();
         return (end - RAW_PURGE);
     }
 
@@ -781,5 +614,13 @@ public class MeasurementDataManagerUtility {
         } else {
             return datasource.getConnection();
         }
+    }
+
+    private static double getDoubleOrNanFromResultSet(ResultSet rs, int index) throws SQLException {
+        double value = rs.getDouble(index);
+        if (rs.wasNull()) {
+            value = Double.NaN;
+        }
+        return value;
     }
 }

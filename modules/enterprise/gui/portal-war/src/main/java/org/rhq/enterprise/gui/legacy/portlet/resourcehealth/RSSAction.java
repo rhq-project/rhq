@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Iterator;
+
 import javax.security.auth.login.LoginException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,7 +33,9 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.MessageResources;
 
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
+import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
@@ -39,6 +45,8 @@ import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.BaseRSSAction;
 import org.rhq.enterprise.gui.legacy.portlet.RSSFeed;
+import org.rhq.enterprise.gui.legacy.taglib.display.DisambiguatedResourceLineageTag;
+import org.rhq.enterprise.gui.legacy.util.DisambiguatedResourceListUtil;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -66,22 +74,27 @@ public class RSSAction extends BaseRSSAction {
                 favoriteResourcePreferences.asArray(), PageControl.getUnlimitedInstance());
 
             if ((results != null) && (results.size() > 0)) {
-                for (ResourceHealthComposite summary : results) {
+                PageList<DisambiguationReport<ResourceHealthComposite>> list = DisambiguatedResourceListUtil.disambiguate(manager, results, ViewAction.RESOURCE_ID_EXTRACTOR);
+                
+                for (DisambiguationReport<ResourceHealthComposite> summary : list) {
                     String link = feed.getBaseUrl() + FunctionTagLibrary.getDefaultResourceTabURL() + "?id="
-                        + summary.getId();
+                        + summary.getOriginal().getId();
 
                     String availText = res.getMessage("dash.home.ResourceHealth.rss.item.availability", summary
-                        .getAvailabilityType().toString());
+                        .getOriginal().getAvailabilityType().toString());
                     String alertsText = res.getMessage("dash.home.ResourceHealth.rss.item.alerts", Long.valueOf(summary
-                        .getAlerts()));
+                        .getOriginal().getAlerts()));
                     String typeText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceType", summary
-                        .getTypeName());
-
+                        .getOriginal().getTypeName());
+                    String parentsText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceParents", getLineage(summary));
+                    
                     long now = System.currentTimeMillis();
 
                     StringBuffer desc = new StringBuffer();
                     desc.append("<table><tr><td align=\"left\">").append(typeText).append("</td></tr>");
 
+                    desc.append("<tr><td align=\"left\">").append(parentsText).append("</td></tr>");
+                    
                     if (favoriteResourcePreferences.showAvailability) {
                         desc.append("<tr><td align=\"left\">").append(availText).append("</td></tr>");
                     }
@@ -92,7 +105,7 @@ public class RSSAction extends BaseRSSAction {
 
                     desc.append("</table>");
 
-                    feed.addItem(summary.getName(), link, desc.toString(), now);
+                    feed.addItem(summary.getOriginal().getName(), link, desc.toString(), now);
                 }
             }
 
@@ -102,6 +115,15 @@ public class RSSAction extends BaseRSSAction {
         } else {
             throw new LoginException("RSS access requires authentication");
         }
-
+    }
+    
+    private static String getLineage(DisambiguationReport<?> report) {
+        StringWriter writer = new StringWriter();
+        try {
+            DisambiguatedResourceLineageTag.writeParents(writer, report.getParents(), false, false);
+            return writer.toString();
+        } catch (IOException e) {
+            return "";
+        }
     }
 }

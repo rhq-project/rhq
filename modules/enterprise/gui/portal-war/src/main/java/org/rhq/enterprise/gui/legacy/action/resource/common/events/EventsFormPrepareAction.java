@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlFormPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
@@ -108,23 +109,10 @@ public class EventsFormPrepareAction extends MetricsControlFormPrepareAction {
 
         // Perform the query and get the (filtered) events
         EventSeverity eventSeverityFilter = getSeverityFromString(eForm.getSevFilter());
-        EventSeverity[] filters = new EventSeverity[] { eventSeverityFilter };
 
-        List<EventComposite> events;
-        if (resourceId > 0) {
-            events = eventManager.findEvents(subject, new int[] { resourceId }, begin, end, filters, sourceFilter,
-                searchString, pc);
-        } else if (groupId > 0) {
-            events = eventManager.findEventsForCompGroup(subject, groupId, begin, end, filters, /*eventId,*/
-            sourceFilter, searchString, pc);
-
-        } else if (parent > 0 && type > 0) {
-            events = eventManager.findEventsForAutoGroup(subject, parent, type, begin, end, filters, /*eventId,*/
-            sourceFilter, searchString, pc);
-        } else {
-            log.warn("Invalid input combination - can not list events ");
-            return null;
-        }
+        EntityContext context = new EntityContext(resourceId, groupId, parent, type);
+        List<EventComposite> events = eventManager.findEventComposites(subject, context, begin, end,
+            new EventSeverity[] { eventSeverityFilter }, sourceFilter, searchString, pc);
 
         // highlight filter info
         for (EventComposite event : events) {

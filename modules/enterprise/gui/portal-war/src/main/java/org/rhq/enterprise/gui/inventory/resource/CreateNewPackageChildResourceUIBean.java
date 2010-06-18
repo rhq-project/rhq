@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -63,14 +63,14 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Handles the workflow for creating a new package-backed resource.
+ * Handles the workflow for creating a new package-backed Resource.
+ *
+ * The associated Facelets page is: /rhq/resource/inventory/create-package-1.xhtml
  *
  * @author Jason Dobies
  * @author Ian Springer
  */
 public class CreateNewPackageChildResourceUIBean {
-    private final Log log = LogFactory.getLog(this.getClass());
-
     // Constants  --------------------------------------------
 
     public static final String MANAGED_BEAN_NAME = "CreateNewPackageChildResourceUIBean";
@@ -79,16 +79,19 @@ public class CreateNewPackageChildResourceUIBean {
     // private static final String OUTCOME_SUCCESS = "success";
     private static final String OUTCOME_CANCEL = "cancel";
 
+    private static final String DEFAULT_VERSION = "0";
+
     // Attributes  --------------------------------------------
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceType resourceType;
     private PackageType packageType;
 
     private String packageName;
-    private String version = "1.0";//default it to 1.0
-    private int selectedPackageTypeId;
+    private String version = DEFAULT_VERSION;
 
-    private int selectedArchitectureId;
+    private Integer selectedArchitectureId;
 
     private CreateResourceHistory retryCreateItem;
     private ConfigurationDefinition configurationDefinition;
@@ -104,7 +107,7 @@ public class CreateNewPackageChildResourceUIBean {
     // Actions  --------------------------------------------
 
     /**
-     * Performs the creation of an package-backed resource.
+     * Performs the creation of an package-backed Resource.
      *
      * @return outcome of the creation attempt
      */
@@ -138,12 +141,8 @@ public class CreateNewPackageChildResourceUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be uploaded");
             return null;
         }
-        if ((getVersion() == null) || (getVersion().trim().length() == 0)) {//version
+        if ((getVersion() == null) || (getVersion().trim().length() == 0)) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package version must be specified.");
-            return null;
-        }
-        if ((getSelectedPackageTypeId() < 0) || (getVersion().trim().length() == 0)) {//type
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package type must be specified.");
             return null;
         }
 
@@ -168,15 +167,9 @@ public class CreateNewPackageChildResourceUIBean {
                 return OUTCOME_SUCCESS_OR_FAILURE;
             }
 
-            //pull in archictecture selection
-            selectedArchitectureId = getSelectedArchitectureId();
-
-            // If the type does not support architectures, load the no architecture entity and use that
-            if (!packageType.isSupportsArchitecture()) {
-                ContentManagerLocal contentManager = LookupUtil.getContentManager();
-                Architecture noArchitecture = contentManager.getNoArchitecture();
-
-                selectedArchitectureId = noArchitecture.getId();
+            if (isSupportsArchitecture()) {
+                // pull in architecture selection
+                selectedArchitectureId = getSelectedArchitectureId();
             }
 
             // Collect data for create call
@@ -219,6 +212,7 @@ public class CreateNewPackageChildResourceUIBean {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                     "Failed to send create resource request to agent. Cause: " + errorMessages);
+                log.error("Failed to create new child Resource of type [" + getResourceType() + "].", e);
                 return OUTCOME_SUCCESS_OR_FAILURE;
             }
 
@@ -231,6 +225,10 @@ public class CreateNewPackageChildResourceUIBean {
         }
 
         return OUTCOME_SUCCESS_OR_FAILURE;
+    }
+
+    public boolean isSupportsArchitecture() {
+        return packageType.isSupportsArchitecture();
     }
 
     private void cleanup(UploadNewChildPackageUIBean uploadUIBean) {
@@ -280,16 +278,18 @@ public class CreateNewPackageChildResourceUIBean {
     }
 
     private PackageType lookupPackageType() {
-        if (resourceType == null)
+        if (resourceType == null) {
             resourceType = lookupResourceType();
+        }
         ContentManagerLocal contentManager = LookupUtil.getContentManager();
         PackageType packageType = contentManager.getResourceCreationPackageType(this.resourceType.getId());
         return packageType;
     }
 
     protected ConfigurationDefinition lookupConfigurationDefinition() {
-        if (packageType == null)
+        if (packageType == null) {
             packageType = lookupPackageType();
+        }
         ConfigurationDefinition configurationDefinition = this.packageType.getDeploymentConfigurationDefinition();
         return configurationDefinition;
     }
@@ -392,11 +392,11 @@ public class CreateNewPackageChildResourceUIBean {
     }
 
     public String getNullConfigurationDefinitionMessage() {
-        return "This resource type does not expose deployment time configuration values.";
+        return "This resource type does not expose deployment-time configuration values.";
     }
 
     public String getNullConfigurationMessage() {
-        return "Unable to create an initial deployment time configuration for resource being added.";
+        return "Unable to create an initial deployment-time configuration for resource being added.";
     }
 
     private int getResourceTypeId() {
@@ -424,14 +424,6 @@ public class CreateNewPackageChildResourceUIBean {
         this.version = version;
     }
 
-    public int getSelectedPackageTypeId() {
-        return selectedPackageTypeId;
-    }
-
-    public void setSelectedPackageTypeId(int selectedPackageTypeId) {
-        this.selectedPackageTypeId = selectedPackageTypeId;
-    }
-
     public SelectItem[] getPackageTypes() {
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
@@ -447,5 +439,4 @@ public class CreateNewPackageChildResourceUIBean {
 
         return items;
     }
-
 }

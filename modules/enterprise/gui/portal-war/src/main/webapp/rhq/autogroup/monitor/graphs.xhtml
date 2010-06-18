@@ -17,7 +17,7 @@
 <ui:composition template="/rhq/autogroup/layout/main.xhtml">
 
    <ui:param name="pageTitle"
-      value="AutoGroup '#{AutoGroupUIBean.parentResourceName}'.'#{AutoGroupUIBean.childResourceTypeName}' - Metric Graphs" />
+      value="AutoGroup '#{AutoGroupUIBean.parentResource.name}'.'#{AutoGroupUIBean.childResourceType.name}' - Metric Graphs" />
    <ui:param name="selectedTabName" value="Monitor.Graphs" />
 
    <ui:define name="content">

@@ -110,7 +110,7 @@ public interface ResourceManagerRemote {
      * @param resourceIds The resources to uninventory.
      */
     @WebMethod
-    void uninventoryResources( //
+    List<Integer> uninventoryResources( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceIds") int[] resourceIds);
 
@@ -138,5 +138,5 @@ public interface ResourceManagerRemote {
     Resource getParentResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
-    
+
 }

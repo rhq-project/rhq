@@ -37,7 +37,6 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
     private BundleVersion bundleVersion;
     private boolean initialDeployment = false;
     private Configuration newDeploymentConfig;
-    private String newDeploymentName;
     private String newDeploymentDescription;
     private BundleDeployment newDeployment;
     private boolean isCleanDeployment = false;
@@ -59,14 +58,6 @@ public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
 
     public void setBundleVersion(BundleVersion bundleVersion) {
         this.bundleVersion = bundleVersion;
-    }
-
-    public String getNewDeploymentName() {
-        return newDeploymentName;
-    }
-
-    public void setNewDeploymentName(String newDeploymentName) {
-        this.newDeploymentName = newDeploymentName;
     }
 
     public String getNewDeploymentDescription() {

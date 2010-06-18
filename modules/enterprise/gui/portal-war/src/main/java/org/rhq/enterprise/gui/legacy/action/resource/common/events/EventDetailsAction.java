@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
@@ -87,22 +88,11 @@ public class EventDetailsAction extends BaseAction {
             int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
 
             EventManagerLocal eventManager = LookupUtil.getEventManager();
-            PageList<EventComposite> events;
 
             Subject subject = user.getSubject();
-            if (resourceId > -1) {
-                events = eventManager.findEventsForResource(subject, resourceId, begin, begin + interval, null,
-                    new PageControl(0, MAX_EVENTS_PER_DOT));
-            } else if (groupId > -1) {
-                events = eventManager.findEventsForCompGroup(subject, groupId, begin, begin + interval, null,
-                    new PageControl(0, MAX_EVENTS_PER_DOT));
-            } else if (parent > -1 && type > -1) {
-                events = eventManager.findEventsForAutoGroup(subject, parent, type, begin, begin + interval, null,
-                    new PageControl(0, MAX_EVENTS_PER_DOT));
-            } else {
-                log.error("Unknown input combination, can't compute events for input");
-                return null;
-            }
+            EntityContext context = new EntityContext(resourceId, groupId, parent, type);
+            PageList<EventComposite> events = eventManager.findEventComposites(subject, context, begin, begin
+                + interval, null, null, null, new PageControl(0, MAX_EVENTS_PER_DOT));
 
             MessageResources res = getResources(request);
             StringBuffer html;

@@ -186,7 +186,6 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                             completeDeployment(resourceDeployment, BundleDeploymentStatus.FAILURE, result
                                 .getErrorMessage());
                         }
-                        completeDeployment(resourceDeployment, BundleDeploymentStatus.SUCCESS, deploymentMessage);
                     } catch (InterruptedException ie) {
                         log.error("Failed to complete bundle deployment due to interrupt", ie);
                         completeDeployment(resourceDeployment, BundleDeploymentStatus.FAILURE, "Deployment interrupted");

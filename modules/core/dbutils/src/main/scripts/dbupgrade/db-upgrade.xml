@@ -2063,11 +2063,20 @@
             <schemaSpec version="2.70.1">
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" precision="100" columnType="VARCHAR2" />
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_CONFIG_ID" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="EXTRA_CONFIG_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_ALERT_NOTIFICATION
                         ADD CONSTRAINT RHQ_AN_SENDER_CONFIG_ID_FK
                         FOREIGN KEY (SENDER_CONFIG_ID)
+                        REFERENCES RHQ_CONFIG (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ALERT_NOTIFICATION
+                        ADD CONSTRAINT RHQ_AN_EXTRA_CONFIG_ID_FK
+                        FOREIGN KEY (EXTRA_CONFIG_ID)
                         REFERENCES RHQ_CONFIG (ID)
                     </statement>
                 </schema-directSQL>
@@ -2100,7 +2109,7 @@
             <schemaSpec version="2.70.5">
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="4000" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4000" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>
@@ -2295,9 +2304,9 @@
                 <schema-alterColumn table="RHQ_REPO_SYNC" column="ID" nullable="false" />
                 <schema-addColumn table="RHQ_REPO_SYNC" column="STATUS" precision="16" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_REPO_SYNC" column="STATUS" nullable="false" />
-                <schema-addColumn table="RHQ_REPO_SYNC" column="START_TIME" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_REPO_SYNC" column="START_TIME" columnType="LONG" />
                 <schema-alterColumn table="RHQ_REPO_SYNC" column="START_TIME" nullable="false" />
-                <schema-addColumn table="RHQ_REPO_SYNC" column="END_TIME" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_REPO_SYNC" column="END_TIME" columnType="LONG" />
                 <schema-addColumn table="RHQ_REPO_SYNC" column="RESULTS" columnType="LONGVARCHAR" />
                 <schema-addColumn table="RHQ_REPO_SYNC" column="PERCENT_COMPLETE" columnType="LONG" />
                 <schema-addColumn table="RHQ_REPO_SYNC" column="REPO_ID" columnType="INTEGER" />
@@ -2305,7 +2314,7 @@
                 <schema-directSQL>
                     <statement desc="Creating RHQ_REPO_SYNC foreign key relation to RHQ_REPO for scheduled jobs">
                         ALTER TABLE RHQ_REPO_SYNC
-                        ADD CONSTRAINT RHQ_RS_REPO_ID_FKEY
+                        ADD CONSTRAINT RHQ_REPO_SYNC_REPO_ID_FKEY
                         FOREIGN KEY (REPO_ID)
                         REFERENCES RHQ_REPO (ID)
                     </statement>
@@ -2567,12 +2576,12 @@
                         FOREIGN KEY (CONFIG_ID)
                         REFERENCES RHQ_CONFIG (ID)
                     </statement>
-                        <statement desc="Creating RHQ_BUNDLE_DEPLOYMENT foreign key relation to RHQ_BUNDLE_DEPLOYMENT">
-                            ALTER TABLE RHQ_BUNDLE_DEPLOYMENT
-                            ADD CONSTRAINT RHQ_BD_B_DEPLOYMENT_ID_FK
-                            FOREIGN KEY (REPLACED_BUNDLE_DEPLOYMENT_ID)
-                            REFERENCES RHQ_BUNDLE_DEPLOYMENT (ID)
-                        </statement>                                        
+                    <statement desc="Creating RHQ_BUNDLE_DEPLOYMENT foreign key relation to RHQ_BUNDLE_DEPLOYMENT">
+                        ALTER TABLE RHQ_BUNDLE_DEPLOYMENT
+                        ADD CONSTRAINT RHQ_BD_B_DEPLOYMENT_ID_FK
+                        FOREIGN KEY (REPLACED_BUNDLE_DEPLOYMENT_ID)
+                        REFERENCES RHQ_BUNDLE_DEPLOYMENT (ID)
+                    </statement>                                        
                 </schema-directSQL>                
                 
                 <!-- RHQ_BUNDLE_RES_DEPLOY -->
@@ -2628,8 +2637,7 @@
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="ACTION" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="INFO" columnType="VARCHAR2" precision="512" />
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="INFO" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="CATEGORY" columnType="VARCHAR2" precision="32" />
-                <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="CATEGORY" nullable="FALSE" />                                
+                <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="CATEGORY" columnType="VARCHAR2" precision="32" />                                
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="STATUS" columnType="VARCHAR2" precision="16" />
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="STATUS" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="MESSAGE" columnType="LONGVARCHAR" />

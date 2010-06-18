@@ -40,7 +40,7 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
-    
+
 
    <!-- /rhq/admin/listAlertTemplates.xhtml & others -->
 
@@ -138,7 +138,7 @@
    <managed-bean>
       <managed-bean-name>ManuallyAddChildResourceUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ManuallyAddChildResourceUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
+      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 
    <!-- /rhq/resource/inventory/edit-general.xhtml -->

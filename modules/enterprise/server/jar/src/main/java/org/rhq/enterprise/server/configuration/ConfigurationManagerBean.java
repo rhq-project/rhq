@@ -213,6 +213,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public ConfigurationUpdateResponse executePluginConfigurationUpdate(PluginConfigurationUpdate update) {
         Resource resource = update.getResource();
         Configuration configuration = update.getConfiguration();
+        configuration = configuration.deepCopy(false);
 
         ConfigurationUpdateResponse response = null;
 

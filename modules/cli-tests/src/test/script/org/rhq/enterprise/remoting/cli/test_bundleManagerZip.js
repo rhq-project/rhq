@@ -83,7 +83,7 @@ function testDeployment() {
    config.put( property );
 
    // create a deployment using the above config
-   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Deployment Zip Test", "Deployment Test of dummy ZIP", config);
+   var testDeployment = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Deployment Test of dummy ZIP", config);
    
    var bd = BundleManager.scheduleBundleDeployment(testDeployment.getId(), false);
    Assert.assertNotNull( bd );      
@@ -97,7 +97,7 @@ function testDeployment() {
    config2.put( property );
    
    // create a deployment using the above config   
-   var testRedeploy = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Redeployment Zip Test", "Redeploy Test of dummy ZIP", config2);
+   var testRedeploy = BundleManager.createBundleDeployment(testBundleVersion.getId(), testDest.getId(), "Redeploy Test of dummy ZIP", config2);
       
    var bd2 = BundleManager.scheduleBundleDeployment(testRedeploy.getId(), false);
    Assert.assertNotNull( bd2 );

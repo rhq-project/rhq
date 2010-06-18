@@ -177,6 +177,10 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     protected void registerPlugin(String pathToDescriptor, String versionOverride) throws Exception {
         pathToDescriptor = COMMON_PATH_PREFIX + getSubsystemDirectory() + "/" + pathToDescriptor;
+        registerPluginInternal(pathToDescriptor, versionOverride);
+    }
+
+    private void registerPluginInternal(String pathToDescriptor, String versionOverride) throws Exception {
         System.out.println("Registering plugin with descriptor [" + pathToDescriptor + "]...");
         String md5 = MessageDigestGenerator.getDigestString(pathToDescriptor);
         Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", md5);
@@ -190,7 +194,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
             testPlugin.setVersion(descriptor.getVersion());
         }
         metadataManager.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null,
-            false);
+            true);
     }
 
     protected void registerPlugin(String pathToDescriptor) throws Exception {
@@ -291,7 +295,10 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     protected void cleanupTest() throws Exception {
         try {
-            cleanupResourceType("constraintPlatform");
+            String pathToDescriptor = COMMON_PATH_PREFIX + "/noTypes.xml";
+            registerPluginInternal(pathToDescriptor, null);            
+
+            /*cleanupResourceType("constraintPlatform");
             cleanupResourceType("events");
             cleanupResourceType("groupDeletedPlatform");
             cleanupResourceType("groupPropDeletedPlatform");
@@ -308,7 +315,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
             cleanupResourceType("testServer2");
             cleanupResourceType("testService1");
             cleanupResourceType("testService2");
-            cleanupResourceType("TestServer");
+            cleanupResourceType("TestServer");*/
 
             getTransactionManager().begin();
             EntityManager entityManager = getEntityManager();
@@ -360,9 +367,9 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
                 // invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
                 // perform in-band and out-of-band work in quick succession
                 for (Resource doomed : doomedResources) {
-                    List<Integer> deletedIds = resourceManager.deleteResource(overlord, doomed.getId());
+                    List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, doomed.getId());
                     for (Integer deletedResourceId : deletedIds) {
-                        resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                        resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
                     }
                 }
 

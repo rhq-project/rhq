@@ -52,6 +52,7 @@ public class BundleTask extends AbstractBundleTask {
         super.maybeConfigure();
 
         validateAttributes();
+        // TODO: Figure out why the Ant parse() method is not initializing the child Type objects.
         //validateTypes();
         
         getProject().setBundleName(this.name);
@@ -60,8 +61,7 @@ public class BundleTask extends AbstractBundleTask {
     }
 
     /**
-     * The RHQ Ant launcher will ensure that the following Ant project properties are defined prior to this method being
-     * invoked:
+     * The following Ant project properties must be defined with valid values prior to this method being invoked:
      *
      *   rhq.deploy.id  -   the {@link org.rhq.core.domain.bundle.BundleDeployment deployment}'s unique id
      *                      (e.g. "10001")
@@ -72,7 +72,7 @@ public class BundleTask extends AbstractBundleTask {
      * If the bundle recipe is being executed from the command line, the user must supply these properties, along
      * with any input properties required by the bundle recipe.
      *
-     * @throws BuildException
+     * @throws BuildException if an error occurs
      */
     @Override
     public void execute() throws BuildException {        
@@ -85,8 +85,11 @@ public class BundleTask extends AbstractBundleTask {
         }
         File deployDirFile = new File(deployDir);
         if (!deployDirFile.isAbsolute()) {
-            throw new BuildException("Value of property [" + DeployPropertyNames.DEPLOY_DIR + "] (" + deployDirFile
-                + ") is not an absolute path.");
+            // throw exception unless we are on windows and the path is a root dir without a drive letter - ignore missing drive letter
+            if (!deployDirFile.getPath().startsWith(File.separator)) {
+                throw new BuildException("Value of property [" + DeployPropertyNames.DEPLOY_DIR + "] (" + deployDirFile
+                    + ") is not an absolute path.");
+            }
         }
         getProject().setDeployDir(deployDirFile);
         log(DeployPropertyNames.DEPLOY_DIR + "=\"" + deployDir + "\"", Project.MSG_DEBUG);
@@ -146,6 +149,7 @@ public class BundleTask extends AbstractBundleTask {
                 + this.name + "' version " + this.version + " using config "
                 + getProject().getConfiguration().toString(true) + " [dryRun=" + dryRun + ", revert=" + revert
                 + ", clean=" + clean + "]...");
+        deploymentUnit.init();
         switch (deploymentPhase) {
             case INSTALL:
                 // TODO: Revert doesn't really make sense for an initial install.

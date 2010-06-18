@@ -26,6 +26,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -123,6 +124,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                         SubjectCriteria criteria = new SubjectCriteria();
                         criteria.fetchConfiguration(true);
                         criteria.addFilterId(subjectId);
+                        criteria.fetchRoles(true);
 
 
                         GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
@@ -228,6 +230,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new LoginView(true);
         } else if (breadcrumbName.equals("Tag")) {
             canvas = new TaggedView();
+        } else if (breadcrumbName.equals("Subsystems")) {
+            canvas = new AlertsView();
         } else {
             canvas = null;
         }

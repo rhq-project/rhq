@@ -24,7 +24,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -71,6 +70,7 @@ import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.parser.ApacheConfigReader;
+import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.parser.ApacheParser;
 import org.rhq.plugins.apache.parser.ApacheParserImpl;
@@ -315,6 +315,10 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        if (!isAugeasEnabled()){
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            return;
+        }
         AugeasTree tree = null;
         try {
             tree = getAugeasTree();
@@ -339,7 +343,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
    }
 
     public AugeasProxy getAugeasProxy() throws AugeasException {
-        File tempDir = resourceContext.getTemporaryDirectory();
+        File tempDir = resourceContext.getDataDirectory();
         if (!tempDir.exists())
             throw new RuntimeException("Loading of lens failed");
         AugeasConfigurationApache config = new AugeasConfigurationApache(tempDir.getAbsolutePath(),resourceContext.getPluginConfiguration());
@@ -389,6 +393,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName);
             } catch (Exception e) {
               report.setStatus(CreateResourceStatus.FAILURE);
+              report.setErrorMessage("Wrong format of virtual host resource name.");
               report.setException(e);
               return report;
           }
@@ -546,7 +551,14 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         if (executablePath != null) {
             executableFile = resolvePathRelativeToServerRoot(executablePath);
         } else {
-            String serverRoot = getAugeasTree().getRootNode().getChildByLabel("ServerRoot").get(0).getValue();
+            String serverRoot=null;
+          
+                ApacheDirectiveTree tree = loadParser();
+                List<ApacheDirective> directives = tree.search("/ServerRoot");
+                if (!directives.isEmpty())
+                   if (!directives.get(0).getValues().isEmpty())    
+                     serverRoot = directives.get(0).getValues().get(0);
+                
             SystemInfo systemInfo = this.resourceContext.getSystemInformation();
             if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) // UNIX
             {
@@ -596,21 +608,28 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         File controlScriptFile = null;
         if (controlScriptPath != null) {
             controlScriptFile = resolvePathRelativeToServerRoot(controlScriptPath);
-        } else {
-            SystemInfo systemInfo = this.resourceContext.getSystemInformation();
-            if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) // UNIX
-            {
+        } else {         
                 boolean found = false;
                 // First try server root as base
-                String serverRoot = getAugeasTree().getRootNode().getChildByLabel("ServerRoot").get(0).getValue();
-
-                for (String path : CONTROL_SCRIPT_PATHS) {
+                String serverRoot=null; 
+                try {
+                ApacheDirectiveTree tree = loadParser();
+                List<ApacheDirective> directives = tree.search("/ServerRoot");
+                if (!directives.isEmpty())
+                   if (!directives.get(0).getValues().isEmpty())    
+                     serverRoot = directives.get(0).getValues().get(0);
+                
+                }catch(Exception e){
+                    log.error("Could not load configuration parser.",e);
+                }
+                if (serverRoot!=null)
+                 for (String path : CONTROL_SCRIPT_PATHS) {
                     controlScriptFile = new File(serverRoot, path);
                     if (controlScriptFile.exists()) {
                         found = true;
                         break;
                     }
-                }
+                  }
                 if (!found) {
                     String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
                     if (executablePath != null) {
@@ -630,11 +649,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 }
                 if (!found) {
                     controlScriptFile = getExecutablePath(); // fall back to the httpd binary
-                }
-            } else // Windows
-            {
-                controlScriptFile = getExecutablePath();
-            }
+                }          
         }
 
         return controlScriptFile;
@@ -837,7 +852,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         }   
     }
     
-    public ApacheDirectiveTree loadParser() throws Exception{
+    public ApacheDirectiveTree loadParser(){
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
         ApacheParser parser = new ApacheParserImpl(tree,getServerRoot().getAbsolutePath());
         ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);

@@ -36,7 +36,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -51,6 +50,8 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
+import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
+import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 
 /**
@@ -82,21 +83,6 @@ public interface ResourceManagerLocal {
     Resource updateResource(Subject user, Resource resource);
 
     /**
-     * This will delete the resources with the given ID along with all of their child resources. This method will not
-     * create its own transaction; each individual child resource as well as the top level resources identified with the
-     * given IDs will be deleted in their own transaction. This will ensure that resources are deleting in the proper
-     * order (for example, if a given resource is actually a child of one of the other given resources, this method
-     * ensures the deletion occurs properly).
-     *
-     * @param  user        the user deleting the resource
-     * @param  resourceIds the ID of the resource to be deleted
-     *
-     * @return the list of all resources that were deleted - in effect, this will contain <code>resourceIds</code> and
-     *         their childrens' IDs
-     */
-    List<Integer> deleteResources(Subject user, int[] resourceIds);
-
-    /**
      * This will delete the resource with the given ID along with all of its child resources. This method will not
      * create its own transaction; each individual child resource as well as the top level resource identified with the
      * given ID will be deleted in its own transaction.
@@ -107,18 +93,18 @@ public interface ResourceManagerLocal {
      * @return the list of all resources that were deleted - in effect, this will contain <code>resourceId</code> and
      *         its children's IDs
      */
-    List<Integer> deleteResource(Subject user, int resourceId);
+    List<Integer> uninventoryResource(Subject user, int resourceId);
 
     /**
      * Deletes the given resource (but not its children) in a new transaction. This is normally used only within this
-     * manager bean itself. Clients normally should call {@link #deleteResource(Subject, int)}. If you call this
+     * manager bean itself. Clients normally should call {@link #uninventoryResource(Subject, int)}. If you call this
      * method, make sure you have a specific reason for it; check to see if calling
-     * {@link #deleteResource(Subject, int)} would not be more appropriate.
+     * {@link #uninventoryResource(Subject, int)} would not be more appropriate.
      *
      * @param user     the user deleting the resource
      * @param resource the resource to be deleted
      */
-    void deleteSingleResourceInNewTransaction(Subject user, int resourceId);
+    void uninventoryResourceAsyncWork(Subject user, int resourceId);
 
     boolean bulkNativeQueryDeleteInNewTransaction(Subject subject, String nativeQueryString, List<Integer> resourceIds);
 
@@ -437,9 +423,19 @@ public interface ResourceManagerLocal {
     List<Resource> findResourceLineage(Subject subject, int resourceId);
 
     /**
-     * #see {@link ResourceManagerRemote#uninventoryResources(Subject, int)
+     * This will uninventory the resources with the given ID along with all of their child resources. This method will not
+     * create its own transaction; each individual child resource as well as the top level resources identified with the
+     * given IDs will be uninventoried in their own transaction. This will ensure that resources are uninventoried in the proper
+     * order (for example, if a given resource is actually a child of one of the other given resources, this method
+     * ensures the uninventory occurs properly).
+     *
+     * @param  user        the user performing the uninventory action
+     * @param  resourceIds the ID of the resource to be deleted
+     *
+     * @return the list of all resources that were deleted - in effect, this will contain <code>resourceIds</code> and
+     *         their childrens' IDs
      */
-    void uninventoryResources(Subject subject, int[] resourceIds);
+    List<Integer> uninventoryResources(Subject subject, int[] resourceIds);
 
     List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
 
@@ -454,27 +450,9 @@ public interface ResourceManagerLocal {
     Resource getParentResource(Subject subject, int resourceId);
 
     /**
-     * Given a list of results, this method produces an object decorates the provided original results
-     * with data needed to disambiguate the results with respect to resource names, their types and ancestory.
-     * <p>
-     * The disambiguation result contains information on what types of information are needed to make the resources
-     * in the original result unambiguous and contains the decorated original data in the same order as the 
-     * supplied result list.
-     * <p>
-     * The objects in results do not necessarily need to correspond to a resource. In case of such objects,
-     * the resourceIdExtractor should return 0. In the resulting report such objects will still be wrapped
-     * in a {@link DisambiguationReport} but the parent list will be empty and resource type and plugin name will
-     * be null.
-     *  
-     * @see ResourceNamesDisambiguationResult
-     * 
-     * @param <T> the type of the result elements
-     * @param results the results to disambiguate
-     * @param alwayIncludeParent if true, the parent disambiguation will always be included in the result
-     * even if the results wouldn't have to be disambiguated using parents.
-     * @param resourceIdExtractor an object able to extract resource id from an instance of type parameter.
+     * @see Disambiguator#disambiguate(List, boolean, IntExtractor, javax.persistence.EntityManager)
      * @return the disambiguation result or null on error
      */
-    <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwayIncludeParent,
-        IntExtractor<? super T> resourceIdExtractor);
+    <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> resourceIdExtractor,
+        DisambiguationUpdateStrategy updateStrategy);
 }

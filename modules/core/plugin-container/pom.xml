@@ -98,9 +98,10 @@
       <dependency>
          <groupId>net.augeas</groupId>
          <artifactId>augeas-native</artifactId>
-         <version>0.7.1</version>
+         <version>0.7.1.1</version>
          <type>zip</type>
       </dependency>
+
       <dependency>
          <groupId>${groupId}</groupId>
          <artifactId>test-utils</artifactId>
@@ -203,7 +204,7 @@
          </snapshots>
       </repository>
 
-      <!-- This is for SIGAR 1.6.4. and AUGEAS 0.7.1-->
+      <!-- This is for SIGAR 1.6.5 and Augeas 0.7.1. -->
       <repository>
           <id>jboss-thirdparty-uploads</id>
           <name>JBoss Third Party Uploads</name>

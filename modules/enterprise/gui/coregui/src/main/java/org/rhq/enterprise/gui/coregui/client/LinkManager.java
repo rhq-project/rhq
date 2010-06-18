@@ -27,7 +27,7 @@ package org.rhq.enterprise.gui.coregui.client;
  */
 public class LinkManager {
 
-    private static boolean GWT = true;
+    private static boolean GWT = false;
 
 
     public static String getResourceLink(int resourceId) {
@@ -76,7 +76,11 @@ public class LinkManager {
     }
 
     public static String getDashboardLink() {
-        return "/Dashboard.do";
+        if (GWT) {
+            return "#Dashboard";
+        } else {
+            return "/Dashboard.do";
+        }
     }
 
 

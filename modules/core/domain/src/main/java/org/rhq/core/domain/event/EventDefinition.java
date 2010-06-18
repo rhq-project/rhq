@@ -22,9 +22,6 @@
  */
 package org.rhq.core.domain.event;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 
 import javax.persistence.Column;
@@ -35,8 +32,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -50,18 +45,12 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Ian Springer
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = EventDefinition.QUERY_EVENT_DEFINITIONS_BY_RESOURCE_TYPE_ID, query = "" //
-    + "SELECT ed " //
-    + "  FROM EventDefinition ed " //
-    + " WHERE ed.resourceTypeId = :resourceTypeId ") })
 @Table(name = EventDefinition.TABLE_NAME)
 @SequenceGenerator(name = "idGenerator", sequenceName = EventDefinition.TABLE_NAME + "_ID_SEQ", allocationSize = 100)
 public class EventDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String TABLE_NAME = "RHQ_EVENT_DEF";
-
-    public static final String QUERY_EVENT_DEFINITIONS_BY_RESOURCE_TYPE_ID = "EventDefinition.findByResourceTypeId";
 
     @Id
     @Column(name = "ID", nullable = false)
@@ -167,7 +156,8 @@ public class EventDefinition implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "id=" + this.id + ", " + "resourceType.name="
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".") + 1) + "[" + "id="
+            + this.id + ", " + "resourceType.name="
             + ((this.resourceType != null) ? this.resourceType.getName() : "null") + ", " + "name=" + this.name + "]";
 
     }

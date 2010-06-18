@@ -111,7 +111,6 @@ public class FileContentDelegate {
                     manifest = new Manifest();
                 }
                 Attributes attribs = manifest.getMainAttributes();
-                //                attribs.put("RHQ-Sha256", shaString);
                 attribs.putValue("RHQ-Sha256", shaString);
                 FileOutputStream outputStream = new FileOutputStream(manifestFile);
                 manifest.write(outputStream);

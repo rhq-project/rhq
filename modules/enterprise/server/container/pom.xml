@@ -165,7 +165,6 @@
                   <property name="dev.profile.active" value="${dev.profile.active}" />
                   <property name="developer" value="${developer}" />
                   <property name="rhq.earName" value="${rhq.earName}" />
-                  <property name="package-connectors" value="${package-connectors}" />
 
                   <!-- dependency versions -->
                   <property name="rhq.version" value="${project.version}" />
@@ -351,13 +350,6 @@
 
         </plugins>
       </build>
-    </profile>
-
-    <profile>
-      <id>dist</id>
-      <properties>
-        <package-connectors>true</package-connectors>
-      </properties>
     </profile>
 
   </profiles>

@@ -32,23 +32,23 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 
-public class InventorySummaryView extends VLayout implements PortletView {
+public class InventorySummaryView extends VLayout implements Portlet {
 
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
@@ -65,9 +65,9 @@ public class InventorySummaryView extends VLayout implements PortletView {
                 form = new DynamicForm();
                 List<FormItem> formItems = new ArrayList<FormItem>();
 
-                HeaderItem headerItem = new HeaderItem("header");
-                headerItem.setValue("Inventory Summary");
-                formItems.add(headerItem);
+//                HeaderItem headerItem = new HeaderItem("header");
+//                headerItem.setValue("Inventory Summary");
+//                formItems.add(headerItem);
 
                 StaticTextItem platformTotal = createSummaryRow("platformTotal", "Platform Total",
                         summary.getPlatformCount());
@@ -118,7 +118,7 @@ public class InventorySummaryView extends VLayout implements PortletView {
         return item;
     }
 
-    public void configure(StoredPortlet storedPortlet) {
+    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
         // TODO: Implement this method.
     }
 
@@ -126,13 +126,13 @@ public class InventorySummaryView extends VLayout implements PortletView {
         return null;  // TODO: Implement this method.
     }
 
-    public Canvas getSettingsCanvas() {
+    public DynamicForm getCustomSettingsForm() {
         return null;  // TODO: Implement this method.
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        public final PortletView getInstance() {
+        public final Portlet getInstance() {
             return GWT.create(InventorySummaryView.class);
         }
     }

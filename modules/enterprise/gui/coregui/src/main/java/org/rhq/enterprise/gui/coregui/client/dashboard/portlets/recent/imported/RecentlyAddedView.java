@@ -26,22 +26,28 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported
 import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 
-public class RecentlyAddedView extends VLayout implements PortletView {
+public class RecentlyAddedView extends VLayout implements Portlet {
 
 
     public static final String KEY = "Recently Added Portlet";
 
+    private boolean simple = true;
+
+    public RecentlyAddedView() {
+    }
 
     @Override
     protected void onInit() {
@@ -66,13 +72,15 @@ public class RecentlyAddedView extends VLayout implements PortletView {
         treeGrid.setFields(resourceNameField, timestampField);
 
 
-        addMember(new HeaderLabel("Recently Added Resources"));
+        if (!simple) {
+            addMember(new HeaderLabel("Recently Added Resources"));
+        }
 
         addMember(treeGrid);
 
     }
 
-    public void configure(StoredPortlet storedPortlet) {
+    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
 
     }
 
@@ -80,14 +88,14 @@ public class RecentlyAddedView extends VLayout implements PortletView {
         return new HTMLFlow("This portlet displays resources that have recently been imported into the inventory.");
     }
 
-    public Canvas getSettingsCanvas() {
+    public DynamicForm getCustomSettingsForm() {
         return null;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final PortletView getInstance() {
+        public final Portlet getInstance() {
             return GWT.create(RecentlyAddedView.class);
         }
     }

@@ -20,45 +20,60 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary;
+package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util;
 
 import com.google.gwt.core.client.GWT;
+import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.HTMLPane;
 
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.ConfigurablePortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
 
 /**
  * @author Greg Hinkle
  */
-public class TagCloudPortlet extends TagCloudView implements Portlet {
+public class MessagePortlet extends HTMLPane implements ConfigurablePortlet {
 
-    public static final String KEY = "TagCloud";
+    public static final String KEY = "Message";
 
-    public TagCloudPortlet() {
-        super(true);
+    public MessagePortlet() {
+        setContentsType(ContentsType.PAGE);
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        // TODO: Implement this method.
+        String contents = storedPortlet.getConfiguration().getSimpleValue("message",null);
+        if (contents != null) {
+            setContents(contents);
+        } else {
+            setContents("<i>Message not yet configured, click the settings button to setup this portlet.");
+        }
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("The <b>Tag Cloud</b> portlet displays the relative tag counts in the system visible " +
-                "to the current user.");
+        return new HTMLFlow("This portlet can display an HTML message on the dashboard.");
+    }
+
+    public ConfigurationDefinition getConfigurationDefinition() {
+        ConfigurationDefinition definition = new ConfigurationDefinition("MessagePortlet Configuration", "The configuration settings for the message portlet.");
+
+        definition.put(new PropertyDefinitionSimple("message", "Message", true, PropertySimpleType.LONG_STRING));
+
+        return definition;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance() {
-            return GWT.create(TagCloudPortlet.class);
+            return GWT.create(MessagePortlet.class);
         }
     }
-
 }
-

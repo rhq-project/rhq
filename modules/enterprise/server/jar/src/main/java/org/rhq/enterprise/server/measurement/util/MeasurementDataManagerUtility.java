@@ -44,6 +44,7 @@ import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -512,19 +513,48 @@ public class MeasurementDataManagerUtility {
         return measurementAggregate;
     }
 
-    public MeasurementAggregate getAggregateByScheduleIds(long beginTime, long endTime, int[] scheduleIds)
+    public MeasurementAggregate getAggregateByContext(long beginTime, long endTime, EntityContext context)
         throws MeasurementNotFoundException {
 
         Connection myConnection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         String condition = null;
+        String scheduleSubQuery = null;
 
         try {
-            condition = "         AND d.schedule_id IN ( " + JDBCUtil.generateInBinds(scheduleIds.length) + ")\n";
+            Object[] bindParams = null;
+            if (context.category == EntityContext.Category.Resource) {
+                scheduleSubQuery = "" //
+                    + "SELECT innerSchedule.id \n" //
+                    + "  FROM rhq_measurement_sched innerSchedule \n" //
+                    + " WHERE innerSchedule.resource_id = ? \n";
+                bindParams = new Object[] { context.getResourceId() };
 
+            } else if (context.category == EntityContext.Category.ResourceGroup) {
+                scheduleSubQuery = "" //
+                    + "SELECT innerSchedule.id \n" //
+                    + "  FROM rhq_measurement_sched innerSchedule \n" //
+                    + "  JOIN rhq_resource_group_res_exp_map groupMap \n" //
+                    + "       ON innerSchedule.resource_id = groupMap.resource_id \n" //
+                    + " WHERE groupMap.resource_group_id = ? \n";
+                bindParams = new Object[] { context.getGroupId() };
+
+            } else if (context.category == EntityContext.Category.AutoGroup) {
+                scheduleSubQuery = "" //
+                    + "SELECT innerSchedule.id \n" //
+                    + "  FROM rhq_measurement_sched innerSchedule \n" //
+                    + "  JOIN rhq_resource innerRes \n"//
+                    + "       ON innerSchedule.resource_id = innerRes.id \n"//
+                    + " WHERE innerRes.parent_resource_id = ? \n"//
+                    + "   AND innerRes.resource_type_id = ? \n";
+                bindParams = new Object[] { context.getParentResourceId(), context.getResourceTypeId() };
+
+            }
+
+            condition = "         AND d.schedule_id IN ( " + scheduleSubQuery + " )\n";
             myConnection = getConnection();
-            ps = getFullQuery(myConnection, beginTime, endTime, 1, "", condition, scheduleIds);
+            ps = getFullQuery(myConnection, beginTime, endTime, 1, "", condition, bindParams);
 
             rs = ps.executeQuery();
             if (rs.next()) {
@@ -709,11 +739,6 @@ public class MeasurementDataManagerUtility {
         long now = System.currentTimeMillis();
         long start = now - (1000L * 60 * 60 * 22);
         MeasurementAggregate ag = getInstance(c).getAggregateByScheduleId(start, now, 1);
-        System.out.println(ag);
-
-        System.out.println("=============getAggregateByScheduleIds=================================================");
-        c = DriverManager.getConnection(db, "jon", "jon");
-        ag = getInstance(c).getAggregateByScheduleIds(start, now, new int[] { 1, 2, 3 });
         System.out.println(ag);
 
         System.out

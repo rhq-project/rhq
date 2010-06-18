@@ -1828,7 +1828,7 @@
                      </statement>
                 </schema-directSQL>
 
-                <schema-createSequence name="RHQ_RHQ_DISTRIBUTION_ID_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_DISTRIBUTION_ID_SEQ" initial="10001" />
                 <schema-directSQL>                
                     <statement desc="Creating table RHQ_DISTRIBUTION">
                         CREATE TABLE RHQ_DISTRIBUTION ( ID INTEGER PRIMARY KEY )
@@ -2126,7 +2126,7 @@
 
             <!-- RHQ Advisory Representation -->
             <schemaSpec version="2.71">
-                <schema-createSequence name="RHQ_ADVISORY_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_ADVISORY_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_ADVISORY">
                         CREATE TABLE RHQ_ADVISORY ( ID INTEGER PRIMARY KEY )
@@ -2165,7 +2165,7 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-createSequence name="RHQ_ADVISORY_PACKAGE_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_ADVISORY_PACKAGE_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_ADVISORY_PACKAGE ( ID INTEGER PRIMARY KEY )
@@ -2196,7 +2196,7 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-createSequence name="RHQ_CVE_SEQ" initial="101" />
+                <schema-createSequence name="RHQ_CVE_ID_SEQ" initial="101" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_CVE ( ID INTEGER PRIMARY KEY )
@@ -2206,6 +2206,7 @@
                 <schema-addColumn   table="RHQ_CVE" column="NAME" precision="64" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_CVE" column="NAME" nullable="false" />
 
+                <schema-createSequence name="RHQ_ADVISORY_CVE_ID_SEQ" initial="10001"/>
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_ADVISORY_CVE ( ID INTEGER PRIMARY KEY )

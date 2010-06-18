@@ -126,6 +126,12 @@
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <build>

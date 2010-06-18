@@ -2063,11 +2063,20 @@
             <schemaSpec version="2.70.1">
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" precision="100" columnType="VARCHAR2" />
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_CONFIG_ID" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="EXTRA_CONFIG_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_ALERT_NOTIFICATION
                         ADD CONSTRAINT RHQ_AN_SENDER_CONFIG_ID_FK
                         FOREIGN KEY (SENDER_CONFIG_ID)
+                        REFERENCES RHQ_CONFIG (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ALERT_NOTIFICATION
+                        ADD CONSTRAINT RHQ_AN_EXTRA_CONFIG_ID_FK
+                        FOREIGN KEY (EXTRA_CONFIG_ID)
                         REFERENCES RHQ_CONFIG (ID)
                     </statement>
                 </schema-directSQL>
@@ -2100,7 +2109,7 @@
             <schemaSpec version="2.70.5">
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="4000" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4000" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>

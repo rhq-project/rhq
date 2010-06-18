@@ -18,9 +18,17 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.rhq.core.domain.auth.Subject;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -36,17 +44,6 @@ import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * @author Greg Hinkle
  */
@@ -56,51 +53,47 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     private ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
 
-    private static String[] importantFields = {
-            "serialVersionUID",
-//                    "ROOT                            \n" +
-//                    "ROOT_ID                         \n" +
-            "id",
+    private static String[] importantFields = { "serialVersionUID",
+    //                    "ROOT                            \n" +
+        //                    "ROOT_ID                         \n" +
+        "id",
 
-//                    "uuid                            \n" +
-//                    "resourceKey                     \n" +
-            "name",
+        //                    "uuid                            \n" +
+        //                    "resourceKey                     \n" +
+        "name",
 
-//                    "connected                       \n" +
-//                    "version                         \n" +
-            "description",
+        //                    "connected                       \n" +
+        //                    "version                         \n" +
+        "description",
 
-//                    "ctime                           \n" +
-//                    "mtime                           \n" +
-//                    "itime                           \n" +
-//                    "modifiedBy                      \n" +
-//                    "location                        \n" +
-            "resourceType",
-                    "childResources",
-            "parentResource",
-//                    "resourceConfiguration           \n" +
-//                    "pluginConfiguration             \n" +
-//                    "agent                           \n" +
-//                    "alertDefinitions                \n" +
-//                    "resourceConfigurationUpdates    \n" +
-//                    "pluginConfigurationUpdates      \n" +
-//                    "implicitGroups                  \n" +
-//                    "explicitGroups                  \n" +
-//                    "contentServiceRequests          \n" +
-//                    "createChildResourceRequests     \n" +
-//                    "deleteResourceRequests          \n" +
-//                    "operationHistories              \n" +
-//                    "installedPackages               \n" +
-//                    "installedPackageHistory         \n" +
-//                    "resourceRepos                   \n" +
-                    "schedules",
-//                    "availability                    \n" +
-            "currentAvailability",
-//                    "resourceErrors                  \n" +
-//                    "eventSources                    \n" +
-//                    "productVersion                  "}
-            "tags"
-    };
+        //                    "ctime                           \n" +
+        //                    "mtime                           \n" +
+        //                    "itime                           \n" +
+        //                    "modifiedBy                      \n" +
+        //                    "location                        \n" +
+        "resourceType", "childResources", "parentResource",
+        //                    "resourceConfiguration           \n" +
+        //                    "pluginConfiguration             \n" +
+        //                    "agent                           \n" +
+        //                    "alertDefinitions                \n" +
+        //                    "resourceConfigurationUpdates    \n" +
+        //                    "pluginConfigurationUpdates      \n" +
+        //                    "implicitGroups                  \n" +
+        //                    "explicitGroups                  \n" +
+        //                    "contentServiceRequests          \n" +
+        //                    "createChildResourceRequests     \n" +
+        //                    "deleteResourceRequests          \n" +
+        //                    "operationHistories              \n" +
+        //                    "installedPackages               \n" +
+        //                    "installedPackageHistory         \n" +
+        //                    "resourceRepos                   \n" +
+        "schedules",
+        //                    "availability                    \n" +
+        "currentAvailability",
+        //                    "resourceErrors                  \n" +
+        //                    "eventSources                    \n" +
+        //                    "productVersion                  "}
+        "tags" };
 
     private static Set<String> importantFieldsSet = new HashSet<String>(Arrays.asList(importantFields));
 
@@ -124,23 +117,24 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
             return SerialUtility.prepare(result, "ResourceService.findResourceByCriteria");
         } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
             throw new RuntimeException(e);
         }
     }
 
     public List<Resource> getResourceLineage(int resourceId) {
-        return SerialUtility.prepare(resourceManager.getResourceLineage(resourceId), "ResourceService.getResourceLineage");
+        return SerialUtility.prepare(resourceManager.getResourceLineage(resourceId),
+            "ResourceService.getResourceLineage");
     }
-
 
     public List<Resource> getResourceLineageAndSiblings(int resourceId) {
-        return SerialUtility.prepare(resourceManager.getResourceLineageAndSiblings(resourceId), "ResourceService.getResourceLineage");
+        return SerialUtility.prepare(resourceManager.getResourceLineageAndSiblings(resourceId),
+            "ResourceService.getResourceLineage");
     }
 
-
     public Resource getPlatformForResource(int resourceId) {
-        return SerialUtility.prepare(resourceManager.getRootResourceForResource(resourceId), "ResourceService.getPlatformForResource");
+        return SerialUtility.prepare(resourceManager.getRootResourceForResource(resourceId),
+            "ResourceService.getPlatformForResource");
     }
 
     public List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems) {
@@ -156,22 +150,20 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         return platforms;
     }
 
-    public List<Integer> deleteResources(int[] resourceIds) {
-        return SerialUtility.prepare(
-                resourceManager.deleteResources(getSessionSubject(), resourceIds),
-                "ResourceService.deleteResources");
+    public List<Integer> uninventoryResources(int[] resourceIds) {
+        return SerialUtility.prepare(resourceManager.uninventoryResources(getSessionSubject(), resourceIds),
+            "ResourceService.uninventoryResources");
     }
 
     public void updateResource(Resource resource) {
         resourceManager.updateResource(getSessionSubject(), resource);
     }
 
+    public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration newResourceConfiguration) {
 
-    public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName, Configuration newResourceConfiguration) {
-
-        ConfigurationDefinition pluginConfigDefinition =
-                LookupUtil.getConfigurationManager().
-                        getPluginConfigurationDefinitionForResourceType(getSessionSubject(), newResourceTypeId);
+        ConfigurationDefinition pluginConfigDefinition = LookupUtil.getConfigurationManager()
+            .getPluginConfigurationDefinitionForResourceType(getSessionSubject(), newResourceTypeId);
         Configuration pluginConfig = null;
         if (pluginConfigDefinition != null) {
             ConfigurationTemplate pluginConfigTemplate = pluginConfigDefinition.getDefaultTemplate();
@@ -182,12 +174,9 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             // ConfigurationUtility.normalizeConfiguration(pluginConfig, pluginConfigDefinition);
         }
 
-
-        resourceFactoryManager.createResource(getSessionSubject(),
-                parentResourceId, newResourceTypeId, newResourceName, pluginConfig, newResourceConfiguration);
+        resourceFactoryManager.createResource(getSessionSubject(), parentResourceId, newResourceTypeId,
+            newResourceName, pluginConfig, newResourceConfiguration);
     }
-
-
 
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc) {
         return SerialUtility.prepare(
@@ -209,6 +198,5 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public void unignoreResources(Integer[] resourceIds) {
         discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
     }
-
 
 }

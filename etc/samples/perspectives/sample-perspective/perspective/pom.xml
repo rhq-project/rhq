@@ -10,7 +10,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>4.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -22,7 +22,7 @@
    <description>A Sample Perspective showing extension points and filters</description>
 
    <properties>
-      <rhq.version>3.0.0-SNAPSHOT</rhq.version>
+      <rhq.version>${project.parent.version}</rhq.version>
    </properties>
 
    <dependencies>

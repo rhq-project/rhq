@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.plugin.pc.alert;
 
+import java.util.Arrays;
+
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -33,17 +36,27 @@ public class CustomAlertSenderBackingBean {
 
     /** Configuration from the per alert definition parameters */
     protected Configuration alertParameters;
+    protected Configuration extraParameters;
     protected Subject webUser;
     protected String context;
     protected String contextId;
     protected String contextSubId;
+    protected Integer alertNotificationId;
 
     public Configuration getAlertParameters() {
         return alertParameters;
     }
 
+    public Configuration getExtraParameters() {
+        return extraParameters;
+    }
+
     public void setAlertParameters(Configuration alertParameters) {
         this.alertParameters = alertParameters;
+    }
+
+    public void setExtraParameters(Configuration extraParameters) {
+        this.extraParameters = extraParameters;
     }
 
     public Subject getWebUser() {
@@ -78,24 +91,18 @@ public class CustomAlertSenderBackingBean {
         this.contextSubId = contextSubId;
     }
 
+    public Integer getAlertNotificationId() {
+        return alertNotificationId;
+    }
+
+    public void setAlertNotificationId(Integer alertNotificationId) {
+        this.alertNotificationId = alertNotificationId;
+    }
+
     public void loadView() {
     }
 
     public void saveView() {
-    }
-
-    /**
-     * This method is called after constructing the bean and injecting the
-     * #alertParameters
-     */
-    public void internalInit() {
-    }
-
-    /**
-     * This method is called when the alert notification that uses this backing bean
-     * is removed, so that the backing bean can do some cleanup work
-     */
-    public void internalCleanup() {
     }
 
     /**
@@ -155,6 +162,17 @@ public class CustomAlertSenderBackingBean {
         }
 
         return ret;
+    }
+
+    final protected void deleteExtraParameters() {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        AlertNotification notification = LookupUtil.getAlertNotificationManager().getAlertNotification(overlord,
+            alertNotificationId);
+        Configuration extraParameters = notification.getExtraConfiguration();
+        notification.setExtraConfiguration(null);
+        LookupUtil.getAlertNotificationManager().updateAlertNotification(overlord,
+            notification.getAlertDefinition().getId(), notification);
+        LookupUtil.getConfigurationManager().deleteConfigurations(Arrays.asList(extraParameters.getId()));
     }
 
 }

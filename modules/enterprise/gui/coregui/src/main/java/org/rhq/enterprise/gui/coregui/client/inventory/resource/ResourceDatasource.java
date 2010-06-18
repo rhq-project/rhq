@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 import java.util.List;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -32,7 +31,6 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
@@ -59,7 +57,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
-
 
         DataSourceImageField iconField = new DataSourceImageField("icon");
         iconField.setImageURLPrefix("types/");
@@ -128,13 +125,13 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         }
 
         if (request.getCriteria().getValues().get("type") != null) {
-            criteria.addFilterResourceTypeId(Integer.parseInt(((String)request.getCriteria().getValues().get("type"))));
+            criteria
+                .addFilterResourceTypeId(Integer.parseInt(((String) request.getCriteria().getValues().get("type"))));
         }
 
         if (request.getCriteria().getValues().get("plugin") != null) {
-            criteria.addFilterPluginName((String)request.getCriteria().getValues().get("plugin"));
+            criteria.addFilterPluginName((String) request.getCriteria().getValues().get("plugin"));
         }
-
 
         if (request.getCriteria().getValues().get("tag") != null) {
             criteria.addFilterTag((Tag) request.getCriteria().getValues().get("tag"));
@@ -152,8 +149,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
 
-
-
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to fetch resource data", caught);
@@ -162,7 +157,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             }
 
             public void onSuccess(PageList<Resource> result) {
-
 
                 dataRetrieved(result, response, request);
             }
@@ -173,11 +167,10 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     protected void executeRemove(final DSRequest request, final DSResponse response) {
         JavaScriptObject data = request.getData();
         final ListGridRecord rec = new ListGridRecord(data);
-        final Resource resourceToDelete  = copyValues(rec);
-
+        final Resource resourceToDelete = copyValues(rec);
 
         final int resourceId = resourceToDelete.getId();
-        resourceService.deleteResources(new int[]{resourceId}, new AsyncCallback<List<Integer>>() {
+        resourceService.uninventoryResources(new int[] { resourceId }, new AsyncCallback<List<Integer>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to uninventory resource " + resourceId, caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
@@ -185,12 +178,12 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             }
 
             public void onSuccess(List<Integer> result) {
-                CoreGUI.getMessageCenter().notify(new Message("Resource [" + resourceId + "] successfully uninventoried.", Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Resource [" + resourceId + "] successfully uninventoried.", Message.Severity.Info));
                 response.setStatus(DSResponse.STATUS_SUCCESS);
                 processResponse(request.getRequestId(), response);
             }
         });
-
 
     }
 
@@ -200,7 +193,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
         processResponse(request.getRequestId(), response);
     }
-
 
     @Override
     public Resource copyValues(ListGridRecord from) {
@@ -217,9 +209,8 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute("typeName", from.getResourceType().getName());
         record.setAttribute("pluginName", from.getResourceType().getPlugin());
         record.setAttribute("category", from.getResourceType().getCategory().getDisplayName());
-        record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_" +
-                (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
-
+        record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_"
+            + (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
 
         record
             .setAttribute(

@@ -883,6 +883,18 @@ commands named "config", "setconfig" and "setup" and the command line options
                adapters that are available. If you want the agent to use
                a specific IP or address, then you must define the
                bind-address here.
+               
+               Notice about bind-address and bind-port:
+               If you use transport param "serverBindAddress", that will
+               actually be the address the agent will use to bind its
+               socket and the rhq.communications.connector.bind-address
+               will be the public address the RHQ Server will use to
+               talk to the agent.
+               If you use transport param "serverBindPort", that will
+               actually be the port the agent will use for its server
+               socket and the rhq.communications.connector.bind-port
+               will be the public port the RHQ Server will use to
+               talk to the agent.
                -->
                <entry key="rhq.communications.connector.rhqtype"          value="agent" />
                <entry key="rhq.communications.connector.transport"        value="socket" />

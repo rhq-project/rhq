@@ -54,10 +54,8 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.pluginapi.content.version.PackageVersions;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -91,8 +89,6 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
     private static final String ARCHITECTURE = "noarch";
 
     private final Log log = LogFactory.getLog(this.getClass());
-
-    private PackageVersions versions;
 
     // ------------ MeasurementFacet Implementation ------------
 
@@ -138,20 +134,9 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 + getResourceDescription() + " does not exist.");
 
         String fileName = this.deploymentFile.getName();
-        PackageVersions packageVersions = loadPackageVersions();
-        String version = packageVersions.getVersion(fileName);
-
         JarContentFileInfo fileInfo = new JarContentFileInfo(this.deploymentFile);
         String sha256 = getSHA256(fileInfo);
-
-        // First discovery of this EAR/WAR
-        if (version == null) {
-            // try to use version from manifest. if not there use the sha256. if that fails default to "0".
-            version = getVersion(fileInfo, sha256);
-            versions.putVersion(fileName, version);
-            versions.saveToDisk();
-        }
-
+        String version = getVersion(fileInfo, sha256);
         // Package name is the deployment's file name (e.g. foo.ear).
         PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
         ResourcePackageDetails packageDetails = new ResourcePackageDetails(key);
@@ -324,7 +309,6 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         // Deploy was successful!
         deleteBackupOfOriginalFile(backupOfOriginalFile);
-        persistApplicationVersion(packageDetails, this.deploymentFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
         DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
@@ -390,14 +374,6 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         return response;
     }
 
-    private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile) {
-        String packageName = appFile.getName();
-        log.debug("Persisting application version '" + packageDetails.getVersion() + "' for package '" + packageName
-            + "'");
-        PackageVersions versions = loadPackageVersions();
-        versions.putVersion(packageName, packageDetails.getVersion());
-    }
-
     private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
         log.debug("Deleting backup of original file '" + backupOfOriginalFile + "'...");
         try {
@@ -436,26 +412,5 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
             throw new Exception();
         }
         return tempFile;
-    }
-
-    /**
-     * Returns an instantiated and loaded versions store access point.
-     *
-     * @return will not be <code>null</code>
-     */
-    private PackageVersions loadPackageVersions() {
-        if (this.versions == null) {
-            ResourceType resourceType = getResourceContext().getResourceType();
-            String pluginName = resourceType.getPlugin();
-            File dataDirectoryFile = getResourceContext().getDataDirectory();
-            dataDirectoryFile.mkdirs();
-            String dataDirectory = dataDirectoryFile.getAbsolutePath();
-            log.trace("Creating application versions store with plugin name [" + pluginName + "] and data directory ["
-                + dataDirectory + "]");
-            this.versions = new PackageVersions(pluginName, dataDirectory);
-            this.versions.loadFromDisk();
-        }
-
-        return this.versions;
     }
 }

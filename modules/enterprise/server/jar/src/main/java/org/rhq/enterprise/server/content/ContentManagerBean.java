@@ -1512,7 +1512,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      *  as the agent side discovery mechanism, and passes in additional parameters available
      *  when file has been uploaded via the UI.
      */
-    @Override
     public PackageVersion getUploadedPackageVersion(String packageName, int packageTypeId, String version,
         int architectureId, InputStream packageBitStream, Map<String, String> packageUploadDetails,
         int newResourceTypeId) {

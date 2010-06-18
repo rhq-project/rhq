@@ -51,6 +51,9 @@ public abstract class AlertSender<T extends ServerPluginComponent> {
     /** Configuration from the per alert definition parameters */
     protected Configuration alertParameters;
 
+    /** Configuration from the per alert definition parameters */
+    protected Configuration extraParameters;
+
     /** Global component holding persistent resources */
     protected T pluginComponent;
 

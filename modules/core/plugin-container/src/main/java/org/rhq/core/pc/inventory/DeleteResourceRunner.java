@@ -104,7 +104,7 @@ public class DeleteResourceRunner implements Callable, Runnable {
             // TODO: Doesn't support resources with children
             facet.deleteResource();
 
-            PluginContainer.getInstance().getInventoryManager().removeResource(resourceId);
+            PluginContainer.getInstance().getInventoryManager().uninventoryResource(resourceId);
 
             status = DeleteResourceStatus.SUCCESS;
         } catch (Throwable t) {

@@ -160,22 +160,30 @@ public class SavedSearchManager {
 
             @Override
             public void onSuccess(List<SavedSearch> result) {
-                savedSearches.clear();
-                Collections.sort(result, new Comparator<SavedSearch>() {
+                try {
+                    savedSearches.clear();
+                    Collections.sort(result, new Comparator<SavedSearch>() {
 
-                    @Override
-                    public int compare(SavedSearch first, SavedSearch second) {
-                        return first.getName().compareTo(second.getName());
+                        @Override
+                        public int compare(SavedSearch first, SavedSearch second) {
+                            return first.getName().compareTo(second.getName());
+                        }
+                    });
+                    for (SavedSearch next : result) {
+                        savedSearches.put(next.getName(), next);
                     }
-                });
-                for (SavedSearch next : result) {
-                    savedSearches.put(next.getName(), next);
+                } finally {
+                    searchBar.onSavedSearchManagerLoaded();
                 }
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                SearchLogger.debug("Error: loading saved searches: " + caught.getMessage());
+                try {
+                    SearchLogger.debug("Error: loading saved searches: " + caught.getMessage());
+                } finally {
+                    searchBar.onSavedSearchManagerLoaded();
+                }
             }
         });
     }

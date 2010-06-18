@@ -48,6 +48,9 @@ public class EmailSender extends AlertSender {
     @Override
     public String previewConfiguration() {
         String emailAddressString = alertParameters.getSimpleValue("emailAddress", null);
+        if (emailAddressString == null) {
+            return "<empty>";
+        }
         return emailAddressString;
     }
 }

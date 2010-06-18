@@ -37,10 +37,6 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
         } else if (subtab.equals("mixed")) {
             category = GroupCategory.MIXED;
         }
-
-        /*
-            search = FacesContextUtility.getOptionalRequestParameter("search");
-        */
     }
 
     public String getSearch() {

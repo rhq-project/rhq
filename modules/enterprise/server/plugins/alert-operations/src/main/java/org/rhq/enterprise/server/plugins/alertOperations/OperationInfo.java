@@ -18,8 +18,7 @@ public class OperationInfo {
         RELATIVE_ANCESTOR_TYPE_ID("selection-relative-ancestor-type-id"), //
         RELATIVE_DESCENDANT_TYPE_ID("selection-relative-descendant-type-id"), //
         RELATIVE_DESCENDANT_NAME("selection-relative-descendant-name"), //
-        OPERATION_ID("operation-definition-id"), //
-        ARGUMENTS_CONFIG_ID("operation-arguments-configuration-id");
+        OPERATION_ID("operation-definition-id");
 
         public final String propertyName;
 
@@ -46,14 +45,14 @@ public class OperationInfo {
     public final Integer descendantTypeId;
     public final String descendantName;
     public final Integer operationId;
-    public final Integer argumentsConfigurationId;
+    public final Configuration arguments;;
 
     public final String error;
 
     private Subject overlord;
 
     private OperationInfo(String mode, String resourceId, String ancestorTypeId, String descendantTypeId,
-        String descendantName, String operationId, String argumentsConfigurationId) {
+        String descendantName, String operationId, Configuration arguments) {
         ResourceSelectionMode selectionMode = null;
         try {
             selectionMode = ResourceSelectionMode.valueOf(mode);
@@ -65,9 +64,9 @@ public class OperationInfo {
         this.descendantTypeId = get(descendantTypeId);
         this.descendantName = descendantName;
         this.operationId = get(operationId);
-        this.argumentsConfigurationId = get(argumentsConfigurationId);
+        this.arguments = arguments;
 
-        this.error = getErrorString(this);
+        this.error = getErrorString();
     }
 
     private Integer get(String data) {
@@ -78,14 +77,12 @@ public class OperationInfo {
         return Integer.parseInt(data);
     }
 
-    private String getErrorString(OperationInfo info) {
+    private String getErrorString() {
         if (mode == ResourceSelectionMode.RELATIVE) {
             if (ancestorTypeId == null) {
                 return "<no 'start search from' selected>";
             }
-            if (descendantTypeId == null) {
-                return "<no 'filter by' selected>";
-            }
+            // if (descendantTypeId == null) wants to execute operation on direct ancestor
         } else if (mode == ResourceSelectionMode.SPECIFIC) {
             if (resourceId == null) {
                 return "<no resource selected>";
@@ -99,17 +96,16 @@ public class OperationInfo {
         return null;
     }
 
-    public static OperationInfo load(Configuration configuration) {
+    public static OperationInfo load(Configuration configuration, Configuration extraConfiguration) {
         String mode = get(configuration, Constants.SELECTION_MODE, null);
         String resourceId = get(configuration, Constants.SPECIFIC_RESOURCE_ID, null);
         String ancestorTypeId = get(configuration, Constants.RELATIVE_ANCESTOR_TYPE_ID, null);
         String descendantTypeId = get(configuration, Constants.RELATIVE_DESCENDANT_TYPE_ID, null);
         String descendantName = get(configuration, Constants.RELATIVE_DESCENDANT_NAME, null);
         String operationId = get(configuration, Constants.OPERATION_ID, null);
-        String argumentsConfigurationId = get(configuration, Constants.ARGUMENTS_CONFIG_ID, null);
 
         return new OperationInfo(mode, resourceId, ancestorTypeId, descendantTypeId, descendantName, operationId,
-            argumentsConfigurationId);
+            extraConfiguration);
     }
 
     private static String get(Configuration configuration, Constants operationInfoConstants, String defaultValue) {
@@ -117,24 +113,23 @@ public class OperationInfo {
     }
 
     public String toString() {
+        String errorInfo = getErrorString();
+        if (errorInfo != null) {
+            return errorInfo;
+        }
+
         String resourceInfo = getResourceInfo();
-
-        if (resourceInfo == null) {
-            return "<no resource selected>";
-        }
-
-        if (operationId == null) {
-            return "<no operation selected> for " + resourceInfo;
-        }
-
-        return getOperationDefinition().getDisplayName() + " on " + resourceInfo;
+        OperationDefinition operation = getOperationDefinition();
+        return "'" + operation.getDisplayName() + "' on " + resourceInfo;
     }
 
     public String getResourceInfo() {
         /*
-         * <operation> on this resource (<resource ancestry>)
-         * <operation> on other resource (<resource ancestry>)
-         * <operation> on { { name } <descendant> } { under <ancestor> }
+         * 1) "on" this resource 
+         * 2) "on" the ( <resource ancestry> ) resource 
+         * 3a) "on" the <ancestorType> ancestor
+         * 3b) "on" the '{name}' <descendantType> descendant 
+         * 3c) "on" the '{name}' <descendantType> descendant under the <ancestorType> ancestor
          */
         if (mode == null) {
             return null;
@@ -155,14 +150,14 @@ public class OperationInfo {
                 }
                 builder.append(next.getName());
             }
-            return "other resource ( " + builder.toString() + " )";
+            return "the ( " + builder.toString() + " ) resource";
         } else if (mode == ResourceSelectionMode.RELATIVE) {
             ResourceType ancestor = getType(ancestorTypeId);
             ResourceType descendant = getType(descendantTypeId);
 
             StringBuilder builder = new StringBuilder();
+            builder.append(" the ");
             if (descendant != null) {
-                builder.append(" the ");
                 if (descendantName != null) {
                     builder.append('\'');
                     builder.append(descendantName); // name only relevant if type is chosen
@@ -170,10 +165,10 @@ public class OperationInfo {
                 }
                 builder.append(' ');
                 builder.append(descendant.getName());
-                builder.append(" resource");
+                builder.append(" descendant");
 
                 if (ancestor != null) {
-                    builder.append(" under ");
+                    builder.append(" under the ");
                 }
             }
 
@@ -195,11 +190,6 @@ public class OperationInfo {
     }
 
     public Configuration getArguments() {
-        if (argumentsConfigurationId == null) {
-            return null;
-        }
-
-        Configuration arguments = LookupUtil.getConfigurationManager().getConfigurationById(argumentsConfigurationId);
         return arguments;
     }
 

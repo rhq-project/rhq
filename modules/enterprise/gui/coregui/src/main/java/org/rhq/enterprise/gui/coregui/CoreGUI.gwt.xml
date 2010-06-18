@@ -23,7 +23,7 @@
 <!--    <generate-with class="org.rhq.core.rebind.RecordBuilderGenerator">
         <when-type-assignable class="org.rhq.core.domain.util.Recordizable"/>
     </generate-with>-->
-
+  
 
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
@@ -31,9 +31,8 @@
 
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE6">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
-    <when-property-is name="user.agent" value="ie6"/>
+        <when-property-is name="user.agent" value="ie6"/>
     </replace-with>
-
 
     <!-- limit builds to your preferred browser -->
 
@@ -52,9 +51,11 @@
     <servlet path="/AvailabilityGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl"/>
     <servlet path="/BundleGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.BundleGWTServiceImpl"/>
     <servlet path="/ConfigurationGwtService" class="org.rhq.enterprise.gui.coregui.server.gwt.ConfigurationGWTServiceImpl"/>
+    <servlet path="/ContentGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ContentGWTServiceImpl"/>
     <servlet path="/MeasurementDataGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl"/>
     <servlet path="/OperationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.OperationGWTServiceImpl"/>
     <servlet path="/RemoteInstallGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl"/>
+    <servlet path="/RepoGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RepoGWTServiceImpl"/>
     <servlet path="/ResourceBossGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl"/>
     <servlet path="/ResourceGroupGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceGroupGWTServiceImpl"/>
     <servlet path="/ResourceGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceGWTServiceImpl"/>

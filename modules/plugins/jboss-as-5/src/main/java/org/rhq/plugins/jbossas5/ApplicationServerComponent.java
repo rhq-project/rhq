@@ -190,7 +190,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     public void start(ResourceContext resourceContext) {
         this.resourceContext = resourceContext;
-
+        this.operationDelegate = new ApplicationServerOperationsDelegate(this);
         // Connect to the JBAS instance's Profile Service and JMX MBeanServer.
         connectToProfileService();
         initializeEmsConnection();
@@ -486,10 +486,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
-        if (this.operationDelegate == null) {
-            this.operationDelegate = new ApplicationServerOperationsDelegate(this, this.resourceContext
-                .getSystemInformation());
-        }
+  
         ApplicationServerSupportedOperations operation = Enum.valueOf(ApplicationServerSupportedOperations.class, name
             .toUpperCase());
         return this.operationDelegate.invoke(operation, parameters);

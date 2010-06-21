@@ -1,20 +1,24 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 package org.jboss.on.plugins.tomcat;
 
@@ -414,9 +418,9 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
         SupportedOperations operation = Enum.valueOf(SupportedOperations.class, name.toUpperCase());
-        
+
         addScriptsEnvironment(parameters);
-        
+
         return operationsDelegate.invoke(operation, parameters);
     }
 
@@ -445,20 +449,20 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
             }
         }
     }
-    
+
     private void addScriptsEnvironment(Configuration operationParameters) {
         Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-        
-        PropertyList startScriptEnv = pluginConfiguration.getList(
-            TomcatServerOperationsDelegate.START_SCRIPT_ENVIRONMENT_PROPERTY);
-        
-        PropertyList shutdownScriptEnv = pluginConfiguration.getList(
-            TomcatServerOperationsDelegate.SHUTDOWN_SCRIPT_ENVIRONMENT_PROPERTY);
-        
+
+        PropertyList startScriptEnv = pluginConfiguration
+            .getList(TomcatServerOperationsDelegate.START_SCRIPT_ENVIRONMENT_PROPERTY);
+
+        PropertyList shutdownScriptEnv = pluginConfiguration
+            .getList(TomcatServerOperationsDelegate.SHUTDOWN_SCRIPT_ENVIRONMENT_PROPERTY);
+
         if (startScriptEnv != null) {
             operationParameters.put(startScriptEnv);
         }
-        
+
         if (shutdownScriptEnv != null) {
             operationParameters.put(shutdownScriptEnv);
         }

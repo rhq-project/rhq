@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
-import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -103,39 +102,54 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource
-    private SessionContext sessionContext;
+    @javax.annotation.Resource(name = "RHQ_DS")
+    private DataSource rhqDs;
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @EJB
+    private CallTimeDataManagerLocal callTimeDataManager;
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void addCallTimeData(@NotNull Set<CallTimeData> callTimeDataSet) {
         if (callTimeDataSet.isEmpty()) {
             return;
         }
 
         log.debug("Persisting call-time data for " + callTimeDataSet.size() + " schedules...");
-        DataSource ds = (DataSource) this.sessionContext.lookup("RHQ_DS");
-        Connection conn = null;
-        try {
-            conn = ds.getConnection();
 
-            // First make sure a single row exists in the key table for each reported call destination.
-            insertCallTimeDataKeys(callTimeDataSet, conn);
+        // First make sure a single row exists in the key table for each reported call destination.
+        callTimeDataManager.insertCallTimeDataKeys(callTimeDataSet);
 
-            // Delete any existing rows that have the same key and begin time as the data about to be inserted.
-            deleteRedundantCallTimeDataValues(callTimeDataSet, conn);
+        /*
+         * TODO: JM - Is this really needed?  Under what circumstances are duplicates generated?  Are we presuming
+         *       this is a misbehaving plugin, or a problem at the comm-layer where the same piece of data is delivered
+         *       twice?  I'm tentatively removing this because it is a big hit to call-time data reporting performance.
+         *       If, however, evidence is presented that implores us to bring this functionality back, it should be
+         *       implemented by getting rid of the duplicate data points that share the same key_id and begin_time.
+         *       These records can be found with:
+         *
+         *         SELECT key_id, begin_time, count(id)
+         *           FROM rhq_calltime_data_value
+         *       GROUP BY key_id, begin_time
+         *         HAVING count(id) > 1
+         *
+         *       This is functionally equivalent to the CALLTIME_VALUE_DELETE_SUPERCEDED_STATEMENT query, but takes
+         *       advantage of the fact that key_id represents the already-computed pair of schedule_id/destination, thus
+         *       allowing the duplicate-search to be implemented against a single table.
+         *       
+         *       Taking this solution one step further, an appropriate delete statement can be crafted which leverages 
+         *       the above concept but deletes all but one of the duplicates (perhaps leaving the record with the 
+         *       smallest id/pk).  This purge routine can either be grouped in with the rest in DataPurgeJob, or it can
+         *       be implemented as its own quartz job that runs more (or less) frequently, depending on how needs 
+         *       (i.e., how often we anticipate duplicates)
+         */
+        // Delete any existing rows that have the same key and begin time as the data about to be inserted.
+        //callTimeDataManager.deleteRedundantCallTimeDataValues(callTimeDataSet);
 
-            // Finally, add the stats themselves to the value table.
-            insertCallTimeDataValues(callTimeDataSet, conn);
-        } catch (SQLException e) {
-            logSQLException(e);
-        } catch (Throwable t) {
-            log.error("Failed to persist call-time data.", t);
-        } finally {
-            JDBCUtil.safeClose(conn);
-        }
+        // Finally, add the stats themselves to the value table.
+        callTimeDataManager.insertCallTimeDataValues(callTimeDataSet);
     }
 
     @SuppressWarnings("unchecked")
@@ -198,7 +212,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         Connection conn = null;
         PreparedStatement stmt = null;
         try {
-            conn = ((DataSource) this.sessionContext.lookup(RHQConstants.DATASOURCE_JNDI_NAME)).getConnection();
+            conn = rhqDs.getConnection();
 
             // Purge old rows from RHQ_CALLTIME_DATA_VALUE.
             stmt = conn.prepareStatement(CALLTIME_VALUE_PURGE_STATEMENT);
@@ -219,13 +233,19 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         }
     }
 
-    private void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet, Connection conn) throws Exception {
+    /*
+     * internal method, do not expose to the remote API
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet) {
 
         int[] results;
         String insertKeySql;
         PreparedStatement ps = null;
+        Connection conn = null;
 
         try {
+            conn = rhqDs.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
             if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
                 || dbType instanceof H2DatabaseType) {
@@ -250,30 +270,39 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             }
 
             results = ps.executeBatch();
-        } finally {
-            JDBCUtil.safeClose(ps);
-        }
 
-        int insertedRowCount = 0;
-        for (int i = 0; i < results.length; i++) {
-            if (((results[i] < 0) || (results[i] > 1)) && (results[i] != -2)) // oracle returns -2 because it can't count updated rows
-            {
-                throw new MeasurementStorageException("Failed to insert call-time data key rows - result ["
-                    + results[i] + "] for batch command [" + i + "] is less than 0 or greater than 1.");
+            int insertedRowCount = 0;
+            for (int i = 0; i < results.length; i++) {
+                if (((results[i] < 0) || (results[i] > 1)) && (results[i] != -2)) // oracle returns -2 because it can't count updated rows
+                {
+                    throw new MeasurementStorageException("Failed to insert call-time data key rows - result ["
+                        + results[i] + "] for batch command [" + i + "] is less than 0 or greater than 1.");
+                }
+
+                insertedRowCount += results[i];
             }
 
-            insertedRowCount += results[i];
+            log.debug("Inserted new call-time data key rows for " + ((insertedRowCount >= 0) ? insertedRowCount : "?")
+                + " out of " + results.length + " reported key-value pairs.");
+        } catch (SQLException e) {
+            logSQLException("Failed to persist call-time data keys", e);
+        } catch (Throwable t) {
+            log.error("Failed to persist call-time data keys", t);
+        } finally {
+            JDBCUtil.safeClose(conn, ps, null);
         }
-
-        log.debug("Inserted new call-time data key rows for " + ((insertedRowCount >= 0) ? insertedRowCount : "?")
-            + " out of " + results.length + " reported key-value pairs.");
     }
 
-    private void deleteRedundantCallTimeDataValues(Set<CallTimeData> callTimeDataSet, Connection conn)
-        throws SQLException {
-        PreparedStatement ps = null;
+    /*
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void deleteRedundantCallTimeDataValues(Set<CallTimeData> callTimeDataSet) {
+
         int[] results;
+        PreparedStatement ps = null;
+        Connection conn = null;
+
         try {
+            conn = rhqDs.getConnection();
             ps = conn.prepareStatement(CALLTIME_VALUE_DELETE_SUPERCEDED_STATEMENT);
             for (CallTimeData callTimeData : callTimeDataSet) {
                 ps.setInt(1, callTimeData.getScheduleId());
@@ -287,33 +316,44 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             }
 
             results = ps.executeBatch();
-        } finally {
-            JDBCUtil.safeClose(ps);
-        }
 
-        int deletedRowCount = 0;
-        for (int i = 0; i < results.length; i++) {
-            if ((results[i] < 0) && (results[i] != -2)) // oracle returns -2 because it can't count updated rows
-            {
-                throw new MeasurementStorageException("Failed to delete redundant call-time data rows - result ["
-                    + results[i] + "] for batch command [" + i + "] is less than 0.");
+            int deletedRowCount = 0;
+            for (int i = 0; i < results.length; i++) {
+                if ((results[i] < 0) && (results[i] != -2)) // oracle returns -2 because it can't count updated rows
+                {
+                    throw new MeasurementStorageException("Failed to delete redundant call-time data rows - result ["
+                        + results[i] + "] for batch command [" + i + "] is less than 0.");
+                }
+
+                deletedRowCount += results[i];
             }
 
-            deletedRowCount += results[i];
+            log
+                .debug("Deleted "
+                    + ((deletedRowCount >= 0) ? deletedRowCount : "?")
+                    + " redundant call-time data value rows that were superceded by data in the measurement report currently being processed.");
+        } catch (SQLException e) {
+            logSQLException("Failed to delete redundant call-time data values", e);
+        } catch (Throwable t) {       
+            log.error("Failed to delete redundant call-time data values", t);
+        } finally {
+            JDBCUtil.safeClose(conn, ps, null);
         }
-
-        log
-            .debug("Deleted "
-                + ((deletedRowCount >= 0) ? deletedRowCount : "?")
-                + " redundant call-time data value rows that were superceded by data in the measurement report currently being processed.");
     }
+    */
 
-    private void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet, Connection conn) throws Exception {
+    /*
+     * internal method, do not expose to the remote API
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet) {
         int[] results;
         String insertValueSql;
         PreparedStatement ps = null;
+        Connection conn = null;
 
         try {
+            conn = rhqDs.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
             if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
                 || dbType instanceof H2DatabaseType) {
@@ -343,25 +383,30 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             }
 
             results = ps.executeBatch();
-        } finally {
-            JDBCUtil.safeClose(ps);
-        }
 
-        int insertedRowCount = 0;
-        for (int i = 0; i < results.length; i++) {
-            if ((results[i] != 1) && (results[i] != -2)) // Oracle likes to return -2 becuase it doesn't track batch update counts
-            {
-                throw new MeasurementStorageException("Failed to insert call-time data value rows - result ["
-                    + results[i] + "] for batch command [" + i + "] does not equal 1.");
+            int insertedRowCount = 0;
+            for (int i = 0; i < results.length; i++) {
+                if ((results[i] != 1) && (results[i] != -2)) // Oracle likes to return -2 becuase it doesn't track batch update counts
+                {
+                    throw new MeasurementStorageException("Failed to insert call-time data value rows - result ["
+                        + results[i] + "] for batch command [" + i + "] does not equal 1.");
+                }
+
+                insertedRowCount += results[i];
             }
 
-            insertedRowCount += results[i];
+            log.debug("Inserted " + ((insertedRowCount >= 0) ? insertedRowCount : "?") + " call-time data value rows.");
+        } catch (SQLException e) {
+            logSQLException("Failed to persist call-time data values", e);
+        } catch (Throwable t) {
+            log.error("Failed to persist call-time data values", t);
+        } finally {
+            JDBCUtil.safeClose(conn, ps, null);
         }
 
-        log.debug("Inserted " + ((insertedRowCount >= 0) ? insertedRowCount : "?") + " call-time data value rows.");
     }
 
-    private void logSQLException(SQLException e) {
+    private void logSQLException(String message, SQLException e) {
         SQLException mainException = e;
         StringBuilder causes = new StringBuilder();
         int i = 1;
@@ -369,6 +414,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             causes.append(i++).append("\n\t").append(e);
         }
 
-        log.error("Failed to persist call-time data - causes: " + causes, mainException);
+        log.error(message + " - causes: " + causes, mainException);
     }
 }

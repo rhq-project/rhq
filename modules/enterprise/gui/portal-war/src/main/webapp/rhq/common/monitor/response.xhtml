@@ -83,7 +83,7 @@
 
             <rich:column>
                <f:facet name="header">
-                  <onc:sortableColumnHeader sort="SUM(value.total) / SUM(value.count))">
+                  <onc:sortableColumnHeader sort="(SUM(value.total)/SUM(value.count))">
                      <h:outputText value="Average" />
                   </onc:sortableColumnHeader>
                </f:facet>

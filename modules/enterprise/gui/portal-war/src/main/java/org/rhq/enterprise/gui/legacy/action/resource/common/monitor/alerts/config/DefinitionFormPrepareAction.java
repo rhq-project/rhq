@@ -42,6 +42,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
@@ -111,8 +112,8 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
         } else {
             throw new IllegalArgumentException("Unsupported context: " + formContext);
         }
-        int eventDefinitionCount = LookupUtil.getEventManager().getEventDefinitionCountForResourceType(type.getId());
-        request.setAttribute("showEvents", eventDefinitionCount > 0);
+        ResourceFacets facets = LookupUtil.getResourceTypeManager().getResourceFacets(type.getId());
+        request.setAttribute("showEvents", facets.isEvent());
 
         return null;
     }

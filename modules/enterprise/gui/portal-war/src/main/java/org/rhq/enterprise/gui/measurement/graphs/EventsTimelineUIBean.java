@@ -3,9 +3,6 @@ package org.rhq.enterprise.gui.measurement.graphs;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
@@ -20,8 +17,6 @@ import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangeP
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class EventsTimelineUIBean {
-
-    private final Log log = LogFactory.getLog(EventsTimelineUIBean.class);
 
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
 
@@ -52,21 +47,8 @@ public class EventsTimelineUIBean {
 
         context = WebUtility.getEntityContext();
 
-        EventSeverity[] eventsCounts;
-        if (context.category == EntityContext.Category.Resource) {
-            eventsCounts = eventManager.getSeverityBuckets(user.getSubject(), context.resourceId, begin, end,
-                numberOfBuckets);
-            showLogs = true;
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
-            eventsCounts = eventManager.getSeverityBucketsForCompGroup(user.getSubject(), context.groupId, begin, end,
-                numberOfBuckets);
-        } else if (context.category == EntityContext.Category.AutoGroup) {
-            eventsCounts = eventManager.getSeverityBucketsForAutoGroup(user.getSubject(), context.parentResourceId,
-                context.resourceTypeId, begin, end, numberOfBuckets);
-        } else {
-            log.warn("Invalid input parameter combination, not generating a timeline");
-            return;
-        }
+        EventSeverity[] eventsCounts = eventManager.getSeverityBucketsByContext(user.getSubject(), context, begin, end,
+            numberOfBuckets);
 
         data = new ArrayList<TimelineBean>();
         long interval = TimeUtil.getInterval(begin, end, numberOfBuckets);

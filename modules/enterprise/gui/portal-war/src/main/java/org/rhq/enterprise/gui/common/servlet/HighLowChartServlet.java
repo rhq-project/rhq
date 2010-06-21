@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
@@ -150,42 +151,16 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
         long endTime = rangePreferences.end;
         List<MeasurementDataNumericHighLowComposite> dataPoints = null;
 
-        if (scheduleId > 0) // single resource
-        {
+        int resourceId = -1;
+        if (scheduleId > 0) {
             MeasurementSchedule schedule = scheduleManager.getScheduleById(subject, scheduleId);
-
-            if (schedule != null) {
-                if (log.isDebugEnabled())
-                    log.debug("Plotting a high-low chart data for metric " + schedule.getDefinition().getName()
-                        + " on resource " + schedule.getResource().getName() + "...");
-                dataPoints = dataManager.findDataForResource(subject, schedule.getResource().getId(),
-                    new int[] { schedule.getDefinition().getId() }, beginTime, endTime, NUMBER_OF_DATA_POINTS).get(0);
-            } else {
-                log.debug("Passed scheduleId " + scheduleId + " has no schedule attached, ignoring");
-                return;
-            }
+            resourceId = schedule.getResource().getId();
+            definitionId = schedule.getDefinition().getId();
         }
 
-        /*
-         * Now look at compatible groups and autogroups
-         *
-         */
-        else if ((groupId > 0) && (definitionId > 0)) // compatible group
-        {
-            dataPoints = dataManager.findDataForCompatibleGroup(subject, groupId, definitionId, beginTime, endTime,
-                NUMBER_OF_DATA_POINTS, true).get(0);
-        } else if ((parentId > 0) && (childTypeId > 0) && (definitionId > 0)) //  autogroup
-        {
-            dataPoints = dataManager.findDataForAutoGroup(subject, parentId, childTypeId, definitionId, beginTime,
-                endTime, NUMBER_OF_DATA_POINTS, true).get(0);
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("No valid input found for HighLowChart: [schedId=" + scheduleId + ", defId=" + definitionId
-                    + ", groupId=" + groupId + ", parentId=" + parentId + ", childTypeId=" + childTypeId + "]");
-            }
-
-            return;
-        }
+        EntityContext context = new EntityContext(resourceId, groupId, parentId, childTypeId);
+        dataPoints = dataManager.findDataForContext(subject, context, definitionId, beginTime, endTime,
+            NUMBER_OF_DATA_POINTS).get(0);
 
         List<HighLowMetricValue> chartDataPoints = new ArrayList<HighLowMetricValue>(dataPoints.size());
         for (MeasurementDataNumericHighLowComposite dataPoint : dataPoints) {

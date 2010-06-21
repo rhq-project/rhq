@@ -22,9 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
-import javax.jws.WebParam;
-
-import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
@@ -34,11 +31,11 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.common.EntityContext;
 
 /**
  * A manager for {@link MeasurementSchedule}s.
@@ -102,19 +99,6 @@ public interface MeasurementScheduleManagerLocal {
      */
     MeasurementSchedule getSchedule(Subject subject, int resourceId, int definitionId, boolean attachBaseline)
         throws MeasurementNotFoundException;
-
-    /**
-     * Retrieves the metric collection schedules for the given resource.
-     *
-     * @param  subject     the current user
-     * @param  resourceId  a {@link Resource} id
-     * @param  dataType    the data type to limit results to, or null to not limit results to a particular data type
-     * @param  pageControl the page control for the results
-     *
-     * @return the metric collection schedules for the given resource
-     */
-    PageList<MeasurementScheduleComposite> findScheduleCompositesForResource(Subject subject, int resourceId,
-        @Nullable DataType dataType, PageControl pageControl);
 
     /**
      * Disables all collection schedules in the given measurement definition IDs. This only disables the "templates", it
@@ -270,34 +254,8 @@ public interface MeasurementScheduleManagerLocal {
      */
     List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionIds(int[] resourceIds, int[] definitionIds);
 
-    /**
-     * Get the MeasurementSchedule composites for an autogroup
-     *
-     * @param  subject
-     * @param  parentId
-     * @param  childType
-     * @param  pageControl
-     *
-     * @return
-     */
-    PageList<MeasurementScheduleComposite> findSchedulesForAutoGroup(Subject subject, int parentId, int childType,
-        PageControl pageControl);
-
-    PageList<MeasurementScheduleComposite> findSchedulesForCompatibleGroup(Subject subject, int groupId,
-        PageControl pageControl);
-
-    /**
-     * Retrieves the metric collection schedules for the given resource.
-     *
-     * @param  subject     the current user
-     * @param  resourceId  a {@link Resource} id
-     * @param  pageControl the page control for the results
-     *
-     * @return the metric collection schedules for the given resource
-     */
-    PageList<MeasurementScheduleComposite> findSchedulesForResource(Subject subject, int resourceId,
-        PageControl pageControl);
-
+    PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(Subject subject,
+        EntityContext context, PageControl pc);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

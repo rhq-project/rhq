@@ -73,7 +73,7 @@
                <rich:column
                   style="background-color: #{item.collectionEnabled  ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ms.definition.displayName">
+                     <onc:sortableColumnHeader sort="definition.displayName">
                         <h:outputText styleClass="headerText" value="Metric" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -93,7 +93,7 @@
                <rich:column
                  style="background-color: #{item.collectionEnabled  ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ms.definition.dataType">
+                     <onc:sortableColumnHeader sort="definition.dataType">
                         <h:outputText styleClass="headerText" value="Type" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -104,9 +104,7 @@
                <rich:column
                  style="background-color: #{item.collectionEnabled  ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ms.enabled">
-                        <h:outputText styleClass="headerText" value="Enabled" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Enabled" />
                   </f:facet>
                   <h:outputText value="Yes" style="color:green;font:bold;" rendered="#{item.collectionEnabled}"/>
                   <h:outputText value="No" style="color:red;font:bold;" rendered="#{!item.collectionEnabled}"/>
@@ -115,9 +113,7 @@
                <rich:column
                  style="background-color: #{item.collectionEnabled  ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ms.interval">
-                        <h:outputText styleClass="headerText" value="Collection Interval" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Collection Interval" />
                   </f:facet>
                   
                   <h:outputText value="#{item.collectionInterval}">

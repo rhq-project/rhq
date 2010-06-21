@@ -95,6 +95,8 @@ public interface ResourceGroupManagerLocal {
 
     void setResourceType(int resourceGroupId);
 
+    int getExplicitGroupMemberCount(int resourceGroupId);
+
     int getImplicitGroupMemberCount(int resourceGroupId);
 
     PageList<ResourceGroupComposite> findResourceGroupComposites(Subject subject, GroupCategory groupCategory,
@@ -107,6 +109,8 @@ public interface ResourceGroupManagerLocal {
     List<Integer> findDeletedResourceGroupIds(int[] groupIds);
 
     void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupUpdateException;
+
+    void uninventoryMembers(Subject subject, int groupId);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

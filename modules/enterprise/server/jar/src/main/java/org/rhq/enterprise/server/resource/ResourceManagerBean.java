@@ -276,6 +276,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         toBeDeletedQuery.setParameter("resourceId", resourceId);
         List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
 
+        boolean hasErrors = uninventoryResourcesBulkDelete(overlord, toBeDeletedResourceIds);
+        if (hasErrors) {
+            throw new IllegalArgumentException("Could not remove resources from their containing groups");
+        }
+
         Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
         markDeletedQuery.setParameter("resourceId", resourceId);
         markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
@@ -320,7 +325,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             throw new IllegalArgumentException("Only the overlord can execute out-of-band async resource delete method");
         }
 
-        boolean hasErrors = doBulkDelete(user, resourceId);
+        boolean hasErrors = uninventoryResourceBulkDeleteAsyncWork(user, resourceId);
         if (hasErrors) {
             return; // return early if there were any errors, because we can't remove the resource yet
         }
@@ -336,12 +341,23 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return;
     }
 
-    private boolean doBulkDelete(Subject overlord, int resourceId) {
+    private boolean uninventoryResourcesBulkDelete(Subject overlord, List<Integer> resourceIds) {
         String[] nativeQueriesToExecute = new String[] { //
         ResourceGroup.QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS, // unmap from explicit groups
             ResourceGroup.QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS // unmap from implicit groups
         };
 
+        boolean hasErrors = false;
+        for (String nativeQueryToExecute : nativeQueriesToExecute) {
+            // execute all in new transactions, continuing on error, but recording whether errors occurred
+            hasErrors |= resourceManager.bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute,
+                resourceIds);
+        }
+
+        return hasErrors;
+    }
+
+    private boolean uninventoryResourceBulkDeleteAsyncWork(Subject overlord, int resourceId) {
         String[] namedQueriesToExecute = new String[] { //
         ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
@@ -384,11 +400,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         boolean supportsCascade = DatabaseTypeFactory.getDefaultDatabaseType().supportsSelfReferringCascade();
 
         boolean hasErrors = false;
-        for (String nativeQueryToExecute : nativeQueriesToExecute) {
-            // execute all in new transactions, continuing on error, but recording whether errors occurred
-            hasErrors |= resourceManager.bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute,
-                resourceIds);
-        }
         for (String namedQueryToExecute : namedQueriesToExecute) {
             // execute all in new transactions, continuing on error, but recording whether errors occurred
 
@@ -1244,7 +1255,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public List<Integer> findExplicitResourceIdsByResourceGroup(int resourceGroupId) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN);
         query.setParameter("groupId", resourceGroupId);
-        query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
         List<Integer> results = query.getResultList();
         return results;

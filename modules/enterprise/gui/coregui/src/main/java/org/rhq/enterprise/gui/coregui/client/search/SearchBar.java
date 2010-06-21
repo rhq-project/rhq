@@ -107,7 +107,6 @@ public class SearchBar extends SimplePanel {
         searchButton = DOM.getElementById(searchButtonId);
 
         Event.addNativePreviewHandler(new NativePreviewHandler() {
-            @Override
             public void onPreviewNativeEvent(NativePreviewEvent event) {
                 if (event.getNativeEvent().getEventTarget().equals(searchButton)
                     && event.getTypeInt() == Event.ONMOUSEDOWN) {
@@ -314,7 +313,6 @@ public class SearchBar extends SimplePanel {
      * Event Handlers
      */
     class AutoCompletePatternFieldEventHandler implements KeyPressHandler, FocusHandler, BlurHandler {
-        @Override
         public void onKeyPress(KeyPressEvent event) {
             // hide pattern field/label, turn off star
             if (event.getCharCode() == KeyCodes.KEY_ENTER) {
@@ -335,7 +333,6 @@ public class SearchBar extends SimplePanel {
             }
         }
 
-        @Override
         public void onFocus(FocusEvent event) {
             // clear default search text if necessary
             if (autoCompletePatternField.getText().equals(welcomeMessage)) {
@@ -345,7 +342,6 @@ public class SearchBar extends SimplePanel {
             savedSearchesPanel.hide();
         }
 
-        @Override
         public void onBlur(BlurEvent event) {
             if (autoCompletePatternField.getText().equals("")) {
                 autoCompletePatternField.setValue(welcomeMessage, true);
@@ -355,7 +351,6 @@ public class SearchBar extends SimplePanel {
     }
 
     class PatternNameFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
-        @Override
         public void onKeyPress(KeyPressEvent event) {
             if (event.getCharCode() == KeyCodes.KEY_ENTER) {
                 SearchLogger.debug("key press pattern name field");
@@ -363,14 +358,12 @@ public class SearchBar extends SimplePanel {
             }
         }
 
-        @Override
         public void onClick(ClickEvent event) {
             if (patternNameField.getText().equals(DEFAULT_PATTERN_NAME)) {
                 patternNameField.setValue("", false);
             }
         }
 
-        @Override
         public void onBlur(BlurEvent event) {
             lastNameFieldBlurTime = System.currentTimeMillis();
             turnNameFieldIntoLabel();
@@ -378,18 +371,16 @@ public class SearchBar extends SimplePanel {
     }
 
     class PatternNameLabelEventHandler implements ClickHandler {
-        @Override
         public void onClick(ClickEvent event) {
             turnNameLabelIntoField();
         }
     }
 
     class StarImageEventHandler implements ClickHandler, MouseOverHandler, MouseOutHandler {
-        @Override
         public void onClick(ClickEvent event) {
             long diff = System.currentTimeMillis() - lastNameFieldBlurTime;
             if (Math.abs(diff) < 750) {
-                /* 
+                /*
                  * This event propagation is annoying.  If the threshold is set too low, then both
                  * the name field blur event and this star image click event fire...but the blur
                  * event fires first, which turns the star white.  Then a click on a white star
@@ -416,7 +407,6 @@ public class SearchBar extends SimplePanel {
             }
         }
 
-        @Override
         public void onMouseOver(MouseOverEvent event) {
             if (starImage.getUrl().endsWith(STAR_OFF_URL)) {
                 starImage.setUrl(STAR_ACTIVE_URL);
@@ -424,7 +414,6 @@ public class SearchBar extends SimplePanel {
             }
         }
 
-        @Override
         public void onMouseOut(MouseOutEvent event) {
             if (starImage.getUrl().endsWith(STAR_ACTIVE_URL) && !patternNameField.isVisible()) {
                 starImage.setUrl(STAR_OFF_URL);
@@ -433,7 +422,6 @@ public class SearchBar extends SimplePanel {
     }
 
     class ArrowImageEventHandler implements ClickHandler {
-        @Override
         public void onClick(ClickEvent event) {
             savedSearches.updateModel();
             int left = autoCompletePatternField.getAbsoluteLeft();
@@ -445,12 +433,10 @@ public class SearchBar extends SimplePanel {
     }
 
     class SavedSearchesEventHandler implements CloseHandler<PopupPanel>, PatternSelectionHandler {
-        @Override
         public void onClose(CloseEvent<PopupPanel> event) {
             arrowImage.setUrl(ARROW_WHITE_URL);
         }
 
-        @Override
         public void handleSelection(int rowIndex, int columnIndex, String patternName) {
             if (columnIndex == 1) {
                 savedSearchManager.removePatternByName(patternName);

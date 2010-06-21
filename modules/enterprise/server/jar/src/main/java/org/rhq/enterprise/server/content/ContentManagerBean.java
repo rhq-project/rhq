@@ -1519,7 +1519,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageVersion packageVersion = null;
 
         //default version to 1.0 if is null, not provided for any reason.
-        if ((version == null) || (version.trim().isEmpty())) {
+        if ((version == null) || (version.trim().length() == 0)) {
             version = "1.0";
         }
 

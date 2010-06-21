@@ -213,7 +213,7 @@ public class ServerInformation {
      *
      * @throws Exception if failed to create the new schema for some reason
      */
-    public void createNewDatabaseSchema(Properties props) throws Exception {
+    public void  createNewDatabaseSchema(Properties props) throws Exception {
         if (props == null) {
             props = getServerProperties();
         }
@@ -542,7 +542,7 @@ public class ServerInformation {
         return binDirectory;
     }
 
-    private File getLogDirectory() {
+    File getLogDirectory() {
         if (logDirectory == null) {
             MBeanServer mbs = getMBeanServer();
             ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
@@ -554,6 +554,10 @@ public class ServerInformation {
         }
 
         return logDirectory;
+    }
+
+    void setLogDirectory(File dir) {
+        logDirectory = dir;
     }
 
     public File getDataDirectory() {

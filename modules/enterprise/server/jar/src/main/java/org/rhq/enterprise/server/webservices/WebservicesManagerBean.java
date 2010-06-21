@@ -752,9 +752,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
-        int definitionId, long beginTime, long endTime, int numPoints, boolean groupAggregateOnly) {
+        int definitionId, long beginTime, long endTime, int numPoints) {
         return measurementDataManager.findDataForCompatibleGroup(subject, groupId, definitionId, beginTime, endTime,
-            numPoints, groupAggregateOnly);
+            numPoints);
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,

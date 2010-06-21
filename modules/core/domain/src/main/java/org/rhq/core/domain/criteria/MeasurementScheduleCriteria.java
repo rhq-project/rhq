@@ -40,6 +40,7 @@ public class MeasurementScheduleCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private Boolean filterEnabled;
     private List<Integer> filterDefinitionIds; // requires overrides
     private Integer filterResourceId; // requires overrides
     private Integer filterResourceGroupId; // requires overrides
@@ -51,6 +52,8 @@ public class MeasurementScheduleCriteria extends Criteria {
     private boolean fetchResource;
 
     private PageOrdering sortName; // requires overrides
+    private PageOrdering sortDisplayName; // requires overrides
+    private PageOrdering sortDataType; // requires overrides
 
     public MeasurementScheduleCriteria() {
         filterOverrides.put("definitionIds", "definition.id IN ( ? )");
@@ -72,6 +75,8 @@ public class MeasurementScheduleCriteria extends Criteria {
             + "   WHERE parent.id = ? )");
 
         sortOverrides.put("name", "definition.name");
+        sortOverrides.put("displayName", "definition.displayName");
+        sortOverrides.put("dataType", "definition.dataType");
     }
 
     @Override
@@ -81,6 +86,10 @@ public class MeasurementScheduleCriteria extends Criteria {
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
+    }
+
+    public void addFilterEnabled(Boolean filterEnabled) {
+        this.filterEnabled = filterEnabled;
     }
 
     public void addFilterDefinitionIds(Integer... filterDefinitionIds) {
@@ -118,6 +127,16 @@ public class MeasurementScheduleCriteria extends Criteria {
     public void addSortName(PageOrdering sortName) {
         addSortField("name");
         this.sortName = sortName;
+    }
+
+    public void addSortDisplayName(PageOrdering sortDisplayName) {
+        addSortField("displayName");
+        this.sortDisplayName = sortDisplayName;
+    }
+
+    public void addSortDataType(PageOrdering sortDataType) {
+        addSortField("dataType");
+        this.sortDataType = sortDataType;
     }
 
 }

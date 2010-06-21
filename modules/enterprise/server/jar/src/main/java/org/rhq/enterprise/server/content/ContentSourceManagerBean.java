@@ -2184,11 +2184,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                         if (startByte == 0) {
                             bytesRetrieved = StreamUtil.copy(blob.getBinaryStream(), outputStream, false);
                         }
-                    } else {
-                        long length = (endByte - startByte) + 1;
-//                        InputStream stream = blob.getBinaryStream(startByte, length);  // JDK 6 api
+                    } else {                                                                   
+                        long length = (endByte - startByte) + 1;                       
+                        //InputStream stream = blob.getBinaryStream(startByte, length);  // JDK 6 api
                         InputStream stream = blob.getBinaryStream();
-
                         bytesRetrieved = StreamUtil.copy(stream, outputStream, startByte , length);                       
                     }
                     log.debug("Retrieved and sent [" + bytesRetrieved + "] bytes for [" + packageDetailsKey + "]");

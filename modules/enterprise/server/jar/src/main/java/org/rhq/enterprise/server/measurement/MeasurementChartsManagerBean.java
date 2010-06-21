@@ -453,6 +453,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         for (int definitionId : measurementDefinitionIds) {
 
             MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+            criteria.addFilterDefinitionIds(definitionId);
             PageList<MeasurementSchedule> theSchedules = scheduleManager.findSchedulesByCriteria(subject, criteria);
             int totalScheduleCount = theSchedules.getTotalSize();
 

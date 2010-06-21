@@ -124,7 +124,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             this.suggestion = suggestion;
         }
 
-        @Override
         public void execute() {
             complete(suggestion, currentCursorPosition);
         }
@@ -203,7 +202,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             }
 
             public void onKeyDown(KeyDownEvent event) {
-                /* 
+                /*
                  * Make sure that the menu is actually showing.  These
                  * keystrokes are only relevant when choosing a suggestion.
                  */
@@ -310,7 +309,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     }
 
     /*
-     * TextBox methods 
+     * TextBox methods
      */
     public void setText(String text) {
         box.setText(text);
@@ -341,7 +340,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     }
 
     /*
-     * SuggestBox methods 
+     * SuggestBox methods
      */
     public void showSuggestionList() {
         if (isAttached()) {
@@ -359,7 +358,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
     /**
      * Get the number of suggestions that are currently showing.
-     * 
+     *
      * @return the number of suggestions currently showing, 0 if there are none
      */
     int getSuggestionCount() {
@@ -412,7 +411,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
         /**
          * Returns the index of the menu item that is currently selected.
-         * 
+         *
          * @return returns the selected item
          */
         public int getSelectedItemIndex() {
@@ -672,12 +671,10 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             this.suggestion = suggestion;
         }
 
-        @Override
         public String getDisplayString() {
             return suggestion.getLabel();
         }
 
-        @Override
         public String getReplacementString() {
             return suggestion.getValue();
         }
@@ -687,13 +684,11 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
     }
 
-    @Override
     public HandlerRegistration addFocusHandler(FocusHandler handler) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
     public HandlerRegistration addBlurHandler(BlurHandler handler) {
         // TODO Auto-generated method stub
         return null;

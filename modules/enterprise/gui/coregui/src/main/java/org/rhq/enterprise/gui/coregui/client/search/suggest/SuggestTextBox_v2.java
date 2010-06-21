@@ -157,12 +157,10 @@ public class SuggestTextBox_v2 extends TextBox {
             this.suggestion = suggestion;
         }
 
-        @Override
         public String getDisplayString() {
             return suggestion.getLabel();
         }
 
-        @Override
         public String getReplacementString() {
             return suggestion.getValue();
         }

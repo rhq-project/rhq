@@ -584,12 +584,10 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             searchService.getSuggestions(searchBar.getSearchSubsystem(), expression, caretPosition,
                 new AsyncCallback<List<SearchSuggestion>>() {
 
-                    @Override
                     public void onSuccess(List<SearchSuggestion> results) {
                         adaptAndHandle(results.toArray(new SearchSuggestion[results.size()]));
                     }
 
-                    @Override
                     public void onFailure(Throwable caught) {
                         SearchSuggestion errorInform = new SearchSuggestion(Kind.InstructionalTextComment, caught
                             .getMessage());

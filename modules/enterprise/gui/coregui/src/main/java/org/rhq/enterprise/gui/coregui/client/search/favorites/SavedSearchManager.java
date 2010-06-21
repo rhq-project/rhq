@@ -155,7 +155,6 @@ public class SavedSearchManager {
                     savedSearches.clear();
                     Collections.sort(result, new Comparator<SavedSearch>() {
 
-                        @Override
                         public int compare(SavedSearch first, SavedSearch second) {
                             return first.getName().compareTo(second.getName());
                         }

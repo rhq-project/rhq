@@ -57,7 +57,6 @@ public class SuggestTextBox_v2 extends TextBox {
     private void initHandlers() {
         this.suggestBox.addSelectionHandler(new SelectionHandler<Suggestion>() {
 
-            @Override
             public void onSelection(SelectionEvent<Suggestion> event) {
 
                 //event.stopPropagation();
@@ -102,7 +101,6 @@ public class SuggestTextBox_v2 extends TextBox {
             searchService.getSuggestions(searchBar.getSearchSubsystem(), expression, caretPosition,
                 new AsyncCallback<List<SearchSuggestion>>() {
 
-                    @Override
                     public void onSuccess(List<SearchSuggestion> results) {
                         List<SearchSuggestionOracleAdapter> adaptedResults = new java.util.ArrayList<SearchSuggestionOracleAdapter>();
                         for (SearchSuggestion next : results) {
@@ -112,7 +110,6 @@ public class SuggestTextBox_v2 extends TextBox {
                         callback.onSuggestionsReady(request, response);
                     }
 
-                    @Override
                     public void onFailure(Throwable caught) {
                         System.out.println("Uh oh");
                     }

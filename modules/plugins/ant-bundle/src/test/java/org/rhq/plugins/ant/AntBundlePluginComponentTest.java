@@ -22,6 +22,7 @@
  */
 package org.rhq.plugins.ant;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -79,7 +80,7 @@ public class AntBundlePluginComponentTest {
     }
 
     @BeforeMethod
-    public void beforeMethod() throws Exception {
+    public void prepareBeforeTestMethod() throws Exception {
         if (!this.tmpDir.mkdirs()) {
             throw new IllegalStateException("Failed to create temp dir '" + this.tmpDir + "'.");
         }
@@ -96,16 +97,130 @@ public class AntBundlePluginComponentTest {
     }
 
     @AfterMethod(alwaysRun = true)
-    public void cleanDirs() {
+    public void cleanPluginDirs() {
         FileUtil.purge(this.tmpDir, true);
         FileUtil.purge(this.bundleFilesDir, true);
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void cleanDestDir() {
         FileUtil.purge(this.destDir, true);
+    }
+
+    public void testAntBundleUpgrade() throws Exception {
+        testAntBundleInitialInstall(); // install a bundle first
+        cleanPluginDirs(); // clean everything but the dest dir - we want to upgrade the destination
+        prepareBeforeTestMethod(); // prepare for our new test
+
+        // deploy upgrade and test it
+        ResourceType resourceType = new ResourceType("testSimpleBundle2Type", "plugin", ResourceCategory.SERVER, null);
+        BundleType bundleType = new BundleType("testSimpleBundle2BType", resourceType);
+        Repo repo = new Repo("test-bundle-two");
+        PackageType packageType = new PackageType("test-bundle-two", resourceType);
+        Bundle bundle = new Bundle("test-bundle-two", bundleType, repo, packageType);
+        BundleVersion bundleVersion = new BundleVersion("test-bundle-two", "3.0", bundle,
+            getRecipeFromFile("test-bundle-three.xml"));
+        BundleDestination destination = new BundleDestination(bundle, "testSimpleBundle2Dest", new ResourceGroup(
+            "testSimpleBundle2Group"), this.destDir.getAbsolutePath());
+
+        Configuration config = new Configuration();
+        String customPropName = "custom.prop";
+        String customPropValue = "DEF";
+        String onePropName = "one.prop";
+        String onePropValue = "one-one-one";
+        String threePropName = "three.prop";
+        String threePropValue = "333";
+        config.put(new PropertySimple(customPropName, customPropValue));
+        config.put(new PropertySimple(onePropName, onePropValue));
+        config.put(new PropertySimple(threePropName, threePropValue));
+
+        BundleDeployment deployment = new BundleDeployment();
+        deployment.setId(456);
+        deployment.setName("test bundle 3 deployment name - upgrades test bundle 2");
+        deployment.setBundleVersion(bundleVersion);
+        deployment.setConfiguration(config);
+        deployment.setDestination(destination);
+
+        // copy the test archive file to the bundle files dir
+        FileUtil.copyFile(new File("src/test/resources/test-bundle-three-archive.zip"), new File(this.bundleFilesDir,
+            "test-bundle-three-archive.zip"));
+
+        // create test.properties file in the bundle files dir
+        File file1 = new File(this.bundleFilesDir, "test.properties");
+        Properties props = new Properties();
+        props.setProperty(customPropName, "@@" + customPropName + "@@");
+        FileOutputStream outputStream = new FileOutputStream(file1);
+        props.store(outputStream, "test.properties comment");
+        outputStream.close();
+
+        // create some additional files - note: receipe says to ignore "ignore/**"
+        File ignoreDir = new File(this.destDir, "ignore");
+        File extraDir = new File(this.destDir, "extra");
+        ignoreDir.mkdirs();
+        extraDir.mkdirs();
+        File ignoredFile = new File(ignoreDir, "ignore-file.txt");
+        File extraFile = new File(extraDir, "extra-file.txt");
+        FileUtil.writeFile(new ByteArrayInputStream("ignore".getBytes()), ignoredFile);
+        FileUtil.writeFile(new ByteArrayInputStream("extra".getBytes()), extraFile);
+
+        BundleDeployRequest request = new BundleDeployRequest();
+        request.setBundleFilesLocation(this.bundleFilesDir);
+        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
+        request.setBundleManagerProvider(new MockBundleManagerProvider());
+
+        BundleDeployResult results = plugin.deployBundle(request);
+
+        assertResultsSuccess(results);
+
+        // test that the prop was replaced in raw file test.properties
+        Properties realizedProps = new Properties();
+        realizedProps.load(new FileInputStream(new File(this.destDir, "config/test.properties")));
+        assert customPropValue.equals(realizedProps.getProperty(customPropName)) : "didn't replace prop";
+
+        // test that the archive was extracted properly. These are the files in the archive or removed from original:
+        // REMOVED: zero-file.txt
+        // one/one-file.txt (content: "@@one.prop@@") <-- recipe says this is to be replaced
+        // two/two-file.txt (content: "@@two.prop@@") <-- recipe does not say to replace this
+        // three/three-file.txt (content: "@@three.prop@@") <-- recipe says this is to be replaced
+        File zeroFile = new File(this.destDir, "zero-file.txt");
+        File oneFile = new File(this.destDir, "one/one-file.txt");
+        File twoFile = new File(this.destDir, "two/two-file.txt");
+        File threeFile = new File(this.destDir, "three/three-file.txt");
+        assert !zeroFile.exists() : "zero file should have been removed during upgrade";
+        assert oneFile.exists() : "one file missing";
+        assert twoFile.exists() : "two file missing";
+        assert threeFile.exists() : "three file missing";
+        assert ignoredFile.exists() : "ignored file wasn't ignored, it was deleted";
+        assert !extraFile.exists() : "extra file ignored, but it should have been deleted/backed up";
+        assert readFile(oneFile).startsWith(onePropValue);
+        assert readFile(twoFile).startsWith("@@two.prop@@");
+        assert readFile(threeFile).startsWith(threePropValue);
+
+        DeploymentsMetadata metadata = new DeploymentsMetadata(this.destDir);
+        DeploymentProperties deploymentProps = metadata.getDeploymentProperties(deployment.getId());
+        assert deploymentProps.getDeploymentId() == deployment.getId();
+        assert deploymentProps.getBundleName().equals(bundle.getName());
+        assert deploymentProps.getBundleVersion().equals(bundleVersion.getVersion());
+
+        DeploymentProperties currentProps = metadata.getCurrentDeploymentProperties();
+        assert deploymentProps.equals(currentProps);
+
+        File backupDir = metadata.getDeploymentBackupDirectory(deployment.getId());
+        File extraBackupFile = new File(backupDir, extraDir.getName() + File.separatorChar + extraFile.getName());
+        assert extraBackupFile.exists() : "extra file was not backed up";
+        assert "extra".equals(new String(StreamUtil.slurp(new FileInputStream(extraBackupFile)))) : "bad backup of extra";
+
+        DeploymentProperties previousProps = metadata.getPreviousDeploymentProperties(123); // testAntBundleInitialInstall created id 123
+        assert previousProps != null : "There should be previous deployment metadata";
+        assert previousProps.getDeploymentId() == 123 : "bad previous deployment metadata";
+        assert previousProps.getBundleName().equals(deploymentProps.getBundleName());
+        assert previousProps.getBundleVersion().equals("2.5"); // testAntBundleInitialInstall deployed version 2.5
     }
 
     /**
      * Test deployment of an RHQ bundle recipe with archive file and raw file
      */
-    public void testAntBundleTwo() throws Exception {
+    public void testAntBundleInitialInstall() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle2Type", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle2BType", resourceType);
         Repo repo = new Repo("test-bundle-two");

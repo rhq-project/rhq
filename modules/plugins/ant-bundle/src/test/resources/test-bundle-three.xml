@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+
+<project name="test-bundle-three-recipe" default="main" xmlns:rhq="antlib:org.rhq.bundle">
+
+    <echo>test-bundle-3 basedir=${basedir}</echo>
+
+    <property name="propname1" value="one.prop" />
+
+    <rhq:bundle name="test-bundle-two" version="3.0" description="this upgrades test bundle two">
+
+        <rhq:input-property name="${propname1}" />
+        <rhq:input-property name="custom.prop" />
+        <rhq:input-property name="three.prop" />
+
+        <rhq:deployment-unit name="dunit">
+            <rhq:file name="test.properties" destinationFile="config/test.properties" replace="true"/>
+            <rhq:archive name="test-bundle-three-archive.zip">
+                <rhq:replace>
+                    <rhq:fileset>
+                        <include name="one/**"/>
+                        <include name="three/**"/>
+                    </rhq:fileset>
+                </rhq:replace>
+            </rhq:archive>
+            <rhq:ignore>
+                <rhq:fileset>
+                    <include name="ignore/**"/>
+                </rhq:fileset>
+            </rhq:ignore>
+        </rhq:deployment-unit>
+
+    </rhq:bundle>
+        
+    <target name="main"/>
+
+</project>

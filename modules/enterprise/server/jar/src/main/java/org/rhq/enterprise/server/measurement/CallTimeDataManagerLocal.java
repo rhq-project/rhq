@@ -54,9 +54,4 @@ public interface CallTimeDataManagerLocal {
     void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet);
 
     void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet);
-
-    /*
-     * is this a candidate for a periodic purge job?
-     */
-    void deleteRedundantCallTimeDataValues(Set<CallTimeData> callTimeDataSet);
 }

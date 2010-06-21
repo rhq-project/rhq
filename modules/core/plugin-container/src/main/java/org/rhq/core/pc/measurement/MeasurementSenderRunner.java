@@ -23,12 +23,14 @@
 package org.rhq.core.pc.measurement;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 
@@ -52,6 +54,7 @@ public class MeasurementSenderRunner implements Callable<MeasurementReport>, Run
         }
 
         filterUnchangedTraits(report);
+        cleanseInvalidNumericValues(report);
         this.measurementManager.perMinuteItizeData(report);
 
         if (report.getDataCount() > 0) {
@@ -81,6 +84,19 @@ public class MeasurementSenderRunner implements Callable<MeasurementReport>, Run
         }
 
         report.getTraitData().removeAll(duplicates);
+    }
+
+    private void cleanseInvalidNumericValues(MeasurementReport report) {
+        Iterator<MeasurementDataNumeric> iter = report.getNumericData().iterator();
+        while (iter.hasNext()) {
+            MeasurementDataNumeric numeric = iter.next();
+            Double v = numeric.getValue();
+            if (v == null || v.isInfinite() || v.isNaN()) {
+                LOG.warn("Numeric " + numeric.getName() + " with id " + numeric.getScheduleId()
+                    + " is invalid, value was '" + v + "'");
+                iter.remove();
+            }
+        }
     }
 
     public void run() {

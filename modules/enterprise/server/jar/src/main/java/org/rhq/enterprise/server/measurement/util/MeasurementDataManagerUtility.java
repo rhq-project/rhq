@@ -368,9 +368,9 @@ public class MeasurementDataManagerUtility {
     }
 
     private MeasurementAggregate fillAggregateFromResultSet(ResultSet rs) throws SQLException {
-        Double min = getDoubleOrNanFromResultSet(rs, 4);
         Double avg = getDoubleOrNanFromResultSet(rs, 2);
         Double max = getDoubleOrNanFromResultSet(rs, 3);
+        Double min = getDoubleOrNanFromResultSet(rs, 4);
 
         MeasurementAggregate measurementAggregate = new MeasurementAggregate(min, avg, max);
         return measurementAggregate;

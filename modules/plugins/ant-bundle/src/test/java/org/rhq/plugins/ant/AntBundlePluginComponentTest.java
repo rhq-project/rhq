@@ -108,6 +108,14 @@ public class AntBundlePluginComponentTest {
     }
 
     public void testAntBundleUpgrade() throws Exception {
+        upgrade(false);
+    }
+
+    public void testAntBundleCleanUpgrade() throws Exception {
+        upgrade(true);
+    }
+
+    private void upgrade(boolean clean) throws Exception {
         testAntBundleInitialInstall(); // install a bundle first
         cleanPluginDirs(); // clean everything but the dest dir - we want to upgrade the destination
         prepareBeforeTestMethod(); // prepare for our new test
@@ -167,6 +175,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setCleanDeployment(clean);
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -190,8 +199,13 @@ public class AntBundlePluginComponentTest {
         assert oneFile.exists() : "one file missing";
         assert twoFile.exists() : "two file missing";
         assert threeFile.exists() : "three file missing";
-        assert ignoredFile.exists() : "ignored file wasn't ignored, it was deleted";
-        assert !extraFile.exists() : "extra file ignored, but it should have been deleted/backed up";
+        if (clean) {
+            assert !ignoredFile.exists() : "ignored file should have been deleted due to clean deployment request";
+            assert !extraFile.exists() : "extra file should have been deleted due to clean deployment request";
+        } else {
+            assert ignoredFile.exists() : "ignored file wasn't ignored, it was deleted";
+            assert !extraFile.exists() : "extra file ignored, but it should have been deleted/backed up";
+        }
         assert readFile(oneFile).startsWith(onePropValue);
         assert readFile(twoFile).startsWith("@@two.prop@@");
         assert readFile(threeFile).startsWith(threePropValue);
@@ -205,8 +219,11 @@ public class AntBundlePluginComponentTest {
         DeploymentProperties currentProps = metadata.getCurrentDeploymentProperties();
         assert deploymentProps.equals(currentProps);
 
+        // check the backup directory - note, clean flag is irrelevent when determining what should be backed up 
         File backupDir = metadata.getDeploymentBackupDirectory(deployment.getId());
         File extraBackupFile = new File(backupDir, extraDir.getName() + File.separatorChar + extraFile.getName());
+        File ignoredBackupFile = new File(backupDir, ignoreDir.getName() + File.separatorChar + ignoredFile.getName());
+        assert !ignoredBackupFile.exists() : "ignored file was backed up but it should not have been";
         assert extraBackupFile.exists() : "extra file was not backed up";
         assert "extra".equals(new String(StreamUtil.slurp(new FileInputStream(extraBackupFile)))) : "bad backup of extra";
 

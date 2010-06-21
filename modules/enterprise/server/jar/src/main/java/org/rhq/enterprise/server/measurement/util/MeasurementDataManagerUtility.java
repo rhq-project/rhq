@@ -368,16 +368,16 @@ public class MeasurementDataManagerUtility {
     }
 
     private MeasurementAggregate fillAggregateFromResultSet(ResultSet rs) throws SQLException {
-        Double min = getDoubleOrNanFromResultSet(rs, 4);
         Double avg = getDoubleOrNanFromResultSet(rs, 2);
         Double max = getDoubleOrNanFromResultSet(rs, 3);
+        Double min = getDoubleOrNanFromResultSet(rs, 4);
 
         MeasurementAggregate measurementAggregate = new MeasurementAggregate(min, avg, max);
         return measurementAggregate;
     }
 
-    public MeasurementAggregate getAggregateByContext(long beginTime, long endTime, EntityContext context)
-        throws MeasurementNotFoundException {
+    public MeasurementAggregate getAggregateByDefinitionAndContext(long beginTime, long endTime, int definitionId,
+        EntityContext context) throws MeasurementNotFoundException {
 
         Connection myConnection = null;
         PreparedStatement ps = null;
@@ -391,8 +391,9 @@ public class MeasurementDataManagerUtility {
                 scheduleSubQuery = "" //
                     + "SELECT innerSchedule.id \n" //
                     + "  FROM rhq_measurement_sched innerSchedule \n" //
-                    + " WHERE innerSchedule.resource_id = ? \n";
-                bindParams = new Object[] { context.getResourceId() };
+                    + " WHERE innerSchedule.definition = ? \n" //
+                    + "   AND innerSchedule.resource_id = ? \n";
+                bindParams = new Object[] { definitionId, context.getResourceId() };
 
             } else if (context.category == EntityContext.Category.ResourceGroup) {
                 scheduleSubQuery = "" //
@@ -400,8 +401,9 @@ public class MeasurementDataManagerUtility {
                     + "  FROM rhq_measurement_sched innerSchedule \n" //
                     + "  JOIN rhq_resource_group_res_exp_map groupMap \n" //
                     + "       ON innerSchedule.resource_id = groupMap.resource_id \n" //
-                    + " WHERE groupMap.resource_group_id = ? \n";
-                bindParams = new Object[] { context.getGroupId() };
+                    + " WHERE innerSchedule.definition = ? \n" //
+                    + "   AND groupMap.resource_group_id = ? \n";
+                bindParams = new Object[] { definitionId, context.getGroupId() };
 
             } else if (context.category == EntityContext.Category.AutoGroup) {
                 scheduleSubQuery = "" //
@@ -409,9 +411,10 @@ public class MeasurementDataManagerUtility {
                     + "  FROM rhq_measurement_sched innerSchedule \n" //
                     + "  JOIN rhq_resource innerRes \n"//
                     + "       ON innerSchedule.resource_id = innerRes.id \n"//
-                    + " WHERE innerRes.parent_resource_id = ? \n"//
+                    + " WHERE innerSchedule.definition = ? \n" //
+                    + "   AND innerRes.parent_resource_id = ? \n"//
                     + "   AND innerRes.resource_type_id = ? \n";
-                bindParams = new Object[] { context.getParentResourceId(), context.getResourceTypeId() };
+                bindParams = new Object[] { definitionId, context.getParentResourceId(), context.getResourceTypeId() };
 
             }
 

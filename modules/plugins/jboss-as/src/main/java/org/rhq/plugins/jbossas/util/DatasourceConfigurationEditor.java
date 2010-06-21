@@ -69,7 +69,6 @@ public class DatasourceConfigurationEditor {
 
     public static final String[] XA_PROPS = { "xa-datasource-class", "track-connection-by-tx",
         "isSameRM-override-value" };
-    private static final String[][] XA_SPECIALS = { { "connection-url", "URL" } , { "user-name", "User" }, {"password", "Password"}};
 
     /* All props with customizations
      * jndi-name driver-class  <!-- xa-datasource-class --> connection-url user-name password min-pool-size
@@ -81,7 +80,6 @@ public class DatasourceConfigurationEditor {
      */
 
     private static Log log = LogFactory.getLog(DatasourceConfigurationEditor.class);
-    private static final String XA_DATASOURCE_PROPERTIES = "xa-datasource-properties";
     private static final String CONNECTION_PROPERTY = "connection-property";
     private static final String XA_DATASOURCE_PROPERTY = "xa-datasource-property";
 
@@ -133,11 +131,11 @@ public class DatasourceConfigurationEditor {
 
             if (type.equals(XA_TX_TYPE)) {
                 bindElements(datasourceElement, config, XA_PROPS);
-                bindMap(datasourceElement, config, XA_DATASOURCE_PROPERTIES);
-                bindXASpecialElements(datasourceElement,config);
+                bindMap(datasourceElement, config, CONNECTION_PROPERTY, XA_DATASOURCE_PROPERTY);
+//                bindXASpecialElements(datasourceElement,config);
             } else {
                 bindElements(datasourceElement, config, NON_XA_PROPS);
-                bindMap(datasourceElement, config, CONNECTION_PROPERTY);
+                bindMap(datasourceElement, config, CONNECTION_PROPERTY, CONNECTION_PROPERTY);
             }
 
             return config;
@@ -202,6 +200,11 @@ public class DatasourceConfigurationEditor {
         IOException {
         Document doc;
         Element root;
+
+        if (deploymentFile.exists() && !deploymentFile.canWrite()) {
+            throw new RuntimeException("Datasource file " + deploymentFile + " is not writable. Aborting.");
+        }
+
         if (deploymentFile.exists()) {
             SAXBuilder builder = new SAXBuilder();
             doc = builder.build(deploymentFile);
@@ -233,11 +236,11 @@ public class DatasourceConfigurationEditor {
 
         if (type.equals(XA_TX_TYPE)) {
             updateElements(datasourceElement, config, XA_PROPS);
-            updateMap(datasourceElement, config, XA_DATASOURCE_PROPERTIES);
-            updateXAElements(datasourceElement, config);
+            updateMap(datasourceElement, config, CONNECTION_PROPERTY, XA_DATASOURCE_PROPERTY);
+//            updateXAElements(datasourceElement, config);
         } else {
             updateElements(datasourceElement, config, NON_XA_PROPS);
-            updateMap(datasourceElement, config, CONNECTION_PROPERTY);
+            updateMap(datasourceElement, config, CONNECTION_PROPERTY, CONNECTION_PROPERTY);
         }
 
         if (isNewDatasource) {
@@ -245,59 +248,6 @@ public class DatasourceConfigurationEditor {
         }
 
         updateFile(deploymentFile, doc);
-    }
-
-    /**
-     * We need to pick elements that are in the 'normal' pool and pass them in the form of
-     * &ltxa-property name="xxx"&gt;value&lt;/xa-property&gt;
-     * @param parent parent elment (xa-datsource)
-     * @param config passed configuration
-     * @param xaSpecials pairs of items that need special treatment
-     */
-    private static void updateXAElements(Element parent, Configuration config) {
-
-        for (String[] pair: XA_SPECIALS) {
-            String prop = pair[0]; // Property in the configuration
-            String name = pair[1]; // value of the name attribute
-            String value = config.getSimpleValue(prop,""); // value to set
-
-            Element child = null;
-            if (value == null) {
-
-                List<Element> elems = parent.getChildren(XA_DATASOURCE_PROPERTY);
-                for (Element elem : elems) {
-                    if (elem.getAttribute("name").getValue().equals(name)) {
-                        parent.removeContent(elem); // TODO CCME?
-                        break;
-                    }
-                }
-
-            } else {
-                //  find the child and update if it exists
-
-                List<Element> elems = parent.getChildren(XA_DATASOURCE_PROPERTY);
-                for (Element elem : elems) {
-                    if (elem.getAttribute("name").getValue().equals(name)) {
-                        child = elem;
-                        break;
-                    }
-                }
-                if (child== null) {
-                    child = new Element(XA_DATASOURCE_PROPERTY);
-                    child.setAttribute("name",name);
-                    parent.addContent(child);
-                }
-
-                child.setText(value);
-            }
-
-            // remove the non-xa version of the property with name prop
-            Element notNeeded = parent.getChild(prop);
-            if (notNeeded != null) {
-                parent.removeContent(notNeeded);
-            }
-        }
-
     }
 
     public static void deleteDataSource(File deploymentFile, String name) {
@@ -332,14 +282,22 @@ public class DatasourceConfigurationEditor {
         }
     }
 
-    private static void updateMap(Element parent, Configuration configuration, String name) {
-        PropertyMap map = configuration.getMap(name);
+    /**
+     * Update the map-elements in the datasource that are below <i>parent</i>.
+     * @param parent Parent element to add / update
+     * @param configuration configuration that holds the properties
+     * @param mapName the name of the map-property in the configuration that holds the elements
+     * @param propertyElementName the name of the element to write below <i>parent</i>
+     */
+    private static void updateMap(Element parent, Configuration configuration, String mapName,
+                                  String propertyElementName) {
+        PropertyMap map = configuration.getMap(mapName);
         // Wrap in ArrayList to avoid ConcurrentModificationException when adding or removing children while iterating.
-        List<Element> mapElements = new ArrayList<Element>(parent.getChildren(name));
+        List<Element> mapElements = new ArrayList<Element>(parent.getChildren(propertyElementName));
 
         if ((map == null) || map.getMap().isEmpty()) {
             if (!mapElements.isEmpty()) {
-                parent.removeChildren(name);
+                parent.removeChildren(propertyElementName);
             }
 
             return;
@@ -356,7 +314,7 @@ public class DatasourceConfigurationEditor {
         for (Property prop : map.getMap().values()) {
             Element element = elements.get(prop.getName());
             if (element == null) {
-                element = new Element(name);
+                element = new Element(propertyElementName);
                 element.setAttribute("name", prop.getName());
                 parent.addContent(element);
             }
@@ -389,10 +347,18 @@ public class DatasourceConfigurationEditor {
         }
     }
 
-    private static void bindMap(Element parent, Configuration config, String mapName) {
+    /**
+     * Look for elements with the name <i>elementName</i> below <i>parent</i> and put
+     * them in to <i>config</i> as a new map with the name <i>mapName</i>.
+     * @param parent The parent element to search for children
+     * @param config The configuration to put the elements found
+     * @param mapName The name of the map as a key to put into the config
+     * @param elementName The elements to look for
+     */
+    private static void bindMap(Element parent, Configuration config, String mapName, String elementName) {
         PropertyMap map = new PropertyMap(mapName);
 
-        for (Object child : parent.getChildren(mapName)) {
+        for (Object child : parent.getChildren(elementName)) {
             Element childElement = (Element) child;
             String name = childElement.getAttributeValue("name");
             map.put(new PropertySimple(name, childElement.getText()));
@@ -414,29 +380,6 @@ public class DatasourceConfigurationEditor {
             config.put(new PropertySimple(name, child.getText()));
         }
     }
-
-    /**
-     * Bid the special XA datasource elements
-     * @param parent
-     * @param config
-     */
-    private static void bindXASpecialElements(Element parent, Configuration config) {
-
-        List<Element> xaProps = parent.getChildren(XA_DATASOURCE_PROPERTY);
-
-        for (String[] pair: XA_SPECIALS) {
-            String prop = pair[0]; // Property in the configuration
-            String name = pair[1]; // value of the name attribute
-
-            for (Element elem : xaProps ) {
-                if (elem.getAttribute("name").getValue().equals(name)) {
-                    config.put(new PropertySimple(prop,elem.getText()));
-                }
-            }
-        }
-
-    }
-
 
     private static Element findDatasourceElement(Element root, String name) {
         for (Object child : root.getChildren()) {

@@ -195,6 +195,15 @@ TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
 RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 
 
+# Set the system character encoding to ISO-8859-1 to ensure i18log reads its 
+# messages and writes its resource bundle properties files in that encoding, 
+# since that is how the German and French I18NMessage annotation values are
+# encoded and the encoding used by i18nlog to read in resource bundle
+# property files.
+LANG=en_US.iso8859
+export LANG
+
+
 # Print out a summary of the environment.
 
 echo
@@ -204,6 +213,7 @@ echo "JAVA_HOME=$JAVA_HOME"
 echo "M2_HOME=$M2_HOME"
 echo "MAVEN_OPTS=$MAVEN_OPTS"
 echo "PATH=$PATH"
+echo "LANG=$LANG"
 echo "============================= Local Variables ================================="
 echo "WORKING_DIR=$WORKING_DIR"
 echo "PROJECT_NAME=$PROJECT_NAME"

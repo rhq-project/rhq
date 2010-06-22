@@ -6,6 +6,8 @@
 
     <property name="propname1" value="one.prop" />
 
+    <echo>propname1=${propname1}</echo>
+
     <rhq:bundle name="test-bundle-two" version="2.5" description="test bundle two description">
 
         <rhq:input-property name="${propname1}" />

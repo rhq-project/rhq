@@ -189,10 +189,9 @@ public class AntBundlePluginComponentTest {
         assert readFile(twoFile).startsWith("@@two.prop@@");
 
         // make sure the revert restored the backed up files
-        // TODO: uncomment once we fix the problem that ant launcher invokes the deploy multiple times
-        //File extraFile = new File(this.destDir, "extra/extra-file.txt");
-        //assert extraFile.exists() : "extra file should have been restored due to revert deployment request";
-        //assert readFile(extraFile).startsWith("extra") : "bad restore of extra file";
+        File extraFile = new File(this.destDir, "extra/extra-file.txt");
+        assert extraFile.exists() : "extra file should have been restored due to revert deployment request";
+        assert readFile(extraFile).startsWith("extra") : "bad restore of extra file";
 
         DeploymentsMetadata metadata = new DeploymentsMetadata(this.destDir);
         DeploymentProperties deploymentProps = metadata.getDeploymentProperties(deployment.getId());
@@ -205,15 +204,14 @@ public class AntBundlePluginComponentTest {
 
         // check the backup directory - note, clean flag is irrelevent when determining what should be backed up 
         File backupDir = metadata.getDeploymentBackupDirectory(deployment.getId());
-        // TODO: uncomment once we fix the problem that ant launcher invokes the deploy multiple times
-        //assert backupDir.list().length == 0 : "should not have backups: " + Arrays.deepToString(backupDir.listFiles());
+        File ignoredBackupFile = new File(backupDir, "ignore/ignore-file.txt");
+        assert ignoredBackupFile.isFile() : "old recipe didn't ignore these, should be backed up";
 
         DeploymentProperties previousProps = metadata.getPreviousDeploymentProperties(789);
         assert previousProps != null : "There should be previous deployment metadata";
-        // TODO: uncomment once we fix the problem that ant launcher invokes the deploy multiple times
-        //assert previousProps.getDeploymentId() == 456 : "bad previous deployment metadata"; // testAntBundleUpgrade used 456
-        //assert previousProps.getBundleName().equals(deploymentProps.getBundleName());
-        //assert previousProps.getBundleVersion().equals("3.0"); // testAntBundleUpgrade deployed version 3.0
+        assert previousProps.getDeploymentId() == 456 : "bad previous deployment metadata"; // testAntBundleUpgrade used 456
+        assert previousProps.getBundleName().equals(deploymentProps.getBundleName());
+        assert previousProps.getBundleVersion().equals("3.0"); // testAntBundleUpgrade deployed version 3.0
     }
 
     public void testAntBundleUpgrade() throws Exception {
@@ -338,10 +336,9 @@ public class AntBundlePluginComponentTest {
 
         DeploymentProperties previousProps = metadata.getPreviousDeploymentProperties(456);
         assert previousProps != null : "There should be previous deployment metadata";
-        // TODO: uncomment once we fix the problem that ant launcher invokes the deploy multiple times
-        //assert previousProps.getDeploymentId() == 123 : "bad previous deployment metadata"; // testAntBundleInitialInstall used 123
-        //assert previousProps.getBundleName().equals(deploymentProps.getBundleName());
-        //assert previousProps.getBundleVersion().equals("2.5"); // testAntBundleInitialInstall deployed version 2.5
+        assert previousProps.getDeploymentId() == 123 : "bad previous deployment metadata"; // testAntBundleInitialInstall used 123
+        assert previousProps.getBundleName().equals(deploymentProps.getBundleName());
+        assert previousProps.getBundleVersion().equals("2.5"); // testAntBundleInitialInstall deployed version 2.5
     }
 
     /**
@@ -421,7 +418,6 @@ public class AntBundlePluginComponentTest {
         DeploymentProperties currentProps = metadata.getCurrentDeploymentProperties();
         assert deploymentProps.equals(currentProps);
         DeploymentProperties previousProps = metadata.getPreviousDeploymentProperties(deployment.getId());
-        // TODO: uncomment once we fix the problem that ant launcher invokes the deploy multiple times
         assert previousProps == null : "There should not be any previous deployment metadata";
     }
 

@@ -1813,6 +1813,9 @@ public interface AgentI18NResourceKeys {
         + "\\                                 re-enables all types to be discoverable.")
     String DISCOVERY_DETAILED_HELP = "PromptCommand.discovery.detailed-help";
 
+    @I18NMessage("WARNING: Discovery will not be run for the following ResourceTypes, because they are blacklisted: {0}")
+    String DISCOVERY_BLACKLISTED_TYPES = "PromptCommand.discovery.blacklisted-types";
+
     @I18NMessage("Full discovery run in [{0}] ms")
     String DISCOVERY_FULL_RUN = "PromptCommand.discovery.full-run";
 

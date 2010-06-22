@@ -11,7 +11,6 @@ import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.bundle.BundleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
-import org.rhq.enterprise.server.content.EntitlementStuffManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
@@ -41,7 +40,6 @@ public interface WebservicesRemote extends //
     BundleManagerRemote,//
     CallTimeDataManagerRemote,//
     RepoManagerRemote,//
-    EntitlementStuffManagerRemote, //
     ConfigurationManagerRemote,//
     ContentManagerRemote,//
     //Removed as it was problematic for WS clients. Not sure if this well be re-enabled.

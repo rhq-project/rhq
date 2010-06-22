@@ -89,8 +89,6 @@ import org.rhq.enterprise.server.content.ContentUIManagerBean;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.DistributionManagerBean;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
-import org.rhq.enterprise.server.content.EntitlementStuffManagerBean;
-import org.rhq.enterprise.server.content.EntitlementStuffManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerBean;
@@ -448,10 +446,6 @@ public final class LookupUtil {
         return lookupLocal(RepoManagerBean.class);
     }
 
-    public static EntitlementStuffManagerLocal getEntitlementManager() {
-        return lookupLocal(EntitlementStuffManagerBean.class);
-    }
-
     public static DistributionManagerLocal getDistributionManagerLocal() {
         return lookupLocal(DistributionManagerBean.class);
     }
@@ -481,8 +475,8 @@ public final class LookupUtil {
     }
 
     public static RemoteInstallManagerLocal getRemoteInstallManager() {
-         return lookupLocal(RemoteInstallManagerBean.class);
-     }
+        return lookupLocal(RemoteInstallManagerBean.class);
+    }
 
     public static ResourceMetadataManagerLocal getResourceMetadataManager() {
         return lookupLocal(ResourceMetadataManagerBean.class);
@@ -571,8 +565,6 @@ public final class LookupUtil {
     public static TagManagerLocal getTagManager() {
         return lookupLocal(TagManagerBean.class);
     }
-
-
 
     public static CoreServerMBean getCoreServer() {
         MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();

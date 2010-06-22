@@ -65,7 +65,6 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
-import org.rhq.core.domain.content.transfer.EntitlementCertificate;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -123,7 +122,6 @@ import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
-import org.rhq.enterprise.server.content.EntitlementStuffManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
@@ -198,7 +196,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-    private EntitlementStuffManagerLocal entitlementManager = LookupUtil.getEntitlementManager();
 
     //ALERTMANAGER: BEGIN ------------------------------------------
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
@@ -1048,9 +1045,5 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId) {
         return repoManager.findSubscriptions(subject, resourceId);
-    }
-
-    public List<EntitlementCertificate> getCertificates(Subject subject, int resourceId) {
-        return entitlementManager.getCertificates(subject, resourceId);
     }
 }

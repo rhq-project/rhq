@@ -119,7 +119,7 @@ public class SelectBundleVersionStep implements WizardStep {
 
                 public void onSuccess(PageList<BundleVersion> result) {
                     bundleVersions = result;
-                    if (bundleVersions.isEmpty()) {
+                    if (null == bundleVersions || bundleVersions.isEmpty()) {
                         onFailure(new IllegalArgumentException("No bundle versions defined for bundle."));
                     }
 

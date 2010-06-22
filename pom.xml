@@ -411,7 +411,7 @@
     <dependency>
       <groupId>i18nlog</groupId>
       <artifactId>i18nlog</artifactId>
-      <version>1.0.9</version>
+      <version>1.0.10</version>
     </dependency>
 
     <!-- for the JAXB annotations -->
@@ -463,11 +463,11 @@
          </plugin>
          <plugin>
            <artifactId>maven-clean-plugin</artifactId>
-           <version>2.4</version>
+           <version>2.4.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-compiler-plugin</artifactId>
-           <version>2.2</version>
+           <version>2.3.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-dependency-plugin</artifactId>
@@ -861,7 +861,8 @@
 
 
   <repositories>
-     <repository>
+
+    <repository>
        <id>jboss-deprecated-repository</id>
        <name>JBoss Deprecated</name>
        <url>https://repository.jboss.org/maven2/</url>
@@ -875,6 +876,18 @@
          <enabled>false</enabled>
        </snapshots>
     </repository>
+
+    <repository>
+       <id>jboss-thirdparty-uploads</id>
+       <name>JBoss Third-Party Uploads</name>
+       <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-uploads/</url>
+       <!-- Explicitly disable snapshots, so Maven won't try to
+            check for updates for snapshot internal (rhq-*) deps. -->
+       <snapshots>
+         <enabled>false</enabled>
+       </snapshots>
+    </repository>
+
   </repositories>
 
 

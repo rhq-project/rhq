@@ -151,7 +151,8 @@ public class EventManagerTest extends AbstractEJB3Test {
             long t1 = now - 1000L;
             long t2 = now + 1000L;
 
-            int[] buckets = eventManager.getEventCounts(null, resourceId, t1, t2, 3);
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            int[] buckets = eventManager.getEventCounts(overlord, resourceId, t1, t2, 3);
             assert buckets != null : "Buckets should not be null, but were null";
             assert buckets.length == 3 : "Expected 3 buckets, but got " + buckets.length;
 
@@ -161,7 +162,6 @@ public class EventManagerTest extends AbstractEJB3Test {
 
             PageControl pc = PageControl.getUnlimitedInstance();
             EntityContext context = EntityContext.forResource(resourceId);
-            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
             List<EventComposite> res = eventManager
                 .findEventComposites(overlord, context, t1, t2, null, null, null, pc);

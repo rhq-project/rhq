@@ -150,7 +150,7 @@
   </changeSet>
 
   <changeSet id="7" author="jsanda">
-    <!-- the overlord user -->
+    <comment>Create the overlorduser</comment>
     <insert tableName="rhq_subject">
       <column name="id" value="1"/>
       <column name="name" value="admin"/>
@@ -167,7 +167,7 @@
   </changeSet>
 
   <changeSet id="8" author="jsanda">
-    <!-- the initial rhqadmin user -->
+    <comment>Create the initial rhqadmin user</comment>
     <insert tableName="rhq_subject">
       <column name="id" value="2"/>
       <column name="name" value="${admin.username}"/>
@@ -184,5 +184,27 @@
     </rollback>
   </changeSet>
 
-  
+  <changeSet id="9" author="jsanda">
+    <comment>Define the system root role which includes our overlord and rhqadmin users</comment>
+    <insert tableName="rhq_role">
+      <column name="id" value="1"/>
+      <column name="name" value="Super User Role"/>
+      <column name="fsystem" value="true"/>
+      <column name="description" 
+              value="System superuser role that provides full access to everything. This role cannot be modified."/>
+    </insert>
+    <insert tableName="rhq_role">
+      <column name="id" value="2"/>
+      <column name="name" value="All Resource Role"/>
+      <column name="fsystem" value="false"/>
+      <column name="description"
+              value="Provides full access to all resources in inventory. Cannot modify users, roles or server settings."/>
+    </insert>
+
+    <rollback>
+      <delete tableName="rhq_role">
+        <where>id = 2 or id = 1</where>
+      </delete>
+    </rollback>
+  </changeSet>
 </databaseChangeLog>

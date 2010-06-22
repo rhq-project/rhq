@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0.GA_QA</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -178,8 +178,7 @@
                     <include name="**/*I18NResourceKeys.class" />
                   </classfileset>
                 </i18n>
-                <copy todir="${project.build.outputDirectory}" 
-                      encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
+                <copy todir="${project.build.outputDirectory}" encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${basedir}/target/resources/WEB-INF/classes">
                     <include name="InstallerMessages*.properties" />
                   </fileset>

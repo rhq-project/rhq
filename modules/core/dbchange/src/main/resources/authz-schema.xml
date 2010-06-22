@@ -123,7 +123,7 @@
                      primaryKey="true"
                      primaryKeyName="rhq_subject_role_mapping_key"/>
       </column>
-      <column name="rhq_role_id" type="integer">
+      <column name="role_id" type="integer">
         <constraints foreignKeyName="fk_role_id_rhq_role"
                      references="rhq_role"
                      primaryKey="true"
@@ -203,7 +203,33 @@
 
     <rollback>
       <delete tableName="rhq_role">
-        <where>id = 2 or id = 1</where>
+        <where>id = 2</where>
+      </delete>
+      <delete tableName="rhq_role">
+        <where>id = 1</where>
+      </delete>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="10" author="jsanda">
+    <comment>Associate the root users with all security permissions</comment>
+    <!-- overlord user -->
+    <insert tableName="rhq_subject_role_map">
+      <column name="subject_id" value="1"/>
+      <column name="role_id" value="1"/>
+    </insert>
+    <!-- rhqadmin user -->
+    <insert tableName="rhq_subject_role_map">
+      <column name="subject_id" value="2"/>
+      <column name="role_id" value="1"/>
+    </insert>
+
+    <rollback>
+      <delete tableName="rhq_subject_role_map">
+        <where>subject_id = 2 and role_id = 1</where>
+      </delete>
+      <delete tableName="rhq_subject_role_map">
+        <where>subject_id = 1 and role_id = 1</where>
       </delete>
     </rollback>
   </changeSet>

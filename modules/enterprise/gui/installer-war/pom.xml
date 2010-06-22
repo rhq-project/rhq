@@ -172,7 +172,7 @@
                 <!-- generate the I18N resource bundles -->
                 <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
                 <!--<i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">-->
-                <i18n outputdir="${basedir}/target/resources/WEB-INF/classes" defaultlocale="en" verbose="false" append="false" verify="true">
+                <i18n outputdir="${basedir}/target/resources/WEB-INF/classes" defaultlocale="en" verbose="${i18nlog.verbose}" append="false" verify="true">
                   <classpath refid="maven.runtime.classpath" />
                   <classfileset dir="${project.build.outputDirectory}">
                     <include name="**/*I18NResourceKeys.class" />

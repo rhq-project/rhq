@@ -411,7 +411,7 @@
     <dependency>
       <groupId>i18nlog</groupId>
       <artifactId>i18nlog</artifactId>
-      <version>1.0.9</version>
+      <version>1.0.10</version>
     </dependency>
 
     <!-- for the JAXB annotations -->

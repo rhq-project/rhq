@@ -36,7 +36,6 @@ import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.bundle.BundleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
-import org.rhq.enterprise.server.content.DistributionManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
@@ -82,7 +81,6 @@ public class RemoteClient {
         ContentManager(ContentManagerRemote.class), //
         DataAccessManager(DataAccessManagerRemote.class), //
         DiscoveryBoss(DiscoveryBossRemote.class), //
-        DistributionManager(DistributionManagerRemote.class), //
         EventManager(EventManagerRemote.class), //
         MeasurementBaselineManager(MeasurementBaselineManagerRemote.class), //
         MeasurementDataManager(MeasurementDataManagerRemote.class), //
@@ -347,10 +345,6 @@ public class RemoteClient {
 
     public DiscoveryBossRemote getDiscoveryBossRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.DiscoveryBoss);
-    }
-
-    public DistributionManagerRemote getDistributionManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.DistributionManager);
     }
 
     public EventManagerRemote getEventManagerRemote() {

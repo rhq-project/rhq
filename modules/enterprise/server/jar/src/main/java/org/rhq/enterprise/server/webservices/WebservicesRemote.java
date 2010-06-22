@@ -11,7 +11,6 @@ import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.bundle.BundleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
-import org.rhq.enterprise.server.content.DistributionManagerRemote;
 import org.rhq.enterprise.server.content.EntitlementStuffManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
@@ -48,7 +47,6 @@ public interface WebservicesRemote extends //
     //Removed as it was problematic for WS clients. Not sure if this well be re-enabled.
     //    DataAccessManagerRemote,//
     DiscoveryBossRemote,//
-    DistributionManagerRemote,//
     EventManagerRemote,//
     MeasurementBaselineManagerRemote,//
     MeasurementDataManagerRemote,//

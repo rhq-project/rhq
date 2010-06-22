@@ -232,7 +232,6 @@ public class MeasurementDataManagerUtility {
     public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataAggregatesForContext(long beginTime,
         long endTime, EntityContext context, int measurementDefinitionId, int numDataPoints)
         throws MeasurementNotFoundException {
-        String otherTable = ", RHQ_MEASUREMENT_SCHED s ";
 
         Object[] bindParams = null;
         String scheduleSubQuery = null;
@@ -240,8 +239,9 @@ public class MeasurementDataManagerUtility {
             scheduleSubQuery = "" //
                 + "SELECT innerSchedule.id \n" //
                 + "  FROM rhq_measurement_sched innerSchedule \n" //
-                + " WHERE innerSchedule.resource_id = ? \n";
-            bindParams = new Object[] { context.getResourceId() };
+                + " WHERE innerSchedule.definition = ? \n" //
+                + "   AND innerSchedule.resource_id = ? \n";
+            bindParams = new Object[] { measurementDefinitionId, context.getResourceId() };
 
         } else if (context.category == EntityContext.Category.ResourceGroup) {
             scheduleSubQuery = "" //
@@ -249,8 +249,9 @@ public class MeasurementDataManagerUtility {
                 + "  FROM rhq_measurement_sched innerSchedule \n" //
                 + "  JOIN rhq_resource_group_res_exp_map groupMap \n" //
                 + "       ON innerSchedule.resource_id = groupMap.resource_id \n" //
-                + " WHERE groupMap.resource_group_id = ? \n";
-            bindParams = new Object[] { context.getGroupId() };
+                + " WHERE innerSchedule.definition = ? \n" //
+                + "   AND groupMap.resource_group_id = ? \n";
+            bindParams = new Object[] { measurementDefinitionId, context.getGroupId() };
 
         } else if (context.category == EntityContext.Category.AutoGroup) {
             scheduleSubQuery = "" //
@@ -258,14 +259,15 @@ public class MeasurementDataManagerUtility {
                 + "  FROM rhq_measurement_sched innerSchedule \n" //
                 + "  JOIN rhq_resource innerRes \n"//
                 + "       ON innerSchedule.resource_id = innerRes.id \n"//
-                + " WHERE innerRes.parent_resource_id = ? \n"//
+                + " WHERE innerSchedule.definition = ? \n" //
+                + "   AND innerRes.parent_resource_id = ? \n"//
                 + "   AND innerRes.resource_type_id = ? \n";
-            bindParams = new Object[] { context.getParentResourceId(), context.getResourceTypeId() };
+            bindParams = new Object[] { measurementDefinitionId, context.getParentResourceId(),
+                context.getResourceTypeId() };
 
         }
 
-        String conditions = "  AND d.schedule_id = s.id" + "  AND s.id IN ( " + scheduleSubQuery + ") \n"
-            + "  AND s.definition = ? \n";
+        String conditions = "         AND d.schedule_id IN ( " + scheduleSubQuery + " ) \n";
 
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -274,7 +276,7 @@ public class MeasurementDataManagerUtility {
         try {
             myConnection = getConnection();
             ps = getFullQuery("getMeasurementDataAggregatesForContext", myConnection, beginTime, endTime,
-                numDataPoints, otherTable, conditions, bindParams, measurementDefinitionId);
+                numDataPoints, "", conditions, bindParams, measurementDefinitionId);
             rs = ps.executeQuery();
 
             List<MeasurementDataNumericHighLowComposite> compositeList = new ArrayList<MeasurementDataNumericHighLowComposite>();
@@ -320,41 +322,6 @@ public class MeasurementDataManagerUtility {
             connection = null; // the close above invalidates the member
         }
     }
-
-    public MeasurementAggregate getAggregateByGroupAndDefinition(long beginTime, long endTime, int groupId,
-        int definitionId) throws MeasurementNotFoundException {
-        Connection myConnection = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            myConnection = getConnection();
-            String condition = " AND d.schedule_id IN ( SELECT m_sched.id \n" //
-                + "                                       FROM rhq_measurement_sched m_sched, \n" //
-                + "                                            rhq_resource_group_res_imp_map imp_map \n" //
-                + "                                      WHERE m_sched.resource_id = imp_map.resource_id \n" //
-                + "                                        AND imp_map.resource_group_id = ? \n" //
-                + "                                        AND m_sched.definition = ? ) \n";
-
-            ps = getFullQuery("getAggregateByGroupAndDefinition", myConnection, beginTime, endTime, 1, "", condition,
-                groupId, definitionId);
-
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                MeasurementAggregate measurementAggregate = fillAggregateFromResultSet(rs);
-                return measurementAggregate;
-            }
-
-            throw new MeasurementNotFoundException("Data not found");
-        } catch (SQLException e) {
-            throw new MeasurementNotFoundException(e);
-        } finally {
-            JDBCUtil.safeClose(myConnection, ps, rs);
-            connection = null; // the close above invalidates the member
-        }
-    }
-
-    //
 
     private MeasurementDataNumericHighLowComposite fillHighLowCompositeFromResultSet(ResultSet rs) throws SQLException {
         long timestamp = rs.getLong(1);
@@ -418,7 +385,8 @@ public class MeasurementDataManagerUtility {
 
             }
 
-            condition = "         AND d.schedule_id IN ( " + scheduleSubQuery + " )\n";
+            condition = "         AND d.schedule_id IN ( " + scheduleSubQuery + " ) \n";
+
             myConnection = getConnection();
             ps = getFullQuery("getAggregateByContext", myConnection, beginTime, endTime, 1, "", condition, bindParams);
 

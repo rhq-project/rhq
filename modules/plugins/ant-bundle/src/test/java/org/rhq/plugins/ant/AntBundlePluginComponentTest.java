@@ -422,7 +422,7 @@ public class AntBundlePluginComponentTest {
         assert deploymentProps.equals(currentProps);
         DeploymentProperties previousProps = metadata.getPreviousDeploymentProperties(deployment.getId());
         // TODO: uncomment once we fix the problem that ant launcher invokes the deploy multiple times
-        //assert previousProps == null : "There should not be any previous deployment metadata";
+        assert previousProps == null : "There should not be any previous deployment metadata";
     }
 
     /**

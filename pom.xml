@@ -861,7 +861,8 @@
 
 
   <repositories>
-     <repository>
+
+    <repository>
        <id>jboss-deprecated-repository</id>
        <name>JBoss Deprecated</name>
        <url>https://repository.jboss.org/maven2/</url>
@@ -875,6 +876,18 @@
          <enabled>false</enabled>
        </snapshots>
     </repository>
+
+    <repository>
+       <id>jboss-thirdparty-uploads</id>
+       <name>JBoss Third-Party Uploads</name>
+       <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-uploads/</url>
+       <!-- Explicitly disable snapshots, so Maven won't try to
+            check for updates for snapshot internal (rhq-*) deps. -->
+       <snapshots>
+         <enabled>false</enabled>
+       </snapshots>
+    </repository>
+
   </repositories>
 
 

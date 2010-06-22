@@ -323,7 +323,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 }
 
                 refreshBreadCrumbTrail();
-
             }
         }
     }

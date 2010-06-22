@@ -56,21 +56,24 @@ public class BreadcrumbTrailPane extends HTMLPane {
 
             for (ViewId viewId : viewPath.getViewPath()) {
 
-                if (!viewId.getBreadcrumbs().isEmpty()) {
-                    if (!first) {
-                        path.append("/");
-                        content.append("<img src=\"images/header/breadcrumb_space.png\" style=\"vertical-align: middle;\" width=\"28\" height=\"28\"/>");
-                    } else {
-                        first = false;
-                    }
+
+                if (!first && !viewId.getBreadcrumbs().isEmpty()) {
+                    content.append("<img src=\"images/header/breadcrumb_space.png\" style=\"vertical-align: middle;\" width=\"28\" height=\"28\"/>");
                 }
+
+                if (!first) {
+                    path.append("/");
+                } else {
+                    first = false;
+                }
+
 
                 boolean firstBC = true;
                 for (Breadcrumb breadcrumb : viewId.getBreadcrumbs()) {
 //                    path.append(breadcrumb.getName());
 
                     if (!firstBC) {
-                        content.append(" > ");
+                        content.append("<img src=\"images/header/breadcrumb_space.png\" style=\"vertical-align: middle;\" width=\"28\" height=\"28\"/>");
                     } else {
                         firstBC = false;
                     }

@@ -214,7 +214,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
                     public void onSuccess(PageList<BundleVersion> result) {
                         BundleVersion version = result.get(0);
                         viewBundleVersion(version, viewPath.getCurrent());
-                        viewPath.getViewForIndex(2).getBreadcrumbs().set(0, new Breadcrumb(version.getBundle().getName()));
+                        viewPath.getViewForIndex(2).getBreadcrumbs().set(0, new Breadcrumb(String.valueOf(version.getBundle().getId()), version.getBundle().getName()));
                         viewId.getBreadcrumbs().set(0,new Breadcrumb(String.valueOf(version.getId()), version.getVersion()));
                         CoreGUI.refreshBreadCrumbTrail();
                     }

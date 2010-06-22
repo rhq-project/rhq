@@ -108,7 +108,7 @@ public class BundleTopView extends HLayout implements BookmarkableView {
                 this.bundlesListView = new BundlesListView();
                 setContent(this.bundlesListView);
             }
-        } else if (viewPath.getCurrent().getPath().equals("Bundle")) {
+        } else {
             viewPath.getCurrent().getBreadcrumbs().clear();
             if (!viewPath.getNext().equals(currentNextPath)) {
                 currentNextPath = viewPath.getNext();

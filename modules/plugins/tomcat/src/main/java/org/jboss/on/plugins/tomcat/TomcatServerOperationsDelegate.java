@@ -150,7 +150,7 @@ public class TomcatServerOperationsDelegate {
         PropertyList env = parameters.getList(START_SCRIPT_ENVIRONMENT_PROPERTY);
         return start(env);
     }
-    
+
     /**
      * Starts the underlying server.
      *
@@ -159,14 +159,14 @@ public class TomcatServerOperationsDelegate {
      */
     private String start(PropertyList environment) throws InterruptedException {
         Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
-        String controlMethodName = pluginConfiguration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD,
-            ControlMethod.SCRIPT.name());
+        String controlMethodName = pluginConfiguration.getSimpleValue(
+            TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD, ControlMethod.SCRIPT.name());
         ControlMethod controlMethod = ControlMethod.valueOf(controlMethodName);
         ProcessExecution processExecution = (controlMethod == ControlMethod.SCRIPT) ? getScriptStart(pluginConfiguration)
             : getRpmStart(pluginConfiguration);
 
         applyEnvironmentVars(environment, processExecution);
-        
+
         long start = System.currentTimeMillis();
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
@@ -273,7 +273,7 @@ public class TomcatServerOperationsDelegate {
         PropertyList env = parameters.getList(SHUTDOWN_SCRIPT_ENVIRONMENT_PROPERTY);
         return shutdown(env);
     }
-    
+
     private String shutdown(PropertyList environment) throws InterruptedException {
         String result = doShutdown(environment);
         AvailabilityType avail = waitForServerToShutdown();
@@ -295,9 +295,9 @@ public class TomcatServerOperationsDelegate {
             ControlMethod.SCRIPT.name());
         ProcessExecution processExecution = (ControlMethod.SCRIPT.name().equals(controlMethod)) ? getScriptShutdown(pluginConfiguration)
             : getRpmShutdown();
-        
+
         applyEnvironmentVars(environment, processExecution);
-        
+
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
         }
@@ -355,15 +355,10 @@ public class TomcatServerOperationsDelegate {
 
     static public void setProcessExecutionEnvironment(ProcessExecution processExecution, String catalinaHome,
         String catalinaBase) {
-        String javaHomeDir = System.getProperty("java.home");
-        if (null == javaHomeDir) {
+        String jreHomeDir = System.getProperty("java.home");
+        if (null == jreHomeDir) {
             throw new IllegalStateException(
-                "The JAVA_HOME environment variable must be set in order to run the Tomcat start or stop script.");
-        }
-
-        // Strip off the jre since the version script requires a JDK
-        if (javaHomeDir.endsWith("jre")) {
-            javaHomeDir = javaHomeDir.substring(0, javaHomeDir.length() - 3);
+                "The JAVA_HOME or JAVA_JRE environment variable must be set in order to run the Tomcat scripts.");
         }
 
         Map<String, String> processExecutionEnvironmentVariables = processExecution.getEnvironmentVariables();
@@ -372,11 +367,26 @@ public class TomcatServerOperationsDelegate {
             processExecution.setEnvironmentVariables(processExecutionEnvironmentVariables);
         }
 
-        processExecutionEnvironmentVariables.put("JAVA_HOME", new File(javaHomeDir).getPath());
+        // It is important to realize that the processExecutionEnvironmentVariables may have been inheriting the
+        // environment of the RHQ Agent.  The RHQ Agent allows for JAVA_HOME to be set to a JRE and does not
+        // use JRE_HOME. Tomcat does not allow this, and favors the use of JRE_HOME. So, unset JAVA_HOME and
+        // reset it as needed. Always set JRE_HOME.
+        processExecutionEnvironmentVariables.remove("JAVA_HOME");
+        processExecutionEnvironmentVariables.put("JRE_HOME", new File(jreHomeDir).getPath());
         processExecutionEnvironmentVariables.put("CATALINA_HOME", catalinaHome);
         processExecutionEnvironmentVariables.put("CATALINA_BASE", catalinaBase);
         processExecutionEnvironmentVariables.put("CATALINA_TMPDIR", catalinaBase + File.separator + "temp");
 
+        // Tomcat, starting with 5.5, requires only a JRE to run. But, if TC is running in debug mode it
+        // requires a JDK.  We always set JRE_HOME above but, if possible, set JAVA_HOME as well if 
+        // in fact it looks like we have a JDK at our disposal.
+        if (jreHomeDir.endsWith("jre")) {
+            File jdkHomeDir = new File(jreHomeDir.substring(0, jreHomeDir.length() - 3));
+            // one more check, look for a bin dir
+            if (new File(jdkHomeDir, "bin").isDirectory()) {
+                processExecutionEnvironmentVariables.put("JAVA_HOME", jdkHomeDir.getPath());
+            }
+        }
     }
 
     private void initScriptProcessExecution(ProcessExecution processExecution, File scriptFile) {
@@ -497,11 +507,11 @@ public class TomcatServerOperationsDelegate {
 
         return ("Tomcat configuration updated.");
     }
-    
+
     private static void applyEnvironmentVars(PropertyList environment, ProcessExecution processExecution) {
         if (environment != null) {
             Map<String, String> environmentVariables = processExecution.getEnvironmentVariables();
-            for(Property prop : environment.getList()) {
+            for (Property prop : environment.getList()) {
                 PropertyMap var = (PropertyMap) prop;
                 environmentVariables.put(var.getSimpleValue("name", null), var.getSimpleValue("value", null));
             }

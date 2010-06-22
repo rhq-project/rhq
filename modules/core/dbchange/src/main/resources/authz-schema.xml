@@ -114,4 +114,21 @@
       <column name="name"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="5" author="jsanda">
+    <createTable tableName="rhq_subject_role_map">
+      <column name="subject_id" type="integer">
+        <constraints foreignKeyName="fk_subject_id_rhq_subject"
+                     references="rhq_subject"
+                     primaryKey="true"
+                     primaryKeyName="rhq_subject_role_mapping_key"/>
+      </column>
+      <column name="rhq_role_id" type="integer">
+        <constraints foreignKeyName="fk_role_id_rhq_role"
+                     references="rhq_role"
+                     primaryKey="true"
+                     primaryKeyName="rhq_subject_role_mapping_key"/>
+      </column>
+    </createTable>
+  </changeSet>
 </databaseChangeLog>

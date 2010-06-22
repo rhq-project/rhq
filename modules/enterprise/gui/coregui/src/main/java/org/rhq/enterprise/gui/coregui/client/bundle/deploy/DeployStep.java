@@ -92,6 +92,7 @@ public class DeployStep implements WizardStep {
                                         new Message("Scheduled bundle deployment [" + result.getName()
                                             + "] resource group [" + result.getDestination().getGroup() + "]",
                                             Severity.Info));
+                                    CoreGUI.refresh();
                                     wizard.setNewDeployment(result);
                                 }
 

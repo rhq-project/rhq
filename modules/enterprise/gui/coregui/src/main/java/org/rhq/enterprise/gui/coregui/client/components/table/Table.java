@@ -290,6 +290,12 @@ public class Table extends VLayout {
         this.listGrid.markForRedraw();
     }
 
+    public void refresh() {
+        this.listGrid.invalidateCache();
+        this.listGrid.markForRedraw();
+    }
+    
+
     public void setTableTitle(String titleString) {
         if (titleString == null) {
             titleString = "";

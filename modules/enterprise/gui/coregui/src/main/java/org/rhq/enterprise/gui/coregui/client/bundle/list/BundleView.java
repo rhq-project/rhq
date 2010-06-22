@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
 import java.util.HashSet;
 
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
@@ -219,6 +220,7 @@ public class BundleView extends VLayout implements BookmarkableView {
                                 public void onSuccess(Void result) {
                                     CoreGUI.getMessageCenter().notify(
                                             new Message("Deleted bundle [" + bundle.getName() + "]", Message.Severity.Info));
+                                    History.newItem("Bundles"); // Bundle is deleted, go back to all bundles view
                                 }
                             });
                         }

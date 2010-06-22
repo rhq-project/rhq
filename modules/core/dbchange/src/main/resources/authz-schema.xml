@@ -233,4 +233,165 @@
       </delete>
     </rollback>
   </changeSet>
+
+  <changeSet id="11" author="jsanda">
+    <comment>Create permissions</comment>
+    <!-- give super-user-role all permissions (resource perms is mainly just to show on view-role page) -->
+    <!-- Permission.MANAGE_SECURITY -->
+    <insert tableName="rhq_permission">      
+      <column name="role_id" value="1"/>
+      <column name="operation" value="0"/>
+    </insert>
+    
+    <!-- Permission.MANAGE_INVENTORY -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="1"/>
+    </insert>
+
+    <!-- Permission.MANAGE_SETTINGS -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="2"/>
+    </insert>
+
+    <!-- Permission.MANAGE_BUNDLE -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="12"/>
+    </insert>
+    
+    <!-- resource permissions -->
+    <!-- Permission.VIEW_RESOURCE -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="3"/>
+    </insert>
+
+    <!-- Permission.MODIFY_RESOURCE -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="4"/>
+    </insert>
+
+    <!-- Permission.DELETE_RESOURCE -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="5"/>
+    </insert>
+
+    <!-- Permission.CREATE_CHILD_RESOURCES -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="6"/>
+    </insert>
+
+    <!-- Permission.MANAGE_ALERTS -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="7"/>
+    </insert>
+
+    <!-- Permission.MANAGE_MEASUREMENTS -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="8"/>
+    </insert>
+
+    <!-- Permission.MANAGE_CONTENT -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="9"/>
+    </insert>
+
+    <!-- Permission.CONTROL -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="10"/>
+    </insert>
+
+    <!-- Permission.CONFIGURE -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="1"/>
+      <column name="operation" value="11"/>
+    </insert>
+ 
+    <!-- give all-resources-role all permissions (resource perms is mainly just to show on view-role page) -->
+    <!-- Permission.MANAGE_INVENTORY -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="1"/>
+    </insert>
+
+    <!-- Permission.MANAGE_BUNDLE -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="12"/>
+    </insert>
+
+    <!-- resource permissions start here-->
+    <!-- Permission.VIEW_RESOURCE -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="3"/>
+    </insert>
+
+    <!-- Permission.MODIFY_RESOURCE -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="4"/>
+    </insert>
+
+    <!-- Permission.DELETE_RESOURCE -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="5"/>
+    </insert>
+
+    <!-- Permission.CREATE_CHILD_RESOURCES -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="6"/>
+    </insert>
+
+    <!-- Permission.MANAGE_ALERTS -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="7"/>
+    </insert>
+
+    <!-- Permission.MANAGE_MEASUREMENTS -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="8"/>
+    </insert>
+
+    <!-- Permission.MANAGE_CONTENT -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="9"/>
+    </insert>
+
+    <!-- Permission.CONTROL -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="10"/>
+    </insert>
+
+    <!-- Permission.CONFIGURE -->
+    <insert tableName="rhq_permission">
+      <column name="role_id" value="2"/>
+      <column name="operation" value="11"/>
+    </insert>
+
+    <rollback>
+      <delete tableName="rhq_permission">
+        <!-- 
+          we might want to user more specific criteria to make sure we don't delete anything
+          that is not intended to be deleted. 
+        -->
+        <where>role_id = 1 or role_id = 2</where>
+      </delete>
+    </rollback>
+  </changeSet>
 </databaseChangeLog>

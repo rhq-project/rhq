@@ -10,7 +10,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.bundle.BundleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.AdvisoryManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.DistributionManagerRemote;
 import org.rhq.enterprise.server.content.EntitlementStuffManagerRemote;
@@ -25,7 +24,6 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
-import org.rhq.enterprise.server.registration.RegistrationManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
@@ -38,7 +36,6 @@ import org.rhq.enterprise.server.system.SystemManagerRemote;
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface WebservicesRemote extends //
-    AdvisoryManagerRemote, //
     AlertManagerRemote, //
     AlertDefinitionManagerRemote, //
     AvailabilityManagerRemote,//

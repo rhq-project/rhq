@@ -35,7 +35,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.bundle.BundleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.AdvisoryManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.DistributionManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
@@ -72,7 +71,6 @@ import org.rhq.enterprise.server.tagging.TagManagerRemote;
 public class RemoteClient {
 
     public enum Manager {
-        AdvisoryManager(AdvisoryManagerRemote.class), //
         AlertManager(AlertManagerRemote.class), //
         AlertDefinitionManager(AlertDefinitionManagerRemote.class), //
         AvailabilityManager(AvailabilityManagerRemote.class), //
@@ -102,8 +100,7 @@ public class RemoteClient {
         SupportManager(SupportManagerRemote.class), //
         SystemManager(SystemManagerRemote.class), //
         RemoteInstallManager(RemoteInstallManagerRemote.class), //
-        TagManager(TagManagerRemote.class)
-        ;
+        TagManager(TagManagerRemote.class);
 
         private Class<?> remote;
         private String remoteName;
@@ -310,10 +307,6 @@ public class RemoteClient {
      */
     public void setTransport(String transport) {
         this.transport = transport;
-    }
-
-    public AdvisoryManagerRemote getAdvisoryManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.AdvisoryManager);
     }
 
     public AlertManagerRemote getAlertManagerRemote() {

@@ -48,7 +48,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
  * @author Pradeep Kilambi
  */
 @Stateless
-public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManagerRemote {
+public class AdvisoryManagerBean implements AdvisoryManagerLocal {
 
     // Attributes  --------------------------------------------
 
@@ -106,11 +106,6 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
 
         entityManager.persist(advpkg);
         return advpkg;
-    }
-
-    public CVE getCVE(Subject user, int cveId) {
-        CVE cve = entityManager.find(CVE.class, cveId);
-        return cve;
     }
 
     public void deleteCVE(Subject user, int cveId) {
@@ -248,7 +243,6 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
      * find list of Packages Versions associated to an advisory
      * @return list of PackageVersion objects
      */
-    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PackageVersion findPackageVersionByPkgId(Subject subject, String rpmName, PageControl pc) {
         Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_PACKAGEVERSION_BY_FILENAME);
@@ -262,7 +256,6 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
         }
     }
 
-    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public long getPackageCountFromAdv(Subject subject, int advId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, AdvisoryPackage.FIND_PACKAGES_BY_ADV_ID);
@@ -291,7 +284,6 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
 
     }
 
-    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public long getCVECountFromAdv(Subject subject, int advId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, AdvisoryCVE.FIND_CVE_BY_ADV_ID);
@@ -326,7 +318,6 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
      * @param buginfo
      * @return A AdvisoryBuglist objects
      */
-    @SuppressWarnings("unchecked")
     public AdvisoryBuglist getAdvisoryBuglist(Subject subject, int advId, String buginfo) {
         Query query = entityManager.createNamedQuery(AdvisoryBuglist.FIND_ADVISORY_BUGLIST);
 

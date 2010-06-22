@@ -57,11 +57,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.Advisory;
-import org.rhq.core.domain.content.AdvisoryBuglist;
-import org.rhq.core.domain.content.AdvisoryCVE;
-import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.CVE;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DistributionType;
@@ -128,8 +124,6 @@ import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
-import org.rhq.enterprise.server.content.AdvisoryException;
-import org.rhq.enterprise.server.content.AdvisoryManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.DistributionException;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
@@ -181,7 +175,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class WebservicesManagerBean implements WebservicesRemote {
 
     //Lookup the required beans as local references
-    private AdvisoryManagerLocal advisoryManager = LookupUtil.getAdvisoryManagerLocal();
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
     private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
     private AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
@@ -211,80 +204,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
     private EntitlementStuffManagerLocal entitlementManager = LookupUtil.getEntitlementManager();
-
-    //ADVISORYMANAGER: BEGIN ------------------------------------------
-
-    public Advisory createAdvisory(Subject subject, String advisory, String advisoryType, String advisoryName)
-        throws AdvisoryException {
-        return advisoryManager.createAdvisory(subject, advisory, advisoryType, advisoryName);
-    }
-
-    public CVE createCVE(Subject subject, String cvename) throws AdvisoryException {
-        return advisoryManager.createCVE(subject, cvename);
-    }
-
-    public AdvisoryCVE createAdvisoryCVE(Subject subject, Advisory advisory, CVE cve) throws AdvisoryException {
-        return advisoryManager.createAdvisoryCVE(subject, advisory, cve);
-    }
-
-    public AdvisoryPackage createAdvisoryPackage(Subject subject, Advisory advisory, PackageVersion pkg)
-        throws AdvisoryException {
-        return advisoryManager.createAdvisoryPackage(subject, advisory, pkg);
-    }
-
-    public CVE getCVE(Subject subject, int cveId) {
-        return advisoryManager.getCVE(subject, cveId);
-    }
-
-    public void deleteCVE(Subject subject, int cveId) {
-        advisoryManager.deleteCVE(subject, cveId);
-    }
-
-    public void deleteAdvisoryCVE(Subject subject, int advId) {
-        advisoryManager.deleteAdvisoryCVE(subject, advId);
-    }
-
-    public void deleteAdvisoryByAdvId(Subject subject, int advId) {
-        advisoryManager.deleteAdvisoryByAdvId(subject, advId);
-    }
-
-    public Advisory getAdvisoryByName(String advlabel) {
-        return advisoryManager.getAdvisoryByName(advlabel);
-    }
-
-    public List<AdvisoryPackage> findPackageByAdvisory(Subject subject, int advId, PageControl pc) {
-        return advisoryManager.findPackageByAdvisory(subject, advId, pc);
-    }
-
-    public PackageVersion findPackageVersionByPkgId(Subject subject, String rpmName, PageControl pc) {
-        return advisoryManager.findPackageVersionByPkgId(subject, rpmName, pc);
-    }
-
-    public PageList<AdvisoryCVE> getAdvisoryCVEByAdvId(Subject subject, int advId, PageControl pc) {
-        return advisoryManager.getAdvisoryCVEByAdvId(subject, advId, pc);
-    }
-
-    public List<AdvisoryBuglist> getAdvisoryBuglistByAdvId(Subject subject, int advId) {
-        return advisoryManager.getAdvisoryBuglistByAdvId(subject, advId);
-    }
-
-    public void deleteAdvisoryBugList(Subject overlord, int id) {
-        advisoryManager.deleteAdvisoryBugList(overlord, id);
-    }
-
-    public void deleteAdvisoryPackage(Subject subject, int advId) {
-        advisoryManager.deleteAdvisoryPackage(subject, advId);
-    }
-
-    public AdvisoryPackage findAdvisoryPackage(Subject overlord, int advId, int pkgVerId) {
-        return advisoryManager.findAdvisoryPackage(overlord, advId, pkgVerId);
-    }
-
-    public AdvisoryBuglist getAdvisoryBuglist(Subject subject, int advId, String buginfo) {
-        return advisoryManager.getAdvisoryBuglist(subject, advId, buginfo);
-    }
-
-    //ADVISORYMANAGER: END ------------------------------------------
 
     //ALERTMANAGER: BEGIN ------------------------------------------
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {

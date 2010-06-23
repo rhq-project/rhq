@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -261,9 +262,11 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
 
         InventoryManager inventoryManager = pc.getInventoryManager();
         HashSet<ResourceType> blacklist = inventoryManager.getDiscoveryComponentProxyFactory().getResourceTypeBlacklist();
-        for (ResourceType type: blacklist) {
+        Iterator<ResourceType> iterator = blacklist.iterator();
+        while (iterator.hasNext()) {
+            ResourceType type = iterator.next();
             if (!typesToDiscover.contains(type)) {
-                blacklist.remove(type);
+                iterator.remove();
             }
         }
         if (!blacklist.isEmpty()) {

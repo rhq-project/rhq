@@ -97,4 +97,8 @@ public interface AlertNotificationManagerLocal {
     String getBackingBeanNameForSender(String shortName);
 
     AlertNotification getAlertNotification(Subject user, int alertNotificationId);
+
+    int cleanseAlertNotificationBySubject(int subjectId);
+
+    int cleanseAlertNotificationByRole(int roleId);
 }

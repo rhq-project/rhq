@@ -158,21 +158,23 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
                 definitionId = nextDefinitionId;
                 if (buffer.length() != 0) {
                     // buffer will be 0 the very first time, since definitionId is initially -1
-                    int configId = persistConfiguration(propertyName, buffer.toString());
+                    int configId = persistConfiguration(propertyName, "|" + buffer.toString() + "|");
                     persistNotification(definitionId, configId, sender);
                 }
                 buffer = new StringBuilder(); // reset for the next definitionId
             }
 
             if (buffer.length() != 0) {
-                // elements are already in the list
-                buffer.append(',');
+                // elements are already in the list, always add '|' separator between them
+                buffer.append('|');
             }
             buffer.append(nextData);
         }
 
         if (buffer.length() != 0) {
-            int configId = persistConfiguration(propertyName, buffer.toString());
+            // always add '|' separator to both side of the buffer
+            // this will enable searches for data using the JPQL fragment notification.configuration.value = '|<data>|'
+            int configId = persistConfiguration(propertyName, "|" + buffer.toString() + "|");
             persistNotification(definitionId, configId, sender);
         }
     }

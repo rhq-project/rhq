@@ -66,7 +66,8 @@ public class SystemConfigForm extends BaseValidatorForm {
     private String ldapPassword = "";
     private Boolean ldapEnabled = null;
     private boolean reindex = false;
-
+    private boolean allowResourceGenericPropertiesUpgrade;
+    
     @Override
     public String toString() {
         StringBuffer buf = new StringBuffer(super.toString());
@@ -230,6 +231,8 @@ public class SystemConfigForm extends BaseValidatorForm {
         String jaasProvider = prop.getProperty(RHQConstants.JAASProvider);
         ldapEnabled = RHQConstants.LDAPJAASProvider.equals(jaasProvider) ? Boolean.TRUE : null;
 
+        String resourceGenericPropertiesUpgradeAllowed = prop.getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade);
+        allowResourceGenericPropertiesUpgrade = Boolean.parseBoolean(resourceGenericPropertiesUpgradeAllowed);
     }
 
     /**
@@ -332,6 +335,8 @@ public class SystemConfigForm extends BaseValidatorForm {
             prop.setProperty(RHQConstants.JAASProvider, RHQConstants.JDBCJAASProvider);
         }
 
+        prop.setProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade, String.valueOf(allowResourceGenericPropertiesUpgrade));
+        
         return prop;
     }
 
@@ -607,6 +612,14 @@ public class SystemConfigForm extends BaseValidatorForm {
 
     public void setReindex(boolean reindex) {
         this.reindex = reindex;
+    }
+    
+    public boolean isAllowResourceGenericPropertiesUpgrade() {
+        return allowResourceGenericPropertiesUpgrade;
+    }
+
+    public void setAllowResourceGenericPropertiesUpgrade(boolean allowResourceGenericPropertiesUpgrade) {
+        this.allowResourceGenericPropertiesUpgrade = allowResourceGenericPropertiesUpgrade;
     }
 
     /* (non-Javadoc)

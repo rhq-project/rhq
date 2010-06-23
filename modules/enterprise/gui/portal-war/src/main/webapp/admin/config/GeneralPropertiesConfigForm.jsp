@@ -86,6 +86,17 @@
       </table>
     </td>
   </tr>
+  <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.AllowResourceGenericPropertiesUpgrade"/></td>
+    <td class="BlockContent">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td align="left"><html:radio property="allowResourceGenericPropertiesUpgrade" value="true"/><fmt:message key="yesno.true"/></td>
+          <td align="left"><html:radio property="allowResourceGenericPropertiesUpgrade" value="false"/><fmt:message key="yesno.false"/></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
 
 <hq:authorization permission="superuser">
   <tr>

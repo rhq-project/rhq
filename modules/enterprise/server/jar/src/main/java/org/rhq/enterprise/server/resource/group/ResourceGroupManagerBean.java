@@ -984,6 +984,17 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             + "   resourcegroup ) ";
         generator.alterProjection(replacementSelectList);
 
+        if (criteria.isSecurityManagerRequired()
+            && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY)) {
+            throw new PermissionException("Subject [" + subject.getName()
+                + "] requires SecurityManager permission for requested query criteria.");
+        }
+
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, null,
+                subject.getId());
+        }
+
         CriteriaQueryRunner<ResourceGroupComposite> queryRunner = new CriteriaQueryRunner<ResourceGroupComposite>(
             criteria, generator, entityManager);
         PageList<ResourceGroupComposite> results = queryRunner.execute();

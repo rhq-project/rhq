@@ -20,6 +20,7 @@
          <xs:element ref="perf:resourceGenerator" minOccurs="1" maxOccurs="1"/>
          <xs:element ref="perf:pluginConfigurationGenerator" minOccurs="0" maxOccurs="1"/>
          <xs:element ref="perf:measurementGenerator" minOccurs="0" maxOccurs="1"/>
+         <xs:element ref="perf:calltimeGenerator" minOccurs="0" maxOccurs="1"/>
          <xs:element ref="perf:contentGenerator" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
       <xs:attribute name="type" use="required">
@@ -63,6 +64,32 @@
    <xs:complexType name="OOBNumericMeasurementGenerator">
       <xs:complexContent>
          <xs:extension base="perf:measurementGenerator"/>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element name="calltimeGenerator" type="perf:calltimeGenerator" abstract="true"/>
+   <xs:complexType name="calltimeGenerator"/>
+
+
+   <xs:element name="SimpleCallTimeDataGenerator" type="perf:SimpleCallTimeDataGenerator"
+               substitutionGroup="perf:calltimeGenerator"/>
+   <xs:complexType name="SimpleCallTimeDataGenerator">
+      <xs:complexContent>
+         <xs:extension base="perf:calltimeGenerator"/>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element name="ConfigurableCallTimeDataGenerator" type="perf:ConfigurableCallTimeDataGenerator"
+               substitutionGroup="perf:calltimeGenerator"/>
+   <xs:complexType name="ConfigurableCallTimeDataGenerator">
+      <xs:complexContent>
+         <xs:extension base="perf:calltimeGenerator">
+             <xs:attribute name="minMsgCount" type="xs:int" default="1" />
+             <xs:attribute name="maxMsgCount" type="xs:int" default="1" />
+             <xs:attribute name="numberSubPaths" type="xs:int" default="0"/>
+             <xs:attribute name="minDuration" type="xs:int" default="10" />
+             <xs:attribute name="maxDuration" type="xs:int" default="100" />
+         </xs:extension>
       </xs:complexContent>
    </xs:complexType>
 

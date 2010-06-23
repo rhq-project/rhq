@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2008 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,28 +20,30 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.pc.inventory;
 
-import org.rhq.core.pc.util.ComponentUtil;
-import org.rhq.core.pc.util.FacetLockType;
+package org.rhq.enterprise.client;
 
 /**
- * This exception is thrown when a method invoked on a proxied plugin component times out. If possible, its cause
- * will be set to an Exception containing the stack trace of the plugin component thread that timed out.
+ * A builder will throw this exception if it is unable to build the target object. For example, if example if all
+ * required properites of the target object do not have non-null values, then the builder will throw this exception.
  *
- * @see ResourceContainer#createResourceComponentProxy(Class, FacetLockType, long, boolean, boolean)
- * @see ComponentUtil#getComponent(int, Class, FacetLockType, long, boolean, boolean)
- *
- * @author Ian Springer
+ * @author John Sanda
  */
-public class TimeoutException extends RuntimeException {
-    private static final long serialVersionUID = 1L;
+public class BuilderException extends RuntimeException {
 
-    public TimeoutException(String message) {
+    public BuilderException() {
+        super();
+    }
+
+    public BuilderException(String message) {
         super(message);
     }
 
-    public TimeoutException(String message, Throwable cause) {
+    public BuilderException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public BuilderException(Throwable cause) {
+        super(cause);
     }
 }

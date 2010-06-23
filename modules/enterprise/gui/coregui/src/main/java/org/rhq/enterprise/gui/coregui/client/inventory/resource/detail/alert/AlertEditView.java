@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FormItemIfFunction;
@@ -292,7 +293,7 @@ public class AlertEditView extends VLayout {
         valueMap.put("Baseline", subForm2);
 
 
-        valueMap.put("valueChanges", "Value Changes");
+        valueMap.put("valueChanges", new Label("Value Changes"));
 
 
         RadioGroupWithComponentsItem metricConditionType = new RadioGroupWithComponentsItem("metricConditionType", null, valueMap, form);

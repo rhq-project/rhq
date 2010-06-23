@@ -67,7 +67,8 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "         mb.id, " //
         + "         mb.baselineMin, " //
         + "         mb.baselineMean, " //
-        + "         mb.baselineMax " //
+        + "         mb.baselineMax, " //
+        + "         md.dataType " //
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
@@ -100,7 +101,8 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionChangesCategoryComposite " //
         + "       ( " //
         + "         ac, " //
-        + "         ms.id " //
+        + "         ms.id, " //
+        + "         md.dataType " //
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
@@ -191,7 +193,8 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionScheduleCategoryComposite " //
         + "       ( " //
         + "         ac, " //
-        + "         ms.id " //
+        + "         ms.id, " //
+        + "         md.dataType " //
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //

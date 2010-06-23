@@ -50,7 +50,7 @@ import org.rhq.enterprise.server.plugin.pc.perspective.metadata.PerspectivePlugi
  * @author Jay Shaughnessy
  * @author Ian Springer
  */
-public class PerspectiveManagerBean implements PerspectiveManagerLocal, PerspectiveManagerRemote {
+public class PerspectiveManagerBean implements PerspectiveManagerLocal {
 
     // Map of sessionId to cached menu entry.  The cached menu is re-used for the same sessionId.
     // This should more appropriately use Subject as the key, but since Subject equality is

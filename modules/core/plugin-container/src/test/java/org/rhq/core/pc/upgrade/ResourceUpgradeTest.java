@@ -49,6 +49,7 @@ import org.rhq.core.clientapi.server.event.EventServerService;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
+import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -64,6 +65,7 @@ import org.rhq.core.pc.plugin.FileSystemPluginFinder;
  * 
  * @author Lukas Krejci
  */
+@Test(sequential = true, invocationCount = 1)
 public class ResourceUpgradeTest {
 
     private static final String PLUGIN_V1_FILENAME = "resource-upgrade-test-plugin-1.0.0.jar";
@@ -100,7 +102,7 @@ public class ResourceUpgradeTest {
         verifyPluginExists(PLUGIN_V2_FILENAME);
     }
     
-    @BeforeClass
+    @BeforeClass(dependsOnMethods = "sanityCheck")
     public void init() {
         tmpDir = getTmpDirectory();
         pluginDir = new File(tmpDir, PLUGINS_DIR_NAME);
@@ -110,12 +112,10 @@ public class ResourceUpgradeTest {
     }
 
     @Test
-    public void testInitialSyncAndDiscoveryWithoutCommit() throws Exception {
-        testInitialSyncAndDiscovery(InventoryStatus.NEW);
-    }
-    
-    @Test(dependsOnMethods = "testInitialSyncAndDiscoveryWithoutCommit")
     public void testIgnoreUncommittedResources() throws Exception {
+        currentServerSideInventory = new FakeServerInventory();
+        initialSyncAndDiscovery(InventoryStatus.NEW);
+        
         TestPayload testNoChange = new TestPayload() {           
             public void test(Resource discoveredResource) {
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
@@ -123,17 +123,13 @@ public class ResourceUpgradeTest {
                 assertEquals(discoveredResource.getDescription(), "resource-description-v1");
             }
             
-            @SuppressWarnings("unchecked")
             public Expectations getExpectations(Mockery context) throws Exception {
                 return new Expectations() {
                     {
-                        defineIgnoredExpectations(this);
+                        defineDefaultExpectations(this);
                         
                         between(1, 4).of(currentDiscoveryServerService).mergeInventoryReport(with(any(InventoryReport.class)));
                         will(currentServerSideInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
-                        
-                        allowing(currentDiscoveryServerService).getResources(with(any(Set.class)), with(any(boolean.class)));
-                        will(currentServerSideInventory.getResources());
                     }
                 };
             }
@@ -142,17 +138,75 @@ public class ResourceUpgradeTest {
         executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), false, testNoChange);
     }
     
-    //make the tests run serially, so that they don't overwrite the currentServerSideInventory
-    //variable concurrently
-    @Test(dependsOnMethods = "testIgnoreUncommittedResources")
-    public void testInitialSyncAndDiscoveryWithCommit() throws Exception {
-        testInitialSyncAndDiscovery(InventoryStatus.COMMITTED);
-    }
-
-    @Test(dependsOnMethods = "testInitialSyncAndDiscoveryWithCommit")
+    @Test
     public void testUpgradeData() throws Exception {
-        //we are keeping the currentServerSideInventory from the previous test
+        currentServerSideInventory = new FakeServerInventory();
+        upgradeTest(false);
+    }
+    
+    @Test
+    public void testInventoryReinitializationFromServerDuringUpgrade() throws Exception {
+        currentServerSideInventory = new FakeServerInventory();
+        upgradeTest(true);
+    }
+    
+    @Test
+    public void testResourceUpgradeRunsOnlyOnce() throws Exception {
+        currentServerSideInventory = new FakeServerInventory();
+        initialSyncAndDiscovery(InventoryStatus.COMMITTED);
+        
         executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), false, new TestPayload() {
+            public void test(Resource discoveredResource) {
+                for(int i = 0; i < 100; i++) {
+                    PluginContainer.getInstance().getInventoryManager().fireResourceUpgrade();
+                }
+            }
+
+            @SuppressWarnings("unchecked")
+            public Expectations getExpectations(Mockery context) throws Exception {
+                return new Expectations() {
+                    {
+                        defineDefaultExpectations(this);
+                        
+                        between(1, 4).of(currentDiscoveryServerService).mergeInventoryReport(with(any(InventoryReport.class)));
+                        will(currentServerSideInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+                        
+                        //even though we fire the resource upgrade 100 times above, 
+                        //only 1 upgrade should actually occur and go up to the server.
+                        oneOf(currentDiscoveryServerService).upgradeResources(with(any(Set.class)));
+                        will(currentServerSideInventory.upgradeResources());
+                    }
+                };
+            }
+        });
+    }
+    
+    private void initialSyncAndDiscovery(final InventoryStatus requiredInventoryStatus) throws Exception {
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V1_FILENAME), true, new TestPayload() {           
+            public void test(Resource discoveredResource) {
+                assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
+                assertEquals(discoveredResource.getName(), "resource-name-v1");
+                assertEquals(discoveredResource.getDescription(), "resource-description-v1");
+            }
+
+            public Expectations getExpectations(Mockery context) throws Exception {
+                return new Expectations() {
+                    {
+                        defineDefaultExpectations(this);
+                        
+                        between(1, 4).of(currentDiscoveryServerService).mergeInventoryReport(with(any(InventoryReport.class)));
+                        will(currentServerSideInventory.mergeInventoryReport(requiredInventoryStatus));
+                    }
+                };
+            }
+        });                
+        
+    }
+    
+    private void upgradeTest(boolean clearInventoryDat) throws Exception {
+        initialSyncAndDiscovery(InventoryStatus.COMMITTED);
+        
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), clearInventoryDat, new TestPayload() {
             public void test(Resource discoveredResource) {
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v2");
                 assertEquals(discoveredResource.getName(), "resource-name-v2");
@@ -170,47 +224,17 @@ public class ResourceUpgradeTest {
             public Expectations getExpectations(Mockery context) throws Exception {
                 return new Expectations() {
                     {
-                        defineIgnoredExpectations(this);
+                        defineDefaultExpectations(this);
                         
                         between(1, 4).of(currentDiscoveryServerService).mergeInventoryReport(with(any(InventoryReport.class)));
                         will(currentServerSideInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
                         
                         oneOf(currentDiscoveryServerService).upgradeResources(with(any(Set.class)));
                         will(currentServerSideInventory.upgradeResources());
-
-                        allowing(currentDiscoveryServerService).getResources(with(any(Set.class)), with(any(boolean.class)));
-                        will(currentServerSideInventory.getResources());
                     }
                 };
             }
         });
-    }
-    
-    private void testInitialSyncAndDiscovery(final InventoryStatus requiredInventoryStatus) throws Exception {
-        currentServerSideInventory = new FakeServerInventory();
-        executeTestWithPlugins(Collections.singleton(PLUGIN_V1_FILENAME), true, new TestPayload() {           
-            public void test(Resource discoveredResource) {
-                assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
-                assertEquals(discoveredResource.getName(), "resource-name-v1");
-                assertEquals(discoveredResource.getDescription(), "resource-description-v1");
-            }
-
-            @SuppressWarnings("unchecked")
-            public Expectations getExpectations(Mockery context) throws Exception {
-                return new Expectations() {
-                    {
-                        defineIgnoredExpectations(this);
-                        
-                        between(1, 4).of(currentDiscoveryServerService).mergeInventoryReport(with(any(InventoryReport.class)));
-                        will(currentServerSideInventory.mergeInventoryReport(requiredInventoryStatus));
-                        
-                        allowing(currentDiscoveryServerService).getResources(with(any(Set.class)), with(any(boolean.class)));
-                        will(currentServerSideInventory.getResources());
-                    }
-                };
-            }
-        });                
-        
     }
     
     private PluginContainerConfiguration createPluginContainerConfiguration(Mockery context) throws Exception {
@@ -222,6 +246,15 @@ public class ResourceUpgradeTest {
         conf.setInsideAgent(true); //pc must think it's inside an agent so that it persists the inventory between restarts
         conf.setPluginFinder(new FileSystemPluginFinder(conf.getPluginDirectory()));
         conf.setCreateResourceClassloaders(false); 
+        
+        //we're not interested in any scans happening out of our control
+        conf.setAvailabilityScanInitialDelay(Long.MAX_VALUE);
+        conf.setConfigurationDiscoveryInitialDelay(Long.MAX_VALUE);
+        conf.setContentDiscoveryInitialDelay(Long.MAX_VALUE);
+        conf.setEventSenderInitialDelay(Long.MAX_VALUE);
+        conf.setMeasurementCollectionInitialDelay(Long.MAX_VALUE);
+        conf.setServerDiscoveryInitialDelay(Long.MAX_VALUE);
+        conf.setServiceDiscoveryInitialDelay(Long.MAX_VALUE);
         
         currentBundleServerService = context.mock(BundleServerService.class);
         currentConfigurationServerService = context.mock(ConfigurationServerService.class);
@@ -332,7 +365,8 @@ public class ResourceUpgradeTest {
         context.assertIsSatisfied();
     }
     
-    private void defineIgnoredExpectations(Expectations expectations) {
+    @SuppressWarnings("unchecked")
+    private void defineDefaultExpectations(Expectations expectations) {
         expectations.ignoring(currentBundleServerService);
         expectations.ignoring(currentConfigurationServerService);
         expectations.ignoring(currentContentServerService);
@@ -341,5 +375,11 @@ public class ResourceUpgradeTest {
         expectations.ignoring(currentMeasurementServerService);
         expectations.ignoring(currentOperationServerService);
         expectations.ignoring(currentResourceFactoryServerService);
+        
+        //just ignore these invocations if we get a availability scan in the PC...
+        expectations.allowing(currentDiscoveryServerService).mergeAvailabilityReport(expectations.with(Expectations.any(AvailabilityReport.class)));
+
+        expectations.allowing(currentDiscoveryServerService).getResources(expectations.with(Expectations.any(Set.class)), expectations.with(Expectations.any(boolean.class)));
+        expectations.will(currentServerSideInventory.getResources());
     }
 }

@@ -130,10 +130,9 @@ public class ViewAlertAction extends TilesAction {
         request.setAttribute("conditionExpression", adv.getConditionExpression().name());
         request.setAttribute("alertDefConditions", alertCondBeans);
 
+        List<AlertNotificationLog> notificationLogs = av.getAlertNotificationLogs();
 
-        List<AlertNotificationLog> notificationLogs = av.getAlertNotificationLogs() ;
-
-        request.setAttribute("aNotifLogs",notificationLogs);
+        request.setAttribute("aNotifLogs", notificationLogs);
 
         request.setAttribute("controlEnabled", true); // always display control result, even if it's "none"
         if (av.getTriggeredOperation() != null) {

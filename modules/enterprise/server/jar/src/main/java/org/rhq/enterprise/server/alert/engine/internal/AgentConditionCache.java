@@ -18,10 +18,14 @@
  */
 package org.rhq.enterprise.server.alert.engine.internal;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
@@ -35,9 +39,12 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.EventSource;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -46,12 +53,14 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator.Cache;
 import org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor;
 import org.rhq.enterprise.server.alert.engine.model.AlertConditionOperator;
+import org.rhq.enterprise.server.alert.engine.model.CallTimeDataCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.EventCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.InvalidCacheElementException;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementBaselineCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementNumericCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementTraitCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.NumericDoubleCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.CallTimeDataCacheElement.CallTimeElementValue;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -63,6 +72,7 @@ class AgentConditionCache extends AbstractConditionCache {
 
     private Map<Integer, List<NumericDoubleCacheElement>> measurementDataCache;
     private Map<Integer, List<MeasurementTraitCacheElement>> measurementTraitCache;
+    private Map<Integer, List<CallTimeDataCacheElement>> callTimeCache;
     private Map<Integer, List<EventCacheElement>> eventsCache;
 
     private AlertConditionManagerLocal alertConditionManager;
@@ -78,6 +88,7 @@ class AgentConditionCache extends AbstractConditionCache {
 
         measurementDataCache = new HashMap<Integer, List<NumericDoubleCacheElement>>();
         measurementTraitCache = new HashMap<Integer, List<MeasurementTraitCacheElement>>();
+        callTimeCache = new HashMap<Integer, List<CallTimeDataCacheElement>>();
         eventsCache = new HashMap<Integer, List<EventCacheElement>>();
 
         alertConditionManager = LookupUtil.getAlertConditionManager();
@@ -158,7 +169,40 @@ class AgentConditionCache extends AbstractConditionCache {
         AlertConditionOperator alertConditionOperator = AlertConditionCacheUtils.getAlertConditionOperator(
             alertConditionCategory, alertCondition.getComparator(), alertCondition.getOption());
 
-        if (alertConditionCategory == AlertConditionCategory.BASELINE) {
+        if (DataType.CALLTIME == composite.getDataType()) { // call-time cases start here
+            if (alertConditionCategory == AlertConditionCategory.CHANGE) {
+                AlertConditionChangesCategoryComposite changesComposite = (AlertConditionChangesCategoryComposite) composite;
+                int scheduleId = changesComposite.getScheduleId();
+
+                try {
+                    CallTimeDataCacheElement cacheElement = new CallTimeDataCacheElement(alertConditionOperator,
+                        CallTimeElementValue.valueOf(alertCondition.getOption()), alertCondition.getComparator(),
+                        alertCondition.getThreshold(), alertConditionId, alertCondition.getName());
+
+                    addTo("callTimeDataCache", callTimeCache, scheduleId, cacheElement, alertConditionId, stats);
+                } catch (InvalidCacheElementException icee) {
+                    log.info("Failed to create NumericDoubleCacheElement with parameters: "
+                        + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
+                            null, alertCondition.getThreshold()));
+                }
+            } else if (alertConditionCategory == AlertConditionCategory.THRESHOLD) {
+                AlertConditionScheduleCategoryComposite thresholdComposite = (AlertConditionScheduleCategoryComposite) composite;
+
+                try {
+                    CallTimeDataCacheElement cacheElement = new CallTimeDataCacheElement(alertConditionOperator,
+                        CallTimeElementValue.valueOf(alertCondition.getOption()), null, alertCondition.getThreshold(),
+                        alertConditionId, alertCondition.getName());
+
+                    addTo("measurementDataCache", callTimeCache, thresholdComposite.getScheduleId(), cacheElement,
+                        alertConditionId, stats);
+                } catch (InvalidCacheElementException icee) {
+                    log.info("Failed to create NumberDoubleCacheElement with parameters: "
+                        + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
+                            null, alertCondition.getThreshold()));
+                }
+
+            }// last call-time case
+        } else if (alertConditionCategory == AlertConditionCategory.BASELINE) { // normal cases start here
             AlertConditionBaselineCategoryComposite baselineComposite = (AlertConditionBaselineCategoryComposite) composite;
             // option status for baseline gets set to "mean", but it's rather useless since the UI
             // current doesn't allow alerting off of other baseline properties such as "min" and "max"
@@ -301,6 +345,84 @@ class AgentConditionCache extends AbstractConditionCache {
         return stats;
     }
 
+    public AlertConditionCacheStats checkConditions(CallTimeData... callTime) {
+        if ((callTime == null) || (callTime.length == 0)) {
+            return new AlertConditionCacheStats();
+        }
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        HashMap<Integer, HashMap<String, ArrayList<CallTimeDataValue>>> order = produceOrderedCallTimeDataStructure(callTime);
+        for (Integer scheduleId : order.keySet()) {
+            List<? extends CallTimeDataCacheElement> conditionCacheElements = lookupCallTimeDataCacheElements(scheduleId);
+            for (String callDest : order.get(scheduleId).keySet())
+                for (CallTimeDataValue provided : order.get(scheduleId).get(callDest)) {
+                    processCacheElements(conditionCacheElements, provided, provided.getBeginTime(), stats, callDest);
+                }
+        }
+        return stats;
+    }
+
+    private HashMap<Integer, HashMap<String, ArrayList<CallTimeDataValue>>> produceOrderedCallTimeDataStructure(
+        CallTimeData... callTime) {
+        long beginTime = 0;
+        if (log.isDebugEnabled())
+            beginTime = System.nanoTime();
+
+        //Insert all CallTimeDataValue in data structure
+        HashMap<Integer, HashMap<String, ArrayList<CallTimeDataValue>>> order = new HashMap<Integer, HashMap<String, ArrayList<CallTimeDataValue>>>();
+        for (CallTimeData ctd : callTime) {
+            if (!order.containsKey(ctd.getScheduleId()))
+                order.put(ctd.getScheduleId(), new HashMap<String, ArrayList<CallTimeDataValue>>());
+
+            HashMap<String, ArrayList<CallTimeDataValue>> partialOrder = order.get(ctd.getScheduleId());
+            for (String callDestination : ctd.getValues().keySet()) {
+                if (!partialOrder.containsKey(callDestination))
+                    partialOrder.put(callDestination, new ArrayList<CallTimeDataValue>());
+
+                ArrayList<CallTimeDataValue> list = partialOrder.get(callDestination);
+                list.add(ctd.getValues().get(callDestination));
+            }
+        }
+
+        //sort all lists in the data structure
+        for (HashMap<String, ArrayList<CallTimeDataValue>> topList : order.values())
+            for (ArrayList<CallTimeDataValue> bottomList : topList.values())
+                Collections.sort(bottomList, getCallTimeComparator());
+
+        if (log.isDebugEnabled())
+            log.debug("sorting call-time data during alerting took: "
+                + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beginTime) + "ms");
+        return order;
+    }
+
+    private Comparator<CallTimeDataValue> getCallTimeComparator() {
+        return new Comparator<CallTimeDataValue>() {
+            public int compare(CallTimeDataValue arg0, CallTimeDataValue arg1) {
+                if (arg0 == null || arg1 == null)
+                    throw new IllegalArgumentException("Call-time data value entries must not be null!");
+
+                if (arg0 == arg1)
+                    return 0;
+
+                //differing begin times:
+                if (arg0.getBeginTime() < arg1.getBeginTime())
+                    return -1;
+                if (arg0.getBeginTime() > arg1.getBeginTime())
+                    return 1;
+
+                // begin time equality:
+                if (arg0.getBeginTime() == arg1.getBeginTime()) {
+                    if (arg0.getEndTime() == arg1.getEndTime())
+                        return 0;
+                    if (arg0.getEndTime() < arg1.getEndTime())
+                        return -1;
+                    if (arg0.getEndTime() > arg1.getEndTime())
+                        return 1;
+                }
+                return Integer.MIN_VALUE;
+            }
+        };
+    }
+
     public AlertConditionCacheStats checkConditions(EventSource source, Event... events) {
         if ((events == null) || (events.length == 0)) {
             return new AlertConditionCacheStats();
@@ -328,6 +450,10 @@ class AgentConditionCache extends AbstractConditionCache {
 
     private List<? extends NumericDoubleCacheElement> lookupMeasurementDataCacheElements(int scheduleId) {
         return measurementDataCache.get(scheduleId); // yup, might be null
+    }
+
+    private List<? extends CallTimeDataCacheElement> lookupCallTimeDataCacheElements(int scheduleId) {
+        return callTimeCache.get(scheduleId); // yup, might be null
     }
 
     private List<MeasurementTraitCacheElement> lookupMeasurementTraitCacheElements(int scheduleId) {
@@ -379,6 +505,8 @@ class AgentConditionCache extends AbstractConditionCache {
             return AlertConditionCacheUtils.getMapListCount(measurementDataCache);
         } else if (cache == AlertConditionCacheCoordinator.Cache.MeasurementTraitCache) {
             return AlertConditionCacheUtils.getMapListCount(measurementTraitCache);
+        } else if (cache == AlertConditionCacheCoordinator.Cache.CallTimeDataCache) {
+            return AlertConditionCacheUtils.getMapListCount(callTimeCache);
         } else if (cache == AlertConditionCacheCoordinator.Cache.EventsCache) {
             return AlertConditionCacheUtils.getMapListCount(eventsCache);
         } else {

@@ -29,6 +29,7 @@ import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.operation.OperationHistory;
 
 /**
@@ -47,6 +48,14 @@ public interface AlertConditionCacheManagerLocal {
      * @return the number of conditions that were true against this argument
      */
     AlertConditionCacheStats checkConditions(MeasurementData... measurementData);
+
+    /**
+     * A MeasurementReport is full of CallTimeData objects. Each of these could potentially match against one of the
+     * cache's conditions. So, each must be checked against it, to see whether it fires against any of the conditions.
+     *
+     * @return the number of conditions that were true against this argument
+     */
+    AlertConditionCacheStats checkConditions(CallTimeData... callTimeData);
 
     /**
      * Operation history occurs in two distinct phases. The first is when the operation is first triggered. An

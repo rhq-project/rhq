@@ -2994,6 +2994,14 @@
                 </schema-directSQL>
             </schemaSpec>
             
+        	<schemaSpec version="2.88">
+                <schema-directSQL>
+                    <statement desc="Adding 'Allow Agent Plugins To Upgrade Generic Resource Properties' system configuration setting">
+                        INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                        VALUES (56, 'RESOURCE_GENERIC_PROPERTIES_UPGRADE', 'false', 'false')
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

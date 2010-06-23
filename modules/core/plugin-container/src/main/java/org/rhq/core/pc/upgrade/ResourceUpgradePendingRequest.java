@@ -10,12 +10,12 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  * This class is used to store the requests for resource upgrade that originate in 
  * the discovery workflow, but can only be executed after an inventory sync. 
  */
-public class ResourceUpgradeRequest<T extends ResourceComponent> {
+public class ResourceUpgradePendingRequest<T extends ResourceComponent> {
     private Set<Resource> discoveredResources;
     private ResourceDiscoveryContext<T> discoveryContext;
     private Integer parentResourceId;
     
-    public ResourceUpgradeRequest(Set<Resource> discoveredResources, ResourceDiscoveryContext<T> discoveryContext, Integer parentResourceId) {
+    public ResourceUpgradePendingRequest(Set<Resource> discoveredResources, ResourceDiscoveryContext<T> discoveryContext, Integer parentResourceId) {
         this.discoveredResources = discoveredResources;
         this.discoveryContext = discoveryContext;
         this.parentResourceId = parentResourceId;

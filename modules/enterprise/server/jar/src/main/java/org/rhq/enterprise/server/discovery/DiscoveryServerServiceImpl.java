@@ -25,6 +25,8 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
@@ -177,9 +179,9 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return discoveryBoss.updateResourceVersion(resourceId, version);
     }
 
-    public boolean upgradeResources(Set<ResourceUpgradeReport> upgradeReports) {
+    public Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests) {
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        return discoveryBoss.upgradeResources(upgradeReports);
+        return discoveryBoss.upgradeResources(upgradeRequests);
     }
     
     private static Resource convertToPojoResource(Resource resource, boolean includeDescendants) {

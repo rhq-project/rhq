@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
@@ -181,9 +183,11 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
 
     /**
      * Upgrades the data of the resources according to the provided reports.
+     * The server is free to ignore or modify the requests and will provide the
+     * true changes made to the resources on the server-side in the result of this method.
      * 
-     * @param upgradeReports contains the information about the upgrade of individual resources.
-     * @return true if the upgrade succeeded, false otherwise.
+     * @param upgradeRequests contains the information about the upgrade of individual resources.
+     * @return details on what resources have been upgraded with what data.
      */
-    boolean upgradeResources(Set<ResourceUpgradeReport> upgradeReports);
+    Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequest);
 }

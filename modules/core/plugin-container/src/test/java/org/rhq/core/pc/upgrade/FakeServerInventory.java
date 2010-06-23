@@ -37,15 +37,17 @@ import java.util.Set;
 import org.jmock.api.Invocation;
 import org.jmock.lib.action.CustomAction;
 
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.ResourceUpgradeReport;
 
 /**
- * 
+ * This class represents a server side database store of the inventory for the purposes
+ * of the ResourceUpgradeTest unit test.
  * 
  * @author Lukas Krejci
  */
@@ -89,28 +91,36 @@ public class FakeServerInventory {
         return new CustomAction("upgradeServerSideInventory") {
             @SuppressWarnings({"serial", "unchecked"})
             public Object invoke(Invocation invocation) throws Throwable {
-                Set<ResourceUpgradeReport> reports = (Set<ResourceUpgradeReport>) invocation.getParameter(0);
-
-                for (final ResourceUpgradeReport report : reports) {
+                Set<ResourceUpgradeRequest> requests = (Set<ResourceUpgradeRequest>) invocation.getParameter(0);
+                Set<ResourceUpgradeResponse> responses = new HashSet<ResourceUpgradeResponse>();
+                
+                for (final ResourceUpgradeRequest request : requests) {
                     Resource resource = findResource(platform, new Resource() {
                         public int getId() {
-                            return report.getResourceId();
+                            return request.getResourceId();
                         }
                     }, ID_COMPARATOR);
                     if (resource != null) {
-                        if (report.getNewDescription() != null) {
-                            resource.setDescription(report.getNewDescription());
+                        if (request.getNewDescription() != null) {
+                            resource.setDescription(request.getNewDescription());
                         }
-                        if (report.getNewName() != null) {
-                            resource.setName(report.getNewName());
+                        if (request.getNewName() != null) {
+                            resource.setName(request.getNewName());
                         }
                         
-                        if (report.getNewResourceKey() != null) {
-                            resource.setResourceKey(report.getNewResourceKey());
+                        if (request.getNewResourceKey() != null) {
+                            resource.setResourceKey(request.getNewResourceKey());
                         }
+                        
+                        ResourceUpgradeResponse resp = new ResourceUpgradeResponse();
+                        resp.setResourceId(resource.getId());
+                        resp.setUpgradedResourceName(resource.getName());
+                        resp.setUpgradedResourceKey(resource.getResourceKey());
+                        resp.setUpgradedResourceDescription(resource.getDescription());
+                        responses.add(resp);
                     }
                 }
-                return true;
+                return responses;
             }
         };
     }

@@ -55,6 +55,8 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
@@ -92,7 +94,7 @@ import org.rhq.core.pc.plugin.CanonicalResourceKey;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.upgrade.ResourceUpgradeExecutor;
-import org.rhq.core.pc.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.pc.upgrade.ResourceUpgradePendingRequest;
 import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
@@ -1178,31 +1180,31 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return resourceContainer.updateAvailability(availabilityType);
     }
 
-    public boolean mergeResourceFromUpgrade(Set<ResourceUpgradeReport> upgradeReports) {
-        boolean serverUpdated = false;
+    public void mergeResourceFromUpgrade(Set<ResourceUpgradeRequest> upgradeReports) {
+        Set<ResourceUpgradeResponse> serverUpdates = null;
         try {
             ServerServices serverServices = this.configuration.getServerServices();
             if (serverServices != null) {
                 DiscoveryServerService discoveryServerService = serverServices.getDiscoveryServerService();
                 
-                serverUpdated = discoveryServerService.upgradeResources(upgradeReports);
+                serverUpdates = discoveryServerService.upgradeResources(upgradeReports);
             }
         } catch (Exception e) {
             log.error("Failed to process resource upgrades on the server.", e);
         }
         
-        if (serverUpdated) {
-            for (ResourceUpgradeReport upgradeReport : upgradeReports) {
-                String resourceKey = upgradeReport.getNewResourceKey();
-                String name = upgradeReport.getNewName();
+        if (serverUpdates != null) {
+            for (ResourceUpgradeResponse upgradeResponse : serverUpdates) {
+                String resourceKey = upgradeResponse.getUpgradedResourceKey();
+                String name = upgradeResponse.getUpgradedResourceName();
                 //String version = upgradeReport.getNewVersion();
-                String description = upgradeReport.getNewDescription();
+                String description = upgradeResponse.getUpgradedResourceDescription();
                 //Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
                 //Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
 
                 //only bother if there's something to upgrade at all on this resource.
                 if (resourceKey != null || name != null || description != null) {
-                    ResourceContainer existingResourceContainer = getResourceContainer(upgradeReport.getResourceId());
+                    ResourceContainer existingResourceContainer = getResourceContainer(upgradeResponse.getResourceId());
                     if (existingResourceContainer != null) {
                         Resource existingResource = existingResourceContainer.getResource();
                         
@@ -1241,13 +1243,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         
                         log.info(logMessage.toString());
                     } else {
-                        log.error("Upgraded a resource that is not present on the agent. This should not happen. The id of the missing resource is " + upgradeReport.getResourceId());
+                        log.error("Upgraded a resource that is not present on the agent. This should not happen. The id of the missing resource is " + upgradeResponse.getResourceId());
                     }
                 }
             }
         }
-        
-        return serverUpdated;
     }
     
     public Resource mergeResourceFromDiscovery(Resource resource, Resource parent) throws PluginContainerException {
@@ -2173,7 +2173,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
             
             if (resourceUpgradeExecutor.isEnabled()) {
-                resourceUpgradeExecutor.processAndQueue(new ResourceUpgradeRequest(newResources, context, parentResource.getId()), newResources);
+                resourceUpgradeExecutor.processAndQueue(new ResourceUpgradePendingRequest(newResources, context, parentResource.getId()), newResources);
             }
         } catch (Throwable e) {
             // TODO GH: Add server/parent - up/down semantics so this won't happen just because a server is not up

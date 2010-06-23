@@ -29,6 +29,8 @@ import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
@@ -37,7 +39,6 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
-import org.rhq.core.domain.resource.ResourceUpgradeReport;
 
 /**
  * The interface to a JON server's resource discovery subsystem.
@@ -139,11 +140,13 @@ public interface DiscoveryServerService {
 
     /**
      * Upgrades the data of the resources according to the provided reports.
+     * The server is free to ignore or modify the requests and will provide the
+     * true changes made to the resources on the server-side in the result of this method.
      * 
-     * @param upgradeReports contains the information about the upgrade of individual resources.
-     * @return true if the upgrade succeeded, false otherwise.
+     * @param upgradeRequests contains the information about the upgrade of individual resources.
+     * @return details on what resources have been upgraded with what data.
      */
-    boolean upgradeResources(Set<ResourceUpgradeReport> upgradeReports);
+    Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests);
     
     /**
      * Gives the server a chance to apply any necessary post-processing that's needed for newly committed resources

@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -37,6 +36,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -69,11 +69,11 @@ public class ResourceUpgradeExecutor implements Runnable {
     
     private InventoryManager inventoryManager;
 
-    private ConcurrentLinkedQueue<ResourceUpgradeReport> reports;
+    private ConcurrentLinkedQueue<ResourceUpgradeRequest> requests;
 
     public ResourceUpgradeExecutor(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
-        reports = new ConcurrentLinkedQueue<ResourceUpgradeReport>();
+        requests = new ConcurrentLinkedQueue<ResourceUpgradeRequest>();
     }
 
     /**
@@ -92,9 +92,9 @@ public class ResourceUpgradeExecutor implements Runnable {
      * @param discoveredResources the set of discovered resources that this method can optionally remove some elements from.
      */
     public <T extends ResourceComponent> Map<ResourceUpgradeContext<T>, ResourceUpgradeReport> processAndQueue(
-        ResourceUpgradeRequest<T> request, Set<Resource> discoveredResources) {
+        ResourceUpgradePendingRequest<T> request, Set<Resource> discoveredResources) {
 
-        return enabled.get() ? executeResourceUpgradeAndStoreReport(request, discoveredResources) : null;
+        return enabled.get() ? executeResourceUpgradeAndStoreRequest(request, discoveredResources) : null;
     }
 
     /**
@@ -109,10 +109,10 @@ public class ResourceUpgradeExecutor implements Runnable {
      * all the upgrade requests.
      */
     public void sendRequests() {
-        if (enabled.get() && reports.size() > 0) {
-            HashSet<ResourceUpgradeReport> currentCopy = new HashSet<ResourceUpgradeReport>(reports);
+        if (enabled.get() && requests.size() > 0) {
+            HashSet<ResourceUpgradeRequest> currentCopy = new HashSet<ResourceUpgradeRequest>(requests);
             inventoryManager.mergeResourceFromUpgrade(currentCopy);
-            reports.removeAll(currentCopy);
+            requests.removeAll(currentCopy);
         }
     }
 
@@ -148,7 +148,7 @@ public class ResourceUpgradeExecutor implements Runnable {
                 this.enabled.set(false);
 
                 //clear up so that we don't hold unnecessary instances.
-                reports.clear();
+                requests.clear();
 
                 if (log.isDebugEnabled()) {
                     log.debug("Resource upgrade finished.");
@@ -171,8 +171,8 @@ public class ResourceUpgradeExecutor implements Runnable {
      * 
      * @throws PluginContainerException
      */
-    private <T extends ResourceComponent> Map<ResourceUpgradeContext<T>, ResourceUpgradeReport> executeResourceUpgradeAndStoreReport(
-        ResourceUpgradeRequest<T> request, Set<Resource> discoveredResources) {
+    private <T extends ResourceComponent> Map<ResourceUpgradeContext<T>, ResourceUpgradeReport> executeResourceUpgradeAndStoreRequest(
+        ResourceUpgradePendingRequest<T> request, Set<Resource> discoveredResources) {
 
         ResourceDiscoveryContext<T> discoveryContext = request.getDiscoveryContext();
         Set<Resource> newResources = request.getDiscoveredResources();
@@ -267,14 +267,12 @@ public class ResourceUpgradeExecutor implements Runnable {
                     results = inventoryManager.invokeDiscoveryComponentResourceUpgradeFacet(resourceType,
                         discoveryComponent, siblingContexts, parentUpgradeContext, newResourceContexts);
 
-                    //now go through the results and upgrade the resources as needed.
+                    //now go through the results and create the upgrade requests.
                     for (Map.Entry<ResourceUpgradeContext<T>, ResourceUpgradeReport> upgradeEntry : results.entrySet()) {
                         Resource siblingToUpgrade = siblingContextToResource.get(upgradeEntry.getKey());
-                        ResourceUpgradeReport newData = upgradeEntry.getValue();
+                        ResourceUpgradeRequest newData = new ResourceUpgradeRequest(siblingToUpgrade.getId(), upgradeEntry.getValue());
 
-                        //upgrade the data on the server first
-                        newData.setResourceId(siblingToUpgrade.getId());
-                        reports.add(newData);
+                        requests.add(newData);
 
                         //if there was a resource key upgrade, remove a resource with the same resource key
                         //from the discovery results. Otherwise we'd end up with 2 sibling resources with

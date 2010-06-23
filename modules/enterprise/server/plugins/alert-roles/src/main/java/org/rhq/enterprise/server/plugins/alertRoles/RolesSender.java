@@ -56,7 +56,7 @@ public class RolesSender extends AlertSender {
     @Override
     public String previewConfiguration() {
         List<Integer> roleIds = getRoleIdsFromConfiguration();
-        if (roleIds == null) {
+        if (roleIds == null || roleIds.size() == 0) {
             return "<empty>";
         }
 
@@ -70,7 +70,9 @@ public class RolesSender extends AlertSender {
         List<String> results = new ArrayList<String>();
         for (Integer nextRoleId : roleIds) {
             Role nextRole = roleManager.getRoleById(nextRoleId);
-            results.add(nextRole.getName());
+            if (nextRole != null) { // handle unknown role ids
+                results.add(nextRole.getName());
+            }
         }
 
         return results;
@@ -81,10 +83,12 @@ public class RolesSender extends AlertSender {
         List<String> results = new ArrayList<String>();
         for (Integer nextRoleId : roleIds) {
             Role nextRole = roleManager.getRoleById(nextRoleId);
-            for (Subject nextSubject : nextRole.getSubjects()) {
-                String nextEmail = nextSubject.getEmailAddress();
-                if (nextEmail != null) {
-                    results.add(nextEmail);
+            if (nextRole != null) { // handle unknown role ids
+                for (Subject nextSubject : nextRole.getSubjects()) {
+                    String nextEmail = nextSubject.getEmailAddress();
+                    if (nextEmail != null) {
+                        results.add(nextEmail);
+                    }
                 }
             }
         }
@@ -103,11 +107,6 @@ public class RolesSender extends AlertSender {
             return null;
         }
 
-        String[] roleIds = roleIdString.split(",");
-        List<Integer> results = new ArrayList<Integer>(roleIds.length);
-        for (String nextRoleId : roleIds) {
-            results.add(Integer.parseInt(nextRoleId));
-        }
-        return results;
+        return AlertSender.unfence(roleIdString, Integer.class);
     }
 }

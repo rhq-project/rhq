@@ -296,4 +296,21 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return notification;
     }
 
+    public int cleanseAlertNotificationBySubject(int subjectId) {
+        return cleanseParmaeterValueForAlertSender("System Users", "subjectId", String.valueOf(subjectId));
+    }
+
+    public int cleanseAlertNotificationByRole(int roleId) {
+        return cleanseParmaeterValueForAlertSender("System Roles", "roleId", String.valueOf(roleId));
+    }
+
+    private int cleanseParmaeterValueForAlertSender(String senderName, String propertyName, String valueToCleanse) {
+        Query query = entityManager.createNamedQuery(AlertNotification.QUERY_CLEANSE_PARAMETER_VALUE_FOR_ALERT_SENDER);
+        query.setParameter("senderName", senderName);
+        query.setParameter("propertyName", propertyName);
+        query.setParameter("paramValue", "|" + valueToCleanse + "|"); // wrap with fence-delimiter for search
+        int affectedRows = query.executeUpdate();
+        return affectedRows;
+    }
+
 }

@@ -36,55 +36,57 @@ import org.rhq.enterprise.server.ws.Subject;
 @Test(groups = "ws")
 public class WsDistributionManagerTest extends WsUnitTestBase {
 
-    private static final boolean TESTS_ENABLED = true;
-
-    @Test(enabled = TESTS_ENABLED)
-    public void createGetDeleteDistribution() throws Exception {
-
-        // Setup
-        Subject admin = subjectUtil.admin();
-        String label = "WsDistributionManagerTest.createGetDeleteDistribution.label";
-        String path = "WsDistributionManagerTest.createGetDeleteDistribution.path";
-
-        DistributionType type = objectFactory.createDistributionType();
-        type.setName("WsDistributionManagerTest.createGetDeleteDistribution.type");
-        type.setDescription("WsDistributionManagerTest.createGetDeleteDistribution.desc");
-
-        // Test
-        Distribution created = service.createDistribution(admin, label, path, type);
-
-        assert created != null;
-
-        Distribution byLabel = service.getDistributionByLabel(label);
-        Distribution byPath = service.getDistributionByPath(path);
-
-        DistributionType typeByName = service.getDistributionTypeByName(type.getName());
-
-        service.deleteDistributionByDistId(admin, created.getId());
-
-        // Verify
-        assert byLabel != null;
-        assert label.equals(byLabel.getLabel());
-        assert path.equals(byLabel.getBasePath());
-        assert type.getName().equals(byLabel.getDistributionType().getName());
-
-        assert byPath != null;
-        assert label.equals(byPath.getLabel());
-        assert path.equals(byPath.getBasePath());
-        assert type.getName().equals(byPath.getDistributionType().getName());
-
-        assert typeByName != null;
-        assert type.getName().equals(typeByName.getName());
-        assert type.getDescription().equals(typeByName.getDescription());
-
-        Distribution afterDelete = service.getDistributionByLabel(label);
-        assert afterDelete == null;
-
-        // Cleanup
-        service.deleteDistributionTypeByName(admin, type.getName());
-        DistributionType typeAfterDelete = service.getDistributionTypeByName(type.getName());
-
-        assert typeAfterDelete == null;
-    }
+// Currently no WS interface
+    
+//    private static final boolean TESTS_ENABLED = true;
+//
+//    @Test(enabled = TESTS_ENABLED)
+//    public void createGetDeleteDistribution() throws Exception {
+//
+//        // Setup
+//        Subject admin = subjectUtil.admin();
+//        String label = "WsDistributionManagerTest.createGetDeleteDistribution.label";
+//        String path = "WsDistributionManagerTest.createGetDeleteDistribution.path";
+//
+//        DistributionType type = objectFactory.createDistributionType();
+//        type.setName("WsDistributionManagerTest.createGetDeleteDistribution.type");
+//        type.setDescription("WsDistributionManagerTest.createGetDeleteDistribution.desc");
+//
+//        // Test
+//        Distribution created = service.createDistribution(admin, label, path, type);
+//
+//        assert created != null;
+//
+//        Distribution byLabel = service.getDistributionByLabel(label);
+//        Distribution byPath = service.getDistributionByPath(path);
+//
+//        DistributionType typeByName = service.getDistributionTypeByName(type.getName());
+//
+//        service.deleteDistributionByDistId(admin, created.getId());
+//
+//        // Verify
+//        assert byLabel != null;
+//        assert label.equals(byLabel.getLabel());
+//        assert path.equals(byLabel.getBasePath());
+//        assert type.getName().equals(byLabel.getDistributionType().getName());
+//
+//        assert byPath != null;
+//        assert label.equals(byPath.getLabel());
+//        assert path.equals(byPath.getBasePath());
+//        assert type.getName().equals(byPath.getDistributionType().getName());
+//
+//        assert typeByName != null;
+//        assert type.getName().equals(typeByName.getName());
+//        assert type.getDescription().equals(typeByName.getDescription());
+//
+//        Distribution afterDelete = service.getDistributionByLabel(label);
+//        assert afterDelete == null;
+//
+//        // Cleanup
+//        service.deleteDistributionTypeByName(admin, type.getName());
+//        DistributionType typeAfterDelete = service.getDistributionTypeByName(type.getName());
+//
+//        assert typeAfterDelete == null;
+//    }
 
 }

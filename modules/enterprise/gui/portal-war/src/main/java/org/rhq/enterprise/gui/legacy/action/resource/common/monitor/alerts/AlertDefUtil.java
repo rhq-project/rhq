@@ -110,6 +110,11 @@ public final class AlertDefUtil {
             textValue.append(cond.getMeasurementDefinition().getDisplayName());
             textValue.append(" (");
             textValue.append(cond.getOption());
+            if (cond.getName()!=null && !cond.getName().equals("")) {
+                textValue.append("; pattern=[");
+                textValue.append(cond.getName());
+                textValue.append("]");
+            }
             textValue.append(") ");
         } else {
             textValue.append(cond.getName()).append(' ');

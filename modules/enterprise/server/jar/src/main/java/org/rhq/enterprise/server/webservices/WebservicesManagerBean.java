@@ -56,15 +56,11 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
-import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.RepoGroup;
-import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -346,83 +342,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //CALLTIMEDATAMANAGER: END ----------------------------------
-
-    //REPOMANAGER: BEGIN ----------------------------------
-    public void addPackageVersionsToRepo(Subject subject, int repoId, int[] packageVersionIds) {
-        repoManager.addPackageVersionsToRepo(subject, repoId, packageVersionIds);
-    }
-
-    public Repo createRepo(Subject subject, Repo repo) throws RepoException {
-        return repoManager.createRepo(subject, repo);
-    }
-
-    public void deleteRepo(Subject subject, int repoId) {
-        repoManager.deleteRepo(subject, repoId);
-    }
-
-    public PageList<Repo> findRepos(Subject subject, PageControl pc) {
-        return repoManager.findRepos(subject, pc);
-    }
-
-    public PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria) {
-        checkParametersPassedIn(subject, criteria);
-        return repoManager.findReposByCriteria(subject, criteria);
-    }
-
-    public PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc) {
-        return repoManager.findPackageVersionsInRepo(subject, repoId, filter, pc);
-    }
-
-    public PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject, PackageVersionCriteria criteria) {
-        return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
-    }
-
-    public PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc) {
-        return repoManager.findSubscribedResources(subject, repoId, pc);
-    }
-
-    public Repo getRepo(Subject subject, int repoId) {
-        return repoManager.getRepo(subject, repoId);
-    }
-
-    public RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup) throws RepoException {
-        return repoManager.createRepoGroup(subject, repoGroup);
-    }
-
-    public void deleteRepoGroup(Subject subject, int repoGroupId) {
-        repoManager.deleteRepoGroup(subject, repoGroupId);
-    }
-
-    public RepoGroup getRepoGroup(Subject subject, int repoGroupId) {
-        return repoManager.getRepoGroup(subject, repoGroupId);
-    }
-
-    public RepoGroupType getRepoGroupTypeByName(Subject subject, String name) {
-        return repoManager.getRepoGroupTypeByName(subject, name);
-    }
-
-    public void subscribeResourceToRepos(Subject subject, int resourceId, int[] repoIds) {
-        repoManager.subscribeResourceToRepos(subject, resourceId, repoIds);
-    }
-
-    public void unsubscribeResourceFromRepos(Subject subject, int resourceId, int[] repoIds) {
-        repoManager.unsubscribeResourceFromRepos(subject, resourceId, repoIds);
-    }
-
-    public Repo updateRepo(Subject subject, Repo repo) throws RepoException {
-        return repoManager.updateRepo(subject, repo);
-    }
-
-    public PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria) {
-        checkParametersPassedIn(subject, criteria);
-        return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
-    }
-
-    public int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
-        return repoManager.synchronizeRepos(subject, repoIds);
-    }
-
-    //REPOMANAGER: END ----------------------------------
 
     //CONFIGURATIONMANAGER: BEGIN ----------------------------------
     public Configuration getConfiguration(Subject subject, int configurationId) {
@@ -777,6 +696,71 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //OPERATIONMANAGER: END ----------------------------------
 
+    //REPOMANAGER: BEGIN ----------------------------------
+    public void addPackageVersionsToRepo(Subject subject, int repoId, int[] packageVersionIds) {
+        repoManager.addPackageVersionsToRepo(subject, repoId, packageVersionIds);
+    }
+
+    public Repo createRepo(Subject subject, Repo repo) throws RepoException {
+        return repoManager.createRepo(subject, repo);
+    }
+
+    public void deleteRepo(Subject subject, int repoId) {
+        repoManager.deleteRepo(subject, repoId);
+    }
+
+    public PageList<Repo> findRepos(Subject subject, PageControl pc) {
+        return repoManager.findRepos(subject, pc);
+    }
+
+    public PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
+        return repoManager.findReposByCriteria(subject, criteria);
+    }
+
+    public PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc) {
+        return repoManager.findPackageVersionsInRepo(subject, repoId, filter, pc);
+    }
+
+    public PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject, PackageVersionCriteria criteria) {
+        return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
+    }
+
+    public PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc) {
+        return repoManager.findSubscribedResources(subject, repoId, pc);
+    }
+
+    public List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId) {
+        return repoManager.findSubscriptions(subject, resourceId);
+    }
+
+    public Repo getRepo(Subject subject, int repoId) {
+        return repoManager.getRepo(subject, repoId);
+    }
+
+    public void subscribeResourceToRepos(Subject subject, int resourceId, int[] repoIds) {
+        repoManager.subscribeResourceToRepos(subject, resourceId, repoIds);
+    }
+
+    public void unsubscribeResourceFromRepos(Subject subject, int resourceId, int[] repoIds) {
+        repoManager.unsubscribeResourceFromRepos(subject, resourceId, repoIds);
+    }
+
+    public Repo updateRepo(Subject subject, Repo repo) throws RepoException {
+        return repoManager.updateRepo(subject, repo);
+    }
+
+    public PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
+        return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
+    }
+
+    public int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
+        return repoManager.synchronizeRepos(subject, repoIds);
+    }
+
+    //REPOMANAGER: END ----------------------------------
+
     //RESOURCEFACTORYMANAGER: BEGIN ----------------------------------
     public void createResource(Subject subject, int parentResourceId, int resourceTypeId, String resourceName,
         Configuration pluginConfiguration, Configuration resourceConfiguration) {
@@ -1033,17 +1017,5 @@ public class WebservicesManagerBean implements WebservicesRemote {
         if (criteria == null) {
             throw new IllegalArgumentException("Criteria cannot be null.");
         }
-    }
-
-    public PageList<Distribution> findAssociatedDistributions(Subject subject, int repoId, PageControl pc) {
-        return repoManager.findAssociatedDistributions(subject, repoId, pc);
-    }
-
-    public PageList<Advisory> findAssociatedAdvisory(Subject subject, int repoId, PageControl pc) {
-        return repoManager.findAssociatedAdvisory(subject, repoId, pc);
-    }
-
-    public List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId) {
-        return repoManager.findSubscriptions(subject, resourceId);
     }
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,8 @@ import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 
 /**
- * This exception is thrown when a method invoked on a proxied plugin component times out.
+ * This exception is thrown when a method invoked on a proxied plugin component times out. If possible, its cause
+ * will be set to an Exception containing the stack trace of the plugin component thread that timed out.
  *
  * @see ResourceContainer#createResourceComponentProxy(Class, FacetLockType, long, boolean, boolean)
  * @see ComponentUtil#getComponent(int, Class, FacetLockType, long, boolean, boolean)
@@ -38,5 +39,9 @@ public class TimeoutException extends RuntimeException {
 
     public TimeoutException(String message) {
         super(message);
+    }
+
+    public TimeoutException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

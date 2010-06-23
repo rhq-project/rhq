@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -186,8 +187,12 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         }
 
         if (full) {
-            // do a full discovery - we ignored the -p and -r options and do everything
+            // do a full discovery - we ignore the -p and -r options and do everything
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+            HashSet<ResourceType> blacklist = inventoryManager.getDiscoveryComponentProxyFactory().getResourceTypeBlacklist();
+            if (!blacklist.isEmpty()) {
+                out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_BLACKLISTED_TYPES, blacklist));
+            }
             long start = System.currentTimeMillis();
             InventoryReport scan1 = inventoryManager.executeServerScanImmediately();
             InventoryReport scan2 = inventoryManager.executeServiceScanImmediately();
@@ -253,6 +258,19 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
             }
 
             return;
+        }
+
+        InventoryManager inventoryManager = pc.getInventoryManager();
+        HashSet<ResourceType> blacklist = inventoryManager.getDiscoveryComponentProxyFactory().getResourceTypeBlacklist();
+        Iterator<ResourceType> iterator = blacklist.iterator();
+        while (iterator.hasNext()) {
+            ResourceType type = iterator.next();
+            if (!typesToDiscover.contains(type)) {
+                iterator.remove();
+            }
+        }
+        if (!blacklist.isEmpty()) {
+            out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_BLACKLISTED_TYPES, blacklist));
         }
 
         for (ResourceType typeToDiscover : typesToDiscover) {

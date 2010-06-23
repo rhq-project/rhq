@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1812,6 +1812,9 @@ public interface AgentI18NResourceKeys {
         + "\\                                 'clear' delists all resource types which\\n\\\n"
         + "\\                                 re-enables all types to be discoverable.")
     String DISCOVERY_DETAILED_HELP = "PromptCommand.discovery.detailed-help";
+
+    @I18NMessage("WARNING: Discovery will not be run for the following ResourceTypes, because they are blacklisted: {0}")
+    String DISCOVERY_BLACKLISTED_TYPES = "PromptCommand.discovery.blacklisted-types";
 
     @I18NMessage("Full discovery run in [{0}] ms")
     String DISCOVERY_FULL_RUN = "PromptCommand.discovery.full-run";

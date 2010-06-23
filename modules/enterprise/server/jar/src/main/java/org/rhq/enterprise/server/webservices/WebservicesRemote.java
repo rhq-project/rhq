@@ -30,6 +30,12 @@ import org.rhq.enterprise.server.support.SupportManagerRemote;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
 
+/**
+ * The remote API supported by a WebService Interface.
+ * 
+ * @author jay shaughnessy
+ *
+ */
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote

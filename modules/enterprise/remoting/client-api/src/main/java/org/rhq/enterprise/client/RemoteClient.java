@@ -76,7 +76,6 @@ public class RemoteClient {
         CallTimeDataManager(CallTimeDataManagerRemote.class), //
         RepoManager(RepoManagerRemote.class), //
         ConfigurationManager(ConfigurationManagerRemote.class), //
-        //ContentHelperManager(ContentHelperRemote.class), //
         ContentManager(ContentManagerRemote.class), //
         DataAccessManager(DataAccessManagerRemote.class), //
         DiscoveryBoss(DiscoveryBossRemote.class), //

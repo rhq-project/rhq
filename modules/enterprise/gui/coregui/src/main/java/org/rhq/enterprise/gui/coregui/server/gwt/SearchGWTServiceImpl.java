@@ -37,29 +37,24 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
 
     private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
 
-    @Override
     public List<SearchSuggestion> getSuggestions(SearchSubsystem searchSubsystem, String expression, int caretPosition) {
         SearchAssistManager searchAssistManager = new SearchAssistManager(getSessionSubject(), searchSubsystem);
         List<SearchSuggestion> results = searchAssistManager.getSuggestions(expression, caretPosition);
         return results;
     }
 
-    @Override
     public int createSavedSearch(SavedSearch savedSearch) {
         return savedSearchManager.createSavedSearch(getSessionSubject(), savedSearch);
     }
 
-    @Override
     public void updateSavedSearch(SavedSearch savedSearch) {
         savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
     }
 
-    @Override
     public void deleteSavedSearch(int savedSearchId) {
         savedSearchManager.deleteSavedSearch(getSessionSubject(), savedSearchId);
     }
 
-    @Override
     public List<SavedSearch> findSavedSearchesByCriteria(SavedSearchCriteria criteria) {
         return SerialUtility.prepare(savedSearchManager.findSavedSearchesByCriteria(getSessionSubject(), criteria),
             "SearchService.findRolesByCriteria");

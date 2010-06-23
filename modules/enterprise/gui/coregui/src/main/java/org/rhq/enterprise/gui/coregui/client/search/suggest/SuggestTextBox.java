@@ -153,7 +153,6 @@ public class SuggestTextBox extends TextBox {
     }
 
     class SuggestTextBoxEventHandler implements KeyUpHandler, FocusHandler {
-        @Override
         public void onKeyUp(KeyUpEvent event) {
             int keyCode = event.getNativeKeyCode();
             handleKeyCode(keyCode);
@@ -164,7 +163,6 @@ public class SuggestTextBox extends TextBox {
             }
         }
 
-        @Override
         public void onFocus(FocusEvent event) {
             if (getText().equals(searchBar.getWelcomeMessage())) {
                 setText("");
@@ -175,12 +173,10 @@ public class SuggestTextBox extends TextBox {
     }
 
     class SuggestionResultsListBoxEventHandler implements ChangeHandler, ClickHandler {
-        @Override
         public void onChange(ChangeEvent event) {
             complete();
         }
 
-        @Override
         public void onClick(ClickEvent event) {
             complete();
         }
@@ -262,13 +258,11 @@ public class SuggestTextBox extends TextBox {
             this.keyCode = keyCode;
         }
 
-        @Override
         public void onFailure(Throwable caught) {
             choices.setErrorMessage(caught.getMessage());
             commonHandler();
         }
 
-        @Override
         public void onSuccess(List<SearchSuggestion> result) {
             choices.setSearchSuggestions(result);
             commonHandler();

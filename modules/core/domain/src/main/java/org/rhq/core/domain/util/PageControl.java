@@ -98,6 +98,10 @@ public class PageControl implements Serializable, Cloneable {
     }
 
     public void addDefaultOrderingField(String defaultField, PageOrdering defaultPageOrdering) {
+        if (orderingFields.size() >= MAX_ORDERING_FIELD_COUNT) {
+            return; // only need to add defaults if there are less than 3 sort orders
+        }
+
         for (OrderingField ordering : orderingFields) {
             if (ordering.getField().equals(defaultField)) {
                 /* 

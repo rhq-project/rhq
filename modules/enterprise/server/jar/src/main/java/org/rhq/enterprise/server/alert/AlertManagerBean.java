@@ -573,7 +573,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
     /**
      * Acknowledge the alerts (that got fired) so that admins know who is working on fixing the situation.
-     * 
+     *
      * @param user calling user
      * @param alertIds PKs of the alerts to acknowledge
      * @return number of alerts acknowledged
@@ -764,6 +764,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      * @return
      */
     private Collection<String> sendAlertNotificationEmails(Alert alert, Set<String> emailAddresses) {
+
+        if (emailAddresses.size()==0)
+            return new ArrayList<String>(0); // No email to send -> no bad addresses
+        
         log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
 
         AlertDefinition alertDefinition = alert.getAlertDefinition();

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -55,6 +55,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
  * for that resource type's discovery component will fail.
  *
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class DiscoveryComponentProxyFactory {
     private final Log log = LogFactory.getLog(DiscoveryComponentProxyFactory.class);
@@ -201,7 +202,7 @@ public class DiscoveryComponentProxyFactory {
 
         private Object invokeInNewThread(Method method, Object[] args) throws Throwable {
             ExecutorService threadPool = getThreadPool();
-            Callable invocationThread = new ComponentInvocationThread(this.component, method, args,
+            ComponentInvocationThread invocationThread = new ComponentInvocationThread(this.component, method, args,
                 this.pluginClassLoader);
             Future<?> future = threadPool.submit(invocationThread);
             try {
@@ -217,10 +218,20 @@ public class DiscoveryComponentProxyFactory {
                 throw e.getCause();
             } catch (java.util.concurrent.TimeoutException e) {
                 addResourceTypeToBlacklist(this.resourceType);
-                String msg = invokedMethodString(method, args, "timed out. Invocation thread will be interrupted");
-                log.debug(msg);
+                String msg = invokedMethodString(method, args, "timed out. Invocation thread will be interrupted.");
+                Thread thread = invocationThread.getThread();
+                Exception cause;
+                if (thread != null) {
+                    StackTraceElement[] stackTrace = thread.getStackTrace();
+                    cause = new Exception(thread + " with id [" + thread.getId()
+                            + "] is hung. This exception contains its stack trace.");
+                    cause.setStackTrace(stackTrace);
+                } else {
+                    cause = null;
+                }
+                TimeoutException timeoutException = new TimeoutException(msg, cause);
                 future.cancel(true);
-                throw new TimeoutException(msg);
+                throw timeoutException;
             }
         }
 
@@ -251,6 +262,7 @@ public class DiscoveryComponentProxyFactory {
         private final Method method;
         private final Object[] args;
         private ClassLoader pluginClassLoader;
+        private Thread thread;
 
         ComponentInvocationThread(ResourceDiscoveryComponent component, Method method, Object[] args,
             ClassLoader pluginClassLoader) {
@@ -263,7 +275,8 @@ public class DiscoveryComponentProxyFactory {
         public Object call() throws Exception {
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
-                Thread.currentThread().setContextClassLoader(this.pluginClassLoader);
+                this.thread = Thread.currentThread();
+                this.thread.setContextClassLoader(this.pluginClassLoader);
                 // This is the actual call into the discovery component.
                 Object results = this.method.invoke(this.component, this.args);
                 return results;
@@ -273,8 +286,13 @@ public class DiscoveryComponentProxyFactory {
             } catch (Throwable t) {
                 throw new Exception("Failed to invoke discovery component", t);
             } finally {
-                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+                this.thread.setContextClassLoader(originalContextClassLoader);
+                this.thread = null;
             }
+        }
+
+        public Thread getThread() {
+            return this.thread;
         }
     }
 }

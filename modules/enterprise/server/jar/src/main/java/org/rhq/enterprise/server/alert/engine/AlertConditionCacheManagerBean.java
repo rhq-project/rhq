@@ -33,6 +33,7 @@ import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
@@ -54,6 +55,12 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
     public AlertConditionCacheStats checkConditions(MeasurementData... measurementData) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCacheCoordinator.getInstance().checkConditions(measurementData);
+        return stats;
+    }
+
+    public AlertConditionCacheStats checkConditions(CallTimeData... callTimeData) {
+        AlertConditionCacheStats stats;
+        stats = AlertConditionCacheCoordinator.getInstance().checkConditions(callTimeData);
         return stats;
     }
 

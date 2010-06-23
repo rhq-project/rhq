@@ -453,6 +453,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         for (int definitionId : measurementDefinitionIds) {
 
             MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+            criteria.addFilterDefinitionIds(definitionId);
             PageList<MeasurementSchedule> theSchedules = scheduleManager.findSchedulesByCriteria(subject, criteria);
             int totalScheduleCount = theSchedules.getTotalSize();
 
@@ -501,7 +502,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
                 log.warn("No metric schedules found for def=[" + definition + "] and " + context
                     + ", using empty aggregate");
             } else {
-                aggregate = dataUtil.getAggregateByContext(begin, end, context);
+                aggregate = dataUtil.getAggregateByDefinitionAndContext(begin, end, definitionId, context);
             }
             if (aggregate.isEmpty()) {
                 if (log.isTraceEnabled()) {

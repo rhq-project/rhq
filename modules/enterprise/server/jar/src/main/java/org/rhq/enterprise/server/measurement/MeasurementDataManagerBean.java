@@ -655,8 +655,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
         }
 
-        MeasurementAggregate aggregate = getConnectedUtilityInstance().getAggregateByGroupAndDefinition(startTime,
-            endTime, groupId, definitionId);
+        MeasurementAggregate aggregate = getConnectedUtilityInstance().getAggregateByDefinitionAndContext(startTime,
+            endTime, definitionId, EntityContext.forGroup(groupId));
         return aggregate;
     }
 

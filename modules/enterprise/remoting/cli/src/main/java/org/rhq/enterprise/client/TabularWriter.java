@@ -152,7 +152,10 @@ public class TabularWriter {
                     val = invoke(object, m);
                 }
 
-                if (val != null) {
+                if (val == null) {
+                    maxLength = Math.max(maxLength, pd.getName().length());
+                    properties.put(pd.getName(), new PropertyInfo(pd.getName(), null));
+                } else {
                     try {
                         String str = shortVersion(val);
                         maxLength = Math.max(maxLength, pd.getName().length());
@@ -192,7 +195,9 @@ public class TabularWriter {
         printPreSpaced(out, name, maxLength);
         out.print(": ");
 
-        if (exportMode || !String.class.equals(propertyInfo.type)) {
+        if (propertyInfo.type == null) {
+            out.println("");
+        } else if (exportMode || !String.class.equals(propertyInfo.type)) {
             out.println(propertyInfo.value);
         } else {
             out.println(abbreviate(propertyInfo.value, width - 12 - maxLength));
@@ -326,7 +331,11 @@ public class TabularWriter {
 
                                     Object val = "?";
                                     val = invoke(row, pd.getReadMethod());
-                                    data[i][j++] = shortVersion(val);
+                                    if (val == null) {
+                                        data[i][j++] = "";
+                                    } else {
+                                        data[i][j++] = shortVersion(val);
+                                    }
                                 }
                                 i++;
                             }

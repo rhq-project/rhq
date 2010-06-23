@@ -144,6 +144,7 @@ public class BundleUploadRecipeStep implements WizardStep {
                 wizard.setBundleVersion(result);
                 wizard.getView().incrementStep();
                 setButtonsDisableMode(false);
+                CoreGUI.refresh();
             }
 
             public void onFailure(Throwable caught) {

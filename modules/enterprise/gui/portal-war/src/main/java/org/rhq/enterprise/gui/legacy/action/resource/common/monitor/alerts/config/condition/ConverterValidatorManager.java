@@ -23,12 +23,14 @@ import org.apache.struts.action.ActionErrors;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ConditionBean;
 
 public class ConverterValidatorManager {
     private static AvailabilityConverterValidator availabilityConverter;
     private static EventsConverterValidator eventsConverter;
     private static MeasurementConverterValidator measurementConverter;
+    private static CallTimeDataConverterValidator calltimeConverter;
     private static OperationConverterValidator operationConverter;
     private static TraitConverterValidator traitConverter;
     private static ResourceConfigurationConverterValidator resourceConfigurationConverter;
@@ -37,6 +39,7 @@ public class ConverterValidatorManager {
         availabilityConverter = new AvailabilityConverterValidator();
         eventsConverter = new EventsConverterValidator();
         measurementConverter = new MeasurementConverterValidator();
+        calltimeConverter = new CallTimeDataConverterValidator();
         operationConverter = new OperationConverterValidator();
         traitConverter = new TraitConverterValidator();
         resourceConfigurationConverter = new ResourceConfigurationConverterValidator();
@@ -49,6 +52,8 @@ public class ConverterValidatorManager {
             measurementConverter.exportProperties(subject, fromBean, toCondition);
         } else if (fromBean.getTrigger().equals(traitConverter.getTriggerName())) {
             traitConverter.exportProperties(subject, fromBean, toCondition);
+        } else if (fromBean.getTrigger().equals(calltimeConverter.getTriggerName())) {
+            calltimeConverter.exportProperties(subject, fromBean, toCondition);
         } else if (fromBean.getTrigger().equals(eventsConverter.getTriggerName())) {
             eventsConverter.exportProperties(subject, fromBean, toCondition);
         } else if (fromBean.getTrigger().equals(availabilityConverter.getTriggerName())) {
@@ -70,7 +75,13 @@ public class ConverterValidatorManager {
 
         if ((category == AlertConditionCategory.THRESHOLD) || (category == AlertConditionCategory.BASELINE)
             || (category == AlertConditionCategory.CHANGE)) {
-            measurementConverter.importProperties(subject, fromCondition, toBean);
+            DataType measDataType = null;
+            if (fromCondition.getMeasurementDefinition() != null)
+                measDataType = fromCondition.getMeasurementDefinition().getDataType();
+            if (DataType.CALLTIME == measDataType)
+                calltimeConverter.importProperties(subject, fromCondition, toBean);
+            else
+                measurementConverter.importProperties(subject, fromCondition, toBean);
         } else if (category == AlertConditionCategory.TRAIT) {
             traitConverter.importProperties(subject, fromCondition, toBean);
         } else if (category == AlertConditionCategory.EVENT) {
@@ -90,6 +101,8 @@ public class ConverterValidatorManager {
     public static boolean validate(ConditionBean bean, ActionErrors errors, int index) {
         if (bean.getTrigger().equals(measurementConverter.getTriggerName())) {
             return measurementConverter.validate(bean, errors, index);
+        } else if (bean.getTrigger().equals(calltimeConverter.getTriggerName())) {
+            return calltimeConverter.validate(bean, errors, index);
         } else if (bean.getTrigger().equals(traitConverter.getTriggerName())) {
             return traitConverter.validate(bean, errors, index);
         } else if (bean.getTrigger().equals(eventsConverter.getTriggerName())) {
@@ -107,7 +120,6 @@ public class ConverterValidatorManager {
     }
 
     public static void setDefaults(ConditionBean bean) {
-        bean.setTrigger(measurementConverter.getTriggerName());
         bean.setThresholdType(MeasurementConverterValidator.TYPE_ABS);
     }
 }

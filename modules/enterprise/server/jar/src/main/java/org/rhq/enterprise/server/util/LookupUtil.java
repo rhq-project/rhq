@@ -136,8 +136,6 @@ import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsBean;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
-import org.rhq.enterprise.server.registration.RegistrationManagerBean;
-import org.rhq.enterprise.server.registration.RegistrationManagerLocal;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerBean;
@@ -508,10 +506,6 @@ public final class LookupUtil {
 
     public static ResourceTypeManagerRemote getResourceTypeManagerRemote() {
         return lookupRemote(ResourceTypeManagerBean.class);
-    }
-
-    public static RegistrationManagerLocal getRegistrationManager() {
-        return lookupLocal(RegistrationManagerBean.class);
     }
 
     public static RoleManagerLocal getRoleManager() {

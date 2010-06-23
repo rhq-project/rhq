@@ -51,7 +51,6 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
-import org.rhq.enterprise.server.registration.RegistrationManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerBean;
 import org.rhq.enterprise.server.resource.ResourceManagerBean;
@@ -66,7 +65,7 @@ import org.rhq.enterprise.server.system.SystemManagerBean;
 public class RemoteAPIValidator {
 
     private static Class<?>[] beans = new Class[] { //
-        AdvisoryManagerBean.class, //
+    AdvisoryManagerBean.class, //
         AlertDefinitionManagerBean.class, //
         AlertManagerBean.class,//
         AvailabilityManagerBean.class,//
@@ -89,7 +88,6 @@ public class RemoteAPIValidator {
         ResourceGroupManagerBean.class, //
         ResourceManagerBean.class, //
         ResourceTypeManagerBean.class, //
-        RegistrationManagerBean.class, //
         RoleManagerBean.class, //
         SubjectManagerBean.class, //
         SupportManagerBean.class, //

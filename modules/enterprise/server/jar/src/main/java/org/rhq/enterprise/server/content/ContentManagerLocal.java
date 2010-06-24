@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.content;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,7 @@ import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
@@ -211,9 +213,8 @@ public interface ContentManagerLocal {
     PackageVersion createPackageVersion(String packageName, int packageTypeId, String version, int architectureId,
         InputStream packageBitStream);
 
-    PackageVersion getUploadedPackageVersion(String packageName, int packageTypeId, String version,
-        int architectureId, InputStream packageBitStream, Map<String, String> packageUploadDetails,
-        int newResourceTypeId);
+    PackageVersion getUploadedPackageVersion(String packageName, int packageTypeId, String version, int architectureId,
+        InputStream packageBitStream, Map<String, String> packageUploadDetails, int newResourceTypeId);
 
     /**
      * Very simple method that persists the given package version within its own transaction.
@@ -345,5 +346,9 @@ public interface ContentManagerLocal {
     InstalledPackage getBackingPackageForResource(Subject subject, int resourceId);
 
     byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId);
+
+    void writeBlobOutToStream(Subject user, OutputStream stream, PackageBits bits, boolean closeStreams);
+
+    void updateBlobStream(Subject user, InputStream stream, PackageBits bits);
 
 }

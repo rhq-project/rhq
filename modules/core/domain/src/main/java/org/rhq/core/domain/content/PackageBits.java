@@ -104,4 +104,5 @@ public class PackageBits implements Serializable {
     public void setBits(byte[] bits) {
         this.bits = bits;
     }
+
 }

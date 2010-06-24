@@ -28,11 +28,13 @@ import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
 
+import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.composite.AlertHistoryComposite;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -221,8 +223,11 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
 
                     String firedValue = log.getValue();
                     if (condition.getMeasurementDefinition() != null) {
-                        firedValue = MeasurementConverter.format(Double.valueOf(log.getValue()), condition
-                            .getMeasurementDefinition().getUnits(), true);
+                        if (condition.getMeasurementDefinition().getDataType()== DataType.CALLTIME)
+                            firedValue = log.getValue();
+                        else
+                            firedValue = MeasurementConverter.format(Double.valueOf(log.getValue()), condition
+                                .getMeasurementDefinition().getUnits(), true);
                     }
 
                     history.setConditionText(displayText);

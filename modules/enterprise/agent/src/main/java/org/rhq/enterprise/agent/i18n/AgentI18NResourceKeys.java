@@ -1619,6 +1619,31 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("days")
     String UNITS_DAYS = "units.days";
 
+    @I18NMessage("gc")
+    String GC = "PromptCommand.gc";
+
+    @I18NMessage("gc [--dump] [--free] [--verbose={true|false}]")
+    String GC_SYNTAX = "PromptCommand.gc.syntax";
+
+    @I18NMessage("Helps free up memory by invoking the garbage collector")
+    String GC_HELP = "PromptCommand.gc.help";
+
+    @I18NMessage("Provides an interface to the garbage collector and memory subsystem.\\n\\\n"
+        + "\\  -d, --dump : prints out information on current memory usage\\n\\\n"
+        + "\\  -f, --free : attempts to free up memory and invokes the garbage collector\\n\\\n"
+        + "\\  -v, --verbose={true|false} : enables/disables verbose gc messages")
+    String GC_DETAILED_HELP = "PromptCommand.gc.detailed-help";
+
+    @I18NMessage("Invoking the garbage collector")
+    String GC_INVOKE = "PromptCommand.gc.invoke";
+
+    @I18NMessage("{0} ({1}):\\n\\\n" //
+        + "\\      init={2}\\n\\\n" //
+        + "\\       max={3}\\n\\\n" //
+        + "\\      used={4} ({5,number,##}% of committed)\\n\\\n" //
+        + "\\    commit={6} ({7,number,##}% of max)")
+    String GC_MEM_USAGE = "PromptCommand.gc.mem-usage";
+
     @I18NMessage("native")
     String NATIVE = "PromptCommand.native";
 

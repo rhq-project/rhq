@@ -23,17 +23,10 @@
 
 package org.rhq.plugins.apache;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -42,7 +35,9 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
+import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
+import org.rhq.plugins.apache.parser.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
 /**
@@ -73,10 +68,10 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
 
     public Configuration loadResourceConfiguration() throws Exception {
         ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
-        AugeasTree tree = parentVirtualHost.getServerConfigurationTree();
+        ApacheDirectiveTree tree = parentVirtualHost.loadParser();
         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
         
-        AugeasNode virtualHostNode = parentVirtualHost.getNode(tree);
+        ApacheDirective virtualHostNode = parentVirtualHost.getNode(tree);
         ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
         return mapping.updateConfiguration(getNode(virtualHostNode), resourceConfigDef);
     }
@@ -84,15 +79,15 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
 
-        AugeasTree tree = null;
+        ApacheDirectiveTree tree = null;
         try {
-            tree = parentVirtualHost.getServerConfigurationTree();
+            tree = parentVirtualHost.loadParser();
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-            AugeasNode directoryNode = getNode(tree.getRootNode());
-            mapping.updateAugeas(directoryNode, report.getConfiguration(), resourceConfigDef);
-            tree.save();
+            ApacheDirective directoryNode = getNode(tree.getRootNode());
+            mapping.updateApache(directoryNode, report.getConfiguration(), resourceConfigDef);
+            parentVirtualHost.saveParser(tree);
 
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
             log.info("Apache configuration was updated");
@@ -100,7 +95,7 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
             resourceContext.getParentResourceComponent().finishConfigurationUpdate(report);
         } catch (Exception e) {
             if (tree != null)
-                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+                log.error("Augeas failed to save configuration ");
             else
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
@@ -110,18 +105,19 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
 
     public void deleteResource() throws Exception {
         ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
-        AugeasTree tree = parentVirtualHost.getServerConfigurationTree();
-        AugeasNode virtualHostNode = parentVirtualHost.getNode(tree);
+        ApacheDirectiveTree tree = parentVirtualHost.loadParser();
+        ApacheDirective virtualHostNode = parentVirtualHost.getNode(tree);
         
-        AugeasNode myNode = getNode(virtualHostNode);
+        ApacheDirective myNode = getNode(virtualHostNode);
         
         if (myNode != null) {
-            tree.removeNode(myNode, true);
-            tree.save();
+            myNode.remove();
+            resourceContext.getParentResourceComponent().saveParser(tree);
             
             ApacheVirtualHostServiceComponent parentVhost = resourceContext.getParentResourceComponent();
             
-            parentVhost.deleteEmptyFile(tree, myNode);
+           //TODO do we want to delete empty file?
+           // parentVhost.deleteEmptyFile(tree, myNode);
             parentVhost.conditionalRestart();
         } else {
             log.info("Could find the configuration corresponding to the directory " + resourceContext.getResourceKey() + ". Ignoring.");
@@ -135,22 +131,17 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
      * @param virtualHost the node of the parent virtualHost (or root node of the augeas tree)
      * @return
      */
-    public AugeasNode getNode(AugeasNode virtualHost) {
-        AugeasNode directory = AugeasNodeSearch.findNodeById(virtualHost, resourceContext.getResourceKey());
-        
+    public ApacheDirective getNode(ApacheDirective virtualHost) {
+        ApacheDirective directory = AugeasNodeSearch.findNodeById(virtualHost, resourceContext.getResourceKey());        
         return directory;
     }
     
-    public AugeasNode getNode(){
-        ApacheVirtualHostServiceComponent virtHost = resourceContext.getParentResourceComponent();
-        AugeasTree tree = virtHost.getServerConfigurationTree();
-        AugeasNode virtHostNode = resourceContext.getParentResourceComponent().getNode(tree);
+    public ApacheDirective getNode(){
+        ApacheDirectiveTree tree = loadParser();
+        ApacheDirective virtHostNode = resourceContext.getParentResourceComponent().getNode(tree);
         return getNode(virtHostNode);
     }
     
-    public AugeasTree getServerConfigurationTree(){
-        return resourceContext.getParentResourceComponent().getServerConfigurationTree();
-    }
     
     /**
      * @see ApacheServerComponent#finishConfigurationUpdate(ConfigurationUpdateReport)
@@ -159,8 +150,11 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
         resourceContext.getParentResourceComponent().finishConfigurationUpdate(report);
     }
     
-    public boolean isAugeasEnabled(){
-        ApacheVirtualHostServiceComponent parent = resourceContext.getParentResourceComponent();
-        return parent.isAugeasEnabled();          
+    public ApacheDirectiveTree loadParser(){
+        return resourceContext.getParentResourceComponent().loadParser();
+    }
+    
+    public boolean saveParser(ApacheDirectiveTree tree){
+        return resourceContext.getParentResourceComponent().saveParser(tree);
     }
 }

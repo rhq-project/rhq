@@ -1,4 +1,4 @@
-package org.rhq.plugins.apache.parser.mapping;
+package org.rhq.plugins.apache.parser.mapping.update;
 
 import java.util.Collection;
 
@@ -12,6 +12,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.parser.ApacheParserException;
+import org.rhq.plugins.apache.parser.mapping.ConfigurationToApache;
 
 public abstract class ConfigurationToApacheBase implements ConfigurationToApache {
 

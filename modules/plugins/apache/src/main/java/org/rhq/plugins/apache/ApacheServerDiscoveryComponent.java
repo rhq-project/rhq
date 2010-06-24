@@ -29,10 +29,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.tree.AugeasTree;
-import org.rhq.augeas.util.Glob;
-import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -55,7 +51,8 @@ import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.OsProcessUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.plugins.platform.PlatformComponent;
-import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
+import org.rhq.plugins.www.util.Glob;
+import org.rhq.plugins.www.util.GlobFilter;
 
 /**
  * The discovery component for Apache 2.x servers.
@@ -67,7 +64,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
     private static final String PRODUCT_DESCRIPTION = "Apache Web Server";
 
     private static final Log log = LogFactory.getLog(ApacheServerDiscoveryComponent.class);
-
+    public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
@@ -124,7 +121,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                     serverConfigFile);
                 pluginConfig.put(configFile);
             
-                PropertySimple inclusionGlobs = new PropertySimple(PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
+                PropertySimple inclusionGlobs = new PropertySimple(INCLUDE_GLOBS_PROP, serverConfigFile);
                 pluginConfig.put(inclusionGlobs);
             
                 ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(),serverRoot);

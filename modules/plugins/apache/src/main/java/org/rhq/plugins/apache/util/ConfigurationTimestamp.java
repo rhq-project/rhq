@@ -41,10 +41,12 @@ public class ConfigurationTimestamp {
         lastModifiedTimes = new HashMap<String, Long>();
     }
     
-    public ConfigurationTimestamp(List<File> files) {
+    public ConfigurationTimestamp(List<String> files) {
         this();
-        for(File f : files) {
-            lastModifiedTimes.put(f.getAbsolutePath(), f.lastModified());
+        for(String f : files) {
+            File fl = new File(f);
+            if (fl.exists())
+              lastModifiedTimes.put(f, fl.lastModified());
         }
     }
     

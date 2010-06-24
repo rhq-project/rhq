@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rhq.augeas.util.Glob;
+import org.rhq.plugins.www.util.Glob;
 
 public class ApacheParserImpl implements ApacheParser{
 
@@ -13,17 +13,21 @@ public class ApacheParserImpl implements ApacheParser{
     private String serverRootPath;
     private ApacheDirectiveTree tree;
     
+    
     public ApacheParserImpl(ApacheDirectiveTree tree,String serverRootPath){          
       stack = new ApacheDirectiveStack();
       this.serverRootPath = serverRootPath;
       this.tree = tree;
       stack.addDirective(this.tree.getRootNode());
+     
     }
     
     public void addDirective(ApacheDirective directive) throws Exception{
         if (directive.getName().equals(INCLUDE_DIRECTIVE)){
+            tree.addGlob(directive.getValuesAsString());
             List<File> files = getIncludeFiles(directive.getValuesAsString());
             for (File fl : files){
+              tree.addIncludedFile(fl.getAbsolutePath());
               ApacheConfigReader.searchFile(fl.getAbsolutePath(), this);   
             }
         }
@@ -54,5 +58,15 @@ public class ApacheParserImpl implements ApacheParser{
             }
         
         return ret;
+    }
+
+    @Override
+    public void endParsing() {        
+       tree.addIncludedFile(tree.getRootNode().getFile());        
+    }
+
+    @Override
+    public void startParsing() {
+                
     }
 }

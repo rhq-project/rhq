@@ -26,21 +26,19 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
 public class ApacheIfModuleDiscoveryComponent  implements ResourceDiscoveryComponent<ApacheVirtualHostServiceComponent> {
 
     private static final String [] parentRes = {"<IfModule"};
     private static final String IFMODULE_NODE_NAME = "<IfModule";
-    private AugeasTree tree;
-    private AugeasNode parentNode;
     
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context)
@@ -48,20 +46,15 @@ public class ApacheIfModuleDiscoveryComponent  implements ResourceDiscoveryCompo
    
     Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();    
     ApacheVirtualHostServiceComponent virtualHost = context.getParentResourceComponent();
+      
+    ApacheDirectiveTree tree = virtualHost.loadParser();
+    ApacheDirective parentNode = virtualHost.getNode(tree);
     
-    if (!virtualHost.isAugeasEnabled()){
-        return discoveredResources;
-    }
-    
-    tree = virtualHost.getServerConfigurationTree();
-    parentNode = virtualHost.getNode(tree);
-    
-    List<AugeasNode> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
-    
+    List<ApacheDirective> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
     
     ResourceType resourceType = context.getResourceType();
 
-    for (AugeasNode node : ifModuleNodes) {
+    for (ApacheDirective node : ifModuleNodes) {
         
         String resourceKey = AugeasNodeSearch.getNodeKey(node,parentNode);
         String [] paramArray = resourceKey.split("\\|");

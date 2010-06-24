@@ -11,8 +11,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.parser.ApacheParserException;
-import org.rhq.rhqtransform.AugeasRhqException;
-import org.rhq.rhqtransform.NameMap;
 
 /**
  * Implementations of this interface provide mapping of Augeas data
@@ -30,13 +28,6 @@ public interface ApacheToConfiguration {
      */
     public void setTree(ApacheDirectiveTree tree);
 
-    /**
-     * Provides the mapper with name conversion from Augeas node names to RHQ
-     * configuration property names.
-     * 
-     * @param nameMap
-     */
-    public void setNameMap(NameMap nameMap);
 
     /**
      * Loads the RHQ configuration instance from the Augeas tree.

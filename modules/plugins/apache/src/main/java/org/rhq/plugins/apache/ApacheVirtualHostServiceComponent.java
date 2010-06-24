@@ -21,7 +21,6 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -30,12 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.augeas.AugeasException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -57,8 +52,10 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
-import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
+import org.rhq.plugins.apache.parser.ApacheConfigWriter;
+import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
+import org.rhq.plugins.apache.parser.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
@@ -138,10 +135,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     public Configuration loadResourceConfiguration() throws Exception {
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
-        if (!parent.isAugeasEnabled())
-           throw new Exception(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
-        
-        AugeasTree tree = getServerConfigurationTree();
+       
+        ApacheDirectiveTree tree =loadParser();
         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
             .getResourceConfigurationDefinition();
 
@@ -150,23 +145,23 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        AugeasTree tree = null;
+        ApacheDirectiveTree tree = null;
         try {
-            tree = getServerConfigurationTree();
+            tree = loadParser();
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-            AugeasNode virtHostNode = getNode(tree);
-            mapping.updateAugeas(virtHostNode, report.getConfiguration(), resourceConfigDef);
-            tree.save();
-
+            ApacheDirective virtHostNode = getNode(tree);
+            mapping.updateApache(virtHostNode, report.getConfiguration(), resourceConfigDef);
+            saveParser(tree);
+            ApacheConfigWriter writer = new ApacheConfigWriter(tree);
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
             log.info("Apache configuration was updated");
             
             finishConfigurationUpdate(report);
         } catch (Exception e) {
             if (tree != null)
-                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+                log.error("Augeas failed to save configuration");
             else
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
@@ -178,15 +173,13 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             throw new IllegalArgumentException("Cannot delete the virtual host representing the main server configuration.");
         }
         
-        AugeasTree tree = getServerConfigurationTree();
+        ApacheDirectiveTree tree = loadParser();
         
         try {
-            AugeasNode myNode = getNode(getServerConfigurationTree());
-    
-            tree.removeNode(myNode, true);
-            tree.save();
-            
-            deleteEmptyFile(tree, myNode);
+            ApacheDirective myNode = getNode(tree);
+            myNode.remove();
+            saveParser(tree);
+            //TODO do we want to delete the file if the file is empty?            
             conditionalRestart();
         } catch (IllegalStateException e) {
             //this means we couldn't find the augeas node for this vhost.
@@ -241,11 +234,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public CreateResourceReport createResource(CreateResourceReport report) {
-        if (!isAugeasEnabled()){
-            report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage("Resources can be created only when augeas is enabled.");
-            return report;
-        }
         ResourceType resourceType = report.getResourceType();
         
         if (resourceType.equals(getDirectoryResourceType())) {
@@ -257,31 +245,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             //fill in the plugin configuration
             
             //get the directive index
-            AugeasTree tree = getServerConfigurationTree();
-            AugeasNode myNode = getNode(tree);
-            List<AugeasNode> directories = myNode.getChildByLabel("<Directory");
-            int seq = 1;
-            /*
-             * myNode will be parent node of the new Directory node.
-             * We need to create a new node for directory node which will contain child nodes.
-             * To create a node we can call method from AugeasTree which will create a node. In this method is 
-             * parameter sequence, if we will leave this parameter empty and there will be more nodes with 
-             * the same label, new node will be created but the method createNode will return node with index 0 resp 1.
-             * If that will happen we can not update the node anymore because we are updating wrong node.
-             * To avoid this situation we need to know what is the last sequence nr. of virtual host's child (directory) nodes.
-             * We can not just count child nodes with the same label because some of the child nodes
-             * could be stored in another file. So that in httpd configurationstructure they are child nodes of virtual host,
-             *  but in augeas configuration structure they can be child nodes of node Include[];. 
-             */
-           
-            for (AugeasNode n : directories) {
-                String param = n.getFullPath();
-                int end = param.lastIndexOf(File.separatorChar);
-                if (end != -1)
-                  if (myNode.getFullPath().equals(param.substring(0,end)))
-                      seq++;
-                }
-            
+            ApacheDirectiveTree tree = loadParser();
+            ApacheDirective myNode = getNode(tree);
+            List<ApacheDirective> directories = myNode.getChildByName("<Directory");
+       
             //pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, seq));
             //we don't support this yet... need to figure out how...
             pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, false));
@@ -290,17 +257,15 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             //now actually create the data in augeas
             try {
                 ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-                AugeasNode directoryNode = tree.createNode(myNode, "<Directory", null, seq);
-                tree.createNode(directoryNode, "param", dirNameToSet, 0);
-                mapping.updateAugeas(directoryNode, resourceConfiguration, resourceType.getResourceConfigurationDefinition());
-                tree.save();
-                
-                
-                tree = getServerConfigurationTree();
+                ApacheDirective directoryNode = tree.createNode(myNode, "<Directory");
+                directoryNode.addValue(dirNameToSet);
+                mapping.updateApache(directoryNode, resourceConfiguration, resourceType.getResourceConfigurationDefinition());
+                saveParser(tree);
+                     
+                tree = loadParser();
                 String key = AugeasNodeSearch.getNodeKey(myNode, directoryNode);
                 report.setResourceKey(key); 
                 report.setResourceName(directoryName);
-    
                 report.setStatus(CreateResourceStatus.SUCCESS);
                 
                 resourceContext.getParentResourceComponent().finishChildResourceCreate(report);
@@ -314,10 +279,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         }
         return report;
     }
-    
-    public AugeasTree getServerConfigurationTree() {
-        return resourceContext.getParentResourceComponent().getAugeasTree();
-    }
+
 
     /**
      * Returns a node corresponding to this component in the Augeas tree.
@@ -325,8 +287,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
      * @param tree
      * @return
      * @throws IllegalStateException if none or more than one nodes found
-     */
-    public AugeasNode getNode(AugeasTree tree) {
+     */    
+    public ApacheDirective getNode(ApacheDirectiveTree tree) {
         String resourceKey = resourceContext.getResourceKey();
 
         if (ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey)) {
@@ -340,17 +302,17 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         }
 
         String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
-        List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
-        List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
+        List<ApacheDirective> nodes = tree.search(tree.getRootNode(), "<VirtualHost");
+        List<ApacheDirective> virtualHosts = new ArrayList<ApacheDirective>();
         boolean updated = false;
 
-        for (AugeasNode node : nodes) {
+        for (ApacheDirective node : nodes) {
                updated = false;
-            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
+            List<ApacheDirective> serverNameNodes = tree.search(node, "ServerName");
             String tempServerName = null;
 
             if (!(serverNameNodes.isEmpty())) {
-                tempServerName = serverNameNodes.get(0).getValue();
+                tempServerName = serverNameNodes.get(0).getValues().get(0);
             }
                 if (tempServerName == null & serverName == null)
                    updated = true;
@@ -359,14 +321,13 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                             updated = true;
                      }
                 
-
                if (updated){ 
                     updated = false;
-                    List<AugeasNode> params = node.getChildByLabel("param");
-                    for (AugeasNode nd : params) {
+                    List<String> params = node.getValues();
+                    for (String nd : params) {
                         updated = false;
                         for (String adr : addrs) {
-                            if (adr.equals(nd.getValue()))
+                            if (adr.equals(nd))
                                 updated = true;
                         }
                         if (!updated)
@@ -390,7 +351,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
         return virtualHosts.get(0);
     }
-
     /**
      * @see ApacheServerComponent#finishConfigurationUpdate(ConfigurationUpdateReport)
      */
@@ -406,11 +366,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public void conditionalRestart() throws Exception {
         resourceContext.getParentResourceComponent().conditionalRestart();
     }
-    
-    public void deleteEmptyFile(AugeasTree tree, AugeasNode deletedNode) {
-        resourceContext.getParentResourceComponent().deleteEmptyFile(tree, deletedNode);
-    }
-    
+       
     private void collectSnmpMetric(MeasurementReport report, int primaryIndex, SNMPSession snmpSession,
         MeasurementScheduleRequest schedule) throws SNMPException {
         SNMPValue snmpValue = null;
@@ -579,12 +535,11 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return resourceContext.getResourceType().getChildResourceTypes().iterator().next();
     }
     
-    public ApacheDirectiveTree loadParser() throws Exception{
+    public ApacheDirectiveTree loadParser(){
         return resourceContext.getParentResourceComponent().loadParser();
     }
     
-    public boolean isAugeasEnabled(){
-        ApacheServerComponent parent = resourceContext.getParentResourceComponent();
-        return parent.isAugeasEnabled();          
+    public boolean saveParser(ApacheDirectiveTree tree){
+        return resourceContext.getParentResourceComponent().saveParser(tree);
     }
 }

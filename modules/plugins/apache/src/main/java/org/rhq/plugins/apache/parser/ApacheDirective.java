@@ -58,8 +58,12 @@ public class ApacheDirective {
             
         String lastVal =  values.get(values.size()-1);
         if (lastVal.endsWith(">")){
+            if (lastVal.equals(">"))
+                values.remove(values.size()-1);
+            else{
             lastVal = lastVal.substring(0,lastVal.length()-1);
             values.set(values.size()-1, lastVal);
+            }
         }
         
         name = values.get(0);

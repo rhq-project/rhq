@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.apache.parser.mapping;
+package org.rhq.plugins.apache.parser.mapping.update;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,15 +32,15 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.plugins.apache.mapping.ApacheDirectiveRegExpression;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheParserException;
+import org.rhq.plugins.apache.parser.mapping.ApacheDirectiveRegExpression;
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class MappingToAugeasParamPerMap extends ConfigurationToApacheBase{
+public class MappingToApacheParamPerMap extends ConfigurationToApacheBase{
 
         public void updateList(PropertyDefinitionList propDef, Property prop,
                         ApacheDirective listNode, int seq) throws ApacheParserException {

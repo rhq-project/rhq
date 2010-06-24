@@ -30,8 +30,8 @@ public class ApacheConfigWriter {
         return updatedFiles;
       }
     
-    public void saveFile(String path){
-        
+    public boolean save(){
+        return true;
     }
     
     private ApacheDirective findFirstFileDirective(ApacheDirective node,String file){

@@ -26,6 +26,15 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
+import org.rhq.plugins.apache.parser.mapping.load.MappingDirectivePerMap;
+import org.rhq.plugins.apache.parser.mapping.load.MappingDirectivePerMapIndex;
+import org.rhq.plugins.apache.parser.mapping.load.MappingDirectiveToSimpleProperty;
+import org.rhq.plugins.apache.parser.mapping.load.MappingParamPerMap;
+import org.rhq.plugins.apache.parser.mapping.load.MappingPositionToConfiguration;
+import org.rhq.plugins.apache.parser.mapping.update.MappingToApacheDirectivePerMap;
+import org.rhq.plugins.apache.parser.mapping.update.MappingToApacheDirectivePerMapIndex;
+import org.rhq.plugins.apache.parser.mapping.update.MappingToApacheDirectiveToSimple;
+import org.rhq.plugins.apache.parser.mapping.update.MappingToApacheParamPerMap;
 
 /**
  * This enum represents the list of mapping strategies we use in the resource configuration.
@@ -44,7 +53,7 @@ public enum DirectiveMapping {
         };
         
         public void mapToAugeas(ApacheDirectiveTree tree, ApacheDirective node, Configuration config, ConfigurationDefinition configDef){
-        	ConfigurationToApache mapping = new MappingToAugeasDirectivePerMap();
+        	ConfigurationToApache mapping = new MappingToApacheDirectivePerMap();
         	mapping.setTree(tree);
         	mapping.updateResourceConfiguration(node, configDef, config);
         }
@@ -59,7 +68,7 @@ public enum DirectiveMapping {
         };
         
         public void mapToAugeas(ApacheDirectiveTree tree, ApacheDirective node, Configuration config, ConfigurationDefinition configDef) {
-        	ConfigurationToApache mapping = new MappingToAugeasParamPerMap();
+        	ConfigurationToApache mapping = new MappingToApacheParamPerMap();
         	mapping.setTree(tree);
         	mapping.updateResourceConfiguration(node, configDef, config);
         }
@@ -73,7 +82,7 @@ public enum DirectiveMapping {
         };
         
         public void mapToAugeas(ApacheDirectiveTree tree, ApacheDirective node, Configuration config, ConfigurationDefinition configDef){
-        	ConfigurationToApache mapping = new MappingToAugeasDirectivePerMapIndex();
+        	ConfigurationToApache mapping = new MappingToApacheDirectivePerMapIndex();
         	mapping.setTree(tree);
         	mapping.updateResourceConfiguration(node, configDef, config);
         }
@@ -98,7 +107,7 @@ public enum DirectiveMapping {
         };
         
         public void mapToAugeas(ApacheDirectiveTree tree, ApacheDirective node, Configuration config, ConfigurationDefinition configDef){
-        	ConfigurationToApache mapping = new MappingToAugeasDirectiveToSimple();
+        	ConfigurationToApache mapping = new MappingToApacheDirectiveToSimple();
         	mapping.setTree(tree);
         	mapping.updateResourceConfiguration(node, configDef, config);
         }

@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.apache.parser.mapping;
+package org.rhq.plugins.apache.parser.mapping.load;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheParserException;
 
-public class MappingPositionToConfiguration extends ApacheToConfigurationSimple {
+public class MappingPositionToConfiguration extends ApacheToConfigurationBase {
     public static final String LIST_PROPERTY_NAME = "IfModules";
     public static final String MAP_PROPERTY_NAME="IfModule";
     public static final String SIMPLE_PROPERTY_NAME="condition";

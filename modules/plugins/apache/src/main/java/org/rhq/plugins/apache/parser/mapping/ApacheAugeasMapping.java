@@ -24,21 +24,18 @@ package org.rhq.plugins.apache.parser.mapping;
 
 import java.util.Collection;
 
-import org.rhq.augeas.AugeasProxy;
-import org.rhq.augeas.node.AugeasNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
-import org.rhq.rhqtransform.RhqAugeasMapping;
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class ApacheAugeasMapping implements RhqAugeasMapping {
+public class ApacheAugeasMapping {
 
 	private ApacheDirectiveTree tree;
 	public ApacheAugeasMapping(ApacheDirectiveTree tree) {
@@ -64,15 +61,7 @@ public class ApacheAugeasMapping implements RhqAugeasMapping {
         return resourceConfig;
 	}
 	
-    public void updateAugeas(AugeasProxy augeasComponent, Configuration config, ConfigurationDefinition configDef) {
-     
-    }
-
-    public Configuration updateConfiguration(AugeasProxy augeasComponent, ConfigurationDefinition configDef) {
-        return null;
-    }
-    
-    public void updateAugeas(ApacheDirective node,Configuration config,ConfigurationDefinition configDef){
+    public void updateApache(ApacheDirective node,Configuration config,ConfigurationDefinition configDef){
     	  
           Collection<PropertyDefinition> propDefs = configDef.getPropertyDefinitions().values();
 

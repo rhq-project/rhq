@@ -27,10 +27,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import net.augeas.AugeasException;
-
-import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
@@ -38,6 +34,8 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 
@@ -59,40 +57,26 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
         throws InvalidPluginConfigurationException, Exception {
 
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
-
-        if (!context.getParentResourceComponent().isAugeasEnabled())
-            return discoveredResources;
-
-
-        AugeasTree tree = null;
-        
-        try {
-            tree = context.getParentResourceComponent().getServerConfigurationTree();
-        } catch (AugeasException e) {
-            //we depend on Augeas to do anything useful with directories.
-            //give up, if Augeas isn't there.
-            return discoveredResources;
-        }
-
-        AugeasNode parentNode = context.getParentResourceComponent().getNode(tree);
-        List<AugeasNode> directories = AugeasNodeSearch.searchNode(PARENT_DIRECTIVES, DIRECTORY_DIRECTIVE, parentNode);
+        ApacheDirectiveTree tree = context.getParentResourceComponent().loadParser();
+        ApacheDirective parentNode = context.getParentResourceComponent().getNode(tree);
+        List<ApacheDirective> directories = AugeasNodeSearch.searchNode(PARENT_DIRECTIVES, DIRECTORY_DIRECTIVE, parentNode);
 
         ResourceType resourceType = context.getResourceType();
 
-        for (AugeasNode node : directories) {
+        for (ApacheDirective node : directories) {
             Configuration pluginConfiguration = new Configuration();
                      
             String ifmoduleParams = AugeasNodeSearch.getNodeKey(node, parentNode);           
-            List<AugeasNode> params = node.getChildByLabel("param");
+            List<String> params = node.getValues();
             
             String directoryParam;
             boolean isRegexp;
             
             if (params.size() > 1) {
-                directoryParam = params.get(1).getValue();
+                directoryParam = params.get(1);
                 isRegexp = true;
             } else {
-                directoryParam = params.get(0).getValue();
+                directoryParam = params.get(0);
                 isRegexp = false;
             }
             

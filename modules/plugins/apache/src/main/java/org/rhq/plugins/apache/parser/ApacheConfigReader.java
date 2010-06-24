@@ -11,11 +11,13 @@ public class ApacheConfigReader {
     private static final String EMPTY_LINE="^[\t ]*$";
     private static final Pattern emptyLinePattern = Pattern.compile(EMPTY_LINE);
     
-    public static void buildTree(String path,ApacheParser parser) throws Exception{       
-        searchFile(path, parser);          
+    public static void buildTree(String path,ApacheParser parser) {  
+        parser.startParsing();
+        searchFile(path, parser);
+        parser.endParsing();
     }
     
-    public static void searchFile(String path,ApacheParser parser) throws Exception{
+    public static void searchFile(String path,ApacheParser parser){
         File configFile = new File(path);
         if (!configFile.exists())
             throw new RuntimeException("Configuration file does not exist.");
@@ -49,8 +51,11 @@ public class ApacheConfigReader {
             
         }catch(Exception e){
             if (br!=null)
+                try{
                 br.close();
-            throw new Exception(e);
+                }catch(Exception ee){                    
+                }
+            throw new RuntimeException(e);
         }
     }
 }

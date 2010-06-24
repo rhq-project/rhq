@@ -22,25 +22,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import net.augeas.Augeas;
-import net.augeas.AugeasException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.rhq.augeas.AugeasProxy;
-import org.rhq.augeas.config.AugeasModuleConfig;
-import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.tree.AugeasTree;
-import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -60,20 +52,20 @@ import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
-import org.rhq.plugins.apache.augeas.ApacheAugeasNode;
-import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
-import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
-import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.parser.ApacheConfigReader;
+import org.rhq.plugins.apache.parser.ApacheConfigWriter;
+import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.parser.ApacheParser;
 import org.rhq.plugins.apache.parser.ApacheParserImpl;
+import org.rhq.plugins.apache.parser.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
@@ -82,8 +74,8 @@ import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
+import org.rhq.plugins.www.util.Glob;
 import org.rhq.plugins.www.util.WWWUtils;
-import org.rhq.rhqtransform.AugeasRHQComponent;
 
 /**
  * The resource component for Apache 2.x servers.
@@ -91,7 +83,7 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class ApacheServerComponent implements AugeasRHQComponent<PlatformComponent>, MeasurementFacet, OperationFacet,
+public class ApacheServerComponent implements ResourceComponent<PlatformComponent>,MeasurementFacet, OperationFacet,
     ConfigurationFacet, CreateChildResourceFacet {
 
     public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE = "Configuration is supported only for Apache version 2 and up using Augeas. You either have an old version of Apache or Augeas is not installed.";
@@ -297,15 +289,12 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         return this.operationsDelegate.invokeOperation(name, params);
     }
 
-    public Configuration loadResourceConfiguration() throws Exception {
-        if (!isAugeasEnabled())
-            throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
-
+    public Configuration loadResourceConfiguration() throws Exception {       
         try {
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
 
-            AugeasTree tree = getAugeasTree();
+            ApacheDirectiveTree tree = loadParser();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
             return mapping.updateConfiguration(tree.getRootNode(), resourceConfigDef);
         } catch (Exception e) {
@@ -315,15 +304,15 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        AugeasTree tree = null;
+        ApacheDirectiveTree tree = null;
         try {
-            tree = getAugeasTree();
+            tree = loadParser();
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
 
-            mapping.updateAugeas(tree.getRootNode(), report.getConfiguration(), resourceConfigDef);
-            tree.save();
+            mapping.updateApache(tree.getRootNode(), report.getConfiguration(), resourceConfigDef);
+            saveParser(tree);
 
             log.info("Apache configuration was updated");
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
@@ -331,37 +320,15 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             finishConfigurationUpdate(report);
         } catch (Exception e) {
             if (tree != null)
-                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+                log.error("Augeas failed to save configuration ");
             else
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
         }
    }
-
-    public AugeasProxy getAugeasProxy() throws AugeasException {
-        File tempDir = resourceContext.getTemporaryDirectory();
-        if (!tempDir.exists())
-            throw new RuntimeException("Loading of lens failed");
-        AugeasConfigurationApache config = new AugeasConfigurationApache(tempDir.getAbsolutePath(),resourceContext.getPluginConfiguration());
-        AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
-        AugeasProxy augeasProxy = new AugeasProxy(config, builder);
-        augeasProxy.load();
-        return augeasProxy;
-    }
-
-    public AugeasTree getAugeasTree() throws AugeasException {
-        AugeasProxy proxy = getAugeasProxy();
-        String module = ((AugeasConfigurationApache)proxy.getConfiguration()).getAugeasModuleName();
-        
-        return proxy.getAugeasTree(module, true);
-    }
-    
+  
     public CreateResourceReport createResource(CreateResourceReport report) {
-        if (!isAugeasEnabled()){
-            report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage("Resources can be created only when augeas is enabled.");
-            return report;
-        }
+        
         if (ApacheVirtualHostServiceComponent.RESOURCE_TYPE_NAME.equals(report.getResourceType().getName())) {
             Configuration vhostResourceConfig = report.getResourceConfiguration();
             ConfigurationDefinition vhostResourceConfigDef = report.getResourceType().getResourceConfigurationDefinition();
@@ -375,18 +342,15 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             if (serverName != null) {
                 resourceKey = serverName + "|" + resourceKey;
             }
+                                    
+            ApacheDirectiveTree tree = null;
             
-            //determine the resource name
-            AugeasProxy proxy = getAugeasProxy();
-            AugeasTree tree = getAugeasTree();
             String[] vhostDefs = vhostDef.split(" ");
-            HttpdAddressUtility.Address addr;            
-            try{   
-                ApacheDirectiveTree parserTree = new ApacheDirectiveTree();
-                ApacheParser parser = new ApacheParserImpl(parserTree,getServerRoot().getAbsolutePath());
-         
-                ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);
-                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName);
+            HttpdAddressUtility.Address addr;    
+            
+            try{
+            tree = loadParser();
+            addr = getAddressUtility().getVirtualHostSampleAddress(tree, vhostDefs[0], serverName);
             } catch (Exception e) {
               report.setStatus(CreateResourceStatus.FAILURE);
               report.setException(e);
@@ -408,18 +372,18 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             vhostPluginConfig.put(new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url));
             
             //determine the sequence number of the new vhost
-            List<AugeasNode> existingVhosts = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
+            List<ApacheDirective> existingVhosts = tree.search("<VirtualHost");
             int seq = existingVhosts.size() + 1;
             
             Configuration pluginConfig = resourceContext.getPluginConfiguration();
             String creationType = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_VHOST_CREATION_POLICY,
                 PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE);
 
-            AugeasNode vhost = null;
-            String vhostFile = proxy.getConfiguration().getModules().get(0).getConfigFiles().get(0);
+            ApacheDirective vhost = null;
+            String vhostFile = getHttpdConfFile().getAbsolutePath();
             
             if (PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE.equals(creationType)) {
-                vhost = tree.createNode(tree.getRootNode(), "<VirtualHost", null, seq);
+                vhost = tree.createNode(tree.getRootNode(), "<VirtualHost");
             } else if (PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE.equals(creationType)) {
                 String mask = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, null);
                 if (mask == null) {
@@ -427,44 +391,29 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 } else {
                     vhostFile = getNewVhostFileName(addr, mask);
                     File vhostFileFile = new File(vhostFile);
-                    
-                    //we're creating a new file here, so we must ensure that Augeas does have this file
-                    //on its load path, otherwise it will refuse to create it.
-                    AugeasConfigurationApache config = (AugeasConfigurationApache) proxy.getConfiguration();
-                    AugeasModuleConfig moduleConfig = config.getModuleByName(config.getAugeasModuleName());
-                    boolean willPersist = false;
-                    for(String glob : moduleConfig.getIncludedGlobs()) {
-                        if (Glob.matches(getServerRoot(), glob, vhostFileFile)) {
-                            willPersist = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!willPersist) {
-                        //the file wouldn't be loaded by augeas
-                        moduleConfig.addIncludedGlob(vhostFile);
-                    }
-                    
+                                                                            
                     try {
                         vhostFileFile.createNewFile();
                     } catch (IOException e) {
                         log.error("Failed to create a new vhost file: " + vhostFile, e);
                     }
-                    
-                    proxy.load();
-                    tree = proxy.getAugeasTree(moduleConfig.getModuletName(), true);
-                    
-                    vhost = tree.createNode(AugeasTree.AUGEAS_DATA_PATH + vhostFile + "/<VirtualHost");
-                    ((ApacheAugeasNode)vhost).setParentNode(tree.getRootNode());
-                    
-                    if (!willPersist) {
-                        //this also means that there was no include
-                        //that would load the file, so we have to
-                        //add the include directive to the main conf.
-                        List<AugeasNode> includes = tree.matchRelative(tree.getRootNode(), "Include");
-                        AugeasNode include = tree.createNode(tree.getRootNode(), "Include", null, includes.size() + 1);
-                        tree.createNode(include, "param", vhostFile, 0);
+                 
+                    //check if the the file is already Includede                    
+                    boolean isIncluded = false;
+                    for(String glob : tree.getGlobs()) {
+                        if (Glob.matches(getServerRoot(), glob, vhostFileFile)) {
+                           isIncluded=true;
+                           break;
+                        }
                     }
+
+                    if (!isIncluded){
+                        ApacheDirective include = tree.createNode(tree.getRootNode(), "Include");
+                        include.addValue(vhostFile);
+                        }
+                    
+                    vhost = tree.createNode(tree.getRootNode(),"<VirtualHost");
+                    vhost.setFile(vhostFile);                    
                 }
             }
             
@@ -472,13 +421,16 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 report.setStatus(CreateResourceStatus.FAILURE);
             } else {
                 try {
+                    List<String> params = new ArrayList<String>();
                     for(int i = 0; i < vhostDefs.length; ++i) {
-                        tree.createNode(vhost, "param", vhostDefs[i], i + 1);
+                        params.add(vhostDefs[i]);
                     }
-                    ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);                    
-                    mapping.updateAugeas(vhost, vhostResourceConfig, vhostResourceConfigDef);
+                    vhost.setValues(params);
                     
-                    tree.save();
+                    ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);                    
+                    mapping.updateApache(vhost, vhostResourceConfig, vhostResourceConfigDef);
+                    
+                    saveParser(tree);
                     report.setStatus(CreateResourceStatus.SUCCESS);
                     
                     finishChildResourceCreate(report);
@@ -546,7 +498,9 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         if (executablePath != null) {
             executableFile = resolvePathRelativeToServerRoot(executablePath);
         } else {
-            String serverRoot = getAugeasTree().getRootNode().getChildByLabel("ServerRoot").get(0).getValue();
+            List<ApacheDirective> serverRootDirectives = loadParser().getRootNode().getChildByName("ServerRoot");
+            String serverRoot = serverRootDirectives.get(0).getValues().get(0);
+            
             SystemInfo systemInfo = this.resourceContext.getSystemInformation();
             if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) // UNIX
             {
@@ -602,8 +556,9 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             {
                 boolean found = false;
                 // First try server root as base
-                String serverRoot = getAugeasTree().getRootNode().getChildByLabel("ServerRoot").get(0).getValue();
-
+                List<ApacheDirective> serverRootDirectives = loadParser().getRootNode().getChildByName("ServerRoot");
+                String serverRoot = serverRootDirectives.get(0).getValues().get(0);
+                
                 for (String path : CONTROL_SCRIPT_PATHS) {
                     controlScriptFile = new File(serverRoot, path);
                     if (controlScriptFile.exists()) {
@@ -641,10 +596,8 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     @NotNull
-    public ConfigurationTimestamp getConfigurationTimestamp() {
-        AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getTemporaryDirectory().getAbsolutePath(),
-                resourceContext.getPluginConfiguration()); 
-        return new ConfigurationTimestamp(config.getAllConfigurationFiles());
+    public ConfigurationTimestamp getConfigurationTimestamp() {        
+        return new ConfigurationTimestamp(loadParser().getIncludedFiles());
     }
     
     /**
@@ -691,23 +644,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             operationsDelegate.invokeOperation("graceful_restart", new Configuration());
         }
     }
-    
-    /**
-     * This method checks whether the supplied node that has been deleted from the tree didn't leave
-     * the file it was contained in empty.
-     * If the file is empty after deleting the node, the file is automatically deleted.
-     * @param tree TODO
-     * @param deletedNode the node that has been deleted from the tree.
-     */
-    public void deleteEmptyFile(AugeasTree tree, AugeasNode deletedNode) {
-        File file = tree.getFile(deletedNode);
-        List<AugeasNode> fileContents = tree.match(file.getAbsolutePath() + AugeasTree.PATH_SEPARATOR + "*");
         
-        if (fileContents.size() == 0) {
-            file.delete();
-        }
-    }
-    
     // TODO: Move this method to a helper class.
     static void addSnmpMetricValueToReport(MeasurementReport report, MeasurementScheduleRequest schedule,
         SNMPValue snmpValue, boolean valueIsTimestamp) throws SNMPException {
@@ -837,40 +774,16 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         }   
     }
     
-    public ApacheDirectiveTree loadParser() throws Exception{
+    public ApacheDirectiveTree loadParser() {
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
         ApacheParser parser = new ApacheParserImpl(tree,getServerRoot().getAbsolutePath());
         ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);
         return tree;       
     }
     
-    public boolean isAugeasEnabled() {
-        
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        PropertySimple prop = pluginConfig.getSimple(AUGEAS_ENABLED);
-        if (prop == null || prop.getStringValue() == null)
-            {
-            return false;
-            }
-        
-        String val = prop.getStringValue();
-        
-        if (val.equals("yes")){
-            try {                         
-               Augeas ag = new Augeas();                        
-            }catch(Exception e){
-                log.error("Augeas is enabled in configuration but was not found on the system.");
-                throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);                
-            }
-            String version = resourceContext.getVersion();
-            
-            if (!version.startsWith("2.")) {
-                log.error(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
-                throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
-            }
-            return true;
-        }else{
-            return false;                
-        }
+    public boolean saveParser(ApacheDirectiveTree tree){
+      ApacheConfigWriter writer = new ApacheConfigWriter(tree);
+      return writer.save();     
     }
+    
 }

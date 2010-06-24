@@ -20,79 +20,72 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.apache.augeas.mappingImpl;
+package org.rhq.plugins.apache.parser.mapping.update;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.rhq.augeas.node.AugeasNode;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.plugins.apache.mapping.ConfigurationToAugeasApacheBase;
-import org.rhq.rhqtransform.AugeasRhqException;
+import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheParserException;
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class MappingToAugeasDirectiveToSimple extends ConfigurationToAugeasApacheBase{
+public class MappingToApacheDirectiveToSimple extends ConfigurationToApacheBase{
 
         
         public void updateList(PropertyDefinitionList propDef, Property prop,
-                        AugeasNode listNode, int seq) throws AugeasRhqException {
-                throw new AugeasRhqException("Error in configuration. There can not be any ListProperty in simple directive.");
+                        ApacheDirective listNode, int seq) throws ApacheParserException {
+                throw new ApacheParserException("Error in configuration. There can not be any ListProperty in simple directive.");
                 
         }
 
         public void updateMap(PropertyDefinitionMap propDefMap, Property prop,
-                        AugeasNode mapNode, int seq) throws AugeasRhqException {
-                throw new AugeasRhqException("Error in configuration.  There can not be any MapProperty in simple directive.");
+                        ApacheDirective mapNode, int seq) throws ApacheParserException {
+                throw new ApacheParserException("Error in configuration.  There can not be any MapProperty in simple directive.");
         }
 
-        public void updateSimple(AugeasNode parentNode,
+        public void updateSimple(ApacheDirective parentNode,
                         PropertyDefinitionSimple propDef, Property prop, int seq)
-                        throws AugeasRhqException {
+                        throws ApacheParserException {
                 
                 String propName = propDef.getName();
                 String propertyValue = ((PropertySimple) prop).getStringValue();
                 
-                List<AugeasNode> nodes = tree.matchRelative(parentNode, propName);
+                List<ApacheDirective> nodes = tree.search(parentNode, propName);
                 try {
                 //NODE WAS DELETED IN CONFIGURATION
             if (propertyValue == null || propertyValue.equals(""))
                {
-                    for (AugeasNode nod : nodes)
-                            nod.remove(false);
+                    for (ApacheDirective nod : nodes)
+                            nod.remove();
                 return;
                }
             
             //NODE IS NOT PRESENT IN AUGEAS
             if (nodes.isEmpty())
                     {
-                    tree.createNode(parentNode, propName+File.separator+"param", propertyValue, 0);
+                    ApacheDirective dir = tree.createNode(parentNode, propName);
+                    dir.addValue(propertyValue);
                     return;
                     }
             
             //NODE IS PRESENT IN AUGEAS AND IN CONFIGURATION AND WILL BE UPDATED
             if (nodes.size()>1)
-                    throw new AugeasRhqException("Error in configuration. Directive"+propName+" is declared multiple times.");
-            
-            List<AugeasNode> params = nodes.get(0).getChildByLabel("param");
-            
-            if (params.isEmpty())
-                    throw new AugeasRhqException("Error in configuration. Directive"+propName+" has no value.");
-            
-            if (params.size() > 1)
-                    throw new AugeasRhqException("Too many parameters in directive"+propName+" .");
-            
-            AugeasNode node = params.get(0);
-            node.setValue(propertyValue);
-            
+                    throw new ApacheParserException("Error in configuration. Directive"+propName+" is declared multiple times.");
+          
+            List<String> list= new ArrayList<String>();
+            list.add(propertyValue);
+            nodes.get(0).setValues(list);
+                        
                 }catch(Exception e){
-                        throw new AugeasRhqException("Mapping configuration to Augeas failed. "+e.getMessage());
+                        throw new ApacheParserException("Mapping configuration to Augeas failed. "+e.getMessage());
                 }
         }
 

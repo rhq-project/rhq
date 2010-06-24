@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
  * Class is used for avoid using of specific parameters which can not be used in augeas resp. in Rhq configuration.
  * During the transformation from augeas tree to configuration and back we need to replace directive specific parameters
  * by parameters which are understandable for RHQ configuration. 
- * @author fdrabek
+ * @author Filip Drabek
  *
  */
 public class SpecificParams {

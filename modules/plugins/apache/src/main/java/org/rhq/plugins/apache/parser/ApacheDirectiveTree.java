@@ -6,6 +6,8 @@ import java.util.List;
 public class ApacheDirectiveTree {
 
     private ApacheDirective rootNode;
+    private List<String> globs;
+    private List<String> includedFiles;
     
     public ApacheDirectiveTree(){
        rootNode = new ApacheDirective();
@@ -61,4 +63,33 @@ public class ApacheDirectiveTree {
        parentNode.addChildDirective(dir);
        return dir;
     }
-}
+
+    public List<String> getGlobs() {
+        return globs;
+    }
+
+    public void setGlobs(List<String> globs) {
+        this.globs = globs;
+    }
+
+    public List<String> getIncludedFiles() {
+        return includedFiles;
+    }
+
+    public void setIncludedFiles(List<String> includedFiles) {
+        this.includedFiles = includedFiles;
+    }
+    
+    public void addGlob(String glob){
+        if (globs==null)
+            globs = new ArrayList<String>();
+        globs.add(glob);
+    }
+    
+    public void addIncludedFile(String file){
+        if (includedFiles==null)
+            includedFiles = new ArrayList<String>();
+
+        includedFiles.add(file);
+    }
+    }

@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.apache.parser.mapping;
+package org.rhq.plugins.apache.parser.mapping.load;
 
 import java.util.List;
 
@@ -32,6 +32,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheParserException;
+import org.rhq.plugins.apache.parser.mapping.ApacheDirectiveRegExpression;
 
 /**
  * A mapping strategy similar to {@link MappingDirectivePerMap}.

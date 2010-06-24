@@ -20,11 +20,10 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.apache.augeas.mappingImpl;
+package org.rhq.plugins.apache.parser.mapping.load;
 
 import java.util.List;
 
-import org.rhq.augeas.node.AugeasNode;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -34,9 +33,9 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.apache.ApacheServerComponent;
-import org.rhq.plugins.apache.mapping.ApacheDirectiveRegExpression;
-import org.rhq.rhqtransform.AugeasRhqException;
-import org.rhq.rhqtransform.impl.AugeasToConfigurationSimple;
+import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheParserException;
+import org.rhq.plugins.apache.parser.mapping.ApacheDirectiveRegExpression;
 
 /**
  * The most complicated mapping strategy.
@@ -55,10 +54,10 @@ import org.rhq.rhqtransform.impl.AugeasToConfigurationSimple;
  * 
  * @author Lukas Krejci
  */
-public class MappingParamPerMap extends AugeasToConfigurationSimple {
+public class MappingParamPerMap extends ApacheToConfigurationBase {
 
     @Override
-    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws AugeasRhqException {
+    public Property createPropertyList(PropertyDefinitionList propDefList, ApacheDirective node) throws ApacheParserException {
         PropertyList propList = new PropertyList(propDefList.getName());
 
         PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
@@ -76,9 +75,9 @@ public class MappingParamPerMap extends AugeasToConfigurationSimple {
             propCnt -= 1;
 
         //get all the directives
-        List<AugeasNode> nodes = tree.matchRelative(node, mapDef.getName());
+        List<ApacheDirective> nodes = tree.search(node, mapDef.getName());
 
-        for (AugeasNode directiveNode : nodes) {
+        for (ApacheDirective directiveNode : nodes) {
             List<String> params = ApacheDirectiveRegExpression.getParams(directiveNode);
 
             for (int i = 0; i < params.size(); i += propCnt) {

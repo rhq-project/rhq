@@ -243,13 +243,10 @@
         displayName="Apache HTTP Server"
         description="Management of Apache web servers"
         package="org.rhq.plugins.apache"
-        pluginLifecycleListener="ApachePluginLifecycleListener"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="Augeas" useClasses="true"/>
-   
    <server name="Apache HTTP Server" discovery="ApacheServerDiscoveryComponent" class="ApacheServerComponent"
            supportsManualAdd="true"
            description="an Apache HTTP Server instance">
@@ -289,24 +286,10 @@
                 using the restart operation in the operations tab) once all the configuration updates are finished.
             </c:description>
          </c:simple-property>
-          
-          <!-- Augeas Configuration -->
-          <c:group name="Augeas Configuration">
-              <c:simple-property name="augeasEnabled" displayName="Enable augeas support" description="Enable augeas support" default="no">
-                   <c:property-options>
-                     <c:option value="yes" name="Yes"/>
-                     <c:option value="no" name="No" default="true"/>
-                   </c:property-options>
-              </c:simple-property>
-              
-              <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Httpd" required="true" readOnly="true"
-                                            description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
-              <c:simple-property name="configurationFilesInclusionPatterns" 
-                  displayName="Httpd config file" required="true" readOnly="true"
-                                              default="/etc/httpd/conf/httpd.conf" 
-              description="Location of the Apache main configuration file."/>
-          
-          </c:group>
+
+         <c:simple-property name="configurationFilesInclusionPatterns" displayName="Httpd config file"
+          required="true" readOnly="true" default="/etc/httpd/conf/httpd.conf" 
+          description="Location of the Apache main configuration file."/>
          
           <c:group name="Virtual Hosts">
                 <c:simple-property name="vhostCreationPolicy" displayName="Virtual Hosts Configuration Placement" description="How should the new virtual host definitions be put in the configuration" default="vhost-per-file">

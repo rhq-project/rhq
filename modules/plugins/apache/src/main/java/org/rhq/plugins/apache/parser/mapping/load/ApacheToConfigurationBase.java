@@ -1,11 +1,10 @@
-package org.rhq.plugins.apache.parser.mapping;
+package org.rhq.plugins.apache.parser.mapping.load;
 
 import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.augeas.node.AugeasNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -19,7 +18,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.parser.ApacheParserException;
-import org.rhq.rhqtransform.NameMap;
+import org.rhq.plugins.apache.parser.mapping.ApacheToConfiguration;
 
 
 /**
@@ -28,21 +27,16 @@ import org.rhq.rhqtransform.NameMap;
  * @author Filip Drabek
  * @author Ian Springer
  */
-public class ApacheToConfigurationSimple implements ApacheToConfiguration {
+public class ApacheToConfigurationBase implements ApacheToConfiguration {
     private final Log log = LogFactory.getLog(this.getClass());
     protected ApacheDirectiveTree tree;
-    protected NameMap nameMap;
 
-    public ApacheToConfigurationSimple() {
+    public ApacheToConfigurationBase() {
 
     }
 
     public void setTree(ApacheDirectiveTree tree) {
         this.tree = tree;
-    }
-
-    public void setNameMap(NameMap nameMap) {
-        this.nameMap = nameMap;
     }
 
     public Configuration loadResourceConfiguration(ApacheDirective startNode, ConfigurationDefinition resourceConfigDef)

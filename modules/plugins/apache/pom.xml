@@ -33,24 +33,12 @@
       </dependency>
       
       <dependency>
-         <groupId>net.java.dev.jna</groupId>
-         <artifactId>jna</artifactId>
-         <version>${jna.version}</version>
-      </dependency>
-      
-      <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-platform-plugin</artifactId>
          <version>${project.version}</version>
          <scope>provided</scope>
       </dependency>
       
-      <dependency>
-        <groupId>org.rhq</groupId>
-        <artifactId>rhq-augeas-plugin</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>sigar</artifactId>

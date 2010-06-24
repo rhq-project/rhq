@@ -20,11 +20,10 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.apache.augeas.mappingImpl;
+package org.rhq.plugins.apache.parser.mapping.update;
 
 import java.util.List;
 
-import org.rhq.augeas.node.AugeasNode;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -33,28 +32,28 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.plugins.apache.mapping.ApacheDirectiveRegExpression;
-import org.rhq.plugins.apache.mapping.ConfigurationToAugeasApacheBase;
-import org.rhq.rhqtransform.AugeasRhqException;
+import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheParserException;
+import org.rhq.plugins.apache.parser.mapping.ApacheDirectiveRegExpression;
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class MappingToAugeasDirectivePerMap extends ConfigurationToAugeasApacheBase{
+public class MappingToApacheDirectivePerMap extends ConfigurationToApacheBase{
 
         public void updateList(PropertyDefinitionList propDef, Property prop,
-                        AugeasNode listNode, int seq) throws AugeasRhqException {
+                        ApacheDirective listNode, int seq) throws ApacheParserException {
                 
        String propertyName = propDef.getName();
        PropertyDefinition memberPropDef = propDef.getMemberDefinition();
-       List<AugeasNode> nodes = tree.matchRelative(listNode, propertyName);
+       List<ApacheDirective> nodes = tree.search(listNode, propertyName);
       
        //THERE IS NO CONFIGURATION ALL NODES RELATED TO THE CONFIGURATION DEFINITION WILL BE DELETED
       if (prop==null)
       {
-              for (AugeasNode node : nodes){
-                      node.remove(false);
+              for (ApacheDirective node : nodes){
+                      node.remove();
               }
               return;
       }
@@ -64,7 +63,7 @@ public class MappingToAugeasDirectivePerMap extends ConfigurationToAugeasApacheB
        if (list.getList().size()>nodes.size())
        {
                for (int i=0;i<list.getList().size()-nodes.size();i++){
-                       tree.createNode(listNode,propertyName,null,nodes.size()+i+1);
+                       tree.createNode(listNode,propertyName);
                }
        }
        
@@ -72,11 +71,11 @@ public class MappingToAugeasDirectivePerMap extends ConfigurationToAugeasApacheB
        if (list.getList().size()<nodes.size())
        {
                for (int i=0;i<nodes.size()-list.getList().size();i++){
-                       nodes.get(nodes.size()-1-i).remove(false);
+                       nodes.get(nodes.size()-1-i).remove();
                }
        }
        
-       nodes = tree.matchRelative(listNode, propertyName);
+       nodes = tree.search(listNode, propertyName);
        int i=0;
        
        for (Property property : list.getList()){
@@ -87,7 +86,7 @@ public class MappingToAugeasDirectivePerMap extends ConfigurationToAugeasApacheB
        
 
         public void updateMap(PropertyDefinitionMap propDefMap, Property prop,
-                        AugeasNode mapNode, int seq) throws AugeasRhqException {
+                ApacheDirective mapNode, int seq) throws ApacheParserException {
                 
                 PropertyMap propMap = (PropertyMap) prop;
                 String propertyName = propDefMap.getName();
@@ -107,38 +106,13 @@ public class MappingToAugeasDirectivePerMap extends ConfigurationToAugeasApacheB
                }
                         
              List<String> params = ApacheDirectiveRegExpression.createParams(param.toString(), propertyName);
-         
-                        List<AugeasNode> nodes = mapNode.getChildByLabel("param");
-                        
-                      //THERE IS MORE CONFIGURATIONS THAN NODES, NEW NODES WILL BE CREATED
-                if (params.size()>nodes.size())
-                {
-                        for (int i=0;i<params.size()-nodes.size();i++){
-                                tree.createNode(mapNode,"param",null,nodes.size()+i+1);
-                        }
-                }
-                
-                //THERE IS LESS CONFIGURATIONS THAN NODES, REDUDANT NODES WILL BE DELETED
-                if (params.size() < nodes.size())
-                {
-                        for (int i=0;i<nodes.size()-params.size();i++){
-                              nodes.get(params.size()+i).remove(false);
-                        }
-                }
-                
-                nodes = tree.matchRelative(mapNode, "param");
-                
-                int i =0;
-                for (AugeasNode tempNode : nodes){
-                    tempNode.setValue(params.get(i));
-                        i++;
-                }
+             mapNode.setValues(params);
                 
         }
 
-        public void updateSimple(AugeasNode parentNode,
+        public void updateSimple(ApacheDirective parentNode,
                         PropertyDefinitionSimple propDef, Property prop, int seq)
-                        throws AugeasRhqException {
+                        throws ApacheParserException {
                 
         }
 

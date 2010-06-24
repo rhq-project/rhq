@@ -20,34 +20,48 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.apache.augeas.mappingImpl;
+package org.rhq.plugins.apache.parser.mapping.load;
 
 import java.util.List;
 
-import org.rhq.augeas.node.AugeasNode;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.plugins.apache.ApacheServerComponent;
-import org.rhq.plugins.apache.mapping.ApacheDirectiveRegExpression;
-import org.rhq.rhqtransform.AugeasRhqException;
+import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheParserException;
+import org.rhq.plugins.apache.parser.mapping.ApacheDirectiveRegExpression;
 
 /**
- * A mapping strategy similar to {@link MappingDirectivePerMap}.
- * In addition to base class, the map definition is checked for
- * a property called {@link ApacheServerComponent#AUXILIARY_INDEX_PROP}
- * that is supposed to contain the index of the directive inside the
- * configuration file and if found the property is set the appropriate
- * value.
+ * A mapping strategy that creates a map for each directive it finds
+ * in the augeas tree. The map is supposed to be enclosed in a list.  
+ * The name of the map definition is supposed to represent the name of the directives
+ * to create the maps for.
  * 
  * @author Lukas Krejci
  */
-public class MappingDirectivePerMapIndex extends MappingDirectivePerMap {
+public class MappingDirectivePerMap extends ApacheToConfigurationBase {
 
     @Override
-    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws AugeasRhqException {
+    public Property createPropertyList(PropertyDefinitionList propDefList, ApacheDirective node) throws ApacheParserException {
+        PropertyList propList = new PropertyList(propDefList.getName());
+
+        PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
+
+        List<ApacheDirective> nodes = tree.search(node, listMemberPropDef.getName());
+
+        for (ApacheDirective nd : nodes) {
+            propList.add(loadProperty(listMemberPropDef, nd));
+        }
+
+        return propList;
+    }
+
+    @Override
+    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, ApacheDirective node) throws ApacheParserException {
         String directiveName = propDefMap.getName();
 
         List<String> params = ApacheDirectiveRegExpression.getParams(node);
@@ -57,17 +71,15 @@ public class MappingDirectivePerMapIndex extends MappingDirectivePerMap {
         int idx = 0;
         for (PropertyDefinition propDef : propDefMap.getPropertyDefinitions().values()) {
             if (propDef instanceof PropertyDefinitionSimple) {
-                if (ApacheServerComponent.AUXILIARY_INDEX_PROP.equals(propDef.getName())) {
-                    map.put(new PropertySimple(ApacheServerComponent.AUXILIARY_INDEX_PROP, node.getSeq()));
-                    continue;
-                }
-                String value = params.get(idx);
+            	if (params.size()>idx)
+                {
+            	String value = params.get(idx);
                 map.put(Util.createPropertySimple((PropertyDefinitionSimple) propDef, value));
+                }
             }
             idx++;
         }
         return map;
     }
 
-    
 }

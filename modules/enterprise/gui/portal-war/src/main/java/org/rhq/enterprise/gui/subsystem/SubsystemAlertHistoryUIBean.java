@@ -223,7 +223,8 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
 
                     String firedValue = log.getValue();
                     if (condition.getMeasurementDefinition() != null) {
-                        if (condition.getMeasurementDefinition().getDataType()== DataType.CALLTIME)
+                        DataType type = condition.getMeasurementDefinition().getDataType();
+                        if (type == DataType.CALLTIME || type == DataType.TRAIT)
                             firedValue = log.getValue();
                         else
                             firedValue = MeasurementConverter.format(Double.valueOf(log.getValue()), condition

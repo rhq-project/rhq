@@ -128,6 +128,8 @@ public class ViewAlertAction extends TilesAction {
                 || (category == AlertConditionCategory.EVENT)) {
                 // TODO: jmarques - add validation to make sure condition is a valid regex Pattern
                 alertCondBean.setActualValue(condLog.getValue());
+            } else if (category == AlertConditionCategory.TRAIT) {
+                alertCondBean.setActualValue(condLog.getValue());
             } else {
                 alertCondBean.setActualValue("??");
             }

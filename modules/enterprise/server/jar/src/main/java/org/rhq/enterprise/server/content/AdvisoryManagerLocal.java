@@ -47,7 +47,7 @@ public interface AdvisoryManagerLocal {
      * @param advisoryType adv type
      * @return newly created advisory object
      */
-    Advisory createAdvisory(Subject user, String advisory, String advisoryType, String advisoryName)
+    Advisory createAdvisory(Subject subject, String advisory, String advisoryType, String synopsis)
         throws AdvisoryException;
 
     /**
@@ -57,7 +57,7 @@ public interface AdvisoryManagerLocal {
      * @return a CVE object
      * @throws AdvisoryException
      */
-    CVE createCVE(Subject user, String cvename) throws AdvisoryException;
+    CVE createCVE(Subject subject, String cvename) throws AdvisoryException;
 
     /**
      * creates a AdvisoryCVE relationship object
@@ -67,7 +67,7 @@ public interface AdvisoryManagerLocal {
      * @return AdvisoryCVE object
      * @throws AdvisoryException
      */
-    AdvisoryCVE createAdvisoryCVE(Subject user, Advisory advisory, CVE cve) throws AdvisoryException;
+    AdvisoryCVE createAdvisoryCVE(Subject subject, Advisory advisory, CVE cve) throws AdvisoryException;
 
     /**
      * creates a AdvisoryPackage mapping object
@@ -77,36 +77,29 @@ public interface AdvisoryManagerLocal {
      * @return AdvisoryPackage object
      * @throws AdvisoryException
      */
-    AdvisoryPackage createAdvisoryPackage(Subject user, Advisory advisory, PackageVersion pkg) throws AdvisoryException;
-
-    /**
-     * returns an existing CVE object
-     * @param user
-     * @param cveId
-     * @return
-     */
-    CVE getCVE(Subject user, int cveId);
+    AdvisoryPackage createAdvisoryPackage(Subject subject, Advisory advisory, PackageVersion packageVersion)
+        throws AdvisoryException;
 
     /**
      * deletes specified cve object
      * @param user
      * @param cveId
      */
-    void deleteCVE(Subject user, int cveId);
+    void deleteCVE(Subject subject, int cveId);
 
     /**
      * removes the AdvisoryCVE mapping
      * @param user
      * @param advId
      */
-    void deleteAdvisoryCVE(Subject user, int advId);
+    void deleteAdvisoryCVE(Subject subject, int advId);
 
     /**
      * Deletes a given instance of advisory object.
      * @param user
      * @param advId
      */
-    void deleteAdvisoryByAdvId(Subject user, int advId);
+    void deleteAdvisoryByAdvId(Subject subject, int advId);
 
     /**
      * find advisory by advisory name
@@ -162,7 +155,7 @@ public interface AdvisoryManagerLocal {
      * @param user
      * @param advId
      */
-    void deleteAdvisoryPackage(Subject user, int advId);
+    void deleteAdvisoryPackage(Subject subject, int advId);
 
     /**
      *  find AdvisoryPackage object for given advId and packageVersion id

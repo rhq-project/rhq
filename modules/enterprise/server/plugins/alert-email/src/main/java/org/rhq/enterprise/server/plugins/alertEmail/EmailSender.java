@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.plugins.alertEmail;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.rhq.core.domain.alert.Alert;
@@ -41,14 +40,14 @@ public class EmailSender extends AlertSender {
             return new SenderResult(ResultState.FAILURE, "No email address given");
         }
 
-        List<String> emails = Arrays.asList(emailAddressString.split(","));
+        List<String> emails = AlertSender.unfence(emailAddressString, String.class);
         return new SenderResult(ResultState.DEFERRED_EMAIL, "Sending to addresses: " + emails, emails);
     }
 
     @Override
     public String previewConfiguration() {
         String emailAddressString = alertParameters.getSimpleValue("emailAddress", null);
-        if (emailAddressString == null) {
+        if (emailAddressString == null || emailAddressString.trim().length() == 0) {
             return "<empty>";
         }
         return emailAddressString;

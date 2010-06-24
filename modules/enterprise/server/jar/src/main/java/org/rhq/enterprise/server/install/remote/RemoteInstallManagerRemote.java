@@ -24,27 +24,27 @@ package org.rhq.enterprise.server.install.remote;
 
 import javax.ejb.Remote;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.install.remote.AgentInstallInfo;
-import org.rhq.core.domain.install.remote.RemoteAccessInfo;
-
 /**
+ * Future Remote API...
+ * 
  * @author Greg Hinkle
  */
 @Remote
 public interface RemoteInstallManagerRemote {
 
+    /* To Be Updated, commented :-) and Released in next version... 
+     * 
+        AgentInstallInfo agentInstallCheck(Subject subject, RemoteAccessInfo remoteAccessInfo);
 
-    AgentInstallInfo agentInstallCheck(Subject subject, RemoteAccessInfo remoteAccessInfo);
+        AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String path);
 
-    AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String path);
+        String[] remotePathDiscover(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
 
-    String[] remotePathDiscover(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
+        String startAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
 
-    String startAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
+        String stopAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
 
-    String stopAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
-
-    String agentStatus(Subject subject, RemoteAccessInfo remoteAccessInfo);
+        String agentStatus(Subject subject, RemoteAccessInfo remoteAccessInfo);
+    */
 
 }

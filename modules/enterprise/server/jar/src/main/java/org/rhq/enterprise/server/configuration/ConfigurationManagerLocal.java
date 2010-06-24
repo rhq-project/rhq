@@ -18,18 +18,20 @@
  */
 package org.rhq.enterprise.server.configuration;
 
+import java.util.List;
+import java.util.Map;
+
+import javax.ejb.Local;
+
 import org.jetbrains.annotations.Nullable;
 import org.quartz.SchedulerException;
 
-import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -43,11 +45,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
-
-import javax.ejb.Local;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource

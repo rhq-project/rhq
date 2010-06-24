@@ -84,6 +84,14 @@ public interface ParamConstants {
      */
     public static final String ALERT_THRESHOLD_COMPARATOR_LT = "<";
 
+    public static final String CALLTIME_MAX = "MAX";
+    public static final String CALLTIME_MIN = "MIN";
+    public static final String CALLTIME_AVG = "AVG";
+
+    public static final String CALLTIME_CHANGES = "CH";
+    public static final String CALLTIME_SHRINKS = "LO";
+    public static final String CALLTIME_GROWS = "HI";
+
     /**
      * The request parameter that specifies the resource type of the autogroup resources of the currently viewed
      * resource.

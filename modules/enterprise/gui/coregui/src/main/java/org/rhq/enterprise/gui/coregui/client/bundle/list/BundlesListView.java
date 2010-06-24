@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.SelectionAppearance;
@@ -86,7 +87,7 @@ public class BundlesListView extends Table {
             }
         });
 
-        addTableAction("Delete", Table.SelectionEnablement.ANY, "Are You Sure?", new TableAction() {
+        addTableAction("Delete", Table.SelectionEnablement.ANY, "Delete the selected bundle?", new TableAction() {
             public void executeAction(ListGridRecord[] selections) {
                 BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
                 for (ListGridRecord selection : selections) {
@@ -101,6 +102,8 @@ public class BundlesListView extends Table {
                         public void onSuccess(Void result) {
                             CoreGUI.getMessageCenter().notify(
                                 new Message("Deleted bundle [" + object.getBundleName() + "]", Severity.Info));
+
+                            CoreGUI.refresh();
                         }
                     });
                 }

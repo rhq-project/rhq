@@ -57,6 +57,8 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
@@ -80,9 +82,11 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         + "(schedule_id, call_destination) " + "SELECT ?, ? FROM RHQ_numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 
+    /*
     private static final String CALLTIME_VALUE_DELETE_SUPERCEDED_STATEMENT = "DELETE FROM " + DATA_VALUE_TABLE_NAME
         + " WHERE key_id = " + "(SELECT id FROM " + DATA_KEY_TABLE_NAME
         + " WHERE schedule_id = ? AND call_destination = ?) AND begin_time = ?";
+    */
 
     private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT INTO " + DATA_VALUE_TABLE_NAME
         + "(id, key_id, begin_time, end_time, minimum, maximum, total, count) "
@@ -110,6 +114,9 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
     @EJB
     private CallTimeDataManagerLocal callTimeDataManager;
+
+    @EJB
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void addCallTimeData(@NotNull Set<CallTimeData> callTimeDataSet) {
@@ -395,6 +402,9 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                 insertedRowCount += results[i];
             }
 
+            notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet
+                .toArray(new CallTimeData[callTimeDataSet.size()]));
+
             log.debug("Inserted " + ((insertedRowCount >= 0) ? insertedRowCount : "?") + " call-time data value rows.");
         } catch (SQLException e) {
             logSQLException("Failed to persist call-time data values", e);
@@ -404,6 +414,12 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             JDBCUtil.safeClose(conn, ps, null);
         }
 
+    }
+
+    private void notifyAlertConditionCacheManager(String callingMethod, CallTimeData... data) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(data);
+
+        log.debug(callingMethod + ": " + stats.toString());
     }
 
     private void logSQLException(String message, SQLException e) {

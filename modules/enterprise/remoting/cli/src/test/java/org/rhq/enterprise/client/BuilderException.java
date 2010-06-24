@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2008 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,31 +20,30 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.server.install.remote;
 
-import javax.ejb.Remote;
+package org.rhq.enterprise.client;
 
 /**
- * Future Remote API...
- * 
- * @author Greg Hinkle
+ * A builder will throw this exception if it is unable to build the target object. For example, if example if all
+ * required properites of the target object do not have non-null values, then the builder will throw this exception.
+ *
+ * @author John Sanda
  */
-@Remote
-public interface RemoteInstallManagerRemote {
+public class BuilderException extends RuntimeException {
 
-    /* To Be Updated, commented :-) and Released in next version... 
-     * 
-        AgentInstallInfo agentInstallCheck(Subject subject, RemoteAccessInfo remoteAccessInfo);
+    public BuilderException() {
+        super();
+    }
 
-        AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String path);
+    public BuilderException(String message) {
+        super(message);
+    }
 
-        String[] remotePathDiscover(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
+    public BuilderException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-        String startAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
-
-        String stopAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
-
-        String agentStatus(Subject subject, RemoteAccessInfo remoteAccessInfo);
-    */
-
+    public BuilderException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -24,6 +24,12 @@
 package org.rhq.enterprise.client;
 
 import static org.testng.Assert.*;
+
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -34,8 +40,12 @@ import javax.persistence.OneToOne;
 import javax.persistence.OneToMany;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
+
+import static org.rhq.core.domain.measurement.AvailabilityType.*;
+import static org.rhq.core.domain.resource.ResourceCategory.*;
 
 public class TabularWriterTest {
 
@@ -50,7 +60,7 @@ public class TabularWriterTest {
     }
 
     @Test
-    public void aByteShouldBePrintedUnchanged() {
+    public void aByteShouldPrintUnchanged() {
         byte value = 1;
 
         writer.print(value);
@@ -62,7 +72,7 @@ public class TabularWriterTest {
     }
 
     @Test
-    public void anIntegerShouldBePrintedUnchanged() {
+    public void anIntegerShouldPrintUnchanged() {
         int value = 1;
 
         writer.print(value);
@@ -74,17 +84,17 @@ public class TabularWriterTest {
     }
 
     @Test
-    public void theSimpleClassNameShouldBePrintedFirstForAnEntity() {
+    public void theSimpleClassNameShouldPrintFirstForEntity() {
         User user = new User(1, "rhqadmin", "rhqadmin");
 
         writer.print(user);
 
-        assertCorrectNumberOfLinesPrinted(4);
-        assertSimpleClassNameIsFirstLinePrinted(user);
+        assertNumberOfLinesPrintedIs(4);
+        assertLineEquals(0, user.getClass().getSimpleName() + ":", "The simple class name should be the first line printed");
     }
 
     @Test
-    public void theIdShouldBeTheFirstPropertyPrintedForAnEntity() {
+    public void theIdShouldBeTheFirstPropertyPrintedForEntity() {
         User user = new User(1, "rhqadmin", "rhqadmin");
 
         writer.print(user);
@@ -96,8 +106,8 @@ public class TabularWriterTest {
         assertLineEquals(idLineNumber, expected, "The id property should be the 2nd line printed");
     }
 
-    @Test//(enabled = false)
-    public void otherPropertiesShouldBePrintedAfterIdPropertyForAnEntity() {
+    @Test
+    public void otherPropertiesShouldPrintAfterIdForEntity() {
         User user = new User(1, "rhqadmin", "rhqadmin");
 
         writer.print(user);
@@ -114,7 +124,7 @@ public class TabularWriterTest {
     }
 
     @Test
-    public void toStringOfOneToOneAssociationShouldBePrintedForAnEntity() {
+    public void oneToOneAssociationShouldPrintForAnEntity() {
         User mgr = new User(1, "rhqadmin", "rhqadmin");
         Department department = new Department(1, mgr);
 
@@ -126,8 +136,8 @@ public class TabularWriterTest {
         assertLineEquals(lineNumber, expectedLine, "The manager property should be the 3rd line printed");
     }
 
-    @Test(enabled=false)
-    public void toStringOfCollectionShouldBePrintedForAnEntity() {
+    @Test(enabled = false) // TODO revisit
+    public void oneToManyAssociationShouldPrintForEntity() {
         User employee = new User(1, "rhq", "rhq");
 
         Company company = new Company(1);
@@ -142,16 +152,127 @@ public class TabularWriterTest {
                 "toString() value of the collection should be displayed.");
     }
 
-    void assertCorrectNumberOfLinesPrinted(int expectedNumberOfLines) {
+    @Test
+    public void idShouldBeFirstResourcePropertyPrinted() {
+        Resource resource = createResource();
+
+        writer.print(resource);
+
+        assertLineEquals(
+            1,
+            "\t" + padResourceField("id") + ": " + resource.getId(),
+            "Expected Resource.id to be the first property printed."
+        );
+    }
+
+    @Test
+    public void nameShouldBeSecondResourcePropertyPrinted() {
+        Resource resource = createResource();
+
+        writer.print(resource);
+
+        assertLineEquals(
+            2,
+            "\t" + padResourceField("name") + ": " + resource.getName(),
+            "Expected Resource.name to be second property printed"
+        );
+    }
+
+    @Test
+    public void versionShouldBeThirdResourcePropertyPrinted() {
+        Resource resource = createResource();
+
+        writer.print(resource);
+
+        assertLineEquals(
+            3,
+            "\t" + padResourceField("version") + ": " + resource.getVersion(),
+            "Expected Resource.version to be third property printed"
+        );
+    }
+
+    @Test
+    public void currentAvailabilityShouldBeFourthResourcePropertyPrinted() {
+        Resource resource = createResource();
+
+        writer.print(resource);
+
+        assertLineEquals(
+            4,
+            "\t" + padResourceField("currentAvailability") + ": " + resource.getCurrentAvailability().getAvailabilityType(),
+            "Expected short version of Resource.currentAvailability to be fourth property printed"
+        );
+    }
+
+    @Test
+    public void handleNullCurrentAvailabilityForResource() {
+        Resource resource = createUncommittedResource();
+
+        writer.print(resource);
+
+        assertLineEquals(
+            4,
+            "\t" + padResourceField("currentAvailability") + ": ",
+            "Expected to see empty string for Resource.currentAvailability when property is null"
+        );
+    }
+
+    @Test
+    public void resourceTypeShouldBeLastResourcePropertyPrinted() {
+        Resource resource = createResource();
+
+        writer.print(resource);
+
+        assertLineEquals(
+            5,
+            "\t" + padResourceField("resourceType") + ": " + resource.getResourceType().getName(),
+            "Expected short version of Resource.resourceType to be the fifth property printed"
+        );
+    }
+
+    private Resource createResource() {
+        return new ResourceBuilder().createServer()
+            .usingDefaultResourceType()
+            .withId(111)
+            .withName("test-server")
+            .withUuid("12345")
+            .withVersion("1.0")
+            .inInventory()
+            .withCurrentAvailability(UP)
+            .build();
+    }
+
+    private Resource createUncommittedResource() {
+        return new ResourceBuilder().createServer()
+            .usingDefaultResourceType()
+            .withId(111)
+            .withName("test-server")
+            .withUuid("12345")
+            .withVersion("1.0")
+            .notInInventory()
+            .build();
+    }
+
+    @Test
+    public void printCollectionOfUncommittedResource() {
+        Resource parent = new ResourceBuilder().createServer()
+            .usingDefaultResourceType()
+            .withName("test-server")
+            .withUuid("12345")
+            .withVersion("1.0")
+            .inInventory()
+            .with(2).childServices()
+                .notInInventory()
+                .included()
+            .build();
+
+        writer.print(parent.getChildResources());
+    }
+
+    void assertNumberOfLinesPrintedIs(int expectedNumberOfLines) {
         String lines[] = getLines();
         assertEquals(lines.length, expectedNumberOfLines, "The actual lines printed were\n[\n" +
             stringWriter.toString() + "\n]");
-    }
-
-    void assertSimpleClassNameIsFirstLinePrinted(Object object) {
-        String[] lines = getLines();
-        assertEquals(lines[0], object.getClass().getSimpleName() + ":", "The simple class name should have been the " +
-                "first line printed.");
     }
 
     void assertLineEquals(int lineNumber, String expectedLine, String msg) {
@@ -162,6 +283,10 @@ public class TabularWriterTest {
 
     String[] getLines() {
         return stringWriter.toString().split("\n");
+    }
+
+    String padResourceField(String field) {
+        return StringUtils.leftPad(field, "currentAvailability".length());
     }
 
     @Entity

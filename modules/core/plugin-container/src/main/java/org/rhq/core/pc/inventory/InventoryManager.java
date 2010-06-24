@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -281,11 +281,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 .getResourceType(), component, timeout);
             Set<DiscoveredResourceDetails> results = proxy.discoverResources(context);
             return results;
+        } catch (TimeoutException te) {
+            log.warn("Discovery for Resources of [" + context.getResourceType() + "] has been running for more than "
+                    + timeout + " milliseconds. This may be a plugin bug.", te);
+            return null;
         } catch (BlacklistedException be) {
+            // Discovery did not run, because the ResourceType was blacklisted during a prior discovery scan.
             log.debug(ThrowableUtil.getAllMessages(be));
             return null;
         }
-
     }
 
     /**
@@ -310,6 +314,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 .getResourceType(), component, timeout, ManualAddFacet.class);
             DiscoveredResourceDetails result = proxy.discoverResource(pluginConfig, context);
             return result;
+        } catch (TimeoutException te) {
+            log.warn("Manual add of Resource of type [" + context.getResourceType() + "] with plugin configuration ["
+                    + pluginConfig.toString(true) + "] has been running for more than "
+                    + timeout + " milliseconds. This may be a plugin bug.", te);
+            return null;
         } catch (BlacklistedException be) {
             log.debug(ThrowableUtil.getAllMessages(be));
             return null;

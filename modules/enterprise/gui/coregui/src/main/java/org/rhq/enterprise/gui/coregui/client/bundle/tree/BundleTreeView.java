@@ -69,6 +69,7 @@ public class BundleTreeView extends TreeGrid {
 
     public void selectPath(ViewPath viewPath) {
 
+
         if (viewPath.viewsLeft() > 0) {
             String key = "";
             for (ViewId view : viewPath.getViewPath().subList(2, viewPath.getViewPath().size())) {
@@ -99,9 +100,13 @@ public class BundleTreeView extends TreeGrid {
             });
         } else {
             deselectAllRecords();
-            selectRecord(0);
+            if (getTotalRows() > 0)
+                selectRecord(0);
         }
-
-
     }
+
+    public void refresh() {
+        invalidateCache();
+    }
+
 }

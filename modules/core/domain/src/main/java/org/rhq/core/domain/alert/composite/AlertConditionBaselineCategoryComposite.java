@@ -23,6 +23,7 @@
 package org.rhq.core.domain.alert.composite;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.measurement.DataType;
 
 /**
  * @author Joseph Marques
@@ -34,8 +35,8 @@ public class AlertConditionBaselineCategoryComposite extends AlertConditionSched
     private final Double maxValue;
 
     public AlertConditionBaselineCategoryComposite(AlertCondition condition, Integer scheduleId, Integer baselineId,
-        Double minValue, Double meanValue, Double maxValue) {
-        super(condition, scheduleId);
+        Double minValue, Double meanValue, Double maxValue, DataType dataType) {
+        super(condition, scheduleId, dataType);
         this.baselineId = baselineId;
         this.minValue = minValue;
         this.meanValue = meanValue;

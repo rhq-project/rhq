@@ -8,10 +8,10 @@
         To create 10 servers, each with 170 services, the following should be passed to the agent:
 
         -Don.perftest.scenario=configurable-5 -Don.perftest.server-d-count=10 -Don.perftest.service-d-metrics-count=170
-        
+
         This collects, on average, 170 measurements per minute (assuming summary measurement collection interval is 5 mins)
    -->
-   
+
 
    <resource type="server-d">
       <simpleResourceGenerator property="on.perftest.server-d-count"/>
@@ -21,6 +21,10 @@
    <resource type="service-d-metrics">
       <simpleResourceGenerator property="on.perftest.service-d-metrics-count"/>
       <simpleNumericMeasurementGenerator/>
+      <ConfigurableCallTimeDataGenerator
+               minMsgCount="1" maxMsgCount="500"
+               minDuration="10" maxDuration="500"
+               numberSubPaths="100"/>
    </resource>
 
 </scenario>

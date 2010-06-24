@@ -55,7 +55,7 @@ public class SubjectsSender extends AlertSender {
     @Override
     public String previewConfiguration() {
         List<Integer> subjectIds = getSubjectIdsFromConfiguration();
-        if (subjectIds == null) {
+        if (subjectIds == null || subjectIds.size() == 0) {
             return "<empty>";
         }
 
@@ -69,7 +69,9 @@ public class SubjectsSender extends AlertSender {
         List<String> results = new ArrayList<String>();
         for (Integer nextSubjectId : subjectIds) {
             Subject nextSubject = subjectManager.getSubjectById(nextSubjectId);
-            results.add(nextSubject.getName());
+            if (nextSubject != null) { // handle unknown subject ids
+                results.add(nextSubject.getName());
+            }
         }
 
         return results;
@@ -80,9 +82,11 @@ public class SubjectsSender extends AlertSender {
         List<String> results = new ArrayList<String>();
         for (Integer nextSubjectId : subjectIds) {
             Subject nextSubject = subjectManager.getSubjectById(nextSubjectId);
-            String nextEmail = nextSubject.getEmailAddress();
-            if (nextEmail != null) {
-                results.add(nextEmail);
+            if (nextSubject != null) { // handle unknown subject ids
+                String nextEmail = nextSubject.getEmailAddress();
+                if (nextEmail != null) {
+                    results.add(nextEmail);
+                }
             }
         }
 
@@ -100,11 +104,6 @@ public class SubjectsSender extends AlertSender {
             return null;
         }
 
-        String[] subjectIds = subjectIdString.split(",");
-        List<Integer> results = new ArrayList<Integer>(subjectIds.length);
-        for (String nextSubjectId : subjectIds) {
-            results.add(Integer.parseInt(nextSubjectId));
-        }
-        return results;
+        return AlertSender.unfence(subjectIdString, Integer.class);
     }
 }

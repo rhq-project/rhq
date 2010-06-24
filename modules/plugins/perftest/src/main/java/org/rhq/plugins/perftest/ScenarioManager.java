@@ -32,6 +32,10 @@ import javax.xml.bind.util.ValidationEventCollector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.plugins.perftest.calltime.CalltimeFactory;
+import org.rhq.plugins.perftest.calltime.ConfigurableCallTimeDataFactory;
+import org.rhq.plugins.perftest.calltime.EmptyCalltimeFactory;
+import org.rhq.plugins.perftest.calltime.SimpleCallTimeDataFactory;
 import org.rhq.plugins.perftest.configuration.ConfigurationFactory;
 import org.rhq.plugins.perftest.configuration.SimpleConfigurationFactory;
 import org.rhq.plugins.perftest.content.ContentFactory;
@@ -43,6 +47,8 @@ import org.rhq.plugins.perftest.measurement.SimpleNumericMeasurementFactory;
 import org.rhq.plugins.perftest.resource.EmptyResourceFactory;
 import org.rhq.plugins.perftest.resource.ResourceFactory;
 import org.rhq.plugins.perftest.resource.SimpleResourceFactory;
+import org.rhq.plugins.perftest.scenario.CalltimeGenerator;
+import org.rhq.plugins.perftest.scenario.ConfigurableCallTimeDataGenerator;
 import org.rhq.plugins.perftest.scenario.ConfigurationGenerator;
 import org.rhq.plugins.perftest.scenario.ContentGenerator;
 import org.rhq.plugins.perftest.scenario.MeasurementGenerator;
@@ -50,6 +56,7 @@ import org.rhq.plugins.perftest.scenario.OOBNumericMeasurementGenerator;
 import org.rhq.plugins.perftest.scenario.Resource;
 import org.rhq.plugins.perftest.scenario.ResourceGenerator;
 import org.rhq.plugins.perftest.scenario.Scenario;
+import org.rhq.plugins.perftest.scenario.SimpleCallTimeDataGenerator;
 import org.rhq.plugins.perftest.scenario.SimpleConfigurationGenerator;
 import org.rhq.plugins.perftest.scenario.SimpleContentGenerator;
 import org.rhq.plugins.perftest.scenario.SimpleNumericMeasurementGenerator;
@@ -82,6 +89,11 @@ public class ScenarioManager {
      */
     private static final EmptyMeasurementFactory EMPTY_MEASUREMENT_FACTORY = new EmptyMeasurementFactory();
 
+    /**
+     * Calltime factory used when a scenario doesn't define any metrics for a particular resource type.
+     */
+    private static final EmptyCalltimeFactory EMPTY_CALLTIME_FACTORY = new EmptyCalltimeFactory();
+
     // Attributes  --------------------------------------------
 
     private final Log log = LogFactory.getLog(ScenarioManager.class);
@@ -102,6 +114,7 @@ public class ScenarioManager {
      * changed.
      */
     private Map<String, MeasurementFactory> measurementFactories = new HashMap<String, MeasurementFactory>();
+    private Map<String, CalltimeFactory> calltimeFactories = new HashMap<String, CalltimeFactory>();
 
     /**
      * Mapping of resource type name to configuration factory to populate the plugin configuration for newly discovered
@@ -198,6 +211,29 @@ public class ScenarioManager {
         return measurementFactory;
     }
 
+    public CalltimeFactory getCalltimeFactory(String resourceTypeName) {
+        CalltimeFactory calltimeFactory= calltimeFactories.get(resourceTypeName);
+
+        if (calltimeFactory == null ) {
+            Resource resource = findResource(resourceTypeName);
+            if (resource == null) {
+                calltimeFactory = EMPTY_CALLTIME_FACTORY;
+            } else {
+                JAXBElement<? extends CalltimeGenerator> element = resource.getCalltimeGenerator();
+                if (element == null) {
+                    calltimeFactory = EMPTY_CALLTIME_FACTORY;
+                } else {
+                    CalltimeGenerator generator = element.getValue();
+                    calltimeFactory = createCalltimeFactory(generator);
+                }
+            }
+
+            calltimeFactories.put(resourceTypeName, calltimeFactory);
+        }
+
+        return calltimeFactory;
+    }
+
     /**
      * Returns the configuration factory defined in the scenario for creating plugin configurations for the specified
      * resource type.
@@ -289,6 +325,23 @@ public class ScenarioManager {
             return new SimpleNumericMeasurementFactory();
         } else if (generator instanceof OOBNumericMeasurementGenerator) {
             return new OOBNumericMeasurementFactory();
+        }
+
+        return null;
+    }
+
+    /**
+     * Creates the appropriate calltime factory instance based on the provided generator.
+     *
+     * @param  generator read from the scenario
+     *
+     * @return calltime factory instance
+     */
+    private CalltimeFactory createCalltimeFactory(CalltimeGenerator generator) {
+        if (generator instanceof SimpleCallTimeDataGenerator) {
+            return new SimpleCallTimeDataFactory();
+        } else if (generator instanceof ConfigurableCallTimeDataGenerator) {
+            return new ConfigurableCallTimeDataFactory((ConfigurableCallTimeDataGenerator)generator);
         }
 
         return null;

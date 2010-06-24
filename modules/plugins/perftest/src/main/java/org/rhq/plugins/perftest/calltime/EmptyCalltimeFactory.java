@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,15 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.content;
+package org.rhq.plugins.perftest.calltime;
 
-import javax.ejb.Remote;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService
-@Remote
-public interface ContentHelperRemote {
+/**
+ * Factory that returns no data
+ * @author Heiko W. Rupp
+ */
+public class EmptyCalltimeFactory implements CalltimeFactory {
 
+    public CallTimeData nextValue(MeasurementScheduleRequest request) {
+        return null;
+    }
 }

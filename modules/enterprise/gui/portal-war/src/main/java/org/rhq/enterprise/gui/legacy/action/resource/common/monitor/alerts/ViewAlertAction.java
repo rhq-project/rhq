@@ -45,7 +45,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
@@ -117,7 +116,7 @@ public class ViewAlertAction extends TilesAction {
                         true);
                 } catch (Exception e) {
                     // check if this is Calltime data
-                    if (definition.getDataType()== DataType.CALLTIME)
+                    if (definition.getDataType() == DataType.CALLTIME)
                         firedValue = condLog.getValue();
                     else
                         firedValue = "??";
@@ -141,11 +140,6 @@ public class ViewAlertAction extends TilesAction {
         List<AlertNotificationLog> notificationLogs = av.getAlertNotificationLogs();
 
         request.setAttribute("aNotifLogs", notificationLogs);
-
-        request.setAttribute("controlEnabled", true); // always display control result, even if it's "none"
-        if (av.getTriggeredOperation() != null) {
-            request.setAttribute("controlAction", av.getTriggeredOperation());
-        }
 
         int recoveryAlertDefId = adv.getRecoveryId();
         if (recoveryAlertDefId != 0) {

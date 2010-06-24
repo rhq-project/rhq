@@ -1388,6 +1388,12 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + "] requires SecurityManager permission for requested query criteria.");
         }
 
+        if (criteria.isInventoryManagerRequired()
+            && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_INVENTORY)) {
+            throw new PermissionException("Subject [" + subject.getName()
+                + "] requires InventoryManager permission for requested query criteria.");
+        }
+
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, null,
                 subject.getId());

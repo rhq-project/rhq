@@ -95,14 +95,20 @@ public class PackageBits implements Serializable {
      * return <code>null</code>. In this case, the content is probably stored somewhere else on a local file system.
      * When <code>null</code> is returned, it is assumed that who ever needs the content can know where to find it based
      * on the {@link PackageVersion} details.
+     * 
+     * For large file contents, you should use ContentManager.updateBlobStream() to write and
+     * ContentManager.writeBlobOutToStream() to read/direct file contents into as no byte[] is used.
      */
     @XmlTransient
     public byte[] getBits() {
         return bits;
     }
 
+    /** For large file contents, you should use ContentManager.updateBlobStream() to write and 
+     *  ContentManager.writeBlobOutToStream() to read/direct file contents into as no byte[] is used.
+     * 
+     */
     public void setBits(byte[] bits) {
         this.bits = bits;
     }
-
 }

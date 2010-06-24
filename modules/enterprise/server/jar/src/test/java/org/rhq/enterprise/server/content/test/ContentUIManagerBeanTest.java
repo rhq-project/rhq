@@ -29,7 +29,6 @@ import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageBits;
@@ -285,8 +284,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             }
             FileInputStream fos = new FileInputStream(originalBinary);
 
-            Subject empty = null;
-            contentManager.updateBlobStream(empty, fos, packageBits);
+            contentManager.updateBlobStream(fos, packageBits);
             packageBits = em.find(PackageBits.class, packageBits.getId());
 
             // test that the bits are available and stored in the DB: Reading the Blob
@@ -298,7 +296,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             assert composite.isPackageBitsInDatabase();
 
             FileOutputStream outputStream = new FileOutputStream(retrieved);
-            contentManager.writeBlobOutToStream(empty, outputStream, packageBits, false);
+            contentManager.writeBlobOutToStream(outputStream, packageBits, false);
 
             //Check that db content equal to file system content
             String originalDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)

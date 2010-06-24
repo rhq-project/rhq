@@ -347,8 +347,8 @@ public interface ContentManagerLocal {
 
     byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId);
 
-    void writeBlobOutToStream(Subject user, OutputStream stream, PackageBits bits, boolean closeStreams);
+    void writeBlobOutToStream(OutputStream stream, PackageBits bits, boolean closeStreams);
 
-    void updateBlobStream(Subject user, InputStream stream, PackageBits bits);
+    void updateBlobStream(InputStream stream, PackageBits bits);
 
 }

@@ -939,7 +939,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
                 try {
                     PackageBits bits = entityManager.find(PackageBits.class, packageBits.getId());
-                    //                    bits.setBits(StreamUtil.slurp(bitStream));
                     String pkgName = "(set packageName)";
                     if ((packageVersion != null) && (packageVersion.getGeneralPackage() != null)) {
                         //update it to whatever package name is if we can get to it.
@@ -947,7 +946,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     }
                     bits = loadPackageBits(bitStream, packageVersion.getId(), pkgName, packageVersion.getVersion(),
                         bits);
-                    //                    bits.setBits(StreamUtil.slurp(bitStream));
                     entityManager.merge(bits);
 
                 } finally {
@@ -1237,31 +1235,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
 
-        //        PackageBits bits = loadPackageBits(packageBitStream);
         PackageBits bits = loadPackageBits(packageBitStream, newPackageVersion.getId(), packageName, version, null);
-        //        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
-        //        // Write the content into the newly created package version. This may eventually move, but for now we'll just
-        //        // use the byte array in the package version to store the bits.
-        //        byte[] packageBits;
-        //        try {
-        //            packageBits = StreamUtil.slurp(packageBitStream);
-        //        } catch (RuntimeException re) {
-        //            throw new RuntimeException("Error reading in the package file", re);
-        //        }
-        //
-        //        PackageBits bits = new PackageBits();
-        //        try {
-        //            bits.setBits(packageBits);
-        //        } catch (Exception e) {
-        //            log.error("Error saving the package.", e);
-        //        }
 
         newPackageVersion.setPackageBits(bits);
+        //TODO: write down to file system to calculate length and calculate hash.
         newPackageVersion.setFileSize((long) bits.getBits().length);
         try {
             newPackageVersion.setSHA256(new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
                 .calcDigestString(bits.getBits()));
-            //            .calcDigestString(packageBits));
         } catch (IOException e) {
             newPackageVersion.setSHA256(null);
         }
@@ -1579,23 +1560,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         //get the data
         PackageBits bits = loadPackageBits(packageBitStream, packageVersion.getId(), packageName, version, null);
-        //        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
-        //        // Write the content into the newly created package version. This may eventually move, but for now we'll just
-        //        // use the byte array in the package version to store the bits.
-        //        byte[] packageBits;
-        //        try {
-        //            packageBits = StreamUtil.slurp(packageBitStream);
-        //        } catch (RuntimeException re) {
-        //            throw new RuntimeException("Error reading in the package file", re);
-        //        }
-        //
-        //        PackageBits bits = new PackageBits();
-        //        //        bits = new PackageBits();
-        //        try {
-        //            bits.setBits(packageBits);
-        //        } catch (Exception e) {
-        //            log.error("Error savinf the package.", e);
-        //        }
 
         packageVersion.setPackageBits(bits);
 
@@ -1643,10 +1607,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         bits = entityManager.find(PackageBits.class, bits.getId());
 
-        Subject user = null;
-
         //write data from stream into db using Hibernate Blob mechanism
-        updateBlobStream(user, packageBitStream, bits);
+        updateBlobStream(packageBitStream, bits);
 
         return bits;
     }
@@ -1656,19 +1618,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      *
      * @param stream
      */
-    public void updateBlobStream(Subject user, InputStream stream, PackageBits bits) {
-
-        //        int resourceId = -1;
-        //        if (bits != null) {
-        //            resourceId = bits.getId();
-        //        }
-        //        log.info("Updating data for PackageBits [" + bits + "] with resource ID [" + resourceId + "]");
-        //
-        //        // Check permissions first
-        //        if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_CONTENT, resourceId)) {
-        //            throw new PermissionException("User [" + user.getName()
-        //                + "] does not have permission to update packageBits " + bits + " with resource ID [" + resourceId + "]");
-        //        }
+    public void updateBlobStream(InputStream stream, PackageBits bits) {
 
         //TODO: are there any db specific limits that we should check/verify here before stuffing
         // the contents of a stream into the db? Should we just let the db complain and take care of
@@ -1747,24 +1697,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      *
      * @param stream non null stream where contents to be written to.
      */
-    public void writeBlobOutToStream(Subject user, OutputStream stream, PackageBits bits, boolean closeStreams) {
-
-        //        int resourceId = -1;
-        //        if (bits != null) {
-        //            resourceId = bits.getId();
-        //        }
-        //        log.info("Reading data for PackageBits [" + bits + "] with resource ID [" + resourceId + "]");
-        //
-        //        // Check permissions first
-        //        if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_CONTENT, resourceId)) {
-        //            throw new PermissionException("User [" + user.getName() + "] does not have permission to read packageBits "
-        //                + bits + " with resource ID [" + resourceId + "]");
-        //        }
+    public void writeBlobOutToStream(OutputStream stream, PackageBits bits, boolean closeStreams) {
 
         if (stream == null) {
             return; // no locate to write to
         }
-        //        if ((bits == null) || (bits.getId() <= 0) || bits.getBits() == null) {
         if ((bits == null) || (bits.getId() <= 0)) {
             //then PackageBits instance passed in is insufficiently initialized.
             log.warn("PackageBits insufficiently initialized. No data to write out.");

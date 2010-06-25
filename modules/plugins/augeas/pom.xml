@@ -17,6 +17,10 @@
    <name>RHQ Augeas Plugin</name>
    <description>An abstract plugin for configuring resources via Augeas</description>
 
+   <properties>
+      <augeas.version>0.0.2</augeas.version>
+   </properties>
+
    <dependencies>
 
       <dependency>
@@ -30,11 +34,13 @@
          <artifactId>rhq-platform-plugin</artifactId>
          <version>${project.version}</version>
       </dependency>
- 	<dependency>
+
+   	  <dependency>
         <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
          <version>1.4</version>
       </dependency>
+
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
@@ -45,7 +51,7 @@
       <dependency>
          <groupId>net.augeas</groupId>
          <artifactId>augeas</artifactId>
-         <version>0.0.2</version>
+         <version>${augeas.version}</version>
       </dependency>
 
       <dependency>
@@ -79,7 +85,7 @@
                         <artifactItem>
                             <groupId>net.augeas</groupId>
                             <artifactId>augeas</artifactId>
-                            <version>0.0.1</version>
+                            <version>${augeas.version}</version>
                         </artifactItem>
 
                      </artifactItems>
@@ -122,7 +128,6 @@
 
                <plugin>
                  <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
                  <executions>
 
                      <execution>

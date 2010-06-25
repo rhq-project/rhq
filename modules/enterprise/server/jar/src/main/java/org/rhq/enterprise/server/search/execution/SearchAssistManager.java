@@ -358,6 +358,14 @@ public class SearchAssistManager {
     public List<SearchSuggestion> getSuggestions(String expression, int caretPos) {
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
 
+        if (subject == null) {
+            // likely a client's misuse of the API, but gracefully return no saved searches if the user is not found
+            SearchSuggestion footerMessage = new SearchSuggestion(Kind.InstructionalTextComment,
+                "Error retrieving saved searches, please refresh page");
+            results.add(footerMessage);
+            return results;
+        }
+
         try {
             if (expression == null) {
                 expression = "";

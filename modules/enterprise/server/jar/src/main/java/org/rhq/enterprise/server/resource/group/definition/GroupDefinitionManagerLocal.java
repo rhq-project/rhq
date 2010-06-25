@@ -23,14 +23,13 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionCreateException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionDeleteException;
-import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionNotFoundException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionEvaluator;
@@ -50,14 +49,11 @@ public interface GroupDefinitionManagerLocal {
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException,
         ResourceGroupUpdateException;
 
-    void calculateGroupMembership(Subject subject, int groupDefinitionId) throws GroupDefinitionDeleteException,
-        GroupDefinitionNotFoundException, InvalidExpressionException;
+    void calculateGroupMembership(Subject subject, int groupDefinitionId) throws ResourceGroupDeleteException,
+        GroupDefinitionDeleteException, GroupDefinitionNotFoundException, InvalidExpressionException;
 
     Integer calculateGroupMembership_helper(Subject subject, int groupDefinitionId, ExpressionEvaluator.Result result)
-        throws GroupDefinitionNotFoundException, GroupDefinitionNotFoundException;
-
-    PageList<ResourceGroupComposite> getManagedResourceGroups(Subject subject, int groupDefinitionId, PageControl pc)
-        throws GroupDefinitionException;
+        throws ResourceGroupDeleteException, GroupDefinitionNotFoundException, GroupDefinitionNotFoundException;
 
     PageList<GroupDefinition> getGroupDefinitions(Subject subject, PageControl pc);
 

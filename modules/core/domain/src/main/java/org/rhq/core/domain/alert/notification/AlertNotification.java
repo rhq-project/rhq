@@ -225,6 +225,9 @@ public class AlertNotification implements Serializable {
     }
 
     public boolean equalsData(AlertNotification other) {
+        if (other == null) {
+            return false;
+        }
         boolean results = compare(configuration, other.configuration);
         if (results) {
             results = compare(extraConfiguration, other.extraConfiguration);

@@ -103,8 +103,6 @@ public class EditDefinitionControlActionAction extends BaseAction {
             operationDefinition = operationManager.getOperationDefinition(subject, operationId);
         }
 
-        alertDefinition.setOperationDefinition(operationDefinition);
-
         try {
             if (context == FormContext.Type) {
                 alertTemplateManager.updateAlertTemplate(subject, alertDefinition, false);

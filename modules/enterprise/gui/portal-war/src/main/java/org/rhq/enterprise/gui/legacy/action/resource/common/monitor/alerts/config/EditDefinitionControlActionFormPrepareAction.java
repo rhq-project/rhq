@@ -82,12 +82,14 @@ public class EditDefinitionControlActionFormPrepareAction extends TilesAction {
         List<OptionItem> operationNames = AlertDefUtil.getControlActions(subject, id, formContext);
 
         // drop-downs
+        /* replaced by custom alert senders
         operationsForm.setControlActions(operationNames);
         if (alertDefinition.getOperationDefinition() != null) {
             Integer operationId = alertDefinition.getOperationDefinition().getId();
 
             operationsForm.setControlAction(String.valueOf(operationId));
         }
+        */
 
         // properties
         //        AlertDefinition alertDef = AlertDefUtil.getAlertDefinition(request, sessionID, eb);

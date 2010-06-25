@@ -1599,8 +1599,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         //locate related packageVersion
         PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
 
-        //associate the two
-        pv.setPackageBits(bits);
+        //associate the two if located
+        if (pv != null) {//np check.
+            pv.setPackageBits(bits);
+        }
         entityManager.flush(); // push the new package bits row to the DB
 
         bits = entityManager.find(PackageBits.class, bits.getId());

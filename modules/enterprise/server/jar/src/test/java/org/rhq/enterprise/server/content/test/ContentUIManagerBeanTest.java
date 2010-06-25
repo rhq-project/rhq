@@ -284,7 +284,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             }
             FileInputStream fos = new FileInputStream(originalBinary);
 
-            contentManager.updateBlobStream(fos, packageBits);
+            contentManager.updateBlobStream(fos, packageBits, null);
             packageBits = em.find(PackageBits.class, packageBits.getId());
 
             // test that the bits are available and stored in the DB: Reading the Blob

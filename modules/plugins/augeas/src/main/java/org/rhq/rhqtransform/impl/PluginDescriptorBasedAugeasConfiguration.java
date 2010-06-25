@@ -129,7 +129,7 @@ public class PluginDescriptorBasedAugeasConfiguration implements AugeasConfigura
     }
 
     public static List<String> getGlobList(PropertySimple list) {
-        if (list != null) {
+        if (list != null && list.getStringValue() != null) {
             return Arrays.asList(list.getStringValue().split("\\s*\\|\\s*"));
         } else {
             return Collections.emptyList();

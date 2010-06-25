@@ -269,6 +269,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         long startTime = System.currentTimeMillis();
 
         GroupDefinition groupDefinition = getById(groupDefinitionId);
+        groupDefinition.setLastCalculationTime(System.currentTimeMillis()); // we're calculating now
 
         ExpressionEvaluator evaluator = new ExpressionEvaluator();
         for (String expression : groupDefinition.getExpressionAsList()) {
@@ -319,10 +320,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         for (Integer doomedGroupId : doomedResourceGroupIds) {
             groupDefinitionManager.removeManagedResource_helper(subject, groupDefinitionId, doomedGroupId);
         }
-
-        // re-attach the group, because it was cleared from the session during the callout to the helper
-        groupDefinition = getById(groupDefinitionId);
-        groupDefinition.setLastCalculationTime(System.currentTimeMillis());
 
         long endTime = System.currentTimeMillis();
 

@@ -14,7 +14,8 @@
 <%@page import="org.rhq.enterprise.server.resource.ResourceTypeManagerLocal"%>
 <%@page import="org.rhq.enterprise.server.resource.ResourceTypeManagerBean"%>
 <%@page import="org.apache.commons.logging.*"%>
-<html>
+
+<%@page import="org.rhq.enterprise.server.util.LookupUtil"%><html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>ResourceTypeCreator</title>
@@ -41,48 +42,29 @@
 	<%
 		final Log log = LogFactory.getLog(this.getClass());
 	
-		Properties properties = new Properties();
-		properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
-		properties.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
-		properties.put(Context.PROVIDER_URL, "jnp://localhost:2099");
-	
-		
-		
-		
-		
 		/** Creation of parameters for the new ResourceType */
 		String resourceTypeName = request.getParameter("resourceTypeName");
 		
 		if( resourceTypeName != null )
 		{
 			//After name of new resourceType has been given
-			out.println(resourceTypeName);
+			out.println("Input:" + resourceTypeName);
 			
 			try 
 			{
-				Context context = new InitialContext(properties);
-			
-				Object ref1 = context.lookup("ResourceMetadataManagerBean/local");
-				ResourceMetadataManagerLocal rmml = (ResourceMetadataManagerLocal) javax.rmi.PortableRemoteObject.narrow(ref1, ResourceMetadataManagerLocal.class);
-				
-				Object ref2 = context.lookup("ResourceTypeManagerBean/local");
-				ResourceTypeManagerLocal rtml = (ResourceTypeManagerLocal) javax.rmi.PortableRemoteObject.narrow(ref2, ResourceTypeManagerLocal.class);
-						
 				Plugin plugin;
-				plugin = rmml.getPlugin("NagiosMonitor");
+				plugin = LookupUtil.getResourceMetadataManager().getPlugin("NagiosMonitor");
+				out.println("Name of returned plugin: " + plugin.getName());
 				
-				out.println("DEBUG OUTPUT");
-				out.println(plugin.getName());
+				//Method to get the parent resource Type
+				//Got name and plugin from the rhq_resource_type table in the rhq database
+				ResourceType parentResourceType = LookupUtil.getResourceTypeManager().getResourceTypeByNameAndPlugin("NagiosMonitor","NagiosMonitor");
+				out.println("Name of parent ResourceType: " + parentResourceType.getName());
 				
-				//ResourceType parentResourceType = rtml.getResourceTypeByNameAndPlugin("Nagios@127.0.0.1:6557","NagiosMonitor");
-				//ResourceType newResourceType = new ResourceType(resourceTypeName, plugin.getName(), ResourceCategory.SERVER, parentResourceType);
-				
-				//rmml.addNewResourceType(newResourceType);
+				//ResourceType newResourceType = new ResourceType(resourceTypeName, plugin.getName(), ResourceCategory.SERVICE, parentResourceType);
+				//out.println("Name of new ResourceType: " + newResourceType.getName());
+				//LookupUtil.getResourceMetadataManager().addNewResourceType(newResourceType);
 			} 
-			catch (NamingException e) 
-			{
-				log.error(e);
-			}
 			catch (NoResultException nre)
 			{
 				//NoResultException is thrown if no plugin with spcific name exists

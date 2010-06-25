@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -945,7 +946,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                         pkgName = packageVersion.getGeneralPackage().getName();
                     }
                     bits = loadPackageBits(bitStream, packageVersion.getId(), pkgName, packageVersion.getVersion(),
-                        bits);
+                        bits, null);
                     entityManager.merge(bits);
 
                 } finally {
@@ -1235,17 +1236,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
 
-        PackageBits bits = loadPackageBits(packageBitStream, newPackageVersion.getId(), packageName, version, null);
+        Map<String, String> contentDetails = new HashMap<String, String>();
+        PackageBits bits = loadPackageBits(packageBitStream, newPackageVersion.getId(), packageName, version, null,
+            contentDetails);
 
         newPackageVersion.setPackageBits(bits);
-        //TODO: write down to file system to calculate length and calculate hash.
-        newPackageVersion.setFileSize((long) bits.getBits().length);
-        try {
-            newPackageVersion.setSHA256(new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
-                .calcDigestString(bits.getBits()));
-        } catch (IOException e) {
-            newPackageVersion.setSHA256(null);
-        }
+        newPackageVersion.setFileSize(Long.valueOf(contentDetails.get(UPLOAD_FILE_SIZE)).longValue());
+        newPackageVersion.setSHA256(contentDetails.get(UPLOAD_SHA256));
         newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
 
         existingPackage.addVersion(newPackageVersion);
@@ -1559,7 +1556,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         //get the data
-        PackageBits bits = loadPackageBits(packageBitStream, packageVersion.getId(), packageName, version, null);
+        PackageBits bits = loadPackageBits(packageBitStream, packageVersion.getId(), packageName, version, null, null);
 
         packageVersion.setPackageBits(bits);
 
@@ -1583,11 +1580,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      *
      * @param packageBitStream
      * @param packageVersionId
+     * @param contentDetails 
      * @return PackageBits ref populated.
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     private PackageBits loadPackageBits(InputStream packageBitStream, int packageVersionId, String packageName,
-        String packageVersion, PackageBits existingPkgBits) {
+        String packageVersion, PackageBits existingPkgBits, Map<String, String> contentDetails) {
         PackageBits bits = null;
 
         //use or instantiate PackageBits instance.
@@ -1608,7 +1606,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         bits = entityManager.find(PackageBits.class, bits.getId());
 
         //write data from stream into db using Hibernate Blob mechanism
-        updateBlobStream(packageBitStream, bits);
+        updateBlobStream(packageBitStream, bits, contentDetails);
 
         return bits;
     }
@@ -1617,8 +1615,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      *  Blob mechanism with PreparedStatements.  As all content into Bits are not stored as type OID, t
      *
      * @param stream
+     * @param contentDetails Map to store content details in used in PackageVersioning
      */
-    public void updateBlobStream(InputStream stream, PackageBits bits) {
+    public void updateBlobStream(InputStream stream, PackageBits bits, Map<String, String> contentDetails) {
 
         //TODO: are there any db specific limits that we should check/verify here before stuffing
         // the contents of a stream into the db? Should we just let the db complain and take care of
@@ -1632,7 +1631,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         //persist to db if not already
         if (bits.getId() <= 0) {
-            entityManager.persist(this);
+            entityManager.persist(bits);
         }
 
         //locate the existing PackageBits instance
@@ -1647,7 +1646,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Connection conn = null;
         PreparedStatement ps = null;
         PreparedStatement ps2 = null;
-        DataSource ds = null;
         try {
 
             conn = dataSource.getConnection();
@@ -1666,7 +1664,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     Blob blb = rs.getBlob(1);
 
                     //copy the stream to the Blob
-                    long transferred = StreamUtil.copy(stream, blb.setBinaryStream(1), false);
+                    long transferred = copyAndDigest(stream, blb.setBinaryStream(1), false, contentDetails);
                     stream.close();
 
                     //populate the prepared statement for update
@@ -1687,6 +1685,37 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             log.error("An error occurred while updating Blob with stream for PackageBits[" + bits.getId() + "], "
                 + e.getMessage());
             e.printStackTrace();
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close prepared statement for package bits [" + bits.getId() + "]");
+                }
+            }
+
+            if (ps2 != null) {
+                try {
+                    ps2.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close prepared statement for package bits [" + bits.getId() + "]");
+                }
+            }
+
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close connection for package bits [" + bits.getId() + "]");
+                }
+            }
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close stream to package bits located at [" + +bits.getId() + "]");
+                }
+            }
         }
 
         entityManager.merge(bits);
@@ -1717,7 +1746,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ps.setInt(1, bits.getId());
             ResultSet results = ps.executeQuery();
             if (results.next()) {
-                //                results.next();
                 //retrieve the Blob
                 Blob blob = results.getBlob(1);
                 //now copy the contents to the stream passed in
@@ -1728,4 +1756,63 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ex.printStackTrace();
         }
     }
+
+    /** Functions same as StreamUtil.copy(), but calculates SHA hash and file size and write it to 
+     *  the Map<String,String> passed in.  
+     * 
+     * @param input
+     * @param output
+     * @param closeStreams
+     * @param contentDetails
+     * @return
+     * @throws RuntimeException
+     */
+    private long copyAndDigest(InputStream input, OutputStream output, boolean closeStreams,
+        Map<String, String> contentDetails) throws RuntimeException {
+        long numBytesCopied = 0;
+        int bufferSize = 32768;
+        MessageDigestGenerator digestGenerator = null;
+        if (contentDetails != null) {
+            digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+        }
+        try {
+            // make sure we buffer the input
+            input = new BufferedInputStream(input, bufferSize);
+
+            byte[] buffer = new byte[bufferSize];
+
+            for (int bytesRead = input.read(buffer); bytesRead != -1; bytesRead = input.read(buffer)) {
+                output.write(buffer, 0, bytesRead);
+                numBytesCopied += bytesRead;
+                if (digestGenerator != null) {
+                    digestGenerator.add(buffer, 0, bytesRead);
+                }
+            }
+
+            if (contentDetails != null) {//if we're calculating a digest as well
+                contentDetails.put(UPLOAD_FILE_SIZE, String.valueOf(numBytesCopied));
+                contentDetails.put(UPLOAD_SHA256, digestGenerator.getDigestString());
+            }
+            output.flush();
+        } catch (IOException ioe) {
+            throw new RuntimeException("Stream data cannot be copied", ioe);
+        } finally {
+            if (closeStreams) {
+                try {
+                    output.close();
+                } catch (IOException ioe2) {
+                    log.warn("Streams could not be closed", ioe2);
+                }
+
+                try {
+                    input.close();
+                } catch (IOException ioe2) {
+                    log.warn("Streams could not be closed", ioe2);
+                }
+            }
+        }
+
+        return numBytesCopied;
+    }
+
 }

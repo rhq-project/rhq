@@ -349,6 +349,6 @@ public interface ContentManagerLocal {
 
     void writeBlobOutToStream(OutputStream stream, PackageBits bits, boolean closeStreams);
 
-    void updateBlobStream(InputStream stream, PackageBits bits);
+    void updateBlobStream(InputStream stream, PackageBits bits, Map<String, String> contentDetails);
 
 }

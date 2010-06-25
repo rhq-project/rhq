@@ -276,7 +276,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             // contents into memory every time.
 
             //any jar should be fine. Use generated server jar
-            File originalBinary = new File("./target/rhq-enterprise-server.jar");
+            File originalBinary = new File("./src/main/resources/binary-blob-sample.jar");
             //destination once pulled from db
             File retrieved = new File("./target/pulled.jar");
             if (retrieved.exists()) {

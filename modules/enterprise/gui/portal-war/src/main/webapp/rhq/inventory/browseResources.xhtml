@@ -27,7 +27,7 @@
    <ui:param name="pageTitle" value="Browse Resources"/>
    <ui:param name="selectedTabName" value="Resources.#{param.subtab}" />
    <ui:define name="content">
-   
+
       <a4j:keepAlive beanName="BrowseResourcesUIBean"/>
 
       <a4j:form>
@@ -37,7 +37,7 @@
       </a4j:form>
       <h:form id="browseResourcesForm">
             <input type="hidden" name="subtab" value="${param.subtab}" />
-            
+
             <p/>
             <h:panelGrid columns="3">
                <h:outputText value="Search: " />
@@ -48,7 +48,7 @@
                   <ui:param name="defaultSavedSearchPattern" value="#{param.searchId}" />
                </ui:include>
 
-               <a4j:commandButton id="searchButtonJSF" value="GO" 
+               <a4j:commandButton id="searchButtonJSF" value="GO"
                                   reRender="browseResourcesDataTable, browseResourcesDataTableScroller"
                                   status="commonStatus"
                                   actionListener="#{BrowseResourcesUIBean.clearDataModel}"
@@ -85,42 +85,47 @@
                   <onc:select name="selectedItems"
                               value="#{item.original.resource.id}" />
                </rich:column>
-               
+
                <rich:column>
                   <onc:quickNav>
                      <f:param name="id" value="#{item.original.resource.id}"/>
-            
+
                      <onc:icon name="Monitor"
-                               url="/rhq/resource/monitor/graphs.xhtml" 
+                               url="/rhq/resource/monitor/graphs.xhtml"
                                alt="Monitor"
                                visible="#{monitorEnabled}">
                      </onc:icon>
-            
+
                      <onc:icon name="Inventory"
-                               url="/rhq/resource/inventory/view.xhtml" 
+                               url="/rhq/resource/inventory/view.xhtml"
                                alt="Inventory"/>
-            
+
                      <onc:icon name="Alert"
-                               url="/rhq/resource/alert/listAlertDefinitions.xhtml" 
-                               alt="Alerts" 
+                               url="/rhq/resource/alert/listAlertDefinitions.xhtml"
+                               alt="Alerts"
                                visible="#{monitorEnabled}"/>
-            
+
                      <onc:icon name="Configure"
-                               url="/rhq/resource/configuration/view.xhtml" 
-                               alt="Configure" 
+                               url="/rhq/resource/configuration/view.xhtml"
+                               alt="Configure"
                                visible="#{item.original.resourceFacets.configuration}"/>
-            
+
                      <onc:icon name="Operation"
-                               url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml" 
-                               alt="Operations" 
+                               url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml"
+                               alt="Operations"
                                visible="#{item.original.resourceFacets.operation}"/>
-            
-                     <onc:icon name="Content" 
-                               url="/rhq/resource/content/view.xhtml" 
+
+                     <onc:icon name="Events"
+                               url="/rhq/resource/events/history.xhtml"
+                               alt="Events"
+                               visible="#{item.original.resourceFacets.event}"/>
+
+                     <onc:icon name="Content"
+                               url="/rhq/resource/content/view.xhtml"
                                alt="Content"
                                visible="#{item.original.resourceFacets.content}"/>
-                     
-                     <!--  Is this necessary? It's being passed for all quick nav urls. -->   
+
+                     <!--  Is this necessary? It's being passed for all quick nav urls. -->
                      <f:param name="mode" value="list"/>
                   </onc:quickNav>
                </rich:column>
@@ -132,10 +137,10 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <onc:disambiguatedResourceName resourceName="#{item.original.resource.name}" 
+                  <onc:disambiguatedResourceName resourceName="#{item.original.resource.name}"
                       resourceId="#{item.original.resource.id}" disambiguationReport="#{item}"/>
                </rich:column>
-<!--                
+<!--
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="r.resourceType.name">

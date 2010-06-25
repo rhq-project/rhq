@@ -390,7 +390,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 ApacheParser parser = new ApacheParserImpl(parserTree,getServerRoot().getAbsolutePath());
          
                 ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);
-                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName);
+                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName, false);
             } catch (Exception e) {
               report.setStatus(CreateResourceStatus.FAILURE);
               report.setErrorMessage("Wrong format of virtual host resource name.");

@@ -516,11 +516,17 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
             ApacheServerComponent parent = resourceContext.getParentResourceComponent();
             if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-                vhostAddresses.add(parent.getAddressUtility().getMainServerSampleAddress(tree));
+                HttpdAddressUtility.Address serverAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, null, 0);
+                if (serverAddr != null) {
+                    vhostAddresses.add(serverAddr);
+                }
             } else {
                 for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                    vhostAddresses.add(parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
-                        vhostServerName));
+                    HttpdAddressUtility.Address vhostAddr = parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
+                        vhostServerName, true);
+                    if (vhostAddr != null) {
+                        vhostAddresses.add(vhostAddr);
+                    }
                 }
             }
 
@@ -540,7 +546,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 String fullPort = portValue.toString();
 
                 int snmpPort = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
-                if (snmpPort == 0) snmpPort = 80;
+                
+                //the snmp represent wildcard ports as 0 and so does HttpdAddressUtility.Address class
+                //we can therefore match the Address generated from the snmp values and the Addresses
+                //stored for this vhost directly.
                 
                 HttpdAddressUtility.Address snmpAddress = new HttpdAddressUtility.Address(snmpHost, snmpPort);
             
@@ -562,8 +571,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     private int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) throws UnknownHostException {
-        if (addresses.contains(addressToCheck)) {
-            return 3;
+        for(HttpdAddressUtility.Address a : addresses) {
+            if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port)) {
+                return 3;
+            }
         }
         
         //try to get the IP of the address to check
@@ -572,8 +583,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         for(InetAddress ip : ipAddresses) {
             HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
             
-            if (addresses.contains(newCheck)) {
-                return 2;
+            for(HttpdAddressUtility.Address a : addresses) {
+                if (HttpdAddressUtility.isAddressConforming(newCheck, a.host, a.port)) {
+                    return 2;
+                }
             }
         }
         

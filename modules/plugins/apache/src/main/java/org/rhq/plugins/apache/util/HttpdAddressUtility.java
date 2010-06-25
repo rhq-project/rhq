@@ -25,11 +25,11 @@ package org.rhq.plugins.apache.util;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.augeas.node.AugeasNode;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 
@@ -41,71 +41,54 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 public enum HttpdAddressUtility {
 
     APACHE_1_3 {
-        public Address getMainServerSampleAddress(ApacheDirectiveTree ag) {
+        public Address getMainServerSampleAddress(ApacheDirectiveTree ag, String limitToHost, int limitToPort) {
             try {
-                Address addr = null;
+                List<ApacheDirective> ports = ag.search("/Port");
+                List<ApacheDirective> bindAddresses = ag.search("/BindAddress");
+                List<ApacheDirective> listens = ag.search("/Listen");
 
-                //check if there is a ServerName directive
-                List<ApacheDirective> serverNameNodes = ag.search("/ServerName");
-
-                if (serverNameNodes.size() > 0) {
-                    String serverName = serverNameNodes.get(0).getValuesAsString();
-                    addr = Address.parse(serverName);
-                } else {
-                    List<ApacheDirective> ports = ag.search("/Port");
-                    List<ApacheDirective> bindAddresses = ag.search("/BindAddress");
-                    List<ApacheDirective> listens = ag.search("/Listen");
-
-                    String port = null;
-                    String bindAddress = null;
-                    String listen = null;
-                    
-                    if (ports.size() > 0) {
-                        List<String>values = ports.get(0).getValues();
-                        if (values.size()>0)                           
-                           port =  values.get(0);
-                    }
-                    
-                    if (bindAddresses.size() > 0) {
-                        List<String>values = bindAddresses.get(0).getValues();
-                        if (values.size()>0)                        
-                        bindAddress =  values.get(0);
-                    }
-                    
-                    if (listens.size() > 0) {
-                        List<String>values = listens.get(0).getValues();
-                        if (values.size()>0)
-                           listen = values.get(0);
-                    }
-                    
-                    String host = null;
-                    int portToUse = -1;
-                    
-                    if (bindAddress != null && !"*".equals(bindAddress)) {
-                        host = bindAddress;
-                    }
-                    
-                    if (port != null) {
-                        portToUse = Integer.parseInt(port);
-                    }
-                    
-                    if (listen != null) {
-                        Address tmp = Address.parse(listen);
-                        host = tmp.host;
-                        portToUse = tmp.port;
-                        if (portToUse == -1) {
-                            host = null;
-                            portToUse = Integer.parseInt(tmp.host);
-                        }
-                    }
-                    
-                    if (host == null) {
-                        host = InetAddress.getLocalHost().getHostName();
-                    }
-
-                    addr = new Address(host, portToUse);
+                String port = "80"; //this is the default in apache 1.3
+                String bindAddress = null;
+                
+                List<Address> addressesToMatch = new ArrayList<Address>();
+                
+                if (ports.size() > 0) {
+                    List<String>values = ports.get(0).getValues();
+                    if (values.size()>0)                           
+                       port =  values.get(0);
                 }
-                return addr;
+                
+                if (bindAddresses.size() > 0) {
+                    List<String>values = bindAddresses.get(0).getValues();
+                    if (values.size()>0)                        
+                    bindAddress =  values.get(0);
+                }
+                
+                //listen directives take precedence over port/bindaddress combo
+                if (listens.size() > 0) {
+                    for(ApacheDirective l : listens) {
+                        addressesToMatch.add(parseListen(l.getValues().get(0)));
+                    }
+                } else {
+                    addressesToMatch.add(new Address(bindAddress, Integer.parseInt(port)));
+                }
+                
+                for (Address address : addressesToMatch) {
+                    if (isAddressConforming(address, limitToHost, limitToPort)) {
+                        if (!address.isPortDefined() || address.isPortWildcard()) {
+                            address.port = 80;
+                        }
+                        if (address.host == null || address.isHostDefault() || address.isHostWildcard()) {
+                            address = getLocalhost(address.port);
+                        }
+                        
+                        updateWithServerName(address, ag);
+                        
+                        return address;
+                    }
+                }
+                
+                return null;
             } catch (Exception e) {
                 log.info("Failed to obtain main server address. Is augeas installed and correct lens in use?");
 
@@ -114,34 +97,23 @@ public enum HttpdAddressUtility {
         }
     },
     APACHE_2_x {
-        public Address getMainServerSampleAddress(ApacheDirectiveTree ag) {
+        public Address getMainServerSampleAddress(ApacheDirectiveTree ag, String limitToHost, int limitToPort) {
             try {
-                Address addr = null;
-
-                //check if there is a ServerName directive
-                List<ApacheDirective> serverNameNodes = ag.search("/ServerName");
-
-                if (serverNameNodes.size() > 0) {
-                    String serverName = serverNameNodes.get(0).getValuesAsString();
-                    addr = Address.parse(serverName);
-                } else {
-                    //there has to be at least one Listen directive
-                    ApacheDirective listen = ag.search("/Listen").get(0);
-                    
-                    String address = listen.getValues().get(0);
-
-                    addr = Address.parse(address);
-
-                    if (addr.port == -1) {
-                        addr.port = Integer.parseInt(addr.host);
-                        try {
-                            addr.host = InetAddress.getLocalHost().getHostName();
-                        } catch (UnknownHostException e) {
-                            throw new IllegalStateException("Unable to get the localhost address.", e);
+                for(ApacheDirective n : ag.search("/Listen")) {
+                    Address addr = parseListen(n.getValues().get(0));
+                    if (isAddressConforming(addr, limitToHost, limitToPort)) {
+                        if (addr.host == null || addr.isHostDefault() || addr.isHostWildcard()) {
+                            addr = getLocalhost(addr.port);
                         }
+                        
+                        updateWithServerName(addr, ag);
+                        
+                        return addr;
                     }
                 }
-                return addr;
+                
+                //there has to be at least one Listen directive
+                throw new IllegalStateException("Could find a listen address on port " + limitToPort);
             } catch (Exception e) {
                 log.info("Failed to obtain main server address. Is augeas installed and correct lens in use?");
 
@@ -159,7 +131,12 @@ public enum HttpdAddressUtility {
     public static class Address {
         public String host;
         public int port = -1;
-
+        
+        public static final String WILDCARD = "*";
+        public static final String DEFAULT_HOST = "_default_";
+        public static final int PORT_WILDCARD_VALUE = 0;
+        public static final int NO_PORT_SPECIFIED_VALUE = -1;
+        
         public Address(String host, int port) {
             this.host = host;
             this.port = port;
@@ -174,21 +151,45 @@ public enum HttpdAddressUtility {
          */
         public static Address parse(String address) {
             int lastColonIdx = address.lastIndexOf(':');
-            if (lastColonIdx == -1) {
+            if (lastColonIdx == NO_PORT_SPECIFIED_VALUE) {
                 return new Address(address, -1);
             } else {
                 int lastRightBracketPos = address.lastIndexOf(']');
                 if (lastColonIdx > lastRightBracketPos) {
                     String host = address.substring(0, lastColonIdx);
-                    int port = Integer.parseInt(address.substring(lastColonIdx + 1));
+                    String portSpec = address.substring(lastColonIdx + 1);
+                    
+                    int port = NO_PORT_SPECIFIED_VALUE;
+                    if (WILDCARD.equals(portSpec)) {
+                        port = PORT_WILDCARD_VALUE;
+                    } else {
+                        port = Integer.parseInt(portSpec);
+                    }
+                    
                     return new Address(host, port);
                 } else {
                     //this is an IP6 address without a port spec
-                    return new Address(address, -1);
+                    return new Address(address, NO_PORT_SPECIFIED_VALUE);
                 }
             }
         }
 
+        public boolean isPortWildcard() {
+            return port == PORT_WILDCARD_VALUE;
+        }
+        
+        public boolean isPortDefined() {
+            return port != NO_PORT_SPECIFIED_VALUE;
+        }
+        
+        public boolean isHostWildcard() {
+            return WILDCARD.equals(host);
+        }
+        
+        public boolean isHostDefault() {
+            return DEFAULT_HOST.equals(host);
+        }
+        
         @Override
         public int hashCode() {
             int hash = port;
@@ -210,15 +211,28 @@ public enum HttpdAddressUtility {
                 return this.host.equals(o.host) && this.port == o.port;
             }
         }
+        
+        @Override
+        public String toString() {
+            if (port == NO_PORT_SPECIFIED_VALUE) return host;
+            else {
+                String portSpec = port == PORT_WILDCARD_VALUE ? WILDCARD : String.valueOf(port);
+                
+                return host + ":" + portSpec;
+            }
+        }
     }
 
     /**
      * This just constructs a first available address under which the server or one of its virtual hosts can be reached.
      * 
      * @param ag the tree of the httpd configuration
+     * @param limitToHost if non-null and different from {@link Address#DEFAULT_HOST} and {@link Address#WILDCARD}, 
+     * the sample address is looked for only for the given host
+     * @param limitToPort if > 0, the sample address is looked for only for the given port
      * @return the address or null on failure
      */
-    public abstract Address getMainServerSampleAddress(ApacheDirectiveTree ag);
+    public abstract Address getMainServerSampleAddress(ApacheDirectiveTree ag, String limitToHost, int limitToPort);
 
     /**
      * This constructs an address on which given virtual host can be accessed.
@@ -226,29 +240,22 @@ public enum HttpdAddressUtility {
      * @param ag the augeas tree of the httpd configuration
      * @param virtualHost the port or address:port of the virtual host
      * @param serverName the server name for the namebased virtual hosts (or null if the virtual host is ip based)
-     * 
+     * @param snmpModuleCompatibleMode if true, generates a sample address in the same way as snmp module. Namely
+     * deals with the host name wildcard the same way as snmp module (i.e. by assuming it means "localhost", even though it doesn't have to).
      * @return the address on which the virtual host can be accessed or null on error
      */
-    public Address getVirtualHostSampleAddress(ApacheDirectiveTree ag, String virtualHost, String serverName) {
+    public Address getVirtualHostSampleAddress(ApacheDirectiveTree ag, String virtualHost, String serverName, boolean snmpModuleCompatibleMode) {
         Address addr = Address.parse(virtualHost);
-        if (addr.port == -1) {
-            //just port specified
-            Address serverAddr = getMainServerSampleAddress(ag);
-
+        if (addr.isHostDefault() || addr.isHostWildcard()) {
+            Address serverAddr = null;
+            if (snmpModuleCompatibleMode) {
+                serverAddr = getLocalhost(addr.port);
+            } else {
+                serverAddr = getMainServerSampleAddress(ag, null, addr.port);
+            }
             if (serverAddr == null)
                 return null;
-
-            addr.port = Integer.parseInt(addr.host);
             addr.host = serverAddr.host;
-        } else {
-            String host = addr.host;
-            if ("*".equals(host) || "_default_".equals(host)) {
-                Address serverAddr = getMainServerSampleAddress(ag);
-                if (serverAddr == null)
-                    return null;
-                host = serverAddr.host;
-            }
-            addr.host = host;
         }
 
         if (serverName != null) {
@@ -259,9 +266,69 @@ public enum HttpdAddressUtility {
             } else {
                 addr.host = serverName;
             }
-            addr.host = addr.host.replaceAll("\\*", "replaced-wildcard");
         }
 
         return addr;
+    }
+    
+    private static Address parseListen(String listenValue) {
+        Address ret = Address.parse(listenValue);
+        if (!ret.isPortDefined()) {
+            try {
+                ret.port = Integer.parseInt(ret.host);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+            ret.host = null;
+        }
+        
+        return ret;
+    }
+    
+    public static boolean isAddressConforming(Address listen, String limitingHost, int limitingPort) {
+        if (Address.DEFAULT_HOST.equals(limitingHost) || Address.WILDCARD.equals(limitingHost)) {
+            limitingHost = null;
+        }
+        
+        boolean hostOk = limitingHost == null;
+        boolean portOk = limitingPort <= 0;
+        
+        //listen.host == null means that server listens on all addresses 
+        if (!hostOk && (listen.host == null || limitingHost.equals(listen.host))) {
+            hostOk = true;
+        }
+        
+        if (!portOk && limitingPort == listen.port) {
+            portOk = true;
+        }
+        
+        return hostOk && portOk;
+    }
+    
+    private static Address getLocalhost(int port) {
+        try {
+            return new Address(InetAddress.getLocalHost().getHostAddress(), port);
+        } catch (UnknownHostException e) {
+            //well, this is bad, we can get address of the localhost. let's use the force...
+            return new Address("127.0.0.1", port);
+        }
+    }
+    
+    private static void updateWithServerName(Address address, ApacheDirectiveTree config) throws UnknownHostException {
+        //check if there is a ServerName directive
+        List<ApacheDirective> serverNameNodes = config.search("/ServerName");
+
+        //if there is a ServerName directive, check that the address
+        //we're returning indeed corresponds to it. This might not
+        //be the case if the server listens on more than one interfaces.
+        if (serverNameNodes.size() > 0) {
+            String serverName = serverNameNodes.get(0).getValuesAsString();
+            InetAddress addrFromServerName = InetAddress.getByName(serverName);
+            InetAddress addrFromAddress = InetAddress.getByName(address.host);
+            
+            if (addrFromAddress.equals(addrFromServerName)) {
+                address.host = serverName;
+            }
+        }
     }
 }

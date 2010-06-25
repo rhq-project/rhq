@@ -93,7 +93,7 @@ public interface ResourceGroupManagerLocal {
 
     ResourceGroup getByGroupDefinitionAndGroupByClause(int groupDefinitionId, String groupByClause);
 
-    void setResourceType(int resourceGroupId);
+    void setResourceType(int resourceGroupId) throws ResourceGroupDeleteException;
 
     int getExplicitGroupMemberCount(int resourceGroupId);
 

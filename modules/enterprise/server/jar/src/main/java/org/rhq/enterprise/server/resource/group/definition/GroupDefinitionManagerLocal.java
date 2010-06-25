@@ -25,6 +25,7 @@ import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionCreateException;
@@ -48,11 +49,11 @@ public interface GroupDefinitionManagerLocal {
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException,
         ResourceGroupUpdateException;
 
-    void calculateGroupMembership(Subject subject, int groupDefinitionId) throws GroupDefinitionDeleteException,
-        GroupDefinitionNotFoundException, InvalidExpressionException;
+    void calculateGroupMembership(Subject subject, int groupDefinitionId) throws ResourceGroupDeleteException,
+        GroupDefinitionDeleteException, GroupDefinitionNotFoundException, InvalidExpressionException;
 
     Integer calculateGroupMembership_helper(Subject subject, int groupDefinitionId, ExpressionEvaluator.Result result)
-        throws GroupDefinitionNotFoundException, GroupDefinitionNotFoundException;
+        throws ResourceGroupDeleteException, GroupDefinitionNotFoundException, GroupDefinitionNotFoundException;
 
     PageList<GroupDefinition> getGroupDefinitions(Subject subject, PageControl pc);
 

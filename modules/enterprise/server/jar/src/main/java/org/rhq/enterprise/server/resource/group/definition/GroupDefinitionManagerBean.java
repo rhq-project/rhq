@@ -52,6 +52,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.RecursivityChangeType;
+import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
@@ -254,8 +255,9 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     // required for the recalculation thread
-    public void calculateGroupMembership(Subject subject, int groupDefinitionId) throws GroupDefinitionDeleteException,
-        GroupDefinitionNotFoundException, InvalidExpressionException, ResourceGroupUpdateException {
+    public void calculateGroupMembership(Subject subject, int groupDefinitionId) throws ResourceGroupDeleteException,
+        GroupDefinitionDeleteException, GroupDefinitionNotFoundException, InvalidExpressionException,
+        ResourceGroupUpdateException {
         /*
          * even though this method declares to throw it, it should never generate an InvalidExpressionException because
          * the definition's expression set was validated before it was persisted.  conceivably, if the group definition
@@ -329,7 +331,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Integer calculateGroupMembership_helper(Subject overlord, int groupDefinitionId,
-        ExpressionEvaluator.Result result) throws GroupDefinitionNotFoundException, GroupDefinitionNotFoundException {
+        ExpressionEvaluator.Result result) throws ResourceGroupDeleteException, GroupDefinitionNotFoundException,
+        GroupDefinitionNotFoundException {
         long startTime = System.currentTimeMillis();
 
         GroupDefinition groupDefinition = getById(groupDefinitionId);

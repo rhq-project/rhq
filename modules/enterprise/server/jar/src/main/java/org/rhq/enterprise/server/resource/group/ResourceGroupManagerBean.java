@@ -91,7 +91,6 @@ import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QueryUtility;
@@ -252,35 +251,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         ResourceGroupDeleteException {
         ResourceGroup group = getResourceGroupById(subject, groupId, null);
 
-        // for compatible groups, first recursively remove any referring backing groups for auto-clusters
-        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-            for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
-                deleteResourceGroup(subject, referringGroup.getId());
-            }
-        }
-
-        // unschedule all jobs for this group (only compatible groups have operations, mixed do not)
-        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-            Subject overlord = subjectManager.getOverlord();
-            try {
-                List<GroupOperationSchedule> ops = operationManager.findScheduledGroupOperations(overlord, groupId);
-
-                for (GroupOperationSchedule schedule : ops) {
-                    try {
-                        operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), groupId);
-                    } catch (UnscheduleException e) {
-                        log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group
-                            + "]", e);
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("Failed to get jobs for a group being deleted [" + group
-                    + "]; will not attempt to unschedule anything", e);
-            }
-        }
-
-        groupAlertDefinitionManager.purgeAllGroupAlertDefinitions(subject, groupId);
-
         for (Role doomedRoleRelationship : group.getRoles()) {
             group.removeRole(doomedRoleRelationship);
             entityManager.merge(doomedRoleRelationship);
@@ -289,18 +259,62 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         // remove all resources in the group
         resourceGroupManager.removeAllResourcesFromGroup(subject, groupId);
 
+        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
+            removeCompatibleGroupConstructs(subject, group);
+        }
+
         // break resource and plugin configuration update links in order to preserve individual change history
         Query q = null;
 
         q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
-        q.setParameter("groupId", groupId);
+        q.setParameter("groupId", group.getId());
         q.executeUpdate();
 
         q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
-        q.setParameter("groupId", groupId);
+        q.setParameter("groupId", group.getId());
         q.executeUpdate();
 
         entityManager.remove(group);
+    }
+
+    /*
+     * TODO: Deletion of all associated group data (except implicit/explicit resource members) should be moved here.
+     *       in other words, we don't want Hibernate cascade annotations to remove that history upon deletion of an 
+     *       entity anymore because there are now two cases where group constructs need to be destroyed:
+     *       
+     *          1) compatible group deletion - a group is deleted, all history removed, entity is gone from the system 
+     *          2) dynagroup recomputation - a group definition is recalculation, a compatible group turns into a mixed
+     *                                       group, compatible constructs need to be removed, but the entity survives
+     * 
+     *       For now, this implementation should suffice for -- https://bugzilla.redhat.com/show_bug.cgi?id=535671 
+     */
+    private void removeCompatibleGroupConstructs(Subject subject, ResourceGroup group)
+        throws ResourceGroupDeleteException {
+
+        // for compatible groups, first recursively remove any referring backing groups for auto-clusters
+        for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
+            deleteResourceGroup(subject, referringGroup.getId());
+        }
+
+        Subject overlord = subjectManager.getOverlord();
+        try {
+            List<GroupOperationSchedule> ops = operationManager.findScheduledGroupOperations(overlord, group.getId());
+
+            for (GroupOperationSchedule schedule : ops) {
+                try {
+                    operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
+                } catch (UnscheduleException e) {
+                    log
+                        .warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]",
+                            e);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to get jobs for a group being deleted [" + group
+                + "]; will not attempt to unschedule anything", e);
+        }
+
+        groupAlertDefinitionManager.purgeAllGroupAlertDefinitions(subject, group.getId());
     }
 
     public ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
@@ -909,7 +923,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @SuppressWarnings("unchecked")
-    public void setResourceType(int resourceGroupId) {
+    public void setResourceType(int resourceGroupId) throws ResourceGroupDeleteException {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP);
         query.setParameter("groupId", resourceGroupId);
 
@@ -921,16 +935,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             Object[] info = (Object[]) results.get(0);
             int resourceTypeId = (Integer) info[0];
 
-            try {
-                ResourceType type = resourceTypeManager.getResourceTypeById(overlord, resourceTypeId);
-
-                resourceGroup.setResourceType(type);
-            } catch (ResourceTypeNotFoundException rtnfe) {
-                // we just got the resourceTypeId from the database, so it will exist
-                // but let's set some reasonable implementation anyway
-                resourceGroup.setResourceType(null);
-            }
+            ResourceType flyWeightType = new ResourceType();
+            flyWeightType.setId(resourceTypeId);
+            resourceGroup.setResourceType(flyWeightType);
         } else {
+            if (resourceGroup.getResourceType() != null) {
+                // converting compatible group to mixed group, remove all corresponding compatible constructs
+                removeCompatibleGroupConstructs(overlord, resourceGroup);
+            }
             resourceGroup.setResourceType(null);
         }
     }

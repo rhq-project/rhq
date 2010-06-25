@@ -18,14 +18,14 @@
  */
 package org.rhq.enterprise.gui.definition.group;
 
-import javax.faces.model.DataModel;
 import javax.faces.application.FacesMessage;
+import javax.faces.model.DataModel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
-import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -35,7 +35,7 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
-import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -46,8 +46,7 @@ public class GroupDefinitionUIBean extends PagedDataTableUIBean {
 
     private GroupDefinition groupDefinition;
 
-    public GroupDefinitionUIBean() throws GroupDefinitionException
-    {
+    public GroupDefinitionUIBean() throws GroupDefinitionException {
         this.groupDefinition = lookupGroupDefinition();
     }
 
@@ -110,6 +109,8 @@ public class GroupDefinitionUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
+    private ResourceGroupManagerLocal resourceGroupManager = LookupUtil.getResourceGroupManager();
+
     private class ListGroupDefinitionMembersDataModel extends PagedListDataModel<ResourceGroupComposite> {
         public ListGroupDefinitionMembersDataModel(PageControlView view, String beanName) {
             super(view, beanName);
@@ -117,17 +118,16 @@ public class GroupDefinitionUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<ResourceGroupComposite> fetchPage(PageControl pc) {
-            Subject user = getSubject();
-            int groupDefinitionId = groupDefinition.getId();
-
-            GroupDefinitionManagerLocal groupDefinitionManager = LookupUtil.getGroupDefinitionManager();
+            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+            criteria.addFilterGroupDefinitionId(groupDefinition.getId());
+            criteria.setPageControl(pc);
 
             try {
-                return groupDefinitionManager.getManagedResourceGroups(user, groupDefinitionId, pc);
-            } catch (GroupDefinitionException gde) {
+                return resourceGroupManager.findResourceGroupCompositesByCriteria(getSubject(), criteria);
+            } catch (Throwable t) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to retrieve managed groups: "
-                    + gde.getMessage());
-                log.error("Failed to retrieve managed groups", gde);
+                    + t.getMessage());
+                log.error("Failed to retrieve managed groups", t);
                 return new PageList<ResourceGroupComposite>();
             }
         }

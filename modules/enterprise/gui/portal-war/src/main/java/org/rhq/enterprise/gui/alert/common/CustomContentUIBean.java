@@ -108,6 +108,8 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
 
             if (customBackingBean.getExtraParameters() != null) {
                 notification.setExtraConfiguration(customBackingBean.getExtraParameters());
+            } else {
+                notification.setExtraConfiguration(null);
             }
             int alertDefinitionId = Integer.parseInt(customBackingBean.getContextId());
             alertNotificationManager.updateAlertNotification(getSubject(), alertDefinitionId, notification);

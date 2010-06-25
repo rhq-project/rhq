@@ -1,5 +1,6 @@
 package org.rhq.enterprise.server.search.translation;
 
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
@@ -41,7 +42,7 @@ public class GroupSearchTranslator extends AbstractSearchTranslator {
 
         } else if (path.equals("category")) {
             return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
-                getJPQLForString(alias + ".resourceType.category", op, filter));
+                getJPQLForEnum(alias + ".resourceType.category", op, filter, ResourceCategory.class, false));
 
         } else if (path.equals("type")) {
             return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //

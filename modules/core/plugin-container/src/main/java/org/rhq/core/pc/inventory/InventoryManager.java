@@ -862,9 +862,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (!configuration.isInsideAgent()) {
             return true;
         }
-        if (report.getAddedRoots().isEmpty()) {
-            return true; // nothing to do
-        }
 
         ResourceSyncInfo syncInfo;
         try {

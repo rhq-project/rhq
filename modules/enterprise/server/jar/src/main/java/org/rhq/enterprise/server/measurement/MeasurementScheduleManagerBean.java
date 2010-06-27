@@ -242,6 +242,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return findSchedulesByResourcesAndDefinitions(subject, resourceIds, new int[] { definitionId });
     }
 
+    @SuppressWarnings("unchecked")
     public List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionIds(int[] resourceIds, int[] definitionIds) {
         Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
         query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));
@@ -250,7 +251,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return results;
     }
 
-    @SuppressWarnings("unchecked")
     private List<MeasurementSchedule> findSchedulesByResourcesAndDefinitions(Subject subject, int[] resourceIds,
         int[] definitionIds) {
         for (int resourceId : resourceIds) {
@@ -300,55 +300,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         boolean updateSchedules) {
 
         modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, -1, updateSchedules);
-        return;
-    }
-
-    // callers to this method need to perform authorization
-    private void disableSchedule(Subject subject, int resourceId, int[] measurementDefinitionIds) {
-        Resource resource = resourceManager.getResourceById(subject, resourceId);
-
-        List<MeasurementSchedule> measurementSchedules = findSchedulesByResourceIdAndDefinitionIds(subject, resourceId,
-            measurementDefinitionIds);
-        ResourceMeasurementScheduleRequest resourceMeasurementScheduleRequest = new ResourceMeasurementScheduleRequest(
-            resourceId);
-        for (MeasurementSchedule measurementSchedule : measurementSchedules) {
-            measurementSchedule.setEnabled(false);
-            MeasurementScheduleRequest measurementScheduleRequest = new MeasurementScheduleRequest(measurementSchedule);
-            resourceMeasurementScheduleRequest.addMeasurementScheduleRequest(measurementScheduleRequest);
-        }
-
-        Set<ResourceMeasurementScheduleRequest> resourceMeasurementScheduleRequests = new HashSet<ResourceMeasurementScheduleRequest>();
-        resourceMeasurementScheduleRequests.add(resourceMeasurementScheduleRequest);
-        boolean synced = sendUpdatedSchedulesToAgent(resource.getAgent(), resourceMeasurementScheduleRequests);
-        if (!synced) {
-            resource.setAgentSynchronizationNeeded();
-        }
-        entityManager.merge(resource);
-
-        return;
-    }
-
-    // callers to this method need to perform authorization
-    private void enableSchedule(Subject subject, int resourceId, int[] measurementDefinitionIds) {
-        Resource resource = resourceManager.getResourceById(subject, resourceId);
-        List<MeasurementSchedule> measurementSchedules = findSchedulesByResourceIdAndDefinitionIds(subject, resourceId,
-            measurementDefinitionIds);
-        ResourceMeasurementScheduleRequest resourceMeasurementScheduleRequest = new ResourceMeasurementScheduleRequest(
-            resourceId);
-        for (MeasurementSchedule measurementSchedule : measurementSchedules) {
-            measurementSchedule.setEnabled(true);
-            MeasurementScheduleRequest measurementScheduleRequest = new MeasurementScheduleRequest(measurementSchedule);
-            resourceMeasurementScheduleRequest.addMeasurementScheduleRequest(measurementScheduleRequest);
-        }
-
-        Set<ResourceMeasurementScheduleRequest> resourceMeasurementScheduleRequests = new HashSet<ResourceMeasurementScheduleRequest>();
-        resourceMeasurementScheduleRequests.add(resourceMeasurementScheduleRequest);
-        boolean synced = sendUpdatedSchedulesToAgent(resource.getAgent(), resourceMeasurementScheduleRequests);
-        if (!synced) {
-            resource.setAgentSynchronizationNeeded();
-        }
-        entityManager.merge(resource);
-
         return;
     }
 
@@ -546,6 +497,213 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
     }
 
+    public int updateSchedulesForContext(Subject subject, EntityContext context, int[] measurementDefinitionIds,
+        long collectionInterval) {
+        collectionInterval = verifyMinimumCollectionInterval(collectionInterval);
+
+        String measurementScheduleSubQuery = getMeasurementScheduleSubQueryForContext(subject, context,
+            measurementDefinitionIds);
+
+        String updateQuery = "" //
+            + "UPDATE MeasurementSchedule " //
+            + "   SET interval = :interval, " //
+            + "       enabled = true " //
+            + " WHERE id IN ( " + measurementScheduleSubQuery + " ) ";
+
+        Query query = entityManager.createQuery(updateQuery);
+        query.setParameter("interval", collectionInterval);
+        int affectedRows = query.executeUpdate();
+
+        notifyAgentsOfScheduleUpdates(context, measurementScheduleSubQuery);
+
+        return affectedRows;
+    }
+
+    public int enableSchedulesForContext(Subject subject, EntityContext context, int[] measurementDefinitionIds) {
+        String measurementScheduleSubQuery = getMeasurementScheduleSubQueryForContext(subject, context,
+            measurementDefinitionIds);
+
+        String updateQuery = "" //
+            + "UPDATE MeasurementSchedule " //
+            + "   SET enabled = true " //
+            + " WHERE id IN ( " + measurementScheduleSubQuery + " ) ";
+
+        Query query = entityManager.createQuery(updateQuery);
+        int affectedRows = query.executeUpdate();
+
+        notifyAgentsOfScheduleUpdates(context, measurementScheduleSubQuery);
+
+        return affectedRows;
+    }
+
+    public int disableSchedulesForContext(Subject subject, EntityContext context, int[] measurementDefinitionIds) {
+        String measurementScheduleSubQuery = getMeasurementScheduleSubQueryForContext(subject, context,
+            measurementDefinitionIds);
+
+        String updateQuery = "" //
+            + "UPDATE MeasurementSchedule " //
+            + "   SET enabled = false " //
+            + " WHERE id IN ( " + measurementScheduleSubQuery + " ) ";
+
+        Query query = entityManager.createQuery(updateQuery);
+        int affectedRows = query.executeUpdate();
+
+        notifyAgentsOfScheduleUpdates(context, measurementScheduleSubQuery);
+
+        return affectedRows;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void notifyAgentsOfScheduleUpdates(EntityContext context, String measurementScheduleSubQuery) {
+
+        List<Integer> agentIds = new ArrayList<Integer>();
+        try {
+            String agentsQueryString = "" //
+                + "SELECT DISTINCT ms.resource.agent.id " //
+                + "  FROM MeasurementSchedule ms " //
+                + " WHERE ms.id IN ( " + measurementScheduleSubQuery + " ) ";
+            log.info("agentsQueryString: " + agentsQueryString);
+            Query agentsQuery = entityManager.createQuery(agentsQueryString);
+            agentIds = agentsQuery.getResultList();
+        } catch (Throwable t) {
+            log.error("Could not notify agents of updates", t);
+        }
+
+        // use composite query -- won't load managed entities, requires minimal wire transfer
+        String scheduleRequestQueryString = "" //
+            + "SELECT ms.resource.id, " //
+            + "       ms.id, " //
+            + "       ms.definition.name, " //
+            + "       ms.interval, " //
+            + "       ms.enabled, " //
+            + "       ms.definition.dataType, " //
+            + "       ms.definition.rawNumericType " //
+            + "  FROM MeasurementSchedule ms " //
+            + " WHERE ms.id IN ( " + measurementScheduleSubQuery + " ) " //
+            + "   AND ms.resource.agent.id = :agentId";
+        log.info("scheduleRequestQueryString: " + scheduleRequestQueryString);
+        Query scheduleRequestQuery = entityManager.createQuery(scheduleRequestQueryString);
+
+        Map<Integer, ResourceMeasurementScheduleRequest> agentRequests = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
+        for (int nextAgentId : agentIds) {
+            scheduleRequestQuery.setParameter("agentId", nextAgentId);
+            List<Object[]> scheduleRequests = scheduleRequestQuery.getResultList();
+            for (Object[] nextScheduleDataSet : scheduleRequests) {
+                int resourceId = (Integer) nextScheduleDataSet[0];
+                ResourceMeasurementScheduleRequest resourceRequest = agentRequests.get(resourceId);
+                if (resourceRequest == null) {
+                    resourceRequest = new ResourceMeasurementScheduleRequest(resourceId);
+                    agentRequests.put(resourceId, resourceRequest);
+                }
+
+                MeasurementScheduleRequest requestData = new MeasurementScheduleRequest( //
+                    (Integer) nextScheduleDataSet[1], // scheduleId
+                    (String) nextScheduleDataSet[2], // definitionName,
+                    (Long) nextScheduleDataSet[3], // interval, 
+                    (Boolean) nextScheduleDataSet[4], // enabled, 
+                    (DataType) nextScheduleDataSet[5], // dataType, 
+                    (NumericType) nextScheduleDataSet[6]); // awNumericType
+                resourceRequest.addMeasurementScheduleRequest(requestData);
+            }
+
+            boolean markResources = false;
+            try {
+                Agent nextAgent = agentManager.getAgentByID(nextAgentId);
+                AgentClient agentClient = agentManager.getAgentClient(nextAgent);
+
+                boolean couldPing = agentClient.ping(2000); // see if agent is up for sending
+                if (couldPing) {
+                    Set<ResourceMeasurementScheduleRequest> requestsToSend = new HashSet<ResourceMeasurementScheduleRequest>(
+                        agentRequests.values());
+                    agentClient.getMeasurementAgentService().scheduleCollection(requestsToSend);
+                } else {
+                    log.error("Could not send measurement schedule updates to agent[id=" + nextAgentId
+                        + "], marking resources for update; agent ping failed");
+                    markResources = true;
+                }
+            } catch (Throwable t) {
+                log.error("Could not send measurement schedule updates to agent[id=" + nextAgentId
+                    + "], marking resources for update", t);
+                markResources = true;
+            }
+
+            if (markResources) {
+                markResources(context, nextAgentId);
+            }
+        }
+    }
+
+    private void markResources(EntityContext context, int agentId) {
+        ResourceCriteria criteria = new ResourceCriteria();
+        if (context.category == EntityContext.Category.Resource) {
+            criteria.addFilterId(context.resourceId);
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            criteria.addFilterImplicitGroupIds(context.groupId);
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            criteria.addFilterParentResourceId(context.parentResourceId);
+            criteria.addFilterResourceTypeId(context.resourceTypeId);
+        }
+        criteria.addFilterAgentId(agentId);
+
+        try {
+            CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+            generator.alterProjection("resource.id");
+            String resourceSubQuery = generator.getParameterReplacedQuery(false);
+
+            String markResourceQueryString = "" //
+                + "UPDATE Resource res " //
+                + "   SET res.mtime = :now " //
+                + " WHERE res.id IN ( " + resourceSubQuery + " ) ";
+            log.info("markResourceQueryString: " + markResourceQueryString);
+
+            Query markResourceQuery = entityManager.createQuery(markResourceQueryString);
+            markResourceQuery.setParameter("now", System.currentTimeMillis());
+            int affectedRows = markResourceQuery.executeUpdate();
+            log.info("Marked " + affectedRows + " for future measurement scheudle update");
+        } catch (Throwable t) {
+            log.error("Could not notify agents of updates", t);
+        }
+    }
+
+    public String getMeasurementScheduleSubQueryForContext(Subject subject, EntityContext context,
+        int[] measurementDefinitionIds) {
+        if (context.category == EntityContext.Category.Resource) {
+            if (authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, context.resourceId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to manage schedules for resource[id=" + context.resourceId + "]");
+            }
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            if (authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, context.groupId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to manage schedules for resourceGroup[id=" + context.groupId + "]");
+            }
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            if (authorizationManager.hasAutoGroupPermission(subject, Permission.MANAGE_MEASUREMENTS,
+                context.parentResourceId, context.resourceTypeId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to manage schedules for autoGroup[parentResourceId="
+                    + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
+            }
+        }
+
+        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+        if (context.category == EntityContext.Category.Resource) {
+            criteria.addFilterResourceId(context.resourceId);
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            criteria.addFilterResourceGroupId(context.groupId);
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
+            criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
+        }
+        criteria.addFilterDefinitionIds(ArrayUtils.wrapInArray(measurementDefinitionIds));
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        generator.alterProjection("measurementschedule.id");
+        String measurementScheduleSubQuery = generator.getParameterReplacedQuery(false);
+
+        return measurementScheduleSubQuery;
+    }
+
     private void setAgentSynchronizationNeededByDefinitionsForAgent(int agentId, List<Integer> measurementDefinitionIds) {
         String updateSQL = "" //
             + "UPDATE Resource res " //
@@ -562,93 +720,23 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         log.info("" + updateCount + " resources mtime fields were updated as a result of this metric template update");
     }
 
-    public void updateSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds, long collectionInterval) {
-        collectionInterval = verifyMinimumCollectionInterval(collectionInterval);
-        Resource resource = resourceManager.getResourceById(subject, resourceId);
-        if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to change metric collection schedules for resource[id=" + resourceId
-                + "]");
-        }
-
-        List<MeasurementSchedule> measurementSchedules = findSchedulesByResourceIdAndDefinitionIds(subject, resourceId,
-            measurementDefinitionIds);
-        ResourceMeasurementScheduleRequest resourceMeasurementScheduleRequest = new ResourceMeasurementScheduleRequest(
-            resourceId);
-        for (MeasurementSchedule measurementSchedule : measurementSchedules) {
-            measurementSchedule.setEnabled(true);
-            measurementSchedule.setInterval(collectionInterval);
-            MeasurementScheduleRequest measurementScheduleRequest = new MeasurementScheduleRequest(measurementSchedule);
-            resourceMeasurementScheduleRequest.addMeasurementScheduleRequest(measurementScheduleRequest);
-        }
-
-        Set<ResourceMeasurementScheduleRequest> resourceMeasurementScheduleRequests = new HashSet<ResourceMeasurementScheduleRequest>();
-        resourceMeasurementScheduleRequests.add(resourceMeasurementScheduleRequest);
-        boolean synced = sendUpdatedSchedulesToAgent(resource.getAgent(), resourceMeasurementScheduleRequests);
-        if (!synced) {
-            resource.setAgentSynchronizationNeeded();
-        }
-        entityManager.merge(resource);
-
-        return;
-    }
-
-    /**
-     * Enables all collection schedules attached to the given auto group whose schedules are based off the given
-     * definitions. This does not enable the "templates" (aka definitions). If the passed group does not exist an
-     * Exception is thrown.
-     *
-     * @param subject                  Subject of the caller
-     * @param measurementDefinitionIds the definitions on which the schedules to update are based
-     * @param parentResourceId         the Id of the parent resource
-     * @param childResourceType        the ID of the {@link ResourceType} of the children that form the autogroup
-     * @param collectionInterval       the new interval
-     *
-     * @see   org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal#updateSchedulesForAutoGroup(org.rhq.core.domain.auth.Subject,
-     *        int[], int, int, long)
-     */
     public void updateSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds, long collectionInterval) {
         // don't verify minimum collection interval here, it will be caught by updateMeasurementSchedules callee
-        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentResourceId,
-            childResourceType);
-        for (Resource resource : resources) {
-            updateSchedules(subject, resource.getId(), measurementDefinitionIds, collectionInterval);
-        }
+        updateSchedulesForContext(subject, EntityContext.forAutoGroup(parentResourceId, childResourceType),
+            measurementDefinitionIds, collectionInterval);
     }
 
-    /**
-     * Disable the measurement schedules for the passed definitions of the rsource ot the passed auto group.
-     *
-     * @param subject
-     * @param measurementDefinitionIds
-     * @param parentResourceId
-     * @param childResourceType
-     */
     public void disableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds) {
-        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentResourceId,
-            childResourceType);
-        for (Resource resource : resources) {
-            disableSchedulesForResource(subject, resource.getId(), measurementDefinitionIds);
-        }
+        disableSchedulesForContext(subject, EntityContext.forAutoGroup(parentResourceId, childResourceType),
+            measurementDefinitionIds);
     }
 
-    /**
-     * Enable the measurement schedules for the passed definitions of the rsource ot the passed auto group.
-     *
-     * @param subject
-     * @param measurementDefinitionIds
-     * @param parentResourceId
-     * @param childResourceType
-     */
     public void enableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds) {
-        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentResourceId,
-            childResourceType);
-        for (Resource resource : resources) {
-            enableSchedulesForResource(subject, resource.getId(), measurementDefinitionIds);
-        }
+        enableSchedulesForContext(subject, EntityContext.forAutoGroup(parentResourceId, childResourceType),
+            measurementDefinitionIds);
     }
 
     /**
@@ -687,7 +775,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             agentClient.getMeasurementAgentService().updateCollection(resourceMeasurementScheduleRequest);
             return true; // successfully sync'ed schedules down to the agent
         } catch (Throwable t) {
-            log.error("Error updating MeasurementSchedules for Agent[id=" + agent.getId() + "]: " + t);
+            log.error("Error updating MeasurementSchedules for Agent[id=" + agent.getId() + "]: ", t);
         }
         return false; // catch all and presume the live sync failed
     }
@@ -998,31 +1086,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     public void disableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds) {
-        if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to disable metric collection schedules for resource[id=" + resourceId
-                + "]");
-        }
-
-        disableSchedule(subject, resourceId, measurementDefinitionIds);
-
-        return;
+        disableSchedulesForContext(subject, EntityContext.forResource(resourceId), measurementDefinitionIds);
     }
 
-    /**
-     * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
-     */
     public void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
-        if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to disable metric collection schedules for resourceGroup[id=" + groupId
-                + "]");
-        }
-
-        List<Integer> explicitIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
-        for (Integer resourceId : explicitIds) {
-            disableSchedule(subject, resourceId, measurementDefinitionIds);
-        }
+        disableSchedulesForContext(subject, EntityContext.forGroup(groupId), measurementDefinitionIds);
     }
 
     public void disableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds) {
@@ -1030,29 +1098,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     public void enableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds) {
-        if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to enable metric collection schedules for resource[id=" + resourceId
-                + "]");
-        }
-
-        enableSchedule(subject, resourceId, measurementDefinitionIds);
+        enableSchedulesForContext(subject, EntityContext.forResource(resourceId), measurementDefinitionIds);
     }
 
-    /**
-     * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
-     */
     public void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
-        if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to enable metric collection schedules for resourceGroup[id=" + groupId
-                + "]");
-        }
-
-        List<Integer> explicitIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
-        for (Integer resourceId : explicitIds) {
-            enableSchedule(subject, resourceId, measurementDefinitionIds);
-        }
+        enableSchedulesForContext(subject, EntityContext.forGroup(groupId), measurementDefinitionIds);
     }
 
     public void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds) {
@@ -1078,7 +1128,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     public void updateSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds,
         long collectionInterval) {
-        updateSchedules(subject, resourceId, measurementDefinitionIds, collectionInterval);
+        updateSchedulesForContext(subject, EntityContext.forResource(resourceId), measurementDefinitionIds,
+            collectionInterval);
     }
 
     /**
@@ -1097,10 +1148,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     public void updateSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
         long collectionInterval) {
         // don't verify minimum collection interval here, it will be caught by updateMeasurementSchedules callee
-        List<Integer> explicitIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
-        for (Integer resourceId : explicitIds) {
-            updateSchedules(subject, resourceId, measurementDefinitionIds, collectionInterval);
-        }
+        updateSchedulesForContext(subject, EntityContext.forGroup(groupId), measurementDefinitionIds,
+            collectionInterval);
     }
 
     public void updateMeasurementTemplates(Subject subject, int[] measurementDefinitionIds, long collectionInterval) {

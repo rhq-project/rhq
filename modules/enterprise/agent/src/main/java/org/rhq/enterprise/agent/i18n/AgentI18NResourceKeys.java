@@ -769,6 +769,21 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to perform sender command; stack trace follows:")
     String SENDER_FAILURE = "PromptCommand.sender.failure";
 
+    @I18NMessage("schedules")
+    String SCHEDULES = "PromptCommand.schedules";
+
+    @I18NMessage("Retrieves measurement schedule information for the specified resource")
+    String SCHEDULES_HELP = "PromptCommand.schedules.help";
+
+    @I18NMessage("schedules <resourceId>")
+    String SCHEDULES_SYNTAX = "PromptCommand.schedules.syntax";
+
+    @I18NMessage("This agent does not manage a resource with id {0}")
+    String SCHEDULES_UNKNOWN_RESOURCE = "PromptCommand.schedules.unknown-resource";
+
+    @I18NMessage("Failed to perform schedules command; stack trace follows:")
+    String SCHEDULES_FAILURE = "PromptCommand.schedules.failure";
+
     @I18NMessage("exit")
     String EXIT = "PromptCommand.exit";
 

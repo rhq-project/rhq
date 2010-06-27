@@ -120,6 +120,20 @@ public interface AuthorizationManagerLocal {
     boolean hasGroupPermission(Subject subject, Permission permission, int groupId);
 
     /**
+     * Returns true if the current user possesses either: 1) the specified resource permission for the specified
+     * auto-group, or 2) the global MANAGE_INVENTORY permission which, by definition, gives full access to the
+     * inventory (all resources and all groups)
+     *
+     * @param  subject          the current subject or caller
+     * @param  permission       a resource permission (i.e. permission.getTarget() == Permission.Target.RESOURCE)
+     * @param  parentResourceId the id of the parent resource of the auto-group to check permissions against
+     * @param  parentResourceId the id of the resource type filter of the auto-group to check permissions against
+     *
+     * @return true if the current user possesses the specified resource permission for the specified auto-group
+     */
+    boolean hasAutoGroupPermission(Subject subject, Permission permission, int parentResourceId, int resourceTypeId);
+
+    /**
      * Returns true if the current user possesses the specified global permission.
      *
      * @param  subject    the current subject or caller

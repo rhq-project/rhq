@@ -51,7 +51,7 @@
 
       <metric displayName="Query Execution Max Time" property="QueryExecutionMaxTime"
               description="The amount of time taken by the slowest recorded query since the statistics were reset"
-              category="performance" displayType="summary"/>
+              category="performance" displayType="summary" units="milliseconds" />
 
       <metric displayName="Entity Update Count" property="EntityUpdateCount"
               description="The global number of entity updates since the statistics were reset"

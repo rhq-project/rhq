@@ -58,7 +58,7 @@
                      <h:outputText value="Destination" />
                   </onc:sortableColumnHeader>
                </f:facet>
-               <h:outputText value="#{item.callDestination}" />
+               <h:outputText value="#{onf:elideString(item.callDestination, 50, 'left')}" title="#{item.callDestination}"/>
             </rich:column>
 
             <rich:column>

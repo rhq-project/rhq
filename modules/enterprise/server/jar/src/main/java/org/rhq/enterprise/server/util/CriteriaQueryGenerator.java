@@ -417,9 +417,14 @@ public final class CriteriaQueryGenerator {
                 String override = criteria.getJPQLSortOverride(fieldName);
                 String suffix = (override == null) ? fieldName : override;
 
-                // if the suffix is numerical, do not prefix the alias
-                // this allows us to sort by column ordinal, which is required for availability on the group browser 
-                String sortFragment = (isNumber(suffix)) ? suffix : (alias + "." + suffix);
+                /*
+                 * do not prefix the alias when:
+                 * 
+                 *    1) if the suffix is numerical, which allows usto sort by column ordinal
+                 *    2) if the user wants full control and has explicitly chosen to disable alias prepending
+                 */
+                boolean doNotPrefixAlias = isNumber(suffix) || criteria.hasCustomizedSorting();
+                String sortFragment = doNotPrefixAlias ? suffix : (alias + "." + suffix);
 
                 PageOrdering ordering = orderingField.getOrdering();
 

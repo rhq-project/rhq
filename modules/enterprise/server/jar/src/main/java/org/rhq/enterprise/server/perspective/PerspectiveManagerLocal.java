@@ -69,51 +69,114 @@ public interface PerspectiveManagerLocal {
      */
     public String getUrlViaKey(int key) throws PerspectiveException;
 
-    // ****************************************
-    // The following shared with the Remote API
-    // ****************************************
+    // *************************************************************************************************
+    // The following were previously the remote API.  The perspective API is not yet ready for release
+    // *************************************************************************************************
 
     /**
-     * #see {@link PerspectiveManagerRemote#getRootUrl()}
+     * Get the CoreUI context root. This can be used to assemble a url not otherwise obtainable via the API. 
+     * This should be used with care as hardcoded paths may break in future releases of the core UI.
+     *
+     * @param subject
+     * @param makeExplicit If true ensure "protocol://host:port" prefix. Set true for remotely deployed perspectives. 
+     * @param makeSecure  If true use the secure protocol and port. Ignored if makeExplicit=false or not supported.  
+     * @return the Core GUI root url in the format "protocol://host:port/"
      */
     String getRootUrl(Subject subject, boolean makeExplicit, boolean makeSecure);
 
     /**
-     * #see {@link PerspectiveManagerRemote#getMenuUrl( Subject )}
+     * This method does not ensure the specified subject can actually access the requested url.
+     * @param subject
+     * @param menuItemName The name of the menuItem extension point
+     * @param makeExplicit If true ensure "protocol://host:port" prefix. Set true for remotely deployed perspectives. 
+     * @param makeSecure  If true use the secure protocol and port. Ignored if makeExplicit=false or not supported.  
+     * @return The url for specified extension point. May return null if the extension does not specify a url 
+     * @throws IllegalArgumentException if the extension point does not exist. 
      */
     String getMenuItemUrl(Subject subject, String menuItemName, boolean makeExplicit, boolean makeSecure);
 
     /**
-     * #see {@link PerspectiveManagerRemote#getResourceUrl( Subject, String )}
+     * This method does not ensure the specified subject can actually access the requested url. 
+     * @param subject
+     * @param tabName The name of the resource tab extension point
+     * @param resourceId The resource id to be incorporated into the url. This method does not check the validity 
+     * of the resourceId. 
+     * @param makeExplicit If true ensure "protocol://host:port" prefix. Set true for remotely deployed perspectives. 
+     * @param makeSecure  If true use the secure protocol and port. Ignored if makeExplicit=false or not supported.  
+     * @return The url for specified extension point. May return null if the extension does not specify a url 
+     * @throws IllegalArgumentException if the extension point does not exist.
      */
     String getResourceTabUrl(Subject subject, String tabName, int resourceId, boolean makeExplicit, boolean makeSecure);
 
     /**
-     * #see {@link PerspectiveManagerRemote#getTargetUrl(Subject, PerspectiveTarget, int, boolean, boolean)}
+     * This method does not ensure the specified subject can actually access the requested url.
+     *  
+     * @param subject
+     * @param target The target of the navigation link. for example, a role. 
+     * @param targetId The id of the specified target. for example, a roleId
+     * @param makeExplicit If true ensure "protocol://host:port" prefix. Set true for remotely deployed perspectives. 
+     * @param makeSecure  If true use the secure protocol and port. Ignored if makeExplicit=false or not supported.  
+     * @return The url for specified target.   
      */
     String getTargetUrl(Subject subject, PerspectiveTarget target, int targetId, boolean makeExplicit,
         boolean makeSecure);
 
     /**
-     * #see {@link PerspectiveManagerRemote#getTargetUrls(Subject, PerspectiveTarget, int[], boolean, boolean)}
+     * When requesting the same target url for several targets this is a more efficient call than calling
+     * getTargetUrl() repeatedly. For example, if generating links to a list of resources.
+     *  
+     * This method does not ensure the specified subject can actually access the requested urls.
+     *  
+     * @param subject
+     * @param target The target of the navigation link. for example, a role. 
+     * @param targetId The id of the specified target. for example, a roleId
+     * @param makeExplicit If true ensure "protocol://host:port" prefix. Set true for remotely deployed perspectives. 
+     * @param makeSecure  If true use the secure protocol and port. Ignored if makeExplicit=false or not supported.  
+     * @return A Map of targetId to url mappings.   
      */
     Map<Integer, String> getTargetUrls(Subject subject, PerspectiveTarget target, int[] targetIds,
         boolean makeExplicit, boolean makeSecure);
 
     /**
-     * #see {@link PerspectiveManagerRemote#getResourceTargetUrl(Subject, int, PerspectiveTarget, int, boolean, boolean)}
+     * This method does not ensure the specified subject can actually access the requested url.
+     *  
+     * @param subject
+     * @param resourceId The resource id of the specified target. for example, the resource on which an alert is exists
+     * @param target The target of the navigation link. for example, an alert. 
+     * @param targetId The id of the specified target. for example, an alertId
+     * @param makeExplicit If true ensure "protocol://host:port" prefix. Set true for remotely deployed perspectives. 
+     * @param makeSecure  If true use the secure protocol and port. Ignored if makeExplicit=false or not supported.  
+     * @return The url for specified target.   
      */
     String getResourceTargetUrl(Subject subject, int resourceId, PerspectiveTarget target, int targetId,
         boolean makeExplicit, boolean makeSecure);
 
     /**
-     * #see {@link PerspectiveManagerRemote#getResourceTargetUrls(Subject, int, PerspectiveTarget, int[], boolean, boolean)}
+     * When requesting the same target url for several resource targets this is a more efficient call than calling
+     * getResourceTargetUrl() repeatedly. For example, if generating links to a list of a resource's alerts.
+     *  
+     * Same This method does not ensure the specified subject can actually access the requested urls. 
+     * 
+     * @param subject
+     * @param resourceId The resource id of the specified target. for example, the resource on which an alert is exists
+     * @param target The target of the navigation link. for example, an alert. 
+     * @param targetId The id of the specified target. for example, an alertId
+     * @param makeExplicit If true ensure "protocol://host:port" prefix. Set true for remotely deployed perspectives. 
+     * @param makeSecure  If true use the secure protocol and port. Ignored if makeExplicit=false or not supported.  
+     * @return A Map of targetId to url mappings.   
      */
     Map<Integer, String> getResourceTargetUrls(Subject subject, int resourceId, PerspectiveTarget target,
         int[] targetIds, boolean makeExplicit, boolean makeSecure);
 
     /**
-     * #see {@link PerspectiveManagerRemote#getTemplateTargetUrl(Subject, int, PerspectiveTarget, int, boolean, boolean)}
+     * This method does not ensure the specified subject can actually access the requested url. 
+     * @param subject
+     * @param resourceTypeId The resourceType id of the specified target. for example, the type for an alert template
+     * @param target The target of the navigation link. for example, an alert template
+     * @param targetId The id of the specified target. for example, an alert template definition Id
+     * @param makeExplicit If true ensure "protocol://host:port" prefix. Set true for remotely deployed perspectives. 
+     * @param makeSecure  If true use the secure protocol and port. Ignored if makeExplicit=false or not supported.  
+     * @return The url for specified target.   
      */
     String getTemplateTargetUrl(Subject subject, int resourceId, PerspectiveTarget target, int targetId,
         boolean makeExplicit, boolean makeSecure);

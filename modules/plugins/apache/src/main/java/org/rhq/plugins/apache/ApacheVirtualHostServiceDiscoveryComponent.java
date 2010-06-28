@@ -49,6 +49,8 @@ import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
  */
 public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDiscoveryComponent<ApacheServerComponent> {
 
+    private static final String COULD_NOT_DETERMINE_THE_VIRTUAL_HOST_ADDRESS = "*** Could not determine the virtual host address ***";
+
     public static final String LOGS_DIRECTORY_NAME = "logs";
 
     private static final String RT_LOG_FILE_NAME_SUFFIX = "_rt.log";
@@ -97,12 +99,38 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
-            Address address = serverComponent.getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, serverName);
+            Address address = serverComponent.getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, serverName, false);
             if (address != null) {
-                String url = "http://" + address.host + ":" + address.port + "/";
+                String hostToPing = address.host;
+                int portToPing = address.port;
+                if (address.isPortWildcard()) {
+                    Address serverAddress = serverComponent.getAddressUtility().getMainServerSampleAddress(tree, hostToPing, 0);
+                    if (serverAddress != null) {
+                        portToPing = serverAddress.port;
+                    } else {
+                        portToPing = Address.PORT_WILDCARD_VALUE;
+                    }
+                }
+                if (address.isHostDefault() || address.isHostWildcard()) {
+                    Address serverAddress = serverComponent.getAddressUtility().getMainServerSampleAddress(tree, null, portToPing);
+                    
+                    if (serverAddress != null) {
+                        hostToPing = serverAddress.host;
+                    } else {
+                        hostToPing = null;
+                    }
+                }
+                
+                String url;
+                if (hostToPing != null && portToPing != Address.PORT_WILDCARD_VALUE && portToPing != Address.NO_PORT_SPECIFIED_VALUE) {
+                    url = "http://" + hostToPing + ":" + portToPing + "/";
+                } else {
+                    url = COULD_NOT_DETERMINE_THE_VIRTUAL_HOST_ADDRESS;
+                }
 
                 PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
                 pluginConfiguration.put(urlProp);
+                
             }
 
             File rtLogFile = new File(logsDir, address.host + address.port + RT_LOG_FILE_NAME_SUFFIX);
@@ -113,7 +141,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
             String resourceName;
             if (serverName != null) {
-                resourceName = address.host + ":" + address.port;
+                resourceName = address.toString();
             } else {
                 resourceName = resourceKey;
             }

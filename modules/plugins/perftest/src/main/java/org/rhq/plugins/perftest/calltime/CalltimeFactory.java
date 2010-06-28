@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,23 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.registration;
+package org.rhq.plugins.perftest.calltime;
 
-public class RegistrationException extends Exception {
-    private static final long serialVersionUID = -2258189843514401027L;
 
-    public RegistrationException() {
-    }
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 
-    public RegistrationException(String message) {
-        super(message);
-    }
+/**
+ * Calltime data providers need to implement this.
+ * @author Heiko W. Rupp
+ */
+public interface CalltimeFactory {
 
-    public RegistrationException(Throwable cause) {
-        super(cause);
-    }
-
-    public RegistrationException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    public CallTimeData nextValue(MeasurementScheduleRequest request);
 }

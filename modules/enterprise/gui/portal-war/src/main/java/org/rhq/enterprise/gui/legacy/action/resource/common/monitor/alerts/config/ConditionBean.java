@@ -37,8 +37,18 @@ public final class ConditionBean {
     private String percentageComparator;
     private Integer metricId;
     private String metricName;
+    private Integer callTimeMetricId;
+    private String callTimeMetricName;
     private String absoluteValue;
     private String percentage;
+    private String calltimeComparator;
+    private String ctAbsoluteValue;
+    private String calltimeAbsOption;
+    private String calltimeAbsPattern;
+    private String ctPercentage;
+    private String calltimeChgOp;
+    private String calltimeChgOption;
+    private String calltimeChgPattern;
     private String baselineOption;
     private String controlAction;
     private String controlActionStatus;
@@ -109,6 +119,22 @@ public final class ConditionBean {
 
     public void setMetricName(String metricName) {
         this.metricName = metricName;
+    }
+
+    public Integer getCallTimeMetricId() {
+        return callTimeMetricId;
+    }
+
+    public void setCallTimeMetricId(Integer callTimeMetricId) {
+        this.callTimeMetricId = callTimeMetricId;
+    }
+
+    public String getCallTimeMetricName() {
+        return callTimeMetricName;
+    }
+
+    public void setCallTimeMetricName(String callTimeMetricName) {
+        this.callTimeMetricName = callTimeMetricName;
     }
 
     public String getPercentage() {
@@ -205,6 +231,72 @@ public final class ConditionBean {
 
     public void setTraitName(String traitName) {
         this.traitName = traitName;
+    }
+
+    public String getCalltimeComparator() {
+        return calltimeComparator;
+    }
+
+    public void setCalltimeComparator(String calltimeComparator) {
+        this.calltimeComparator = calltimeComparator;
+    }
+
+    public String getCtAbsoluteValue() {
+        return ctAbsoluteValue;
+    }
+
+    public void setCtAbsoluteValue(String ctAbsoluteValue) {
+        this.ctAbsoluteValue = ctAbsoluteValue;
+    }
+
+    public String getCalltimeAbsOption() {
+        return calltimeAbsOption;
+    }
+
+    public void setCalltimeAbsOption(String calltimeAbsOption) {
+        this.calltimeAbsOption = calltimeAbsOption;
+    }
+
+    public String getCalltimeAbsPattern() {
+        return calltimeAbsPattern;
+    }
+
+    public void setCalltimeAbsPattern(String calltimeAbsPattern) {
+        if (calltimeAbsPattern != null && !calltimeAbsPattern.trim().equals(""))
+            this.calltimeAbsPattern = calltimeAbsPattern;
+    }
+
+    public String getCtPercentage() {
+        return ctPercentage;
+    }
+
+    public void setCtPercentage(String ctPercentage) {
+        this.ctPercentage = ctPercentage;
+    }
+
+    public String getCalltimeChgOption() {
+        return calltimeChgOption;
+    }
+
+    public void setCalltimeChgOption(String calltimeChgOption) {
+        this.calltimeChgOption = calltimeChgOption;
+    }
+
+    public String getCalltimeChgPattern() {
+        return calltimeChgPattern;
+    }
+
+    public void setCalltimeChgPattern(String calltimeChgPattern) {
+        if (calltimeChgPattern != null && !calltimeChgPattern.trim().equals(""))
+            this.calltimeChgPattern = calltimeChgPattern;
+    }
+
+    public String getCalltimeChgOp() {
+        return calltimeChgOp;
+    }
+
+    public void setCalltimeChgOp(String calltimeChgOp) {
+        this.calltimeChgOp = calltimeChgOp;
     }
 
     public void importProperties(AlertCondition cond, Subject subject) throws Exception {

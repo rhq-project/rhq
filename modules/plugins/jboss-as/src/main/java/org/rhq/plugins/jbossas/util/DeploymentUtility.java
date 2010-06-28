@@ -114,6 +114,8 @@ public class DeploymentUtility {
             return null;
         }
 
+/* The next code block is already executed within getDeploymentInformations()
+   so no point in repeating here
         try {
             EmsOperation operation = getListDeployedOperation(connection);
 
@@ -128,6 +130,7 @@ public class DeploymentUtility {
 
             return null;
         }
+*/
 
         // ask our connection object to create an ObjectName for us as a java.lang.Object - we don't want to import ObjectName ourselves
         Object ourObjectName = connection.buildObjectName(objectName);
@@ -307,7 +310,7 @@ public class DeploymentUtility {
                 name = (lastSlashIndex == lastIndex) ? "/" : name.substring(lastSlashIndex + 1);
             }
         }
-                 
+
         return webModule;
     }
 

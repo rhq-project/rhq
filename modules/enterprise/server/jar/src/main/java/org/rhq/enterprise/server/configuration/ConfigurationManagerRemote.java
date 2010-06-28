@@ -180,11 +180,6 @@ public interface ConfigurationManagerRemote {
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
         throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
-    @WebMethod
-    ResourceConfigurationUpdate updateStructuredOrRawConfiguration(@WebParam Subject subject, @WebParam int resourceId,
-        @WebParam @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration,
-        @WebParam boolean fromStructured) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
-
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for
      * the up-to-date configuration directly from the agent. An exception will be thrown if communications with the

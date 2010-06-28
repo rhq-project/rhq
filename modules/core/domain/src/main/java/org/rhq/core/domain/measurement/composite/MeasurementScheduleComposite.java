@@ -43,8 +43,8 @@ public class MeasurementScheduleComposite implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private MeasurementDefinition measurementDefinition;
-    private Boolean collectionEnabled;
-    private long collectionInterval;
+    private Boolean collectionEnabled; // null flagged as "SOME"
+    private long collectionInterval; // 0 flagged as "DIFFERENT"
 
     public MeasurementScheduleComposite(MeasurementDefinition measurementDefinition) {
         this.measurementDefinition = measurementDefinition;

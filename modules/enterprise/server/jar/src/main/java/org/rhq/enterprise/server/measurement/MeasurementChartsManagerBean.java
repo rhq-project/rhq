@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.measurement;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +37,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -49,7 +49,6 @@ import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -103,15 +102,9 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     public List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject,
         int autoGroupParentResourceId, int autoGroupChildResourceTypeId, int[] measurementDefinitionIds, long begin,
         long end, boolean enabledOnly) throws MeasurementException {
-        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, autoGroupParentResourceId,
-            autoGroupChildResourceTypeId);
-        int[] resourceIds = new int[resources.size()];
-        for (int i = 0; i < resourceIds.length; i++) {
-            resourceIds[i] = resources.get(i).getId();
-        }
 
-        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, resourceIds,
-            measurementDefinitionIds, begin, end, enabledOnly);
+        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, EntityContext.forAutoGroup(
+            autoGroupParentResourceId, autoGroupChildResourceTypeId), measurementDefinitionIds, begin, end, enabledOnly);
         for (MetricDisplaySummary tmp : ret) {
             tmp.setParentId(autoGroupParentResourceId);
             tmp.setChildTypeId(autoGroupChildResourceTypeId);
@@ -122,10 +115,9 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
     public List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException {
-        List<Integer> resourceIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
 
-        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, ArrayUtils
-            .unwrapCollection(resourceIds), measurementDefinitionIds, begin, end, enabledOnly);
+        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, EntityContext.forGroup(groupId),
+            measurementDefinitionIds, begin, end, enabledOnly);
         for (MetricDisplaySummary tmp : ret) {
             tmp.setGroupId(groupId);
         }
@@ -426,54 +418,49 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         return summary;
     }
 
-    /**
-     * Get the group display summaries for the passed resources that belong to a (auto)group
-     *
-     * @param  subject
-     * @param  resourceIds
-     * @param  measurementDefinitionIds
-     * @param  begin
-     * @param  end
-     * @param  enabledOnly              do we want to restrict this to enabled metrics?
-     *
-     * @return
-     *
-     * @throws MeasurementException
-     */
-    private List<MetricDisplaySummary> getAggregateMetricDisplaySummaries(Subject subject, int[] resourceIds,
+    private List<MetricDisplaySummary> getAggregateMetricDisplaySummaries(Subject subject, EntityContext context,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException {
 
         List<MetricDisplaySummary> data = new ArrayList<MetricDisplaySummary>(measurementDefinitionIds.length);
 
-        // nothing to do, as we have no resources in that group
-        if (resourceIds == null || resourceIds.length == 0) {
-            return data;
-        }
         if (measurementDefinitionIds.length == 0) {
             return data;
         }
 
-        if (!authorizationManager.canViewResources(subject, ArrayUtils.wrapInList(resourceIds))) {
-            throw new PermissionException("User[" + subject.getName() + "] does not have permission to view metric " +
-                "schedules for resource ids, " + ArrayUtils.wrapInList(resourceIds));
+        if (context.category == EntityContext.Category.Resource) {
+            if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view metric display summaries for resource[id="
+                    + context.resourceId + "]");
+            }
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view metric display summaries for resourceGroup[id="
+                    + context.groupId + "]");
+            }
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view metric display summaries for autoGroup[parentResourceId="
+                    + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
+            }
         }
 
         MeasurementDataManagerUtility dataUtil = MeasurementDataManagerUtility.getInstance(rhqDs);
 
         // Loop over the definitions, find matching schedules and create a MetricDisplaySummary for each definition
         for (int definitionId : measurementDefinitionIds) {
-            int collecting = 0;
-            List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionIds(resourceIds,
-                new int[] {definitionId});
-            int[] scheduleIds = new int[schedules.size()];
-            for (int i = 0; i < schedules.size(); i++) {
-                MeasurementSchedule schedule = schedules.get(i);
-                if (schedule.isEnabled()) {
-                    collecting++;
-                }
 
-                scheduleIds[i] = schedule.getId();
-            }
+            MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+            criteria.addFilterDefinitionIds(definitionId);
+            PageList<MeasurementSchedule> theSchedules = scheduleManager.findSchedulesByCriteria(subject, criteria);
+            int totalScheduleCount = theSchedules.getTotalSize();
+
+            criteria.addFilterEnabled(true);
+            criteria.setPageControl(PageControl.getSingleRowInstance()); // get single row only, we want totalSize
+            theSchedules = scheduleManager.findSchedulesByCriteria(subject, criteria);
+            int collecting = theSchedules.getTotalSize();
 
             /*
              * If no metric is collecting, stop here as we have nothing to contribute
@@ -494,8 +481,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
             summary.setDefinitionId(definitionId);
             summary.setBeginTimeFrame(begin);
-            summary.setAlertCount(alertManager.getAlertCountByMeasurementDefinitionAndResources(definitionId,
-                resourceIds, begin, end));
+            summary.setAlertCount(getAlertCountForContext(definitionId, context, begin, end));
             summary.setEndTimeFrame(end);
 
             MeasurementDefinition definition = entityManager.find(MeasurementDefinition.class, definitionId);
@@ -511,18 +497,17 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
              * of the group), skip over this metric.
              */
             MeasurementAggregate aggregate;
-            if (scheduleIds.length == 0) {
+            if (totalScheduleCount == 0) {
                 aggregate = new MeasurementAggregate(null, null, null);
-                log.warn("No metric schedules found for def=[" + definition + "] and resources [" +
-                        Arrays.toString(resourceIds)
-                    + "], using empty aggregate");
+                log.warn("No metric schedules found for def=[" + definition + "] and " + context
+                    + ", using empty aggregate");
             } else {
-                aggregate = dataUtil.getAggregateByScheduleIds(begin, end, scheduleIds);
+                aggregate = dataUtil.getAggregateByDefinitionAndContext(begin, end, definitionId, context);
             }
             if (aggregate.isEmpty()) {
                 if (log.isTraceEnabled()) {
-                    log.trace("There was no measurement data available for schedules " + Arrays.toString(scheduleIds)
-                        + " in the timeframe [" + new Date(begin) + ", " + new Date(end) + "]");
+                    log.warn("No metric data found for def=[" + definition + "] and " + context + " in the timeframe ["
+                        + new Date(begin) + ", " + new Date(end) + "]");
                 }
 
                 summary.setValuesPresent(false);
@@ -628,6 +613,20 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         }
 
         return isCollecting;
+    }
+
+    private int getAlertCountForContext(int measurementDefinitionId, EntityContext context, long begin, long end) {
+        if (context.category == EntityContext.Category.AutoGroup) {
+            return alertManager.getAlertCountByMeasurementDefinitionAndAutoGroup(measurementDefinitionId, context
+                .getParentResourceId(), context.getResourceTypeId(), begin, end);
+        } else if (context.category == EntityContext.Category.Resource) {
+            return alertManager.getAlertCountByMeasurementDefinitionAndResource(measurementDefinitionId, context
+                .getResourceId(), begin, end);
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            return alertManager.getAlertCountByMeasurementDefinitionAndResourceGroup(measurementDefinitionId, context
+                .getGroupId(), begin, end);
+        }
+        return 0;
     }
 
 }

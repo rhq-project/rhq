@@ -48,6 +48,10 @@ public class ViewPath {
         return this;
     }
 
+    public ViewId getViewForIndex(int index) {
+        return viewPath.get(index);
+    }
+
     public ViewId getCurrent() {
         if (index >= viewPath.size()) {
             return null;

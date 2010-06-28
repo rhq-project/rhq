@@ -93,7 +93,9 @@ public interface ResourceGroupManagerLocal {
 
     ResourceGroup getByGroupDefinitionAndGroupByClause(int groupDefinitionId, String groupByClause);
 
-    void setResourceType(int resourceGroupId);
+    void setResourceType(int resourceGroupId) throws ResourceGroupDeleteException;
+
+    int getExplicitGroupMemberCount(int resourceGroupId);
 
     int getImplicitGroupMemberCount(int resourceGroupId);
 
@@ -107,6 +109,8 @@ public interface ResourceGroupManagerLocal {
     List<Integer> findDeletedResourceGroupIds(int[] groupIds);
 
     void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupUpdateException;
+
+    void uninventoryMembers(Subject subject, int groupId);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

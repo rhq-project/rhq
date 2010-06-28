@@ -24,6 +24,7 @@ package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -69,8 +70,12 @@ public class BundleFile implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private BundleVersion bundleVersion;
 
+    // Note, currently we cascade remove the PackageVersion because BundleVersions do not share
+    // PackageVersions. They create a PV versioned the same as the BV.  If this approach changes in
+    // the future (e.e reuse of PVs if the sha256 is not different) then this will will have to change
+    // to reflect the fact that multiple BundleFiles could reference the same PackageVersion.
     @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private PackageVersion packageVersion;
 
     public BundleFile() {

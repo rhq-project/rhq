@@ -56,6 +56,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static MessageCenter messageCenter;
 
+    private static String currentPath;
+
     @SuppressWarnings("unused")
     private static Canvas content;
 
@@ -205,10 +207,18 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         String event = URL.decodeComponent(stringValueChangeEvent.getValue());
         System.out.println("Handling history event: " + event);
+        currentPath = event;
 
         currentViewPath = new ViewPath(event);
 
         rootCanvas.renderView(currentViewPath);
+    }
+    
+    public static void refresh() {
+        currentViewPath = new ViewPath(currentPath);
+
+        coreGUI.rootCanvas.renderView(currentViewPath);
+
     }
 
     public Canvas createContent(String breadcrumbName) {
@@ -313,7 +323,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 }
 
                 refreshBreadCrumbTrail();
-
             }
         }
     }

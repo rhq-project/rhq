@@ -89,8 +89,6 @@ import org.rhq.enterprise.server.content.ContentUIManagerBean;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.DistributionManagerBean;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
-import org.rhq.enterprise.server.content.EntitlementStuffManagerBean;
-import org.rhq.enterprise.server.content.EntitlementStuffManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerBean;
@@ -138,8 +136,6 @@ import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsBean;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
-import org.rhq.enterprise.server.registration.RegistrationManagerBean;
-import org.rhq.enterprise.server.registration.RegistrationManagerLocal;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerBean;
@@ -448,10 +444,6 @@ public final class LookupUtil {
         return lookupLocal(RepoManagerBean.class);
     }
 
-    public static EntitlementStuffManagerLocal getEntitlementManager() {
-        return lookupLocal(EntitlementStuffManagerBean.class);
-    }
-
     public static DistributionManagerLocal getDistributionManagerLocal() {
         return lookupLocal(DistributionManagerBean.class);
     }
@@ -481,8 +473,8 @@ public final class LookupUtil {
     }
 
     public static RemoteInstallManagerLocal getRemoteInstallManager() {
-         return lookupLocal(RemoteInstallManagerBean.class);
-     }
+        return lookupLocal(RemoteInstallManagerBean.class);
+    }
 
     public static ResourceMetadataManagerLocal getResourceMetadataManager() {
         return lookupLocal(ResourceMetadataManagerBean.class);
@@ -514,10 +506,6 @@ public final class LookupUtil {
 
     public static ResourceTypeManagerRemote getResourceTypeManagerRemote() {
         return lookupRemote(ResourceTypeManagerBean.class);
-    }
-
-    public static RegistrationManagerLocal getRegistrationManager() {
-        return lookupLocal(RegistrationManagerBean.class);
     }
 
     public static RoleManagerLocal getRoleManager() {
@@ -571,8 +559,6 @@ public final class LookupUtil {
     public static TagManagerLocal getTagManager() {
         return lookupLocal(TagManagerBean.class);
     }
-
-
 
     public static CoreServerMBean getCoreServer() {
         MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();

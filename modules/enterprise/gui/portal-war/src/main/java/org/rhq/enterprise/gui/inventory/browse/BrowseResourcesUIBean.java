@@ -85,7 +85,8 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
             if (search != null && !search.trim().equals("")) {
                 criteria.setSearchExpression(search);
             }
-            criteria.fetchParentResource(true);
+            // lineage info is now provided by the disambiguation stuff
+            // criteria.fetchParentResource(true);
 
             PageList<ResourceComposite> results;
             results = resourceManager.findResourceCompositesByCriteria(getSubject(), criteria);

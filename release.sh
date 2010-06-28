@@ -1,4 +1,10 @@
-#!/bin/sh -x
+#!/bin/sh
+
+if [ -n "$RELEASE_DEBUG" ]; then
+   echo "Debug output is enabled."
+   set -x
+fi
+
 
 # Constants
 
@@ -22,7 +28,7 @@ abort()
 
 usage() 
 {   
-   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME install|deploy" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips deploy"
+   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips test"
 }
 
 
@@ -34,13 +40,16 @@ if [ "$#" -ne 6 ]; then
 fi  
 RELEASE_TYPE="$1"
 if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
-   usage "Invalid release type: $RELEASE_TYPE"
+   usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
 fi
 RELEASE_VERSION="$2"
 DEVELOPMENT_VERSION="$3"
 RELEASE_BRANCH="$4"
 GIT_USERNAME="$5"
-MAVEN_RELEASE_PERFORM_GOAL="$6"
+MODE="$6"
+if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
+   usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
+fi
 
 
 # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
@@ -140,12 +149,18 @@ if echo $GIT_VERSION | grep -v "^1.[67]"; then
 fi
 
 
+# Set various environment variables.
+
+MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
+export MAVEN_OPTS
+
+
 # Set various local variables.
 
 if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
    echo "We appear to be running in a Hudson job." 
    WORKING_DIR="$WORKSPACE"
-   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-$JOB_NAME-repository"
+   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-release-$RELEASE_TYPE-repository"
    MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
 elif [ -z "$WORKING_DIR" ]; then
    WORKING_DIR="$HOME/release/rhq"
@@ -159,19 +174,34 @@ MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,d
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
 fi
-if [ -z "$RHQ_RELEASE_QUIET" ]; then
+if [ -n "$RELEASE_DEBUG" ]; then
    MAVEN_ARGS="$MAVEN_ARGS --debug"
 fi
-if [ -n "$RHQ_RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS $RHQ_RELEASE_ADDITIONAL_MAVEN_ARGS"
+if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
+   MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
 fi
 if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
    MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="12"
 fi
-# TODO: Set MAVEN_OPTS environment variable.
+
+if [ "$MODE" = "production" ]; then
+   MAVEN_RELEASE_PERFORM_GOAL="deploy"
+else
+   MAVEN_RELEASE_PERFORM_GOAL="install"
+fi
+
 
 TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
 RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
+
+
+# Set the system character encoding to ISO-8859-1 to ensure i18log reads its 
+# messages and writes its resource bundle properties files in that encoding, 
+# since that is how the German and French I18NMessage annotation values are
+# encoded and the encoding used by i18nlog to read in resource bundle
+# property files.
+LANG=en_US.iso8859
+export LANG
 
 
 # Print out a summary of the environment.
@@ -183,6 +213,7 @@ echo "JAVA_HOME=$JAVA_HOME"
 echo "M2_HOME=$M2_HOME"
 echo "MAVEN_OPTS=$MAVEN_OPTS"
 echo "PATH=$PATH"
+echo "LANG=$LANG"
 echo "============================= Local Variables ================================="
 echo "WORKING_DIR=$WORKING_DIR"
 echo "PROJECT_NAME=$PROJECT_NAME"
@@ -192,10 +223,12 @@ echo "RELEASE_VERSION=$RELEASE_VERSION"
 echo "DEVELOPMENT_VERSION=$DEVELOPMENT_VERSION"
 echo "RELEASE_BRANCH=$RELEASE_BRANCH"
 echo "RELEASE_TAG=$RELEASE_TAG"
+echo "MODE=$MODE"
 echo "MAVEN_LOCAL_REPO_DIR=$MAVEN_LOCAL_REPO_DIR"
 echo "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS=$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS"
 echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
 echo "MAVEN_ARGS=$MAVEN_ARGS"
+echo "MAVEN_RELEASE_PERFORM_GOAL=$MAVEN_RELEASE_PERFORM_GOAL"
 echo "============================= Program Versions ================================"
 git --version
 echo
@@ -207,13 +240,14 @@ echo
 
 
 # Clean the Maven local repo if it hasn't been purged recently.
-if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
-   OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
-   if [ -n "$OUTPUT" ]; then       
-      echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
-      rm -rf "$MAVEN_LOCAL_REPO_DIR"
-   fi
-fi
+# TODO: Uncomment this.
+#if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
+#   OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
+#   if [ -n "$OUTPUT" ]; then       
+#      echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
+#      rm -rf "$MAVEN_LOCAL_REPO_DIR"
+#   fi
+#fi
 mkdir -p "$MAVEN_LOCAL_REPO_DIR"
 
 
@@ -264,7 +298,12 @@ if [ -d "$WORKING_DIR" ]; then
    # is truly a git working copy.
    if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; then       
        echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
-       git checkout "$RELEASE_BRANCH"
+       git fetch origin "$RELEASE_BRANCH"
+       [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
+       git checkout "$RELEASE_BRANCH" 2>/dev/null
+       if [ "$?" -ne 0 ]; then
+           git checkout --track -b "$RELEASE_BRANCH" "origin/$RELEASE_BRANCH"
+       fi
        [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
        git reset --hard "origin/$RELEASE_BRANCH"
        [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
@@ -284,8 +323,16 @@ if [ ! -d "$WORKING_DIR" ]; then
    git clone "$PROJECT_GIT_URL" "$WORKING_DIR"
    [ "$?" -ne 0 ] && abort "Failed to clone $PROJECT_NAME git repo ($PROJECT_GIT_URL)."
    cd "$CLONE_DIR"
-   git checkout "$RELEASE_BRANCH"
+   git checkout --track -b $RELEASE_BRANCH "origin/$RELEASE_BRANCH"
    [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
+fi
+
+
+# If the specified tag already exists remotely and we're in production mode, then abort. If it exists and we're in test mode, then we'll delete it after we've had a successful dry run of release:prepare and are ready to tag.
+
+EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
+if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "production" ]; then
+   abort "A remote tag named $RELEASE_TAG already exists - aborting, since we are in production mode..."      
 fi
 
 
@@ -317,6 +364,24 @@ echo
 echo "Tagging dry run succeeded!"
 
 
+# If there's an existing remote tag, and we didn't abort earlier, we must be in test mode, so we can safely delete it before we call mvn release:prepare to recreate it.
+
+if [ -n "$EXISTING_REMOTE_TAG" ]; then
+   echo "A remote tag named $RELEASE_TAG already exists - deleting it, since we are in test mode..."      
+   git push origin ":refs/tags/$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "Failed to delete remote tag ($RELEASE_TAG)."
+fi
+
+
+# See if the specified tag already exists locally - if so, delete it (even if in production mode).
+EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
+if [ -n "$EXISTING_LOCAL_TAG" ]; then
+   echo "A local tag named $RELEASE_TAG already exists - deleting it..."      
+   git tag -d "$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
+fi
+
+
 # If the dry run succeeded, tag it for real.
 
 echo "Tagging the release..."
@@ -326,7 +391,7 @@ echo
 echo "Tagging succeeded!"
 
 
-# Checkout the tag and build and publish the Maven artifacts.
+# Checkout the tag and build it. If in production mode, publish the Maven artifacts.
 
 echo "Checking out release tag $RELEASE_TAG..."
 git checkout "$RELEASE_TAG"

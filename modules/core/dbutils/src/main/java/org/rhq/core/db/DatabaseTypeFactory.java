@@ -146,6 +146,8 @@ public class DatabaseTypeFactory {
             if (db_name.indexOf("postgresql") != -1) {
                 if (db_version.startsWith("7.")) {
                     database_type_class = Postgresql7DatabaseType.class;
+                } else if (db_version.startsWith("9.0")) {
+                    database_type_class = Postgresql90DatabaseType.class;
                 } else if (db_version.startsWith("8.4")) {
                     database_type_class = Postgresql84DatabaseType.class;
                 } else if (db_version.startsWith("8.3")) {
@@ -190,18 +192,18 @@ public class DatabaseTypeFactory {
         return database_type_class.newInstance();
     }
 
-    /** 
+    /**
      * This is the getter of a get/set convenience mechanism for storing and retrieving the active database type.
      * Not a true singleton but typically the value will not change as the underlying db is typically
      * not going to change at runtime.
-     * 
-     * @return The current DatabaseType or null if not yet set. 
+     *
+     * @return The current DatabaseType or null if not yet set.
      */
     public static DatabaseType getDefaultDatabaseType() {
         return DatabaseTypeFactory.defaultDatabaseType;
     }
 
-    /** 
+    /**
      * This is the setter of a get/set convenience mechanism for storing and retrieving the active database type.
      * Typically called one time when the dbType is established.  Not a true singleton but typically the value will
      * not change as the underlying db is typically not going to change.

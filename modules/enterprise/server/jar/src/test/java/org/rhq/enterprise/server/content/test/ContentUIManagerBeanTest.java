@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.content.test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
 import javax.persistence.EntityManager;
 
 import org.apache.commons.logging.Log;
@@ -32,7 +36,9 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -52,6 +58,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
     private ContentUIManagerLocal contentUIManager;
     private SubjectManagerLocal subjectManager;
+    private ContentManagerLocal contentManager;
 
     // Setup  --------------------------------------------
 
@@ -59,6 +66,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
     public void setupBeforeClass() throws Exception {
         contentUIManager = LookupUtil.getContentUIManager();
         subjectManager = LookupUtil.getSubjectManager();
+        contentManager = LookupUtil.getContentManager();
     }
 
     // Test Cases  --------------------------------------------
@@ -207,6 +215,95 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             packageBits2 = em.find(PackageBits.class, packageBits2.getId());
             assert packageBits2 != null;
             assert DATA2.equals(new String(packageBits2.getBits()));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw t;
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    public void testPackageBitsBlobStream() throws Throwable {
+        LoadedPackageBitsComposite composite;
+
+        getTransactionManager().begin();
+
+        try {
+            EntityManager em = getEntityManager();
+            Resource resource = SessionTestHelper.createNewResource(em, "testPkgBitsLargeResource");
+            PackageType pkgType = new PackageType("testPkgBitsLargePT", resource.getResourceType());
+            org.rhq.core.domain.content.Package pkg = new Package("testPkgBitsLargeP", pkgType);
+            Architecture arch = new Architecture("testPkgLargeArch");
+            PackageVersion pkgVer = new PackageVersion(pkg, "1", arch);
+
+            em.persist(pkgType);
+            em.persist(pkg);
+            em.persist(arch);
+            em.persist(pkgVer);
+            em.flush();
+
+            // test that no bits are available right now
+            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+            assert composite != null;
+            assert composite.getPackageVersionId() == pkgVer.getId();
+            assert composite.getPackageBitsId() == null;
+            assert !composite.isPackageBitsAvailable();
+            assert !composite.isPackageBitsInDatabase();
+
+            // pretend we loaded the bits, but we stored them somewhere other then the DB
+            PackageBits packageBits = new PackageBits();
+            em.persist(packageBits);
+            pkgVer.setPackageBits(packageBits);
+            pkgVer = em.merge(pkgVer);
+            em.flush();
+
+            // test that the bits are available, but are not stored in the DB
+            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+            assert composite != null;
+            assert composite.getPackageVersionId() == pkgVer.getId();
+            assert composite.getPackageBitsId() == packageBits.getId();
+            assert composite.isPackageBitsAvailable();
+            assert !composite.isPackageBitsInDatabase();
+
+            // let's make sure there really is no data in the DB
+            packageBits = em.find(PackageBits.class, packageBits.getId());
+            assert packageBits != null;
+            assert packageBits.getBits() == null;
+
+            // now lets store some bits in the DB using PreparedStatements and BLOB mechanism
+            // to simulate large file transfers where streaming is used instead of reading entire
+            // contents into memory every time.
+
+            //any jar should be fine. Use generated server jar
+            File originalBinary = new File("./src/test/resources/binary-blob-sample.jar");
+            //destination once pulled from db
+            File retrieved = new File("./target/pulled.jar");
+            if (retrieved.exists()) {
+                assertTrue("Unable to delete ./target/pulled.jar for test cleanup.", retrieved.delete());
+            }
+            FileInputStream fos = new FileInputStream(originalBinary);
+
+            contentManager.updateBlobStream(fos, packageBits, null);
+            packageBits = em.find(PackageBits.class, packageBits.getId());
+
+            // test that the bits are available and stored in the DB: Reading the Blob
+            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+            assert composite != null;
+            assert composite.getPackageVersionId() == pkgVer.getId();
+            assert composite.getPackageBitsId() == packageBits.getId();
+            assert composite.isPackageBitsAvailable();
+            assert composite.isPackageBitsInDatabase();
+
+            FileOutputStream outputStream = new FileOutputStream(retrieved);
+            contentManager.writeBlobOutToStream(outputStream, packageBits, false);
+
+            //Check that db content equal to file system content
+            String originalDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
+                .calcDigestString(originalBinary);
+            String newDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(retrieved);
+            assertEquals("Uploaded and retrieved digests differ:", originalDigest, newDigest);
+
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;

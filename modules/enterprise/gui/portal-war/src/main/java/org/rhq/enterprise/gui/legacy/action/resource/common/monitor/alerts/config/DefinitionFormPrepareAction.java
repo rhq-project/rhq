@@ -93,11 +93,9 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
         log.trace("defForm.numConditions=" + defForm.getNumConditions());
         request.setAttribute("numConditions", defForm.getNumConditions());
 
-        request.setAttribute("showMetrics", defForm.getMetrics().size() > 0);
-        request.setAttribute("showTraits", defForm.getTraits().size() > 0);
-        request.setAttribute("showResourceConfiguration", defForm.isResourceConfigurationSupported());
-        request.setAttribute("showAvailability", defForm.getAvailabilityOptions().length > 0);
-        request.setAttribute("showOperations", defForm.getControlActions().size() > 0);
+        // process data types from bottom to top and set the initialise
+        // the top-most "trigger" radio button
+        boolean triggerNotSet = defForm.getCondition(0).getTrigger() == null;
 
         ResourceType type = null;
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -114,6 +112,32 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
         }
         ResourceFacets facets = LookupUtil.getResourceTypeManager().getResourceFacets(type.getId());
         request.setAttribute("showEvents", facets.isEvent());
+        if (facets.isEvent() && triggerNotSet)
+            defForm.getCondition(0).setTrigger("onEvent");
+
+        request.setAttribute("showOperations", defForm.getControlActions().size() > 0);
+        if (defForm.getControlActions().size() > 0 && triggerNotSet)
+            defForm.getCondition(0).setTrigger("onOperation");
+
+        request.setAttribute("showAvailability", defForm.getAvailabilityOptions().length > 0);
+        if (defForm.getAvailabilityOptions().length > 0 && triggerNotSet)
+            defForm.getCondition(0).setTrigger("onAvailability");
+
+        request.setAttribute("showResourceConfiguration", defForm.isResourceConfigurationSupported());
+        if (defForm.isResourceConfigurationSupported() && triggerNotSet)
+            defForm.getCondition(0).setTrigger("onResourceConfiguration");
+
+        request.setAttribute("showTraits", defForm.getTraits().size() > 0);
+        if (defForm.getTraits().size() > 0 && triggerNotSet)
+            defForm.getCondition(0).setTrigger("onTrait");
+
+        request.setAttribute("showCalltimeMetrics", defForm.getCalltimeMetrics().size() > 0);
+        if (defForm.getCalltimeMetrics().size() > 0 && triggerNotSet)
+            defForm.getCondition(0).setTrigger("onCallTime");
+
+        request.setAttribute("showMetrics", defForm.getMetrics().size() > 0);
+        if (defForm.getMetrics().size() > 0 && triggerNotSet)
+            defForm.getCondition(0).setTrigger("onMeasurement");
 
         return null;
     }
@@ -153,6 +177,9 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
         List<MeasurementDefinition> dataDefinitions = definitionManager.findMeasurementDefinitionsByResourceType(
             subject, type.getId(), DataType.MEASUREMENT, null);
 
+        List<MeasurementDefinition> calltimeDefinitions = definitionManager.findMeasurementDefinitionsByResourceType(
+            subject, type.getId(), DataType.CALLTIME, null);
+
         List<MeasurementDefinition> traitDefinitions = definitionManager.findMeasurementDefinitionsByResourceType(
             subject, type.getId(), DataType.TRAIT, null);
 
@@ -185,6 +212,7 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
         }
 
         defForm.setMetrics(dataDefinitions);
+        defForm.setCalltimeMetrics(calltimeDefinitions);
         defForm.setTraits(traitDefinitions);
 
         defForm.setBaselines(baselines);

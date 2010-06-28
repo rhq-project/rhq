@@ -73,8 +73,7 @@ public interface MeasurementDataManagerRemote {
         @WebParam(name = "definitionId") int definitionId, //
         @WebParam(name = "beginTime") long beginTime, //
         @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "numPoints") int numPoints,//
-        @WebParam(name = "groupAggregateOnly") boolean groupAggregateOnly);
+        @WebParam(name = "numPoints") int numPoints);
 
     @WebMethod
     @XmlJavaTypeAdapter(MeasurementDataNumericHighLowCompositeAdapter.class)

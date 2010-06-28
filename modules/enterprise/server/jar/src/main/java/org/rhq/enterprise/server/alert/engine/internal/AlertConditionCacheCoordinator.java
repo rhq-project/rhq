@@ -34,6 +34,7 @@ import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
@@ -61,6 +62,7 @@ public final class AlertConditionCacheCoordinator {
     public enum Cache {
         MeasurementDataCache(Type.Agent), //
         MeasurementTraitCache(Type.Agent), //
+        CallTimeDataCache(Type.Agent), //
         ResourceOperationCache(Type.Global), //
         AvailabilityCache(Type.Global), //
         EventsCache(Type.Agent), //
@@ -210,6 +212,37 @@ public final class AlertConditionCacheCoordinator {
         return stats;
     }
 
+    public AlertConditionCacheStats checkConditions(CallTimeData... callTimeData) {
+        if (callTimeData == null || callTimeData.length == 0) {
+            return new AlertConditionCacheStats();
+        }
+
+        CallTimeData datum = callTimeData[0];
+        Integer agentId = getAgentId(datum);
+        if (agentId == null) {
+            log.error("Could not find agent for scheduleId = " + datum.getScheduleId());
+            return new AlertConditionCacheStats();
+        }
+
+        AlertConditionCacheStats stats = null;
+        AgentConditionCache agentCache = null;
+        agentReadWriteLock.readLock().lock();
+        try {
+            agentCache = agentCaches.get(agentId);
+        } catch (Throwable t) {
+            log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
+        } finally {
+            agentReadWriteLock.readLock().unlock();
+        }
+        if (agentCache != null) {
+            stats = agentCache.checkConditions(callTimeData);
+        } else {
+            stats = new AlertConditionCacheStats();
+        }
+
+        return stats;
+    }
+
     public AlertConditionCacheStats checkConditions(OperationHistory operationHistory) {
         AlertConditionCacheStats stats = null;
         try {
@@ -296,6 +329,17 @@ public final class AlertConditionCacheCoordinator {
             return agentId;
         } catch (Throwable t) {
             log.error("Error looking up agent by MeasurementData", t);
+        }
+        return null;
+    }
+
+    private Integer getAgentId(CallTimeData datum) {
+        try {
+            int scheduleId = datum.getScheduleId();
+            Integer agentId = agentManager.getAgentIdByScheduleId(scheduleId);
+            return agentId;
+        } catch (Throwable t) {
+            log.error("Error looking up agent by CallTimeData", t);
         }
         return null;
     }

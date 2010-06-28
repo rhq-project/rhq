@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
@@ -41,7 +43,6 @@ import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.criteria.TaggedCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -70,7 +71,6 @@ public final class CriteriaQueryGenerator {
     private Criteria criteria;
     private String searchExpressionWhereClause;
 
-
     private String authorizationJoinFragment;
     private String authorizationPermsFragment;
     private String authorizationCustomConditionFragment;
@@ -79,6 +79,8 @@ public final class CriteriaQueryGenerator {
     private String alias;
     private String className;
     private String projection;
+    private String groupByClause;
+    private String havingClause;
     private static String NL = System.getProperty("line.separator");
 
     private static List<String> EXPRESSION_START_KEYWORDS;
@@ -114,7 +116,8 @@ public final class CriteriaQueryGenerator {
     }
 
     private String fixFilterOverride(String expression, String fieldName) {
-        boolean fuzzyMatch = expression.toLowerCase().contains(" like ") && !expression.toLowerCase().contains("select"); // Don't fuzzy match subselects
+        boolean fuzzyMatch = expression.toLowerCase().contains(" like ")
+            && !expression.toLowerCase().contains("select"); // Don't fuzzy match subselects
         boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive() && fuzzyMatch;
 
         while (expression.indexOf('?') != -1) {
@@ -154,30 +157,30 @@ public final class CriteriaQueryGenerator {
         if (type == AuthorizationTokenType.RESOURCE) {
             if (fragment == null) {
                 this.authorizationJoinFragment = "" //
-                        + "JOIN " + alias + ".implicitGroups authGroup " + NL //
-                        + "JOIN authGroup.roles authRole " + NL //
-                        + "JOIN authRole.subjects authSubject " + NL;
+                    + "JOIN " + alias + ".implicitGroups authGroup " + NL //
+                    + "JOIN authGroup.roles authRole " + NL //
+                    + "JOIN authRole.subjects authSubject " + NL;
             } else {
                 this.authorizationJoinFragment = "" //
-                        + "JOIN " + alias + "." + fragment + " authRes " + NL //
-                        + "JOIN authRes.implicitGroups authGroup " + NL //
-                        + "JOIN authGroup.roles authRole " + NL //
-                        + "JOIN authRole.subjects authSubject " + NL;
+                    + "JOIN " + alias + "." + fragment + " authRes " + NL //
+                    + "JOIN authRes.implicitGroups authGroup " + NL //
+                    + "JOIN authGroup.roles authRole " + NL //
+                    + "JOIN authRole.subjects authSubject " + NL;
             }
         } else if (type == AuthorizationTokenType.GROUP) {
             if (fragment == null) {
                 this.authorizationJoinFragment = "" // 
-                        + "JOIN " + alias + ".roles authRole " + NL //
-                        + "JOIN authRole.subjects authSubject " + NL;
+                    + "JOIN " + alias + ".roles authRole " + NL //
+                    + "JOIN authRole.subjects authSubject " + NL;
             } else {
                 this.authorizationJoinFragment = "" //
-                        + "JOIN " + alias + "." + fragment + " authGroup " + NL //
-                        + "JOIN authGroup.roles authRole " + NL //
-                        + "JOIN authRole.subjects authSubject " + NL;
+                    + "JOIN " + alias + "." + fragment + " authGroup " + NL //
+                    + "JOIN authGroup.roles authRole " + NL //
+                    + "JOIN authRole.subjects authSubject " + NL;
             }
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
-                    + " does not yet support generating queries for '" + type + "' token types");
+                + " does not yet support generating queries for '" + type + "' token types");
         }
 
         // If the query results are narrowed by requiredParams generate the fragment now. It's done
@@ -188,17 +191,92 @@ public final class CriteriaQueryGenerator {
         List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
         if (!(null == requiredPerms || requiredPerms.isEmpty())) {
             this.authorizationPermsFragment = "" //
-                    + "AND ( SELECT COUNT(DISTINCT p)" + NL //
-                    + "      FROM Subject innerSubject" + NL //
-                    + "      JOIN innerSubject.roles r" + NL //
-                    + "      JOIN r.permissions p" + NL //
-                    + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
-                    + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
+                + "AND ( SELECT COUNT(DISTINCT p)" + NL //
+                + "      FROM Subject innerSubject" + NL //
+                + "      JOIN innerSubject.roles r" + NL //
+                + "      JOIN r.permissions p" + NL //
+                + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
+                + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
         }
     }
 
-    // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
+    public String getParameterReplacedQuery(boolean countQuery) {
+        String query = getQueryString(countQuery);
 
+        for (Map.Entry<String, Object> critField : getFilterFields(criteria).entrySet()) {
+            Object value = critField.getValue();
+
+            if (value instanceof Tag) {
+                Tag tag = (Tag) value;
+                query = query.replace(":tagNamespace", tag.getNamespace());
+                query = query.replace(":tagSemantic", tag.getSemantic());
+                query = query.replace(":tagName", tag.getName());
+
+            } else {
+                value = getParameterReplacedValue(value);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+                }
+                query = query.replace(":" + critField.getKey(), String.valueOf(value));
+            }
+        }
+
+        if (null != this.authorizationPermsFragment) {
+            List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
+            String perms = requiredPerms.toString(); // [data1, data, data3]
+            query = query.replace(":requiredPerms", perms.subSequence(1, perms.length() - 1)); // remove first/last characters
+            query = query.replace(":requiredPermsSize", String.valueOf(requiredPerms.size()));
+        }
+
+        return query;
+    }
+
+    private String getParameterReplacedValue(Object value) {
+        String returnValue = null;
+        if (value instanceof String) {
+            returnValue = "'" + prepareStringBindValue((String) value) + "'";
+        } else if (value instanceof Enum) {
+            // note: this strategy won't work for entities with multiple enums that are persisted differently
+            EnumType type = getPersistenceEnumType(value.getClass());
+            if (type == EnumType.STRING) {
+                returnValue = "'" + String.valueOf(value) + "'";
+            } else {
+                returnValue = String.valueOf(value);
+            }
+        } else if (value instanceof List<?>) {
+            List<?> valueList = (List<?>) value;
+            StringBuilder results = new StringBuilder();
+            boolean first = true;
+            for (Object nextValue : valueList) {
+                if (first) {
+                    first = false;
+                } else {
+                    results.append(",");
+                }
+                results.append(getParameterReplacedValue(nextValue));
+            }
+            returnValue = results.toString();
+        } else {
+            returnValue = String.valueOf(value);
+        }
+        return returnValue;
+    }
+
+    // calculates @Enumerated(EnumType.STRING) or @Enumerated(EnumType.ORDINAL)
+    private EnumType getPersistenceEnumType(Class<?> enumFieldType) {
+        for (Field nextField : getClass().getFields()) {
+            nextField.setAccessible(true);
+            if (nextField.getType().equals(enumFieldType)) {
+                Enumerated enumeratedAnnotation = nextField.getAnnotation(Enumerated.class);
+                if (enumeratedAnnotation != null) {
+                    return enumeratedAnnotation.value();
+                }
+            }
+        }
+        return EnumType.STRING; // catch-all
+    }
+
+    // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
     public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
@@ -308,6 +386,17 @@ public final class CriteriaQueryGenerator {
         }
 
         if (countQuery == false) {
+            // group by clause
+            if (groupByClause != null) {
+                results.append(NL).append("GROUP BY ").append(groupByClause);
+            }
+
+            // having clause
+            if (havingClause != null) {
+                results.append(NL).append("HAVING ").append(havingClause);
+            }
+
+            // order by clause
             boolean overridden = true;
             PageControl pc = criteria.getPageControlOverrides();
             if (pc == null) {
@@ -440,7 +529,7 @@ public final class CriteriaQueryGenerator {
             }
         } catch (Exception e) {
             LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
-                    + ThrowableUtil.getAllMessages(e, true));
+                + ThrowableUtil.getAllMessages(e, true));
         }
     }
 
@@ -503,6 +592,30 @@ public final class CriteriaQueryGenerator {
         this.projection = projection;
     }
 
+    /**
+     * The groupBy clause can be set if and only if the projection is altered.  The passed argument should not be
+     * prefixed with 'group by'; that part of the query will be auto-generated if the argument is non-null.  The 
+     * new projection must follow standard rules as they apply to statements with groupBy clauses.
+     */
+    public void setGroupByClause(String groupByClause) {
+        if (groupByClause != null && projection == null) {
+            throw new IllegalArgumentException("Must alter projection before calling setGroupByClause");
+        }
+        this.groupByClause = groupByClause;
+    }
+
+    /**
+     * The having clause can be set if and only if the groupBy clause is set.  The passed argument should not be
+     * prefixed with 'having'; that part of the query will be auto-generated if the argument is non-null.  The 
+     * having clause must follow standard rules as they apply to statements with groupBy clauses.
+     */
+    public void setHavingClause(String havingClause) {
+        if (havingClause != null && groupByClause == null) {
+            throw new IllegalArgumentException("Must add some groupBy clause before calling setHavingClause");
+        }
+        this.havingClause = havingClause;
+    }
+
     public Query getQuery(EntityManager em) {
         String queryString = getQueryString(false);
         Query query = em.createQuery(queryString);
@@ -519,7 +632,6 @@ public final class CriteriaQueryGenerator {
     }
 
     private void setBindValues(Query query, boolean countQuery) {
-
         for (Map.Entry<String, Object> critField : getFilterFields(criteria).entrySet()) {
             Object value = critField.getValue();
 

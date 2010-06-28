@@ -514,15 +514,29 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
                 vhostAddressStrings.length);
 
-                ApacheServerComponent parent = resourceContext.getParentResourceComponent();
-                if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-                    vhostAddresses.add(parent.getAddressUtility().getMainServerSampleAddress(tree));
-                } else {
-                    for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                        vhostAddresses.add(parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
-                            vhostServerName));
+            ApacheServerComponent parent = resourceContext.getParentResourceComponent();
+            if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
+                HttpdAddressUtility.Address serverAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, null, 0);
+                if (serverAddr != null) {
+                    vhostAddresses.add(serverAddr);
+                }
+            } else {
+                for (int i = 0; i < vhostAddressStrings.length; ++i) {
+                    HttpdAddressUtility.Address vhostAddr = parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
+                        vhostServerName, true);
+                    if (vhostAddr != null) {
+                        vhostAddresses.add(vhostAddr);
                     }
                 }
+            }
+
+            //finding the snmp index that corresponds to the address(es) of the vhost isn't that simple
+            //because the snmp module in apache always resolves the IPs to hostnames.
+            //on the other hand, the resource key tries to be more accurate about what a 
+            //vhost can actually be represented as. A vhost is represented by at most 1 hostname (i.e. ServerName)
+            //and possibly multiple IP addresses.
+            SNMPValue bestMatch = null;
+            int bestMatchRate = 0;
             
             while (namesIterator.hasNext()) {
                 SNMPValue nameValue = namesIterator.next();
@@ -532,22 +546,35 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 String fullPort = portValue.toString();
 
                 int snmpPort = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
-                if (snmpPort == 0) snmpPort = 80;
                 
-                if (containsAddress(vhostAddresses, new HttpdAddressUtility.Address(snmpHost, snmpPort))) {
-                    String nameOID = nameValue.getOID();
-                    snmpWwwServiceIndex = Integer.parseInt(nameOID.substring(nameOID.lastIndexOf(".") + 1));
-                    
-                    break;
+                //the snmp represent wildcard ports as 0 and so does HttpdAddressUtility.Address class
+                //we can therefore match the Address generated from the snmp values and the Addresses
+                //stored for this vhost directly.
+                
+                HttpdAddressUtility.Address snmpAddress = new HttpdAddressUtility.Address(snmpHost, snmpPort);
+            
+                int matchRate = matchRate(vhostAddresses, snmpAddress);
+                if (matchRate > bestMatchRate) {
+                    bestMatch = nameValue;
+                    bestMatchRate = matchRate;
                 }
+            }
+            
+            if (bestMatch != null) {
+                String nameOID = bestMatch.getOID();
+                snmpWwwServiceIndex = Integer.parseInt(nameOID.substring(nameOID.lastIndexOf(".") + 1));
+            } else {
+                log.warn("Unable to match the Virtual Host [" + key + "] with any of the SNMP advertised vhosts: " + names + ". It won't be possible to monitor the Virtual Host.");
             }
         }
         return snmpWwwServiceIndex;
     }
 
-    private boolean containsAddress(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) throws UnknownHostException {
-        if (addresses.contains(addressToCheck)) {
-            return true;
+    private int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) throws UnknownHostException {
+        for(HttpdAddressUtility.Address a : addresses) {
+            if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port)) {
+                return 3;
+            }
         }
         
         //try to get the IP of the address to check
@@ -556,8 +583,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         for(InetAddress ip : ipAddresses) {
             HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
             
-            if (addresses.contains(newCheck)) {
-                return true;
+            for(HttpdAddressUtility.Address a : addresses) {
+                if (HttpdAddressUtility.isAddressConforming(newCheck, a.host, a.port)) {
+                    return 2;
+                }
             }
         }
         
@@ -567,13 +596,13 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             for (InetAddress listInetAddr : listAddresses) {
                 for (InetAddress ip : ipAddresses) {
                     if (ip.equals(listInetAddr) && addressToCheck.port == listAddress.port) {
-                        return true;
+                        return 1;
                     }
                 }
             }
         }
         
-        return false;
+        return 0;
     }
     
     private ResourceType getDirectoryResourceType() {

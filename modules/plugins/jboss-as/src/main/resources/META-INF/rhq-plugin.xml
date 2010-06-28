@@ -132,7 +132,7 @@
                      <c:simple-property name="snapshotAdditionalFilesRecursive" summary="true" type="boolean" default="true" description="If true, the snapshot will include files located in subdirectories under the additional files directory."/>
                  </c:map-property>
              </c:list-property>
-         </c:group>         
+         </c:group>
 
          <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
             <c:simple-property name="type" description="The type of the connection."
@@ -150,9 +150,9 @@
                    <c:integer-constraint minimum="60"/>
                 </c:constraint>
             </c:simple-property>
-            
-            <c:simple-property name="childJmxServerName" displayName="JBoss AS JVM Name" default="JVM" 
-                               readOnly="true" required="false" 
+
+            <c:simple-property name="childJmxServerName" displayName="JBoss AS JVM Name" default="JVM"
+                               readOnly="true" required="false"
                                description="The name of the JBoss AS JVM resource."/>
          </c:group>
       </plugin-configuration>
@@ -208,15 +208,15 @@
               defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
 
       <metric property="jboss:service=TransactionManager:TransactionCount" displayName="Total Transactions" measurementType="trendsup"
-              defaultInterval="300000" defaultOn="true" category="utilization" 
+              defaultInterval="300000" defaultOn="true" category="utilization"
               description="Total number of transactions since last restart"/>
 
       <metric property="jboss:service=TransactionManager:CommitCount" displayName="Transactions Committed" displayType="summary" measurementType="trendsup"
-              defaultInterval="600000" defaultOn="true" category="utilization" 
+              defaultInterval="600000" defaultOn="true" category="utilization"
               description="Number of transactions commited since last restart"/>
 
       <metric property="jboss:service=TransactionManager:RollbackCount" displayName="Transactions Rolledback" measurementType="trendsup"
-              defaultInterval="600000" defaultOn="true" category="utilization" 
+              defaultInterval="600000" defaultOn="true" category="utilization"
               description="Number of transactions commited since last restart"/>
 
       <event name="logEntry" description="an entry in a log file"/>
@@ -248,13 +248,13 @@
       <![CDATA[
         <h3>Binding to IP addresses</h3>
 
-        <p>When starting JBossAS instances that need to be monitored using remote JMX (i.e. JNP), it is necessary for 
-        the <tt>java.rmi.server.hostname</tt> System property to be set to the same value as the server's JNP 
-        address (which is set to the <tt>jboss.bind.address</tt> System property by default). Due to bugs in JBossAS 
-        (for more information please see <a href="http://jira.jboss.com/jira/browse/JBAS-4736">JBAS-4736</a> and 
+        <p>When starting JBossAS instances that need to be monitored using remote JMX (i.e. JNP), it is necessary for
+        the <tt>java.rmi.server.hostname</tt> System property to be set to the same value as the server's JNP
+        address (which is set to the <tt>jboss.bind.address</tt> System property by default). Due to bugs in JBossAS
+        (for more information please see <a href="http://jira.jboss.com/jira/browse/JBAS-4736">JBAS-4736</a> and
         <a href="http://jira.jboss.com/jira/browse/JBAS-4955">JBAS-4955</a>),
-        <tt>java.rmi.server.hostname</tt> will default to <tt>127.0.0.1</tt>, unless JBossAS is started using 
-        <tt>-b</tt>, in which case <tt>java.rmi.server.hostname</tt> will default to the bind address specified 
+        <tt>java.rmi.server.hostname</tt> will default to <tt>127.0.0.1</tt>, unless JBossAS is started using
+        <tt>-b</tt>, in which case <tt>java.rmi.server.hostname</tt> will default to the bind address specified
         as the argument to <tt>-b</tt>.</p>
 
         <p>Therefore, you must start your JBossAS instances by using either <tt>-b</tt>:</p>
@@ -263,7 +263,7 @@
         run -b 12.34.56.78 ...
         </pre></code>
 
-        <p>or by explicitly specifying a value for <tt>java.rmi.server.hostname</tt> via <tt>-D</tt> or 
+        <p>or by explicitly specifying a value for <tt>java.rmi.server.hostname</tt> via <tt>-D</tt> or
         <tt>-P</tt>, e.g.:</p>
 
         <code><pre>
@@ -274,7 +274,7 @@
 
         <div class="note">
         Using <tt>-b</tt> is the recommended way to specify the bind address, since, in addition to setting
-        <tt>jboss.bind.address</tt> and <tt>java.rmi.server.hostname</tt>, it will also set other JGroups-related 
+        <tt>jboss.bind.address</tt> and <tt>java.rmi.server.hostname</tt>, it will also set other JGroups-related
         System properties to the specified address.
         </div>
 
@@ -452,11 +452,11 @@
                </c:simple-property>
                <c:simple-property name="jndi-name" readOnly="true" displayName="JNDI Name"
                                   description="The JNDI name under which the DataSource wrapper will be bound."/>
-               <c:simple-property name="driver-class"
-                                  description="The fully qualified name of the JDBC driver or datasource class"/>
+               <c:simple-property name="driver-class" required="false"
+                                  description="The fully qualified name of the JDBC driver or datasource class. Not used for XA-Datasources"/>
                <!-- xa-datasource-class -->
-               <c:simple-property name="connection-url" displayName="Connection Url"
-                                  description="The JDBC driver connection URL string"/>
+               <c:simple-property name="connection-url" displayName="Connection Url" required="false"
+                                  description="The JDBC driver connection URL string. Needed for Tx and Non-Tx datasources"/>
 
                <c:simple-property name="user-name" required="false"/>
                <c:simple-property name="password" type="password" required="false"/>
@@ -501,6 +501,7 @@
                <c:simple-property name="track-statements" type="boolean" required="false"
                                   description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/returned to the prepared statement cache. The default is Yes, but no warnings."/>
 
+               <c:simple-property name="xa-datasource-class" required="false" description="The datasource class for XA connections."/>
                <c:map-property name="connection-property" required="false"/>
                <!-- xa-datasource-property -->
 
@@ -558,7 +559,7 @@
                <c:simple-property name="descriptionTemplate" default="A JCA Connection Factory"/>
                <c:simple-property name="name" type="string" description="The name of this Connection Factory"/>
             </plugin-configuration>
-            
+
             <metric property="AvailableConnectionCount" measurementType="dynamic" displayType="summary"
             displayName="Available Connection Count" description="Number of available connections."
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
@@ -587,8 +588,8 @@
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
 
             <metric property="MinSize" measurementType="dynamic" displayType="detail" displayName="Min Size"
-            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>            
-            
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
             <resource-configuration>
 
                 <c:group name="connection" displayName="Connection Information">
@@ -913,7 +914,7 @@
 
                 </c:group>
             </resource-configuration>
-            
+
         </service>
 
       <service name="JBossMQ"
@@ -2068,7 +2069,7 @@
                class="EJB2BeanComponent"
                discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
                description="An EJB 1.x or 2.x Stateful Session Bean">
-               
+
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true"
                                default="jboss.management.local:name=%name%,J2EEServer=Local,J2EEApplication=%j2eeApplication%,EJBModule=%ejbJar%,j2eeType=StatefulSessionBean"/>
@@ -2101,14 +2102,14 @@
                    description="The number of pooled instances of this EJB 1.x or 2.x Stateful Session Bean in the passivated state"
                    property="{stats.passiveCount.current}"
                    displayType="summary"/>
-                   
+
            <!-- default interval == 600000 ms == 10 min -->
            <metric property="MethodInvocationTime" dataType="calltime" units="milliseconds"
                    defaultOn="false" defaultInterval="600000" destinationType="Method Name"
                    description="the minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
 
       </service>
-         
+
       <service name="Entity EJB"
                subCategory="Applications"
                class="org.rhq.plugins.jmx.MBeanResourceComponent"
@@ -2616,4 +2617,3 @@
    </server>
 
 </plugin>
-        

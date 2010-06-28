@@ -98,6 +98,10 @@ public class PageControl implements Serializable, Cloneable {
     }
 
     public void addDefaultOrderingField(String defaultField, PageOrdering defaultPageOrdering) {
+        if (orderingFields.size() >= MAX_ORDERING_FIELD_COUNT) {
+            return; // only need to add defaults if there are less than 3 sort orders
+        }
+
         for (OrderingField ordering : orderingFields) {
             if (ordering.getField().equals(defaultField)) {
                 /* 
@@ -252,21 +256,26 @@ public class PageControl implements Serializable, Cloneable {
     }
 
     public void reset() {
+        // allow the pageSize to remain, which keeps unlimited views with unlimited paging
         setPageNumber(0);
-        setPageSize(15);
         this.orderingFields = new LinkedList<OrderingField>();
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         PageControl that = (PageControl) o;
 
-        if (pageNumber != that.pageNumber) return false;
-        if (pageSize != that.pageSize) return false;
-        if (!orderingFields.equals(that.orderingFields)) return false;
+        if (pageNumber != that.pageNumber)
+            return false;
+        if (pageSize != that.pageSize)
+            return false;
+        if (!orderingFields.equals(that.orderingFields))
+            return false;
 
         return true;
     }

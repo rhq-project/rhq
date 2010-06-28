@@ -16,27 +16,37 @@
       </f:facet>
 
       <h:form id="callTimeForm">
+         <a4j:keepAlive beanName="CallTimeUIBean"/>
+      
          <!--  On submit make sure these are provided for the context of any new instance of the UI beans -->
          <c:if test="#{CallTimeUIBean.context.resourceId != -1}">
-            <input type="hidden" name="id"
-               value="#{CallTimeUIBean.context.resourceId}" />
+            <input type="hidden" name="id" value="#{CallTimeUIBean.context.resourceId}" />
          </c:if>
          <c:if test="#{CallTimeUIBean.context.groupId != -1}">
-            <input type="hidden" name="groupId"
-               value="#{CallTimeUIBean.context.groupId}" />
+            <input type="hidden" name="groupId" value="#{CallTimeUIBean.context.groupId}" />
          </c:if>
          <c:if
             test="#{CallTimeUIBean.context.parentResourceId != -1}">
-            <input type="hidden" name="parent"
-               value="#{CallTimeUIBean.context.parentResourceId}" />
+            <input type="hidden" name="parent" value="#{CallTimeUIBean.context.parentResourceId}" />
          </c:if>
          <c:if test="#{CallTimeUIBean.context.resourceTypeId != -1}">
-            <input type="hidden" name="type"
-               value="#{CallTimeUIBean.context.resourceTypeId}" />
+            <input type="hidden" name="type" value="#{CallTimeUIBean.context.resourceTypeId}" />
          </c:if>
 
-         <ui:param name="callTimeDataModel" value="#{CallTimeUIBean.dataModel}" />
+         <h:panelGrid columns="3" cellspacing="3">
+             <h:outputLabel for="destinationFilter" value="Destination Filter: " />
+             <h:inputText id="destinationFilter" value="#{CallTimeUIBean.destinationFilter}"
+                          onkeypress="return ignoreEnterKey(event);"
+                          style="width: 300px;" />
+             <a4j:commandButton value="GO" reRender="callTimeDataTable, callTimeDataTableScroller"
+                                status="commonStatus"
+                                actionListener="#{CallTimeUIBean.clearDataModel}"
+                                styleClass="buttonmed">
+                 <s:defaultAction/>
+             </a4j:commandButton>
+          </h:panelGrid>
 
+         <ui:param name="callTimeDataModel" value="#{CallTimeUIBean.dataModel}" />
          <rich:dataTable id="callTimeDataTable"
                          value="#{callTimeDataModel}" 
                          rows="#{PageControl.CallTimeHistory.pageSize}" 
@@ -54,7 +64,7 @@
 
             <rich:column>
                <f:facet name="header">
-                  <onc:sortableColumnHeader sort="key.callDestination">
+                  <onc:sortableColumnHeader sort="calltimedatavalue.key.callDestination">
                      <h:outputText value="Destination" />
                   </onc:sortableColumnHeader>
                </f:facet>
@@ -63,7 +73,7 @@
 
             <rich:column>
                <f:facet name="header">
-                  <onc:sortableColumnHeader sort="SUM(value.count)">
+                  <onc:sortableColumnHeader sort="SUM(calltimedatavalue.count)">
                      <h:outputText value="Request Count" />
                   </onc:sortableColumnHeader>
                </f:facet>
@@ -72,7 +82,7 @@
 
             <rich:column>
                <f:facet name="header">
-                  <onc:sortableColumnHeader sort="MIN(value.minimum)">
+                  <onc:sortableColumnHeader sort="MIN(calltimedatavalue.minimum)">
                      <h:outputText value="Minimum" />
                   </onc:sortableColumnHeader>
                </f:facet>
@@ -83,7 +93,7 @@
 
             <rich:column>
                <f:facet name="header">
-                  <onc:sortableColumnHeader sort="(SUM(value.total)/SUM(value.count))">
+                  <onc:sortableColumnHeader sort="SUM(calltimedatavalue.total)/SUM(calltimedatavalue.count)">
                      <h:outputText value="Average" />
                   </onc:sortableColumnHeader>
                </f:facet>
@@ -94,7 +104,7 @@
 
             <rich:column>
                <f:facet name="header">
-                  <onc:sortableColumnHeader sort="MAX(value.maximum)">
+                  <onc:sortableColumnHeader sort="MAX(calltimedatavalue.maximum)">
                      <h:outputText value="Maximum" />
                   </onc:sortableColumnHeader>
                </f:facet>
@@ -102,10 +112,21 @@
                   <f:converter converterId="ShortDurationConverter"/>
                </h:outputText>
             </rich:column>
+            
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="MAX(calltimedatavalue.total)">
+                     <h:outputText value="Total" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.total}">
+                  <f:converter converterId="ShortDurationConverter"/>
+               </h:outputText>
+            </rich:column>
 
             <f:facet name="footer">
                 <rich:columnGroup>
-                    <rich:column colspan="5" width="100%">
+                    <rich:column colspan="6" width="100%">
                         <ui:param name="paginationDataTableName" value="callTimeDataTable" />
                         <ui:param name="paginationDataModel" value="#{callTimeDataModel}" />
                         <ui:param name="paginationPageControl" value="#{PageControl.CallTimeHistory}" />

@@ -36,98 +36,80 @@ REQUEST PARAMETERS:
 THIS TEXT WILL BE REMOVED AS WELL.
 
 <ui:param name="defaultPageTitle"
-      value="'#{AutoGroupUIBean.parentResource.name}'.'#{AutoGroupUIBean.childResourceType.name}'" />
+          value="'#{AutoGroupUIBean.parentResource.name}'.'#{AutoGroupUIBean.childResourceType.name}'" />
 
-   <ui:define name="summary">
+    <ui:define name="summary">
 
-      <ui:remove>
-         <!-- NOTE: Besides being included here, summary.xhtml is also leveraged by JSP-based pages. Specifically, it is
-                 included (via an AJAX request) in /common/components/PageTitle.jsp. 
-                 AutoGroups have no obvious summary information past what is in the breadcrumbs -->
-      </ui:remove>
-
+    <ui:remove>
+        <!-- NOTE: Besides being included here, summary.xhtml is also leveraged by JSP-based pages. Specifically, it is
+                   included (via an AJAX request) in /common/components/PageTitle.jsp. 
+                   AutoGroups have no obvious summary information past what is in the breadcrumbs -->
+    </ui:remove>
 
     <h:panelGroup layout="block" style="width: 100%; background-color: #E5E5E5;">
-
-
         <table width="100%" style="padding-right: 20px; padding-top: 5px;" cellpadding="0" cellspacing="0">
+            <tr>
+                <td width="30">
+                    <h:graphicImage value="/images/icons/Auto_group_#{AutoGroupUIBean.childResourceType.category}_up_24.png"/>
+                </td>
+                <td nowrap="nowrap">
+                    <h:outputText value="#{AutoGroupUIBean.childResourceType.name} AutoGroup" style="font-size: 18px;" />
+                    <br/>
+                    <onc:resourceLineage resourceId="#{AutoGroupUIBean.parentResource.id}" />
+                    <h:outputText value=" &gt; " />
+                    <h:outputLink value="/rhq/autogroup/monitor/graphs.xhtml">
+                        <f:param name="parent" value="#{AutoGroupUIBean.parentResource.id}" />
+                        <f:param name="type" value="#{AutoGroupUIBean.childResourceType.id}" />
+                        <h:outputText value="#{AutoGroupUIBean.childResourceType.name}" />
+                    </h:outputLink>
+                </td>
+            </tr>
+        </table>
+    </h:panelGroup>
 
-                <tr>
-                    <td width="30">
-                        
-                        <h:graphicImage value="/images/icons/Auto_group_#{AutoGroupUIBean.childResourceType.category}_up_24.png"/>
-                        </td>
-                    <td nowrap="nowrap">
-                        
-                        <h:outputText value="#{AutoGroupUIBean.childResourceType.name} AutoGroup" style="font-size: 18px;" /><br/>
-
-
-      <onc:resourceLineage
-         resourceId="#{AutoGroupUIBean.parentResource.id}" />
-      <h:outputText value=" &gt; " />
-      <h:outputLink value="/rhq/autogroup/monitor/graphs.xhtml">
-         <f:param name="parent"
-            value="#{AutoGroupUIBean.parentResource.id}" />
-         <f:param name="type"
-            value="#{AutoGroupUIBean.childResourceType.id}" />
-         <h:outputText value="#{AutoGroupUIBean.childResourceType.name}" />
-      </h:outputLink>
-
-      </td>
-       </tr>
-       </table>
-
-</h:panelGroup>
-
-       <rich:spacer height="10px"/>
-
-   </ui:define>
-
-   <ui:define name="tabBar">
-
-      <onc:tabBar selectedTabName="#{selectedTabName}">
-
-         <f:param name="parent" value="#{param.parent}" />
-         <f:param name="type" value="#{param.type}" />
-
-         <onc:tab name="Monitor" image="/images/icons/Monitor_grey_16.png">
-            <onc:subtab name="Graphs"
-               url="/rhq/autogroup/monitor/graphs.xhtml" />
-            <onc:subtab name="Tables"
-               url="/rhq/autogroup/monitor/tables.xhtml" />
-            <onc:subtab name="Schedules"
-               url="/rhq/autogroup/monitor/schedules.xhtml" />               
-         </onc:tab>
-         <onc:tab name="Events" image="/images/icons/Events_grey_16.png">
-            <onc:subtab name="History"
-               url="/rhq/autogroup/events/history.xhtml" />
-         </onc:tab>
-
-      </onc:tabBar>
-
-      <!-- Shows the results of the last action executed. -->
-      <h:messages showSummary="false" showDetail="true"
-         infoClass="InfoBlock" warnClass="WarnBlock"
-         errorClass="ErrorBlock" fatalClass="FatalBlock"
-         globalOnly="true" layout="table" width="100%" />
-
-   </ui:define>
-
-
-    <ui:define name="nav">
-
-        <ui:include src="/rhq/resource/navigation/ResourcesTree.xhtml" />
+    <rich:spacer height="10px"/>
 
     </ui:define>
 
+    <ui:define name="tabBar">
 
-   <ui:define name="content">
-      <p />
+        <onc:tabBar selectedTabName="#{selectedTabName}">
+            <f:param name="parent" value="#{param.parent}" />
+            <f:param name="type" value="#{param.type}" />
 
-      <h1>Default AutoGroup Content</h1>
+            <onc:tab name="Monitor" image="/images/icons/Monitor_grey_16.png">
+                <onc:subtab name="Graphs" url="/rhq/autogroup/monitor/graphs.xhtml" />
+                <onc:subtab name="Tables" url="/rhq/autogroup/monitor/tables.xhtml" />
+                <onc:subtab name="Schedules" url="/rhq/autogroup/monitor/schedules.xhtml" />
+                <onc:subtab name="Response" url="/rhq/autogroup/monitor/response.xhtml" />
+            </onc:tab>
+            
+            <onc:tab name="Events" image="/images/icons/Events_grey_16.png">
+                <onc:subtab name="History" url="/rhq/autogroup/events/history.xhtml" />
+            </onc:tab>
+        </onc:tabBar>
 
-      <p />
-   </ui:define>
+        <!-- Shows the results of the last action executed. -->
+        <h:messages showSummary="false" 
+                    showDetail="true"
+                    infoClass="InfoBlock" 
+                    warnClass="WarnBlock"
+                    errorClass="ErrorBlock" 
+                    fatalClass="FatalBlock"
+                    globalOnly="true" 
+                    layout="table" 
+                    width="100%" />
+    </ui:define>
+
+    <ui:define name="nav">
+        <ui:include src="/rhq/resource/navigation/ResourcesTree.xhtml" />
+    </ui:define>
+
+    <ui:define name="content">
+        <p />
+        <h1>Default AutoGroup Content</h1>
+        <p />
+    </ui:define>
 
 </ui:composition>
 

@@ -47,6 +47,7 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
@@ -61,7 +62,10 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * The manager for call-time metric data.
@@ -149,7 +153,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
          *       Taking this solution one step further, an appropriate delete statement can be crafted which leverages 
          *       the above concept but deletes all but one of the duplicates (perhaps leaving the record with the 
          *       smallest id/pk).  This purge routine can either be grouped in with the rest in DataPurgeJob, or it can
-         *       be implemented as its own quartz job that runs more (or less) frequently, depending on how needs 
+         *       be implemented as its own quartz job that runs more (or less) frequently, depending on our needs 
          *       (i.e., how often we anticipate duplicates)
          */
         // Delete any existing rows that have the same key and begin time as the data about to be inserted.
@@ -196,15 +200,69 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     }
 
     public PageList<CallTimeDataComposite> findCallTimeDataForCompatibleGroup(Subject subject, int groupId,
-        int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl) {
-        // TODO
-        return null;
+        long beginTime, long endTime, PageControl pageControl) {
+        return findCallTimeDataForContext(subject, EntityContext.forGroup(groupId), beginTime, endTime, null,
+            pageControl);
     }
 
     public PageList<CallTimeDataComposite> findCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
-        int childResourceTypeId, int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl) {
-        // TODO
-        return null;
+        int childResourceTypeId, long beginTime, long endTime, PageControl pageControl) {
+        return findCallTimeDataForContext(subject, EntityContext.forAutoGroup(parentResourceId, childResourceTypeId),
+            beginTime, endTime, null, pageControl);
+    }
+
+    public PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context,
+        long beginTime, long endTime, String destination, PageControl pageControl) {
+
+        // lookup measurement definition id
+
+        CallTimeDataCriteria criteria = new CallTimeDataCriteria();
+        criteria.addFilterBeginTime(beginTime);
+        criteria.addFilterEndTime(endTime);
+        if (destination != null && !destination.trim().equals("")) {
+            criteria.addFilterDestination(destination);
+        }
+
+        pageControl.initDefaultOrderingField("SUM(calltimedatavalue.total)/SUM(calltimedatavalue.count)",
+            PageOrdering.DESC); // only set if no ordering yet specified
+        pageControl.addDefaultOrderingField("calltimedatavalue.key.callDestination", PageOrdering.ASC); // add this to sort, if not already specified
+        criteria.setPageControl(pageControl);
+
+        //criteria.addSortAverage(PageOrdering.DESC);
+
+        if (context.category == EntityContext.Category.Resource) {
+            criteria.addFilterResourceId(context.resourceId);
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            criteria.addFilterResourceGroupId(context.groupId);
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
+            criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
+        }
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        String replacementSelectList = "" //
+            + " new org.rhq.core.domain.measurement.calltime.CallTimeDataComposite( " //
+            + "   calltimedatavalue.key.callDestination, " //
+            + "   MIN(calltimedatavalue.minimum), " //
+            + "   MAX(calltimedatavalue.maximum), " //
+            + "   SUM(calltimedatavalue.total), " //
+            + "   SUM(calltimedatavalue.count), " //
+            + "   SUM(calltimedatavalue.total) / SUM(calltimedatavalue.count) ) ";
+        generator.alterProjection(replacementSelectList);
+        generator.setGroupByClause("calltimedatavalue.key.callDestination");
+
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "key.schedule.resource", subject.getId());
+        }
+
+        //log.info(generator.getParameterReplacedQuery(false));
+        //log.info(generator.getParameterReplacedQuery(true));
+
+        CriteriaQueryRunner<CallTimeDataComposite> queryRunner = new CriteriaQueryRunner<CallTimeDataComposite>(
+            criteria, generator, entityManager);
+        PageList<CallTimeDataComposite> results = queryRunner.execute();
+        return results;
     }
 
     /**

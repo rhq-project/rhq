@@ -562,7 +562,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 + "SELECT DISTINCT ms.resource.agent.id " //
                 + "  FROM MeasurementSchedule ms " //
                 + " WHERE ms.id IN ( " + measurementScheduleSubQuery + " ) ";
-            log.info("agentsQueryString: " + agentsQueryString);
+            if (log.isDebugEnabled()) {
+                log.debug("agentsQueryString: " + agentsQueryString);
+            }
             Query agentsQuery = entityManager.createQuery(agentsQueryString);
             agentIds = agentsQuery.getResultList();
         } catch (Throwable t) {
@@ -581,7 +583,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             + "  FROM MeasurementSchedule ms " //
             + " WHERE ms.id IN ( " + measurementScheduleSubQuery + " ) " //
             + "   AND ms.resource.agent.id = :agentId";
-        log.info("scheduleRequestQueryString: " + scheduleRequestQueryString);
+        if (log.isDebugEnabled()) {
+            log.debug("scheduleRequestQueryString: " + scheduleRequestQueryString);
+        }
         Query scheduleRequestQuery = entityManager.createQuery(scheduleRequestQueryString);
 
         Map<Integer, ResourceMeasurementScheduleRequest> agentRequests = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
@@ -654,12 +658,16 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 + "UPDATE Resource res " //
                 + "   SET res.mtime = :now " //
                 + " WHERE res.id IN ( " + resourceSubQuery + " ) ";
-            log.info("markResourceQueryString: " + markResourceQueryString);
+            if (log.isDebugEnabled()) {
+                log.debug("markResourceQueryString: " + markResourceQueryString);
+            }
 
             Query markResourceQuery = entityManager.createQuery(markResourceQueryString);
             markResourceQuery.setParameter("now", System.currentTimeMillis());
             int affectedRows = markResourceQuery.executeUpdate();
-            log.info("Marked " + affectedRows + " for future measurement scheudle update");
+            if (log.isDebugEnabled()) {
+                log.debug("Marked " + affectedRows + " for future measurement scheudle update");
+            }
         } catch (Throwable t) {
             log.error("Could not notify agents of updates", t);
         }
@@ -717,7 +725,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         updateQuery.setParameter("agentId", agentId);
         updateQuery.setParameter("definitionIds", measurementDefinitionIds);
         int updateCount = updateQuery.executeUpdate();
-        log.info("" + updateCount + " resources mtime fields were updated as a result of this metric template update");
+
+        if (log.isDebugEnabled()) {
+            log.debug("" + updateCount
+                + " resources mtime fields were updated as a result of this metric template update");
+        }
     }
 
     public void updateSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
@@ -769,7 +781,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         try {
             AgentClient agentClient = LookupUtil.getAgentManager().getAgentClient(agent);
             if (agentClient.ping(2000) == false) {
-                log.debug("Won't send MeasurementSchedules to offline Agent[id=" + agent.getId() + "]");
+                if (log.isDebugEnabled()) {
+                    log.debug("Won't send MeasurementSchedules to offline Agent[id=" + agent.getId() + "]");
+                }
                 return false;
             }
             agentClient.getMeasurementAgentService().updateCollection(resourceMeasurementScheduleRequest);

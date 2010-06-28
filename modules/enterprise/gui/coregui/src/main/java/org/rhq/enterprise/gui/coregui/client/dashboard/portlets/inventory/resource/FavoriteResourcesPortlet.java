@@ -61,7 +61,11 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
 
 
         Criteria criteria = new Criteria();
-        criteria.addCriteria("resourceIds", favArray );
+        if (favoriteIds.isEmpty()) {
+            criteria.addCriteria("id",-1);
+        } else {
+            criteria.addCriteria("resourceIds", favArray );
+        }
 
         refresh(criteria);
 
@@ -84,7 +88,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
             getListGrid().setViewState(state);
         }
 
-        
+
     }
 
     public Canvas getHelpCanvas() {

@@ -373,8 +373,12 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         criteria.addFilterStartTime(begin);
         criteria.addFilterEndTime(end);
         criteria.addFilterSeverities(severities);
-        criteria.addFilterSourceName(source);
-        criteria.addFilterDetail(detail);
+        if (source != null && !source.trim().equals("")) {
+            criteria.addFilterSourceName(source);
+        }
+        if (detail != null && !detail.trim().equals("")) {
+            criteria.addFilterDetail(detail);
+        }
 
         criteria.setPageControl(pc);
 
@@ -407,6 +411,9 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
                 "source.resource", subject.getId());
         }
+
+        //log.info(generator.getParameterReplacedQuery(false));
+        //log.info(generator.getParameterReplacedQuery(true));
 
         CriteriaQueryRunner<EventComposite> queryRunner = new CriteriaQueryRunner<EventComposite>(criteria, generator,
             entityManager);

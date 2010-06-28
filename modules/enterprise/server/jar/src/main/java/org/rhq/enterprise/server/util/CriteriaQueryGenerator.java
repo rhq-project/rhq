@@ -397,12 +397,7 @@ public final class CriteriaQueryGenerator {
             }
 
             // order by clause
-            boolean overridden = true;
-            PageControl pc = criteria.getPageControlOverrides();
-            if (pc == null) {
-                overridden = false;
-                pc = getPageControl(criteria);
-            }
+            PageControl pc = getPageControl(criteria);
 
             boolean first = true;
             for (OrderingField orderingField : pc.getOrderingFields()) {

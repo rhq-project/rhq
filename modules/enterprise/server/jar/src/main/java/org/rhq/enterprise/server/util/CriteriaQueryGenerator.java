@@ -281,7 +281,13 @@ public final class CriteriaQueryGenerator {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
         if (countQuery) {
-            results.append("COUNT(").append(alias).append(")").append(NL);
+            if (groupByClause == null) { // non-grouped method
+                results.append("COUNT(").append(alias).append(")").append(NL);
+            } else {
+                // gets the count of the number of aggregate/grouped rows
+                // NOTE: this only works when the gorupBy is a single element, as opposed to a list of elements
+                results.append("COUNT(DISTINCT ").append(groupByClause).append(")").append(NL);
+            }
         } else {
             if (projection == null) {
                 results.append(alias).append(NL);

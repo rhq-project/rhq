@@ -261,15 +261,15 @@ cat <<EOF >"${MAVEN_SETTINGS_FILE}"
       <profile>
          <id>release</id>
          <properties>
-            <rhq.test.ds.connection-url>jdbc:postgresql://jon03.qa.atl2.redhat.com:5432/rhq_release</rhq.test.ds.connection-url>
+            <rhq.test.ds.server-name>hudson-qe.rhq.rdu.redhat.com</rhq.test.ds.server-name>
+            <rhq.test.ds.port>5432</rhq.test.ds.port>
+            <rhq.test.ds.db-name>rhq_release_tag</rhq.test.ds.db-name>
+            <rhq.test.ds.connection-url>jdbc:postgresql://hudson-qe.rhq.rdu.redhat.com:5432/rhq_release_tag</rhq.test.ds.connection-url>
             <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
             <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
             <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
             <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
             <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
-            <rhq.test.ds.server-name>jon03.qa.atl2.redhat.com</rhq.test.ds.server-name>
-            <rhq.test.ds.port>5432</rhq.test.ds.port>
-            <rhq.test.ds.db-name>rhq_release</rhq.test.ds.db-name>
             <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
             <!-- quartz properties -->
             <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>

@@ -85,7 +85,11 @@ public class LinkManager {
 
 
     public static String getHubAllResourcesLink() {
-        return "/rhq/inventory/browseResources.xhtml?subtab=all";
+        if (GWT) {
+            return "#Inventory";
+        } else {
+            return "/rhq/inventory/browseResources.xhtml?subtab=all";
+        }
     }
 
     public static String getHubPlatformsLink() {

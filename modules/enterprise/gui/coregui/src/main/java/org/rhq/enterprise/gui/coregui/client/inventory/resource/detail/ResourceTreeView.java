@@ -104,6 +104,7 @@ public class ResourceTreeView extends VLayout {
         treeGrid.setSortField("name");
         treeGrid.setShowHeader(false);
 
+        treeGrid.setLeaveScrollbarGap(false);
 
         contextMenu = new Menu();
         MenuItem item = new MenuItem("Expand node");

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
 import com.google.gwt.core.client.GWT;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -39,6 +40,8 @@ public class RecentAlertsPortlet extends AlertsView implements Portlet {
     public RecentAlertsPortlet() {
         setShowHeader(false);
         setShowFooter(false);
+
+        setOverflow(Overflow.HIDDEN);
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
